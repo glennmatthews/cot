@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ovf:Envelope xmlns:ovf="http://www.vmware.com/schema/ovf/1/envelope" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ovf:version="0.9">
+  <ovf:References>
+    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="73216" />
+  </ovf:References>
+  <ovf:Section xsi:type="ovf:DiskSection_Type">
+    <ovf:Info>Meta-information about the virtual disks</ovf:Info>
+    <ovf:Disk ovf:capacity="8589934592" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/specifications/vmdk.html#sparse" />
+  </ovf:Section>
+  <ovf:Section xsi:type="ovf:NetworkSection_Type">
+    <ovf:Info>The list of logical networks</ovf:Info>
+    <ovf:Network ovf:name="bridged">
+      <ovf:Description>The bridged network</ovf:Description>
+    </ovf:Network>
+  </ovf:Section>
+  <ovf:Content ovf:id="v0.9" xsi:type="ovf:VirtualSystem_Type">
+    <ovf:Info>A virtual machine</ovf:Info>
+    <ovf:Section ovf:id="107" vmw:osType="other26xLinux64Guest" xsi:type="ovf:OperatingSystemSection_Type">
+      <ovf:Info>The kind of installed guest operating system</ovf:Info>
+    </ovf:Section>
+    <ovf:Section xsi:type="ovf:VirtualHardwareSection_Type">
+      <ovf:Info>Virtual hardware requirements for a virtual machine</ovf:Info>
+      <ovf:System>
+        <vssd:InstanceId>0</vssd:InstanceId>
+        <vssd:VirtualSystemIdentifier>foo</vssd:VirtualSystemIdentifier>
+        <vssd:VirtualSystemType>vmx-04</vssd:VirtualSystemType>
+      </ovf:System>
+      <ovf:Item>
+        <rasd:Caption>1 virtual CPU(s)</rasd:Caption>
+        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+        <rasd:InstanceId>1</rasd:InstanceId>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:AllocationUnits>MegaHertz</rasd:AllocationUnits>
+        <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Caption>8192MB of memory</rasd:Caption>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:InstanceId>2</rasd:InstanceId>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:AllocationUnits>MegaBytes</rasd:AllocationUnits>
+        <rasd:VirtualQuantity>8192</rasd:VirtualQuantity>
+      </ovf:Item>
+      <ovf:Item ovf:required="false">
+        <rasd:Caption>usb</rasd:Caption>
+        <rasd:Description>USB Controller</rasd:Description>
+        <rasd:InstanceId>3</rasd:InstanceId>
+        <rasd:ResourceType>23</rasd:ResourceType>
+        <rasd:Address>0</rasd:Address>
+        <rasd:BusNumber>0</rasd:BusNumber>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Caption>scsiController0</rasd:Caption>
+        <rasd:Description>SCSI Controller</rasd:Description>
+        <rasd:InstanceId>4</rasd:InstanceId>
+        <rasd:ResourceType>6</rasd:ResourceType>
+        <rasd:ResourceSubType>lsilogic</rasd:ResourceSubType>
+        <rasd:Address>0</rasd:Address>
+        <rasd:BusNumber>0</rasd:BusNumber>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Caption>ideController1</rasd:Caption>
+        <rasd:Description>IDE Controller</rasd:Description>
+        <rasd:InstanceId>5</rasd:InstanceId>
+        <rasd:ResourceType>5</rasd:ResourceType>
+        <rasd:Address>1</rasd:Address>
+        <rasd:BusNumber>1</rasd:BusNumber>
+      </ovf:Item>
+      <ovf:Item ovf:required="false">
+        <rasd:Caption>cdrom1</rasd:Caption>
+        <rasd:InstanceId>6</rasd:InstanceId>
+        <rasd:ResourceType>15</rasd:ResourceType>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Parent>5</rasd:Parent>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Caption>disk1</rasd:Caption>
+        <rasd:InstanceId>7</rasd:InstanceId>
+        <rasd:ResourceType>17</rasd:ResourceType>
+        <rasd:HostResource>/disk/vmdisk1</rasd:HostResource>
+        <rasd:Parent>4</rasd:Parent>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Caption>ethernet0</rasd:Caption>
+        <rasd:Description>PCNet32 ethernet adapter</rasd:Description>
+        <rasd:InstanceId>8</rasd:InstanceId>
+        <rasd:ResourceType>10</rasd:ResourceType>
+        <rasd:ResourceSubType>PCNet32</rasd:ResourceSubType>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>bridged</rasd:Connection>
+        <rasd:AddressOnParent>1</rasd:AddressOnParent>
+      </ovf:Item>
+    </ovf:Section>
+    <ovf:Section ovf:required="false" xsi:type="ovf:AnnotationSection_Type">
+      <ovf:Info>A human-readable annotation</ovf:Info>
+      <ovf:Annotation>Hello world! This is a version 0.9 OVF.</ovf:Annotation>
+    </ovf:Section>
+  </ovf:Content>
+</ovf:Envelope>

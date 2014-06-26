@@ -1,0 +1,338 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData">
+  <ovf:References>
+    <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" ovf:size="73216" />
+  </ovf:References>
+  <ovf:DiskSection>
+    <ovf:Info>Virtual disk information</ovf:Info>
+    <ovf:Disk ovf:capacity="128" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="flash2" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+    <ovf:Disk ovf:capacity="2147483648" ovf:capacityAllocationUnits="byte" ovf:diskId="vios-adventerprisek9-m.vmdk" ovf:fileRef="vios-adventerprisek9-m.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+  </ovf:DiskSection>
+  <ovf:NetworkSection>
+    <ovf:Info>The list of logical networks that NICs can be assigned to</ovf:Info>
+    <ovf:Network ovf:name="GigabitEthernet0_0">
+      <ovf:Description>Data network 1</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_1">
+      <ovf:Description>Data network 2</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_2">
+      <ovf:Description>Data network 3</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_3">
+      <ovf:Description>Data network 4</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_4">
+      <ovf:Description>Data network 5</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_5">
+      <ovf:Description>Data network 6</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_6">
+      <ovf:Description>Data network 7</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_7">
+      <ovf:Description>Data network 8</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_8">
+      <ovf:Description>Data network 9</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_9">
+      <ovf:Description>Data network 10</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_10">
+      <ovf:Description>Data network 11</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_11">
+      <ovf:Description>Data network 12</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_12">
+      <ovf:Description>Data network 13</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_13">
+      <ovf:Description>Data network 14</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_14">
+      <ovf:Description>Data network 15</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet0_15">
+      <ovf:Description>Data network 16</ovf:Description>
+    </ovf:Network>
+  </ovf:NetworkSection>
+  <ovf:DeploymentOptionSection>
+    <ovf:Info>Predefined Configuration Profiles</ovf:Info>
+    <ovf:Configuration ovf:default="true" ovf:id="1CPU-384MB-2NIC">
+      <ovf:Label>Small</ovf:Label>
+      <ovf:Description>Minimal hardware profile - 1 vCPU, 384 MB RAM, 2 NICs</ovf:Description>
+    </ovf:Configuration>
+    <ovf:Configuration ovf:id="1CPU-1GB-8NIC">
+      <ovf:Label>Medium</ovf:Label>
+      <ovf:Description>Medium hardware profile - 1 vCPU, 1 GB RAM, 8 NICs</ovf:Description>
+    </ovf:Configuration>
+    <ovf:Configuration ovf:id="1CPU-3GB-10NIC">
+      <ovf:Label>Large (ESXi)</ovf:Label>
+      <ovf:Description>Large hardware profile for ESXi - 1 vCPU, 3 GB RAM, 10 NICs</ovf:Description>
+    </ovf:Configuration>
+    <ovf:Configuration ovf:id="1CPU-3GB-16NIC">
+      <ovf:Label>Large (non-ESXi)</ovf:Label>
+      <ovf:Description>Large hardware profile for other hypervisors - 1 vCPU, 3 GB RAM, 16 NICs.
+(Note: ESXi only permits 10 NICs in a VM so this profile is unsupported on ESXi.)</ovf:Description>
+    </ovf:Configuration>
+  </ovf:DeploymentOptionSection>
+  <ovf:VirtualSystem ovf:id="com.cisco.iosv">
+    <ovf:Info>IOSv virtual machine</ovf:Info>
+    <ovf:Name>Cisco IOSv</ovf:Name>
+    <ovf:OperatingSystemSection ovf:id="100" vmw:osType="otherGuest">
+      <ovf:Info>The kind of installed guest operating system</ovf:Info>
+      <ovf:Description>IOSv</ovf:Description>
+    </ovf:OperatingSystemSection>
+    <ovf:VirtualHardwareSection>
+      <ovf:Info>Virtual hardware requirements</ovf:Info>
+      <ovf:System>
+        <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
+        <vssd:InstanceID>0</vssd:InstanceID>
+        <vssd:VirtualSystemType>vmx-08 Cisco:Internal:VMCloud-01</vssd:VirtualSystemType>
+      </ovf:System>
+      <ovf:Item>
+        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+        <rasd:ElementName>1 virtual CPU(s)</rasd:ElementName>
+        <rasd:InstanceID>1</rasd:InstanceID>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:ElementName>384 MB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>384</rasd:VirtualQuantity>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-1GB-8NIC">
+        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:ElementName>1 GB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>384</rasd:VirtualQuantity>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:ElementName>3 GB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>384</rasd:VirtualQuantity>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Address>0</rasd:Address>
+        <rasd:Description>IDE/VirtIO Controller</rasd:Description>
+        <rasd:ElementName>IDE Controller 0</rasd:ElementName>
+        <rasd:InstanceID>3</rasd:InstanceID>
+        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
+        <rasd:ResourceType>5</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:ElementName>Hard Disk Drive</rasd:ElementName>
+        <rasd:HostResource>ovf:/disk/vios-adventerprisek9-m.vmdk</rasd:HostResource>
+        <rasd:InstanceID>4</rasd:InstanceID>
+        <rasd:Parent>3</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:required="false">
+        <rasd:AddressOnParent>1</rasd:AddressOnParent>
+        <rasd:Description>Disk device corresponding to flash2:; may be used for bootstrap configuration.</rasd:Description>
+        <rasd:ElementName>flash2</rasd:ElementName>
+        <rasd:HostResource>ovf:/disk/flash2</rasd:HostResource>
+        <rasd:InstanceID>5</rasd:InstanceID>
+        <rasd:Parent>3</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:required="false">
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Description>Serial Port acting as IOSd Console Port</rasd:Description>
+        <rasd:ElementName>Serial 1</rasd:ElementName>
+        <rasd:InstanceID>9</rasd:InstanceID>
+        <rasd:ResourceType>21</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:required="false">
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Description>Serial Port acting as IOSd Aux Port</rasd:Description>
+        <rasd:ElementName>Serial 2</rasd:ElementName>
+        <rasd:InstanceID>10</rasd:InstanceID>
+        <rasd:ResourceType>21</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AddressOnParent>11</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_0</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/0 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/0</rasd:ElementName>
+        <rasd:InstanceID>11</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AddressOnParent>12</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_1</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/1 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/1</rasd:ElementName>
+        <rasd:InstanceID>12</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-1GB-8NIC 1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>13</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_2</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/2 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/2</rasd:ElementName>
+        <rasd:InstanceID>13</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-1GB-8NIC 1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>14</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_3</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/3 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/3</rasd:ElementName>
+        <rasd:InstanceID>14</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-1GB-8NIC 1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>15</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_4</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/4 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/4</rasd:ElementName>
+        <rasd:InstanceID>15</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-1GB-8NIC 1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>16</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_5</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/5 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/5</rasd:ElementName>
+        <rasd:InstanceID>16</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-1GB-8NIC 1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>17</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_6</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/6 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/6</rasd:ElementName>
+        <rasd:InstanceID>17</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-1GB-8NIC 1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>18</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_7</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/7 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/7</rasd:ElementName>
+        <rasd:InstanceID>18</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>19</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_8</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/8 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/8</rasd:ElementName>
+        <rasd:InstanceID>19</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-10NIC 1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>20</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_9</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/9 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/9</rasd:ElementName>
+        <rasd:InstanceID>20</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>21</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_10</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/10 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/10</rasd:ElementName>
+        <rasd:InstanceID>21</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>22</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_11</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/11 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/11</rasd:ElementName>
+        <rasd:InstanceID>22</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>23</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_12</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/12 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/12</rasd:ElementName>
+        <rasd:InstanceID>23</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>24</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_13</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/13 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/13</rasd:ElementName>
+        <rasd:InstanceID>24</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>25</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_14</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/14 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/14</rasd:ElementName>
+        <rasd:InstanceID>25</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="1CPU-3GB-16NIC">
+        <rasd:AddressOnParent>26</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet0_15</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet0/15 interface</rasd:Description>
+        <rasd:ElementName>GigabitEthernet0/15</rasd:ElementName>
+        <rasd:InstanceID>26</rasd:InstanceID>
+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+    </ovf:VirtualHardwareSection>
+    <ovf:ProductSection ovf:class="com.cisco.iosv" ovf:instance="1" ovf:required="false">
+      <ovf:Info>Information about the installed software</ovf:Info>
+      <ovf:Product>Cisco IOSv Virtual Router</ovf:Product>
+      <ovf:Vendor>Cisco Systems, Inc.</ovf:Vendor>
+      <ovf:Version>15.4(2.4)T</ovf:Version>
+      <ovf:FullVersion>Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version 15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9</ovf:FullVersion>
+      <ovf:ProductUrl>http://www.cisco.com/en/US/products/index.html</ovf:ProductUrl>
+      <ovf:VendorUrl>http://www.cisco.com</ovf:VendorUrl>
+    </ovf:ProductSection>
+  </ovf:VirtualSystem>
+</ovf:Envelope>
