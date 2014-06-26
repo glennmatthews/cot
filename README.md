@@ -3,10 +3,10 @@ Common OVF Tool (COT)
 =====================
 
 COT (the Common OVF Tool) is a tool for editing
-`Open Virtualization Format <http://dmtf.org/standards/ovf>`
+[Open Virtualization Format](http://dmtf.org/standards/ovf)
 (``.ovf``, ``.ova``) virtual appliances, with a focus on virtualized network
-appliances such as the `Cisco CSR 1000V <http://www.cisco.com/go/csr1000v>`
-and `Cisco IOS XRv <http://www.cisco.com/go/iosxrv>` platforms.
+appliances such as the [Cisco CSR 1000V](http://www.cisco.com/go/csr1000v)
+and [Cisco IOS XRv](http://www.cisco.com/go/iosxrv) platforms.
 
 Capabilities
 ============
@@ -25,15 +25,15 @@ System Requirements
 
 * COT requires either Python 2.7 or Python 3.
 * The ``cot add-disk`` command requires
-  `vmdktool <http://www.freshports.org/sysutils/vmdktool/>` and
-  `qemu-img <http://www.qemu.org>` as
+  [vmdktool](http://www.freshports.org/sysutils/vmdktool/) and
+  [qemu-img](http://www.qemu.org) as
   helper programs when adding hard disks to an OVF.
 * The ``cot inject-config`` command requires
-  `mkisofs <ftp://ftp.berlios.de/pub/cdrecord/>` to create ISO
-  (CD-ROM) images and `fatdisk <http://github.com/goblinhack/fatdisk>`
+  [mkisofs](ftp://ftp.berlios.de/pub/cdrecord/) to create ISO
+  (CD-ROM) images and [fatdisk](http://github.com/goblinhack/fatdisk)
   to create hard disk images.
 * COT's automated unit tests make use of (but do not require)
-  `ovftool <https://www.vmware.com/support/developer/ovf/>` to perform
+  [ovftool](https://www.vmware.com/support/developer/ovf/) to perform
   additional verification that OVFs and OVAs created by COT align with
   VMWare's expectations for these file types.
 
@@ -45,7 +45,7 @@ Mac OS X Prerequisites
 ----------------------
 
 The recommended installation method on Mac OS X is to use
-`MacPorts <http://www.macports.org/>`. Once you have MacPorts set up on your
+[MacPorts](http://www.macports.org/). Once you have MacPorts set up on your
 system, use the following commands to install the necessary helpers:
 
     # mkisofs
@@ -65,7 +65,7 @@ Python via MacPorts as well:
     # python setup-tools module
     sudo port install py27-setuptools
 
-Optionally, download `ovftool <https://www.vmware.com/support/developer/ovf/>`
+Optionally, download [ovftool](https://www.vmware.com/support/developer/ovf/)
 from VMware and install it.
 
 Then proceed as documented in "Installing COT" below.
@@ -107,7 +107,9 @@ modules and scripts as part of your system Python environment:
     running build_py
     > python ./setup.py test
     running test
-<verbose test case output omitted here for brevity>
+
+(verbose test case output omitted here for brevity)
+
     ----------------------------------------------------------------------
     Ran 115 tests in 28.222s
     
@@ -120,7 +122,9 @@ them before installing COT.)
     > sudo python ./setup.py install
     Password:
     running install
-<verbose install output omitted>
+
+(verbose install output omitted)
+
     Installing cot script to /usr/local/bin
 
     Installed /usr/local/lib/python2.7/dist-packages/common_ovf_tool-1.0.0rc5-py2.7.egg
@@ -128,7 +132,9 @@ them before installing COT.)
     Finished processing dependencies for common-ovf-tool==1.0.0rc5
     > which cot
     /usr/local/bin/cot
+
 (the specific installation path will depend on your OS and system)
+
     > cot -h
     usage:
       cot --help
