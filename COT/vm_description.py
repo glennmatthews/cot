@@ -268,6 +268,16 @@ class VMDescription(object):
         """
         raise NotImplementedError("info_string not implemented")
 
+    def profile_info_string(self):
+        """Returns a descriptive string summarizing the different configuration
+           profiles of this VM."""
+        raise NotImplementedError("profile_info_string not implemented")
+
+    def get_default_profile_name(self):
+        """Returns the name of the default configuration profile for the VM
+        """
+        raise NotImplementedError("get_default_profile_name not implemented")
+
     # API methods needed for inject-config
     def find_empty_drive(self, type):
         """Returns a disk device (if any) of the requested type

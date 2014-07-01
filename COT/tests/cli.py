@@ -274,3 +274,25 @@ class TestCLIInjectConfig(COT_UT):
                        '-c', '/foo'], result=2)
         self.call_cot(['inject-config', self.input_ovf,
                        '-s', '/foo'], result=2)
+
+class TestCLIDeploy(COT_UT):
+    """CLI test cases for "cot deploy" command"""
+
+    def test_help(self):
+        """Verifying help menu"""
+        self.call_cot(['deploy', '-h'])
+
+    def test_invalid_args(self):
+        # No VM specified
+        self.call_cot(['deploy'], result = 2)
+        # VM does not exist
+        self.call_cot(['deploy', '/foo'], result=2)
+        # Hypervisor not specified
+        self.call_cot(['deploy', self.input_ovf], result=2)
+        # No server specified
+        self.call_cot(['deploy', self.input_ovf, 'esxi'], result=2)
+        # Missing strings
+        for param in ['-c', '-n', '-N', '-u', '-p', '-s']:
+            self.call_cot(['deploy', self.input_ovf, 'esxi', '-s', 'localhost', param],
+                          result=2)
+

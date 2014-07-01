@@ -472,12 +472,49 @@ class OVF(VMDescription, XML):
             str_list.append("")
 
         # Profile information
+        profile_str = self.profile_info_string(verbosity_option)
+        if profile_str:
+            str_list.append(profile_str)
+            str_list.append("")
+
+        # Network information
+        if (self.network_section is not None) and (verbosity_option != 'brief'):
+            str_list.append("Networks:")
+            for network in self.network_section.findall(self.NETWORK):
+                str_list.append('  {0:30} "{1}"'
+                                .format(network.get(self.NETWORK_NAME),
+                                        network.find(self.NWK_DESC).text))
+            str_list.append("")
+
+        # Property information
+        properties = self.get_property_keys()
+        if properties:
+            str_list.append("Properties:")
+            if verbosity_option == 'verbose':
+                wrapper = textwrap.TextWrapper(initial_indent='      ',
+                                               subsequent_indent='      ')
+            for key in properties:
+                str_list.append('  {0:30} : {1}'
+                                .format(key, self.get_property_value(key)))
+                if verbosity_option != 'brief':
+                    str_list.append('      "{0}"'
+                                    .format(self.get_property_label(key)))
+                if verbosity_option == 'verbose':
+                    str_list.append(wrapper.fill(
+                            self.get_property_description(key)))
+            str_list.append("")
+
+        return "\n".join(str_list)
+
+    def profile_info_string(self, verbosity_option):
+        str_list = []
+        #Profile information
         PROF_W = 33
         CPU_W = 4
         MEM_W = 9
         NIC_W = 6
         SER_W = 7
-        HD_W  = 15
+        HD_W = 15
         template = (
             "{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:>{3}}} {{4:>{4}}} {{5:>{5}}}"
             .format(PROF_W, CPU_W, MEM_W, NIC_W, SER_W, HD_W))
@@ -545,37 +582,31 @@ class OVF(VMDescription, XML):
                 str_list.append(wrapper.fill(
                         '{0:15} "{1}"'.format("Description:",
                                 profile.find(self.CFG_DESC).text)))
-        str_list.append("")
-
-        # Network information
-        if (self.network_section is not None) and (verbosity_option != 'brief'):
-            str_list.append("Networks:")
-            for network in self.network_section.findall(self.NETWORK):
-                str_list.append('  {0:30} "{1}"'
-                                .format(network.get(self.NETWORK_NAME),
-                                        network.find(self.NWK_DESC).text))
-            str_list.append("")
-
-        # Property information
-        properties = self.get_property_keys()
-        if properties:
-            str_list.append("Properties:")
-            if verbosity_option == 'verbose':
-                wrapper = textwrap.TextWrapper(initial_indent='      ',
-                                               subsequent_indent='      ')
-            for key in properties:
-                str_list.append('  {0:30} : {1}'
-                                .format(key, self.get_property_value(key)))
-                if verbosity_option != 'brief':
-                    str_list.append('      "{0}"'
-                                    .format(self.get_property_label(key)))
-                if verbosity_option == 'verbose':
-                    str_list.append(wrapper.fill(
-                            self.get_property_description(key)))
-            str_list.append("")
 
         return "\n".join(str_list)
 
+    def get_default_profile_name(self):
+        default_profile = None
+        profiles = []
+        if self.deploy_opt_section is not None:
+            default_profile = self.find_child(self.deploy_opt_section,
+                                              self.CONFIG,
+                                              attrib={self.CONFIG_DEFAULT:
+                                                          'true'})
+            if default_profile is None:
+                # "If no default is specified, the first element in the list
+                # is the default" - OVF specification
+                #default_profile = profiles[0]
+                
+                profiles = self.find_all_children(self.deploy_opt_section,
+                                                  self.CONFIG)
+                if profiles:
+                    default_profile = profiles[0]
+
+        if default_profile is not None:
+            return default_profile.get(self.CONFIG_ID)
+
+        return None
 
     def get_platform(self):
         """Identifies the platform type from the OVF descriptor"""
