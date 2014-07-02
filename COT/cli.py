@@ -141,6 +141,7 @@ Cisco IOS XRv platforms.
 * qemu-img (http://www.qemu.org/)
 * mkisofs  (ftp://ftp.berlios.de/pub/cdrecord/)
 * fatdisk  (http://github.com/goblinhack/fatdisk)
+* ovftool  (https://www.vmware.com/support/developer/ovf/)
 """),
     formatter_class=argparse.RawDescriptionHelpFormatter)
 

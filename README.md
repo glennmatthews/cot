@@ -19,6 +19,8 @@ COT's capabilities include:
 * Edit OVF environment properties
 * Display a descriptive summary of the contents of an OVA or OVF package
 * Embed a bootstrap configuration text file into an OVF/OVA.
+* Deploy an OVF/OVA to an ESXi (VMware vCenter) server to provision a new
+  virtual machine (VM).
 
 System Requirements
 ===================
@@ -32,10 +34,11 @@ System Requirements
   [mkisofs](ftp://ftp.berlios.de/pub/cdrecord/) to create ISO
   (CD-ROM) images and [fatdisk](http://github.com/goblinhack/fatdisk)
   to create hard disk images.
-* COT's automated unit tests make use of (but do not require)
-  [ovftool](https://www.vmware.com/support/developer/ovf/) to perform
-  additional verification that OVFs and OVAs created by COT align with
-  VMWare's expectations for these file types.
+* The ``cot deploy ... esxi`` command requires
+  [ovftool](https://www.vmware.com/support/developer/ovf/) to communicate
+  with an ESXi server. If ovftool is installed, COT's automated unit tests will
+  also make use of ovftool to perform additional verification that OVFs and
+  OVAs created by COT align with VMware's expectations for these file types.
 
 
 Installation
@@ -278,6 +281,8 @@ You can always get detailed help for COT by running ``cot --help`` or
     * vmdktool (http://www.freshports.org/sysutils/vmdktool/)
     * qemu-img (http://www.qemu.org/)
     * mkisofs  (ftp://ftp.berlios.de/pub/cdrecord/)
+    * fatdisk  (http://github.com/goblinhack/fatdisk)
+    * ovftool  (https://www.vmware.com/support/developer/ovf/)
 
 cot add-disk
 ------------
