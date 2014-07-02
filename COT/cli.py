@@ -168,6 +168,7 @@ def main():
     # Add supported subcommands to main parser
     import COT.add_disk
     import COT.add_file
+    import COT.deploy
     import COT.edit_hardware
     import COT.edit_product
     import COT.edit_properties
