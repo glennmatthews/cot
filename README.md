@@ -358,6 +358,64 @@ cot add-file
                             File ID string within the package (default: same as
                             filename)
 
+cot deploy
+----------
+
+    > cot deploy --help
+    usage:
+       cot deploy --help
+       cot [-f] [-v] deploy [-c CONFIGURATION] [-n VM_NAME] [-N FROM=to] [-P]
+                            [-u USERNAME] [-p PASSWORD] [-s SERVER]
+                            HYPERVISOR PACKAGE [ovftool_args ...]
+
+    Deploy a virtual machine to a specified server.
+
+    positional arguments:
+      {esxi}                The hypervisor to be used
+      PACKAGE               OVF descriptor or OVA file
+
+    General options:
+      -h, --help            Show this help message and exit
+
+    Configuration options:
+      -c CONFIGURATION, --configuration CONFIGURATION
+                            Use the specified configuration (as defined in the
+                            OVF). If unspecified the user will be prompted or the
+                            default configuration will be used.
+
+    VM info:
+      -n VM_NAME, --vm-name VM_NAME
+                            Name to use for the VM (if applicable) and any files
+                            created. If unspecified, the name of the OVF will be
+                            used.
+      -N NETWORK_MAP, --network-map NETWORK_MAP
+                            Map networks named in the OVF to networks (bridges,
+                            vSwitches, etc.) in the hypervisor environment. Syntax
+                            should be as follows: -N <OVF name>=<target name>
+      -P, --power-on        Power on the created VM to begin booting immediately.
+
+    Target info:
+      -u USERNAME, --username USERNAME
+                            Username to log into the server that will run this VM
+      -p PASSWORD, --password PASSWORD
+                            Password to log into the server that will run this VM
+      -s SERVER, --server SERVER
+                            Server (IP address or URL) to run the VM on (default:
+                            localhost)
+
+    Optional arguments:
+      ovf_args              Additional optional arguments to be sent to ovftool
+
+    Examples:
+       cot deploy -u admin -p admin -s 192.0.2.100 esxi foo.ova
+       cot deploy -s 192.0.2.100 -n test_vm esxi foo.ova -o
+       cot deploy -u admin -s 192.0.2.100 -c 1CPU-2.5GB esxi foo.ova
+       cot deploy -u admin -s 192.0.2.100 -N 'GigabitEthernet1=VM Network'
+       cot deploy -u admin -s 192.0.2.100 esxi foo.ova --overwrite
+       cot -f deploy -u admin -p admin -s 192.0.2.100 esxi foo.ova
+       cot deploy -s 192.0.2.100 esxi foo.ova -ds=datastore1
+
+
 cot edit-hardware
 -----------------
 
