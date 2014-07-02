@@ -31,7 +31,7 @@ System Requirements
   [qemu-img](http://www.qemu.org) as
   helper programs when adding hard disks to an OVF.
 * The ``cot inject-config`` command requires
-  [mkisofs](ftp://ftp.berlios.de/pub/cdrecord/) to create ISO
+  [mkisofs](http://cdrecord.org/) to create ISO
   (CD-ROM) images and [fatdisk](http://github.com/goblinhack/fatdisk)
   to create hard disk images.
 * The ``cot deploy ... esxi`` command requires
@@ -280,7 +280,7 @@ You can always get detailed help for COT by running ``cot --help`` or
     Note: some subcommands rely on external software tools, including:
     * vmdktool (http://www.freshports.org/sysutils/vmdktool/)
     * qemu-img (http://www.qemu.org/)
-    * mkisofs  (ftp://ftp.berlios.de/pub/cdrecord/)
+    * mkisofs  (http://cdrecord.org/)
     * fatdisk  (http://github.com/goblinhack/fatdisk)
     * ovftool  (https://www.vmware.com/support/developer/ovf/)
 
