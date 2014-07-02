@@ -1,4 +1,4 @@
-#!/usr/bin/en
+#!/usr/bin/env python
 #
 # deploy.py - Implements "cot deploy" command
 #
@@ -8,7 +8,7 @@
 #
 # This file is part of the Common OVF Tool (COT) project.
 # It is subject to the license terms in the LICENSE.txt file found in the
-# top-level directory of this distribution. No part of COT, including this 
+# top-level directory of this distribution. No part of COT, including this
 # file, may be copied, modified, propagated, or distributed except
 # according to the terms contained in the LICENSE.txt file.
 
@@ -21,7 +21,7 @@ from .cli import subparsers, subparser_lookup, argparse, get_input
 from .vm_context_manager import VMContextManager
 from .vm_description import VMDescription
 from COT.helper_tools import check_output
-from COT.ovf import * 
+from COT.ovf import *
 
 logger = logging.getLogger('cot')
 
@@ -71,27 +71,27 @@ def deploy_esxi(args):
                     print()
                     print("Entry does not match a profile. Please try again.")
 
-        args.ovf_args.append("--deploymentOption=" + args.configuration)
+        args.ovftool_args.append("--deploymentOption=" + args.configuration)
 
     # pass network settings on to ovftool
     if args.network_map is not None:
         for network in args.network_map:
-            args.ovf_args.append("--net:" + network)
+            args.ovftool_args.append("--net:" + network)
 
     # check if user entered a name for the VM
     if args.vm_name is not None:
-        args.ovf_args.append("--name=" + args.vm_name)
+        args.ovftool_args.append("--name=" + args.vm_name)
 
     # tell ovftool to power on the VM
     if args.power_on:
-        args.ovf_args.append("--powerOn")
+        args.ovftool_args.append("--powerOn")
 
     # add package and target to the list
-    args.ovf_args.append(args.PACKAGE)
-    args.ovf_args.append(target)
+    args.ovftool_args.append(args.PACKAGE)
+    args.ovftool_args.append(target)
 
     # Create new list with 'ovftool' at front
-    new_list = ['ovftool'] + args.ovf_args
+    new_list = ['ovftool'] + args.ovftool_args
 
     # use the new list to call ovftool
     check_output(new_list)
@@ -105,9 +105,9 @@ p_deploy = subparsers.add_parser(
     'deploy', add_help=False,
     usage=("""
    {0} deploy --help
-   {0} [-f] [-v] deploy [-c CONFIGURATION] [-n VM_NAME] [-N FROM=to] [-P] 
-              [-u USERNAME] [-p PASSWORD] [-s SERVER] HYPERVISOR PACKAGE 
-              [ovf_args ...]"""
+   {0} [-f] [-v] deploy [-c CONFIGURATION] [-n VM_NAME] [-N FROM=to] [-P]
+                        [-u USERNAME] [-p PASSWORD] [-s SERVER]
+                        HYPERVISOR PACKAGE [ovftool_args ...]"""
                 .format(os.path.basename(sys.argv[0]))),
            help="""Create a new VM on the target hypervisor from the given OVF""",
            formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -124,7 +124,7 @@ p_deploy = subparsers.add_parser(
 
 subparser_lookup['deploy'] = p_deploy
 
-p_deploy.add_argument('HYPERVISOR', choices=['esxi'], 
+p_deploy.add_argument('HYPERVISOR', choices=['esxi'],
                        help="""The hypervisor to be used""")
 p_deploy.add_argument('PACKAGE', help="""OVF descriptor or OVA file""")
 
@@ -135,19 +135,19 @@ p_ds_gen.add_argument('-h', '--help', action='help',
 p_ds_config = p_deploy.add_argument_group("Configuration options")
 p_ds_config.add_argument('-c', '--configuration',
                           help="""Use the specified configuration (as defined in
-                                  the OVF). If unspecified the user will be 
+                                  the OVF). If unspecified the user will be
                                   prompted or the default configuration will be
                                   used.""")
 
 p_ds_info = p_deploy.add_argument_group("VM info")
 p_ds_info.add_argument('-n', '--vm-name',
-                        help="""Name to use for the VM (if applicable) and any 
-                                files created. If unspecified, the name of the 
+                        help="""Name to use for the VM (if applicable) and any
+                                files created. If unspecified, the name of the
                                 OVF will be used.""")
 p_ds_info.add_argument('-N', '--network-map', action='append',
                         help="""Map networks named in the OVF to networks
                                 (bridges, vSwitches, etc.) in the hypervisor
-                                environment. Syntax should be as follows: 
+                                environment. Syntax should be as follows:
                                 -N <OVF name>=<target name>""")
 p_ds_info.add_argument('-P', '--power-on', action='store_true',
                         help="""Power on the created VM to begin booting
@@ -155,7 +155,7 @@ p_ds_info.add_argument('-P', '--power-on', action='store_true',
 
 p_ds_cred = p_deploy.add_argument_group("Target info")
 p_ds_cred.add_argument('-u', '--username',
-                        help="""Username to log into the server that will 
+                        help="""Username to log into the server that will
                                 run this VM""")
 p_ds_cred.add_argument('-p', '--password',
                         help="""Password to log into the server that will
@@ -165,8 +165,8 @@ p_ds_cred.add_argument('-s', '--server',
                                 on (default: localhost)""")
 
 p_ds_opt = p_deploy.add_argument_group("Optional arguments")
-p_ds_opt.add_argument('ovf_args', nargs=argparse.REMAINDER, 
-                       help="""Additional optional arguments to be sent to 
+p_ds_opt.add_argument('ovftool_args', nargs=argparse.REMAINDER,
+                       help="""Additional optional arguments to be sent to
                                ovftool""")
 
 p_deploy.set_defaults(func=deploy)
