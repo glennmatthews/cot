@@ -272,6 +272,18 @@ class OVF(VMDescription, XML):
                                        file_size_string))
                 file.set(self.FILE_SIZE, file_size_string)
 
+            disk = self.find_disk_from_file_id(file.get(self.FILE_ID))
+            if disk is not None:
+                capacity = str(self.get_capacity_from_disk(disk))
+                actual_capacity = get_disk_capacity(file_path)
+                if capacity != actual_capacity:
+                    logger.error("Capacity of disk {0} seems to have changed "
+                                   "from {1} to {2}. "
+                                   "OVF will reflect this change."
+                                   .format(file.get(self.FILE_HREF),
+                                           capacity, actual_capacity))
+                    self.set_capacity_of_disk(disk, actual_capacity)
+
         if extension == '.ova':
             ovf_file = os.path.join(self.working_dir, "{0}.ovf"
                                     .format(os.path.basename(prefix)))
@@ -387,10 +399,8 @@ class OVF(VMDescription, XML):
                     disk_cap_string = ""
                     device_item = self.find_item_from_file(file)
                 else:
-                    disk_capacity = int(disk.get(self.DISK_CAPACITY))
-                    cap_units = disk.get(self.DISK_CAP_UNITS, 'byte')
-                    disk_cap_string = byte_string(byte_count(disk_capacity,
-                                                             cap_units))
+                    disk_cap_string = byte_string(
+                        self.get_capacity_from_disk(disk))
                     device_item = self.find_item_from_disk(disk)
                 if device_item is None:
                     device_str = ""
@@ -418,10 +428,7 @@ class OVF(VMDescription, XML):
                                        attrib={self.FILE_ID: file_id})
                 if file is not None:
                     continue # already reported on above
-                disk_capacity = int(disk.get(self.DISK_CAPACITY))
-                cap_units = disk.get(self.DISK_CAP_UNITS, 'byte')
-                disk_cap_string = byte_string(byte_count(disk_capacity,
-                                                         cap_units))
+                disk_cap_string = byte_string(self.get_capacity_from_disk(disk))
                 device_item = self.find_item_from_disk(disk)
                 if device_item is None:
                     device_str = ""
@@ -560,9 +567,7 @@ class OVF(VMDescription, XML):
             disks_size = 0
             if self.disk_section is not None:
                 for disk in self.disk_section.findall(self.DISK):
-                    capacity = float(disk.get(self.DISK_CAPACITY))
-                    units = disk.get(self.DISK_CAP_UNITS, 'byte')
-                    disks_size += byte_count(capacity, units)
+                    disks_size += self.get_capacity_from_disk(disk)
             str_list.append(template.format(
                     ("  {0}" if profile != default_profile else
                      "  {0} (default)").format(profile_id),
@@ -1340,18 +1345,12 @@ class OVF(VMDescription, XML):
             disk = ET.SubElement(self.disk_section, self.DISK)
 
         capacity = get_disk_capacity(file_path)
-        if self.ovf_version < 1.0:
-            # In OVF 0.9 only bytes is supported as a unit
-            disk.set(self.DISK_CAPACITY, capacity)
-        else:
-            (capacity, cap_units) = factor_bytes(capacity)
-            disk.set(self.DISK_CAPACITY, capacity)
-            disk.set(self.DISK_CAP_UNITS, cap_units)
+        self.set_capacity_of_disk(disk, capacity)
 
         disk.set(self.DISK_ID, disk_id)
         disk.set(self.DISK_FILE_REF, file_id)
-        disk.set(self.DISK_FORMAT,
-"http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized")
+        disk.set(self.DISK_FORMAT, ("http://www.vmware.com/interfaces/"
+                                    "specifications/vmdk.html#streamOptimized"))
         return disk
 
 
@@ -1687,6 +1686,27 @@ class OVF(VMDescription, XML):
         return (self.get_type_from_device(controller),
                 (controller.get_value(self.ADDRESS) + ':' +
                  device.get_value(self.ADDRESS_ON_PARENT)))
+
+
+    def get_capacity_from_disk(self, disk):
+        """Returns the capacity of the given Disk in bytes
+        """
+        cap = int(disk.get(self.DISK_CAPACITY))
+        cap_units = disk.get(self.DISK_CAP_UNITS, 'byte')
+        return byte_count(cap, cap_units)
+
+
+    def set_capacity_of_disk(self, disk, capacity_bytes):
+        """Sets the capacity of the given Disk in the most human-readable
+        form (i.e., 8 GB instead of 8589934592 bytes)
+        """
+        if self.ovf_version < 1.0:
+            # In OVF 0.9 only bytes is supported as a unit
+            disk.set(self.DISK_CAPACITY, capacity_bytes)
+        else:
+            (capacity, cap_units) = factor_bytes(capacity_bytes)
+            disk.set(self.DISK_CAPACITY, capacity)
+            disk.set(self.DISK_CAP_UNITS, cap_units)
 
 
 class OVFNameHelper(object):
