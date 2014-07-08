@@ -1520,7 +1520,7 @@ class OVF(VMDescription, XML):
             if os.path.exists(manifest):
                 os.remove(manifest)
             return False
-        with open(manifest, 'w') as f:
+        with open(manifest, 'wb') as f:
             f.write("SHA1({file})= {sum}\n"
                     .format(file=os.path.basename(ovf_file), sum=sha1sum))
             # Checksum all referenced files as well
