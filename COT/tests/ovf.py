@@ -199,7 +199,9 @@ class TestOVFInputOutput(COT_UT):
         for ext in ['.ovf', '.mf', '.iso', '.vmdk']:
             self.assertTrue(filecmp.cmp(
                     os.path.join(input_dir, "input" + ext),
-                    os.path.join(self.temp_dir, "input" + ext)))
+                    os.path.join(self.temp_dir, "input" + ext)),
+                            "{0} file changed after OVF->OVA->OVF conversion"
+                            .format(ext))
 
 
     def test_invalid_ovf_file(self):
@@ -382,7 +384,8 @@ class TestOVFAddDisk(COT_UT):
 """)
         # Make sure the disk file is copied over
         self.assertTrue(filecmp.cmp(self.new_vmdk,
-                                    os.path.join(self.temp_dir, "blank.vmdk")))
+                                    os.path.join(self.temp_dir, "blank.vmdk")),
+                        "disk file should be exported unchanged")
 
         # Create new controller with specified address
         self.call_add_disk(['-c', 'scsi', '-a', '1:0'])
@@ -417,7 +420,8 @@ class TestOVFAddDisk(COT_UT):
 """)
         # Make sure the disk file is copied over
         self.assertTrue(filecmp.cmp(self.new_vmdk,
-                                    os.path.join(self.temp_dir, "blank.vmdk")))
+                                    os.path.join(self.temp_dir, "blank.vmdk")),
+                        "disk file should be exported unchanged")
 
         # Since the primary IDE0 controller is already full in the IOSv OVF,
         # COT will need to automatically create IDE1 controller
@@ -498,10 +502,12 @@ expected="""
 """)
         # Make sure the old disk is not copied
         self.assertFalse(os.path.exists(os.path.join(self.temp_dir,
-                                                     "input.vmdk")))
+                                                     "input.vmdk")),
+                         "old disk should be replaced, not exported")
         # Make sure the new disk is copied
         self.assertTrue(filecmp.cmp(self.new_vmdk,
-                                    os.path.join(self.temp_dir, "blank.vmdk")))
+                                    os.path.join(self.temp_dir, "blank.vmdk")),
+                        "newly added disk should be exported unchanged")
 
         # Overwrite by specifying controller address
         self.call_add_disk(['-c', 'scsi', '-a', '0:0'])
@@ -519,10 +525,12 @@ expected="""
 """)
         # Make sure the old disk is not copied
         self.assertFalse(os.path.exists(os.path.join(self.temp_dir,
-                                                     "input.vmdk")))
+                                                     "input.vmdk")),
+                         "old disk should be replaced, not exported")
         # Make sure the new disk is copied
         self.assertTrue(filecmp.cmp(self.new_vmdk,
-                                    os.path.join(self.temp_dir, "blank.vmdk")))
+                                    os.path.join(self.temp_dir, "blank.vmdk")),
+                        "new disk should be exported unchanged")
 
 
     def test_conflicting_args(self):
@@ -661,7 +669,6 @@ class TestOVFAddFile(COT_UT):
 +    <ovf:File ovf:href="iosv.ovf" ovf:id="myfile" ovf:size="18257" />
    </ovf:References>
 """)
-
 
 class TestOVFEditHardware(COT_UT):
     """Test cases for "cot edit-hardware" command with OVF files"""
