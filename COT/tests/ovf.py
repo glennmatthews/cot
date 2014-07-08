@@ -1765,12 +1765,10 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
   4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
-    Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3
-                     NICs"
+    Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
   2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
-    Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1
-                     NIC"
+    Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
 Networks:
   VM Network                     "VM Network"
@@ -1861,12 +1859,10 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
   4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
-    Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3
-                     NICs"
+    Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
   2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
-    Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1
-                     NIC"
+    Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
 Networks:
   VM Network                     "VM Network"
@@ -1877,14 +1873,13 @@ Properties:
       Username for remote login
   login-password                 :
       "Login Password"
-      Password for remote login. WARNING: While this password will be
-      stored securely within IOS, the plain-text password will be
-      recoverable from the OVF descriptor file.
+      Password for remote login.
+      WARNING: While this password will be stored securely within IOS, the
+      plain-text password will be recoverable from the OVF descriptor file.
   mgmt-ipv4-addr                 :
       "Management IPv4 Address/Mask"
-      IPv4 address and mask for management interface (such as
-      "10.1.1.100/24" or "10.1.1.100 255.255.255.0"), or "dhcp" to
-      configure via DHCP
+      IPv4 address and mask for management interface (such as "10.1.1.100/24"
+      or "10.1.1.100 255.255.255.0"), or "dhcp" to configure via DHCP
   mgmt-ipv4-gateway              :
       "Management IPv4 Default Gateway"
       IPv4 default gateway address (such as "10.1.1.1") for management
@@ -1894,8 +1889,8 @@ Properties:
       Hostname of this router
   enable-ssh-server              : false
       "Enable SSH Login"
-      Enable remote login via SSH and disable remote login via telnet.
-      Requires login-username and login-password to be set!
+      Enable remote login via SSH and disable remote login via telnet. Requires
+      login-username and login-password to be set!
   enable-http-server             : false
       "Enable HTTP Server"
       Enable HTTP server capability for REST API
@@ -1904,9 +1899,9 @@ Properties:
       Enable HTTPS server capability for REST API
   privilege-password             :
       "Enable Password"
-      Password for privileged (enable) access. WARNING: While this
-      password will be stored securely within IOS, the plain-text
-      password will be recoverable from the OVF descriptor file.
+      Password for privileged (enable) access.
+      WARNING: While this password will be stored securely within IOS, the
+      plain-text password will be recoverable from the OVF descriptor file.
   domain-name                    :
       "Domain Name"
       Network domain name (such as "cisco.com")

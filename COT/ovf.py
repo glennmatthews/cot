@@ -33,6 +33,9 @@ import COT.platform as Platform
 
 logger = logging.getLogger('cot')
 
+# Where do we want to wrap lines when pretty-printing?
+TEXT_WIDTH = 79
+
 def byte_count(base_val, multiplier):
     """Convert an OVF-style value + multiplier into decimal byte count.
     >>> byte_count("128", "byte * 2^20")
@@ -323,12 +326,12 @@ class OVF(VMDescription, XML):
 
         str_list = []
         # File description
-        str_list.append('-' * 79)
+        str_list.append('-' * TEXT_WIDTH)
         str_list.append(self.input_file)
         if self.platform and self.platform is not Platform.GenericPlatform:
             str_list.append("COT detected platform type: {0}"
                             .format(self.platform.PLATFORM_NAME))
-        str_list.append('-' * 79)
+        str_list.append('-' * TEXT_WIDTH)
 
         # Product information
         if verbosity_option == 'brief':
@@ -369,11 +372,15 @@ class OVF(VMDescription, XML):
         if a is not None:
             ann = a.find(self.ANNOTATION)
             if ann is not None and ann.text:
-                wrapper = textwrap.TextWrapper(
-                    initial_indent='',
-                    subsequent_indent='            ')
-                str_list.append(wrapper.fill("Annotation: {0}"
-                                             .format(ann.text)))
+                first = True
+                wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
+                                               initial_indent='Annotation: ',
+                                               subsequent_indent='            ')
+                for line in ann.text.splitlines():
+                    str_list.append(wrapper.fill(line))
+                    if first:
+                        wrapper.initial_indent = wrapper.subsequent_indent
+                        first = False
                 str_list.append("")
 
         # File information
@@ -498,7 +505,8 @@ class OVF(VMDescription, XML):
         if properties:
             str_list.append("Properties:")
             if verbosity_option == 'verbose':
-                wrapper = textwrap.TextWrapper(initial_indent='      ',
+                wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
+                                               initial_indent='      ',
                                                subsequent_indent='      ')
             for key in properties:
                 str_list.append('  {0:30} : {1}'
@@ -507,8 +515,8 @@ class OVF(VMDescription, XML):
                     str_list.append('      "{0}"'
                                     .format(self.get_property_label(key)))
                 if verbosity_option == 'verbose':
-                    str_list.append(wrapper.fill(
-                            self.get_property_description(key)))
+                    for line in self.get_property_description(key).splitlines():
+                        str_list.append(wrapper.fill(line))
             str_list.append("")
 
         return "\n".join(str_list)
@@ -578,9 +586,9 @@ class OVF(VMDescription, XML):
                     "{0:2} / {1:>9}".format(disk_count,
                                             byte_string(disks_size))))
             if profile is not None and verbosity_option != 'brief':
-                wrapper = textwrap.TextWrapper(
-                    initial_indent='    ',
-                    subsequent_indent='                     ')
+                wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
+                                               initial_indent='    ',
+                                               subsequent_indent=(' ' * 21))
                 str_list.append(wrapper.fill('{0:15} "{1}"'.format(
                             "Label:",
                             profile.find(self.CFG_LABEL).text)))
@@ -602,7 +610,7 @@ class OVF(VMDescription, XML):
                 # "If no default is specified, the first element in the list
                 # is the default" - OVF specification
                 #default_profile = profiles[0]
-                
+
                 profiles = self.find_all_children(self.deploy_opt_section,
                                                   self.CONFIG)
                 if profiles:
