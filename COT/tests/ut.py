@@ -32,6 +32,11 @@ class COT_UT(unittest.TestCase):
 
     OVFTOOL_PRESENT = True
 
+    FILE_SIZE = {}
+    for filename in ['input.iso', 'input.vmdk', 'blank.vmdk']:
+        FILE_SIZE[filename] = os.path.getsize(os.path.join(
+            os.path.dirname(__file__), filename))
+
     def check_diff(self, expected, file1=None, file2=None):
         """Calls diff on the two files and compares it to the expected output.
         If the files are unspecified, defaults to comparing the input OVF file

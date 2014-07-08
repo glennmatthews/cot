@@ -363,12 +363,12 @@ class TestOVFAddDisk(COT_UT):
         # Default controller for generic platform is IDE for hard disks
         self.check_diff(
 """
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-+    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="73216" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="{blank_size}" />
    </ovf:References>
 ...
-     <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="293011456" />
-+    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+     <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
 ...
        </ovf:Item>
@@ -381,7 +381,8 @@ class TestOVFAddDisk(COT_UT):
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
-""")
+""".format(iso_size=self.FILE_SIZE['input.iso'],
+           blank_size=self.FILE_SIZE['blank.vmdk']))
         # Make sure the disk file is copied over
         self.assertTrue(filecmp.cmp(self.new_vmdk,
                                     os.path.join(self.temp_dir, "blank.vmdk")),
@@ -391,12 +392,12 @@ class TestOVFAddDisk(COT_UT):
         self.call_add_disk(['-c', 'scsi', '-a', '1:0'])
         self.check_diff(
 """
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-+    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="73216" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="{blank_size}" />
    </ovf:References>
 ...
-     <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="293011456" />
-+    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+     <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
 ...
        </ovf:Item>
@@ -417,7 +418,8 @@ class TestOVFAddDisk(COT_UT):
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
-""")
+""".format(iso_size=self.FILE_SIZE['input.iso'],
+           blank_size=self.FILE_SIZE['blank.vmdk']))
         # Make sure the disk file is copied over
         self.assertTrue(filecmp.cmp(self.new_vmdk,
                                     os.path.join(self.temp_dir, "blank.vmdk")),
@@ -428,12 +430,12 @@ class TestOVFAddDisk(COT_UT):
         self.call_add_disk([], input=self.iosv_ovf)
         self.check_diff(file1=self.iosv_ovf,
 expected="""
-     <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" ovf:size="73216" />
-+    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="73216" />
+     <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" ovf:size="{input_size}" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="{blank_size}" />
    </ovf:References>
 ...
-     <ovf:Disk ovf:capacity="2147483648" ovf:capacityAllocationUnits="byte" ovf:diskId="vios-adventerprisek9-m.vmdk" ovf:fileRef="vios-adventerprisek9-m.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
-+    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+     <ovf:Disk ovf:capacity="1073741824" ovf:capacityAllocationUnits="byte" ovf:diskId="vios-adventerprisek9-m.vmdk" ovf:fileRef="vios-adventerprisek9-m.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
 ...
        </ovf:Item>
@@ -454,7 +456,8 @@ expected="""
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
        <ovf:Item ovf:required="false">
-""")
+""".format(input_size=self.FILE_SIZE['input.vmdk'],
+           blank_size=self.FILE_SIZE['blank.vmdk']))
 
     def test_new_hard_disk_v09(self):
         """Add a new hard disk to a v0.9 OVF.
@@ -463,12 +466,12 @@ expected="""
         # Default controller for generic platform is IDE for hard disks
         self.check_diff(file1=self.v09_ovf,
 expected="""
-     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="73216" />
-+    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="73216" />
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{input_size}" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="{blank_size}" />
    </ovf:References>
 ...
-     <ovf:Disk ovf:capacity="8589934592" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/specifications/vmdk.html#sparse" />
-+    <ovf:Disk ovf:capacity="8589934592" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+     <ovf:Disk ovf:capacity="1073741824" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/specifications/vmdk.html#sparse" />
++    <ovf:Disk ovf:capacity="536870912" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:Section>
 ...
        </ovf:Item>
@@ -481,7 +484,8 @@ expected="""
 +        <rasd:AddressOnParent>1</rasd:AddressOnParent>
 +      </ovf:Item>
      </ovf:Section>
-""")
+""".format(input_size=self.FILE_SIZE['input.vmdk'],
+           blank_size=self.FILE_SIZE['blank.vmdk']))
 
 
     def test_overwrite_hard_disk(self):
@@ -491,15 +495,17 @@ expected="""
         self.check_diff(
 """
    <ovf:References>
--    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="73216" />
-+    <ovf:File ovf:href="blank.vmdk" ovf:id="file1" ovf:size="73216" />
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
+-    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{input_size}" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="file1" ovf:size="{blank_size}" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
 ...
      <ovf:Info>Virtual disk information</ovf:Info>
--    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="293011456" />
-+    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+-    <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
-""")
+""".format(input_size=self.FILE_SIZE['input.vmdk'],
+           blank_size=self.FILE_SIZE['blank.vmdk'],
+           iso_size=self.FILE_SIZE['input.iso']))
         # Make sure the old disk is not copied
         self.assertFalse(os.path.exists(os.path.join(self.temp_dir,
                                                      "input.vmdk")),
@@ -514,15 +520,17 @@ expected="""
         self.check_diff(
 """
    <ovf:References>
--    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="73216" />
-+    <ovf:File ovf:href="blank.vmdk" ovf:id="file1" ovf:size="73216" />
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
+-    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{input_size}" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="file1" ovf:size="{blank_size}" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
 ...
      <ovf:Info>Virtual disk information</ovf:Info>
--    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="293011456" />
-+    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+-    <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
-""")
+""".format(input_size=self.FILE_SIZE['input.vmdk'],
+           blank_size=self.FILE_SIZE['blank.vmdk'],
+           iso_size=self.FILE_SIZE['input.iso']))
         # Make sure the old disk is not copied
         self.assertFalse(os.path.exists(os.path.join(self.temp_dir,
                                                      "input.vmdk")),
@@ -554,11 +562,11 @@ expected="""
         # Make sure the disk was converted and added to the OVF
         self.check_diff(
 """
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-+    <ovf:File ovf:href="new.vmdk" ovf:id="new.vmdk" ovf:size="70656" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="new.vmdk" ovf:id="new.vmdk" ovf:size="{new_size}" />
    </ovf:References>
 ...
-     <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="293011456" />
+     <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
 +    <ovf:Disk ovf:capacity="16" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="new.vmdk" ovf:fileRef="new.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
 ...
@@ -572,7 +580,8 @@ expected="""
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
-""")
+""".format(iso_size=self.FILE_SIZE['input.iso'],
+           new_size=os.path.getsize(os.path.join(self.temp_dir, "new.vmdk"))))
         # Make sure the disk was actually converted to the right format
         format, subformat = get_disk_format(os.path.join(self.temp_dir,
                                                          "new.vmdk"))
@@ -594,15 +603,17 @@ expected="""
         self.check_diff(
 """
    <ovf:References>
--    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="73216" />
-+    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="70656" />
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
+-    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{input_size}" />
++    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{new_size}" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
 ...
      <ovf:Info>Virtual disk information</ovf:Info>
--    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="293011456" />
+-    <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
 +    <ovf:Disk ovf:capacity="16" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
-""")
+""".format(input_size=self.FILE_SIZE['input.vmdk'],
+           iso_size=self.FILE_SIZE['input.iso'],
+           new_size=os.path.getsize(os.path.join(self.temp_dir, "input.vmdk"))))
 
 
     def test_add_disk_no_existing(self):
@@ -617,11 +628,11 @@ expected="""
 -  <ovf:References />
 +<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData">
 +  <ovf:References>
-+    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="73216" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" ovf:size="{blank_size}" />
 +  </ovf:References>
 +  <ovf:DiskSection>
 +    <ovf:Info>Virtual disk information</ovf:Info>
-+    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
 +  </ovf:DiskSection>
    <ovf:VirtualSystem ovf:id="x">
 ...
@@ -642,7 +653,7 @@ expected="""
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
-""")
+""".format(blank_size=self.FILE_SIZE['blank.vmdk']))
 
 
 class TestOVFAddFile(COT_UT):
@@ -654,10 +665,11 @@ class TestOVFAddFile(COT_UT):
         self.call_cot(['add-file', self.iosv_ovf, self.input_ovf,
                       '-o', self.temp_file])
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-+    <ovf:File ovf:href="iosv.ovf" ovf:id="iosv.ovf" ovf:size="18257" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="iosv.ovf" ovf:id="iosv.ovf" ovf:size="{ovf_size}" />
    </ovf:References>
-""")
+""".format(iso_size=self.FILE_SIZE['input.iso'],
+           ovf_size=os.path.getsize(self.iosv_ovf)))
 
     def test_add_file_with_id(self):
         """Call 'cot add-file' with explicit '--file-id' argument.
@@ -665,10 +677,12 @@ class TestOVFAddFile(COT_UT):
         self.call_cot(['add-file', self.iosv_ovf, self.input_ovf,
                        '-o', self.temp_file, '--file-id', 'myfile'])
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-+    <ovf:File ovf:href="iosv.ovf" ovf:id="myfile" ovf:size="18257" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="iosv.ovf" ovf:id="myfile" ovf:size="{ovf_size}" />
    </ovf:References>
-""")
+""".format(iso_size=self.FILE_SIZE['input.iso'],
+           ovf_size=os.path.getsize(self.iosv_ovf)))
+
 
 class TestOVFEditHardware(COT_UT):
     """Test cases for "cot edit-hardware" command with OVF files"""
@@ -1739,7 +1753,7 @@ Version:  DEV
 
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
-  input.vmdk                           71.50 kB    8.00 GB harddisk @ SCSI 0:0
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
   input.iso                           352.00 kB            cdrom @ IDE 1:0
 
 Hardware Variants:
@@ -1749,11 +1763,11 @@ Hardware Variants:
 
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   8.00 GB
+  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3
                      NICs"
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   8.00 GB
+  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1
                      NIC"
@@ -1795,7 +1809,7 @@ Version:  DEV
 
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
-  input.vmdk                           71.50 kB    8.00 GB harddisk @ SCSI 0:0
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
   input.iso                           352.00 kB            cdrom @ IDE 1:0
 
 Hardware Variants:
@@ -1805,8 +1819,8 @@ Hardware Variants:
 
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   8.00 GB
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   8.00 GB
+  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
+  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
 
 Properties:
   login-username                 :
@@ -1835,7 +1849,7 @@ Version:  DEV
 
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
-  input.vmdk                           71.50 kB    8.00 GB harddisk @ SCSI 0:0
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
   input.iso                           352.00 kB            cdrom @ IDE 1:0
 
 Hardware Variants:
@@ -1845,11 +1859,11 @@ Hardware Variants:
 
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   8.00 GB
+  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3
                      NICs"
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   8.00 GB
+  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1
                      NIC"
@@ -1914,7 +1928,7 @@ Version:  15.4(2.4)T
 
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
-  input.vmdk                           71.50 kB    2.00 GB harddisk @ IDE 0:0
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ IDE 0:0
   (disk placeholder)                         --  128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
@@ -1924,10 +1938,10 @@ Hardware Variants:
 
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
-  1CPU-384MB-2NIC (default)          1    384 MB      2       2   2 /   2.12 GB
-  1CPU-1GB-8NIC                      1    384 MB      8       2   2 /   2.12 GB
-  1CPU-3GB-10NIC                     1    384 MB     10       2   2 /   2.12 GB
-  1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   2.12 GB
+  1CPU-384MB-2NIC (default)          1    384 MB      2       2   2 /   1.12 GB
+  1CPU-1GB-8NIC                      1    384 MB      8       2   2 /   1.12 GB
+  1CPU-3GB-10NIC                     1    384 MB     10       2   2 /   1.12 GB
+  1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   1.12 GB
 """.format(self.iosv_ovf))
 
     def test_v09_ovf(self):
@@ -1942,7 +1956,7 @@ Annotation: Hello world! This is a version 0.9 OVF.
 
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
-  input.vmdk                           71.50 kB    8.00 GB harddisk @ SCSI 0:0
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-04
@@ -1951,7 +1965,7 @@ Hardware Variants:
 
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
-  None (default)                     1   8.00 GB      1       0   1 /   8.00 GB
+  None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
 
 Networks:
   bridged                        "The bridged network"
@@ -1967,7 +1981,7 @@ Networks:
 -------------------------------------------------------------------------------
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
-  input.vmdk                           71.50 kB    8.00 GB harddisk @ SCSI 0:0
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-08
@@ -1976,7 +1990,7 @@ Hardware Variants:
 
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
-  None (default)                     2   1.50 GB      4       0   1 /   8.00 GB
+  None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
 
 Networks:
   lanethernet0                   "The lanethernet0 network"
@@ -2005,8 +2019,8 @@ class TestOVFInjectConfig(COT_UT):
 
         self.check_diff(
 """
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-+    <ovf:File ovf:href="config.iso" ovf:id="config.iso" ovf:size="358400" />
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="config.iso" ovf:id="config.iso" ovf:size="{config_size}" />
    </ovf:References>
 ...
          <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
@@ -2014,7 +2028,9 @@ class TestOVFInjectConfig(COT_UT):
          <rasd:ElementName>CD-ROM 2</rasd:ElementName>
 +        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
          <rasd:InstanceID>8</rasd:InstanceID>
-""")
+""".format(iso_size=self.FILE_SIZE['input.iso'],
+           config_size=os.path.getsize(os.path.join(self.temp_dir,
+                                                    'config.iso'))))
 
 
     def test_inject_config_vmdk(self):
@@ -2029,16 +2045,17 @@ class TestOVFInjectConfig(COT_UT):
         self.check_diff(file1=self.iosv_ovf,
 expected="""
    <ovf:References>
-+    <ovf:File ovf:href="config.vmdk" ovf:id="config.vmdk" ovf:size="71168" />
-     <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" ovf:size="73216" />
++    <ovf:File ovf:href="config.vmdk" ovf:id="config.vmdk" ovf:size="{config_size}" />
+     <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" ovf:size="{input_size}" />
 ...
      <ovf:Info>Virtual disk information</ovf:Info>
 -    <ovf:Disk ovf:capacity="128" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="flash2" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
 +    <ovf:Disk ovf:capacity="8" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="flash2" ovf:fileRef="config.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
-     <ovf:Disk ovf:capacity="2147483648" ovf:capacityAllocationUnits="byte" ovf:diskId="vios-adventerprisek9-m.vmdk" ovf:fileRef="vios-adventerprisek9-m.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+     <ovf:Disk ovf:capacity="1073741824" ovf:capacityAllocationUnits="byte" ovf:diskId="vios-adventerprisek9-m.vmdk" ovf:fileRef="vios-adventerprisek9-m.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
 ...
          <rasd:AddressOnParent>1</rasd:AddressOnParent>
 -        <rasd:Description>Disk device corresponding to flash2:; may be used for bootstrap configuration.</rasd:Description>
 +        <rasd:Description>Configuration disk</rasd:Description>
          <rasd:ElementName>flash2</rasd:ElementName>
-""")
+""".format(input_size=self.FILE_SIZE['input.vmdk'],
+           config_size=os.path.getsize(os.path.join(self.temp_dir, 'config.vmdk'))))

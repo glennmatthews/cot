@@ -31,7 +31,7 @@ class TestGetChecksum(COT_UT):
         """
         try:
             checksum = get_checksum(self.input_ovf, 'md5')
-            self.assertEqual(checksum, "1318e8d525aab8113af95a0d2d4b8858")
+            self.assertEqual(checksum, "9eba020a34d1d6f1e14785b11742665b")
 
             checksum = get_checksum(self.minimal_ovf, 'md5')
             self.assertEqual(checksum, "288e1e3fcb05265cd9b8c7578e173fef")
@@ -44,7 +44,7 @@ class TestGetChecksum(COT_UT):
         try:
             checksum = get_checksum(self.input_ovf, 'sha1')
             self.assertEqual(checksum,
-                             "6add403901f5aebaa68c9c51078e510a745ae912")
+                             "2c56f8292a5127485fcd45e81922ed49ef83492f")
 
             checksum = get_checksum(self.minimal_ovf, 'sha1')
             self.assertEqual(checksum,
@@ -106,9 +106,13 @@ class TestGetDiskCapacity(COT_UT):
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         try:
             capacity = get_disk_capacity(disk_path)
-            self.assertEqual(capacity, "8589934592")
+            self.assertEqual(capacity, "536870912")
         except HelperNotFoundError as e:
             self.fail(e.strerror)
+
+        disk_path = os.path.join(os.path.dirname(__file__), "input.vmdk")
+        capacity = get_disk_capacity(disk_path)
+        self.assertEqual(capacity, "1073741824")
 
 class TestConvertDiskImage(COT_UT):
     """Test cases for convert_disk_image().

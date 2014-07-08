@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 <ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData">
   <ovf:References>
-    <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" ovf:size="73216" />
+    <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" ovf:size="152576" />
   </ovf:References>
   <ovf:DiskSection>
     <ovf:Info>Virtual disk information</ovf:Info>
     <ovf:Disk ovf:capacity="128" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="flash2" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
-    <ovf:Disk ovf:capacity="2147483648" ovf:capacityAllocationUnits="byte" ovf:diskId="vios-adventerprisek9-m.vmdk" ovf:fileRef="vios-adventerprisek9-m.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+    <ovf:Disk ovf:capacity="1073741824" ovf:capacityAllocationUnits="byte" ovf:diskId="vios-adventerprisek9-m.vmdk" ovf:fileRef="vios-adventerprisek9-m.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
   </ovf:DiskSection>
   <ovf:NetworkSection>
     <ovf:Info>The list of logical networks that NICs can be assigned to</ovf:Info>
