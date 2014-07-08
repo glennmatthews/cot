@@ -95,7 +95,7 @@ def get_disk_format(file_path):
                 .format(file_path))
     qemu_stdout = check_output(['qemu-img', 'info', file_path])
     # Read the format from the output
-    match = re.search("file format: (.*)", qemu_stdout)
+    match = re.search("file format: (\S*)", qemu_stdout)
     if not match:
         raise RuntimeError("Did not find file format string in "
                            "the output from qemu-img:\n{0}"
