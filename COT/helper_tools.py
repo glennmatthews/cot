@@ -15,6 +15,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import hashlib
 import logging
 import os
 import re
@@ -64,32 +65,22 @@ def get_checksum(file_path, checksum_type):
     """
 
     if checksum_type == 'md5':
-        try:
-            md5sum = check_output(['md5sum', file_path])
-            # md5sum outputs something like:
-            # 835a7493384047fde776d6e0f6ccb492  foo.ovf
-            # We only want the first part of this string
-            return md5sum.split(" ")[0]
-        except HelperNotFoundError:
-            md5sum = check_output(['md5', file_path])
-            # md5 outputs something like:
-            # MD5 (foo.ovf) = 835a7493384047fde776d6e0f6ccb492
-            # We want the last part of this string, minus any trailing \n
-            return md5sum.strip().split(" ")[-1]
+        h = hashlib.md5()
     elif checksum_type == 'sha1':
-        # Depending on the platform we can use either 'sha1sum' or 'shasum'
-        try:
-            sha1sum = check_output(['sha1sum', file_path])
-        except HelperNotFoundError:
-            sha1sum = check_output(['shasum', '-a', '1', file_path])
-        # sha1sum and shasum both output something like:
-        # 1309dfbf9a556def784fa3cc011a2b1f343024ba foo.ovf
-        # We only want the first part of this string
-        return sha1sum.split(" ")[0]
+        h = hashlib.sha1()
     else:
         raise ValueUnsupportedError("checksum type",
                                     checksum_type,
                                     "'md5' or 'sha1'")
+    BLOCKSIZE = 65536
+    with open(file_path, 'rb') as file_obj:
+        while True:
+            buf = file_obj.read(BLOCKSIZE)
+            if len(buf) == 0:
+                break
+            h.update(buf)
+
+    return h.hexdigest()
 
 
 def get_disk_format(file_path):
