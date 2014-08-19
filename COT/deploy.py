@@ -43,16 +43,29 @@ def deploy_esxi(args):
     if args.username is None:
         args.username = getpass.getuser()
     if args.password is None:
-        args.password = getpass.getpass("Password for {0}@{1}: "
-                                        .format(args.username, args.server))
+        if not args.force:
+            # Prompt user to enter password interactively
+            args.password = getpass.getpass("Password for {0}@{1}: "
+                                            .format(args.username, args.server))
+        else:
+            p_deploy.error("No password specified for {0}@{1}"
+                           .format(args.username, args.server))
 
     target = "vi://" + args.username + ":" + args.password + "@" + args.server
 
-    # ensure configuration was specified
-    # will use ovf tool --deploymentOption
-    # if not specified and force not specified prompt for selection
     with VMContextManager(args.PACKAGE, None) as vm:
+        # ensure configuration was specified
+        # will use ovf tool --deploymentOption
+        # if not specified and force not specified prompt for selection
         profile_list = vm.get_configuration_profiles()
+
+        if (args.configuration is not None and
+            not (args.configuration in profile_list)):
+            p_deploy.error("Configuration '{0}' is not a recognized profile "
+                           "for '{1}'. Valid options are:\n{2}"
+                           .format(args.configuration,
+                                   args.PACKAGE,
+                                   "\n".join(profile_list)))
 
         if args.configuration is None:
             if args.force:
@@ -73,6 +86,11 @@ def deploy_esxi(args):
 
         args.ovftool_args.append("--deploymentOption=" + args.configuration)
 
+        # Get the number of serial ports in the OVA.
+        # ovftool does not create serial ports when deploying to a VM,
+        # so we'll have to fix this up manually later.
+        serial_count = vm.get_serial_count(args.configuration)
+
     # pass network settings on to ovftool
     if args.network_map is not None:
         for network in args.network_map:
@@ -83,6 +101,8 @@ def deploy_esxi(args):
         args.ovftool_args.append("--name=" + args.vm_name)
 
     # tell ovftool to power on the VM
+    # TODO - if serial port fixup (below) is implemented,
+    # do not power on VM until after serial ports are added.
     if args.power_on:
         args.ovftool_args.append("--powerOn")
 
@@ -94,11 +114,20 @@ def deploy_esxi(args):
     new_list = ['ovftool'] + args.ovftool_args
 
     # use the new list to call ovftool
+    print("Deploying VM...")
     check_output(new_list)
     print("VM has been deployed successfully.")
 
     # Post-fix of serial ports (ovftool will not implement)
-    #TODO
+    if serial_count > 0:
+        # TODO - fixup not implemented yet
+        # add serial ports as requested
+        # power on VM if args.power_on
+        logger.warning("Package '{0}' contains {1} serial ports, but ovftool "
+                       "ignores serial port declarations. If these ports are "
+                       "needed, you must add them manually to the new VM."
+                       .format(args.PACKAGE, serial_count))
+
 
 # Add ourselves to the parser options
 p_deploy = subparsers.add_parser(

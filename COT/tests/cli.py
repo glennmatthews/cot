@@ -290,9 +290,17 @@ class TestCLIDeploy(COT_UT):
         # Hypervisor not specified
         self.call_cot(['deploy', self.input_ovf], result=2)
         # No server specified
-        self.call_cot(['deploy', self.input_ovf, 'esxi'], result=2)
+        self.call_cot(['deploy', '-p', 'password', 'esxi', self.input_ovf],
+                      result=2)
+        # No password specified
+        self.call_cot(['deploy', '-s', 'localhost', 'esxi', self.input_ovf],
+                      result=2)
         # Missing strings
         for param in ['-c', '-n', '-N', '-u', '-p', '-s']:
-            self.call_cot(['deploy', self.input_ovf, 'esxi', '-s', 'localhost', param],
+            self.call_cot(['deploy', '-s', 'localhost', param,
+                           '-p', 'password', 'esxi', self.input_ovf],
                           result=2)
-
+        # Invalid configuration profile
+        self.call_cot(['deploy', '-s', 'localhost', '-p', 'password',
+                       '-c', 'nonexistent', 'esxi', self.input_ovf],
+                      result=2)
