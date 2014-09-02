@@ -20,7 +20,7 @@ import logging
 import os.path
 import re
 
-from COT import __version__
+from COT import __version__, __version_long__
 
 # In python 2.7, we want raw_input, but in python 3 we want input.
 try: input = raw_input
@@ -130,11 +130,10 @@ parser = argparse.ArgumentParser(
     #       "\n  %(prog)s --version"
     #       "\n  %(prog)s <command> --help"
     #       "\n  %(prog)s [-f] [-v] <command> <options>"),
-    description=("""Common OVF Tool (COT) {version}
+    description=(__version_long__ + """
 A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
 with a focus on virtualized network appliances such as the Cisco CSR 1000V and
-Cisco IOS XRv platforms.
-""".format(version=__version__)),
+Cisco IOS XRv platforms."""),
     epilog=(
 """Note: some subcommands rely on external software tools, including:
 * vmdktool (http://www.freshports.org/sysutils/vmdktool/)
@@ -146,7 +145,7 @@ Cisco IOS XRv platforms.
     formatter_class=argparse.RawDescriptionHelpFormatter)
 
 parser.add_argument('-V', '--version', action='version',
-                    version="%(prog)s {version}".format(version=__version__))
+                    version=__version_long__)
 parser.add_argument('-f', '--force',  action='store_true',
                     help="""Perform requested actions without prompting
                             for confirmation""")

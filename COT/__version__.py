@@ -13,3 +13,7 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 __version__ = "1.1.1"
+__version_long__ = (
+    """Common OVF Tool (COT), version """ + __version__ +
+    """\nCopyright (C) 2013-2014 the COT project developers."""
+)
