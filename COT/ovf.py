@@ -1530,7 +1530,8 @@ class OVF(VMDescription, XML):
             return False
         with open(manifest, 'wb') as f:
             f.write("SHA1({file})= {sum}\n"
-                    .format(file=os.path.basename(ovf_file), sum=sha1sum))
+                    .format(file=os.path.basename(ovf_file), sum=sha1sum)
+                    .encode('utf-8'))
             # Checksum all referenced files as well
             for file in self.find_all_children(self.references, self.FILE):
                 file_name = file.get(self.FILE_HREF)
@@ -1542,7 +1543,8 @@ class OVF(VMDescription, XML):
                     continue
                 sha1sum = get_checksum(file_path, 'sha1')
                 f.write("SHA1({file})= {sum}\n"
-                        .format(file=file_name, sum=sha1sum))
+                        .format(file=file_name, sum=sha1sum)
+                        .encode('utf-8'))
         logger.debug("Manifest generated successfully")
         return True
 
