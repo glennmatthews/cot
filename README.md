@@ -4,7 +4,7 @@ Common OVF Tool (COT)
 
 COT (the Common OVF Tool) is a tool for editing
 [Open Virtualization Format](http://dmtf.org/standards/ovf)
-(``.ovf``, ``.ova``) virtual appliances, with a focus on virtualized network
+(`.ovf`, `.ova`) virtual appliances, with a focus on virtualized network
 appliances such as the [Cisco CSR 1000V](http://www.cisco.com/go/csr1000v)
 and [Cisco IOS XRv](http://www.cisco.com/go/iosxrv) platforms.
 
@@ -14,19 +14,19 @@ Table of Contents
 * [Capabilities](#capabilities)
 * [System Requirements](#system-requirements)
 * [Installation](#installation)
-* * [Mac OS X Prerequisites](#mac-os-x-prerequisites)
-* * [Linux Prerequisites](#linux-prerequisites)
-* * [Installing COT](#installing-cot)
+  * [Mac OS X Prerequisites](#mac-os-x-prerequisites)
+  * [Linux Prerequisites](#linux-prerequisites)
+  * [Installing COT](#installing-cot)
 * [Examples](#examples)
 * [Detailed Usage](#detailed-usage)
-* * [cot add-disk](#cot-add-disk)
-* * [cot add-file](#cot-add-file)
-* * [cot deploy](#cot-deploy)
-* * [cot edit-hardware](#cot-edit-hardware)
-* * [cot edit-product](#cot-edit-product)
-* * [cot edit-properties](#cot-edit-properties)
-* * [cot info](#cot-info)
-* * [cot inject-config](#cot-inject-config)
+  * [cot add-disk](#cot-add-disk)
+  * [cot add-file](#cot-add-file)
+  * [cot deploy](#cot-deploy)
+  * [cot edit-hardware](#cot-edit-hardware)
+  * [cot edit-product](#cot-edit-product)
+  * [cot edit-properties](#cot-edit-properties)
+  * [cot info](#cot-info)
+  * [cot inject-config](#cot-inject-config)
 
 Capabilities
 ============
@@ -46,16 +46,16 @@ System Requirements
 ===================
 
 * COT requires either Python 2.7 or Python 3.
-* The ``cot add-disk`` command requires [qemu-img](http://www.qemu.org) as a
+* The `cot add-disk` command requires [`qemu-img`](http://www.qemu.org) as a
   helper program when adding hard disks to an OVF. If `qemu-img` is earlier than
-  version 2.1, [vmdktool](http://www.freshports.org/sysutils/vmdktool/) is also
-  required as an additional helper.
-* The ``cot inject-config`` command requires
-  [mkisofs](http://cdrecord.org/) to create ISO
-  (CD-ROM) images and [fatdisk](http://github.com/goblinhack/fatdisk)
+  version 2.1, [`vmdktool`](http://www.freshports.org/sysutils/vmdktool/) is
+  also required as an additional helper.
+* The `cot inject-config` command requires
+  [`mkisofs`](http://cdrecord.org/) to create ISO
+  (CD-ROM) images and [`fatdisk`](http://github.com/goblinhack/fatdisk)
   to create hard disk images.
-* The ``cot deploy ... esxi`` command requires
-  [ovftool](https://www.vmware.com/support/developer/ovf/) to communicate
+* The `cot deploy ... esxi` command requires
+  [`ovftool`](https://www.vmware.com/support/developer/ovf/) to communicate
   with an ESXi server. If ovftool is installed, COT's automated unit tests will
   also make use of ovftool to perform additional verification that OVFs and
   OVAs created by COT align with VMware's expectations for these file types.
@@ -88,10 +88,10 @@ Python via MacPorts as well:
     # python setup-tools module
     sudo port install py27-setuptools
 
-Optionally, download [ovftool](https://www.vmware.com/support/developer/ovf/)
+Optionally, download [`ovftool`](https://www.vmware.com/support/developer/ovf/)
 from VMware and install it.
 
-Then proceed as documented in "Installing COT" below.
+Then proceed as documented in ["Installing COT"](#installing-cot) below.
 
 Linux Prerequisites
 -------------------
@@ -119,8 +119,8 @@ Then proceed as described in "Installing COT" below.
 Installing COT
 --------------
 
-While you can run COT directly from this directory (``./bin/cot ...``),
-you can also use the included ``setup.py`` script to install the COT
+While you can run COT directly from this directory (`./bin/cot ...`),
+you can also use the included `setup.py` script to install the COT
 modules and scripts as part of your system Python environment:
 
     > python ./setup.py check
@@ -134,8 +134,8 @@ modules and scripts as part of your system Python environment:
 (verbose test case output omitted here for brevity)
 
     ----------------------------------------------------------------------
-    Ran 115 tests in 28.222s
-    
+    Ran 123 tests in 36.904s
+
     OK
 
 (If any tests fail, likely due to missing binary dependencies described above,
@@ -264,8 +264,8 @@ Non-interactively customizing environment properties:
 Detailed Usage
 ==============
 
-You can always get detailed help for COT by running ``cot --help`` or
-``cot <command> --help``.
+You can always get detailed help for COT by running `cot --help` or
+`cot <command> --help`.
 
     > cot --help
     usage:
