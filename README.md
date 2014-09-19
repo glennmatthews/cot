@@ -8,6 +8,26 @@ COT (the Common OVF Tool) is a tool for editing
 appliances such as the [Cisco CSR 1000V](http://www.cisco.com/go/csr1000v)
 and [Cisco IOS XRv](http://www.cisco.com/go/iosxrv) platforms.
 
+Table of Contents
+=================
+
+* [Capabilities](#capabilities)
+* [System Requirements](#system-requirements)
+* [Installation](#installation)
+* * [Mac OS X Prerequisites](#mac-os-x-prerequisites)
+* * [Linux Prerequisites](#linux-prerequisites)
+* * [Installing COT](#installing-cot)
+* [Examples](#examples)
+* [Detailed Usage](#detailed-usage)
+* * [cot add-disk](#cot-add-disk)
+* * [cot add-file](#cot-add-file)
+* * [cot deploy](#cot-deploy)
+* * [cot edit-hardware](#cot-edit-hardware)
+* * [cot edit-product](#cot-edit-product)
+* * [cot edit-properties](#cot-edit-properties)
+* * [cot info](#cot-info)
+* * [cot inject-config](#cot-inject-config)
+
 Capabilities
 ============
 
@@ -130,9 +150,9 @@ them before installing COT.)
 
     Installing cot script to /usr/local/bin
 
-    Installed /usr/local/lib/python2.7/dist-packages/common_ovf_tool-1.0.0rc5-py2.7.egg
-    Processing dependencies for common-ovf-tool==1.0.0rc5
-    Finished processing dependencies for common-ovf-tool==1.0.0rc5
+    Installed /usr/local/lib/python2.7/dist-packages/common_ovf_tool-1.1.1-py2.7.egg
+    Processing dependencies for common-ovf-tool==1.1.1
+    Finished processing dependencies for common-ovf-tool==1.1.1
     > which cot
     /usr/local/bin/cot
 
@@ -145,7 +165,8 @@ them before installing COT.)
       cot <command> --help
       cot [-f] [-v] <command> <options>
 
-    Common OVF Tool (COT)
+    Common OVF Tool (COT), version 1.1.1
+    Copyright (C) 2013-2014 the COT project developers
     A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
     with a focus on virtualized network appliances such as the Cisco CSR 1000V and
     Cisco IOS XRv platforms.
