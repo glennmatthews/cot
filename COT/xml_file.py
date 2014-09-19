@@ -172,18 +172,20 @@ class XML(object):
 
 
     @classmethod
-    def add_child(cls, parent, new_child, ordering=None):
+    def add_child(cls, parent, new_child, ordering=None, known_namespaces=None):
         """Add the given child element under the given parent element.
         If ordering is unspecified, the child will be appended after
         all existing children; otherwise, the placement of the child
         relative to other children will respect this ordering.
         """
         if ordering and not (new_child.tag in ordering):
-            logger.warning("New child '{0}' is not in the list of "
-                           "expected children under '{1}': {2}"
-                           .format(tag,
-                                   XML.strip_ns(parent.tag),
-                                   ordering))
+            if (known_namespaces and
+                (XML.get_ns(new_child.tag) in known_namespaces)):
+                logger.warning("New child '{0}' is not in the list of "
+                               "expected children under '{1}': {2}"
+                               .format(new_child.tag,
+                                       XML.strip_ns(parent.tag),
+                                       ordering))
             # Assume this is some sort of custom element, which
             # implicitly goes at the end of the list.
             ordering = None
@@ -200,12 +202,14 @@ class XML(object):
                         found_position = True
                         break
                 except ValueError as e:
-                    logger.warning("Existing child element '{0}' is not in "
-                                   "expected list of children under '{1}': "
-                                   "\n{2}"
-                                   .format(child.tag,
-                                           XML.strip_ns(parent.tag),
-                                           ordering))
+                    if (known_namespaces and (XML.get_ns(child.tag) in
+                                              known_namespaces)):
+                        logger.warning("Existing child element '{0}' is not in "
+                                       "expected list of children under '{1}': "
+                                       "\n{2}"
+                                       .format(child.tag,
+                                               XML.strip_ns(parent.tag),
+                                               ordering))
                     # Assume this is some sort of custom element - all known
                     # elements should implicitly come before it.
                     found_position = True
@@ -219,7 +223,7 @@ class XML(object):
 
     @classmethod
     def set_or_make_child(cls, parent, tag, text=None, attrib=None,
-                          ordering=None):
+                          ordering=None, known_namespaces=None):
         """Update or create a child element with the desired text
         and/or attributes under the specified parent element.
         The optional 'ordering' parameter is used to provide a list of
@@ -234,7 +238,7 @@ class XML(object):
             logger.debug("Creating new {0} under {1}"
                          .format(XML.strip_ns(tag), XML.strip_ns(parent.tag)))
             element = ET.Element(tag)
-            XML.add_child(parent, element, ordering)
+            XML.add_child(parent, element, ordering, known_namespaces)
         if text is not None:
             element.text = str(text)
         for a in attrib:

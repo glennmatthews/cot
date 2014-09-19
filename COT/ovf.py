@@ -184,6 +184,9 @@ class OVF(VMDescription, XML):
         for (prefix, URI) in self.NSM.items():
             self.register_namespace(prefix, URI)
 
+        # Register additional non-standard namespaces we're aware of:
+        self.register_namespace('vmw', "http://www.vmware.com/schema/ovf")
+
         # Go ahead and set pointers to some of the most useful XML sections
         self.envelope = self.root
         self.references = self.find_child(self.envelope, self.REFERENCES,
@@ -219,7 +222,7 @@ class OVF(VMDescription, XML):
         except OVFHardwareDataError as e:
             raise VMInitError(1, "OVF descriptor is invalid: {0}".format(e))
 
-        self.platform = self.get_platform()
+        self.get_platform()
 
         # Check any file references in the ovf descriptor
         self.validate_file_references()
@@ -623,6 +626,9 @@ class OVF(VMDescription, XML):
 
     def get_platform(self):
         """Identifies the platform type from the OVF descriptor"""
+        if self.platform is not None:
+            return self.platform
+
         platform = None
         product_class = None
         class_to_platform_map = {
@@ -633,6 +639,7 @@ class OVF(VMDescription, XML):
             'ios-xrv.rp' : Platform.IOSXRvRP,
             'ios-xrv.lc' : Platform.IOSXRvLC,
             }
+
         if self.product_section is not None:
             product_class = self.product_section.get(self.PRODUCT_CLASS)
             if product_class is not None:
@@ -650,7 +657,8 @@ class OVF(VMDescription, XML):
             platform = Platform.GenericPlatform
         logger.info("OVF product class {0} --> platform {1}"
                     .format(product_class, platform.__name__))
-        return platform
+        self.platform = platform
+        return self.platform
 
 
     def validate_file_references(self):
@@ -1727,17 +1735,20 @@ class OVFNameHelper(object):
 
     def __init__(self, version):
         self.ovf_version = version
-        # We need to tell the XML ElementTree about the various namespaces
-        # that are involved in an OVF descriptor
+        self.platform = None
+        # For the standard namespace URIs in an OVF descriptor, let's define
+        # shorthand identifiers to be used when writing back out to XML:
         cim_uri = "http://schemas.dmtf.org/wbem/wscim/1"
         self.NSM = {
             'xsi':  "http://www.w3.org/2001/XMLSchema-instance",
             'cim':  cim_uri + "/common",
             'rasd': cim_uri + "/cim-schema/2/CIM_ResourceAllocationSettingData",
             'vssd': cim_uri + "/cim-schema/2/CIM_VirtualSystemSettingData",
-            # Namespace for VMWare-specific extensions
-            'vmw':  "http://www.vmware.com/schema/ovf"
         }
+        # Non-standard namespaces (such as VMWare's
+        # 'http://www.vmware.com/schema/ovf') should not be added to the NSM
+        # dictionary, but may be registered manually by calling
+        # self.register_namespace() as needed - see self.write() for examples.
 
         if self.ovf_version < 1.0:
             self.NSM['ovf'] = "http://www.vmware.com/schema/ovf/1/envelope"
@@ -2126,8 +2137,8 @@ class OVFHardware:
                     break
             if valid:
                 filtered_items.append(ovfitem)
-        logger.info("Found {0} {1} Items"
-                    .format(len(filtered_items), resource_type))
+        logger.debug("Found {0} {1} Items"
+                     .format(len(filtered_items), resource_type))
         return filtered_items
 
 
@@ -2314,6 +2325,10 @@ class OVFItem:
     each of which is a dict of sets of profiles (indexed by element value)
     """
 
+    # Magic strings
+    ATTRIB_KEY_SUFFIX=" {Item attribute}"
+    ELEMENT_KEY_SUFFIX=" {custom element}"
+
     def __init__(self, ovf, item=None):
         """Create a new OVFItem with contents based on the given Item element
         """
@@ -2356,7 +2371,7 @@ class OVFItem:
         for (attrib, value) in item.attrib.items():
             if attrib == self.ITEM_CONFIG:
                 continue
-            attrib_string = "_attrib_" + attrib
+            attrib_string = attrib + self.ATTRIB_KEY_SUFFIX
             self.set_property(attrib_string, value, profiles, overwrite=False)
 
         # Store any child elements of the Item.
@@ -2370,8 +2385,9 @@ class OVFItem:
                 # vmw:Config elements, each distinguished by its vmw:key attrib.
                 # Rather than try to guess how these items do or do not match,
                 # we simply store the whole item
-                self.set_property("_element_"+ET.tostring(child).decode(),
-                                  ET.tostring(child),
+                self.set_property((ET.tostring(child).decode().strip() +
+                                   self.ELEMENT_KEY_SUFFIX),
+                                  ET.tostring(child).decode(),
                                   profiles, overwrite=False)
                 continue
             # Store the value of this element:
@@ -2396,6 +2412,9 @@ class OVFItem:
         set for the provided profile will raise a OVFItemDataError.
         (Otherwise, by default, the existing data will be overwritten).
         """
+        # Just to be safe...
+        value = str(value)
+
         if not profiles:
             value_dict = self.dict.get(key, {})
             if not value_dict:
@@ -2407,8 +2426,6 @@ class OVFItem:
         # or ResourceSubType, replace that reference with a placeholder
         # that we can regenerate at output time. That way, if the
         # VirtualQuantity or ResourceSubType changes, these can change too.
-        logger.debug("Setting {0} to {1} under profiles {2}"
-                     .format(key, value, profiles))
         if key == self.ELEMENT_NAME or key == self.ITEM_DESCRIPTION:
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, profiles)
             if vq_val is not None:
@@ -2421,6 +2438,8 @@ class OVFItem:
             en_val = self.get_value(self.ELEMENT_NAME, profiles)
             if en_val is not None:
                 value = re.sub(en_val, "_EN_", value)
+        logger.debug("Setting {0} to {1} under profiles {2}"
+                     .format(key, value, profiles))
         if not key in self.dict:
             if value == '':
                 pass
@@ -2683,35 +2702,38 @@ class OVFItem:
                     val = default_val
                 # Regenerate text that depends on the VirtualQuantity
                 # or ResourceSubType strings:
-                if rst_val is not None:
-                    val = re.sub("_RST_", str(rst_val), str(val))
-                if vq_val is not None:
-                    val = re.sub("_VQ_", str(vq_val), str(val))
-                if en_val is not None:
-                    val = re.sub("_EN_", str(en_val), str(val))
+                if key == self.ELEMENT_NAME or key == self.ITEM_DESCRIPTION:
+                    if rst_val is not None:
+                        val = re.sub("_RST_", str(rst_val), str(val))
+                    if vq_val is not None:
+                        val = re.sub("_VQ_", str(vq_val), str(val))
+                if key == self.ITEM_DESCRIPTION:
+                    if en_val is not None:
+                        val = re.sub("_EN_", str(en_val), str(val))
 
                 # Is this an attribute, a child, or a custom element?
-                attrib_match = re.match("_attrib_(.*)", key)
+                attrib_match = re.match("(.*)" + self.ATTRIB_KEY_SUFFIX, key)
                 if attrib_match:
                     attrib_string = attrib_match.group(1)
                 child_attrib = re.match("(.*)_attrib_(.*)", key)
-                custom_elem = re.match("_element_(.*)", key)
+                custom_elem = re.match("(.*)" + self.ELEMENT_KEY_SUFFIX, key)
                 if attrib_match:
                     item.set(attrib_string, val)
                 elif child_attrib:
                     child = XML.set_or_make_child(item,
                                                   child_attrib.group(1),
                                                   None,
-                                                  ordering=self.ITEM_CHILDREN)
+                                                  ordering=self.ITEM_CHILDREN,
+                                                  known_namespaces=self.NSM)
                     child.set(child_attrib.group(2), val)
                 elif custom_elem:
                     # Recreate the element in question and append it
-                    elem = ET.fromstring(custom_elem.group(1))
-                    item.append(elem)
+                    item.append(ET.fromstring(val))
                 else:
                     # Children of Item must be in sorted order
                     XML.set_or_make_child(item, key, val,
-                                          ordering=self.ITEM_CHILDREN)
+                                          ordering=self.ITEM_CHILDREN,
+                                          known_namespaces=self.NSM)
             logger.debug("Item is:\n{0}".format(ET.tostring(item)))
             item_list.append(item)
 

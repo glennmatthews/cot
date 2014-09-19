@@ -753,17 +753,35 @@ expected="""
         """Set the number of CPUs"""
         for cli_opt in ['-c', '--cpus']:
             # Change value under a specific profile:
-            self.call_edit_hardware([cli_opt, '4', '-p', '2CPU-2GB-1NIC'])
+            self.call_edit_hardware([cli_opt, '8', '-p', '2CPU-2GB-1NIC'])
             self.check_diff(
 """
          <rasd:Description>Number of Virtual CPUs</rasd:Description>
 -        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
-+        <rasd:ElementName>4 virtual CPU(s)</rasd:ElementName>
++        <rasd:ElementName>8 virtual CPU(s)</rasd:ElementName>
          <rasd:InstanceID>1</rasd:InstanceID>
          <rasd:ResourceType>3</rasd:ResourceType>
 -        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
-+        <rasd:VirtualQuantity>4</rasd:VirtualQuantity>
++        <rasd:VirtualQuantity>8</rasd:VirtualQuantity>
          <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+""")
+            # Change value under a specific profile to match another profile:
+            self.call_edit_hardware([cli_opt, '4', '-p', '2CPU-2GB-1NIC'])
+            self.check_diff(
+"""
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
+-        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+-        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+-        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
+-        <rasd:InstanceID>1</rasd:InstanceID>
+-        <rasd:ResourceType>3</rasd:ResourceType>
+-        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+-        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+-      </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
++      <ovf:Item ovf:configuration="2CPU-2GB-1NIC 4CPU-4GB-3NIC">
+         <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
 """)
             # Change value under all profiles.
             # This results in merging the separate Items together
@@ -1401,8 +1419,19 @@ expected="""
     def test_profiles(self):
         """Test configuration profile creation"""
 
-        # Create a new profile:
+        # Add a profile sharing attributes with the default profile:
         self.call_edit_hardware(['--profile', 'UT', '--cpus', '1'])
+        self.check_diff("""
+     </ovf:Configuration>
++    <ovf:Configuration ovf:id="UT">
++      <ovf:Label>UT</ovf:Label>
++      <ovf:Description>UT</ovf:Description>
++    </ovf:Configuration>
+   </ovf:DeploymentOptionSection>
+""")
+
+        # Create a new profile:
+        self.call_edit_hardware(['--profile', 'UT', '--cpus', '8'])
         self.check_diff("""
      </ovf:Configuration>
 +    <ovf:Configuration ovf:id="UT">
@@ -1415,10 +1444,10 @@ expected="""
 +      <ovf:Item ovf:configuration="UT">
 +        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
 +        <rasd:Description>Number of Virtual CPUs</rasd:Description>
-+        <rasd:ElementName>1 virtual CPU(s)</rasd:ElementName>
++        <rasd:ElementName>8 virtual CPU(s)</rasd:ElementName>
 +        <rasd:InstanceID>1</rasd:InstanceID>
 +        <rasd:ResourceType>3</rasd:ResourceType>
-+        <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
++        <rasd:VirtualQuantity>8</rasd:VirtualQuantity>
 +        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
 +      </ovf:Item>
        <ovf:Item>
