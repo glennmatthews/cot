@@ -1,4 +1,3 @@
-=====================
 Common OVF Tool (COT)
 =====================
 
@@ -19,14 +18,14 @@ Table of Contents
   * [Installing COT](#installing-cot)
 * [Examples](#examples)
 * [Detailed Usage](#detailed-usage)
-  * [cot add-disk](#cot-add-disk)
-  * [cot add-file](#cot-add-file)
-  * [cot deploy](#cot-deploy)
-  * [cot edit-hardware](#cot-edit-hardware)
-  * [cot edit-product](#cot-edit-product)
-  * [cot edit-properties](#cot-edit-properties)
-  * [cot info](#cot-info)
-  * [cot inject-config](#cot-inject-config)
+  * [`cot add-disk`](#cot-add-disk)
+  * [`cot add-file`](#cot-add-file)
+  * [`cot deploy`](#cot-deploy)
+  * [`cot edit-hardware`](#cot-edit-hardware)
+  * [`cot edit-product`](#cot-edit-product)
+  * [`cot edit-properties`](#cot-edit-properties)
+  * [`cot info`](#cot-info)
+  * [`cot inject-config`](#cot-inject-config)
 
 Capabilities
 ============
@@ -114,7 +113,7 @@ The specifics may vary depending on your Linux distribution, of course.
     ./RUNME
     cp ./fatdisk /usr/local/bin/fatdisk
 
-Then proceed as described in "Installing COT" below.
+Then proceed as described in ["Installing COT"](#installing-cot) below.
 
 Installing COT
 --------------
@@ -307,8 +306,8 @@ You can always get detailed help for COT by running `cot --help` or
     * fatdisk  (http://github.com/goblinhack/fatdisk)
     * ovftool  (https://www.vmware.com/support/developer/ovf/)
 
-cot add-disk
-------------
+`cot add-disk`
+--------------
 
     > cot add-disk --help
     usage:
@@ -361,8 +360,8 @@ cot add-disk
                             Name of this disk (default: "Hard disk #" or "CD-ROM
                             #" as appropriate)
 
-cot add-file
-------------
+`cot add-file`
+--------------
 
     > cot add-file --help
     usage:
@@ -386,8 +385,8 @@ cot add-file
                             File ID string within the package (default: same as
                             filename)
 
-cot deploy
-----------
+`cot deploy`
+------------
 
     > cot deploy --help
     usage:
@@ -444,8 +443,8 @@ cot deploy
        cot deploy -s 192.0.2.100 esxi foo.ova -ds=datastore1
 
 
-cot edit-hardware
------------------
+`cot edit-hardware`
+-------------------
 
     > cot edit-hardware --help
     usage:
@@ -519,8 +518,8 @@ cot edit-hardware
                             controllers. If an empty string is provided, any
                             existing subtype will be removed.
 
-cot edit-product
-----------------
+`cot edit-product`
+------------------
 
     > cot edit-product --help
     usage:
@@ -545,8 +544,8 @@ cot edit-product
                             Software long version string, such as "Cisco IOS-XE
                             Software, Version 15.3(4)S"
 
-cot edit-properties
--------------------
+`cot edit-properties`
+---------------------
 
     > cot edit-properties --help
     usage:
@@ -576,8 +575,8 @@ cot edit-properties
       -p KEY1=VALUE1 [KEY2=VALUE2 ...], --properties KEY1=VALUE1 [KEY2=VALUE2 ...]
                             Set the given property key-value pairs
 
-cot info
---------
+`cot info`
+----------
 
     > cot info -h
     usage:
@@ -595,8 +594,8 @@ cot info
       -b, --brief           Brief output (shorter)
       -v, --verbose         Verbose output (longer)
 
-cot inject-config
------------------
+`cot inject-config`
+-------------------
 
     > cot inject-config -h
     usage:
