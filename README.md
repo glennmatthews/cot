@@ -26,10 +26,10 @@ System Requirements
 ===================
 
 * COT requires either Python 2.7 or Python 3.
-* The ``cot add-disk`` command requires
-  [vmdktool](http://www.freshports.org/sysutils/vmdktool/) and
-  [qemu-img](http://www.qemu.org) as
-  helper programs when adding hard disks to an OVF.
+* The ``cot add-disk`` command requires [qemu-img](http://www.qemu.org) as a
+  helper program when adding hard disks to an OVF. If `qemu-img` is earlier than
+  version 2.1, [vmdktool](http://www.freshports.org/sysutils/vmdktool/) is also
+  required as an additional helper.
 * The ``cot inject-config`` command requires
   [mkisofs](http://cdrecord.org/) to create ISO
   (CD-ROM) images and [fatdisk](http://github.com/goblinhack/fatdisk)
@@ -55,7 +55,7 @@ system, use the following commands to install the necessary helpers:
     sudo port install cdrtools
     # qemu-img
     sudo port install qemu
-    # vmdktool
+    # vmdktool (only needed if qemu version is less than 2.1.0)
     sudo port install vmdktool
     # fatdisk
     sudo port install fatdisk
@@ -80,10 +80,10 @@ The specifics may vary depending on your Linux distribution, of course.
 
     # qemu-img
     sudo apt-get install qemu
-    # vmdktool
-    wget http://people.freebsd.org/~brian/vmdktool/vmdktool-1.3.tar.gz
-    tar zxf vmdktool-1.3.tar.gz
-    cd vmdktool-1.3/
+    # vmdktool (only needed if qemu version is less than 2.1.0)
+    wget http://people.freebsd.org/~brian/vmdktool/vmdktool-1.4.tar.gz
+    tar zxf vmdktool-1.4.tar.gz
+    cd vmdktool-1.4/
     make
     sudo make install
     # python setuptools module
@@ -253,7 +253,8 @@ You can always get detailed help for COT by running ``cot --help`` or
       cot <command> --help
       cot [-f] [-v] <command> <options>
 
-    Common OVF Tool (COT)
+    Common OVF Tool (COT), version 1.1.1
+    Copyright (C) 2013-2014 the COT project developers.
     A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
     with a focus on virtualized network appliances such as the Cisco CSR 1000V and
     Cisco IOS XRv platforms.
@@ -270,6 +271,7 @@ You can always get detailed help for COT by running ``cot --help`` or
         add-disk       Add a disk image to an OVF package and map it as a disk in
                        the guest environment
         add-file       Add a file to an OVF package
+        deploy         Create a new VM on the target hypervisor from the given OVF
         edit-hardware  Edit virtual machine hardware properties of an OVF
         edit-product   Edit product info in an OVF
         edit-properties

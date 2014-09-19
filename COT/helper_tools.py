@@ -20,10 +20,13 @@ import logging
 import os
 import re
 import subprocess
+from distutils.version import StrictVersion
 
 from .data_validation import ValueUnsupportedError
 
 logger = logging.getLogger('cot')
+
+QEMU_IMG_VERSION = None
 
 class HelperNotFoundError(OSError):
     """Error thrown when a helper program cannot be located."""
@@ -31,12 +34,13 @@ class HelperNotFoundError(OSError):
 class HelperError(EnvironmentError):
     """Error thrown when a helper program exits with non-zero return code."""
 
-def check_output(args):
+def check_output(args, require_success=True):
     """Wrapper for subprocess.check_output.
     1) Raises a HelperNotFoundError if the command doesn't exist, instead of
        an OSError.
     2) Raises a HelperError if the command doesn't return 0 when run,
-       instead of subprocess.CalledProcessError.
+       instead of subprocess.CalledProcessError. (Setting the optional
+       require_success parameter to False will suppress this error.)
     3) Automatically redirects stderr to stdout, captures both, and generates
        a debug message with the stdout contents.
     """
@@ -50,11 +54,14 @@ def check_output(args):
                                   "Unable to locate helper program '{0}'. "
                                   "Please check your $PATH.".format(cmd))
     except subprocess.CalledProcessError as e:
-        raise HelperError(e.returncode,
-                          "Helper program '{0}' exited with error {1}:\n"
-                          "> {2}\n{3}".format(cmd, e.returncode,
-                                              " ".join(args),
-                                              e.output.decode()))
+        if require_success:
+            raise HelperError(e.returncode,
+                              "Helper program '{0}' exited with error {1}:\n"
+                              "> {2}\n{3}".format(cmd, e.returncode,
+                                                  " ".join(args),
+                                                  e.output.decode()))
+        else:
+            stdout = e.output.decode()
     logger.debug("{0} output:\n{1}".format(cmd, stdout))
     return stdout
 
@@ -81,6 +88,28 @@ def get_checksum(file_path, checksum_type):
             h.update(buf)
 
     return h.hexdigest()
+
+
+def get_qemu_img_version():
+    """Get the installed 'qemu-img' version as a StrictVersion object.
+    """
+    global QEMU_IMG_VERSION
+    if QEMU_IMG_VERSION is None:
+        logger.debug("Checking QEMU version")
+        # Older versions of qemu-img don't support --version,
+        # and will exit with code 1, but will still output the
+        # necessary version information.
+        qemu_stdout = check_output(['qemu-img', '--version'],
+                                   require_success=False)
+        match = re.search("qemu-img version ([0-9.]+)", qemu_stdout)
+        if not match:
+            raise RuntimeError("Did not find version number in the output "
+                               "from qemu-img:\n{0}"
+                               .format(qemu_stdout))
+        QEMU_IMG_VERSION = StrictVersion(match.group(1))
+        logger.info("qemu-img version is '{0}'".format(QEMU_IMG_VERSION))
+
+    return QEMU_IMG_VERSION
 
 
 def get_disk_format(file_path):
@@ -172,26 +201,38 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
     temp_path = None # any temporary file we should delete before returning
 
     if new_format == 'vmdk' and new_subformat == 'streamOptimized':
-        # We have to pass through raw format on the way, even if the existing
-        # image is a non-streamOptimized vmdk.
-        if curr_format != 'raw':
-            # Use qemu-img to convert to raw format
-            temp_path = os.path.join(output_dir, file_string + '.img')
-            logger.warning("Invoking qemu-img to convert {0} to RAW {1}"
-                           .format(file_path, temp_path))
-            qemu_stdout = check_output(['qemu-img', 'convert', '-O', 'raw',
-                                        file_path, temp_path])
-            file_path = temp_path
-
-        # Use vmdktool to convert raw image to stream-optimized VMDK
         new_file_path = os.path.join(output_dir, file_string + '.vmdk')
-        logger.warning("Invoking vmdktool to convert {0} to "
-                       "stream-optimized VMDK {1}"
-                       .format(file_path, new_file_path))
-        # Note that vmdktool takes its arguments in unusual order -
-        # output file comes before input file
-        vmdktool_so = check_output(['vmdktool', '-z9', '-v',
-                                    new_file_path, file_path])
+        if get_qemu_img_version() >= StrictVersion("2.1.0"):
+            # qemu-img finally supports streamOptimized - yay!
+            logger.warning("Invoking qemu-img to convert {0} to "
+                           "streamOptimized VMDK {1}"
+                           .format(file_path, new_file_path))
+            qemu_stdout = check_output(['qemu-img', 'convert', '-O', 'vmdk',
+                                        '-o', 'subformat=streamOptimized',
+                                        file_path, new_file_path])
+        else:
+            # Older versions of qemu-img don't support streamOptimized VMDKs,
+            # so we have to use qemu-img + vmdktool to get the desired result.
+
+            # We have to pass through raw format on the way, even if the
+            # existing image is a non-streamOptimized vmdk.
+            if curr_format != 'raw':
+                # Use qemu-img to convert to raw format
+                temp_path = os.path.join(output_dir, file_string + '.img')
+                logger.warning("Invoking qemu-img to convert {0} to RAW {1}"
+                               .format(file_path, temp_path))
+                qemu_stdout = check_output(['qemu-img', 'convert', '-O', 'raw',
+                                            file_path, temp_path])
+                file_path = temp_path
+
+            # Use vmdktool to convert raw image to stream-optimized VMDK
+            logger.warning("Invoking vmdktool to convert {0} to "
+                           "stream-optimized VMDK {1}"
+                           .format(file_path, new_file_path))
+            # Note that vmdktool takes its arguments in unusual order -
+            # output file comes before input file
+            vmdktool_so = check_output(['vmdktool', '-z9', '-v',
+                                        new_file_path, file_path])
     else:
         raise ValueUnsupportedError("new file format/subformat",
                                     (new_format, new_subformat),
