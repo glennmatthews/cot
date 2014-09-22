@@ -1216,7 +1216,7 @@ expected="""
 """
        </ovf:Item>
 -      <ovf:Item ovf:required="false">
-+      <ovf:Item ovf:configuration="4CPU-4GB-3NIC" ovf:required="false">
++      <ovf:Item ovf:configuration="1CPU-1GB-1NIC 4CPU-4GB-3NIC" ovf:required="false">
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 """)
 
@@ -1795,6 +1795,9 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
+  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
+    Label:          "1 vCPU, 1 GB RAM, 1 NIC"
+    Description:    "Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC"
   2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
@@ -1847,6 +1850,7 @@ Hardware Variants:
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
   4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
+  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
   2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
 
 Properties:
@@ -1889,6 +1893,9 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
+  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
+    Label:          "1 vCPU, 1 GB RAM, 1 NIC"
+    Description:    "Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC"
   2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"

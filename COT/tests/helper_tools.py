@@ -31,7 +31,7 @@ class TestGetChecksum(COT_UT):
         """
         try:
             checksum = get_checksum(self.input_ovf, 'md5')
-            self.assertEqual(checksum, "9eba020a34d1d6f1e14785b11742665b")
+            self.assertEqual(checksum, "8b202de9b35109494fb810d72d0c6c51")
 
             checksum = get_checksum(self.minimal_ovf, 'md5')
             self.assertEqual(checksum, "288e1e3fcb05265cd9b8c7578e173fef")
@@ -44,7 +44,7 @@ class TestGetChecksum(COT_UT):
         try:
             checksum = get_checksum(self.input_ovf, 'sha1')
             self.assertEqual(checksum,
-                             "2c56f8292a5127485fcd45e81922ed49ef83492f")
+                             "fe08990b4dea5599745e9d84d3aa9442a6199f09")
 
             checksum = get_checksum(self.minimal_ovf, 'sha1')
             self.assertEqual(checksum,

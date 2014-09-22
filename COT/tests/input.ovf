@@ -16,6 +16,10 @@
   </ovf:NetworkSection>
   <ovf:DeploymentOptionSection>
     <ovf:Info>Configuration Profiles</ovf:Info>
+    <ovf:Configuration ovf:id="1CPU-1GB-1NIC">
+      <ovf:Label>1 vCPU, 1 GB RAM, 1 NIC</ovf:Label>
+      <ovf:Description>Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC</ovf:Description>
+    </ovf:Configuration>
     <ovf:Configuration ovf:id="2CPU-2GB-1NIC">
       <ovf:Label>2 vCPUs, 2 GB RAM, 1 NIC</ovf:Label>
       <ovf:Description>Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC</ovf:Description>
