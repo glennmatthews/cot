@@ -134,9 +134,12 @@ class VMDescription(object):
         raise NotImplementedError("add_disk_device not implemented")
 
     # API methods needed for edit-hardware
-    def get_configuration_profiles(self):
-        """Return a list of named configuration profiles in the VM"""
-        raise NotImplementedError("get_configuration_profiles not implemented!")
+    def get_configuration_profile_ids(self):
+        """Return a list of named configuration profiles in the VM.
+        If there are no profiles defined, returns an empty list.
+        """
+        raise NotImplementedError("get_configuration_profile_ids "
+                                  "not implemented!")
 
     def create_configuration_profile(self, id, label, description):
         """Create/update a configuration profile with the given ID"""
@@ -146,6 +149,26 @@ class VMDescription(object):
     def set_system_type(self, type_list):
         """Set the virtual system type(s) supported by this virtual machine."""
         raise NotImplementedError("set_system_type not implemented!")
+
+    # A note on getters/setters that take a profile_list parameter:
+    #
+    # A profile name of None is taken to mean "the default for all profiles
+    # now or in the future that do not explicitly have a different value set."
+    #
+    # A profile_list of None or [] is taken to mean "all profiles, including
+    # the default, as well as any to be defined in the future". For a VM with
+    # profiles 'a' and 'b' currently defined, this is equivalent to the list
+    # [None, 'a', 'b']
+    #
+    # A profile_list of [None] means "the default value to be inherited by
+    # any other profiles that do not override it"
+    #
+    # A profile_list of [None, "a"] means "the default and profile 'a'". For a
+    # setter function, this translates to "change 'a' to inherit the default,
+    # and change the default as well."
+    #
+    # A profile_list of ["a", "b", "c"] means "profiles 'a', 'b', and 'c', but
+    # not the default.
 
     def set_cpu_count(self, cpus, profile_list):
         raise NotImplementedError("set_cpu_count not implemented!")

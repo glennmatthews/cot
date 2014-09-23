@@ -57,7 +57,7 @@ def deploy_esxi(args):
         # ensure configuration was specified
         # will use ovf tool --deploymentOption
         # if not specified and force not specified prompt for selection
-        profile_list = vm.get_configuration_profiles()
+        profile_list = vm.get_configuration_profile_ids()
 
         if (args.configuration is not None and
             not (args.configuration in profile_list)):

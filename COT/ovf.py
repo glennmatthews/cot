@@ -559,7 +559,7 @@ class OVF(VMDescription, XML):
         profiles.insert(0, default_profile)
         # Print a table of profiles vs. their hardware
         for profile in profiles:
-            profile_id = ('None' if profile is None else
+            profile_id = (None if profile is None else
                           profile.get(self.CONFIG_ID))
             cpus = 0
             cpu_item = self.hardware.find_item('cpu', profile=profile_id)
@@ -612,8 +612,6 @@ class OVF(VMDescription, XML):
             if default_profile is None:
                 # "If no default is specified, the first element in the list
                 # is the default" - OVF specification
-                #default_profile = profiles[0]
-
                 profiles = self.find_all_children(self.deploy_opt_section,
                                                   self.CONFIG)
                 if profiles:
@@ -693,15 +691,17 @@ class OVF(VMDescription, XML):
         return rc
 
 
-    def get_configuration_profiles(self):
-        """Get the list of supported configuration profiles"""
-        profile_ids = ["<default>"]
+    def get_configuration_profile_ids(self):
+        """Get the list of supported configuration profile identifiers.
+        If this OVF has no defined profiles, returns an empty list.
+        """
+        profile_ids = []
         if self.deploy_opt_section is not None:
             profiles = self.find_all_children(self.deploy_opt_section,
                                               self.CONFIG)
             for profile in profiles:
                 profile_ids.append(profile.get(self.CONFIG_ID))
-            logger.debug("Configuration profiles are: {0}".format(profile_ids))
+        logger.debug("Configuration profiles are: {0}".format(profile_ids))
         return profile_ids
 
 
@@ -2008,13 +2008,15 @@ class OVFHardware:
         May raise an OVFHardwareDataError if any data errors are seen.
         """
         self.ovf = ovf
-        self.dict = {}
-        valid_profiles = set(ovf.get_configuration_profiles())
+        self.item_dict = {}
+        valid_profiles = set(ovf.get_configuration_profile_ids())
         for item in ovf.virtual_hw_section.findall(self.ovf.ITEM):
             # We index the dict by InstanceID as it's the one property of
             # an Item that uniquely identifies this set of hardware items.
             instance = item.find(self.ovf.INSTANCE_ID).text
 
+            # Pre-sanity check - are all of the profiles associated with this
+            # item properly defined in the OVF DeploymentOptionSection?
             item_profiles = set(item.get(self.ovf.ITEM_CONFIG, "").split())
             unknown_profiles = item_profiles - valid_profiles
             if unknown_profiles:
@@ -2022,20 +2024,20 @@ class OVFHardware:
                                            "Item instance {1}"
                                            .format(unknown_profiles, instance))
 
-            if not instance in self.dict:
-                self.dict[instance] = OVFItem(self.ovf, item)
+            if not instance in self.item_dict:
+                self.item_dict[instance] = OVFItem(self.ovf, item)
             else:
                 try:
-                    self.dict[instance].add_item(item)
+                    self.item_dict[instance].add_item(item)
                 except OVFItemDataError as e:
                     # Mask away the nitty-gritty details from our caller
                     logger.warning(e)
                     raise OVFHardwareDataError("Data conflict for instance {0}"
                                                .format(instance))
-        logger.info("OVF describes {0} unique hardware Items"
-                    .format(len(self.dict)))
+        logger.info("OVF describes {0} unique (by InstanceID) hardware Items"
+                    .format(len(self.item_dict)))
         # Treat the current state as golden:
-        for ovfitem in self.dict.values():
+        for ovfitem in self.item_dict.values():
             ovfitem.modified = False
 
 
@@ -2044,7 +2046,7 @@ class OVFHardware:
         regenerate any Items in the OVF VirtualHardwareSection to reflect this.
         """
         modified = False
-        for ovfitem in self.dict.values():
+        for ovfitem in self.item_dict.values():
             if ovfitem.modified:
                 modified = True
                 break
@@ -2057,10 +2059,10 @@ class OVFHardware:
             self.ovf.virtual_hw_section.remove(item)
         # Generate the new XML Items, in appropriately sorted order by Instance
         ordering = [self.ovf.INFO, self.ovf.SYSTEM, self.ovf.ITEM]
-        for instance in natural_sort(self.dict.keys()):
+        for instance in natural_sort(self.item_dict.keys()):
             logger.debug("Writing Item(s) with InstanceID {0}"
                          .format(instance))
-            ovfitem = self.dict[instance]
+            ovfitem = self.item_dict[instance]
             new_items = ovfitem.generate_items()
             logger.debug("Generated {0} items".format(len(new_items)))
             for item in new_items:
@@ -2074,53 +2076,54 @@ class OVFHardware:
         """Find the first unused InstanceID number and return it as a string.
         """
         i = 1
-        while str(i) in self.dict.keys():
+        while str(i) in self.item_dict.keys():
             i += 1
         logger.debug("Found unused InstanceID {0}".format(i))
         return str(i)
 
 
-    def new_item(self, resource_type, profiles=None):
+    def new_item(self, resource_type, profile_list=None):
         """Create a new OVFItem of the given type with a new InstanceID
         under the given profile(s).
         Returns (instance, ovfitem).
         """
         instance = self.find_unused_instance_id()
         ovfitem = OVFItem(self.ovf)
-        ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profiles)
+        ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profile_list)
         ovfitem.set_property(self.ovf.RESOURCE_TYPE,
                              self.ovf.RES_MAP[resource_type],
-                             profiles)
-        self.dict[instance] = ovfitem
+                             profile_list)
+        self.item_dict[instance] = ovfitem
         ovfitem.modified = True
         logger.info("Added new {0} under {1}, instance is {2}"
-                    .format(resource_type, profiles, instance))
+                    .format(resource_type, profile_list, instance))
         return (instance, ovfitem)
 
 
-    def clone_item(self, parent_item, profiles):
+    def clone_item(self, parent_item, profile_list):
         """Clone the given OVFItem to create a new instance of this Item under
         the given profile(s).
         Returns (instance, ovfitem).
         """
         instance = self.find_unused_instance_id()
         ovfitem = OVFItem(self.ovf)
-        for profile in profiles:
+        for profile in profile_list:
             ovfitem.add_profile(profile, from_item=parent_item)
-        ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profiles)
+        ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profile_list)
         ovfitem.modified = True
-        self.dict[instance] = ovfitem
+        self.item_dict[instance] = ovfitem
         logger.info("Added clone of {0} under {1}, instance is {2}"
-                    .format(parent_item, profiles, instance))
+                    .format(parent_item, profile_list, instance))
         return (instance, ovfitem)
 
 
-    def find_all_items(self, resource_type=None, properties=None, profile=None):
+    def find_all_items(self, resource_type=None, properties=None,
+                       profile_list=None):
         """Find all OVFItems of the given resource_type and other properties,
         and return a list, sorted by InstanceID.
         """
-        items = [self.dict[instance] for instance in
-                 natural_sort(self.dict.keys())]
+        items = [self.item_dict[instance] for instance in
+                 natural_sort(self.item_dict.keys())]
         filtered_items = []
         if properties is None:
             properties = {}
@@ -2128,7 +2131,8 @@ class OVFHardware:
             if resource_type and (self.ovf.RES_MAP[resource_type] !=
                                   ovfitem.get_value(self.ovf.RESOURCE_TYPE)):
                 continue
-            if profile and not ovfitem.has_profile(profile):
+            if profile_list and not [ovfitem.has_profile(profile) for
+                                     profile in profile_list]:
                 continue
             valid = True
             for (property, value) in properties.items():
@@ -2167,8 +2171,9 @@ class OVFHardware:
         the total for each profile.
         """
         count_dict = {}
-        if profile_list is None:
-            profile_list = self.ovf.get_configuration_profiles()
+        if not profile_list:
+            # Get the count under all profiles
+            profile_list = self.ovf.get_configuration_profile_ids() + [None]
         for profile in profile_list:
             count_dict[profile] = 0
         for ovfitem in self.find_all_items(resource_type):
@@ -2194,8 +2199,9 @@ class OVFHardware:
         If the new count is less than the current count under this profile,
         then the highest-numbered instances will be removed preferentially.
         """
-        if profile_list is None:
-            profile_list = self.ovf.get_configuration_profiles()
+        if not profile_list:
+            # Set the profile list for all profiles, including the default
+            profile_list = self.ovf.get_configuration_profile_ids() + [None]
         count_dict = self.get_item_count_per_profile(resource_type,
                                                      profile_list)
         items_seen = dict.fromkeys(profile_list, 0)
@@ -2271,7 +2277,7 @@ class OVFHardware:
 
 
     def set_value_for_all_items(self, resource_type, property, new_value,
-                                profiles):
+                                profile_list):
         """For all items of the given resource_type, update the given property
         to the given new_value under the specified set of profiles.
         """
@@ -2281,10 +2287,10 @@ class OVFHardware:
             raise LookupError("No items of type {0} found!"
                               .format(resource_type))
         for ovfitem in ovfitem_list:
-            ovfitem.set_property(property, new_value, profiles)
+            ovfitem.set_property(property, new_value, profile_list)
         logger.info("Updated {0} {1} to {2} under {3}"
                     .format(resource_type, XML.strip_ns(property), new_value,
-                            profiles))
+                            profile_list))
 
 
     def set_item_values_per_profile(self, resource_type, property, value_list,
@@ -2293,7 +2299,7 @@ class OVFHardware:
         resource type under the given profile(s) to the list of values provided.
         """
         if profile_list is None:
-            profile_list = self.ovf.get_configuration_profiles()
+            profile_list = self.ovf.get_configuration_profile_ids() + [None]
         for ovfitem in self.find_all_items(resource_type):
             if len(value_list):
                 new_value = value_list.pop(0)
@@ -2337,19 +2343,19 @@ class OVFItem:
             self.name_helper = ovf
         else:
             self.name_helper = OVFNameHelper(1.0)
-        self.dict = {}
+        self.property_dict = {}
         self.modified = False
         if item is not None:
             self.add_item(item)
 
 
     def __repr__(self):
-        return ("<OVFItem: {0}>".format(self.dict.items()))
+        return ("<OVFItem: {0}>".format(self.property_dict.items()))
 
 
     def __str__(self):
         str = "OVFItem:"
-        for (key, value_dict) in self.dict.items():
+        for (key, value_dict) in self.property_dict.items():
             str += "  " + XML.strip_ns(key) + "\n"
             for (value, profile_set) in value_dict.items():
                 str += "    {0:20} : {1}\n".format(value, profile_set)
@@ -2366,7 +2372,7 @@ class OVFItem:
         Will raise an OVFItemDataError if the new Item conflicts with
         existing data in the OVFItem.
         """
-        profiles = set(item.get(self.ITEM_CONFIG, "<default>").split())
+        profiles = set(item.get(self.ITEM_CONFIG, "").split())
         # Store any attributes of the Item itself:
         for (attrib, value) in item.attrib.items():
             if attrib == self.ITEM_CONFIG:
@@ -2416,10 +2422,15 @@ class OVFItem:
         value = str(value)
 
         if not profiles:
-            value_dict = self.dict.get(key, {})
+            value_dict = self.property_dict.get(key, {})
             if not value_dict:
-                profiles = set(["<default>"])
+                # No previous values for this property,
+                # and no specified profile set to use.
+                # So mark this property as applicable to all profiles.
+                profiles = set([None])
             else:
+                # Mark this property as applicable to all profiles currently
+                # used by this property.
                 profiles = set.union(*value_dict.values())
         profiles = set(profiles)
         # If the ElementName or Description references the VirtualQuantity
@@ -2440,15 +2451,15 @@ class OVFItem:
                 value = re.sub(en_val, "_EN_", value)
         logger.debug("Setting {0} to {1} under profiles {2}"
                      .format(key, value, profiles))
-        if not key in self.dict:
+        if not key in self.property_dict:
             if value == '':
                 pass
-            elif "<default>" in profiles:
-                self.dict[key] = {value: set(["<default>"])}
+            elif None in profiles:
+                self.property_dict[key] = {value: set([None])}
             else:
-                self.dict[key] = {value: profiles}
+                self.property_dict[key] = {value: profiles}
         else:
-            for (known_value, profile_set) in list(self.dict[key].items()):
+            for (known_value, profile_set) in list(self.property_dict[key].items()):
                 if not overwrite and profile_set.intersection(profiles):
                     raise OVFItemDataError(
                         "Tried to set value {0} for {1} under profile(s) {2} "
@@ -2462,28 +2473,29 @@ class OVFItem:
                     if not profile_set:
                         logger.debug("No longer any profiles with value {0}"
                                      .format(known_value))
-                        del self.dict[key][known_value]
+                        del self.property_dict[key][known_value]
                 else:
                     # Add our profiles to the existing set using this value
-                    if "<default>" in profile_set:
-                        # No need to add ourselves, we're covered implicitly
+                    if None in profile_set:
+                        # No need to add ourselves, we're already covered
+                        # implicitly by the default
                         pass
-                    elif "<default>" in profiles:
+                    elif None in profiles:
                         # Can remove all others currently in the set, as
                         # default will cover them implicitly
                         profile_set.clear()
-                        profile_set.add("<default>")
+                        profile_set.add(None)
                     else:
                         profile_set |= profiles
-            if value != '' and not value in self.dict[key].keys():
-                if "<default>" in profiles:
-                    self.dict[key][value] = set(["<default>"])
+            if value != '' and not value in self.property_dict[key].keys():
+                if None in profiles:
+                    self.property_dict[key][value] = set([None])
                 else:
-                    self.dict[key][value] = profiles
-            elif not self.dict[key]:
+                    self.property_dict[key][value] = profiles
+            elif not self.property_dict[key]:
                 logger.debug("No longer any values saved for {0}"
                              .format(key))
-                del self.dict[key]
+                del self.property_dict[key]
         self.modified = True
         self.validate()
 
@@ -2499,24 +2511,24 @@ class OVFItem:
         if from_item is None:
             from_item = self
         logger.info("Adding profile {0} to item {1} from item {2}"
-                    .format(new_profile, self.dict.get(self.INSTANCE_ID, "?"),
-                            from_item.dict[self.INSTANCE_ID]))
+                    .format(new_profile, self.property_dict.get(self.INSTANCE_ID, "?"),
+                            from_item.property_dict[self.INSTANCE_ID]))
         p_set = set([new_profile])
-        for key in from_item.dict.keys():
+        for key in from_item.property_dict.keys():
             found = False
-            if not from_item.dict[key]:
+            if not from_item.property_dict[key]:
                 logger.debug("No values stored for key {0} - not cloning it"
                              .format(key))
                 continue
-            for (value, profiles) in from_item.dict[key].items():
-                if ("<default>" in profiles or
-                    len(from_item.dict[key].keys()) == 1):
+            for (value, profiles) in from_item.property_dict[key].items():
+                if (None in profiles or
+                    len(from_item.property_dict[key].keys()) == 1):
                     self.set_property(key, value, p_set)
                     found = True
                     break
             if not found:
                 raise RuntimeError("Not sure which value to clone for {0}: {1}"
-                                   .format(key, from_item.dict[key].items()))
+                                   .format(key, from_item.property_dict[key].items()))
         self.modified = True
         self.validate()
 
@@ -2528,21 +2540,27 @@ class OVFItem:
                            .format(profile, self))
             return
         logger.info("Removing profile {0} from item {1}"
-                    .format(profile, self.dict[self.INSTANCE_ID]))
+                    .format(profile, self.property_dict[self.INSTANCE_ID]))
         p_set = set([profile])
-        for key in self.dict.keys():
+        for key in self.property_dict.keys():
             found = False
-            for (value, profiles) in list(self.dict[key].items()):
+            for (value, profiles) in list(self.property_dict[key].items()):
                 profiles -= p_set
-                if not profiles:
-                    del self.dict[key][value]
-                # Convert "default" to a list of all profiles except this one
-                if '<default>' in profiles:
-                    logger.debug("Profile contains <default>; fixing it up")
-                    profiles.update(self.get_configuration_profiles())
-                    profiles.discard('<default>')
+                # Convert "any profile" to a list of all profiles minus this one
+                # and any profiles already set elsewhere
+                if None in profiles:
+                    logger.debug("Profile contains 'any profile'; fixing it up")
+                    profiles.update(self.ovf.get_configuration_profile_ids())
+                    profiles.discard(None)
                     profiles.discard(profile)
+                    # Discard all profiles set elsewhere
+                    for (v, p) in list(self.property_dict[key].items()):
+                        if v == value:
+                            continue
+                        profiles -= p
                     logger.debug("profiles are now: {0}".format(profiles))
+                if not profiles:
+                    del self.property_dict[key][value]
         self.modified = True
         self.validate()
 
@@ -2551,9 +2569,9 @@ class OVFItem:
         """Gets the dict associated with the given XML tag.
         If no previous entry exists, creates a blank dict and returns it.
         """
-        if not tag in self.dict.keys():
-            self.dict[tag] = {}
-        return self.dict[tag]
+        if not tag in self.property_dict.keys():
+            self.property_dict[tag] = {}
+        return self.property_dict[tag]
 
 
     def get_value(self, tag, profiles=None):
@@ -2561,27 +2579,35 @@ class OVFItem:
         the given tag. If the tag does not exist under these profiles, or the
         tag values differ across the profiles, returns None.
         """
-        val_dict = self.dict.get(tag, {})
+        if profiles is not None:
+            profiles = set(profiles)
+        val_dict = self.property_dict.get(tag, {})
         if profiles is None:
             if len(val_dict) == 1:
                 return list(val_dict.keys())[0]
             else:
                 return None
+        # A case we need to handle:
+        # {'1': set([None])
+        #  '4': set(['x'])
+        # get_value([None, 'y', 'z'])  --> return '1'
+        # get_value([None, 'x']) --> return None
+        # We have to recognize that y and z are implicit in None but z is not.
         default_val = None
         for (val, prof) in val_dict.items():
             if prof.issuperset(profiles):
                 return val
-            if "<default>" in prof:
+            if None in prof:
                 default_val = val
-        if not "<default>" in profiles and default_val is not None:
-            return default_val
-        return None
+            elif not prof.isdisjoint(profiles):
+                return None
+        return default_val
 
 
     def get_all_values(self, tag):
         """Gets the set of all value strings for the given tag.
         """
-        return set(self.dict.get(tag, {}).keys())
+        return set(self.property_dict.get(tag, {}).keys())
 
 
     def validate(self):
@@ -2589,21 +2615,21 @@ class OVFItem:
         # An OVFItem must describe only one InstanceID
         # All Items with a given InstanceID must have the same ResourceType
         for key in [self.INSTANCE_ID, self.RESOURCE_TYPE]:
-            if len(self.dict.get(key, {})) > 1:
+            if len(self.property_dict.get(key, {})) > 1:
                 raise RuntimeError("OVFItem illegally contains multiple {0} "
                                    "values: {1}"
                                    .format(XML.strip_ns(key),
-                                           self.dict[key].keys()))
-        for (key, value_dict) in self.dict.items():
+                                           self.property_dict[key].keys()))
+        for (key, value_dict) in self.property_dict.items():
             set_so_far = set()
             for profile_set in value_dict.values():
-                if "<default>" in profile_set and len(profile_set) > 1:
+                if None in profile_set and len(profile_set) > 1:
                     logger.error("Profile set {0} contains redundant info; "
                                  "cleaning it up now..."
                                  .format(profile_set))
                     # Clean up...
                     profile_set.clear()
-                    profile_set.add("<default>")
+                    profile_set.add(None)
                 # Make sure the profile sets are mutually exclusive
                 inter = set_so_far.intersection(profile_set)
                 if inter:
@@ -2615,13 +2641,14 @@ class OVFItem:
 
     def has_profile(self, profile):
         """Returns whether this Item exists under the given profile"""
-        instance_dict = self.dict.get(self.INSTANCE_ID, None)
+        instance_dict = self.property_dict.get(self.INSTANCE_ID, None)
         if not instance_dict:
             return False
         profile_set = set.union(*instance_dict.values())
-        if "<default>" in profile_set:
+        if profile in profile_set:
             return True
-        elif profile in profile_set:
+        elif (None in profile_set and
+              profile in self.ovf.get_configuration_profile_ids()):
             return True
         return False
 
@@ -2632,8 +2659,8 @@ class OVFItem:
 
         # First step - identify the minimal non-intersecting set of profiles
         set_list = []
-        for key in self.dict.keys():
-            for (val, new_set) in self.dict[key].items():
+        for key in self.property_dict.keys():
+            for (val, new_set) in self.property_dict[key].items():
                 new_list = []
                 for existing_set in set_list:
                     # If the sets are identical or do not intersect, do nothing
@@ -2662,7 +2689,7 @@ class OVFItem:
         # Construct a list of profile strings
         set_string_list = []
         for final_set in set_list:
-            if "<default>" in final_set:
+            if None in final_set:
                 set_string_list.append("")
             else:
                 set_string_list.append(" ".join(natural_sort(final_set)))
@@ -2675,7 +2702,7 @@ class OVFItem:
             if not set_string:
                 # no config profile
                 item = ET.Element(self.ITEM)
-                final_set = set(["<default>"])
+                final_set = set([None])
             else:
                 item = ET.Element(self.ITEM, {self.ITEM_CONFIG: set_string})
                 final_set = set(set_string.split())
@@ -2685,14 +2712,14 @@ class OVFItem:
             rst_val = self.get_value(self.RESOURCE_SUB_TYPE, final_set)
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, final_set)
             en_val = self.get_value(self.ELEMENT_NAME, final_set)
-            for key in sorted(self.dict.keys()):
+            for key in sorted(self.property_dict.keys()):
                 default_val = None
                 found = False
-                for (val, val_set) in self.dict[key].items():
+                for (val, val_set) in self.property_dict[key].items():
                     if final_set.issubset(val_set):
                         found = True
                         break
-                    elif "<default>" in val_set:
+                    elif None in val_set:
                         default_val = val
                 if not found:
                     if default_val is None:

@@ -55,7 +55,7 @@ def edit_hardware(args):
         platform = vm.get_platform()
 
         if args.profiles is not None:
-            profile_list = vm.get_configuration_profiles()
+            profile_list = vm.get_configuration_profile_ids()
             for profile in args.profiles:
                 if not profile in profile_list:
                     confirm_or_die("Profile '{0}' does not exist. Create it?"

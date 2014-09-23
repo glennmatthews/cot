@@ -300,6 +300,15 @@ class TestOVFInputOutput(COT_UT):
 class TestOVFItem(COT_UT):
     """Unit test cases for the OVFItem class"""
 
+    def setUp(self):
+        super(TestOVFItem, self).setUp()
+        self.working_dir = tempfile.mkdtemp(prefix="cot_ut_ovfiitem")
+
+
+    def tearDown(self):
+        shutil.rmtree(self.working_dir)
+        super(TestOVFItem, self).tearDown()
+
     def test_1_to_1(self):
         """Convert one Item to an OVFItem and back"""
         root = ET.fromstring(
@@ -335,6 +344,144 @@ class TestOVFItem(COT_UT):
         for child in list(input_item):
             self.assertEqual(child.text,
                              output_item.find(child.tag).text)
+
+
+    def test_remove_profile(self):
+        """Test case for remove_profile() method
+        """
+        ovf = OVF(self.input_ovf, self.working_dir, self.temp_file)
+        hw = ovf.hardware
+        # InstanceID 11, NIC 0 (default, under all profiles)
+        item = hw.item_dict['11']
+        self.assertTrue(item.has_profile(None))
+        self.assertTrue(item.has_profile("1CPU-1GB-1NIC"))
+        self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
+        self.assertTrue(item.has_profile("4CPU-4GB-3NIC"))
+        # nonexistent profile
+        self.assertFalse(item.has_profile("nonexistent"))
+
+        # Remove one profile
+        item.remove_profile("1CPU-1GB-1NIC")
+        self.assertTrue(item.has_profile("4CPU-4GB-3NIC"))
+        self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
+        # no longer available
+        self.assertFalse(item.has_profile(None))
+        self.assertFalse(item.has_profile("1CPU-1GB-1NIC"))
+        self.assertFalse(item.has_profile("nonexistent"))
+
+        self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
+                                        ["2CPU-2GB-1NIC", "4CPU-4GB-3NIC"]),
+                         "11")
+        self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
+                                        ["1CPU-1GB-1NIC"]),
+                         None)
+        self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT, [None]),
+                         None)
+        self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
+                                        ["1CPU-1GB-1NIC", "2CPU-2GB-1NIC",
+                                         "4CPU-4GB-3NIC"]),
+                         None)
+
+        ovf.write()
+        self.check_diff("""
+       </ovf:Item>
+-      <ovf:Item>
++      <ovf:Item ovf:configuration="2CPU-2GB-1NIC 4CPU-4GB-3NIC">
+         <rasd:AddressOnParent>11</rasd:AddressOnParent>
+""")
+
+
+    def test_set_property(self):
+        """Test cases for set_property() and related methods
+        """
+        ovf = OVF(self.input_ovf, self.working_dir, self.temp_file)
+        hw = ovf.hardware
+        # InstanceID 1, 'CPU' - entries for 'default' plus two other profiles
+        item = hw.item_dict['1']
+
+        self.assertTrue(item.has_profile(None))
+        self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
+        self.assertTrue(item.has_profile("4CPU-4GB-3NIC"))
+        # implied by default profile
+        self.assertTrue(item.has_profile("1CPU-1GB-1NIC"))
+        # nonexistent profile
+        self.assertFalse(item.has_profile("nonexistent"))
+
+        self.assertEqual(item.get_value(ovf.VIRTUAL_QUANTITY,
+                                        ['1CPU-1GB-1NIC']),
+                         '1')
+        self.assertEqual(item.get_value(ovf.VIRTUAL_QUANTITY,
+                                        ['2CPU-2GB-1NIC']),
+                         '2')
+        # value differs between profiles, so get_value returns None
+        self.assertEqual(item.get_value(ovf.VIRTUAL_QUANTITY,
+                                        ['1CPU-1GB-1NIC', '2CPU-2GB-1NIC']),
+                         None)
+
+        # Set profile 1 to same as default (this is a no-op)
+        item.set_property(ovf.VIRTUAL_QUANTITY, '1', ["1CPU-1GB-1NIC"])
+        ovf.write()
+        self.check_diff("")
+
+        # Change profile 1 to same as profile 2
+        item.set_property(ovf.VIRTUAL_QUANTITY, '2', ["1CPU-1GB-1NIC"])
+        self.assertEqual(item.get_value(ovf.VIRTUAL_QUANTITY,
+                                        ['1CPU-1GB-1NIC', '2CPU-2GB-1NIC']),
+                         '2')
+        ovf.write()
+        self.check_diff("""
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
++      <ovf:Item ovf:configuration="1CPU-1GB-1NIC 2CPU-2GB-1NIC">
+         <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+""")
+
+        # Change profile 1 back under default
+        item.set_property(ovf.VIRTUAL_QUANTITY, '1', ["1CPU-1GB-1NIC"])
+        ovf.write()
+        self.check_diff("")
+
+        # Change profile 2 to fall under default
+        item.set_property(ovf.VIRTUAL_QUANTITY, '1', ["2CPU-2GB-1NIC"])
+        self.assertTrue(item.has_profile(None))
+        self.assertTrue(item.has_profile("4CPU-4GB-3NIC"))
+        # implied by default profile
+        self.assertTrue(item.has_profile("1CPU-1GB-1NIC"))
+        self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
+        # nonexistent profile
+        self.assertFalse(item.has_profile("nonexistent"))
+
+        self.assertEqual(item.get_value(ovf.VIRTUAL_QUANTITY,
+                                        ['1CPU-1GB-1NIC',
+                                         '2CPU-2GB-1NIC']),
+                         '1')
+        self.assertEqual(item.get_value(ovf.VIRTUAL_QUANTITY, [None]),
+                         '1')
+        self.assertEqual(item.get_value(ovf.VIRTUAL_QUANTITY,
+                                        [None, '1CPU-1GB-1NIC',
+                                         '2CPU-2GB-1NIC']),
+                         '1')
+        # disjoint sets
+        self.assertEqual(item.get_value(ovf.VIRTUAL_QUANTITY,
+                                        [None, '1CPU-1GB-1NIC',
+                                         '2CPU-2GB-1NIC', '4CPU-4GB-3NIC']),
+                         None)
+
+        ovf.write()
+        self.check_diff("""
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
+-        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+-        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+-        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
+-        <rasd:InstanceID>1</rasd:InstanceID>
+-        <rasd:ResourceType>3</rasd:ResourceType>
+-        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+-        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+-      </ovf:Item>
+       <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
+""")
+
 
 
 class TestOVFAddDisk(COT_UT):
