@@ -958,6 +958,25 @@ expected="""
        <ovf:Item>
 """)
 
+        # Create a CPU definition in an OVF that doesn't have one
+        self.call_edit_hardware(['--cpus', '1'], input=self.minimal_ovf)
+        self.check_diff(file1=self.minimal_ovf,
+expected="""
+ <?xml version='1.0' encoding='utf-8'?>
+-<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
++<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData">
+   <ovf:References />
+...
+       <ovf:Info />
++      <ovf:Item>
++        <rasd:ElementName>cpu</rasd:ElementName>
++        <rasd:InstanceID>1</rasd:InstanceID>
++        <rasd:ResourceType>3</rasd:ResourceType>
++        <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+""")
+
 
     def test_set_memory(self):
         """Set the amount of RAM"""
@@ -1004,6 +1023,25 @@ expected="""
 -        <rasd:VirtualQuantity>4096</rasd:VirtualQuantity>
 +        <rasd:VirtualQuantity>3072</rasd:VirtualQuantity>
        </ovf:Item>
+""")
+
+        # Create a RAM definition in an OVF that doesn't have one
+        self.call_edit_hardware(['--memory', '4GB'], input=self.minimal_ovf)
+        self.check_diff(file1=self.minimal_ovf,
+expected="""
+ <?xml version='1.0' encoding='utf-8'?>
+-<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
++<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData">
+   <ovf:References />
+...
+       <ovf:Info />
++      <ovf:Item>
++        <rasd:ElementName>memory</rasd:ElementName>
++        <rasd:InstanceID>1</rasd:InstanceID>
++        <rasd:ResourceType>4</rasd:ResourceType>
++        <rasd:VirtualQuantity>4096</rasd:VirtualQuantity>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
 """)
 
 
@@ -1353,6 +1391,35 @@ expected="""
          <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
 """)
 
+        # Define NIC in an OVF that previously had none
+        self.call_edit_hardware(['-n', '1', '-N', 'testme',
+                                 '-M', '12:34:56:78:9a:bc'],
+                                input=self.minimal_ovf)
+        self.check_diff(file1=self.minimal_ovf,
+expected="""
+ <?xml version='1.0' encoding='utf-8'?>
+-<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
++<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData">
+   <ovf:References />
++  <ovf:NetworkSection>
++    <ovf:Info>Logical networks</ovf:Info>
++    <ovf:Network ovf:name="testme">
++      <ovf:Description>testme</ovf:Description>
++    </ovf:Network>
++  </ovf:NetworkSection>
+   <ovf:VirtualSystem ovf:id="x">
+...
+       <ovf:Info />
++      <ovf:Item>
++        <rasd:Address>12:34:56:78:9a:bc</rasd:Address>
++        <rasd:Connection>testme</rasd:Connection>
++        <rasd:ElementName>Ethernet1</rasd:ElementName>
++        <rasd:InstanceID>1</rasd:InstanceID>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+""")
+
 
     def test_set_serial_count(self):
         """Test addition and removal of serial ports"""
@@ -1392,6 +1459,24 @@ expected="""
 +        <rasd:Description>Serial Port acting as IOSd Aux Port</rasd:Description>
 +        <rasd:ElementName>Serial 2</rasd:ElementName>
 +        <rasd:InstanceID>14</rasd:InstanceID>
++        <rasd:ResourceType>21</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+""")
+
+        # Create a serial port in an OVF that doesn't have one
+        self.call_edit_hardware(['--serial-ports', '1'], input=self.minimal_ovf)
+        self.check_diff(file1=self.minimal_ovf,
+expected="""
+ <?xml version='1.0' encoding='utf-8'?>
+-<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
++<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData">
+   <ovf:References />
+...
+       <ovf:Info />
++      <ovf:Item>
++        <rasd:ElementName>serial</rasd:ElementName>
++        <rasd:InstanceID>1</rasd:InstanceID>
 +        <rasd:ResourceType>21</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>

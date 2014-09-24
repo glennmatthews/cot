@@ -2093,6 +2093,9 @@ class OVFHardware:
         ovfitem.set_property(self.ovf.RESOURCE_TYPE,
                              self.ovf.RES_MAP[resource_type],
                              profile_list)
+        # ovftool freaks out if we leave out the ElementName on an Item,
+        # so provide a simple default value.
+        ovfitem.set_property(self.ovf.ELEMENT_NAME, resource_type, profile_list)
         self.item_dict[instance] = ovfitem
         ovfitem.modified = True
         logger.info("Added new {0} under {1}, instance is {2}"
@@ -2244,8 +2247,15 @@ class OVFHardware:
                     new_item_profiles.append(profile)
                     count_dict[profile] += 1
                     items_seen[profile] += 1
-            (new_instance, new_item) = self.clone_item(last_item,
-                                                       new_item_profiles)
+            if last_item is None:
+                logger.warning("No existing items found for {0}. "
+                               "Creating new {0}"
+                               .format(resource_type))
+                (new_instance, new_item) = self.new_item(resource_type,
+                                                         new_item_profiles)
+            else:
+                (new_instance, new_item) = self.clone_item(last_item,
+                                                           new_item_profiles)
             # Check/update other properties of the clone that should be unique:
             address = new_item.get(self.ovf.ADDRESS)
             if address:
@@ -2283,9 +2293,10 @@ class OVFHardware:
         """
         ovfitem_list = self.find_all_items(resource_type)
         if not ovfitem_list:
-            # TODO - create an item?
-            raise LookupError("No items of type {0} found!"
-                              .format(resource_type))
+            logger.warning("No existing items of type {0} found. Will create "
+                           "new {0} from scratch.".format(resource_type))
+            (instance, ovfitem) = self.new_item(resource_type, profile_list)
+            ovfitem_list = [ovfitem]
         for ovfitem in ovfitem_list:
             ovfitem.set_property(property, new_value, profile_list)
         logger.info("Updated {0} {1} to {2} under {3}"
