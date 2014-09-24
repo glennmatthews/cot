@@ -27,8 +27,15 @@ try: input = raw_input
 except NameError: pass
 
 def mac_address(string):
-    """Parser helper function - validate string is a valid MAC address"""
-    if not re.match("([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$", string):
+    """Parser helper function - validate string is a valid MAC address.
+    Valid formats are:
+    xx:xx:xx:xx:xx:xx
+    xx-xx-xx-xx-xx-xx
+    xxxx.xxxx.xxxx
+    """
+    if not (re.match("([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$", string) or
+            re.match("([0-9a-fA-F]{2}-){5}[0-9a-fA-F]{2}$", string) or
+            re.match("([0-9a-fA-F]{4}\.){2}[0-9a-fA-F]{4}$", string)):
         msg = "'{0}' is not a valid MAC address".format(string)
         raise argparse.ArgumentTypeError(msg)
     return string

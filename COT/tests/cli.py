@@ -17,6 +17,31 @@
 import os.path
 
 from COT.tests.ut import COT_UT
+from COT.cli import mac_address, device_address
+from argparse import ArgumentTypeError
+
+class TestCLIParserHelpers(COT_UT):
+    """Test cases for CLI parser helper functions"""
+
+    def test_mac_address(self):
+        for valid_string in ["01:08:ab:cd:e0:f9", "00-00-00-00-00-00",
+                             "081a.1357.ffff"]:
+            self.assertEqual(mac_address(valid_string), valid_string)
+
+        for invalid_string in ["01:08:ab:cd:e0:g9", "01:02:03:04:05",
+                               "00:00-00:00-00:00", "1111.2345",
+                               "01-02-03-04-05", "01-02-03-04-05-06-07",
+                               "12345.6789.abcd"]:
+            self.assertRaises(ArgumentTypeError, mac_address, invalid_string)
+
+
+    def test_device_address(self):
+        for valid_string in ["0:0", "1:1", "3:7"]:
+            self.assertEqual(device_address(valid_string), valid_string)
+
+        for invalid_string in ["0", "-1:0", "1:-1", "1:1:1"]:
+            self.assertRaises(ArgumentTypeError, device_address, invalid_string)
+
 
 class TestCLIGeneral(COT_UT):
     """CLI Test cases for top-level "cot" command"""
