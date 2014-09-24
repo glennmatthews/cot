@@ -9,3 +9,6 @@
 # https://github.com/glennmatthews/cot/blob/master/LICENSE.txt. No part
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
+
+import logging
+logging.basicConfig(level=logging.CRITICAL)

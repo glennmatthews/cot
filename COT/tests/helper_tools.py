@@ -31,7 +31,7 @@ class TestGetChecksum(COT_UT):
         """
         try:
             checksum = get_checksum(self.input_ovf, 'md5')
-            self.assertEqual(checksum, "8b202de9b35109494fb810d72d0c6c51")
+            self.assertEqual(checksum, "5aa4e3defb16e02ea16dd07cff77bfdf")
 
             checksum = get_checksum(self.minimal_ovf, 'md5')
             self.assertEqual(checksum, "288e1e3fcb05265cd9b8c7578e173fef")
@@ -44,7 +44,7 @@ class TestGetChecksum(COT_UT):
         try:
             checksum = get_checksum(self.input_ovf, 'sha1')
             self.assertEqual(checksum,
-                             "fe08990b4dea5599745e9d84d3aa9442a6199f09")
+                             "63b6c9d71cc8b051ffbfa8d1d630d30a2dfb9701")
 
             checksum = get_checksum(self.minimal_ovf, 'sha1')
             self.assertEqual(checksum,
@@ -70,8 +70,7 @@ class TestGetDiskFormat(COT_UT):
     """Test cases for get_disk_format() function"""
 
     def test_get_disk_format(self):
-        """TODO
-        """
+        """Get format and subformat of various disk images."""
         # First, tests that just use qemu-img
         try:
             temp_disk = os.path.join(self.temp_dir, 'foo.img')

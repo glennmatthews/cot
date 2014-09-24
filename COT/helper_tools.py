@@ -107,7 +107,7 @@ def get_qemu_img_version():
                                "from qemu-img:\n{0}"
                                .format(qemu_stdout))
         QEMU_IMG_VERSION = StrictVersion(match.group(1))
-        logger.info("qemu-img version is '{0}'".format(QEMU_IMG_VERSION))
+        logger.debug("qemu-img version is '{0}'".format(QEMU_IMG_VERSION))
 
     return QEMU_IMG_VERSION
 
@@ -120,7 +120,7 @@ def get_disk_format(file_path):
     subformat may be None, or one of many strings for 'vmdk' files.
     """
 
-    logger.info("Invoking qemu-img to determine disk format of {0}"
+    logger.debug("Invoking qemu-img to determine disk format of {0}"
                 .format(file_path))
     qemu_stdout = check_output(['qemu-img', 'info', file_path])
     # Read the format from the output
@@ -130,7 +130,8 @@ def get_disk_format(file_path):
                            "the output from qemu-img:\n{0}"
                            .format(qemu_stdout))
     file_format = match.group(1)
-    logger.info("File format is {0}".format(file_format))
+    logger.info("File format of '{0}' is '{1}'"
+                .format(os.path.basename(file_path), file_format))
 
     if file_format == 'raw':
         # No applicable sub-format
@@ -150,7 +151,7 @@ def get_disk_format(file_path):
                 raise RuntimeError("Could not find VMDK 'createType' in the "
                                    "file header:\n{0}".format(header))
             vmdk_format = match.group(1)
-        logger.info("VMDK sub-format is {0}".format(vmdk_format))
+        logger.info("VMDK sub-format is '{0}'".format(vmdk_format))
         return (file_format, vmdk_format)
     else:
         raise ValueUnsupportedError("disk file format",
@@ -204,9 +205,9 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
         new_file_path = os.path.join(output_dir, file_string + '.vmdk')
         if get_qemu_img_version() >= StrictVersion("2.1.0"):
             # qemu-img finally supports streamOptimized - yay!
-            logger.warning("Invoking qemu-img to convert {0} to "
-                           "streamOptimized VMDK {1}"
-                           .format(file_path, new_file_path))
+            logger.debug("Invoking qemu-img to convert {0} to "
+                         "streamOptimized VMDK {1}"
+                         .format(file_path, new_file_path))
             qemu_stdout = check_output(['qemu-img', 'convert', '-O', 'vmdk',
                                         '-o', 'subformat=streamOptimized',
                                         file_path, new_file_path])
@@ -219,16 +220,16 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
             if curr_format != 'raw':
                 # Use qemu-img to convert to raw format
                 temp_path = os.path.join(output_dir, file_string + '.img')
-                logger.warning("Invoking qemu-img to convert {0} to RAW {1}"
-                               .format(file_path, temp_path))
+                logger.debug("Invoking qemu-img to convert {0} to RAW {1}"
+                             .format(file_path, temp_path))
                 qemu_stdout = check_output(['qemu-img', 'convert', '-O', 'raw',
                                             file_path, temp_path])
                 file_path = temp_path
 
             # Use vmdktool to convert raw image to stream-optimized VMDK
-            logger.warning("Invoking vmdktool to convert {0} to "
-                           "stream-optimized VMDK {1}"
-                           .format(file_path, new_file_path))
+            logger.debug("Invoking vmdktool to convert {0} to "
+                         "stream-optimized VMDK {1}"
+                         .format(file_path, new_file_path))
             # Note that vmdktool takes its arguments in unusual order -
             # output file comes before input file
             vmdktool_so = check_output(['vmdktool', '-z9', '-v',
@@ -285,8 +286,8 @@ def create_disk_image(file_path, file_format=None,
             # Round capacity to the next larger multiple of 8 MB
             # just to be safe...
             capacity = "{0}M".format(((capacity/1024/1024/8) + 1)*8)
-            logger.debug("To contain files {0}, disk capacity will be {1}"
-                         .format(contents, capacity))
+            logger.info("To contain files {0}, disk capacity of {1} will be {2}"
+                         .format(contents, file_path, capacity))
         # TODO - if fatdisk not available, use qemu-img and guestfish?
         fatdisk_args = ['fatdisk', file_path, 'format',
                         'size', capacity,

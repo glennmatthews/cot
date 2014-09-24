@@ -265,8 +265,7 @@ class TestOVFInputOutput(COT_UT):
 
 
     def test_invalid_ovf_contents(self):
-        """Check that OVF files which are valid XML but have invalid data
-        are correctly rejected."""
+        """Check for rejection of OVF files with valid XML but invalid data"""
 
         # Multiple Items under same profile with same InstanceID
         fake_file = os.path.join(self.temp_dir, "foo.ovf")

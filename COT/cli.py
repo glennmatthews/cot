@@ -198,7 +198,6 @@ def main():
     if not sys.__stdin__.isatty():
         args.force = True
 
-    logging.basicConfig()
     logger = logging.getLogger('COT')
     # Map verbosity to logging level
     log_level = {0: logging.ERROR,

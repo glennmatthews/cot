@@ -187,7 +187,7 @@
         <rasd:ResourceType>10</rasd:ResourceType>
       </ovf:Item>
     </ovf:VirtualHardwareSection>
-    <ovf:ProductSection ovf:class="generic" ovf:instance="1" ovf:required="false">
+    <ovf:ProductSection ovf:required="false">
       <ovf:Info>Information about the installed software</ovf:Info>
       <ovf:Product>generic platform</ovf:Product>
       <ovf:Vendor>Cisco Systems, Inc.</ovf:Vendor>

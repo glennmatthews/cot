@@ -107,8 +107,8 @@ class OVF(VMDescription, XML):
         m = re.search("(\.ov[fa])[^a-zA-Z0-9]", filename)
         if m:
             extension = m.group(1)
-            logger.warning("Filename {0} does not end in .ovf or .ova, "
-                           "but found {1} in mid-filename; treating as such."
+            logger.warning("Filename '{0}' does not end in '.ovf' or '.ova', "
+                           "but found '{1}' in mid-filename; treating as such."
                            .format(filename, extension))
             return extension
 
@@ -235,9 +235,11 @@ class OVF(VMDescription, XML):
             for file in self.find_all_children(self.references, self.FILE):
                 filepath = os.path.join(input_dir, file.get(self.FILE_HREF))
                 if not os.path.exists(filepath):
-                    logger.warning("As file {0} does not exist, not copying it "
-                                   "to the working directory."
-                                   .format(filepath))
+                    logger.warning("File '{0}' referenced in the OVF does not "
+                                   "exist. It will not be copied to the "
+                                   "working directory '{1}'."
+                                   .format(file.get(self.FILE_HREF),
+                                           self.working_dir))
                     continue
                 logger.debug("Copying {0} to {1}"
                              .format(filepath, self.working_dir))
@@ -265,14 +267,16 @@ class OVF(VMDescription, XML):
             file_path = os.path.join(self.working_dir,
                                      file.get(self.FILE_HREF))
             if not os.path.exists(file_path):
-                logger.warning("Referenced file {0} does not exist and so "
-                               "will not be included in the output."
-                               .format(file_path))
+                logger.error("Referenced file '{0}' does not exist and so "
+                             "will not be included in the output."
+                             .format(file.get(self.FILE_HREF)))
                 continue
             file_size_string = str(os.path.getsize(file_path))
             if file_size_string != file.get(self.FILE_SIZE):
-                logger.warning("Size of file {0} seems to have changed "
-                               "from {1} to {2}. OVF will reflect this change."
+                logger.warning("Size of file '{0}' seems to have changed "
+                               "from {1} (reported in the original OVF) "
+                               "to {2} (current file size). "
+                               "The updated OVF will reflect this change."
                                .format(file.get(self.FILE_HREF),
                                        file.get(self.FILE_SIZE),
                                        file_size_string))
@@ -283,12 +287,15 @@ class OVF(VMDescription, XML):
                 capacity = str(self.get_capacity_from_disk(disk))
                 actual_capacity = get_disk_capacity(file_path)
                 if capacity != actual_capacity:
-                    logger.error("Capacity of disk {0} seems to have changed "
-                                   "from {1} to {2}. "
-                                   "OVF will reflect this change."
+                    logger.warning("Capacity of disk '{0}' seems to have "
+                                   "changed from {1} (reported in the original "
+                                   "OVF) to {2} (actual capacity). "
+                                   "The updated OVF will reflect this change."
                                    .format(file.get(self.FILE_HREF),
                                            capacity, actual_capacity))
                     self.set_capacity_of_disk(disk, actual_capacity)
+
+        logger.info("Writing out to file {0}".format(self.output_file))
 
         if extension == '.ova':
             ovf_file = os.path.join(self.working_dir, "{0}.ovf"
@@ -638,9 +645,13 @@ class OVF(VMDescription, XML):
             'ios-xrv.lc' : Platform.IOSXRvLC,
             }
 
-        if self.product_section is not None:
+        if self.product_section is None:
+            platform = Platform.GenericPlatform
+        else:
             product_class = self.product_section.get(self.PRODUCT_CLASS)
-            if product_class is not None:
+            if product_class is None:
+                platform = Platform.GenericPlatform
+            else:
                 match = re.match("com\.cisco\.(.*)", product_class)
                 if match:
                     class_type = match.group(1)
@@ -649,7 +660,7 @@ class OVF(VMDescription, XML):
                     except KeyError:
                         pass
         if not platform:
-            logger.warning("Unrecognized product class {0} - known classes "
+            logger.warning("Unrecognized product class '{0}' - known classes "
                            "are {1}. Treating as generic product..."
                            .format(product_class, class_to_platform_map.keys()))
             platform = Platform.GenericPlatform
@@ -671,7 +682,7 @@ class OVF(VMDescription, XML):
             file_name = file.get(self.FILE_HREF)
             file_path = os.path.join(base_dir, file_name)
             if not os.path.exists(file_path):
-                logger.warning("OVF descriptor references file {0}, "
+                logger.warning("OVF descriptor references file '{0}', "
                                "but file does not exist!".format(file_name))
                 rc = False
                 continue
@@ -680,8 +691,8 @@ class OVF(VMDescription, XML):
             expected_size = file.get(self.FILE_SIZE)
             actual_size = str(os.path.getsize(file_path))
             if expected_size != actual_size:
-                logger.warning("OVF descriptor describes file {0} as size {1}, "
-                               "but file has actual size {2}."
+                logger.warning("OVF descriptor describes file '{0}' as having "
+                               "size {1} bytes, but file is actually {2} bytes."
                                .format(file_name, expected_size, actual_size))
                 rc = False
                 continue
@@ -1132,8 +1143,8 @@ class OVF(VMDescription, XML):
 
         ctrl_addr = address.split(":")[0]
         disk_addr = address.split(":")[1]
-        logger.info("Searching for controller address {0}"
-                    .format(ctrl_addr))
+        logger.debug("Searching for controller address {0}"
+                     .format(ctrl_addr))
 
         ctrl_item = self.hardware.find_item(controller,
                                             {self.ADDRESS: ctrl_addr})
@@ -1143,8 +1154,8 @@ class OVF(VMDescription, XML):
 
         # From controller Item to its child disk Item
         ctrl_instance = ctrl_item.get_value(self.INSTANCE_ID)
-        logger.info("Searching for disk address {0} with parent {1}"
-                    .format(disk_addr, ctrl_instance))
+        logger.debug("Searching for disk address {0} with parent {1}"
+                     .format(disk_addr, ctrl_instance))
         disk_item = self.hardware.find_item(
             properties={self.PARENT: ctrl_instance,
                         self.ADDRESS_ON_PARENT: disk_addr})
@@ -1154,12 +1165,12 @@ class OVF(VMDescription, XML):
 
         host_resource = disk_item.get_value(self.HOST_RESOURCE)
         if host_resource is None:
-            logger.info("Disk item has no RASD:HostResource - "
-                        "i.e., empty drive")
+            logger.debug("Disk item has no RASD:HostResource - "
+                         "i.e., empty drive")
             return (file, disk, ctrl_item, disk_item)
 
         if host_resource.startswith(self.HOST_RSRC_DISK_REF):
-            logger.info("Looking for Disk and File matching disk Item")
+            logger.debug("Looking for Disk and File matching disk Item")
             # From disk Item to Disk
             disk_id = os.path.basename(host_resource)
             if self.disk_section is not None:
@@ -1172,7 +1183,7 @@ class OVF(VMDescription, XML):
                 file = self.find_child(self.references, self.FILE,
                                        attrib={self.FILE_ID: file_id})
         elif host_resource.startswith(self.HOST_RSRC_FILE_REF):
-            logger.info("Looking for File and Disk matching disk Item")
+            logger.debug("Looking for File and Disk matching disk Item")
             # From disk Item to File
             file_id = os.path.basename(host_resource)
             file = self.find_child(self.references, self.FILE,
@@ -1515,7 +1526,8 @@ class OVF(VMDescription, XML):
             else:
                 # Read-only mode - only extract the OVF descriptor file.
                 tarf.extract(ovf_descriptor, path=self.working_dir)
-            logger.info("Extracted {0} to {1}".format(file, self.working_dir))
+            logger.info("Extracted {0} to working directory {1}"
+                        .format(file, self.working_dir))
 
         # Find the OVF file
         return os.path.join(self.working_dir, ovf_descriptor.name)
@@ -1533,7 +1545,7 @@ class OVF(VMDescription, XML):
         try:
             sha1sum = get_checksum(ovf_file, 'sha1')
         except HelperNotFoundError:
-            logger.warning("Unable to get checksum due to missing helper tool")
+            logger.error("Unable to get checksum due to missing helper tool")
             # Remove any existing manifest file
             if os.path.exists(manifest):
                 os.remove(manifest)
@@ -1547,9 +1559,9 @@ class OVF(VMDescription, XML):
                 file_name = file.get(self.FILE_HREF)
                 file_path = os.path.join(os.path.dirname(ovf_file), file_name)
                 if not os.path.exists(file_path):
-                    logger.warning("File {0} does not exist - unable to "
-                                   "determine its checksum for the manifest."
-                                   .format(file_path))
+                    logger.error("File {0} does not exist - unable to "
+                                 "determine its checksum for the manifest."
+                                 .format(file_name))
                     continue
                 sha1sum = get_checksum(file_path, 'sha1')
                 f.write("SHA1({file})= {sum}\n"
@@ -1585,9 +1597,9 @@ class OVF(VMDescription, XML):
             for file in self.find_all_children(self.references, self.FILE):
                 file_path = os.path.join(dir, file.get(self.FILE_HREF))
                 if not os.path.exists(file_path):
-                    logger.warning("As referenced file {0} does not exist, "
-                                   "it will not be added to the OVA"
-                                   .format(file.get(self.FILE_HREF)))
+                    logger.error("As referenced file '{0}' does not exist, "
+                                 "it will not be added to the OVA"
+                                 .format(file.get(self.FILE_HREF)))
                     continue
                 tarf.add(file_path, os.path.basename(file_path))
                 logger.info("Added {0} to {1}".format(file_path, tar_file))
@@ -1601,8 +1613,8 @@ class OVF(VMDescription, XML):
         if section is not None:
             return section
 
-        logger.warning("No existing {0}. Creating it."
-                       .format(XML.strip_ns(section_tag)))
+        logger.info("No existing {0}. Creating it."
+                    .format(XML.strip_ns(section_tag)))
         section = ET.Element(section_tag, attrib=attrib)
         # Section elements may be in arbitrary order relative to one another,
         # but they MUST come after the References and before the VirtualSystem.
@@ -1627,7 +1639,7 @@ class OVF(VMDescription, XML):
 
         parent_instance = item.get_value(self.PARENT)
         if parent_instance is None:
-            logger.warning("Provided Item has no RASD:Parent element?")
+            logger.error("Provided Item has no RASD:Parent element?")
             return None
 
         return self.hardware.find_item(
@@ -2032,12 +2044,14 @@ class OVFHardware:
                 try:
                     self.item_dict[instance].add_item(item)
                 except OVFItemDataError as e:
+                    logger.debug(e)
                     # Mask away the nitty-gritty details from our caller
-                    logger.warning(e)
                     raise OVFHardwareDataError("Data conflict for instance {0}"
                                                .format(instance))
-        logger.info("OVF describes {0} unique (by InstanceID) hardware Items"
-                    .format(len(self.item_dict)))
+        logger.info("OVF contains {0} hardware Item elements describing {1} "
+                    "unique devices"
+                    .format(len(ovf.virtual_hw_section.findall(self.ovf.ITEM)),
+                            len(self.item_dict)))
         # Treat the current state as golden:
         for ovfitem in self.item_dict.values():
             ovfitem.modified = False
@@ -2069,9 +2083,11 @@ class OVFHardware:
             logger.debug("Generated {0} items".format(len(new_items)))
             for item in new_items:
                 XML.add_child(self.ovf.virtual_hw_section, item, ordering)
-        logger.info("Updated XML VirtualHardwareSection, now contains {0} Items"
+        logger.info("Updated XML VirtualHardwareSection, now contains {0} "
+                    "Items representing {1} devices"
                     .format(len(self.ovf.virtual_hw_section.findall(
-                        self.ovf.ITEM))))
+                                self.ovf.ITEM)),
+                            len(self.item_dict)))
 
 
     def find_unused_instance_id(self):
@@ -2331,10 +2347,10 @@ class OVFHardware:
                         .format(resource_type, XML.strip_ns(property),
                                 new_value, profile_list))
         if len(value_list):
-            logger.warning("After scanning all known {0} Items, not all "
-                           "{1} values were used - leftover {2}"
-                           .format(resource_type, XML.strip_ns(property),
-                                   value_list))
+            logger.error("After scanning all known {0} Items, not all "
+                         "{1} values were used - leftover {2}"
+                         .format(resource_type, XML.strip_ns(property),
+                                 value_list))
 
 
 class OVFItemDataError(Exception):
@@ -2481,8 +2497,9 @@ class OVFItem:
             for (known_value, profile_set) in list(self.property_dict[key].items()):
                 if not overwrite and profile_set.intersection(profiles):
                     raise OVFItemDataError(
-                        "Tried to set value {0} for {1} under profile(s) {2} "
-                        "but already had value {3} under profile(s) {4}"
+                        "Tried to set value '{0}' for property '{1}' under "
+                        "profile(s) {2} but already had value '{3}' for this "
+                        "property under profile(s) {4}"
                         .format(value, XML.strip_ns(key), profiles,
                                 known_value,
                                 profile_set.intersection(profiles)))
@@ -2524,8 +2541,8 @@ class OVFItem:
         from this item or another item.
         """
         if self.has_profile(new_profile):
-            logger.warning("Profile {0} already exists under {1}!"
-                           .format(new_profile, self))
+            logger.error("Profile {0} already exists under {1}!"
+                         .format(new_profile, self))
             return
         if from_item is None:
             from_item = self
@@ -2555,11 +2572,12 @@ class OVFItem:
     def remove_profile(self, profile):
         """Remove all trace of the given profile from this item"""
         if not self.has_profile(profile):
-            logger.warning("Profile {0} not present under {1}!"
-                           .format(profile, self))
+            logger.error("Requested deletion of profile '{0}' but it is "
+                         "not present under {1}!"
+                         .format(profile, self))
             return
-        logger.info("Removing profile {0} from item {1}"
-                    .format(profile, self.property_dict[self.INSTANCE_ID]))
+        logger.debug("Removing profile {0} from item {1}"
+                     .format(profile, self.property_dict[self.INSTANCE_ID]))
         p_set = set([profile])
         for key in self.property_dict.keys():
             found = False
@@ -2643,9 +2661,9 @@ class OVFItem:
             set_so_far = set()
             for profile_set in value_dict.values():
                 if None in profile_set and len(profile_set) > 1:
-                    logger.error("Profile set {0} contains redundant info; "
-                                 "cleaning it up now..."
-                                 .format(profile_set))
+                    logger.warning("Profile set {0} contains redundant info; "
+                                   "cleaning it up now..."
+                                   .format(profile_set))
                     # Clean up...
                     profile_set.clear()
                     profile_set.add(None)

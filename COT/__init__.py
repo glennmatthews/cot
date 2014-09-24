@@ -12,6 +12,9 @@
 
 import os.path
 
+import logging
+logging.basicConfig()
+
 version_file = os.path.join(os.path.dirname(__file__), '__version__.py')
 # Work under python 2.x and 3.x both
 try:
