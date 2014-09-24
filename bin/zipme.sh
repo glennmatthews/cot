@@ -30,11 +30,12 @@ VERSION=`grep __version__ $COT/COT/__version__.py | cut -f 2 -d'"'`
 ARCHIVE="cot-$VERSION.tgz"
 
 tar czvf $ARCHIVE \
+    $COT/*.md \
     $COT/*.txt \
     $COT/*.in \
     $COT/*.py \
     $COT/bin/cot \
-    $COT/bin/*.py \
+    $COT/bin/cot_unittest \
     $COT/bin/*.sh \
     $COT/COT/*.py \
     $COT/COT/tests/*.py \
