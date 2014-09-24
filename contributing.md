@@ -15,26 +15,39 @@ unit test case(s) under `COT/tests/` to cover your changes. Your changes
 **must** pass all existing and new automated test cases before your code
 will be accepted.
 
-You can run the COT automated tests using the provided `cot_unittest.py`
+You can run the COT automated tests using the provided `cot_unittest`
 script:
 
-    > ./bin/cot_unittest.py --help
-    usage: cot_unittest.py [-h] [-v]
+```
+> ./bin/cot_unittest --help
+Usage: python -m unittest discover [options]
 
-    Common OVF Tool unit tests
+Options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Verbose output
+  -f, --failfast        Stop on first fail or error
+  -c, --catch           Catch ctrl-C and display results so far
+  -b, --buffer          Buffer stdout and stderr during tests
+  -s START, --start-directory=START
+                        Directory to start discovery ('.' default)
+  -p PATTERN, --pattern=PATTERN
+                        Pattern to match tests ('test*.py' default)
+  -t TOP, --top-level-directory=TOP
+                        Top level directory of project (defaults to start
+                        directory)
+```
 
-    optional arguments:
-      -h, --help     show this help message and exit
-      -v, --verbose  Increase verbosity (repeatable)
+When run, if all tests pass, you will see output like this:
 
-When run, if all tests pass, you will see output like this::
+```
+> ./bin/cot_unittest
+................................................................................
+......................................................
+----------------------------------------------------------------------
+Ran 134 tests in 32.542s
 
-    > ./bin/cot_unittest.py
-    .........................................................................................................................
-    ----------------------------------------------------------------------
-    Ran 123 tests in 38.184s
-
-    OK
+OK
+```
 
 Update README
 -------------

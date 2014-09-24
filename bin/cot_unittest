@@ -1,0 +1,35 @@
+#!/bin/bash
+#
+# cot_unittest - Unit test driver for the Common OVF Tool suite
+#
+# August 2013, Glenn F. Matthews
+# Copyright (c) 2013-2014 the COT project developers.
+# See the COPYRIGHT.txt file at the top-level directory of this distribution
+# and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
+#
+# This file is part of the Common OVF Tool (COT) project.
+# It is subject to the license terms in the LICENSE.txt file found in the
+# top-level directory of this distribution and at
+# https://github.com/glennmatthews/cot/blob/master/LICENSE.txt. No part
+# of COT, including this file, may be copied, modified, propagated, or
+# distributed except according to the terms contained in the LICENSE.txt file.
+
+# Find the current working directory and source any helper file provided
+dir="$( dirname "$0" )"
+if [ -f "$dir/cot_helper.sh" ]; then
+  . "$dir/cot_helper.sh"
+fi
+# Now proceed to find the right python version...
+if type python3 >/dev/null 2>/dev/null; then
+    python=python3
+elif type python2.7 >/dev/null 2>/dev/null; then
+    python=python2.7
+elif type python-2.7.1 >/dev/null 2>/dev/null; then
+    python=python-2.7.1
+else
+    python=python
+fi
+exec $python -m unittest discover -s COT/tests -p "*.py" "$@"
+
+# You can also invoke test cases with the following command:
+# python-2.7.1 -m unittest discover -s COT/tests -p "*.py"
