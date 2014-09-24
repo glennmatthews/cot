@@ -15,11 +15,11 @@ import os.path
 import logging
 logging.basicConfig()
 
-version_file = os.path.join(os.path.dirname(__file__), '__version__.py')
-# Work under python 2.x and 3.x both
-try:
-    # python 2
-    execfile(version_file)
-except NameError:
-    # python 3
-    exec(compile(open(version_file, "rb").read(), version_file, 'exec'))
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
+__version_long__ = (
+    """Common OVF Tool (COT), version """ + __version__ +
+    """\nCopyright (C) 2013-2014 the COT project developers."""
+)

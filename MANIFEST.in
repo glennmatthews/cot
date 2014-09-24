@@ -1,2 +1,4 @@
 include *.txt
 include *.md
+include versioneer.py
+include COT/_version.py

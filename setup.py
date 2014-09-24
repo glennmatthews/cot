@@ -15,15 +15,22 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 from setuptools import setup
-import os.path
+import versioneer
 
-execfile(os.path.join(os.path.dirname(__file__), 'COT', '__version__.py'))
+versioneer.VCS = 'git'
+versioneer.versionfile_source = 'COT/_version.py'
+versioneer.versionfile_build = versioneer.versionfile_source # TODO
+versioneer.tag_prefix = 'v'
+versioneer.parentdir_prefix = 'cot-'
+
+import os.path
 
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
 
 setup(
     name='common-ovf-tool',
-    version=__version__,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
     packages=['COT'],
@@ -33,7 +40,7 @@ setup(
         ],
     },
     url='https://github.com/glennmatthews/cot',
-    license='LICENSE.txt',
+    license=open('LICENSE.txt').read(),
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
     test_suite='COT.tests',
