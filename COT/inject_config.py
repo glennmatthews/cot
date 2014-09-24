@@ -26,7 +26,7 @@ from .data_validation import ValueUnsupportedError
 from .helper_tools import create_disk_image
 from .vm_context_manager import VMContextManager
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 def inject_config(args):
     """Wrap the given configuration file(s) into an appropriate disk image file

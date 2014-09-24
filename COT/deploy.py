@@ -23,7 +23,7 @@ from .vm_description import VMDescription
 from COT.helper_tools import check_output
 from COT.ovf import *
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 def deploy(args):
     # if deploying to esxi use deploy_esxi function

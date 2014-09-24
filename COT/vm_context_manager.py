@@ -26,7 +26,7 @@ from .ovf import OVF
 from .vm_description import VMInitError
 from .data_validation import ValueUnsupportedError
 
-logger = logging.getLogger("cot")
+logger = logging.getLogger(__name__)
 
 class VMContextManager:
     """Context manager for virtual machine definitions. Use as follows:

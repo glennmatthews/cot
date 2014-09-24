@@ -23,7 +23,7 @@ from .cli import subparsers, subparser_lookup, confirm_or_die, get_input
 from .vm_context_manager import VMContextManager
 from .data_validation import ValueUnsupportedError
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 def edit_properties(args):
     """Edit environment properties in an OVF descriptor.

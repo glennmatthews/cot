@@ -19,7 +19,7 @@ from .data_validation import ValueUnsupportedError
 from .data_validation import ValueTooLowError, ValueTooHighError
 import logging
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 class GenericPlatform(object):
     """Generic class for operations that depend on guest platform.

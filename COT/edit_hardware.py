@@ -25,7 +25,7 @@ from .cli import (subparsers, subparser_lookup,
 from .data_validation import natural_sort, ValueUnsupportedError
 from .vm_context_manager import VMContextManager
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 def edit_hardware(args):
     """Edit hardware information (CPUs, RAM, NICs, etc.)"""

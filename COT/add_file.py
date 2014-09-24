@@ -22,7 +22,7 @@ from .cli import subparsers, subparser_lookup, confirm_or_die
 from .vm_context_manager import VMContextManager
 from .data_validation import check_for_conflict
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 def add_file(args):
     """Add a file (such as a README) to the package.

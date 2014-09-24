@@ -21,7 +21,7 @@ import sys
 from .cli import subparsers, subparser_lookup
 from .vm_context_manager import VMContextManager
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 def info(args):
     """Display VM information string"""

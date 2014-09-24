@@ -31,7 +31,7 @@ from .data_validation import *
 from .helper_tools import get_checksum, get_disk_capacity, convert_disk_image
 import COT.platform as Platform
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 # Where do we want to wrap lines when pretty-printing?
 TEXT_WIDTH = 79

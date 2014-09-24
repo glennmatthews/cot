@@ -24,7 +24,7 @@ from distutils.version import StrictVersion
 
 from .data_validation import ValueUnsupportedError
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 QEMU_IMG_VERSION = None
 

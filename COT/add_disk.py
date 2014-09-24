@@ -22,7 +22,7 @@ from .cli import subparsers, subparser_lookup, confirm_or_die, device_address
 from .vm_context_manager import VMContextManager
 from .data_validation import *
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 def add_disk(args):
     """Add or replace a disk in a virtual machine"""

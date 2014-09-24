@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ET
 import logging
 import re
 
-logger = logging.getLogger('cot')
+logger = logging.getLogger(__name__)
 
 class XML(object):
 

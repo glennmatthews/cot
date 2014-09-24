@@ -22,6 +22,8 @@ import re
 
 from COT import __version__, __version_long__
 
+logger = logging.getLogger(__name__)
+
 # In python 2.7, we want raw_input, but in python 3 we want input.
 try: input = raw_input
 except NameError: pass
@@ -92,7 +94,6 @@ def confirm(prompt, force=False):
     """Prompts user to confirm the requested operation, or auto-accepts if
        args.force is set to True."""
     if force:
-        logger = logging.getLogger('cot')
         logger.warning("Automatically agreeing to '{0}'".format(prompt))
         return True
 
@@ -116,7 +117,6 @@ def get_input(prompt, default, force=False):
     """Prompt the user to enter a string, or auto-accepts the default if
     force is set to True."""
     if force:
-        logger = logging.getLogger('cot')
         logger.warning("Automatically entering {0} in response to '{1}'"
                        .format(default, prompt))
         return default
@@ -199,7 +199,7 @@ def main():
         args.force = True
 
     logging.basicConfig()
-    logger = logging.getLogger('cot')
+    logger = logging.getLogger('COT')
     # Map verbosity to logging level
     log_level = {0: logging.ERROR,
                  1: logging.WARNING,
