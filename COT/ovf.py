@@ -747,7 +747,8 @@ class OVF(VMDescription, XML):
         self.platform.validate_cpu_count(cpus)
         self.hardware.set_value_for_all_items('cpu',
                                               self.VIRTUAL_QUANTITY, cpus,
-                                              profile_list)
+                                              profile_list,
+                                              create_new=True)
 
 
     def set_memory(self, megabytes, profile_list):
@@ -757,7 +758,8 @@ class OVF(VMDescription, XML):
         self.platform.validate_memory_amount(megabytes)
         self.hardware.set_value_for_all_items('memory',
                                               self.VIRTUAL_QUANTITY, megabytes,
-                                              profile_list)
+                                              profile_list,
+                                              create_new=True)
 
 
     def set_nic_type(self, type, profile_list):
@@ -2287,12 +2289,18 @@ class OVFHardware:
 
 
     def set_value_for_all_items(self, resource_type, property, new_value,
-                                profile_list):
+                                profile_list, create_new=False):
         """For all items of the given resource_type, update the given property
         to the given new_value under the specified set of profiles.
+        If no items of the given type exist, will create a new Item if
+        create_new is set to True; otherwise will log a warning and do nothing.
         """
         ovfitem_list = self.find_all_items(resource_type)
         if not ovfitem_list:
+            if not create_new:
+                logger.warning("No items of type {0} found. Nothing to do."
+                               .format(resource_type))
+                return
             logger.warning("No existing items of type {0} found. Will create "
                            "new {0} from scratch.".format(resource_type))
             (instance, ovfitem) = self.new_item(resource_type, profile_list)

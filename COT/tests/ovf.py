@@ -958,7 +958,9 @@ expected="""
        <ovf:Item>
 """)
 
-        # Create a CPU definition in an OVF that doesn't have one
+
+    def test_set_cpus_no_existing(self):
+        """Create a CPU definition in an OVF that doesn't have one"""
         self.call_edit_hardware(['--cpus', '1'], input=self.minimal_ovf)
         self.check_diff(file1=self.minimal_ovf,
 expected="""
@@ -1025,7 +1027,9 @@ expected="""
        </ovf:Item>
 """)
 
-        # Create a RAM definition in an OVF that doesn't have one
+
+    def test_set_memory_no_existing(self):
+        """Create a RAM definition in an OVF that doesn't have one"""
         self.call_edit_hardware(['--memory', '4GB'], input=self.minimal_ovf)
         self.check_diff(file1=self.minimal_ovf,
 expected="""
@@ -1118,6 +1122,13 @@ expected="""
 +        <rasd:ResourceSubType>""" + TYPE + """</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 """)
+
+
+    def test_set_nic_type_no_existing(self):
+        """Set NIC subtype for an OVF with no NICs (no-op)."""
+        self.call_edit_hardware(['--nic-type', 'virtio'],
+                                input=self.minimal_ovf)
+        self.check_diff("", file1=self.minimal_ovf)
 
 
     def test_set_nic_count(self):
@@ -1391,7 +1402,9 @@ expected="""
          <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
 """)
 
-        # Define NIC in an OVF that previously had none
+
+    def test_set_nic_kitchen_sink_no_existing(self):
+        """Define NIC in an OVF that previously had none"""
         self.call_edit_hardware(['-n', '1', '-N', 'testme',
                                  '-M', '12:34:56:78:9a:bc'],
                                 input=self.minimal_ovf)
@@ -1464,7 +1477,8 @@ expected="""
      </ovf:VirtualHardwareSection>
 """)
 
-        # Create a serial port in an OVF that doesn't have one
+    def test_set_serial_count_no_existing(self):
+        """Create a serial port in an OVF that doesn't have one"""
         self.call_edit_hardware(['--serial-ports', '1'], input=self.minimal_ovf)
         self.check_diff(file1=self.minimal_ovf,
 expected="""
@@ -1600,6 +1614,13 @@ expected="""
 """)
 
 
+    def test_set_scsi_subtype_no_existing(self):
+        """Set SCSI subtype for an OVF with no SCSI controller (no-op)."""
+        self.call_edit_hardware(['--scsi-subtype', 'virtio'],
+                                input=self.minimal_ovf)
+        self.check_diff("", file1=self.minimal_ovf)
+
+
     def test_set_ide_subtype(self):
         """Test IDE controller subtype changes"""
 
@@ -1646,6 +1667,13 @@ expected="""
 +        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
          <rasd:ResourceType>5</rasd:ResourceType>
 """)
+
+
+    def test_set_ide_subtype_no_existing(self):
+        """Set IDE subtype for an OVF with no IDE controller (no-op)."""
+        self.call_edit_hardware(['--ide-subtype', 'virtio'],
+                                input=self.minimal_ovf)
+        self.check_diff("", file1=self.minimal_ovf)
 
 
     def test_profiles(self):
@@ -1738,8 +1766,6 @@ expected="""
 +  </ovf:NetworkSection>
    <ovf:VirtualSystem ovf:id="x">
 """)
-
-    # TODO add test cases for creating hardware that doesn't previously exist
 
 
 class TestOVFEditProduct(COT_UT):
