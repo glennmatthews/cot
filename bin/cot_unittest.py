@@ -62,6 +62,8 @@ def main():
 
     parser.add_argument('-v', '--verbose', action='count', default=1,
                         help="""Increase verbosity (repeatable)""")
+    parser.add_argument('-f', '--failfast', action='store_true',
+                        help="Stop the test run on the first error or failure")
 
     args = parser.parse_args()
 
@@ -79,7 +81,8 @@ def main():
                                                 os.path.dirname(
                                                     os.path.dirname(__file__)))
     # Run the tests!
-    unittest.TextTestRunner(verbosity=args.verbose, failfast=True).run(tests)
+    unittest.TextTestRunner(verbosity=args.verbose,
+                            failfast=args.failfast).run(tests)
 
 if __name__ == "__main__":
     main()
