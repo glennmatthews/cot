@@ -66,7 +66,7 @@ def main():
     args = parser.parse_args()
 
     logging.basicConfig()
-    logger = logging.getLogger('cot')
+    logger = logging.getLogger('COT')
     # Map verbosity to logging level
     log_level = {1: logging.ERROR,
                  2: logging.WARNING,
