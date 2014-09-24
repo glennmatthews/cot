@@ -46,9 +46,11 @@ class COT_UT(unittest.TestCase):
             file1 = self.input_ovf
         if file2 is None:
             file2 = self.temp_file
-        diff = unified_diff(open(file1).readlines(), open(file2).readlines(),
-                            fromfile=file1, tofile=file2,
-                            n=1) # number of context lines
+        with open(file1) as f1:
+            with open(file2) as f2:
+                diff = unified_diff(f1.readlines(), f2.readlines(),
+                                    fromfile=file1, tofile=file2,
+                                    n=1) # number of context lines
         # Strip line numbers and file names from the diff
         # to keep the UT more maintainable
         clean_diff = ""
