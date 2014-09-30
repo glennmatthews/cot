@@ -25,7 +25,7 @@ class TestIOSXRv(unittest.TestCase):
     def test_nic_name(self):
         """Test NIC name construction"""
         self.assertEqual(self.cls.guess_nic_name(1),
-                         "MgmtEthernet0/0/CPU0/0")
+                         "MgmtEth0/0/CPU0/0")
         self.assertEqual(self.cls.guess_nic_name(2),
                          "GigabitEthernet0/0/0/0")
         self.assertEqual(self.cls.guess_nic_name(3),
@@ -84,18 +84,19 @@ class TestIOSXRvRP(TestIOSXRv):
     def test_nic_name(self):
         """Test NIC name construction.
         An HA-capable RP has a fabric interface in addition to the usual
-        MgmtEth and GigabitEthernet NICs.
+        MgmtEth NIC, but does not have GigabitEthernet NICs.
         """
         self.assertEqual(self.cls.guess_nic_name(1),
                          "fabric")
         self.assertEqual(self.cls.guess_nic_name(2),
-                         "MgmtEthernet0/0/CPU0/0")
-        self.assertEqual(self.cls.guess_nic_name(3),
-                         "GigabitEthernet0/0/0/0")
-        self.assertEqual(self.cls.guess_nic_name(4),
-                         "GigabitEthernet0/0/0/1")
-        self.assertEqual(self.cls.guess_nic_name(5),
-                         "GigabitEthernet0/0/0/2")
+                         "MgmtEth0/{SLOT}/CPU0/0")
+
+    def test_nic_count(self):
+        """Test NIC range limits. Only fabric+MgmtEth is allowed."""
+        self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, 0)
+        self.cls.validate_nic_count(1)
+        self.cls.validate_nic_count(2)
+        self.assertRaises(ValueTooHighError, self.cls.validate_nic_count, 3)
 
 
 class TestIOSXRvLC(TestIOSXRv):
@@ -112,11 +113,11 @@ class TestIOSXRvLC(TestIOSXRv):
         self.assertEqual(self.cls.guess_nic_name(1),
                          "fabric")
         self.assertEqual(self.cls.guess_nic_name(2),
-                         "GigabitEthernet0/2/0/0")
+                         "GigabitEthernet0/{SLOT}/0/0")
         self.assertEqual(self.cls.guess_nic_name(3),
-                         "GigabitEthernet0/2/0/1")
+                         "GigabitEthernet0/{SLOT}/0/1")
         self.assertEqual(self.cls.guess_nic_name(4),
-                         "GigabitEthernet0/2/0/2")
+                         "GigabitEthernet0/{SLOT}/0/2")
 
     def test_serial_count(self):
         """Test serial port range limits. An LC with zero serial ports is valid.

@@ -113,9 +113,9 @@ class IOSXRv(GenericPlatform):
 
     @classmethod
     def guess_nic_name(cls, nic_number):
-        # MgmtEthernet0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc.
+        # MgmtEth0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc.
         if nic_number == 1:
-            return "MgmtEthernet0/0/CPU0/0"
+            return "MgmtEth0/0/CPU0/0"
         else:
             return ("GigabitEthernet0/0/0/" + str(nic_number - 2))
 
@@ -161,11 +161,19 @@ class IOSXRvRP(IOSXRv):
 
     @classmethod
     def guess_nic_name(cls, nic_number):
-        # First NIC name is fabric - then as above
+        # fabric
+        # MgmtEth0/{SLOT}/CPU0/0
         if nic_number == 1:
             return "fabric"
         else:
-            return IOSXRv.guess_nic_name(nic_number - 1)
+            return ("MgmtEth0/{SLOT}/CPU0/" + str(nic_number - 2))
+
+    @classmethod
+    def validate_nic_count(cls, count):
+        if count < 1:
+            raise ValueTooLowError("NIC count", count, 1)
+        if count > 2:
+            raise ValueTooHighError("NIC count", count, 2)
 
 
 class IOSXRvLC(IOSXRv):
@@ -179,11 +187,13 @@ class IOSXRvLC(IOSXRv):
 
     @classmethod
     def guess_nic_name(cls, nic_number):
-        # fabric, GigabitEthernet0/2/0/0, Gig0/2/0/1, etc.
+        # fabric
+        # GigabitEthernet0/{SLOT}/0/0
+        # GigabitEthernet0/{SLOT}/0/1, etc.
         if nic_number == 1:
             return "fabric"
         else:
-            return ("GigabitEthernet0/2/0/" + str(nic_number - 2))
+            return ("GigabitEthernet0/{SLOT}/0/" + str(nic_number - 2))
 
     @classmethod
     def validate_serial_count(cls, count):
