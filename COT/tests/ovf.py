@@ -1289,6 +1289,110 @@ expected="""
 """)
 
 
+    def test_set_nic_name(self):
+        """Test changing NIC name strings"""
+
+        # Explicitly name each NIC
+        self.call_edit_hardware(['--nic-names', 'foo', 'bar', 'baz'])
+        self.check_diff(
+"""
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
++        <rasd:ElementName>foo</rasd:ElementName>
+         <rasd:InstanceID>11</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
++        <rasd:ElementName>bar</rasd:ElementName>
+         <rasd:InstanceID>12</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
++        <rasd:ElementName>baz</rasd:ElementName>
+         <rasd:InstanceID>13</rasd:InstanceID>
+""")
+
+        # More names than NICs
+        self.call_edit_hardware(['--nic-names', 'foo', 'bar', 'baz', 'bat'])
+        self.check_diff(
+"""
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
++        <rasd:ElementName>foo</rasd:ElementName>
+         <rasd:InstanceID>11</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
++        <rasd:ElementName>bar</rasd:ElementName>
+         <rasd:InstanceID>12</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
++        <rasd:ElementName>baz</rasd:ElementName>
+         <rasd:InstanceID>13</rasd:InstanceID>
+""")
+
+        # Fewer names than NICs
+        self.call_edit_hardware(['--nic-names', 'foo', 'bar'])
+        self.check_diff(
+"""
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
++        <rasd:ElementName>foo</rasd:ElementName>
+         <rasd:InstanceID>11</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
++        <rasd:ElementName>bar</rasd:ElementName>
+         <rasd:InstanceID>12</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
++        <rasd:ElementName>bar</rasd:ElementName>
+         <rasd:InstanceID>13</rasd:InstanceID>
+""")
+
+        # Pattern only
+        self.call_edit_hardware(['--nic-names', 'eth{0}'])
+        self.check_diff(
+"""
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
++        <rasd:ElementName>eth0</rasd:ElementName>
+         <rasd:InstanceID>11</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
++        <rasd:ElementName>eth1</rasd:ElementName>
+         <rasd:InstanceID>12</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
++        <rasd:ElementName>eth2</rasd:ElementName>
+         <rasd:InstanceID>13</rasd:InstanceID>
+""")
+
+        # Name + pattern
+        self.call_edit_hardware(['--nic-names', 'foo', 'eth{10}'])
+        self.check_diff(
+"""
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
++        <rasd:ElementName>foo</rasd:ElementName>
+         <rasd:InstanceID>11</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
++        <rasd:ElementName>eth10</rasd:ElementName>
+         <rasd:InstanceID>12</rasd:InstanceID>
+...
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
++        <rasd:ElementName>eth11</rasd:ElementName>
+         <rasd:InstanceID>13</rasd:InstanceID>
+""")
+
+
     def test_set_nic_kitchen_sink(self):
         """Test changing many NIC properties at once"""
 
@@ -2060,7 +2164,12 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
 Networks:
-  VM Network                     "VM Network"
+  VM Network
+
+NICs and Associated Networks:
+  GigabitEthernet1               : VM Network
+  GigabitEthernet2               : VM Network
+  GigabitEthernet3               : VM Network
 
 Properties:
   login-username                 :
@@ -2110,6 +2219,9 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
   2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
 
+Networks:
+  VM Network
+
 Properties:
   login-username                 :
   login-password                 :
@@ -2158,7 +2270,15 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
 Networks:
-  VM Network                     "VM Network"
+  VM Network                     VM Network
+
+NICs and Associated Networks:
+  GigabitEthernet1               : VM Network
+    VMXNET3 ethernet adapter on "VM Network"
+  GigabitEthernet2               : VM Network
+    VMXNET3 ethernet adapter on "VM Network"
+  GigabitEthernet3               : VM Network
+    VMXNET3 ethernet adapter on "VM Network"
 
 Properties:
   login-username                 :
@@ -2230,7 +2350,120 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   1CPU-1GB-8NIC                      1    384 MB      8       2   2 /   1.12 GB
   1CPU-3GB-10NIC                     1    384 MB     10       2   2 /   1.12 GB
   1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   1.12 GB
+
+Networks:
+  GigabitEthernet0_0
+  GigabitEthernet0_1
+  GigabitEthernet0_2
+  GigabitEthernet0_3
+  GigabitEthernet0_4
+  GigabitEthernet0_5
+  GigabitEthernet0_6
+  GigabitEthernet0_7
+  GigabitEthernet0_8
+  GigabitEthernet0_9
+  GigabitEthernet0_10
+  GigabitEthernet0_11
+  GigabitEthernet0_12
+  GigabitEthernet0_13
+  GigabitEthernet0_14
+  GigabitEthernet0_15
 """.format(self.iosv_ovf))
+
+        self.check_cot_output(['info', '--verbose', self.iosv_ovf],
+"""
+-------------------------------------------------------------------------------
+{0}
+COT detected platform type: Cisco IOSv
+-------------------------------------------------------------------------------
+Product:  Cisco IOSv Virtual Router
+          http://www.cisco.com/en/US/products/index.html
+Vendor:   Cisco Systems, Inc.
+          http://www.cisco.com
+Version:  15.4(2.4)T
+          Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version 15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
+
+Files and Disks:                      File Size   Capacity Device
+                                     ---------- ---------- --------------------
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ IDE 0:0
+  (disk placeholder)                         --  128.00 MB harddisk @ IDE 0:1
+
+Hardware Variants:
+  System types:             vmx-08 Cisco:Internal:VMCloud-01
+  IDE device types:         virtio
+  Ethernet device types:    E1000
+
+Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
+                                  ---- --------- ------ ------- ---------------
+  1CPU-384MB-2NIC (default)          1    384 MB      2       2   2 /   1.12 GB
+    Label:          "Small"
+    Description:    "Minimal hardware profile - 1 vCPU, 384 MB RAM, 2 NICs"
+  1CPU-1GB-8NIC                      1    384 MB      8       2   2 /   1.12 GB
+    Label:          "Medium"
+    Description:    "Medium hardware profile - 1 vCPU, 1 GB RAM, 8 NICs"
+  1CPU-3GB-10NIC                     1    384 MB     10       2   2 /   1.12 GB
+    Label:          "Large (ESXi)"
+    Description:    "Large hardware profile for ESXi - 1 vCPU, 3 GB RAM, 10
+                     NICs"
+  1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   1.12 GB
+    Label:          "Large (non-ESXi)"
+    Description:    "Large hardware profile for other hypervisors - 1 vCPU, 3
+                     GB RAM, 16 NICs. (Note: ESXi only permits 10 NICs in a VM
+                     so this profile is unsupported on ESXi.)"
+
+Networks:
+  GigabitEthernet0_0             Data network 1
+  GigabitEthernet0_1             Data network 2
+  GigabitEthernet0_2             Data network 3
+  GigabitEthernet0_3             Data network 4
+  GigabitEthernet0_4             Data network 5
+  GigabitEthernet0_5             Data network 6
+  GigabitEthernet0_6             Data network 7
+  GigabitEthernet0_7             Data network 8
+  GigabitEthernet0_8             Data network 9
+  GigabitEthernet0_9             Data network 10
+  GigabitEthernet0_10            Data network 11
+  GigabitEthernet0_11            Data network 12
+  GigabitEthernet0_12            Data network 13
+  GigabitEthernet0_13            Data network 14
+  GigabitEthernet0_14            Data network 15
+  GigabitEthernet0_15            Data network 16
+
+NICs and Associated Networks:
+  GigabitEthernet0/0             : GigabitEthernet0_0
+    NIC representing GigabitEthernet0/0 interface
+  GigabitEthernet0/1             : GigabitEthernet0_1
+    NIC representing GigabitEthernet0/1 interface
+  GigabitEthernet0/2             : GigabitEthernet0_2
+    NIC representing GigabitEthernet0/2 interface
+  GigabitEthernet0/3             : GigabitEthernet0_3
+    NIC representing GigabitEthernet0/3 interface
+  GigabitEthernet0/4             : GigabitEthernet0_4
+    NIC representing GigabitEthernet0/4 interface
+  GigabitEthernet0/5             : GigabitEthernet0_5
+    NIC representing GigabitEthernet0/5 interface
+  GigabitEthernet0/6             : GigabitEthernet0_6
+    NIC representing GigabitEthernet0/6 interface
+  GigabitEthernet0/7             : GigabitEthernet0_7
+    NIC representing GigabitEthernet0/7 interface
+  GigabitEthernet0/8             : GigabitEthernet0_8
+    NIC representing GigabitEthernet0/8 interface
+  GigabitEthernet0/9             : GigabitEthernet0_9
+    NIC representing GigabitEthernet0/9 interface
+  GigabitEthernet0/10            : GigabitEthernet0_10
+    NIC representing GigabitEthernet0/10 interface
+  GigabitEthernet0/11            : GigabitEthernet0_11
+    NIC representing GigabitEthernet0/11 interface
+  GigabitEthernet0/12            : GigabitEthernet0_12
+    NIC representing GigabitEthernet0/12 interface
+  GigabitEthernet0/13            : GigabitEthernet0_13
+    NIC representing GigabitEthernet0/13 interface
+  GigabitEthernet0/14            : GigabitEthernet0_14
+    NIC representing GigabitEthernet0/14 interface
+  GigabitEthernet0/15            : GigabitEthernet0_15
+    NIC representing GigabitEthernet0/15 interface
+""".format(self.iosv_ovf))
+
 
     def test_v09_ovf(self):
         """Test a legacy v0.9 OVF.
@@ -2256,8 +2489,40 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
 
 Networks:
-  bridged                        "The bridged network"
+  bridged
+
+NICs and Associated Networks:
+  ethernet0                      : bridged
 """.format(self.v09_ovf))
+
+        self.check_cot_output(['info', '--verbose', self.v09_ovf],
+"""
+-------------------------------------------------------------------------------
+{0}
+-------------------------------------------------------------------------------
+Annotation: Hello world! This is a version 0.9 OVF.
+
+Files and Disks:                      File Size   Capacity Device
+                                     ---------- ---------- --------------------
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+
+Hardware Variants:
+  System types:             vmx-04
+  SCSI device types:        lsilogic
+  Ethernet device types:    PCNet32
+
+Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
+                                  ---- --------- ------ ------- ---------------
+  None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
+
+Networks:
+  bridged                        The bridged network
+
+NICs and Associated Networks:
+  ethernet0                      : bridged
+    PCNet32 ethernet adapter
+""".format(self.v09_ovf))
+
 
     def test_vmware_ovf(self):
         """Test info string for an OVF with lots of VMware custom extensions.
@@ -2281,7 +2546,45 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
 
 Networks:
-  lanethernet0                   "The lanethernet0 network"
+  lanethernet0
+
+NICs and Associated Networks:
+  Network adapter 1              : lanethernet0
+  Network adapter 2              : lanethernet0
+  Network adapter 3              : lanethernet0
+  Network adapter 4              : lanethernet0
+""".format(self.vmware_ovf))
+
+        self.check_cot_output(['info', '--verbose', self.vmware_ovf],
+"""
+-------------------------------------------------------------------------------
+{0}
+-------------------------------------------------------------------------------
+Files and Disks:                      File Size   Capacity Device
+                                     ---------- ---------- --------------------
+  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+
+Hardware Variants:
+  System types:             vmx-08
+  SCSI device types:        virtio lsilogic
+  Ethernet device types:    E1000
+
+Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
+                                  ---- --------- ------ ------- ---------------
+  None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
+
+Networks:
+  lanethernet0                   The lanethernet0 network
+
+NICs and Associated Networks:
+  Network adapter 1              : lanethernet0
+    E1000 ethernet adapter on "lanethernet0"
+  Network adapter 2              : lanethernet0
+    E1000 ethernet adapter on "lanethernet0"
+  Network adapter 3              : lanethernet0
+    E1000 ethernet adapter on "lanethernet0"
+  Network adapter 4              : lanethernet0
+    E1000 ethernet adapter on "lanethernet0"
 """.format(self.vmware_ovf))
 
 

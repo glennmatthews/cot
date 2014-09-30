@@ -198,7 +198,9 @@ class TestCLIEditHardware(COT_UT):
         # Arguments missing values
         for arg in ['-p', '--profile', '-c', '--cpus',
                     '-m', '--memory', '-n', '--nics',
-                    '-N', '--nic-type', '-M', '--mac-addresses-list',
+                    '-N', '--nic-networks',
+                    '--nic-type', '--nic-count',
+                    '-M', '--mac-addresses-list',
                     '-s', '--serial-ports', '-S', '--serial-connectivity',
                     '--scsi-subtype', '--ide-subtype',
                     '-v', '--virtual-system-type']:

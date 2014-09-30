@@ -502,12 +502,37 @@ class OVF(VMDescription, XML):
             str_list.append("")
 
         # Network information
-        if (self.network_section is not None) and (verbosity_option != 'brief'):
+        if self.network_section is not None:
             str_list.append("Networks:")
+            wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
+                                           initial_indent=   '  ',
+                                           subsequent_indent=' ' * 33)
             for network in self.network_section.findall(self.NETWORK):
-                str_list.append('  {0:30} "{1}"'
-                                .format(network.get(self.NETWORK_NAME),
-                                        network.find(self.NWK_DESC).text))
+                network_name = network.get(self.NETWORK_NAME)
+                network_desc = XML.find_child(network, self.NWK_DESC)
+                if network_desc is not None:
+                    network_desc = network_desc.text
+                if verbosity_option == 'verbose' and network_desc:
+                    str_list.append(wrapper.fill("{0:30} {1}"
+                                                 .format(network_name,
+                                                         network_desc)))
+                else:
+                    str_list.append("  " + network_name)
+            str_list.append("")
+
+        # NIC information
+        nics = self.hardware.find_all_items('ethernet')
+        if nics and verbosity_option != 'brief':
+            str_list.append("NICs and Associated Networks:")
+            wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
+                                           initial_indent=   '    ')
+            for nic in nics:
+                network_name = nic.get_value(self.CONNECTION)
+                str_list.append("  {0:30} : {1}"
+                                .format(nic.get_value(self.ELEMENT_NAME),
+                                        nic.get_value(self.CONNECTION)))
+                if verbosity_option == 'verbose':
+                    str_list.append(wrapper.fill(nic.get_value(self.ITEM_DESCRIPTION)))
             str_list.append("")
 
         # Property information
@@ -840,6 +865,35 @@ class OVF(VMDescription, XML):
                                                   mac_list,
                                                   profile_list,
                                                   default=mac_list[-1])
+
+
+    def set_nic_names(self, name_list, profile_list):
+        """Set the device names for NICs under the given profile(s).
+        """
+        # Expand the pattern (if any) out to a full list
+        nic_dict = self.get_nic_count(profile_list)
+        max_nics = max(nic_dict.values())
+        if len(name_list) < max_nics:
+            logger.info("Expanding name_list {0} to {1} entries"
+                        .format(name_list, max_nics))
+            # Extract the pattern and remove it from the list
+            pattern = name_list[-1]
+            name_list = name_list[:-1]
+            # Look for the magic string {0}, {1}, etc in the pattern
+            match = re.search("{(\d+)}", pattern)
+            if match:
+                i = int(match.group(1))
+            else:
+                i = 0
+            while len(name_list) < max_nics:
+                name_list.append(re.sub("{\d+}", str(i), pattern))
+                i += 1
+            logger.info("New name_list is {0}".format(name_list))
+
+        self.hardware.set_item_values_per_profile('ethernet',
+                                                  self.ELEMENT_NAME,
+                                                  name_list,
+                                                  profile_list)
 
 
     def get_serial_count(self, profile_list):
@@ -2611,10 +2665,13 @@ class OVFItem:
         return self.property_dict[tag]
 
 
-    def get_value(self, tag, profiles=None):
-        """Gets the value string associated with the given profiles for
-        the given tag. If the tag does not exist under these profiles, or the
-        tag values differ across the profiles, returns None.
+    def get_value_internal(self, tag, profiles=None):
+        """Get the internal value string (wildcard tags and temporary
+        substitutions included) associated with the given profiles
+        for the given tag. If the tag does not exist under these profiles, or
+        the tag values differ across the profiles, returns None.
+
+        DO NOT USE OUTSIDE THE OVFHardware CLASS - USE get_value() INSTEAD!
         """
         if profiles is not None:
             profiles = set(profiles)
@@ -2639,6 +2696,28 @@ class OVFItem:
             elif not prof.isdisjoint(profiles):
                 return None
         return default_val
+
+
+    def get_value(self, tag, profiles=None):
+        """Gets the value string associated with the given profiles for
+        the given tag. If the tag does not exist under these profiles, or the
+        tag values differ across the profiles, returns None.
+        """
+        val = self.get_value_internal(tag, profiles)
+
+        if val:
+            # To regenerate text that depends on these values:
+            rst_val = self.get_value_internal(self.RESOURCE_SUB_TYPE, profiles)
+            vq_val = self.get_value_internal(self.VIRTUAL_QUANTITY, profiles)
+            en_val = self.get_value_internal(self.ELEMENT_NAME, profiles)
+            if rst_val is not None:
+                val = re.sub("_RST_", str(rst_val), str(val))
+            if vq_val is not None:
+                val = re.sub("_VQ_", str(vq_val), str(val))
+            if en_val is not None:
+                val = re.sub("_EN_", str(en_val), str(val))
+
+        return val
 
 
     def get_all_values(self, tag):

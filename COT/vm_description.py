@@ -210,6 +210,11 @@ class VMDescription(object):
         """
         raise NotImplementedError("set_nic_mac_addresses not implemented!")
 
+    def set_nic_names(self, name_list, profile_list):
+        """Set the device names for NICs under the given profile(s).
+        """
+        raise NotImplementedError("set_nic_names not implemented!")
+
     def get_serial_count(self, profile_list):
         """Get the number of serial ports under the given profile(s).
         Returns a dictionary of profile_name:serial_count.

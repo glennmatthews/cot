@@ -454,6 +454,7 @@ You can always get detailed help for COT by running `cot --help` or
                                   [-c CPUS] [-m MEMORY]
                                   [-n NICS] [--nic-type {e1000,virtio,vmxnet3}]
                                   [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
+                                  [--nic-names NAME1 [NAME2 ...]]
                                   [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
                                   [--scsi-subtype SCSI_SUBTYPE]
                                   [--ide-subtype IDE_SUBTYPE]
@@ -498,6 +499,12 @@ You can always get detailed help for COT by running `cot --help` or
                             MACs are specified, the first (N-1) NICs will receive
                             the first (N-1) MACs, and all remaining NICs will
                             receive the Nth MAC
+      --nic-names NAME1 [NAME2 ...]
+                            Specify a list of one or more NIC names or patterns to
+                            apply to NIC devices. If N names/patterns are
+                            specified, the first (N-1) NICs will receive the first
+                            (N-1) names and remaining NICs will be named based on
+                            the name or pattern of the Nth item. See examples.
 
     serial port options:
       -s SERIAL_PORTS, --serial-ports SERIAL_PORTS
@@ -517,6 +524,20 @@ You can always get detailed help for COT by running `cot --help` or
                             Set resource subtype (such as "virtio") for all IDE
                             controllers. If an empty string is provided, any
                             existing subtype will be removed.
+
+    Examples:
+
+      cot edit-hardware csr1000v.ova --output csr1000v_custom.ova \
+            --profile 1CPU-4GB --cpus 1 --memory 4GB
+        Create a new profile named "1CPU-4GB" with 1 CPU and 4 GB of RAM
+
+      cot edit-hardware input.ova -o output.ova --nic-names 'management' 'eth{0}'
+        Rename the NICs in the output OVA as 'management', 'eth0', 'eth1', 'eth2'...
+
+      cot edit-hardware input.ova -o output.ova --nic-names 'Ethernet0/{10}'
+        Rename the NICs in the output OVA as 'Ethernet0/10', 'Ethernet0/11',
+        'Ethernet0/12', etc.
+
 
 `cot edit-product`
 ------------------

@@ -14,6 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import argparse
 import logging
 import os.path
 import re
@@ -30,11 +31,18 @@ logger = logging.getLogger(__name__)
 def edit_hardware(args):
     """Edit hardware information (CPUs, RAM, NICs, etc.)"""
 
-    if (args.cpus is None and args.memory is None and args.nics is None and
-        args.nic_type is None and args.mac_addresses_list is None and
-        args.nic_networks is None and args.serial_ports is None and
-        args.serial_connectivity is None and args.scsi_subtype is None and
-        args.ide_subtype is None and args.virtual_system_type is None):
+    if (args.cpus is None and
+        args.memory is None and
+        args.nics is None and
+        args.nic_type is None and
+        args.mac_addresses_list is None and
+        args.nic_networks is None and
+        args.nic_names is None and
+        args.serial_ports is None and
+        args.serial_connectivity is None and
+        args.scsi_subtype is None and
+        args.ide_subtype is None and
+        args.virtual_system_type is None):
         p_edit_hw.error("No work requested! Please specify at least one "
                         "hardware change")
 
@@ -149,6 +157,8 @@ def edit_hardware(args):
         if args.mac_addresses_list is not None:
             vm.set_nic_mac_addresses(args.mac_addresses_list, args.profiles)
 
+        if args.nic_names is not None:
+            vm.set_nic_names(args.nic_names, args.profiles)
 
         if args.serial_ports is not None:
             try:
@@ -194,6 +204,7 @@ def edit_hardware(args):
 # Add ourselves to the parser options
 p_edit_hw = subparsers.add_parser(
     'edit-hardware', add_help=False,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
     usage=("""
   {0} edit-hardware --help
   {0} [-f] [-v] edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
@@ -201,12 +212,28 @@ p_edit_hw = subparsers.add_parser(
                               [-c CPUS] [-m MEMORY]
                               [-n NICS] [--nic-type {{e1000,virtio,vmxnet3}}]
                               [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
+                              [--nic-names NAME1 [NAME2 ...]]
                               [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
                               [--scsi-subtype SCSI_SUBTYPE]
                               [--ide-subtype IDE_SUBTYPE]"""
            .format(os.path.basename(sys.argv[0]))),
     help="""Edit virtual machine hardware properties of an OVF""",
-    description="""Edit hardware properties of the specified OVF or OVA""")
+    description="""Edit hardware properties of the specified OVF or OVA""",
+    epilog="""
+Examples:
+
+  {0} edit-hardware csr1000v.ova --output csr1000v_custom.ova \\
+        --profile 1CPU-4GB --cpus 1 --memory 4GB
+    Create a new profile named "1CPU-4GB" with 1 CPU and 4 GB of RAM
+
+  {0} edit-hardware input.ova -o output.ova --nic-names 'management' 'eth{{0}}'
+    Rename the NICs in the output OVA as 'management', 'eth0', 'eth1', 'eth2'...
+
+  {0} edit-hardware input.ova -o output.ova --nic-names 'Ethernet0/{{10}}'
+    Rename the NICs in the output OVA as 'Ethernet0/10', 'Ethernet0/11',
+    'Ethernet0/12', etc.
+
+    """.format(os.path.basename(sys.argv[0])))
 subparser_lookup['edit-hardware'] = p_edit_hw
 
 p_eh_gen = p_edit_hw.add_argument_group("general options")
@@ -256,6 +283,13 @@ p_eh_nic.add_argument('-M', '--mac-addresses-list', type=mac_address,
                               If N MACs are specified, the first (N-1) NICs
                               will receive the first (N-1) MACs, and all
                               remaining NICs will receive the Nth MAC""")
+p_eh_nic.add_argument('--nic-names', nargs='+',
+                      metavar=('NAME1', 'NAME2'),
+                      help="""Specify a list of one or more NIC names or
+                      patterns to apply to NIC devices. If N names/patterns are
+                      specified, the first (N-1) NICs will receive the first
+                      (N-1) names and remaining NICs will be named based on the
+                      name or pattern of the Nth item. See examples.""")
 
 p_eh_ser = p_edit_hw.add_argument_group("serial port options")
 
