@@ -24,6 +24,8 @@ The specifics may vary depending on your Linux distribution, of course.
 * [Install QEMU](#install-qemu)
 * [Install `vmdktool` (if needed)](#install-vmdktool-if-needed)
 * [Install `fatdisk` (optional)](#install-fatdisk-optional)
+* [Install `mkisofs` (optional)](#install-mkisofs-optional)
+* [Install `ovftool` (optional)](#install-ovftool-optional)
 * [Install COT](#install-cot)
 
 Check installed Python version
@@ -106,6 +108,19 @@ Currently the only such platform known to COT is Cisco IOSv.
 
         sudo cp ./fatdisk /usr/local/bin/fatdisk
 
+Install `mkisofs` (optional)
+----------------------------
+
+[`mkisofs`](http://cdrecord.org/) is standard on most Linux distributions, but
+if not installed on your system you may want to install it according to the
+instructions at the linked web site.
+
+Install `ovftool` (optional)
+----------------------------
+
+Download [`ovftool`](https://www.vmware.com/support/developer/ovf/)
+from VMware and install it according to the included instructions.
+
 Install COT
 -----------
 
@@ -140,7 +155,7 @@ Install COT
 
         OK
 
-   (If any tests fail, likely due to missing binary dependencies described
+   (If any tests fail, likely due to missing optional dependencies described
    above, the failures will be reported here, giving you a chance to fix them
    or ignore them before installing COT.)
 
