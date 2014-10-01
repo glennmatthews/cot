@@ -143,11 +143,11 @@ with a focus on virtualized network appliances such as the Cisco CSR 1000V and
 Cisco IOS XRv platforms."""),
     epilog=(
 """Note: some subcommands rely on external software tools, including:
-* vmdktool (http://www.freshports.org/sysutils/vmdktool/)
 * qemu-img (http://www.qemu.org/)
 * mkisofs  (http://cdrecord.org/
-* fatdisk  (http://github.com/goblinhack/fatdisk)
 * ovftool  (https://www.vmware.com/support/developer/ovf/)
+* fatdisk  (http://github.com/goblinhack/fatdisk)
+* vmdktool (http://www.freshports.org/sysutils/vmdktool/)
 """),
     formatter_class=argparse.RawDescriptionHelpFormatter)
 
