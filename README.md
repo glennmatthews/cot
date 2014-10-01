@@ -13,9 +13,6 @@ Table of Contents
 * [Capabilities](#capabilities)
 * [System Requirements](#system-requirements)
 * [Installation](#installation)
-  * [Mac OS X Prerequisites](#mac-os-x-prerequisites)
-  * [Linux Prerequisites](#linux-prerequisites)
-  * [Installing COT](#installing-cot)
 * [Examples](#examples)
 * [Detailed Usage](#detailed-usage)
   * [`cot add-disk`](#cot-add-disk)
@@ -45,132 +42,30 @@ System Requirements
 ===================
 
 * COT requires either Python 2.7 or Python 3.
-* The `cot add-disk` command requires [`qemu-img`](http://www.qemu.org) as a
-  helper program when adding hard disks to an OVF. If `qemu-img` is earlier than
-  version 2.1, [`vmdktool`](http://www.freshports.org/sysutils/vmdktool/) is
-  also required as an additional helper.
+* COT uses [`qemu-img`](http://www.qemu.org) as a helper program for various
+  operations involving the creation, inspection, and modification of
+  hard disk image files packaged in an OVF.
+* The `cot add-disk` command requires either `qemu-img` (version 2.1 or later)
+  or [`vmdktool`](http://www.freshports.org/sysutils/vmdktool/) as a
+  helper program when adding hard disks to an OVF.
 * The `cot inject-config` command requires
   [`mkisofs`](http://cdrecord.org/) to create ISO
-  (CD-ROM) images and [`fatdisk`](http://github.com/goblinhack/fatdisk)
+  (CD-ROM) images and/or [`fatdisk`](http://github.com/goblinhack/fatdisk)
   to create hard disk images.
 * The `cot deploy ... esxi` command requires
   [`ovftool`](https://www.vmware.com/support/developer/ovf/) to communicate
-  with an ESXi server. If ovftool is installed, COT's automated unit tests will
-  also make use of ovftool to perform additional verification that OVFs and
-  OVAs created by COT align with VMware's expectations for these file types.
+  with an ESXi server. If `ovftool` is installed, COT's automated unit tests
+  will also make use of `ovftool` to perform additional verification that
+  OVFs and OVAs created by COT align with VMware's expectations for these
+  file types.
 
 
 Installation
 ============
 
-Mac OS X Prerequisites
-----------------------
-
-The recommended installation method on Mac OS X is to use
-[MacPorts](http://www.macports.org/). Once you have MacPorts set up on your
-system, use the following commands to install the necessary helpers:
-
-    # mkisofs
-    sudo port install cdrtools
-    # qemu-img
-    sudo port install qemu
-    # vmdktool (only needed if qemu version is less than 2.1.0)
-    sudo port install vmdktool
-    # fatdisk
-    sudo port install fatdisk
-
-If running Mountain Lion or earlier, you may need to install the latest
-Python via MacPorts as well:
-
-    # python
-    sudo port install python27
-    # python setup-tools module
-    sudo port install py27-setuptools
-
-Optionally, download [`ovftool`](https://www.vmware.com/support/developer/ovf/)
-from VMware and install it.
-
-Then proceed as documented in ["Installing COT"](#installing-cot) below.
-
-Linux Prerequisites
--------------------
-
-The specifics may vary depending on your Linux distribution, of course.
-
-    # qemu-img
-    sudo apt-get install qemu
-    # vmdktool (only needed if qemu version is less than 2.1.0)
-    wget http://people.freebsd.org/~brian/vmdktool/vmdktool-1.4.tar.gz
-    tar zxf vmdktool-1.4.tar.gz
-    cd vmdktool-1.4/
-    make
-    sudo make install
-    # python setuptools module
-    sudo apt-get install python-setuptools
-    # fatdisk
-    git clone git://github.com/goblinhack/fatdisk
-    cd fatdisk
-    ./RUNME
-    cp ./fatdisk /usr/local/bin/fatdisk
-
-Then proceed as described in ["Installing COT"](#installing-cot) below.
-
-Installing COT
---------------
-
-While you can run COT directly from this directory (`./bin/cot ...`),
-you can also use the included `setup.py` script to install the COT
-modules and scripts as part of your system Python environment:
-
-    > python ./setup.py check
-    running check
-    > python ./setup.py build
-    running build
-    running build_py
-    > python ./setup.py test
-    running test
-
-(verbose test case output omitted here for brevity)
-
-    ----------------------------------------------------------------------
-    Ran 123 tests in 36.904s
-
-    OK
-
-(If any tests fail, likely due to missing binary dependencies described above,
-the failures will be reported here, giving you a chance to fix them or ignore
-them before installing COT.)
-
-    > sudo python ./setup.py install
-    Password:
-    running install
-
-(verbose install output omitted)
-
-    Installing cot script to /usr/local/bin
-
-    Installed /usr/local/lib/python2.7/dist-packages/common_ovf_tool-1.1.1-py2.7.egg
-    Processing dependencies for common-ovf-tool==1.1.1
-    Finished processing dependencies for common-ovf-tool==1.1.1
-    > which cot
-    /usr/local/bin/cot
-
-(the specific installation path will depend on your OS and system)
-
-    > cot -h
-    usage:
-      cot --help
-      cot --version
-      cot <command> --help
-      cot [-f] [-v] <command> <options>
-
-    Common OVF Tool (COT), version 1.1.1
-    Copyright (C) 2013-2014 the COT project developers
-    A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
-    with a focus on virtualized network appliances such as the Cisco CSR 1000V and
-    Cisco IOS XRv platforms.
-    ...
-
+Refer to the included
+[INSTALL.md](https://github.com/glennmatthews/cot/blob/master/INSTALL.md)
+for installation instructions.
 
 Examples
 ========
@@ -300,11 +195,11 @@ You can always get detailed help for COT by running `cot --help` or
         inject-config  Inject a configuration file into an OVF package
 
     Note: some subcommands rely on external software tools, including:
-    * vmdktool (http://www.freshports.org/sysutils/vmdktool/)
     * qemu-img (http://www.qemu.org/)
     * mkisofs  (http://cdrecord.org/)
-    * fatdisk  (http://github.com/goblinhack/fatdisk)
     * ovftool  (https://www.vmware.com/support/developer/ovf/)
+    * fatdisk  (http://github.com/goblinhack/fatdisk)
+    * vmdktool (http://www.freshports.org/sysutils/vmdktool/)
 
 `cot add-disk`
 --------------
