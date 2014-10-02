@@ -20,7 +20,6 @@ Linux Installation
 The specifics may vary depending on your Linux distribution, of course.
 
 * [Check installed Python version](#check-installed-python-version)
-* [Install Python `setuptools` module](#install-python-setuptools-module)
 * [Install QEMU](#install-qemu)
 * [Install `vmdktool` (if needed)](#install-vmdktool-if-needed)
 * [Install `fatdisk` (optional)](#install-fatdisk-optional)
