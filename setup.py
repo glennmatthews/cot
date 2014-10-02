@@ -30,13 +30,28 @@ versioneer.tag_prefix = 'v'
 versioneer.parentdir_prefix = 'cot-'
 
 import os.path
+import subprocess
 
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
+
+cmd_class = versioneer.get_cmdclass()
+
+# Extend the "build" command a bit further:
+from versioneer import cmd_build
+class custom_build(cmd_build):
+    def run(self):
+        cmd_build.run(self)
+        try:
+            subprocess.check_call("./check_and_install_helpers.py")
+        except subprocess.CalledProcessError:
+            exit()
+
+cmd_class['build'] = custom_build
 
 setup(
     name='common-ovf-tool',
     version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass=cmd_class,
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
     packages=['COT'],
