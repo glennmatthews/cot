@@ -31,7 +31,35 @@ PORT = distutils.spawn.find_executable('port')
 APT_GET = distutils.spawn.find_executable('apt-get')
 
 def check_qemu_and_vmdktool():
-    print("Checking for qemu-img executable...")
+    print("Checking for 'qemu-img' executable...")
+    qemu_path = distutils.spawn.find_executable('qemu-img')
+    if not qemu_path:
+        print("QEMU not found.")
+        return False
+    else:
+        print("Found '{0}'".format(qemu_path))
+
+    qemu_version = COT.helper_tools.get_qemu_img_version()
+    print("QEMU version is {0}".format(qemu_version))
+
+    if qemu_version >= StrictVersion("2.1.0"):
+        print("'vmdktool' is not required")
+        return True
+
+    print("Checking for 'vmdktool' executable...")
+
+    vmdktool_path = distutils.spawn.find_executable('vmdktool')
+    if not vmdktool_path:
+        print("'vmdktool' not found")
+        return False
+    else:
+        print("Found '{0}'".format(vmdktool_path))
+        return True
+
+def install_qemu_and_vmdktool():
+    if check_qemu_and_vmdktool():
+        return True
+
     try:
         qemu_version = COT.helper_tools.get_qemu_img_version()
     except HelperNotFoundError:
@@ -50,9 +78,7 @@ def check_qemu_and_vmdktool():
 
     if qemu_version >= StrictVersion("2.1.0"):
         print("vmdktool is not required")
-        return
-
-    print("Checking for vmdktool executable...")
+        return True
 
     if not distutils.spawn.find_executable('vmdktool'):
         confirm_or_die("vmdktool not found. Try to install it?")
@@ -87,79 +113,125 @@ def check_qemu_and_vmdktool():
             exit("Not sure how to install vmdktool, sorry!\n"
                  "See http://www.freshports.org/sysutils/vmdktool/")
 
-    print("vmdktool is available")
-    return
+    print("installed vmdktool successfully")
+    return True
 
 
 def check_fatdisk():
-    if ((not distutils.spawn.find_executable('fatdisk')) and
-        confirm("Optional dependency 'fatdisk' not found. "
-                "Try to install it?")):
-        if PORT:
-            subprocess.check_call(['port', 'install', 'fatdisk'])
-        elif sys.platform == 'linux2':
-            subprocess.check_call(['wget', '-O', 'fatdisk.zip',
-                    'https://github.com/goblinhack/fatdisk/archive/master.zip'])
-            subprocess.check_call(['unzip', 'fatdisk.zip'])
-            subprocess.check_call(['./RUNME'], cwd='fatdisk-master')
-            shutil.copy2('fatdisk-master/fatdisk', '/usr/local/bin/fatdisk')
-        else:
-            print("Not sure how to install fatdisk, sorry!\n"
-                  "See https://github.com/goblinhack/fatdisk")
-
-    if distutils.spawn.find_executable('fatdisk'):
-        print("fatdisk is available")
+    print("Checking for 'fatdisk' executable...")
+    fatdisk_path = distutils.spawn.find_executable('fatdisk')
+    if fatdisk_path:
+        print("Found '{0}'".format(fatdisk_path))
+        return True
     else:
-        print("fatdisk (optional dependency) not installed")
-    return
+        print("'fatdisk' (optional dependency) not found")
+        return False
+
+def install_fatdisk():
+    if check_fatdisk():
+        return True
+
+    if not confirm("Optional dependency 'fatdisk' not found. "
+                   "Try to install it?"):
+        return False
+
+    if PORT:
+        subprocess.check_call(['port', 'install', 'fatdisk'])
+    elif sys.platform == 'linux2':
+        subprocess.check_call(['wget', '-O', 'fatdisk.zip',
+            'https://github.com/goblinhack/fatdisk/archive/master.zip'])
+        subprocess.check_call(['unzip', 'fatdisk.zip'])
+        subprocess.check_call(['./RUNME'], cwd='fatdisk-master')
+        shutil.copy2('fatdisk-master/fatdisk', '/usr/local/bin/fatdisk')
+    else:
+        print("Not sure how to install fatdisk, sorry!\n"
+              "See https://github.com/goblinhack/fatdisk")
+        return False
+
+    return check_fatdisk()
+
 
 def check_mkisofs():
-    if ((not distutils.spawn.find_executable('mkisofs')) and
-        confirm("Optional dependency 'mkisofs' not found. "
-                "Try to install it?")):
-        if PORT:
-            subprocess.check_call(['port', 'install', 'cdrtools'])
-        else:
-            print("Not sure how to install mkisofs, sorry!\n"
-                  "See http://cdrecord.org/")
-
-    if distutils.spawn.find_executable('mkisofs'):
-        print("mkisofs is available")
+    print("Checking for 'mkisofs' executable...")
+    mkisofs_path = distutils.spawn.find_executable('mkisofs')
+    if mkisofs_path:
+        print("Found '{0}'".format(mkisofs_path))
+        return True
     else:
-        print("mkisofs (optional dependency) not installed")
-    return
+        print("'mkisofs' (optional dependency) not found")
+        return False
+
+def install_mkisofs():
+    if check_mkisofs():
+        return True
+
+    if not confirm("Optional dependency 'mkisofs' not found. "
+                   "Try to install it?"):
+        return False
+
+    if PORT:
+        subprocess.check_call(['port', 'install', 'cdrtools'])
+    else:
+        print("Not sure how to install mkisofs, sorry!\n"
+              "See http://cdrecord.org/")
+        return False
+
+    return check_mkisofs()
 
 def check_ovftool():
-    if distutils.spawn.find_executable('ovftool'):
-        print("ovftool is available")
+    print("Checking for 'ovftool' executable...")
+    ovftool_path = distutils.spawn.find_executable('ovftool')
+    if ovftool_path:
+        print("Found '{0}'".format(ovftool_path))
+        return True
     else:
-        print("ovftool (optional dependency) not installed.\n"
-              "See https://www.vmware.com/support/developer/ovf/")
-    return
+        print("'ovftool' (optional dependency) not found")
+        return False
+
+def install_ovftool():
+    if check_ovftool():
+        return True
+
+    print("ovftool (optional dependency) not installed.\n"
+          "See https://www.vmware.com/support/developer/ovf/")
+    return False
+
 
 def main():
-    print("Checking for required and optional helper programs...")
-    if sys.platform == 'darwin' and not PORT:
-        confirm_or_die("It appears you are running on a Mac but "
-                       "do not have MacPorts installed.\n"
-                       "If you've already installed all helper programs "
-                       "that COT needs, this is not a problem.\n"
-                       "If any helpers are missing, we could use MacPorts "
-                       "to automatically install them for you... "
-                       "if it were installed!\n"
-                       "See https://www.macports.org/\n"
-                       "Continue?")
-    elif sys.platform == 'linux2' and not APT_GET:
-        confirm_or_die("It appears you are running on a Linux that doesn't "
-                       "have 'apt-get' capability.\n"
-                       "If you've already installed all helper programs "
-                       "that COT needs, this is not a problem.\n"
-                       "Continue?")
+    if len(sys.argv) < 2:
+        exit("Usage: {0} [check, install]".format(sys.argv[0]))
+    if sys.argv[1] == "check":
+        print("Checking for required and optional helper programs...")
+        check_qemu_and_vmdktool()
+        check_fatdisk()
+        check_mkisofs()
+        check_ovftool()
+    elif sys.argv[1] == "install":
+        print("Installing required and optional helper programs...")
 
-    check_qemu_and_vmdktool()
-    check_fatdisk()
-    check_mkisofs()
-    check_ovftool()
+        if sys.platform == 'darwin' and not PORT:
+            confirm_or_die("It appears you are running on a Mac but "
+                           "do not have MacPorts installed.\n"
+                           "If you've already installed all helper programs "
+                           "that COT needs, this is not a problem.\n"
+                           "If any helpers are missing, we could use MacPorts "
+                           "to automatically install them for you... "
+                           "if it were installed!\n"
+                           "See https://www.macports.org/\n"
+                           "Continue?")
+        elif sys.platform == 'linux2' and not APT_GET:
+            confirm_or_die("It appears you are running on a Linux that doesn't "
+                           "have 'apt-get' capability.\n"
+                           "If you've already installed all helper programs "
+                           "that COT needs, this is not a problem.\n"
+                           "Continue?")
+
+        install_qemu_and_vmdktool()
+        install_fatdisk()
+        install_mkisofs()
+        install_ovftool()
+    else:
+        exit("Unknown subcommand '{0}'!".format(sys.argv[1]))
 
 if __name__ == "__main__":
     main()
