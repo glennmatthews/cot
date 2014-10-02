@@ -20,16 +20,12 @@ Linux Installation
 The specifics may vary depending on your Linux distribution, of course.
 
 * [Check installed Python version](#check-installed-python-version)
-* [Install QEMU](#install-qemu)
-* [Install `vmdktool` (if needed)](#install-vmdktool-if-needed)
-* [Install `fatdisk` (optional)](#install-fatdisk-optional)
-* [Install `mkisofs` (optional)](#install-mkisofs-optional)
-* [Install `ovftool` (optional)](#install-ovftool-optional)
+* [Download and build COT](#download-and-build-cot)
+* [Install helper programs](#install-helper-programs)
 * [Install COT](#install-cot)
 
 Check installed Python version
 ------------------------------
-
 Make sure your Python version is at least 2.7:
 
     > python --version
@@ -39,16 +35,65 @@ If it's an older release (CentOS in particular defaults to old Python versions)
 then you need to install a newer version. Refer to http://www.python.org for
 installation instructions.
 
-Install QEMU
-------------
+Download and build COT
+----------------------
+
+1. Download the latest source distribution.
+
+        git clone git://github.com/glennmatthews/cot
+        cd cot
+
+  or (if `git` is blocked for you)
+
+        wget -O cot.zip https://github.com/glennmatthews/cot/archive/master.zip
+        unzip cot.zip
+        cd cot-master
+
+2. While you can run COT directly from this directory (`./bin/cot ...`),
+   you can also use the included `setup.py` script to install the COT
+   modules and scripts as part of your system Python environment. In that case,
+   build and test COT as follows:
+
+        > python ./setup.py check
+        running check
+        > python ./setup.py build
+        running build
+        running build_py
+
+Install helper programs
+-----------------------
+
+Once you have verified your Python version, run the following command to check
+for and install the various helper programs COT relies upon.
+
+    sudo python ./setup.py install_helpers
+
+If any helpers are missing, the script will warn you and give you an option to
+attempt to automatically install them. If it tries and fails to do so, it will
+point you to the web site for the failed tool - but *please* post an issue on
+GitHub (https://github.com/glennmatthews/cot/issues) so that we can identify the
+failure and work to improve this script.
+
+If for some reason you do not wish to use the above script, or would like to
+understand exactly what it's doing, see the following sections:
+
+* [Install QEMU](#install-qemu)
+* [Install `vmdktool` (if needed)](#install-vmdktool-if-needed)
+* [Install `fatdisk` (optional)](#install-fatdisk-optional)
+* [Install `mkisofs` (optional)](#install-mkisofs-optional)
+* [Install `ovftool` (optional)](#install-ovftool-optional)
+
+In any case, once the helper tools you need are installed, you can proceed to
+[Install COT](#install-cot).
+
+### Install QEMU ###
 
 * Ubuntu and similar: `sudo apt-get install qemu`
 * CentOS and similar: `sudo yum install qemu`
 
 See http://en.wikibooks.org/wiki/QEMU/Installing_QEMU for other Linux variants.
 
-Install `vmdktool` (if needed)
-------------------------------
+### Install `vmdktool` (if needed) ###
 
 First, check your QEMU version to see if you even need `vmdktool`:
 
@@ -58,23 +103,27 @@ First, check your QEMU version to see if you even need `vmdktool`:
 If the reported version is 2.1.0 or newer, you don't need `vmdktool`.
 If you have an older QEMU version and do need `vmdktool`:
 
-1. Download the latest source distribution from
+1. Install the library `zlib` that `vmdktool` depends on:
+
+        sudo apt-get install zlib1g-dev
+
+2. Download the latest source distribution from
    http://people.freebsd.org/~brian/vmdktool:
 
         wget http://people.freebsd.org/~brian/vmdktool/vmdktool-1.4.tar.gz
 
-2. Compile `vmdktool`:
+3. Compile `vmdktool`:
 
         tar zxf vmdktool-1.4.tar.gz
         cd vmdktool-1.4/
-        make
+        make CFLAGS="-D_GNU_SOURCE"
 
-3. Install `vmdktool`:
+4. Install `vmdktool`:
 
+        sudo mkdir -p /usr/local/man/man8
         sudo make install
 
-Install `fatdisk` (optional)
-----------------------------
+### Install `fatdisk` (optional) ###
 
 You only need `fatdisk` if you are planning to use `cot inject-config` to
 inject bootstrap configuration for a platform that requires a hard disk image
@@ -100,15 +149,13 @@ Currently the only such platform known to COT is Cisco IOSv.
 
         sudo cp ./fatdisk /usr/local/bin/fatdisk
 
-Install `mkisofs` (optional)
-----------------------------
+### Install `mkisofs` (optional) ###
 
 [`mkisofs`](http://cdrecord.org/) is standard on most Linux distributions, but
 if not installed on your system you may want to install it according to the
 instructions at the linked web site.
 
-Install `ovftool` (optional)
-----------------------------
+### Install `ovftool` (optional) ###
 
 Download [`ovftool`](https://www.vmware.com/support/developer/ovf/)
 from VMware and install it according to the included instructions.
@@ -116,27 +163,8 @@ from VMware and install it according to the included instructions.
 Install COT
 -----------
 
-1. Download the latest source distribution.
+1. Before installing COT, if you want to, you can test it as follows:
 
-        git clone git://github.com/glennmatthews/cot
-        cd cot
-
-  or (if `git` is blocked for you)
-
-        wget -O cot.zip https://github.com/glennmatthews/cot/archive/master.zip
-        unzip cot.zip
-        cd cot-master
-
-2. While you can run COT directly from this directory (`./bin/cot ...`),
-   you can also use the included `setup.py` script to install the COT
-   modules and scripts as part of your system Python environment. In that case,
-   build and test COT as follows:
-
-        > python ./setup.py check
-        running check
-        > python ./setup.py build
-        running build
-        running build_py
         > python ./setup.py test
         running test
 
@@ -151,7 +179,7 @@ Install COT
    above, the failures will be reported here, giving you a chance to fix them
    or ignore them before installing COT.)
 
-3. Install COT:
+2. Install COT:
 
         > sudo python ./setup.py install
         Password:
