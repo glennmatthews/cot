@@ -15,11 +15,20 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import distutils.spawn
+from distutils.version import StrictVersion
+import os
+import os.path
+import shutil
+import subprocess
+import sys
 
 import COT.helper_tools
 from COT.helper_tools import HelperNotFoundError, HelperError
-from COT.cli import confirm_or_die
-from distutils.version import StrictVersion
+from COT.cli import confirm, confirm_or_die
+
+# Look for various package managers:
+PORT = distutils.spawn.find_executable('port')
+APT_GET = distutils.spawn.find_executable('apt-get')
 
 def check_qemu_and_vmdktool():
     print("Checking for qemu-img executable...")
@@ -27,7 +36,14 @@ def check_qemu_and_vmdktool():
         qemu_version = COT.helper_tools.get_qemu_img_version()
     except HelperNotFoundError:
         COT.cli.confirm_or_die("qemu-img not found. Try to install it?")
-        # TODO
+        if PORT:
+            subprocess.check_call(['port', 'install', 'qemu'])
+        elif APT_GET:
+            subprocess.check_call(['apt-get', 'install', 'qemu'])
+        else:
+            exit("Not sure how to install QEMU without 'port' or 'apt-get'!\n"
+                 "Please install QEMU before proceeding.\n"
+                 "See http://en.wikibooks.org/wiki/QEMU/Installing_QEMU")
         qemu_version = COT.helper_tools.get_qemu_img_version()
 
     print("installed qemu version is {0}".format(qemu_version))
@@ -40,34 +56,83 @@ def check_qemu_and_vmdktool():
 
     if not distutils.spawn.find_executable('vmdktool'):
         confirm_or_die("vmdktool not found. Try to install it?")
-        # TODO
+        if PORT:
+            subprocess.check_call(['port', 'install', 'vmdktool'])
+        elif APT_GET:
+            # We don't have vmdktool in apt yet but we can install it manually:
+            # vmdktool requires zlib1g-dev
+            subprocess.check_call(['apt-get', 'install', 'zlib1g-dev'])
+            try:
+                # Get the source
+                subprocess.check_call(['wget',
+                                       'http://people.freebsd.org/~brian/'
+                                       'vmdktool/vmdktool-1.4.tar.gz'])
+                subprocess.check_call(['tar', 'zxf', 'vmdktool-1.4.tar.gz'])
+                # vmdktool doesn't build cleanly under linux without
+                # modifying the CFLAGS:
+                env = os.environment.copy()
+                env["CFLAGS"] = "-D_GNU_SOURCE"
+                subprocess.check_call(['make', '--directory', 'vmdktool-1.4'],
+                                      env=env)
+                subprocess.check_call(['make', '--directory', 'vmdktool-1.4',
+                                       'install'])
+            finally:
+                if os.path.exists('vmdktool-1.4.tar.gz'):
+                    os.remove('vmdktool-1.4.tar.gz')
+                if os.path.exists('vmdktool-1.4'):
+                    shutil.rmtree('vmdktool-1.4')
+        else:
+            exit("Not sure how to install vmdktool, sorry!\n"
+                 "See http://www.freshports.org/sysutils/vmdktool/")
 
     print("vmdktool is available")
     return
 
 
 def check_fatdisk():
-    if not distutils.spawn.find_executable('fatdisk'):
-        confirm_or_die("fatdisk not found. Try to install it?")
-        # TODO
+    if ((not distutils.spawn.find_executable('fatdisk')) and
+        confirm("Optional dependency 'fatdisk' not found. "
+                "Try to install it?")):
+        if PORT:
+            subprocess.check_call(['port', 'install', 'fatdisk'])
+        elif sys.platform == 'linux2':
+            subprocess.check_call(['wget', '-O', 'fatdisk.zip',
+                    'https://github.com/goblinhack/fatdisk/archive/master.zip'])
+            subprocess.check_call(['unzip', 'fatdisk.zip'])
+            subprocess.check_call(['./RUNME'], cwd='fatdisk-master')
+            shutil.copy2('fatdisk-master/fatdisk', '/usr/local/bin/fatdisk')
+        else:
+            print("Not sure how to install fatdisk, sorry!\n"
+                  "See https://github.com/goblinhack/fatdisk")
 
-    print("fatdisk is available")
+    if distutils.spawn.find_executable('fatdisk'):
+        print("fatdisk is available")
+    else:
+        print("fatdisk (optional dependency) not installed")
     return
 
 def check_mkisofs():
-    if not distutils.spawn.find_executable('mkisofs'):
-        confirm_or_die("mkisofs not found. Try to install it?")
-        # TODO
+    if ((not distutils.spawn.find_executable('mkisofs')) and
+        confirm("Optional dependency 'mkisofs' not found. "
+                "Try to install it?")):
+        if PORT:
+            subprocess.check_call(['port', 'install', 'cdrtools'])
+        else:
+            print("Not sure how to install mkisofs, sorry!\n"
+                  "See http://cdrecord.org/")
 
-    print("mkisofs is available")
+    if distutils.spawn.find_executable('mkisofs'):
+        print("mkisofs is available")
+    else:
+        print("mkisofs (optional dependency) not installed")
     return
 
 def check_ovftool():
-    if not distutils.spawn.find_executable('ovftool'):
-        confirm_or_die("ovftool not found. Try to install it?")
-        # TODO
-
-    print("ovftool is available")
+    if distutils.spawn.find_executable('ovftool'):
+        print("ovftool is available")
+    else:
+        print("ovftool (optional dependency) not installed.\n"
+              "See https://www.vmware.com/support/developer/ovf/")
     return
 
 def main():
