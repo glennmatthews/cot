@@ -14,7 +14,13 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-from setuptools import setup
+# Install setuptools automatically if not already present
+try:
+    from setuptools import setup
+except ImportError:
+    import ez_setup
+    ez_setup.use_setuptools()
+
 import versioneer
 
 versioneer.VCS = 'git'

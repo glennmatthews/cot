@@ -40,13 +40,6 @@ If it's an older release (CentOS in particular defaults to old Python versions)
 then you need to install a newer version. Refer to http://www.python.org for
 installation instructions.
 
-Install Python `setuptools` module
-----------------------------------
-
-* Ubuntu and similar: `sudo apt-get install python-setuptools`
-
-For other variants, refer to https://pypi.python.org/pypi/setuptools
-
 Install QEMU
 ------------
 
