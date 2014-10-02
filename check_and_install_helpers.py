@@ -23,7 +23,7 @@ import subprocess
 import sys
 
 import COT.helper_tools
-from COT.helper_tools import HelperNotFoundError, HelperError
+from COT.helper_tools import HelperNotFoundError
 from COT.cli import confirm, confirm_or_die
 
 # Look for various package managers:
@@ -70,10 +70,12 @@ def check_qemu_and_vmdktool():
                 subprocess.check_call(['tar', 'zxf', 'vmdktool-1.4.tar.gz'])
                 # vmdktool doesn't build cleanly under linux without
                 # modifying the CFLAGS:
-                env = os.environment.copy()
+                env = os.environ.copy()
                 env["CFLAGS"] = "-D_GNU_SOURCE"
                 subprocess.check_call(['make', '--directory', 'vmdktool-1.4'],
                                       env=env)
+                if not os.path.exists('/usr/local/man/man8'):
+                    os.makedirs('/usr/local/man/man8', 0755)
                 subprocess.check_call(['make', '--directory', 'vmdktool-1.4',
                                        'install'])
             finally:
@@ -136,6 +138,24 @@ def check_ovftool():
     return
 
 def main():
+    print("Checking for required and optional helper programs...")
+    if sys.platform == 'darwin' and not PORT:
+        confirm_or_die("It appears you are running on a Mac but "
+                       "do not have MacPorts installed.\n"
+                       "If you've already installed all helper programs "
+                       "that COT needs, this is not a problem.\n"
+                       "If any helpers are missing, we could use MacPorts "
+                       "to automatically install them for you... "
+                       "if it were installed!\n"
+                       "See https://www.macports.org/\n"
+                       "Continue?")
+    elif sys.platform == 'linux2' and not APT_GET:
+        confirm_or_die("It appears you are running on a Linux that doesn't "
+                       "have 'apt-get' capability.\n"
+                       "If you've already installed all helper programs "
+                       "that COT needs, this is not a problem.\n"
+                       "Continue?")
+
     check_qemu_and_vmdktool()
     check_fatdisk()
     check_mkisofs()
