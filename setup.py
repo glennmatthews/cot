@@ -31,6 +31,8 @@ versioneer.parentdir_prefix = 'cot-'
 
 import os.path
 import subprocess
+from distutils.command.install import install
+from setuptools import Command
 
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
 
@@ -40,13 +42,35 @@ cmd_class = versioneer.get_cmdclass()
 from versioneer import cmd_build
 class custom_build(cmd_build):
     def run(self):
-        cmd_build.run(self)
         try:
-            subprocess.check_call("./check_and_install_helpers.py")
+            subprocess.check_call(["./check_and_install_helpers.py", "check"])
         except subprocess.CalledProcessError:
             exit()
+        cmd_build.run(self)
+
+# Add a custom 'install_helpers' command:
+class custom_install_helpers(Command):
+    description = "Install executable helper programs needed by COT"
+    user_options = []
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            subprocess.check_call(["./check_and_install_helpers.py", "install"])
+        except subprocess.CalledProcessError:
+            exit('Aborting')
+
+# 'install' needs to include 'install_helpers':
+class custom_install(install):
+    sub_commands = install.sub_commands + [('install_helpers', None)]
 
 cmd_class['build'] = custom_build
+cmd_class['install_helpers'] = custom_install_helpers
+cmd_class['install'] = custom_install
 
 setup(
     name='common-ovf-tool',
