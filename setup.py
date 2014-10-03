@@ -31,7 +31,7 @@ versioneer.parentdir_prefix = 'cot-'
 
 import os.path
 import subprocess
-from distutils.command.install import install
+from setuptools.command.bdist_egg import bdist_egg
 from setuptools import Command
 
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
@@ -64,13 +64,15 @@ class custom_install_helpers(Command):
         except subprocess.CalledProcessError:
             exit('Aborting')
 
-# 'install' needs to include 'install_helpers':
-class custom_install(install):
-    sub_commands = install.sub_commands + [('install_helpers', None)]
+# 'bdist_egg' (called automatically by 'install') to include 'install_helpers'
+class custom_bdist_egg(bdist_egg):
+    def run(self):
+        self.run_command('install_helpers')
+        bdist_egg.run(self)
 
 cmd_class['build'] = custom_build
 cmd_class['install_helpers'] = custom_install_helpers
-cmd_class['install'] = custom_install
+cmd_class['bdist_egg'] = custom_bdist_egg
 
 setup(
     name='common-ovf-tool',
