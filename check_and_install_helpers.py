@@ -30,31 +30,32 @@ from COT.cli import confirm, confirm_or_die
 PORT = distutils.spawn.find_executable('port')
 APT_GET = distutils.spawn.find_executable('apt-get')
 
-def check_qemu_and_vmdktool():
-    print("Checking for 'qemu-img' executable...")
-    qemu_path = distutils.spawn.find_executable('qemu-img')
-    if not qemu_path:
-        print("QEMU not found.")
-        return False
+def check_executable(name):
+    print("Checking for '{0}' executable...".format(name))
+    path = distutils.spawn.find_executable(name)
+    if path:
+        print("Found '{0}'".format(path))
+        return True
     else:
-        print("Found '{0}'".format(qemu_path))
+        print("'{0}' not found".format(name))
+        return False
+
+
+def check_qemu_and_vmdktool():
+    if not check_executable('qemu-img'):
+        return False
 
     qemu_version = COT.helper_tools.get_qemu_img_version()
     print("QEMU version is {0}".format(qemu_version))
 
     if qemu_version >= StrictVersion("2.1.0"):
-        print("'vmdktool' is not required")
+        print("QEMU is new enough that 'vmdktool' is not required")
         return True
 
     print("Checking for 'vmdktool' executable...")
 
-    vmdktool_path = distutils.spawn.find_executable('vmdktool')
-    if not vmdktool_path:
-        print("'vmdktool' not found")
-        return False
-    else:
-        print("Found '{0}'".format(vmdktool_path))
-        return True
+    return check_executable('vmdktool')
+
 
 def install_qemu_and_vmdktool():
     if check_qemu_and_vmdktool():
@@ -118,14 +119,8 @@ def install_qemu_and_vmdktool():
 
 
 def check_fatdisk():
-    print("Checking for 'fatdisk' executable...")
-    fatdisk_path = distutils.spawn.find_executable('fatdisk')
-    if fatdisk_path:
-        print("Found '{0}'".format(fatdisk_path))
-        return True
-    else:
-        print("'fatdisk' (optional dependency) not found")
-        return False
+    return check_executable('fatdisk')
+
 
 def install_fatdisk():
     if check_fatdisk():
@@ -152,25 +147,21 @@ def install_fatdisk():
 
 
 def check_mkisofs():
-    print("Checking for 'mkisofs' executable...")
-    mkisofs_path = distutils.spawn.find_executable('mkisofs')
-    if mkisofs_path:
-        print("Found '{0}'".format(mkisofs_path))
-        return True
-    else:
-        print("'mkisofs' (optional dependency) not found")
-        return False
+    return (check_executable('mkisofs') or check_executable('genisoimage'))
+
 
 def install_mkisofs():
     if check_mkisofs():
         return True
 
-    if not confirm("Optional dependency 'mkisofs' not found. "
+    if not confirm("Optional dependency 'mkisofs'/'genisoimage' not found. "
                    "Try to install it?"):
         return False
 
     if PORT:
         subprocess.check_call(['port', 'install', 'cdrtools'])
+    elif APT_GET:
+        subprocess.check_call(['apt-get', 'install', 'genisoimage'])
     else:
         print("Not sure how to install mkisofs, sorry!\n"
               "See http://cdrecord.org/")
@@ -178,15 +169,10 @@ def install_mkisofs():
 
     return check_mkisofs()
 
+
 def check_ovftool():
-    print("Checking for 'ovftool' executable...")
-    ovftool_path = distutils.spawn.find_executable('ovftool')
-    if ovftool_path:
-        print("Found '{0}'".format(ovftool_path))
-        return True
-    else:
-        print("'ovftool' (optional dependency) not found")
-        return False
+    return check_executable('ovftool')
+
 
 def install_ovftool():
     if check_ovftool():
