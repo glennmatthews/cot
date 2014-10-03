@@ -144,7 +144,7 @@ Cisco IOS XRv platforms."""),
     epilog=(
 """Note: some subcommands rely on external software tools, including:
 * qemu-img (http://www.qemu.org/)
-* mkisofs  (http://cdrecord.org/
+* mkisofs  (http://cdrecord.org/)
 * ovftool  (https://www.vmware.com/support/developer/ovf/)
 * fatdisk  (http://github.com/goblinhack/fatdisk)
 * vmdktool (http://www.freshports.org/sysutils/vmdktool/)
