@@ -99,7 +99,7 @@ understand exactly what it's doing, see the following sections:
 * [Install QEMU](#install-qemu)
 * [Install `vmdktool` (if needed)](#install-vmdktool-if-needed)
 * [Install `fatdisk` (optional)](#install-fatdisk-optional)
-* [Install `mkisofs` (optional)](#install-mkisofs-optional)
+* [Install `mkisofs` or `genisoimage` (optional)](#install-mkisofs-or-genisoimage-optional)
 * [Install `ovftool` (optional)](#install-ovftool-optional)
 
 In any case, once the helper tools you need are installed, you can proceed to
@@ -168,16 +168,26 @@ Currently the only such platform known to COT is Cisco IOSv.
 
         sudo cp ./fatdisk /usr/local/bin/fatdisk
 
-### Install `mkisofs` (optional) ###
+### Install `mkisofs` or `genisoimage` (optional) ###
 
-[`mkisofs`](http://cdrecord.org/) is standard on most Linux distributions, but
-if not installed on your system you may want to install it according to the
-instructions at the linked web site.
+[`mkisofs`](http://cdrecord.org/) or the similar `genisoimage` are standard on
+most Linux distributions. These are used by COT primarily for creation of ISO
+images as part of the `cot inject-config` command for various platforms, so if
+you are not using that command, these tools are optional.
+
+* Ubuntu and similar: `sudo apt-get install genisoimage`
+* Others: http://cdrecord.org/
 
 ### Install `ovftool` (optional) ###
 
-Download [`ovftool`](https://www.vmware.com/support/developer/ovf/)
-from VMware and install it according to the included instructions.
+If you want to validate OVFs against VMware's expectations, or if you want to
+use the `cot deploy esxi` command, you need `ovftool`. Otherwise it is not
+required.
+
+If desired, you can download `ovftool` from
+https://www.vmware.com/support/developer/ovf/
+This will require creating a user account for VMware.com if you do not have
+one already. Once downloaded, install it according to the included instructions.
 
 Install COT
 -----------
