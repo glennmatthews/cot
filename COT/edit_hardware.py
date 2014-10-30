@@ -38,6 +38,7 @@ def edit_hardware(args):
         args.mac_addresses_list is None and
         args.nic_networks is None and
         args.nic_names is None and
+        args.profiles is None and
         args.serial_ports is None and
         args.serial_connectivity is None and
         args.scsi_subtype is None and
