@@ -295,6 +295,26 @@ class TestOVFInputOutput(COT_UT):
         # TODO - inconsistent order of File versus Disk?
         # TODO - Sections in wrong order?
 
+    def test_configuration_profiles(self):
+        """Check profile id list APIs"""
+
+        # No profiles defined
+        ovf = OVF(self.vmware_ovf, self.working_dir, None)
+
+        self.assertEqual(ovf.get_configuration_profile_ids(), [])
+
+        self.assertEqual(ovf.get_default_profile_name(), None)
+
+        # Profile list exists
+        ovf = OVF(self.input_ovf, self.working_dir, None)
+
+        self.assertEqual(ovf.get_configuration_profile_ids(),
+                         ["1CPU-1GB-1NIC",
+                          "2CPU-2GB-1NIC",
+                          "4CPU-4GB-3NIC"])
+
+        self.assertEqual(ovf.get_default_profile_name(), "4CPU-4GB-3NIC")
+
 
 class TestOVFItem(COT_UT):
     """Unit test cases for the OVFItem class"""

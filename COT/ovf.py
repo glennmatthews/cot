@@ -556,7 +556,7 @@ class OVF(VMDescription, XML):
 
         return "\n".join(str_list)
 
-    def profile_info_string(self, verbosity_option):
+    def profile_info_string(self, verbosity_option=None):
         str_list = []
         #Profile information
         PROF_W = 33

@@ -67,24 +67,27 @@ def deploy_esxi(args):
                                    args.PACKAGE,
                                    "\n".join(profile_list)))
 
-        if args.configuration is None:
-            if args.force:
+        if profile_list and args.configuration is None:
+            if len(profile_list) == 1:
+                # No need to prompt the user
+                args.configuration = profile_list[0]
+                logger.debug("Auto-selected only profile '{0}'"
+                             .format(args.configuration))
+            elif args.force:
                 args.configuration = vm.get_default_profile_name()
-                logger.warning("Automatically selecting default profile '{0}'"
+                logger.warning("Auto-selecting default profile '{0}'"
                                .format(args.configuration))
-            else:
-                while True:
-                    print(vm.profile_info_string(None))
-                    user_input = get_input("Choose a Configuration: ",
-                                           vm.get_default_profile_name())
-                    if user_input in profile_list:
-                        args.configuration = user_input
-                        break
+            while args.configuration is None:
+                print(vm.profile_info_string())
+                user_input = get_input("Choose a Configuration: ",
+                                       vm.get_default_profile_name())
+                if user_input in profile_list:
+                    args.configuration = user_input
+                else:
+                    print("\nInvalid input. Please try again.")
 
-                    print()
-                    print("Entry does not match a profile. Please try again.")
-
-        args.ovftool_args.append("--deploymentOption=" + args.configuration)
+        if args.configuration is not None:
+            args.ovftool_args.append("--deploymentOption=" + args.configuration)
 
         # Get the number of serial ports in the OVA.
         # ovftool does not create serial ports when deploying to a VM,
@@ -109,6 +112,8 @@ def deploy_esxi(args):
     # add package and target to the list
     args.ovftool_args.append(args.PACKAGE)
     args.ovftool_args.append(target)
+
+    logger.debug("Final args to pass to OVFtool: {0}".format(args.ovftool_args))
 
     # Create new list with 'ovftool' at front
     new_list = ['ovftool'] + args.ovftool_args
