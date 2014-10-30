@@ -556,7 +556,7 @@ class OVF(VMDescription, XML):
 
         return "\n".join(str_list)
 
-    def profile_info_string(self, verbosity_option=None):
+    def profile_info_string(self, verbosity_option=None, enumerate=False):
         str_list = []
         #Profile information
         PROF_W = 33
@@ -573,26 +573,13 @@ class OVF(VMDescription, XML):
                                 "NICs", "Serials", "Disks/Capacity"))
         str_list.append(template.format("", "----", "---------",
                                         "------", "-------", "---------------"))
-        default_profile = None
-        profiles = [None]
-        if self.deploy_opt_section is not None:
-            default_profile = self.find_child(self.deploy_opt_section,
-                                              self.CONFIG,
-                                              attrib={self.CONFIG_DEFAULT:
-                                                          'true'})
-            profiles = self.find_all_children(self.deploy_opt_section,
-                                              self.CONFIG)
-        if default_profile is None:
-            # "If no default is specified, the first element in the list
-            # is the default" - OVF specification
-            default_profile = profiles[0]
-        # Move the default profile to the head of the list
-        profiles.remove(default_profile)
-        profiles.insert(0, default_profile)
+        default_profile_id = self.get_default_profile_name()
+        profile_ids = self.get_configuration_profile_ids()
+        if not profile_ids:
+            profile_ids = [None]
         # Print a table of profiles vs. their hardware
-        for profile in profiles:
-            profile_id = (None if profile is None else
-                          profile.get(self.CONFIG_ID))
+        index = 0
+        for profile_id in profile_ids:
             cpus = 0
             cpu_item = self.hardware.find_item('cpu', profile=profile_id)
             if cpu_item:
@@ -611,48 +598,48 @@ class OVF(VMDescription, XML):
             if self.disk_section is not None:
                 for disk in self.disk_section.findall(self.DISK):
                     disks_size += self.get_capacity_from_disk(disk)
+
+            if enumerate:
+                profile_str = "{0:2}) ".format(index)
+            else:
+                profile_str = "  "
+            profile_str += str(profile_id)
+            if profile_id == default_profile_id:
+                profile_str += " (default)"
             str_list.append(template.format(
-                    ("  {0}" if profile != default_profile else
-                     "  {0} (default)").format(profile_id),
-                    cpus,
-                    byte_string(int(megabytes), base_shift=2),
-                    nics,
-                    serials,
-                    "{0:2} / {1:>9}".format(disk_count,
-                                            byte_string(disks_size))))
-            if profile is not None and verbosity_option != 'brief':
+                profile_str,
+                cpus,
+                byte_string(int(megabytes), base_shift=2),
+                nics,
+                serials,
+                "{0:2} / {1:>9}".format(disk_count,
+                                        byte_string(disks_size))))
+            if profile_id is not None and verbosity_option != 'brief':
                 wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
                                                initial_indent='    ',
                                                subsequent_indent=(' ' * 21))
+                profile = self.find_child(self.deploy_opt_section,
+                                          self.CONFIG,
+                                          attrib={self.CONFIG_ID: profile_id})
                 str_list.append(wrapper.fill('{0:15} "{1}"'.format(
                             "Label:",
                             profile.find(self.CFG_LABEL).text)))
                 str_list.append(wrapper.fill(
                         '{0:15} "{1}"'.format("Description:",
                                 profile.find(self.CFG_DESC).text)))
+            index += 1
+
 
         return "\n".join(str_list)
 
     def get_default_profile_name(self):
         default_profile = None
-        profiles = []
-        if self.deploy_opt_section is not None:
-            default_profile = self.find_child(self.deploy_opt_section,
-                                              self.CONFIG,
-                                              attrib={self.CONFIG_DEFAULT:
-                                                          'true'})
-            if default_profile is None:
-                # "If no default is specified, the first element in the list
-                # is the default" - OVF specification
-                profiles = self.find_all_children(self.deploy_opt_section,
-                                                  self.CONFIG)
-                if profiles:
-                    default_profile = profiles[0]
+        profiles = self.get_configuration_profile_ids()
+        if profiles:
+            default_profile = profiles[0]
 
-        if default_profile is not None:
-            return default_profile.get(self.CONFIG_ID)
+        return default_profile
 
-        return None
 
     def get_platform(self):
         """Identifies the platform type from the OVF descriptor"""
@@ -730,13 +717,19 @@ class OVF(VMDescription, XML):
     def get_configuration_profile_ids(self):
         """Get the list of supported configuration profile identifiers.
         If this OVF has no defined profiles, returns an empty list.
+        If there is a default profile, it will be first in the list.
         """
         profile_ids = []
         if self.deploy_opt_section is not None:
             profiles = self.find_all_children(self.deploy_opt_section,
                                               self.CONFIG)
             for profile in profiles:
-                profile_ids.append(profile.get(self.CONFIG_ID))
+                # Force the "default" profile to the head of the list
+                if (profile.get(self.CONFIG_DEFAULT) == 'true' or
+                    profile.get(self.CONFIG_DEFAULT) == '1'):
+                    profile_ids.insert(0, profile.get(self.CONFIG_ID))
+                else:
+                    profile_ids.append(profile.get(self.CONFIG_ID))
         logger.debug("Configuration profiles are: {0}".format(profile_ids))
         return profile_ids
 

@@ -137,6 +137,7 @@ class VMDescription(object):
     def get_configuration_profile_ids(self):
         """Return a list of named configuration profiles in the VM.
         If there are no profiles defined, returns an empty list.
+        If there is a default profile, it will be first in the list.
         """
         raise NotImplementedError("get_configuration_profile_ids "
                                   "not implemented!")

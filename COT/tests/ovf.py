@@ -308,10 +308,11 @@ class TestOVFInputOutput(COT_UT):
         # Profile list exists
         ovf = OVF(self.input_ovf, self.working_dir, None)
 
+        # default profile is first in the list
         self.assertEqual(ovf.get_configuration_profile_ids(),
-                         ["1CPU-1GB-1NIC",
-                          "2CPU-2GB-1NIC",
-                          "4CPU-4GB-3NIC"])
+                         ["4CPU-4GB-3NIC",
+                          "1CPU-1GB-1NIC",
+                          "2CPU-2GB-1NIC"])
 
         self.assertEqual(ovf.get_default_profile_name(), "4CPU-4GB-3NIC")
 

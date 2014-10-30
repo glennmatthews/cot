@@ -77,14 +77,22 @@ def deploy_esxi(args):
                 args.configuration = vm.get_default_profile_name()
                 logger.warning("Auto-selecting default profile '{0}'"
                                .format(args.configuration))
+            profile_info_string = None
             while args.configuration is None:
-                print(vm.profile_info_string())
-                user_input = get_input("Choose a Configuration: ",
-                                       vm.get_default_profile_name())
+                if not profile_info_string:
+                    profile_info_string = vm.profile_info_string(enumerate=True)
+                print(profile_info_string)
+                user_input = get_input("Choose a Configuration:", "0")
                 if user_input in profile_list:
                     args.configuration = user_input
                 else:
-                    print("\nInvalid input. Please try again.")
+                    try:
+                        i = int(user_input)
+                        if i >= len(profile_list):
+                            raise ValueError
+                        args.configuration = profile_list[i]
+                    except ValueError:
+                        print("\nInvalid input. Please try again.")
 
         if args.configuration is not None:
             args.ovftool_args.append("--deploymentOption=" + args.configuration)
@@ -92,7 +100,7 @@ def deploy_esxi(args):
         # Get the number of serial ports in the OVA.
         # ovftool does not create serial ports when deploying to a VM,
         # so we'll have to fix this up manually later.
-        serial_count = vm.get_serial_count(args.configuration)
+        serial_count = vm.get_serial_count([args.configuration])
 
     # pass network settings on to ovftool
     if args.network_map is not None:
