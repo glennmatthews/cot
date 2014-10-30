@@ -20,6 +20,7 @@ Linux Installation
 The specifics may vary depending on your Linux distribution, of course.
 
 * [Check installed Python version](#check-installed-python-version)
+* [Install Python `setuptools`](#install-python-setuptools)
 * [Install QEMU](#install-qemu)
 * [Install `vmdktool` (if needed)](#install-vmdktool-if-needed)
 * [Install `fatdisk` (optional)](#install-fatdisk-optional)
@@ -37,6 +38,13 @@ Make sure your Python version is at least 2.7:
 
 If it's an older release (CentOS in particular defaults to old Python versions)
 then you need to install a newer version. Refer to http://www.python.org for
+installation instructions.
+
+Install Python `setuptools`
+---------------------------
+* Ubuntu and similar: `sudo apt-get install python-setuptools`
+
+For other OS, refer to https://pythonhosted.org/setuptools/setuptools.html for
 installation instructions.
 
 Install QEMU
