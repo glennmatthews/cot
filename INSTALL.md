@@ -135,7 +135,7 @@ Install COT
 
 1. Download the latest source distribution. You can do this from the GitHub
   website (go to https://github.com/glennmatthews/cot/ and click
-  ["Download Zip"](https://github.com/glennmatthews/cot/archive/master.zip)
+  ["Download ZIP"](https://github.com/glennmatthews/cot/archive/master.zip)
   on the right side of the page), or you can do this via the CLI:
 
         git clone git://github.com/glennmatthews/cot
