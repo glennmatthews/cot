@@ -69,7 +69,7 @@ Install `vmdktool` (if needed)
 
 First, check your QEMU version to see if you even need `vmdktool`:
 
-    $ qemu-img --version
+    $ qemu-img --version | grep " version"
     qemu-img version 2.1.0, Copyright (c) 2004-2008 Fabrice Bellard
 
 If the reported version is 2.1.0 or newer, you don't need `vmdktool`.
