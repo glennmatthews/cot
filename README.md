@@ -65,7 +65,7 @@ Installation
 
 Refer to the included
 [INSTALL.md](https://github.com/glennmatthews/cot/blob/master/INSTALL.md)
-for installation instructions.
+for installation instructions, including how to download COT to your system.
 
 Examples
 ========

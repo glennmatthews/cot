@@ -21,6 +21,7 @@ The specifics may vary depending on your Linux distribution, of course.
 
 * [Check installed Python version](#check-installed-python-version)
 * [Install Python `setuptools`](#install-python-setuptools)
+* [Install Git (optional)](#install-git-optional)
 * [Install QEMU](#install-qemu)
 * [Install `vmdktool` (if needed)](#install-vmdktool-if-needed)
 * [Install `fatdisk` (optional)](#install-fatdisk-optional)
@@ -46,6 +47,14 @@ Install Python `setuptools`
 
 For other OS, refer to https://pythonhosted.org/setuptools/setuptools.html for
 installation instructions.
+
+Install Git (optional)
+----------------------
+Git makes it easier to obtain COT and `vmdktool` but it is not strictly
+necessary - you can download source via HTTP if you do not have/want Git or
+if Git is blocked by your environment.
+
+* Ubuntu and similar: `sudo apt-get install git`
 
 Install QEMU
 ------------
@@ -124,12 +133,15 @@ from VMware and install it according to the included instructions.
 Install COT
 -----------
 
-1. Download the latest source distribution.
+1. Download the latest source distribution. You can do this from the GitHub
+  website (go to https://github.com/glennmatthews/cot/ and click
+  ["Download Zip"](https://github.com/glennmatthews/cot/archive/master.zip)
+  on the right side of the page), or you can do this via the CLI:
 
         git clone git://github.com/glennmatthews/cot
         cd cot
 
-  or (if `git` is blocked for you)
+  or (if `git` is blocked for you):
 
         wget -O cot.zip https://github.com/glennmatthews/cot/archive/master.zip
         unzip cot.zip
