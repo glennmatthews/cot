@@ -28,11 +28,11 @@ Git installed already) is as follows:
 If you can't install or use Git for whatever reason, you can download via HTTP
 instead:
 
-   wget -O cot.tgz https://github.com/glennmatthews/cot/archive/master.tar.gz
-   tar zxf cot.tgz
-   cd cot-master
-   python setup.py build
-   sudo python setup.py install
+    wget -O cot.tgz https://github.com/glennmatthews/cot/archive/master.tar.gz
+    tar zxf cot.tgz
+    cd cot-master
+    python setup.py build
+    sudo python setup.py install
 
 The specifics may vary depending on your Linux distribution, of course.
 For more details you can refer to the
