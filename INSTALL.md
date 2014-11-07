@@ -38,13 +38,6 @@ installation instructions.
 Download and build COT
 ----------------------
 
-### Install Python `setuptools` ###
-
-* Ubuntu and similar: `sudo apt-get install python-setuptools`
-
-For other OS, refer to https://pythonhosted.org/setuptools/setuptools.html for
-installation instructions.
-
 ### Install Git (optional) ###
 
 Git makes it easier to obtain COT and `vmdktool` but it is not strictly
@@ -60,7 +53,7 @@ Download the latest source distribution.
     git clone git://github.com/glennmatthews/cot
     cd cot
 
-or (if `git` is blocked for you)
+or (if you didn't install `git` or it is blocked for you)
 
     wget -O cot.tgz https://github.com/glennmatthews/cot/archive/master.tar.gz
     tar zxf cot.tgz
@@ -154,7 +147,7 @@ Currently the only such platform known to COT is Cisco IOSv.
         git clone git://github.com/goblinhack/fatdisk
         cd fatdisk
 
-  or (if `git` is blocked for you)
+  or (if you didn't install `git` or it is blocked for you)
 
         wget -O fatdisk.tgz https://github.com/goblinhack/fatdisk/archive/master.tar.gz
         tar zxf fatdisk.tgz
