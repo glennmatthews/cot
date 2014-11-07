@@ -137,21 +137,16 @@ def install_fatdisk():
     if PORT:
         subprocess.check_call(['port', 'install', 'fatdisk'])
     elif sys.platform == 'linux2':
-        # Fatdisk installation requires unzip and make
-        if not check_executable('unzip'):
-            if APT_GET:
-                subprocess.check_call(['apt-get', 'install', 'unzip'])
-            else:
-                exit("Not sure how to install 'unzip', sorry!")
+        # Fatdisk installation requires make
         if not check_executable('make'):
             subprocess.check_call(['apt-get', 'install', 'make'])
             if APT_GET:
                 subprocess.check_call(['apt-get', 'install', 'make'])
             else:
                 exit("Not sure how to install 'make', sorry!")
-        subprocess.check_call(['wget', '-O', 'fatdisk.zip',
-            'https://github.com/goblinhack/fatdisk/archive/master.zip'])
-        subprocess.check_call(['unzip', 'fatdisk.zip'])
+        subprocess.check_call(['wget', '-O', 'fatdisk.tgz',
+            'https://github.com/goblinhack/fatdisk/archive/master.tar.gz'])
+        subprocess.check_call(['tar', 'zxf', 'fatdisk.tgz'])
         subprocess.check_call(['./RUNME'], cwd='fatdisk-master')
         shutil.copy2('fatdisk-master/fatdisk', '/usr/local/bin/fatdisk')
     else:

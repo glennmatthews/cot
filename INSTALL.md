@@ -62,8 +62,8 @@ Download the latest source distribution.
 
 or (if `git` is blocked for you)
 
-    wget -O cot.zip https://github.com/glennmatthews/cot/archive/master.zip
-    unzip cot.zip
+    wget -O cot.tgz https://github.com/glennmatthews/cot/archive/master.tar.gz
+    tar zxf cot.tgz
     cd cot-master
 
 ### Build COT ###
@@ -156,8 +156,8 @@ Currently the only such platform known to COT is Cisco IOSv.
 
   or (if `git` is blocked for you)
 
-        wget -O fatdisk.zip https://github.com/goblinhack/fatdisk/archive/master.zip
-        unzip fatdisk.zip
+        wget -O fatdisk.tgz https://github.com/goblinhack/fatdisk/archive/master.tar.gz
+        tar zxf fatdisk.tgz
         cd fatdisk-master
 
 2. Compile `fatdisk`
