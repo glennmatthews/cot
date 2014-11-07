@@ -86,8 +86,10 @@ def install_qemu_and_vmdktool():
         if PORT:
             subprocess.check_call(['port', 'install', 'vmdktool'])
         elif APT_GET:
-            # We don't have vmdktool in apt yet but we can install it manually:
-            # vmdktool requires zlib1g-dev
+            # We don't have vmdktool in apt yet but we can build it manually:
+            # vmdktool requires make and zlib1g-dev
+            if not check_executable('make'):
+                subprocess.check_call(['apt-get', 'install', 'make'])
             subprocess.check_call(['apt-get', 'install', 'zlib1g-dev'])
             try:
                 # Get the source
@@ -95,12 +97,14 @@ def install_qemu_and_vmdktool():
                                        'http://people.freebsd.org/~brian/'
                                        'vmdktool/vmdktool-1.4.tar.gz'])
                 subprocess.check_call(['tar', 'zxf', 'vmdktool-1.4.tar.gz'])
-                # vmdktool doesn't build cleanly under linux without
-                # modifying the CFLAGS:
-                env = os.environ.copy()
-                env["CFLAGS"] = "-D_GNU_SOURCE"
-                subprocess.check_call(['make', '--directory', 'vmdktool-1.4'],
-                                      env=env)
+                # vmdktool is originally a BSD tool so it has some build
+                # assumptions that aren't necessarily correct under Linux.
+                # The easiest workaround is to override the CFLAGS to:
+                # 1) add -D_GNU_SOURCE
+                # 2) not treat all warnings as errors
+                subprocess.check_call(['make',
+                                       'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
+                                       '--directory', 'vmdktool-1.4'])
                 if not os.path.exists('/usr/local/man/man8'):
                     os.makedirs('/usr/local/man/man8', 0755)
                 subprocess.check_call(['make', '--directory', 'vmdktool-1.4',
@@ -111,10 +115,10 @@ def install_qemu_and_vmdktool():
                 if os.path.exists('vmdktool-1.4'):
                     shutil.rmtree('vmdktool-1.4')
         else:
-            exit("Not sure how to install vmdktool, sorry!\n"
+            exit("Not sure how to install 'vmdktool', sorry!\n"
                  "See http://www.freshports.org/sysutils/vmdktool/")
 
-    print("installed vmdktool successfully")
+    print("installed 'vmdktool' successfully")
     return True
 
 
@@ -133,13 +137,25 @@ def install_fatdisk():
     if PORT:
         subprocess.check_call(['port', 'install', 'fatdisk'])
     elif sys.platform == 'linux2':
+        # Fatdisk installation requires unzip and make
+        if not check_executable('unzip'):
+            if APT_GET:
+                subprocess.check_call(['apt-get', 'install', 'unzip'])
+            else:
+                exit("Not sure how to install 'unzip', sorry!")
+        if not check_executable('make'):
+            subprocess.check_call(['apt-get', 'install', 'make'])
+            if APT_GET:
+                subprocess.check_call(['apt-get', 'install', 'make'])
+            else:
+                exit("Not sure how to install 'make', sorry!")
         subprocess.check_call(['wget', '-O', 'fatdisk.zip',
             'https://github.com/goblinhack/fatdisk/archive/master.zip'])
         subprocess.check_call(['unzip', 'fatdisk.zip'])
         subprocess.check_call(['./RUNME'], cwd='fatdisk-master')
         shutil.copy2('fatdisk-master/fatdisk', '/usr/local/bin/fatdisk')
     else:
-        print("Not sure how to install fatdisk, sorry!\n"
+        print("Not sure how to install 'fatdisk', sorry!\n"
               "See https://github.com/goblinhack/fatdisk")
         return False
 
