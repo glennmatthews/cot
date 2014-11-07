@@ -30,13 +30,54 @@ versioneer.tag_prefix = 'v'
 versioneer.parentdir_prefix = 'cot-'
 
 import os.path
+import subprocess
+from setuptools.command.bdist_egg import bdist_egg
+from setuptools import Command
 
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
+
+cmd_class = versioneer.get_cmdclass()
+
+# Extend the "build" command a bit further:
+from versioneer import cmd_build
+class custom_build(cmd_build):
+    def run(self):
+        try:
+            subprocess.check_call(["./check_and_install_helpers.py", "check"])
+        except subprocess.CalledProcessError:
+            exit()
+        cmd_build.run(self)
+
+# Add a custom 'install_helpers' command:
+class custom_install_helpers(Command):
+    description = "Install executable helper programs needed by COT"
+    user_options = []
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            subprocess.check_call(["./check_and_install_helpers.py", "install"])
+        except subprocess.CalledProcessError:
+            exit('Aborting')
+
+# 'bdist_egg' (called automatically by 'install') to include 'install_helpers'
+class custom_bdist_egg(bdist_egg):
+    def run(self):
+        self.run_command('install_helpers')
+        bdist_egg.run(self)
+
+cmd_class['build'] = custom_build
+cmd_class['install_helpers'] = custom_install_helpers
+cmd_class['bdist_egg'] = custom_bdist_egg
 
 setup(
     name='common-ovf-tool',
     version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass=cmd_class,
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
     packages=['COT'],

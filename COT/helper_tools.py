@@ -21,6 +21,7 @@ import os
 import re
 import subprocess
 from distutils.version import StrictVersion
+from distutils.spawn import find_executable
 
 from .data_validation import ValueUnsupportedError
 
@@ -271,7 +272,16 @@ def create_disk_image(file_path, file_format=None,
         return True
 
     if file_format == 'iso':
-        mkisofs_args = ['mkisofs',
+        # mkisofs and genisoimage take the same parameters, conveniently
+        exec_path = find_executable('mkisofs')
+        if not exec_path:
+            exec_path = find_executable('genisoimage')
+        if not exec_path:
+            raise HelperNotFoundError(1,
+                                      "Unable to locate helper programs "
+                                      "'mkisofs' or 'genisoimage'. "
+                                      "Please check your $PATH.")
+        mkisofs_args = [exec_path,
                         '-output', file_path,
                         '-full-iso9660-filenames',
                         '-iso-level', '2'] + contents
