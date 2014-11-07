@@ -38,26 +38,38 @@ installation instructions.
 Download and build COT
 ----------------------
 
-### Install Git (optional) ###
-
-Git makes it easier to obtain COT and `vmdktool` but it is not strictly
-necessary - you can download source via HTTP if you do not have/want Git or
-if Git is blocked by your environment.
-
-* Ubuntu and similar: `sudo apt-get install git`
-
 ### Download COT ###
 
-Download the latest source distribution.
+You can download COT via either HTTP or via Git.
 
-    git clone git://github.com/glennmatthews/cot
-    cd cot
+#### Downloading COT via HTTP ####
 
-or (if you didn't install `git` or it is blocked for you)
+To download the latest bleeding-edge version:
 
     wget -O cot.tgz https://github.com/glennmatthews/cot/archive/master.tar.gz
     tar zxf cot.tgz
     cd cot-master
+
+To download a specific stable release (in this example, v1.1.3):
+
+    wget -O cot.tgz https://github.com/glennmatthews/cot/archive/v1.1.3.tar.gz
+    tar zxf cot.tgz
+    cd cot-1.1.3
+
+#### Downloading COT via Git ####
+
+Under Ubuntu and similar, you may need to run `sudo apt-get install git`.
+
+Make a local clone of the Git repository:
+
+    git clone git://github.com/glennmatthews/cot
+    cd cot
+
+This will default to the latest bleeding-edge version. If you want a specific
+stable release, use the following command to select to the desired release
+(for example, version 1.1.3):
+
+    git checkout tags/v1.1.3
 
 ### Build COT ###
 
