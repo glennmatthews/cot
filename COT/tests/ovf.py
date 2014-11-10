@@ -212,25 +212,21 @@ class TestOVFInputOutput(COT_UT):
         # .ovf that is an empty file
         with open(fake_file, 'w+') as f:
             f.write("")
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
         # .ovf that isn't actually XML at all
         with open(fake_file, 'w+') as f:
             f.write("< hello world!")
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
         # .ovf that is XML but not OVF XML
         with open(fake_file, 'w+') as f:
             f.write("<?xml version='1.0' encoding='utf-8'?>")
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
         with open(fake_file, 'w+') as f:
             f.write("<?xml version='1.0' encoding='utf-8'?>")
             f.write("<foo/>")
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
 
     def test_invalid_ova_file(self):
@@ -241,27 +237,29 @@ class TestOVFInputOutput(COT_UT):
         # .ova that is an empty file
         with open(fake_file, 'w+') as f:
             f.write("")
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
         # .ova that is not a TAR file
         with open(fake_file, 'w+') as f:
             f.write("< hello world!")
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
         # .ova that is a TAR file but does not contain an OVF descriptor
-        with tarfile.open(fake_file, 'w') as tarf:
+        tarf = tarfile.open(fake_file, 'w')
+        try:
             disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
             tarf.add(disk_path, os.path.basename(disk_path))
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+        finally:
+            tarf.close()
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
         # .ova that contains an OVF descriptor but in the wrong position
-        with tarfile.open(fake_file, 'a') as tarf:
+        tarf = tarfile.open(fake_file, 'a')
+        try:
             tarf.add(self.input_ovf, os.path.basename(self.input_ovf))
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+        finally:
+            tarf.close()
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
 
     def test_invalid_ovf_contents(self):
@@ -275,10 +273,8 @@ class TestOVFInputOutput(COT_UT):
                                   stdout=f)
         if COT_UT.OVFTOOL_PRESENT:
             # Make sure ovftool also sees this as invalid
-            with self.assertRaises(HelperError):
-                validate_ovf_for_esxi(fake_file)
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+            self.assertRaises(HelperError, validate_ovf_for_esxi, fake_file)
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
         # Item referencing a nonexistent Configuration
         with open(fake_file, "w") as f:
@@ -287,10 +283,8 @@ class TestOVFInputOutput(COT_UT):
                                   stdout=f)
         if COT_UT.OVFTOOL_PRESENT:
             # Make sure ovftool also sees this as invalid
-            with self.assertRaises(HelperError):
-                validate_ovf_for_esxi(fake_file)
-        with self.assertRaises(VMInitError):
-            ovf = OVF(fake_file, self.working_dir, None)
+            self.assertRaises(HelperError, validate_ovf_for_esxi, fake_file)
+        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
 
         # TODO - inconsistent order of File versus Disk?
         # TODO - Sections in wrong order?
@@ -2085,8 +2079,7 @@ class TestOVFInfo(COT_UT):
         argv.insert(0, os.path.join(os.path.dirname(__file__),
                                     "..", "..", "bin", "cot"))
         try:
-            output = subprocess.check_output(argv,
-                                             stderr=subprocess.STDOUT).decode()
+            output = check_output(argv).decode()
         except subprocess.CalledProcessError as e:
             self.fail("{0} returned {1} (error) instead of 0 (success):\n{2}"
                       .format(e.cmd, e.returncode, e.output))

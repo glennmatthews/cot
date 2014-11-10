@@ -23,6 +23,12 @@ import string
 import tarfile
 import shutil
 import xml.etree.ElementTree as ET
+# In 2.7+, ET raises a ParseError if XML parsing fails,
+# but in 2.6 it raises an ExpatError. Hide this variation.
+try:
+    from xml.etree.ElementTree import ParseError
+except ImportError:
+    from xml.parsers.expat import ExpatError as ParseError
 import textwrap
 
 from .xml_file import XML
@@ -140,7 +146,7 @@ class OVF(VMDescription, XML):
         # Open the provided OVF
         try:
             self.read_xml(self.ovf_descriptor)
-        except ET.ParseError as e:
+        except ParseError as e:
             raise VMInitError(2, "XML parser error in reading {0}: {1}"
                               .format(self.ovf_descriptor, str(e)))
 
@@ -172,14 +178,25 @@ class OVF(VMDescription, XML):
         # Some OVF sources are lazy about their XML namespacing, treating the
         #"OVF" namespace as default but not explicitly declaring it as such.
         # So fix things up if necessary:
-        for elem in self.root.iter():
-            # A namespaced element will have its namespace prepended
-            # to the tag like so:
-            # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
-            if elem.tag[0] != '{':
-                logger.debug("Fixing up missing namespace for element {0}"
-                             .format(elem.tag))
-                elem.tag = self.OVF + elem.tag
+        try:
+            for elem in self.root.iter():
+                # A namespaced element will have its namespace prepended
+                # to the tag like so:
+                # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
+                if elem.tag[0] != '{':
+                    logger.debug("Fixing up missing namespace for element {0}"
+                                 .format(elem.tag))
+                    elem.tag = self.OVF + elem.tag
+        except AttributeError:
+            # 2.6 has getiterator() but not iter()
+            for elem in self.root.getiterator():
+                # A namespaced element will have its namespace prepended
+                # to the tag like so:
+                # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
+                if elem.tag[0] != '{':
+                    logger.debug("Fixing up missing namespace for element {0}"
+                                 .format(elem.tag))
+                    elem.tag = self.OVF + elem.tag
 
         for (prefix, URI) in self.NSM.items():
             self.register_namespace(prefix, URI)
@@ -1538,7 +1555,7 @@ class OVF(VMDescription, XML):
             raise VMInitError(1, "Could not untar {0}: {1}"
                               .format(file, e.args))
 
-        with tarf:
+        try:
             # The OVF standard says, with regard to OVAs:
             # ...the files shall be in the following order inside the archive:
             # 1) OVF descriptor
@@ -1575,6 +1592,8 @@ class OVF(VMDescription, XML):
                 tarf.extract(ovf_descriptor, path=self.working_dir)
             logger.info("Extracted {0} to working directory {1}"
                         .format(file, self.working_dir))
+        finally:
+            tarf.close()
 
         # Find the OVF file
         return os.path.join(self.working_dir, ovf_descriptor.name)
@@ -1627,7 +1646,9 @@ class OVF(VMDescription, XML):
         dir = os.path.dirname(ovf_descriptor)
         (prefix, extension) = os.path.splitext(ovf_descriptor)
 
-        with tarfile.open(tar_file, 'w') as tarf:
+        tarf = tarfile.open(tar_file, 'w')
+
+        try:
             # OVF is always first
             logger.info("Adding {0} to {1}".format(ovf_descriptor, tar_file))
             tarf.add(ovf_descriptor, os.path.basename(ovf_descriptor))
@@ -1650,6 +1671,8 @@ class OVF(VMDescription, XML):
                     continue
                 tarf.add(file_path, os.path.basename(file_path))
                 logger.info("Added {0} to {1}".format(file_path, tar_file))
+        finally:
+            tarf.close()
 
 
     def create_envelope_section_if_absent(self, section_tag, info_string,

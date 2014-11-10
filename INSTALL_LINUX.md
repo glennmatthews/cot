@@ -40,6 +40,7 @@ To download a specific stable release (in this example, v1.1.3):
 ## Downloading COT via Git ##
 
 Under Ubuntu and similar, you may need to run `sudo apt-get install git`.
+Under CentOS and similar, you may need to run `sudo yum install git`.
 
 Make a local clone of the Git repository:
 
@@ -81,7 +82,7 @@ failure and work to improve this script.
 If for some reason you do not wish to use the above script, or would like to
 understand exactly what it's doing, see the following sections:
 
-* [Install QEMU](#install-qemu)
+* [Install `qemu-img`](#install-qemu-img)
 * [Install `vmdktool` (if needed)](#install-vmdktool-if-needed)
 * [Install `fatdisk` (optional)](#install-fatdisk-optional)
 * [Install `mkisofs` or `genisoimage` (optional)](#install-mkisofs-or-genisoimage-optional)
@@ -90,10 +91,10 @@ understand exactly what it's doing, see the following sections:
 In any case, once the helper tools you need are installed, you can proceed to
 [Install COT](#install-cot).
 
-## Install QEMU ##
+## Install `qemu-img` ##
 
 * Ubuntu and similar: `sudo apt-get install qemu`
-* CentOS and similar: `sudo yum install qemu`
+* CentOS and similar: `sudo yum install qemu-img`
 
 See http://en.wikibooks.org/wiki/QEMU/Installing_QEMU for other Linux variants.
 
@@ -107,10 +108,11 @@ First, check your QEMU version to see if you even need `vmdktool`:
 If the reported version is 2.1.0 or newer, you don't need `vmdktool`.
 If you have an older QEMU version and do need `vmdktool`:
 
-1. Install the library `zlib` that `vmdktool` depends on:
-
-        sudo apt-get install zlib1g-dev
-
+1. Install `make` and the library `zlib` that `vmdktool` depends on:
+** Ubuntu and similar: `sudo apt-get install make`,
+   `sudo apt-get install zlib1g-dev`
+** CentOS and similar: `sudo yum install make`,
+   `sudo yum install zlib-devel`
 2. Download the latest source distribution from
    http://people.freebsd.org/~brian/vmdktool:
 
@@ -161,6 +163,7 @@ images as part of the `cot inject-config` command for various platforms, so if
 you are not using that command, these tools are optional.
 
 * Ubuntu and similar: `sudo apt-get install genisoimage`
+* CentOS and similar: `sudo yum install genisoimage`
 * Others: http://cdrecord.org/
 
 ## Install `ovftool` (optional) ##

@@ -55,7 +55,11 @@ class XML(object):
 
 
     def register_namespace(self, prefix, URI):
-        ET.register_namespace(prefix, URI)
+        try:
+            ET.register_namespace(prefix, URI)
+        except AttributeError:
+            # 2.6 doesn't have the above API so we must write directly
+            ET._namespace_map[URI] = prefix
 
 
     def write_xml(self, file):
@@ -75,8 +79,11 @@ class XML(object):
         # option
         #
         # This is a bug - see http://bugs.python.org/issue17088
-        self.tree.write(file, xml_declaration=True, encoding='utf-8')
-
+        try:
+            self.tree.write(file, xml_declaration=True, encoding='utf-8')
+        except TypeError:
+            # 2.6 doesn't have the xml_declaration parameter. Sigh.
+            self.tree.write(file, encoding='utf-8')
 
     def xml_reindent(self, parent, depth):
         """Recursively add indentation to XML to make it look nice"""

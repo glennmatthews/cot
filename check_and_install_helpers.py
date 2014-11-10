@@ -29,6 +29,7 @@ from COT.cli import confirm, confirm_or_die
 # Look for various package managers:
 PORT = distutils.spawn.find_executable('port')
 APT_GET = distutils.spawn.find_executable('apt-get')
+YUM = distutils.spawn.find_executable('yum')
 
 def check_executable(name):
     print("Checking for '{0}' executable...".format(name))
@@ -69,6 +70,8 @@ def install_qemu_and_vmdktool():
             subprocess.check_call(['port', 'install', 'qemu'])
         elif APT_GET:
             subprocess.check_call(['apt-get', 'install', 'qemu'])
+        elif YUM:
+            subprocess.check_call(['yum', 'install', 'qemu-img'])
         else:
             exit("Not sure how to install QEMU without 'port' or 'apt-get'!\n"
                  "Please install QEMU before proceeding.\n"
@@ -85,12 +88,19 @@ def install_qemu_and_vmdktool():
         confirm_or_die("vmdktool not found. Try to install it?")
         if PORT:
             subprocess.check_call(['port', 'install', 'vmdktool'])
-        elif APT_GET:
-            # We don't have vmdktool in apt yet but we can build it manually:
-            # vmdktool requires make and zlib1g-dev
+        elif APT_GET or YUM:
+            # We don't have vmdktool in apt or yum yet,
+            # but we can build it manually:
+            # vmdktool requires make and zlib
             if not check_executable('make'):
-                subprocess.check_call(['apt-get', 'install', 'make'])
-            subprocess.check_call(['apt-get', 'install', 'zlib1g-dev'])
+                if APT_GET:
+                    subprocess.check_call(['apt-get', 'install', 'make'])
+                else:
+                    subprocess.check_call(['yum', 'install', 'make'])
+            if APT_GET:
+                subprocess.check_call(['apt-get', 'install', 'zlib1g-dev'])
+            else:
+                subprocess.check_call(['yum', 'install', 'zlib-devel'])
             try:
                 # Get the source
                 subprocess.check_call(['wget',
@@ -216,9 +226,9 @@ def main():
                            "if it were installed!\n"
                            "See https://www.macports.org/\n"
                            "Continue?")
-        elif sys.platform == 'linux2' and not APT_GET:
+        elif sys.platform == 'linux2' and (not APT_GET and not YUM):
             confirm_or_die("It appears you are running on a Linux that doesn't "
-                           "have 'apt-get' capability.\n"
+                           "have 'apt-get' or 'yum' capability.\n"
                            "If you've already installed all helper programs "
                            "that COT needs, this is not a problem.\n"
                            "Continue?")

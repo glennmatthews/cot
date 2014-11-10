@@ -47,22 +47,36 @@ def check_output(args, require_success=True):
     """
     cmd = args[0]
     logger.debug("Calling {0}".format(" ".join(args)))
+    # In 2.7+ we can use subprocess.check_output(), but in 2.6,
+    # we have to work around its absence.
     try:
-        stdout = (subprocess.check_output(args, stderr=subprocess.STDOUT)
-                  .decode())
+        if "check_output" not in dir( subprocess ):
+            process = subprocess.Popen(args,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT)
+            stdout, _ = process.communicate()
+            retcode = process.poll()
+            if retcode and require_success:
+                raise subprocess.CalledProcessError(retcode, " ".join(args))
+        else:
+            stdout = (subprocess.check_output(args, stderr=subprocess.STDOUT)
+                      .decode())
     except OSError as e:
         raise HelperNotFoundError(e.errno,
                                   "Unable to locate helper program '{0}'. "
                                   "Please check your $PATH.".format(cmd))
     except subprocess.CalledProcessError as e:
+        try:
+            stdout = e.output.decode()
+        except AttributeError:
+            # CalledProcessError doesn't have 'output' in 2.6
+            stdout = "(output unavailable)"
         if require_success:
             raise HelperError(e.returncode,
                               "Helper program '{0}' exited with error {1}:\n"
                               "> {2}\n{3}".format(cmd, e.returncode,
                                                   " ".join(args),
-                                                  e.output.decode()))
-        else:
-            stdout = e.output.decode()
+                                                  stdout))
     logger.debug("{0} output:\n{1}".format(cmd, stdout))
     return stdout
 
@@ -145,7 +159,7 @@ def get_disk_format(file_path):
         with open(file_path, 'rb') as f:
             # The header contains a fun mix of binary and ASCII, so ignore
             # any errors in decoding binary data to strings
-            header = f.read(1000).decode(errors='ignore')
+            header = f.read(1000).decode('ascii', 'ignore')
             # Detect the VMDK format from the output:
             match = re.search('createType="(.*)"', header)
             if not match:
