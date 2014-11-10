@@ -110,7 +110,7 @@ def install_qemu_and_vmdktool():
     try:
         qemu_version = COT.helper_tools.get_qemu_img_version()
     except HelperNotFoundError:
-        COT.cli.confirm_or_die("qemu-img not found. Try to install it?")
+        confirm_or_die("qemu-img not found. Try to install it?")
         if PORT:
             subprocess.check_call(['port', 'install', 'qemu'])
         elif APT_GET:
