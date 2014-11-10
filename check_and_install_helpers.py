@@ -24,7 +24,31 @@ import sys
 
 import COT.helper_tools
 from COT.helper_tools import HelperNotFoundError
-from COT.cli import confirm, confirm_or_die
+
+# In python 2.x, we want raw_input, but in python 3 we want input.
+try: input = raw_input
+except NameError: pass
+
+def confirm(prompt, force=False):
+    """Prompts user to confirm the requested operation, or auto-accepts if
+       args.force is set to True."""
+    if force:
+        return True
+
+    while True:
+        ans = input("{0} [y] ".format(prompt))
+        if not ans or ans == 'y' or ans == 'Y':
+            return True
+        elif ans == 'n' or ans == 'N':
+            return False
+        else:
+            print("Please enter 'y' or 'n'")
+
+def confirm_or_die(prompt, force=False):
+    """If the user doesn't agree, abort!"""
+    if not confirm(prompt, force):
+        sys.exit("Aborting.")
+
 
 # Look for various package managers:
 PORT = distutils.spawn.find_executable('port')
@@ -41,6 +65,27 @@ def check_executable(name):
         print("'{0}' not found".format(name))
         return False
 
+def check_argparse():
+    print("Checking for Python 'argparse' library...")
+    try:
+        import argparse
+        return True
+    except ImportError:
+        return False
+
+def install_argparse():
+    if check_argparse():
+        return True
+
+    confirm_or_die("Python 'argparse' library not found. Try to install it?")
+    # Should be available by default in 2.7 and later. So really we only need
+    # to worry about CentOS for now...
+    if YUM:
+        subprocess.check_call(['yum', 'install', 'python-argparse'])
+    else:
+        exit("Not sure how to install Python 'argparse' library!")
+    print("installed 'argparse'")
+    return True
 
 def check_qemu_and_vmdktool():
     if not check_executable('qemu-img'):
@@ -209,6 +254,7 @@ def main():
         exit("Usage: {0} [check, install]".format(sys.argv[0]))
     if sys.argv[1] == "check":
         print("Checking for required and optional helper programs...")
+        check_argparse()
         check_qemu_and_vmdktool()
         check_fatdisk()
         check_mkisofs()
@@ -233,6 +279,7 @@ def main():
                            "that COT needs, this is not a problem.\n"
                            "Continue?")
 
+        install_argparse()
         install_qemu_and_vmdktool()
         install_fatdisk()
         install_mkisofs()
