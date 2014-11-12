@@ -17,7 +17,7 @@ which is the only reason I haven't automated this too...)
 Linux Installation
 ==================
 
-The simplest installation path (assuming you have Python 2.7 or later and
+The simplest installation path (assuming you have Python 2.6 or later and
 Git installed already) is as follows:
 
     git clone git://github.com/glennmatthews/cot

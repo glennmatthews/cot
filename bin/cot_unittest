@@ -32,4 +32,8 @@ fi
 exec $python -m unittest discover -s COT/tests -p "*.py" "$@"
 
 # You can also invoke test cases with the following command:
-# python-2.7.1 -m unittest discover -s COT/tests -p "*.py"
+# python2.7 -m unittest discover -s COT/tests -p "*.py"
+# or, in 2.6:
+# nosetests COT/tests/*.py
+# Note that at present many failures will occur under 2.6 as it produces
+# differently structured XML output compared to the expected 2.7/3.x output.
