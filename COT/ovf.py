@@ -2359,9 +2359,10 @@ class OVFHardware:
                                               "unique AddressOnParent value "
                                               "when cloning an Item with a "
                                               "Parent")
-                logger.warning("Item has AddressOnParent but no Parent - "
-                               "AddressOnParent is meaningless and will not "
-                               "be updated for uniqueness.")
+                logger.warning("Item (of type {0}) has an AddressOnParent "
+                               "but no Parent - AddressOnParent is meaningless "
+                               "and will not be updated for uniqueness."
+                               .format(resource_type))
 
             if resource_type == 'ethernet':
                 # Update ElementName to reflect the NIC number
@@ -2673,12 +2674,9 @@ class OVFItem:
 
 
     def get(self, tag):
-        """Gets the dict associated with the given XML tag.
-        If no previous entry exists, creates a blank dict and returns it.
+        """Gets the dict associated with the given XML tag, if any.
         """
-        if not tag in self.property_dict.keys():
-            self.property_dict[tag] = {}
-        return self.property_dict[tag]
+        return self.property_dict.get(tag, None)
 
 
     def get_value_internal(self, tag, profiles=None):
