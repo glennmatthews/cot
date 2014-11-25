@@ -1169,7 +1169,7 @@ expected="""
 """
        </ovf:Item>
 +      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
-+        <rasd:AddressOnParent>13</rasd:AddressOnParent>
++        <rasd:AddressOnParent>14</rasd:AddressOnParent>
 +        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 +        <rasd:Connection>VM Network</rasd:Connection>
 +        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
@@ -1511,7 +1511,7 @@ expected="""
 +        <rasd:ResourceType>10</rasd:ResourceType>
 +      </ovf:Item>
 +      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
-+        <rasd:AddressOnParent>13</rasd:AddressOnParent>
++        <rasd:AddressOnParent>14</rasd:AddressOnParent>
 +        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 +        <rasd:Connection>UT</rasd:Connection>
 +        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>

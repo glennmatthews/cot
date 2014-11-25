@@ -704,6 +704,13 @@ class OVF(VMDescription, XML):
         described.
         Returns True (all files valid) or False (one or more missing/invalid).
         """
+        if not self.output_file:
+            if self.input_file != self.ovf_descriptor:
+                # Read-only mode, handling an OVA input file.
+                # In this case we only untarred the ovf descriptor
+                # and not any other contents of the OVA, so there's
+                # nothing to check here.
+                return True
         base_dir = os.path.dirname(self.ovf_descriptor)
         rc = True
         for file in XML.find_all_children(self.references, self.FILE):
@@ -2351,18 +2358,28 @@ class OVFHardware:
                                           "Address value when cloning an Item "
                                           "of type {0}".format(resource_type))
 
-            address = new_item.get(self.ovf.ADDRESS_ON_PARENT)
-            if address:
-                parent = new_item.get(self.ovf.PARENT)
-                if parent:
+            address_on_parent = new_item.get(self.ovf.ADDRESS_ON_PARENT)
+            if address_on_parent:
+                address_set = new_item.get_all_values(self.ovf.ADDRESS_ON_PARENT)
+                if len(address_set) > 1:
+                    raise NotImplementedError("AddressOnParent is not common "
+                                              "across all profiles but has "
+                                              "multiple values {0}. COT can't "
+                                              "handle this yet."
+                                              .format(address_set))
+                address_on_parent = address_set.pop()
+                # Currently we only handle integer addresses
+                try:
+                    address_on_parent = int(address_on_parent)
+                    address_on_parent += 1
+                    new_item.set_property(self.ovf.ADDRESS_ON_PARENT,
+                                          str(address_on_parent),
+                                          new_item_profiles)
+                except ValueError:
                     raise NotImplementedError("Don't know how to ensure a "
                                               "unique AddressOnParent value "
-                                              "when cloning an Item with a "
-                                              "Parent")
-                logger.warning("Item (of type {0}) has an AddressOnParent "
-                               "but no Parent - AddressOnParent is meaningless "
-                               "and will not be updated for uniqueness."
-                               .format(resource_type))
+                                              "given base value '{0}'"
+                                              .format(address_on_parent))
 
             if resource_type == 'ethernet':
                 # Update ElementName to reflect the NIC number
