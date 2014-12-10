@@ -224,6 +224,8 @@ class OVF(VMDescription, XML):
                                               required=True)
         self.product_section = self.find_child(self.virtual_system,
                                                self.PRODUCT_SECTION)
+        self.eula_section = self.find_child(self.virtual_system,
+                                            self.EULA_SECTION)
         self.annotation_section = self.find_child(
             self.virtual_system,
             self.ANNOTATION_SECTION,
@@ -367,6 +369,7 @@ class OVF(VMDescription, XML):
             template = "{0:9} {1}\n          {2}"
         p = self.product_section
         if p is not None:
+            str_list.append("")
             # All elements in this section are optional
             product = p.find(self.PRODUCT)
             product_url = p.find(self.PRODUCT_URL)
@@ -392,13 +395,13 @@ class OVF(VMDescription, XML):
                      else "(No version string)"),
                     (full_version.text if full_version is not None
                      else "(No detailed version string)")))
-            str_list.append("")
 
         # Annotation information
         a = self.annotation_section
         if a is not None:
             ann = a.find(self.ANNOTATION)
             if ann is not None and ann.text:
+                str_list.append("")
                 first = True
                 wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
                                                initial_indent='Annotation: ',
@@ -408,7 +411,23 @@ class OVF(VMDescription, XML):
                     if first:
                         wrapper.initial_indent = wrapper.subsequent_indent
                         first = False
+
+        # End user license agreement information
+        e = self.eula_section
+        if e is not None:
+            lic = e.find(self.EULA_LICENSE)
+            if lic is not None and lic.text:
                 str_list.append("")
+                if verbosity_option == 'brief':
+                    str_list.append("End User License Agreement: "
+                                    "(not displayed)")
+                else:
+                    str_list.append("End User License Agreement:")
+                    wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
+                                                   initial_indent='  ',
+                                                   subsequent_indent='  ')
+                    for line in lic.text.splitlines():
+                        str_list.append(wrapper.fill(line))
 
         # File information
         HREF_W = 36
@@ -421,6 +440,7 @@ class OVF(VMDescription, XML):
         disk_list = (self.disk_section.findall(self.DISK)
                      if self.disk_section is not None else [])
         if file_list or disk_list:
+            str_list.append("")
             str_list.append(template.format("Files and Disks:",
                                             "File Size", "Capacity", "Device"))
             str_list.append(template.format("", "----------", "----------",
@@ -477,7 +497,6 @@ class OVF(VMDescription, XML):
                                                 "--",
                                                 disk_cap_string,
                                                 device_str))
-            str_list.append("")
 
         # Supported hardware information
         virtual_system_type = None
@@ -496,6 +515,7 @@ class OVF(VMDescription, XML):
 
         if ((virtual_system_type is not None) or
             (scsi_subtypes or ide_subtypes or eth_subtypes)):
+            str_list.append("")
             str_list.append("Hardware Variants:")
             template = "  {0:25} {1}"
             if virtual_system_type is not None:
@@ -510,16 +530,16 @@ class OVF(VMDescription, XML):
             if eth_subtypes:
                 str_list.append(template.format("Ethernet device types:",
                                                 " ".join(sorted(eth_subtypes))))
-            str_list.append("")
 
         # Profile information
         profile_str = self.profile_info_string(verbosity_option)
         if profile_str:
-            str_list.append(profile_str)
             str_list.append("")
+            str_list.append(profile_str)
 
         # Network information
         if self.network_section is not None:
+            str_list.append("")
             str_list.append("Networks:")
             wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
                                            initial_indent=   '  ',
@@ -535,11 +555,11 @@ class OVF(VMDescription, XML):
                                                          network_desc)))
                 else:
                     str_list.append("  " + network_name)
-            str_list.append("")
 
         # NIC information
         nics = self.hardware.find_all_items('ethernet')
         if nics and verbosity_option != 'brief':
+            str_list.append("")
             str_list.append("NICs and Associated Networks:")
             wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
                                            initial_indent=   '    ')
@@ -550,11 +570,11 @@ class OVF(VMDescription, XML):
                                         nic.get_value(self.CONNECTION)))
                 if verbosity_option == 'verbose':
                     str_list.append(wrapper.fill(nic.get_value(self.ITEM_DESCRIPTION)))
-            str_list.append("")
 
         # Property information
         properties = self.get_property_keys()
         if properties:
+            str_list.append("")
             str_list.append("Properties:")
             if verbosity_option == 'verbose':
                 wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
@@ -569,7 +589,6 @@ class OVF(VMDescription, XML):
                 if verbosity_option == 'verbose':
                     for line in self.get_property_description(key).splitlines():
                         str_list.append(wrapper.fill(line))
-            str_list.append("")
 
         return "\n".join(str_list)
 
@@ -1953,6 +1972,10 @@ class OVFNameHelper(object):
         # Property sub-elements
         self.PROPERTY_LABEL = OVF + 'Label'
         self.PROPERTY_DESC = OVF + 'Description'
+
+        # Envelope -> VirtualSystem -> EulaSection -> License
+        self.EULA_SECTION = OVF + 'EulaSection'
+        self.EULA_LICENSE = OVF + 'License'
 
         # Envelope -> VirtualSystem -> VirtualHardwareSection -> Item(s)
         if self.ovf_version < 1.0:
