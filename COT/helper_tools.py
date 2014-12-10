@@ -35,6 +35,32 @@ class HelperNotFoundError(OSError):
 class HelperError(EnvironmentError):
     """Error thrown when a helper program exits with non-zero return code."""
 
+def check_call(args, require_success=True):
+    """Wrapper for subprocess.check_call.
+    1) Raises a HelperNotFoundError if the command doesn't exist, instead of
+       an OSError.
+    2) Raises a HelperError if the command doesn't return 0 when run,
+       instead of subprocess.CalledProcessError. (Setting the optional
+       require_success parameter to False will suppress this error.)
+    Unlike check_output() below, this does not redirect stdout/stderr;
+    all output from the subprocess will be sent to stdout/stderr as normal.
+    """
+    cmd = args[0]
+    logger.debug("Calling {0}".format(" ".join(args)))
+    try:
+        subprocess.check_call(args)
+    except OSError as e:
+        raise HelperNotFoundError(e.errno,
+                                  "Unable to locate helper program '{0}'. "
+                                  "Please check your $PATH.".format(cmd))
+    except subprocess.CalledProcessError as e:
+        if require_success:
+            raise HelperError(e.returncode,
+                              "Helper program '{0}' exited with error {1}"
+                              .format(cmd, e.returncode))
+    logger.debug("{0} exited successfully".format(cmd))
+
+
 def check_output(args, require_success=True):
     """Wrapper for subprocess.check_output.
     1) Raises a HelperNotFoundError if the command doesn't exist, instead of

@@ -20,7 +20,7 @@ import getpass
 from .cli import subparsers, subparser_lookup, argparse, get_input
 from .vm_context_manager import VMContextManager
 from .vm_description import VMDescription
-from COT.helper_tools import check_output
+from COT.helper_tools import check_call
 from COT.ovf import *
 
 logger = logging.getLogger(__name__)
@@ -128,7 +128,7 @@ def deploy_esxi(args):
 
     # use the new list to call ovftool
     print("Deploying VM...")
-    check_output(new_list)
+    check_call(new_list)
     print("VM has been deployed successfully.")
 
     # Post-fix of serial ports (ovftool will not implement)
