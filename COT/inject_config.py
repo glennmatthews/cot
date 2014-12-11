@@ -21,45 +21,52 @@ import shutil
 import sys
 
 from .add_disk import add_disk_worker
-from .cli import subparsers, subparser_lookup, confirm_or_die
-from .data_validation import ValueUnsupportedError
+from .data_validation import ValueUnsupportedError, InvalidInputError
 from .helper_tools import create_disk_image
 from .vm_context_manager import VMContextManager
 
 logger = logging.getLogger(__name__)
 
-def inject_config(args):
+def inject_config(UI,
+                  PACKAGE,
+                  output=None,
+                  config_file=None,
+                  secondary_config_file=None,
+                  **kwargs):
     """Wrap the given configuration file(s) into an appropriate disk image file
     and embed it into the given VM package.
     """
 
     # Input validation
-    if args.config_file:
-        if not os.path.exists(args.config_file):
-            p_inj_conf.error("Primary config file {0} does not exist!"
-                             .format(args.config_file))
+    if config_file:
+        if not os.path.exists(config_file):
+            raise InvalidInputError("Primary config file {0} does not exist!"
+                                    .format(config_file))
 
-    if args.secondary_config_file:
-        if not os.path.exists(args.secondary_config_file):
-            p_inj_conf.error("Secondary config file {0} does not exist!"
-                             .format(args.secondary_config_file))
+    if secondary_config_file:
+        if not os.path.exists(secondary_config_file):
+            raise InvalidInputError("Secondary config file {0} does not exist!"
+                                    .format(secondary_config_file))
 
-    if not args.config_file and not args.secondary_config_file:
-        p_inj_conf.error("No configuration files specified - nothing to do!")
+    if not config_file and not secondary_config_file:
+        raise InvalidInputError("No configuration files specified - "
+                                "nothing to do!")
 
-    with VMContextManager(args.PACKAGE, args.output) as vm:
+    with VMContextManager(PACKAGE, output) as vm:
         platform = vm.get_platform()
 
         # Platform-specific input validation
-        if args.config_file and not platform.CONFIG_TEXT_FILE:
+        if config_file and not platform.CONFIG_TEXT_FILE:
             # All reference platforms support config files, but be safe...
-            p_inj_conf.error("Configuration file not supported for platform {0}"
-                             .format(platform.__name__))
+            raise InvalidInputError(
+                "Configuration file not supported for platform {0}"
+                .format(platform.__name__))
 
-        if (args.secondary_config_file and
+        if (secondary_config_file and
             not platform.SECONDARY_CONFIG_TEXT_FILE):
-            p_inj_conf.error("Secondary configuration file not supported for "
-                             "platform '{0}'".format(platform.__name__))
+            raise InvalidInputError(
+                "Secondary configuration file not supported for "
+                "platform '{0}'".format(platform.__name__))
 
         # Find the disk drive where the config should be injected
         # First, look for any previously-injected config disk to overwrite:
@@ -73,9 +80,9 @@ def inject_config(args):
                                         "'cdrom' or 'harddisk'")
         if f is not None:
             file_id = vm.get_id_from_file(f)
-            confirm_or_die("Existing configuration disk '{0}' found. "
-                           "Continue and overwrite it?"
-                           .format(file_id), args.force)
+            UI.confirm_or_die("Existing configuration disk '{0}' found. "
+                              "Continue and overwrite it?"
+                              .format(file_id))
             logger.warning("Overwriting existing config disk '{0}'"
                            .format(file_id))
         else:
@@ -91,14 +98,14 @@ def inject_config(args):
 
         # Copy config file(s) to per-platform name in working directory
         config_files = []
-        if args.config_file:
+        if config_file:
             dest = os.path.join(vm.working_dir, platform.CONFIG_TEXT_FILE)
-            shutil.copy(args.config_file, dest)
+            shutil.copy(config_file, dest)
             config_files.append(dest)
-        if args.secondary_config_file:
+        if secondary_config_file:
             dest = os.path.join(vm.working_dir,
                                 platform.SECONDARY_CONFIG_TEXT_FILE)
-            shutil.copy(args.secondary_config_file, dest)
+            shutil.copy(secondary_config_file, dest)
             config_files.append(dest)
 
         # Package the config files into a disk image
@@ -115,7 +122,9 @@ def inject_config(args):
                                         "'cdrom' or 'harddisk'")
 
         # Inject the disk image into the OVA, using "add-disk" functionality
-        new_args = argparse.Namespace(
+        add_disk_worker(
+            UI=UI,
+            vm=vm,
             DISK_IMAGE=bootstrap_file,
             type=platform.BOOTSTRAP_DISK_TYPE,
             file_id=file_id,
@@ -124,35 +133,35 @@ def inject_config(args):
             subtype=None,
             description='Configuration disk',
             diskname=None,
-            force=True,
             )
-        add_disk_worker(vm, new_args)
 
 
-p_inj_conf = subparsers.add_parser(
-    'inject-config',
-    help="Inject a configuration file into an OVF package",
-    usage=("""
+def create_subparser(parent):
+    p = parent.add_parser(
+        'inject-config',
+        help="Inject a configuration file into an OVF package",
+        usage=("""
   {0} inject-config --help
   {0} [-f] [-v] inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
   {0} [-f] [-v] inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
   {0} [-f] [-v] inject-config PACKAGE -c CONFIG_FILE
                               -s SECONDARY_CONFIG_FILE [-o OUTPUT]"""
-           .format(os.path.basename(sys.argv[0]))),
-    description="""
-Add one or more "bootstrap" configuration file(s) to the given OVF or OVA.""")
-subparser_lookup['inject-config'] = p_inj_conf
+               .format(os.path.basename(sys.argv[0]))),
+        description="""Add one or more "bootstrap" configuration file(s) """
+                    """to the given OVF or OVA.""")
 
-p_inj_conf.add_argument('-o', '--output',
-                        help="""Name/path of new VM package to create instead
-of updating the existing package""")
+    p.add_argument('-o', '--output',
+                   help="""Name/path of new VM package to create instead """
+                        """of updating the existing package""")
 
-p_inj_conf.add_argument('-c', '--config-file',
-                        help="""Primary configuration text file to embed""")
-p_inj_conf.add_argument('-s', '--secondary-config-file',
-                        help="""Secondary configuration text file to embed """
+    p.add_argument('-c', '--config-file',
+                   help="""Primary configuration text file to embed""")
+    p.add_argument('-s', '--secondary-config-file',
+                   help="""Secondary configuration text file to embed """
                         """(currently only supported in IOS XRv for """
                         """admin config)""")
-p_inj_conf.add_argument('PACKAGE',
-                        help="""Package, OVF descriptor or OVA file to edit""")
-p_inj_conf.set_defaults(func=inject_config)
+    p.add_argument('PACKAGE',
+                   help="""Package, OVF descriptor or OVA file to edit""")
+    p.set_defaults(func=inject_config)
+
+    return 'inject-config', p

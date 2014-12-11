@@ -18,46 +18,51 @@ import logging
 import os.path
 import sys
 
-from .cli import subparsers, subparser_lookup
 from .vm_context_manager import VMContextManager
+from .data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
-def edit_product(args):
+def edit_product(PACKAGE=None,
+                 output=None,
+                 version=None,
+                 full_version=None,
+                 **kwargs):
     """Edit product information (short version, long version)"""
-    if args.version is None and args.full_version is None:
-        p_edit_prod.error("Neither --version nor --full-version was "
-                          "specified - nothing to do!")
+    if version is None and full_version is None:
+        raise InvalidInputError("Neither --version nor --full-version was "
+                                "specified - nothing to do!")
 
-    with VMContextManager(args.PACKAGE, args.output) as vm:
-        if args.version is not None:
-            vm.set_short_version(args.version)
-        if args.full_version is not None:
-            vm.set_long_version(args.full_version)
+    with VMContextManager(PACKAGE, output) as vm:
+        if version is not None:
+            vm.set_short_version(version)
+        if full_version is not None:
+            vm.set_long_version(full_version)
 
 
-# Add ourselves to the parser options
-p_edit_prod = subparsers.add_parser(
-    'edit-product',
-    help="""Edit product info in an OVF""",
-    usage=("""
+def create_subparser(parent):
+    p = parent.add_parser(
+        'edit-product',
+        help="""Edit product info in an OVF""",
+        usage=("""
   {0} edit-product --help
   {0} [-f] [-v] edit-product PACKAGE [-o OUTPUT]
                              [-v SHORT_VERSION] [-V FULL_VERSION]"""
-           .format(os.path.basename(sys.argv[0]))),
-    description="""
+               .format(os.path.basename(sys.argv[0]))),
+        description="""
 Edit product information attributes of the given OVF or OVA""")
-subparser_lookup['edit-product'] = p_edit_prod
 
-p_edit_prod.add_argument('-o', '--output',
-                         help="""Name/path of new OVF/OVA package to create
-                                 instead of updating the existing OVF""")
-p_edit_prod.add_argument('-v', '--version', metavar="SHORT_VERSION",
-                         help="""Software short version string, such as
-                                 "15.3(4)S" or "5.2.0.01I" """)
-p_edit_prod.add_argument('-V', '--full-version',
-                         help="""Software long version string, such as "Cisco
-                                 IOS-XE Software, Version 15.3(4)S" """)
-p_edit_prod.add_argument('PACKAGE',
-                         help="""OVF descriptor or OVA file to edit""")
-p_edit_prod.set_defaults(func=edit_product)
+    p.add_argument('-o', '--output',
+                   help="""Name/path of new OVF/OVA package to create """
+                   """instead of updating the existing OVF""")
+    p.add_argument('-v', '--version', metavar="SHORT_VERSION",
+                   help="""Software short version string, such as """
+                   """"15.3(4)S" or "5.2.0.01I" """)
+    p.add_argument('-V', '--full-version',
+                   help="""Software long version string, such as """
+                   """"Cisco IOS-XE Software, Version 15.3(4)S" """)
+    p.add_argument('PACKAGE',
+                   help="""OVF descriptor or OVA file to edit""")
+    p.set_defaults(func=edit_product)
+
+    return 'edit-product', p

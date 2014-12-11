@@ -19,54 +19,60 @@ import os.path
 import sys
 import textwrap
 
-from .cli import subparsers, subparser_lookup, confirm_or_die, get_input
 from .vm_context_manager import VMContextManager
-from .data_validation import ValueUnsupportedError
+from .data_validation import ValueUnsupportedError, InvalidInputError
 
 logger = logging.getLogger(__name__)
 
-def edit_properties(args):
+def edit_properties(UI,
+                    PACKAGE,
+                    output=None,
+                    config_file=None,
+                    properties=None,
+                    force=False,
+                    **kwargs):
     """Edit environment properties in an OVF descriptor.
     """
 
-    with VMContextManager(args.PACKAGE, args.output) as vm:
-        if args.config_file is not None:
-            if not os.path.exists(args.config_file):
-                p_edit_prop.error("Specified config file {0} does not exist!"
-                                  .format(args.config_file))
-            vm.config_file_to_properties(args.config_file)
+    with VMContextManager(PACKAGE, output) as vm:
+        if config_file is not None:
+            if not os.path.exists(config_file):
+                raise InvalidInputError(
+                    "Specified config file {0} does not exist!"
+                    .format(config_file))
+            vm.config_file_to_properties(config_file)
 
-        if args.properties is not None:
+        if properties is not None:
             # Because we used both "nargs='+'" and "append",
             # this is a nested list - let's flatten it out
-            args.properties = [kvp for l in args.properties for kvp in l]
-            for key_value_pair in args.properties:
+            properties = [kvp for l in properties for kvp in l]
+            for key_value_pair in properties:
                 try:
                     (key, value) = key_value_pair.split('=',1)
                     logger.debug("key: {0} value: {1}".format(key, value))
                     if key == '':
                         raise ValueError()
                 except ValueError:
-                    p_edit_prop.error("Invalid property '{0}' - properties "
-                                      "must be in 'key=value' form"
-                                      .format(key_value_pair))
+                    raise InvalidInputError(
+                        "Invalid property '{0}' - properties "
+                        "must be in 'key=value' form"
+                        .format(key_value_pair))
                 if value == '':
-                    value = get_input("Enter value for property '{0}'",
-                                      value, args.force)
+                    value = UI.get_input("Enter value for property '{0}'",
+                                         value)
                 curr_value = vm.get_property_value(key)
                 if curr_value is None:
-                    confirm_or_die("Property '{0}' does not yet exist.\n"
-                                   "Create it?"
-                                   .format(key), args.force)
+                    UI.confirm_or_die("Property '{0}' does not yet exist.\n"
+                                      "Create it?".format(key))
                     # TODO - for new property, prompt for label/descr/type?
                 vm.set_property_value(key, value)
 
-        if args.config_file is None and args.properties is None:
+        if config_file is None and properties is None:
             # Interactive mode!
-            edit_properties_interactive(args, vm)
+            edit_properties_interactive(vm)
 
 
-def edit_properties_interactive(args, vm):
+def edit_properties_interactive(vm):
     wrapper = textwrap.TextWrapper(initial_indent='',
                                    subsequent_indent='                 ')
     format_str = '{0:15} "{1}"'
@@ -81,9 +87,9 @@ def edit_properties_interactive(args, vm):
                   .format(i=i, label='"'+label+'"', key=key))
             i += 1
 
-        input = get_input("""Enter property number to edit, """
-                          """or "q" to quit and write changes""",
-                          default="q")
+        input = UI.get_input("""Enter property number to edit, """
+                             """or "q" to quit and write changes""",
+                             default="q")
 
         if input is None or input == 'q' or input == 'Q':
             break
@@ -107,8 +113,8 @@ def edit_properties_interactive(args, vm):
         print("")
 
         while True:
-            new_value = get_input("""New value for this property""",
-                                  default=old_value)
+            new_value = UI.get_input("""New value for this property""",
+                                     default=old_value)
             if new_value == old_value:
                 print("(no change)")
                 break
@@ -124,43 +130,44 @@ def edit_properties_interactive(args, vm):
                     print(e)
             print("")
 
-
-p_edit_prop = subparsers.add_parser(
-    'edit-properties', add_help=False,
-    help="""Edit environment properties of an OVF""",
-    usage=("""
+def create_subparser(parent):
+    p = parent.add_parser(
+        'edit-properties', add_help=False,
+        help="""Edit environment properties of an OVF""",
+        usage=("""
   {0} edit-properties --help
   {0} [-f] [-v] edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
                                 [-o OUTPUT]
   {0} [-f] [-v] edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
   {0} [-f] [-v] edit-properties PACKAGE [-o OUTPUT]"""
-           .format(os.path.basename(sys.argv[0]))),
-    description="""
+               .format(os.path.basename(sys.argv[0]))),
+        description="""
 Configure environment properties of the given OVF or OVA. The user may specify
 key-value pairs as command-line arguments or may provide a config-file to
 read from. If neither are specified, the program will run interactively.""")
-subparser_lookup['edit-properties'] = p_edit_prop
 
-p_edit_prop.add_argument('PACKAGE',
-                         help="""OVF descriptor or OVA file to edit""")
+    p.add_argument('PACKAGE',
+                   help="""OVF descriptor or OVA file to edit""")
 
-p_epp_gen = p_edit_prop.add_argument_group("general options")
+    group = p.add_argument_group("general options")
 
-p_epp_gen.add_argument('-h', '--help', action='help',
+    group.add_argument('-h', '--help', action='help',
                        help="""Show this help message and exit""")
-p_epp_gen.add_argument('-o', '--output',
-                       help="""Name/path of new OVF/OVA package to create
-                               instead of updating the existing OVF""")
+    group.add_argument('-o', '--output',
+                       help="""Name/path of new OVF/OVA package to create """
+                       """instead of updating the existing OVF""")
 
-p_epp_conf = p_edit_prop.add_argument_group("property setting options")
+    group = p.add_argument_group("property setting options")
 
-p_epp_conf.add_argument('-c', '--config-file',
-                        help="""Read configuration CLI from this text file
-                                and generate generic properties for each
-                                line of CLI""")
-p_epp_conf.add_argument('-p', '--properties', action='append', nargs='+',
+    group.add_argument('-c', '--config-file',
+                       help="""Read configuration CLI from this text file """
+                       """and generate generic properties for each line """
+                       """of CLI""")
+    group.add_argument('-p', '--properties', action='append', nargs='+',
                         metavar=('KEY1=VALUE1', 'KEY2=VALUE2'), help=
 "Set the given property key-value pair(s). This argument may be repeated "
 "as needed to specify multiple properties to edit.")
 
-p_edit_prop.set_defaults(func=edit_properties)
+    p.set_defaults(func=edit_properties)
+
+    return 'edit-properties', p

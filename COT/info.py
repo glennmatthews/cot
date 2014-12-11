@@ -18,43 +18,43 @@ import logging
 import os.path
 import sys
 
-from .cli import subparsers, subparser_lookup
 from .vm_context_manager import VMContextManager
 
 logger = logging.getLogger(__name__)
 
-def info(args):
+def info(PACKAGE_LIST, verbosity, **kwargs):
     """Display VM information string"""
-    for package in args.PACKAGE_LIST:
+    for package in PACKAGE_LIST:
         with VMContextManager(package, None) as vm:
-            print(vm.info_string(args.verbosity))
+            print(vm.info_string(verbosity))
 
 
-# Add ourselves to the parser options
-p_info = subparsers.add_parser(
-    'info',
-    help="""Generate a description of an OVF package""",
-    usage=("""
+def create_subparser(parent):
+    p = parent.add_parser(
+        'info',
+        help="""Generate a description of an OVF package""",
+        usage=("""
   {0} info --help
   {0} info [-b | -v] PACKAGE [PACKAGE ...]"""
-           .format(os.path.basename(sys.argv[0]))),
-    description="""
+               .format(os.path.basename(sys.argv[0]))),
+        description="""
 Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
-subparser_lookup['info'] = p_info
 
-verbosity_group = p_info.add_mutually_exclusive_group()
+    group = p.add_mutually_exclusive_group()
 
-verbosity_group.add_argument('-b', '--brief',
-                             action='store_const', const='brief',
-                             dest='verbosity',
-                             help="""Brief output (shorter)""")
-verbosity_group.add_argument('-v', '--verbose',
-                             action='store_const', const='verbose',
-                             dest='verbosity',
-                             help="""Verbose output (longer)""")
+    group.add_argument('-b', '--brief',
+                       action='store_const', const='brief',
+                       dest='verbosity',
+                       help="""Brief output (shorter)""")
+    group.add_argument('-v', '--verbose',
+                       action='store_const', const='verbose',
+                       dest='verbosity',
+                       help="""Verbose output (longer)""")
 
-p_info.add_argument('PACKAGE_LIST',
-                    nargs='+',
-                    metavar='PACKAGE [PACKAGE ...]',
-                    help="""OVF descriptor(s) and/or OVA file(s) to describe""")
-p_info.set_defaults(func=info)
+    p.add_argument('PACKAGE_LIST',
+                   nargs='+',
+                   metavar='PACKAGE [PACKAGE ...]',
+                   help="""OVF descriptor(s) and/or OVA file(s) to describe""")
+    p.set_defaults(func=info)
+
+    return 'info', p

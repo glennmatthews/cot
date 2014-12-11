@@ -67,6 +67,71 @@ def check_for_conflict(label, li):
         obj = obj1
     return obj
 
+
+def mac_address(string):
+    """Validate whether string is a valid MAC address.
+    Valid formats are:
+    xx:xx:xx:xx:xx:xx
+    xx-xx-xx-xx-xx-xx
+    xxxx.xxxx.xxxx
+    """
+    string = string.strip()
+    if not (re.match("([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$", string) or
+            re.match("([0-9a-fA-F]{2}-){5}[0-9a-fA-F]{2}$", string) or
+            re.match("([0-9a-fA-F]{4}\.){2}[0-9a-fA-F]{4}$", string)):
+        raise InvalidInputError("'{0}' is not a valid MAC address"
+                                .format(string))
+    # TODO - reformat string to a consistent output style?
+    return string
+
+
+def device_address(string):
+    """Validate string is an appropriately formed device address such as '1:0'.
+    """
+    string = string.strip()
+    if not re.match("\d+:\d+$", string):
+        raise InvalidInputError("'{0}' is not a valid device address"
+                                .format(string))
+    return string
+
+
+def no_whitespace(string):
+    """Parser helper function - for arguments not allowed to contain
+    any whitespace.
+    Returns (True, string) or (False, message)"""
+    string = string.strip()
+    if len(string.split()) > 1:
+        raise InvalidInputError("'{0}' contains invalid whitespace"
+                                .format(string))
+    return string
+
+
+def validate_int(string, min=None, max=None, label="input"):
+    """Parser helper function - for validation that a given string
+    converts to an integer in the given range.
+    Returns (True, int) or (False, message)"""
+    try:
+        i = int(string)
+    except ValueError:
+        raise ValueUnsupportedError(label, string, "integer")
+    if min is not None and i < min:
+        raise ValueTooLowError(label, i, min)
+    if max is not None and i > max:
+        raise ValueTooHighError(label, i, max)
+    return i
+
+
+def non_negative_int(string):
+    """Parser helper function - for numerical arguments that must be 0 or more.
+    """
+    return validate_int(string, min=0)
+
+
+def positive_int(string):
+    """Parser helper function - for numerical arguments that must be 1 or more.
+    """
+    return validate_int(string, min=1)
+
 # Some handy exception and error types we can throw
 class ValueMismatchError(ValueError):
     """Error class indicating that values which were expected to be equal
@@ -74,7 +139,11 @@ class ValueMismatchError(ValueError):
     """
     pass
 
-class ValueUnsupportedError(ValueError):
+class InvalidInputError(ValueError):
+    """Error class indicating a failure during validation of user input"""
+    pass
+
+class ValueUnsupportedError(InvalidInputError):
     """Error class indicating an unsupported value was provided.
 
     Attributes:
@@ -118,3 +187,4 @@ class ValueTooHighError(ValueUnsupportedError):
         return ("Value '{0}' for {1} is too high - must be at most {2}"
                 .format(self.actual_value, self.value_type,
                         self.expected_value))
+
