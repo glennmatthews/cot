@@ -18,43 +18,74 @@ import logging
 import os.path
 import sys
 
+from .submodule import COTSubmodule
 from .vm_context_manager import VMContextManager
 
 logger = logging.getLogger(__name__)
 
-def info(PACKAGE_LIST, verbosity, **kwargs):
+class COTInfo(COTSubmodule):
     """Display VM information string"""
-    for package in PACKAGE_LIST:
-        with VMContextManager(package, None) as vm:
-            print(vm.info_string(verbosity))
+    def __init__(self, UI):
+        super(COTInfo, self).__init__(
+            UI,
+            [
+                "PACKAGE_LIST",
+                "verbosity",
+            ])
 
 
-def create_subparser(parent):
-    p = parent.add_parser(
-        'info',
-        help="""Generate a description of an OVF package""",
-        usage=("""
+    def validate_arg(self, arg, value):
+        valid, value_or_reason = super(COTInfo, self).validate_arg(arg, value)
+        if not valid or value_or_reason is None:
+            return valid, value_or_reason
+        value = value_or_reason
+
+        if arg == "PACKAGE_LIST":
+            for package in value:
+                if not os.path.exists(package):
+                    return False, ("Specified package {0} does not exist!"
+                                   .format(package))
+
+        return valid, value_or_reason
+
+
+    def run(self):
+        super(COTInfo, self).run()
+
+        PACKAGE_LIST = self.get_value("PACKAGE_LIST")
+        verbosity = self.get_value("verbosity")
+        for package in PACKAGE_LIST:
+            with VMContextManager(package, None) as vm:
+                print(vm.info_string(verbosity))
+
+
+    def create_subparser(self, parent):
+        p = parent.add_parser(
+            'info',
+            help="""Generate a description of an OVF package""",
+            usage=("""
   {0} info --help
   {0} info [-b | -v] PACKAGE [PACKAGE ...]"""
-               .format(os.path.basename(sys.argv[0]))),
-        description="""
+                   .format(os.path.basename(sys.argv[0]))),
+            description="""
 Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
 
-    group = p.add_mutually_exclusive_group()
+        group = p.add_mutually_exclusive_group()
 
-    group.add_argument('-b', '--brief',
-                       action='store_const', const='brief',
-                       dest='verbosity',
-                       help="""Brief output (shorter)""")
-    group.add_argument('-v', '--verbose',
-                       action='store_const', const='verbose',
-                       dest='verbosity',
-                       help="""Verbose output (longer)""")
+        group.add_argument('-b', '--brief',
+                           action='store_const', const='brief',
+                           dest='verbosity',
+                           help="""Brief output (shorter)""")
+        group.add_argument('-v', '--verbose',
+                           action='store_const', const='verbose',
+                           dest='verbosity',
+                           help="""Verbose output (longer)""")
 
-    p.add_argument('PACKAGE_LIST',
-                   nargs='+',
-                   metavar='PACKAGE [PACKAGE ...]',
-                   help="""OVF descriptor(s) and/or OVA file(s) to describe""")
-    p.set_defaults(func=info)
+        p.add_argument('PACKAGE_LIST',
+                       nargs='+',
+                       metavar='PACKAGE [PACKAGE ...]',
+                       help="""OVF descriptor(s) and/or OVA file(s) to describe""")
+        p.set_defaults(func=self.run)
+        p.set_defaults(instance=self)
 
-    return 'info', p
+        return 'info', p

@@ -22,247 +22,317 @@ import getpass
 from distutils.version import StrictVersion
 
 from .data_validation import InvalidInputError
-from .vm_context_manager import VMContextManager
-from .vm_description import VMDescription
+from .submodule import COTSubmodule
 from COT.helper_tools import check_call, get_ovftool_version
 from COT.ovf import *
 
 logger = logging.getLogger(__name__)
 
-def deploy(HYPERVISOR, **kwargs):
-    # if deploying to esxi use deploy_esxi function
-    if HYPERVISOR == "esxi":
-        deploy_esxi(**kwargs)
-    else:
-        raise NotImplementedError("""No support for deployment to '{0}' at
-                                   this time!"""
-                                   .format(HYPERVISOR))
-
-def deploy_esxi(UI,
-                PACKAGE,
-                LOCATOR,
-                configuration=None,
-                username=None,
-                password=None,
-                power_on=False,
-                vm_name=None,
-                network_map=None,
-                ovftool_args=[],
-                **kwargs):
-    # ensure user entered a locator
-    if LOCATOR is None:
-        raise InvalidInputError("No locator was specified.")
-    server = LOCATOR.split("/")[0]
-
-    # ensure user provided proper credentials
-    if username is None:
-        username = getpass.getuser()
-    if password is None:
-        password = UI.get_password(username, server)
-
-    # Use shlex to split ovftool_args but respect quoted whitespace
-    if ovftool_args:
-        ovftool_args = shlex.split(ovftool_args)
-        logger.debug("ovftool_args split to: {0}".format(ovftool_args))
-    else:
-        ovftool_args = []
-
-    target = "vi://" + username + ":" + password + "@" + LOCATOR
-
-    with VMContextManager(PACKAGE, None) as vm:
-        # If the locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
-        # then environment properties will always be used. Otherwise we may need
-        # to help and/or warn the user:
-        if vm.get_property_keys() and not re.search("/host/", LOCATOR):
-            if get_ovftool_version() < StrictVersion("4.0.0"):
-                UI.confirm_or_die("When deploying an OVF directly to a vSphere "
-                               "target using ovftool prior to version 4.0.0, "
-                               "any OVF environment properties will not be "
-                               "made available to the new guest.\n"
-                               "If your guest needs environment properties, "
-                               "please either specify a vCenter target locator "
-                               "(such as '<vCenter>/<datacenter>/host/<host>') "
-                               "or upgrade to ovftool 4.0.0 or later.\n"
-                               "Continue deployment without OVF environment?")
-                logger.warning("deploying directly to vSphere and ovftool "
-                               "version is too low to add injectOvfEnv option. "
-                               "OVF environment properties will be ignored.")
-            elif not power_on:
-                UI.confirm_or_die("When deploying an OVF directly to a vSphere "
-                               "target, OVF environment properties can only "
-                               "be made available to the new guest if the "
-                               "guest is to be powered on immediately.\n"
-                               "If your guest needs environment properties, "
-                               "please either specify the '--power-on'/'-P' "
-                               "option or provide a vCenter target locator "
-                               "(such as '<vCenter>/<datacenter>/host/<host>') "
-                               "instead of a vSphere target.\n"
-                               "Continue deployment without OVF environment?")
-                logger.warning("deploying directly to vSphere but --power-on "
-                               "is not requested. "
-                               "OVF environment properties will be ignored.")
-            else:
-                logger.debug("Since ovftool version is sufficient and user "
-                             "requested --power-on, adding ovftool args to "
-                             "ensure passthrough of OVF environment to guest.")
-                ovftool_args.append("--X:injectOvfEnv")
-        # ensure configuration was specified
-        # will use ovf tool --deploymentOption
-        # if not specified and force not specified prompt for selection
-        profile_list = vm.get_configuration_profile_ids()
-
-        if (configuration is not None and
-            not (configuration in profile_list)):
-            raise InvalidInputError(
-                "Configuration '{0}' is not a recognized profile for '{1}'. "
-                "Valid options are:\n{2}"
-                .format(configuration, PACKAGE,
-                        "\n".join(profile_list)))
-
-        if profile_list and configuration is None:
-            if len(profile_list) == 1:
-                # No need to prompt the user
-                configuration = profile_list[0]
-                logger.debug("Auto-selected only profile '{0}'"
-                             .format(configuration))
-            elif UI.force: # TODO
-                configuration = vm.get_default_profile_name()
-                logger.warning("Auto-selecting default profile '{0}'"
-                               .format(configuration))
-            profile_info_string = None
-            while configuration is None:
-                if not profile_info_string:
-                    profile_info_string = vm.profile_info_string(enumerate=True)
-                print(profile_info_string)
-                user_input = UI.get_input("Choose a Configuration:", "0")
-                if user_input in profile_list:
-                    configuration = user_input
-                else:
-                    try:
-                        i = int(user_input)
-                        if i >= len(profile_list):
-                            raise ValueError
-                        configuration = profile_list[i]
-                    except ValueError:
-                        print("\nInvalid input. Please try again.")
-
-        if configuration is not None:
-            ovftool_args.append("--deploymentOption=" + configuration)
-
-        # Get the number of serial ports in the OVA.
-        # ovftool does not create serial ports when deploying to a VM,
-        # so we'll have to fix this up manually later.
-        serial_count = vm.get_serial_count([configuration])
-        serial_count = serial_count[configuration]
-
-    # pass network settings on to ovftool
-    if network_map is not None:
-        # This is a list of lists because we use both "nargs" and "append".
-        # Flatten it!
-        network_map = [nm for l in network_map for nm in l]
-        for nm in network_map:
-            ovftool_args.append("--net:" + nm)
-
-    # check if user entered a name for the VM
-    if vm_name is not None:
-        ovftool_args.append("--name=" + vm_name)
-
-    # tell ovftool to power on the VM
-    # TODO - if serial port fixup (below) is implemented,
-    # do not power on VM until after serial ports are added.
-    if power_on:
-        ovftool_args.append("--powerOn")
-
-    # specify target datastore
-    if args.datastore:
-        args.ovftool_args.append("--datastore=" + args.datastore)
-
-    # add package and target to the list
-    ovftool_args.append(PACKAGE)
-    ovftool_args.append(target)
-
-    logger.debug("Final args to pass to OVFtool: {0}".format(ovftool_args))
-
-    # Create new list with 'ovftool' at front
-    cmd = ['ovftool'] + ovftool_args
-
-    # use the new list to call ovftool
-    print("Deploying VM...")
-    check_call(cmd)
-
-    # Post-fix of serial ports (ovftool will not implement)
-    if serial_count > 0:
-        # TODO - fixup not implemented yet
-        # add serial ports as requested
-        # power on VM if power_on
-        print("WARNING: Package '{0}' contains {1} serial ports, but ovftool "
-              "ignores serial port declarations. If these ports are "
-              "needed, you must add them manually to the new VM."
-              .format(args.PACKAGE, serial_count))
+class COTDeploy(COTSubmodule):
+    def __init__(self, UI, arg_names=None):
+        if arg_names is None:
+            arg_names = []
+        arg_names = [
+            "PACKAGE",
+            "HYPERVISOR",
+            "configuration",
+            "username",
+            "password",
+            "power_on",
+            "vm_name",
+            "network_map",
+        ] + arg_names
+        super(COTDeploy, self).__init__(UI, arg_names)
+        self.args["power_on"] = False
+        self.generic_parser = None
+        self.parser = None
+        self.subparsers = None
 
 
-def create_subparser(parent):
-    import argparse
-    # This becomes problematic once we have multiple 'deploy' subcommands
-    # but for now it's OK to do everything in here...
+    def validate_arg(self, arg, value):
+        """Check whether it's OK to set the given argument to the given value.
+        Returns either (True, massaged_value) or (False, reason)"""
+        valid, value_or_reason = super(COTDeploy, self).validate_arg(arg, value)
+        if not valid or value_or_reason is None:
+            return valid, value_or_reason
+        value = value_or_reason
 
-    # Create a generic parser with arguments to be shared by all
-    generic = argparse.ArgumentParser(add_help=False)
+        if arg == "HYPERVISOR":
+            if value != "esxi":
+                return False, ("'{0}' is not a supported hypervisor"
+                               .format(value))
+        return valid, value_or_reason
 
-    generic.add_argument('-u', '--username', help="Server login username")
 
-    generic.add_argument('-p', '--password', help="Server login password")
+    def ready_to_run(self):
+        """Are we ready to go?
+        Returns the tuple (ready, reason)"""
+        if self.get_value("HYPERVISOR") is None:
+            return False, "HYPERVISOR is a mandatory argument"
+        return super(COTDeploy, self).ready_to_run()
 
-    generic.add_argument('-c', '--configuration', help=
+
+    def create_subparser(self, parent):
+        import argparse
+
+        if self.parser:
+            return 'deploy', self.parser
+
+        # Create a generic parser with arguments to be shared by all
+        self.generic_parser = argparse.ArgumentParser(add_help=False)
+
+        self.generic_parser.add_argument('-u', '--username',
+                                         help="Server login username")
+
+        self.generic_parser.add_argument('-p', '--password',
+                                         help="Server login password")
+
+        self.generic_parser.add_argument('-c', '--configuration', help=
 "Use the specified configuration profile defined in the OVF. "
 "If unspecified and the OVF has multiple profiles, the user will be prompted "
 "or the default configuration will be used.")
 
-    generic.add_argument('-n', '--vm-name', help=
+        self.generic_parser.add_argument('-n', '--vm-name', help=
 "Name to use for the VM (if applicable) and any files created. "
 "If unspecified, the name of the OVF will be used.")
 
-    generic.add_argument('-P', '--power-on', action='store_true', help=
+        self.generic_parser.add_argument('-P', '--power-on',
+                                         action='store_true', help=
 "Power on the created VM to begin booting immediately.")
 
-    generic.add_argument('-N', '--network-map', action='append', nargs='+',
-                         metavar=('OVF_NET1=HOST_NET1',
-                                  'OVF_NET2=HOST_NET2'), help=
+        self.generic_parser.add_argument('-N', '--network-map',
+                                         action='append', nargs='+',
+                                         metavar=('OVF_NET1=HOST_NET1',
+                                                  'OVF_NET2=HOST_NET2'), help=
 "Map networks named in the OVF to networks (bridges, vSwitches, etc.) in the "
 "hypervisor environment. This argument may be repeated as needed to specify "
 "multiple mappings.")
 
-    generic.set_defaults(func=deploy)
+        self.generic_parser.set_defaults(func=self.run)
 
-    # Create 'cot deploy' parser
-    gp = parent.add_parser(
-        'deploy',
-        help="""Create a new VM on the target hypervisor from the given OVF""",
-        description="""Deploy a virtual machine to a specified server.""")
+        # Create 'cot deploy' parser
+        self.parser = parent.add_parser(
+            'deploy',
+            help="Create a new VM on the target hypervisor from the given OVF",
+            description="""Deploy a virtual machine to a specified server.""")
 
 
-    gp.add_argument('PACKAGE', help="""OVF descriptor or OVA file""")
+        self.parser.add_argument('PACKAGE', help="OVF descriptor or OVA file")
 
-    hypervisor_subparsers = gp.add_subparsers(
-        dest='HYPERVISOR', metavar='hypervisors supported:')
+        self.subparsers = self.parser.add_subparsers(
+            dest='HYPERVISOR', metavar='hypervisors supported:')
 
-    gp.set_defaults(func=deploy)
+        self.parser.set_defaults(func=self.run)
 
-    # Create 'cot deploy ... esxi' parser
-    p = hypervisor_subparsers.add_parser(
-        'esxi', parents=[generic],
-        usage=("""
+        self.parser.usage="""
+  {0} deploy --help
+  {0} [-f] [-v] deploy PACKAGE esxi ...""".format(os.path.basename(sys.argv[0]))
+
+        return 'deploy', self.parser
+
+
+class COTDeployESXi(COTDeploy):
+    def __init__(self, UI):
+        super(COTDeployESXi, self).__init__(
+            UI,
+            [
+                "LOCATOR",
+                "datastore",
+                "ovftool_args",
+            ])
+        self.args["ovftool_args"] = []
+
+
+    def ready_to_run(self):
+        """Are we ready to go?
+        Returns the tuple (ready, reason)"""
+        if self.get_value("LOCATOR") is None:
+            return False, "LOCATOR is a mandatory argument"
+        return super(COTDeployESXi, self).ready_to_run()
+
+
+    def run(self):
+        super(COTDeployESXi, self).run()
+
+        # ensure user provided proper credentials
+        username = self.get_value("username")
+        password = self.get_value("password")
+        LOCATOR = self.get_value("LOCATOR")
+        server = LOCATOR.split("/")[0]
+        if username is None:
+            username = getpass.getuser()
+        if password is None:
+            password = self.UI.get_password(username, server)
+
+        target = "vi://" + username + ":" + password + "@" + LOCATOR
+
+        ovftool_args = self.get_value("ovftool_args")
+        # Use shlex to split ovftool_args but respect quoted whitespace
+        if ovftool_args:
+            ovftool_args = shlex.split(ovftool_args)
+            logger.debug("ovftool_args split to: {0}".format(ovftool_args))
+        else:
+            ovftool_args = []
+
+        PACKAGE = self.get_value("PACKAGE")
+        configuration = self.get_value("configuration")
+
+        with self.vm as vm:
+            # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
+            # then environment properties will always be used.
+            # Otherwise we may need to help and/or warn the user:
+            if vm.get_property_keys() and not re.search("/host/", LOCATOR):
+                if get_ovftool_version() < StrictVersion("4.0.0"):
+                    self.UI.confirm_or_die(
+"When deploying an OVF directly to a vSphere target using ovftool prior to "
+"version 4.0.0, any OVF environment properties will not be made available "
+"to the new guest.\n"
+"If your guest needs environment properties, please either specify a vCenter "
+"target locator (such as '<vCenter>/<datacenter>/host/<host>') "
+"or upgrade to ovftool 4.0.0 or later.\n"
+"Continue deployment without OVF environment?")
+                    logger.warning("deploying directly to vSphere and ovftool "
+                                   "version is too low to add injectOvfEnv "
+                                   "option. OVF environment properties will "
+                                   "be ignored.")
+                elif not self.get_value("power_on"):
+                    self.UI.confirm_or_die(
+"When deploying an OVF directly to a vSphere target, OVF environment "
+"properties can only be made available to the new guest if the guest is to be "
+"powered on immediately.\n"
+"If your guest needs environment properties, please either specify the "
+"'--power-on'/'-P' option or provide a vCenter target locator "
+"(such as '<vCenter>/<datacenter>/host/<host>') "
+"instead of a vSphere target.\n"
+"Continue deployment without OVF environment?")
+                    logger.warning("deploying directly to vSphere but "
+                                   "--power-on is not requested. OVF "
+                                   "environment properties will be ignored.")
+                else:
+                    logger.debug("Since ovftool version is sufficient and user "
+                                 "requested --power-on, adding ovftool args to "
+                                 "ensure passthru of OVF environment to guest.")
+                    ovftool_args.append("--X:injectOvfEnv")
+
+            # ensure configuration was specified
+            # will use ovf tool --deploymentOption
+            # if not specified and force not specified prompt for selection
+            profile_list = vm.get_configuration_profile_ids()
+
+            if (configuration is not None and
+                not (configuration in profile_list)):
+                raise InvalidInputError(
+                    "Configuration '{0}' is not a recognized profile for '{1}'. "
+                    "Valid options are:\n{2}"
+                    .format(configuration, PACKAGE,
+                            "\n".join(profile_list)))
+
+            if profile_list and configuration is None:
+                if len(profile_list) == 1:
+                    # No need to prompt the user
+                    configuration = profile_list[0]
+                    logger.debug("Auto-selected only profile '{0}'"
+                                 .format(configuration))
+                elif self.UI.force: # TODO
+                    configuration = vm.get_default_profile_name()
+                    logger.warning("Auto-selecting default profile '{0}'"
+                                   .format(configuration))
+                profile_info_string = None
+                while configuration is None:
+                    if not profile_info_string:
+                        profile_info_string = vm.profile_info_string(enumerate=True)
+                    print(profile_info_string)
+                    user_input = self.UI.get_input("Choose a Configuration:", "0")
+                    if user_input in profile_list:
+                        configuration = user_input
+                    else:
+                        try:
+                            i = int(user_input)
+                            if i >= len(profile_list):
+                                raise ValueError
+                            configuration = profile_list[i]
+                        except ValueError:
+                            print("\nInvalid input. Please try again.")
+
+            if configuration is not None:
+                ovftool_args.append("--deploymentOption=" + configuration)
+
+            # Get the number of serial ports in the OVA.
+            # ovftool does not create serial ports when deploying to a VM,
+            # so we'll have to fix this up manually later.
+            serial_count = vm.get_serial_count([configuration])
+            serial_count = serial_count[configuration]
+
+        # close out vm, not needed now
+
+        # pass network settings on to ovftool
+        network_map = self.get_value("network_map")
+        if network_map is not None:
+            # This is a list of lists because we use both "nargs" and "append".
+            # Flatten it!
+            network_map = [nm for l in network_map for nm in l]
+            for nm in network_map:
+                ovftool_args.append("--net:" + nm)
+
+        # check if user entered a name for the VM
+        vm_name = self.get_value("vm_name")
+        if vm_name is not None:
+            ovftool_args.append("--name=" + vm_name)
+
+        # tell ovftool to power on the VM
+        # TODO - if serial port fixup (below) is implemented,
+        # do not power on VM until after serial ports are added.
+        if self.get_value("power_on"):
+            ovftool_args.append("--powerOn")
+
+        # specify target datastore
+        datastore = self.get_value("datastore")
+        if datastore:
+            ovftool_args.append("--datastore=" + datastore)
+
+        # add package and target to the list
+        ovftool_args.append(PACKAGE)
+        ovftool_args.append(target)
+
+        logger.debug("Final args to pass to OVFtool: {0}".format(ovftool_args))
+
+        # Create new list with 'ovftool' at front
+        cmd = ['ovftool'] + ovftool_args
+
+        # use the new list to call ovftool
+        print("Deploying VM...")
+        check_call(cmd)
+
+        # Post-fix of serial ports (ovftool will not implement)
+        if serial_count > 0:
+            # TODO - fixup not implemented yet
+            # add serial ports as requested
+            # power on VM if power_on
+            print("Package '{0}' contains {1} serial ports, but ovftool "
+                  "ignores serial port declarations. If these ports are "
+                  "needed, you must add them manually to the new VM."
+                  .format(PACKAGE, serial_count))
+
+
+    def create_subparser(self, parent):
+        super(COTDeployESXi, self).create_subparser(parent)
+
+        import argparse
+        # Create 'cot deploy ... esxi' parser
+        p = self.subparsers.add_parser(
+            'esxi', parents=[self.generic_parser],
+            usage=("""
   {0} deploy PACKAGE esxi --help
   {0} [-f] [-v] deploy PACKAGE esxi LOCATOR
                        [-u USERNAME] [-p PASSWORD]
                        [-c CONFIGURATION] [-n VM_NAME] [-P]
                        [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
                        [-d DATASTORE] [-o=OVFTOOL_ARGS]"""
-               .format(os.path.basename(sys.argv[0]))),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        help="Deploy to ESXi, vSphere, or vCenter",
-        description="Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor",
-        epilog=textwrap.dedent("""Examples:
+                   .format(os.path.basename(sys.argv[0]))),
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            help="Deploy to ESXi, vSphere, or vCenter",
+            description="Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor",
+            epilog=textwrap.dedent("""Examples:
   {0} deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test_vm
     Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
     creating a VM named 'test_vm' from foo.ova.
@@ -281,25 +351,21 @@ def create_subparser(parent):
   {0} deploy foo.ova esxi 192.0.2.100 -u admin -p password \\
         --ovftool-args="--overwrite --acceptAllEulas"
     Deploy with passthrough arguments to ovftool."""
-                               .format(os.path.basename(sys.argv[0]))))
+                                   .format(os.path.basename(sys.argv[0]))))
 
-    # ovftool uses '-ds' as shorthand for '--datastore', so let's allow it too.
-    p.add_argument("-d", "-ds", "--datastore", help=
+        # ovftool uses '-ds' as shorthand for '--datastore', so let's allow it.
+        p.add_argument("-d", "-ds", "--datastore", help=
 "ESXi datastore to use for the new VM")
 
-    p.add_argument("-o", "--ovftool-args", help=
+        p.add_argument("-o", "--ovftool-args", help=
 "Quoted string describing additional CLI parameters to pass through "
 """to "ovftool". Examples: -o="--foo", --ovftool-args="--foo --bar" """)
 
-    p.add_argument("LOCATOR", help=
+        p.add_argument("LOCATOR", help=
 "vSphere target locator. Examples: "
 '"192.0.2.100" (deploy directly to ESXi server), '
 '"192.0.2.101/mydatacenter/host/192.0.2.100" (deploy via vCenter server)')
 
-    p.set_defaults(func=deploy_esxi)
-
-    gp.usage="""
-  {0} deploy --help
-  {0} [-f] [-v] deploy PACKAGE esxi ...""".format(os.path.basename(sys.argv[0]))
-
-    return 'deploy', gp
+        p.set_defaults(func=self.run)
+        p.set_defaults(instance=self)
+        return 'deploy', p

@@ -34,11 +34,13 @@ TEXT_WIDTH = 79
 class CLI(UI):
     """Command-line user interface for COT"""
 
-    # In python 2.7, we want raw_input, but in python 3 we want input.
-    try: input = raw_input
-    except NameError: pass
-
     def __init__(self):
+        # In python 2.7, we want raw_input, but in python 3 we want input.
+        try:
+            self.input = raw_input
+        except NameError:
+            self.input = input
+
         self.create_parser()
         self.create_subparsers()
         args = self.parse_args()
@@ -61,7 +63,7 @@ class CLI(UI):
         prompt = "\n".join(prompt_w)
 
         while True:
-            ans = input("{0} [y] ".format(prompt))
+            ans = self.input("{0} [y] ".format(prompt))
             if not ans or ans == 'y' or ans == 'Y':
                 return True
             elif ans == 'n' or ans == 'N':
@@ -78,7 +80,7 @@ class CLI(UI):
                            .format(default_value, prompt))
             return default_value
 
-        ans = input("{0} [{1}] ".format(prompt, default_value))
+        ans = self.input("{0} [{1}] ".format(prompt, default_value))
         if ans:
             return ans
         return default_value
@@ -142,23 +144,26 @@ Cisco IOS XRv platforms."""),
 
 
     def create_subparsers(self):
-        import COT.add_disk
-        import COT.add_file
-        import COT.deploy
-        import COT.edit_hardware
-        import COT.edit_product
-        import COT.edit_properties
-        import COT.info
-        import COT.inject_config
-
-        # Add supported subcommands to main parser
-        for module in [COT.add_disk, COT.add_file, COT.deploy,
-                       COT.edit_hardware, COT.edit_product,
-                       COT.edit_properties, COT.info,
-                       COT.inject_config]:
-            name, subparser = module.create_subparser(self.subparsers)
+        from COT.add_disk import COTAddDisk
+        from COT.add_file import COTAddFile
+        from COT.deploy import COTDeployESXi
+        from COT.edit_hardware import COTEditHardware
+        from COT.edit_product import COTEditProduct
+        from COT.edit_properties import COTEditProperties
+        from COT.info import COTInfo
+        from COT.inject_config import COTInjectConfig
+        for klass in [
+                COTAddDisk,
+                COTAddFile,
+                COTDeployESXi,
+                COTEditHardware,
+                COTEditProduct,
+                COTEditProperties,
+                COTInfo,
+                COTInjectConfig,
+        ]:
+            name, subparser = klass(self).create_subparser(self.subparsers)
             self.subparser_lookup[name] = subparser
-
 
     def parse_args(self):
         # By now all subparsers have been created so we can safely set usage.
@@ -193,26 +198,14 @@ Cisco IOS XRv platforms."""),
 
         subp = self.subparser_lookup[args.subcommand]
 
-        # General input sanity:
-        if hasattr(args, "PACKAGE") and not os.path.exists(args.PACKAGE):
-            subp.error("Specified package {0} does not exist!"
-                       .format(args.PACKAGE))
-        if hasattr(args, "PACKAGE_LIST"):
-            for package in args.PACKAGE_LIST:
-                if not os.path.exists(package):
-                    subp.error("Specified package {0} does not exist!"
-                               .format(package))
-
+        # Call the appropriate subcommand func and handle any resulting errors
         try:
-            if hasattr(args, "output"):
-                if args.output is None:
-                    args.output = args.PACKAGE
-                if os.path.exists(args.output):
-                    self.confirm_or_die("Overwrite existing file {0}?"
-                                        .format(args.output))
-
-            # Call the appropriate subcommand func and handle any errors
-            args.func(UI=self, **vars(args))
+            if hasattr(args, "instance"):
+                for (arg, value) in vars(args).iteritems():
+                    args.instance.set_value(arg, value)
+                args.instance.run()
+            else:
+                args.func(UI=self, **vars(args))
         except InvalidInputError as e:
             subp.error(e)
         except NotImplementedError as e:

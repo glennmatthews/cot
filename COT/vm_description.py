@@ -39,6 +39,9 @@ class VMDescription(object):
         self.working_dir = working_dir
         self.output_file = output_file
 
+    def set_output_file(self, output_file):
+        self.output_file = output_file
+
     def write(self):
         """Write the VM description to the previously specified output file"""
         raise NotImplementedError("write not implemented")

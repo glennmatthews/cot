@@ -18,47 +18,163 @@ import sys
 import logging
 import os.path
 
-from .vm_context_manager import VMContextManager
 from .data_validation import InvalidInputError
 from .data_validation import *
 
+from .submodule import COTSubmodule
+
 logger = logging.getLogger(__name__)
 
-def add_disk(UI,
-             DISK_IMAGE,
-             PACKAGE,
-             output=None,
-             controller=None,
-             address=None,
-             **kwargs):
+class COTAddDisk(COTSubmodule):
     """Add or replace a disk in a virtual machine"""
 
-    if address is not None:
-        if controller is None:
-            raise InvalidInputError("When using --address you must also use "
-                                    "--controller")
-        ctrl_addr = address.split(":")[0]
-        disk_addr = address.split(":")[1]
-        if controller == "scsi" and (int(ctrl_addr) > 3 or
-                                          int(disk_addr) > 15):
-            raise InvalidInputError(
-                "SCSI disk address must be between 0:0 and 3:15")
-        elif controller == "ide" and (int(ctrl_addr) > 1 or
-                                           int(disk_addr) > 1):
-            raise InvalidInputError(
-                "IDE disk address must be between 0:0 and 1:1")
+    def __init__(self, UI):
+        super(COTAddDisk, self).__init__(
+            UI,
+            [
+                "DISK_IMAGE",
+                "PACKAGE",
+                "output",
+                "type",
+                "subtype",
+                "file_id",
+                "controller",
+                "address",
+                "diskname",
+                "description",
+            ])
 
-    if not os.path.exists(DISK_IMAGE):
-        raise InvalidInputError("Specified disk {0} does not exist!"
-                                .format(DISK_IMAGE))
+    def validate_arg(self, arg, value):
+        """Check whether it's OK to set the given argument to the given value.
+        Returns either (True, massaged_value) or (False, reason)"""
+        valid, value_or_reason = super(COTAddDisk, self).validate_arg(arg,
+                                                                      value)
+        if not valid or value_or_reason is None:
+            return valid, value_or_reason
+        value = value_or_reason
 
-    with VMContextManager(PACKAGE, output) as vm:
-        add_disk_worker(vm,
-                        UI=UI,
-                        DISK_IMAGE=DISK_IMAGE,
-                        controller=controller,
-                        address=address,
-                        **kwargs)
+        if arg == "DISK_IMAGE":
+            if not os.path.exists(value):
+                return False, ("Specified disk '{0}' does not exist!"
+                               .format(value))
+        elif arg == "address":
+            return self.validate_controller_address(None, value)
+        elif arg == "controller":
+            return self.validate_controller_address(value, None)
+
+        return valid, value_or_reason
+
+
+    def validate_controller_address(self, controller, address):
+        if controller is not None:
+            input_value = controller
+            address = self.get_value("address")
+        elif address is not None:
+            input_value = address
+            controller = self.get_value("controller")
+
+        if controller is not None and address is not None:
+            ctrl_addr = address.split(":")[0]
+            disk_addr = address.split(":")[1]
+            if controller == "scsi" and (int(ctrl_addr) > 3 or
+                                         int(disk_addr) > 15):
+                return False, "SCSI disk address must be between 0:0 and 3:15"
+            elif controller == "ide" and (int(ctrl_addr) > 1 or
+                                          int(disk_addr) > 1):
+                return False, "IDE disk address must be between 0:0 and 1:1"
+
+        return True, input_value
+
+
+    def ready_to_run(self):
+        """Are we ready to go?
+        Returns the tuple (ready, reason)"""
+        if self.get_value("DISK_IMAGE") is None:
+            return False, "DISK_IMAGE is a mandatory argument!"
+        elif self.get_value("address") is not None:
+            if self.get_value("controller") is None:
+                return False, ("When specifying an address you must also "
+                               "specify the controller type")
+        return super(COTAddDisk, self).ready_to_run()
+
+
+    def run(self):
+        super(COTAddDisk, self).run()
+
+        with self.vm as vm:
+            add_disk_worker(vm,
+                            UI=self.UI,
+                            **self.args)
+
+    def create_subparser(self, parent):
+        p = parent.add_parser(
+            'add-disk', add_help=False,
+            usage=("""
+  {0} add-disk --help
+  {0} [-f] [-v] add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
+                         [-f FILE_ID] [-t {{harddisk,cdrom}}]
+                         [-c {{ide,scsi}}] [-s SUBTYPE] [-a ADDRESS]
+                         [-d DESCRIPTION] [-n DISKNAME]"""
+                   .format(os.path.basename(sys.argv[0]))),
+            help="""Add a disk image to an OVF package and map it as a disk
+in the guest environment""",
+            description="""
+Add or replace a disk image in the specified OVF or OVA.
+If the specified disk image, controller/address, file-id, and/or instance
+match an existing entry in the OVF, will replace the existing disk with
+the provided file (prompting for confirmation if --force was not set);
+otherwise, will create a new disk entry.""")
+
+        group = p.add_argument_group("general options")
+
+        group.add_argument('-h', '--help', action='help',
+                           help="""Show this help message and exit""")
+        group.add_argument('-o', '--output',
+                           help="""Name/path of new OVF/OVA package to create """
+                           """instead of updating the existing OVF""")
+
+        group = p.add_argument_group("disk-related options")
+
+        group.add_argument('-f', '--file-id',
+                           help="""Disk image file ID string within the OVF """
+                           """package (default: use disk image filename)""")
+        group.add_argument('-t', '--type',
+                           choices=['harddisk', 'cdrom'],
+                           help="""Disk type (default: files ending in """
+                           """.vmdk/.raw/.qcow2/.img will use harddisk """
+                           """and files ending in .iso will use cdrom)""")
+
+        group = p.add_argument_group("controller-related options")
+
+        group.add_argument('-c', '--controller',
+                           choices=['ide', 'scsi'],
+                           help="""Disk controller type (default: determined by """
+                           """disk type and platform)""")
+        group.add_argument('-a', '--address', type=device_address,
+                           help="""Address of the disk, such as "1:0". Requires """
+                           """that --controller be explicitly set. """
+                            """(default: use first unused address on the """
+                            """controller)""")
+        group.add_argument('-s', '--subtype',
+                           help="""Disk controller subtype such as "virtio" or """
+                           """"lsilogic".""")
+
+        group = p.add_argument_group("descriptive options")
+
+        group.add_argument('-d', '--description',
+                           help="""Description of this disk (optional)""")
+        group.add_argument('-n', '--name', dest='diskname',
+                           help="""Name of this disk (default: "Hard disk #" or """
+                           """"CD-ROM #" as appropriate)""")
+
+        p.add_argument('DISK_IMAGE',
+                       help="""Disk image file to add to the package""")
+        p.add_argument('PACKAGE',
+                       help="""OVF descriptor or OVA file to edit""")
+        p.set_defaults(func=self.run)
+        p.set_defaults(instance=self)
+
+        return 'add-disk', p
 
 
 def add_disk_worker(vm,
@@ -276,72 +392,3 @@ def add_disk_worker(vm,
         # Finally, the disk Item
         vm.add_disk_device(type, disk_addr, diskname,
                            description, disk, file, ctrl_item, disk_item)
-
-def create_subparser(parent):
-    p = parent.add_parser(
-        'add-disk', add_help=False,
-        usage=("""
-  {0} add-disk --help
-  {0} [-f] [-v] add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
-                         [-f FILE_ID] [-t {{harddisk,cdrom}}]
-                         [-c {{ide,scsi}}] [-s SUBTYPE] [-a ADDRESS]
-                         [-d DESCRIPTION] [-n DISKNAME]"""
-               .format(os.path.basename(sys.argv[0]))),
-        help="""Add a disk image to an OVF package and map it as a disk in the
-guest environment""",
-        description="""
-Add or replace a disk image in the specified OVF or OVA.
-If the specified disk image, controller/address, file-id, and/or instance
-match an existing entry in the OVF, will replace the existing disk with
-the provided file (prompting for confirmation if --force was not set);
-otherwise, will create a new disk entry.""")
-
-    group = p.add_argument_group("general options")
-
-    group.add_argument('-h', '--help', action='help',
-                       help="""Show this help message and exit""")
-    group.add_argument('-o', '--output',
-                       help="""Name/path of new OVF/OVA package to create """
-                            """instead of updating the existing OVF""")
-
-    group = p.add_argument_group("disk-related options")
-
-    group.add_argument('-f', '--file-id',
-                       help="""Disk image file ID string within the OVF """
-                            """package (default: use disk image filename)""")
-    group.add_argument('-t', '--type',
-                       choices=['harddisk', 'cdrom'],
-                       help="""Disk type (default: files ending in """
-                            """.vmdk/.raw/.qcow2/.img will use harddisk """
-                            """and files ending in .iso will use cdrom)""")
-
-    group = p.add_argument_group("controller-related options")
-
-    group.add_argument('-c', '--controller',
-                       choices=['ide', 'scsi'],
-                       help="""Disk controller type (default: determined by """
-                            """disk type and platform)""")
-    group.add_argument('-a', '--address', type=device_address,
-                       help="""Address of the disk, such as "1:0". Requires """
-                            """that --controller be explicitly set. """
-                            """(default: use first unused address on the """
-                            """controller)""")
-    group.add_argument('-s', '--subtype',
-                       help="""Disk controller subtype such as "virtio" or """
-                            """"lsilogic".""")
-
-    group = p.add_argument_group("descriptive options")
-
-    group.add_argument('-d', '--description',
-                       help="""Description of this disk (optional)""")
-    group.add_argument('-n', '--name', dest='diskname',
-                       help="""Name of this disk (default: "Hard disk #" or """
-                            """"CD-ROM #" as appropriate)""")
-
-    p.add_argument('DISK_IMAGE',
-                   help="""Disk image file to add to the package""")
-    p.add_argument('PACKAGE',
-                   help="""OVF descriptor or OVA file to edit""")
-    p.set_defaults(func=add_disk)
-
-    return 'add-disk', p

@@ -263,6 +263,28 @@ class OVF(VMDescription, XML):
                              .format(filepath, self.working_dir))
                 shutil.copy(filepath, self.working_dir)
 
+    def set_output_file(self, output_file):
+        # Make sure we can write the requested output format, or abort:
+        if output_file:
+            self.detect_type_from_name(output_file)
+        if not self.output_file:
+            # Copy all referenced files to the working directory
+            # Not needed if we're in read-only mode (no output_file)
+            input_dir = os.path.dirname(self.ovf_descriptor)
+            for file in self.find_all_children(self.references, self.FILE):
+                filepath = os.path.join(input_dir, file.get(self.FILE_HREF))
+                if not os.path.exists(filepath):
+                    logger.warning("File '{0}' referenced in the OVF does not "
+                                   "exist. It will not be copied to the "
+                                   "working directory '{1}'."
+                                   .format(file.get(self.FILE_HREF),
+                                           self.working_dir))
+                    continue
+                logger.debug("Copying {0} to {1}"
+                             .format(filepath, self.working_dir))
+                shutil.copy(filepath, self.working_dir)
+        self.output_file = output_file
+
 
     def __getattr__(self, name):
         """Transparently pass constant name lookups off to our OVFNameHelper.
