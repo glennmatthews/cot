@@ -85,7 +85,6 @@ Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
                        nargs='+',
                        metavar='PACKAGE [PACKAGE ...]',
                        help="""OVF descriptor(s) and/or OVA file(s) to describe""")
-        p.set_defaults(func=self.run)
         p.set_defaults(instance=self)
 
         return 'info', p

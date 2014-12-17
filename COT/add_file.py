@@ -115,7 +115,6 @@ create a new file entry.""")
         p.add_argument('FILE', help="""File to add to the package""")
         p.add_argument('PACKAGE',
                        help="""Package, OVF descriptor or OVA file to edit""")
-        p.set_defaults(func=self.run)
         p.set_defaults(instance=self)
 
         return 'add-file', p

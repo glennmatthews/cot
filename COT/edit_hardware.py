@@ -343,7 +343,6 @@ Examples:
 
         p.add_argument('PACKAGE',
                        help="""OVF descriptor or OVA file to edit""")
-        p.set_defaults(func=self.run)
         p.set_defaults(instance=self)
 
         return 'edit-hardware', p

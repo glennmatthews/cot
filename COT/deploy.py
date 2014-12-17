@@ -366,6 +366,5 @@ class COTDeployESXi(COTDeploy):
 '"192.0.2.100" (deploy directly to ESXi server), '
 '"192.0.2.101/mydatacenter/host/192.0.2.100" (deploy via vCenter server)')
 
-        p.set_defaults(func=self.run)
         p.set_defaults(instance=self)
         return 'deploy', p

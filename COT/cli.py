@@ -198,14 +198,11 @@ Cisco IOS XRv platforms."""),
 
         subp = self.subparser_lookup[args.subcommand]
 
-        # Call the appropriate subcommand func and handle any resulting errors
+        # Call the appropriate submodule and handle any resulting errors
         try:
-            if hasattr(args, "instance"):
-                for (arg, value) in vars(args).iteritems():
-                    args.instance.set_value(arg, value)
-                args.instance.run()
-            else:
-                args.func(UI=self, **vars(args))
+            for (arg, value) in vars(args).iteritems():
+                args.instance.set_value(arg, value)
+            args.instance.run()
         except InvalidInputError as e:
             subp.error(e)
         except NotImplementedError as e:

@@ -208,7 +208,6 @@ read from. If neither are specified, the program will run interactively.""")
 "Set the given property key-value pair(s). This argument may be repeated "
 "as needed to specify multiple properties to edit.")
 
-        p.set_defaults(func=self.run)
         p.set_defaults(instance=self)
 
         return 'edit-properties', p

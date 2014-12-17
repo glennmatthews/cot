@@ -171,7 +171,6 @@ otherwise, will create a new disk entry.""")
                        help="""Disk image file to add to the package""")
         p.add_argument('PACKAGE',
                        help="""OVF descriptor or OVA file to edit""")
-        p.set_defaults(func=self.run)
         p.set_defaults(instance=self)
 
         return 'add-disk', p

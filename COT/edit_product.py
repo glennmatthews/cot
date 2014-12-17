@@ -87,7 +87,6 @@ Edit product information attributes of the given OVF or OVA""")
                        """"Cisco IOS-XE Software, Version 15.3(4)S" """)
         p.add_argument('PACKAGE',
                        help="""OVF descriptor or OVA file to edit""")
-        p.set_defaults(func=self.run)
         p.set_defaults(instance=self)
 
         return 'edit-product', p

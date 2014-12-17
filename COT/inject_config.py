@@ -195,7 +195,6 @@ class COTInjectConfig(COTSubmodule):
                        """admin config)""")
         p.add_argument('PACKAGE',
                        help="""Package, OVF descriptor or OVA file to edit""")
-        p.set_defaults(func=self.run)
         p.set_defaults(instance=self)
 
         return 'inject-config', p
