@@ -94,6 +94,7 @@ class CLI(UI):
         return getpass.getpass("Password for {0}@{1}: "
                                .format(username, host))
 
+
     def create_parser(self):
         # Top-level command definition and any global options
         parser = argparse.ArgumentParser(
@@ -200,8 +201,13 @@ Cisco IOS XRv platforms."""),
 
         # Call the appropriate submodule and handle any resulting errors
         try:
+            # Set mandatory (CAPITALIZED) args first, then optional args
             for (arg, value) in vars(args).iteritems():
-                args.instance.set_value(arg, value)
+                if arg[0].isupper():
+                    args.instance.set_value(arg, value)
+            for (arg, value) in vars(args).iteritems():
+                if not arg[0].isupper():
+                    args.instance.set_value(arg, value)
             args.instance.run()
         except InvalidInputError as e:
             subp.error(e)
