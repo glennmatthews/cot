@@ -127,105 +127,107 @@ class COTEditHardware(COTSubmodule):
                                    "for ALL profiles, not just profile(s) {1}. Continue?"
                                    .format(" ".join(virtual_system_type), profiles))
 
-        with self.vm as vm:
-            platform = vm.get_platform()
+        vm = self.vm
 
-            if profiles is not None:
-                profile_list = vm.get_configuration_profile_ids()
-                for profile in profiles:
-                    if not profile in profile_list:
-                        self.UI.confirm_or_die("Profile '{0}' does not exist. Create it?"
-                                               .format(profile))
-                        label = self.UI.get_input("Please enter a label for this "
-                                                  "configuration profile", profile)
-                        desc = self.UI.get_input("Please enter a description for this "
-                                                 "configuration profile", label)
-                        vm.create_configuration_profile(profile, label=label,
-                                                        description=desc)
+        platform = vm.get_platform()
 
-            if virtual_system_type is not None:
-                vm.set_system_type(virtual_system_type)
+        if profiles is not None:
+            profile_list = vm.get_configuration_profile_ids()
+            for profile in profiles:
+                if not profile in profile_list:
+                    self.UI.confirm_or_die("Profile '{0}' does not exist. Create it?"
+                                           .format(profile))
+                    label = self.UI.get_input("Please enter a label for this "
+                                              "configuration profile", profile)
+                    desc = self.UI.get_input("Please enter a description for this "
+                                             "configuration profile", label)
+                    vm.create_configuration_profile(profile, label=label,
+                                                    description=desc)
 
-            cpus = self.get_value("cpus")
-            if cpus is not None:
-                vm.set_cpu_count(cpus, profiles)
+        if virtual_system_type is not None:
+            vm.set_system_type(virtual_system_type)
 
-            memory = self.get_value("memory")
-            if memory is not None:
-                vm.set_memory(memory, profiles)
+        cpus = self.get_value("cpus")
+        if cpus is not None:
+            vm.set_cpu_count(cpus, profiles)
 
-            nic_type = self.get_value("nic_type")
-            if nic_type is not None:
-                vm.set_nic_type(nic_type, profiles)
+        memory = self.get_value("memory")
+        if memory is not None:
+            vm.set_memory(memory, profiles)
 
-            nics = self.get_value("nics")
-            if nics is not None:
-                platform.validate_nic_count(nics) # TODO move to validate_arg
-                nics_dict = vm.get_nic_count(profiles)
-                for (profile, count) in nics_dict.items():
-                    if nics < count:
-                        self.UI.confirm_or_die("Profile {0} currently has {1} NIC(s). "
-                                               "Delete {2} NIC(s) to reduce to "
-                                               "{3} total?"
-                                               .format(profile, count,
-                                                       (count - nics),
-                                                       nics))
-                vm.set_nic_count(nics, profiles)
+        nic_type = self.get_value("nic_type")
+        if nic_type is not None:
+            vm.set_nic_type(nic_type, profiles)
 
-            nic_networks = self.get_value("nic_networks")
-            if nic_networks is not None:
-                existing_networks = vm.get_network_list()
-                # Convert nic_networks to a set to merge duplicate entries
-                for network in natural_sort(set(nic_networks)):
-                    if not network in existing_networks:
-                        self.UI.confirm_or_die("Network {0} is not currently defined. "
-                                               "Create it?".format(network))
-                        desc = self.UI.get_input("Please enter a description for "
-                                                 "this network", network)
-                        vm.create_network(network, desc)
-                vm.set_nic_networks(nic_networks, profiles)
+        nics = self.get_value("nics")
+        if nics is not None:
+            platform.validate_nic_count(nics) # TODO move to validate_arg
+            nics_dict = vm.get_nic_count(profiles)
+            for (profile, count) in nics_dict.items():
+                if nics < count:
+                    self.UI.confirm_or_die("Profile {0} currently has {1} NIC(s). "
+                                           "Delete {2} NIC(s) to reduce to "
+                                           "{3} total?"
+                                           .format(profile, count,
+                                                   (count - nics),
+                                                   nics))
+            vm.set_nic_count(nics, profiles)
 
-            mac_addresses_list = self.get_value("mac_addresses_list")
-            if mac_addresses_list is not None:
-                vm.set_nic_mac_addresses(mac_addresses_list, profiles)
+        nic_networks = self.get_value("nic_networks")
+        if nic_networks is not None:
+            existing_networks = vm.get_network_list()
+            # Convert nic_networks to a set to merge duplicate entries
+            for network in natural_sort(set(nic_networks)):
+                if not network in existing_networks:
+                    self.UI.confirm_or_die("Network {0} is not currently defined. "
+                                           "Create it?".format(network))
+                    desc = self.UI.get_input("Please enter a description for "
+                                             "this network", network)
+                    vm.create_network(network, desc)
+            vm.set_nic_networks(nic_networks, profiles)
 
-            nic_names = self.get_value("nic_names")
-            if nic_names is not None:
-                vm.set_nic_names(nic_names, profiles)
+        mac_addresses_list = self.get_value("mac_addresses_list")
+        if mac_addresses_list is not None:
+            vm.set_nic_mac_addresses(mac_addresses_list, profiles)
 
-            serial_ports = self.get_value("serial_ports")
-            if serial_ports is not None:
-                platform.validate_serial_count(serial_ports) # TODO validate_arg
-                serial_dict = vm.get_serial_count(profiles)
-                for (profile, count) in serial_dict.items():
-                    if serial_ports < count:
-                        self.UI.confirm_or_die(
-                            "Profile {0} currently has {1} serial port(s). "
-                            "Delete {2} port(s) to reduce to {3} total?"
-                            .format(profile, count, (count - serial_ports),
-                                serial_ports))
-                vm.set_serial_count(serial_ports, profiles)
+        nic_names = self.get_value("nic_names")
+        if nic_names is not None:
+            vm.set_nic_names(nic_names, profiles)
 
-            serial_connectivity = self.get_value("serial_connectivity")
-            if serial_connectivity is not None:
-                serial_dict = vm.get_serial_count(profiles)
-                for (profile, count) in serial_dict.items():
-                    if len(serial_connectivity) < count:
-                        self.UI.confirm_or_die(
-                            "There are {0} serial port(s) under profile {1}, but you "
-                            "have specified connectivity information for only {2}. "
-                            "\nThe remaining ports will be unreachable. Continue?"
-                            .format(count, profile,
-                                    len(serial_connectivity)))
-                vm.set_serial_connectivity(serial_connectivity, profiles)
+        serial_ports = self.get_value("serial_ports")
+        if serial_ports is not None:
+            platform.validate_serial_count(serial_ports) # TODO validate_arg
+            serial_dict = vm.get_serial_count(profiles)
+            for (profile, count) in serial_dict.items():
+                if serial_ports < count:
+                    self.UI.confirm_or_die(
+                        "Profile {0} currently has {1} serial port(s). "
+                        "Delete {2} port(s) to reduce to {3} total?"
+                        .format(profile, count, (count - serial_ports),
+                            serial_ports))
+            vm.set_serial_count(serial_ports, profiles)
 
-            scsi_subtype = self.get_value("scsi_subtype")
-            if scsi_subtype is not None:
-                vm.set_scsi_subtype(scsi_subtype, profiles)
+        serial_connectivity = self.get_value("serial_connectivity")
+        if serial_connectivity is not None:
+            serial_dict = vm.get_serial_count(profiles)
+            for (profile, count) in serial_dict.items():
+                if len(serial_connectivity) < count:
+                    self.UI.confirm_or_die(
+                        "There are {0} serial port(s) under profile {1}, but you "
+                        "have specified connectivity information for only {2}. "
+                        "\nThe remaining ports will be unreachable. Continue?"
+                        .format(count, profile,
+                                len(serial_connectivity)))
+            vm.set_serial_connectivity(serial_connectivity, profiles)
 
-            ide_subtype = self.get_value("ide_subtype")
-            if ide_subtype is not None:
-                vm.set_ide_subtype(ide_subtype, profiles)
+        scsi_subtype = self.get_value("scsi_subtype")
+        if scsi_subtype is not None:
+            vm.set_scsi_subtype(scsi_subtype, profiles)
+
+        ide_subtype = self.get_value("ide_subtype")
+        if ide_subtype is not None:
+            vm.set_ide_subtype(ide_subtype, profiles)
+
 
     def create_subparser(self, parent):
         p = parent.add_parser(

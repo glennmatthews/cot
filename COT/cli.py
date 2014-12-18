@@ -209,6 +209,7 @@ Cisco IOS XRv platforms."""),
                 if not arg[0].isupper():
                     args.instance.set_value(arg, value)
             args.instance.run()
+            args.instance.finished()
         except InvalidInputError as e:
             subp.error(e)
         except NotImplementedError as e:

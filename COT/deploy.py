@@ -108,8 +108,6 @@ class COTDeploy(COTSubmodule):
 "hypervisor environment. This argument may be repeated as needed to specify "
 "multiple mappings.")
 
-        self.generic_parser.set_defaults(func=self.run)
-
         # Create 'cot deploy' parser
         self.parser = parent.add_parser(
             'deploy',
@@ -121,8 +119,6 @@ class COTDeploy(COTSubmodule):
 
         self.subparsers = self.parser.add_subparsers(
             dest='HYPERVISOR', metavar='hypervisors supported:')
-
-        self.parser.set_defaults(func=self.run)
 
         self.parser.usage="""
   {0} deploy --help
@@ -177,13 +173,14 @@ class COTDeployESXi(COTDeploy):
         PACKAGE = self.get_value("PACKAGE")
         configuration = self.get_value("configuration")
 
-        with self.vm as vm:
-            # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
-            # then environment properties will always be used.
-            # Otherwise we may need to help and/or warn the user:
-            if vm.get_property_keys() and not re.search("/host/", LOCATOR):
-                if get_ovftool_version() < StrictVersion("4.0.0"):
-                    self.UI.confirm_or_die(
+        vm = self.vm
+
+        # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
+        # then environment properties will always be used.
+        # Otherwise we may need to help and/or warn the user:
+        if vm.get_property_keys() and not re.search("/host/", LOCATOR):
+            if get_ovftool_version() < StrictVersion("4.0.0"):
+                self.UI.confirm_or_die(
 "When deploying an OVF directly to a vSphere target using ovftool prior to "
 "version 4.0.0, any OVF environment properties will not be made available "
 "to the new guest.\n"
@@ -191,12 +188,12 @@ class COTDeployESXi(COTDeploy):
 "target locator (such as '<vCenter>/<datacenter>/host/<host>') "
 "or upgrade to ovftool 4.0.0 or later.\n"
 "Continue deployment without OVF environment?")
-                    logger.warning("deploying directly to vSphere and ovftool "
-                                   "version is too low to add injectOvfEnv "
-                                   "option. OVF environment properties will "
-                                   "be ignored.")
-                elif not self.get_value("power_on"):
-                    self.UI.confirm_or_die(
+                logger.warning("deploying directly to vSphere and ovftool "
+                               "version is too low to add injectOvfEnv "
+                               "option. OVF environment properties will "
+                               "be ignored.")
+            elif not self.get_value("power_on"):
+                self.UI.confirm_or_die(
 "When deploying an OVF directly to a vSphere target, OVF environment "
 "properties can only be made available to the new guest if the guest is to be "
 "powered on immediately.\n"
@@ -205,65 +202,63 @@ class COTDeployESXi(COTDeploy):
 "(such as '<vCenter>/<datacenter>/host/<host>') "
 "instead of a vSphere target.\n"
 "Continue deployment without OVF environment?")
-                    logger.warning("deploying directly to vSphere but "
-                                   "--power-on is not requested. OVF "
-                                   "environment properties will be ignored.")
+                logger.warning("deploying directly to vSphere but "
+                               "--power-on is not requested. OVF "
+                               "environment properties will be ignored.")
+            else:
+                logger.debug("Since ovftool version is sufficient and user "
+                             "requested --power-on, adding ovftool args to "
+                             "ensure passthru of OVF environment to guest.")
+                ovftool_args.append("--X:injectOvfEnv")
+
+        # ensure configuration was specified
+        # will use ovf tool --deploymentOption
+        # if not specified and force not specified prompt for selection
+        profile_list = vm.get_configuration_profile_ids()
+
+        if (configuration is not None and
+            not (configuration in profile_list)):
+            raise InvalidInputError(
+                "Configuration '{0}' is not a recognized profile for '{1}'. "
+                "Valid options are:\n{2}"
+                .format(configuration, PACKAGE,
+                        "\n".join(profile_list)))
+
+        if profile_list and configuration is None:
+            if len(profile_list) == 1:
+                # No need to prompt the user
+                configuration = profile_list[0]
+                logger.debug("Auto-selected only profile '{0}'"
+                             .format(configuration))
+            elif self.UI.force: # TODO
+                configuration = vm.get_default_profile_name()
+                logger.warning("Auto-selecting default profile '{0}'"
+                               .format(configuration))
+            profile_info_string = None
+            while configuration is None:
+                if not profile_info_string:
+                    profile_info_string = vm.profile_info_string(enumerate=True)
+                print(profile_info_string)
+                user_input = self.UI.get_input("Choose a Configuration:", "0")
+                if user_input in profile_list:
+                    configuration = user_input
                 else:
-                    logger.debug("Since ovftool version is sufficient and user "
-                                 "requested --power-on, adding ovftool args to "
-                                 "ensure passthru of OVF environment to guest.")
-                    ovftool_args.append("--X:injectOvfEnv")
+                    try:
+                        i = int(user_input)
+                        if i >= len(profile_list):
+                            raise ValueError
+                        configuration = profile_list[i]
+                    except ValueError:
+                        print("\nInvalid input. Please try again.")
 
-            # ensure configuration was specified
-            # will use ovf tool --deploymentOption
-            # if not specified and force not specified prompt for selection
-            profile_list = vm.get_configuration_profile_ids()
+        if configuration is not None:
+            ovftool_args.append("--deploymentOption=" + configuration)
 
-            if (configuration is not None and
-                not (configuration in profile_list)):
-                raise InvalidInputError(
-                    "Configuration '{0}' is not a recognized profile for '{1}'. "
-                    "Valid options are:\n{2}"
-                    .format(configuration, PACKAGE,
-                            "\n".join(profile_list)))
-
-            if profile_list and configuration is None:
-                if len(profile_list) == 1:
-                    # No need to prompt the user
-                    configuration = profile_list[0]
-                    logger.debug("Auto-selected only profile '{0}'"
-                                 .format(configuration))
-                elif self.UI.force: # TODO
-                    configuration = vm.get_default_profile_name()
-                    logger.warning("Auto-selecting default profile '{0}'"
-                                   .format(configuration))
-                profile_info_string = None
-                while configuration is None:
-                    if not profile_info_string:
-                        profile_info_string = vm.profile_info_string(enumerate=True)
-                    print(profile_info_string)
-                    user_input = self.UI.get_input("Choose a Configuration:", "0")
-                    if user_input in profile_list:
-                        configuration = user_input
-                    else:
-                        try:
-                            i = int(user_input)
-                            if i >= len(profile_list):
-                                raise ValueError
-                            configuration = profile_list[i]
-                        except ValueError:
-                            print("\nInvalid input. Please try again.")
-
-            if configuration is not None:
-                ovftool_args.append("--deploymentOption=" + configuration)
-
-            # Get the number of serial ports in the OVA.
-            # ovftool does not create serial ports when deploying to a VM,
-            # so we'll have to fix this up manually later.
-            serial_count = vm.get_serial_count([configuration])
-            serial_count = serial_count[configuration]
-
-        # close out vm, not needed now
+        # Get the number of serial ports in the OVA.
+        # ovftool does not create serial ports when deploying to a VM,
+        # so we'll have to fix this up manually later.
+        serial_count = vm.get_serial_count([configuration])
+        serial_count = serial_count[configuration]
 
         # pass network settings on to ovftool
         network_map = self.get_value("network_map")

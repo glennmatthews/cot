@@ -101,10 +101,10 @@ class COTAddDisk(COTSubmodule):
     def run(self):
         super(COTAddDisk, self).run()
 
-        with self.vm as vm:
-            add_disk_worker(vm,
-                            UI=self.UI,
-                            **self.args)
+        add_disk_worker(self.vm,
+                        UI=self.UI,
+                        **self.args)
+
 
     def create_subparser(self, parent):
         p = parent.add_parser(

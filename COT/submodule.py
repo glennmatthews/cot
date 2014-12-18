@@ -18,7 +18,7 @@ import os.path
 import logging
 
 from .data_validation import InvalidInputError
-from .vm_context_manager import VMContextManager
+from .vm_factory import VMFactory
 
 logger = logging.getLogger(__name__)
 
@@ -63,10 +63,10 @@ class COTSubmodule(object):
         self.args[arg] = value
         # Generic operations
         if arg == "PACKAGE":
-            self.vm = VMContextManager(value, self.get_value("output"))
+            self.vm = VMFactory.create(value, self.get_value("output"))
         elif arg == "output":
             if self.vm is not None:
-                self.vm.obj.set_output_file(value)
+                self.vm.set_output_file(value)
 
 
     def get_value(self, arg):
@@ -97,6 +97,11 @@ class COTSubmodule(object):
         if not ready:
             raise InvalidInputError(reason)
         # do the work now...
+
+    def finished(self):
+        # do any submodule-specific work here, then:
+        if self.vm is not None:
+            self.vm.write()
 
 
     def create_subparser(self, parent):

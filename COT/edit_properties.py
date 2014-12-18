@@ -88,29 +88,30 @@ class COTEditProperties(COTSubmodule):
         config_file = self.get_value("config_file")
         properties = self.get_value("properties")
 
-        with self.vm as vm:
-            if config_file is not None:
-                vm.config_file_to_properties(config_file)
+        vm = self.vm
 
-            if properties is not None:
-                for key_value_pair in properties:
-                    (key, value) = key_value_pair.split('=',1)
-                    logger.debug("key: {0} value: {1}".format(key, value))
-                    if value == '':
-                        value = self.UI.get_input(
-                            "Enter value for property '{0}'",
-                            value)
-                    curr_value = vm.get_property_value(key)
-                    if curr_value is None:
-                        self.UI.confirm_or_die(
-                            "Property '{0}' does not yet exist.\n"
-                            "Create it?".format(key))
-                        # TODO - for new property, prompt for label/descr/type?
-                    vm.set_property_value(key, value)
+        if config_file is not None:
+            vm.config_file_to_properties(config_file)
 
-            if config_file is None and properties is None:
-                # Interactive mode!
-                self.edit_properties_interactive(vm)
+        if properties is not None:
+            for key_value_pair in properties:
+                (key, value) = key_value_pair.split('=',1)
+                logger.debug("key: {0} value: {1}".format(key, value))
+                if value == '':
+                    value = self.UI.get_input(
+                        "Enter value for property '{0}'",
+                        value)
+                curr_value = vm.get_property_value(key)
+                if curr_value is None:
+                    self.UI.confirm_or_die(
+                        "Property '{0}' does not yet exist.\n"
+                        "Create it?".format(key))
+                    # TODO - for new property, prompt for label/descr/type?
+                vm.set_property_value(key, value)
+
+        if config_file is None and properties is None:
+            # Interactive mode!
+            self.edit_properties_interactive(vm)
 
 
     def edit_properties_interactive(self, vm):

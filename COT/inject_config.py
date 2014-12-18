@@ -3,7 +3,7 @@
 # inject_config.py - Implements "cot inject-config" command
 #
 # February 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -83,90 +83,91 @@ class COTInjectConfig(COTSubmodule):
     def run(self):
         super(COTInjectConfig, self).run()
 
-        with self.vm as vm:
-            platform = vm.get_platform()
+        vm = self.vm
 
-            config_file = self.get_value("config_file")
-            secondary_config_file = self.get_value("secondary_config_file")
-            # Platform-specific input validation - TODO move to validate_input
-            if config_file and not platform.CONFIG_TEXT_FILE:
-                # All reference platforms support config files, but be safe...
-                raise InvalidInputError(
-                    "Configuration file not supported for platform {0}"
-                    .format(platform.__name__))
+        platform = vm.get_platform()
 
-            if (secondary_config_file and
-                not platform.SECONDARY_CONFIG_TEXT_FILE):
-                raise InvalidInputError(
-                    "Secondary configuration file not supported for "
-                    "platform '{0}'".format(platform.__name__))
+        config_file = self.get_value("config_file")
+        secondary_config_file = self.get_value("secondary_config_file")
+        # Platform-specific input validation - TODO move to validate_input
+        if config_file and not platform.CONFIG_TEXT_FILE:
+            # All reference platforms support config files, but be safe...
+            raise InvalidInputError(
+                "Configuration file not supported for platform {0}"
+                .format(platform.__name__))
 
-            # Find the disk drive where the config should be injected
-            # First, look for any previously-injected config disk to overwrite:
-            if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
-                (f, d, ci, drive_device) = vm.search_from_filename('config.iso')
-            elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
-                (f, d, ci, drive_device) = vm.search_from_filename('config.vmdk')
-            else:
-                raise ValueUnsupportedError("bootstrap disk type",
-                                            platform.BOOTSTRAP_DISK_TYPE,
-                                            "'cdrom' or 'harddisk'")
-            if f is not None:
-                file_id = vm.get_id_from_file(f)
-                self.UI.confirm_or_die(
-                    "Existing configuration disk '{0}' found.\n"
-                    "Continue and overwrite it?".format(file_id))
-                logger.warning("Overwriting existing config disk '{0}'"
-                               .format(file_id))
-            else:
-                file_id = None
-                # Find the empty slot where we should inject the config
-                drive_device = vm.find_empty_drive(platform.BOOTSTRAP_DISK_TYPE)
+        if (secondary_config_file and
+            not platform.SECONDARY_CONFIG_TEXT_FILE):
+            raise InvalidInputError(
+                "Secondary configuration file not supported for "
+                "platform '{0}'".format(platform.__name__))
 
-            if drive_device is None:
-                raise LookupError("Could not find an empty {0} drive to "
-                                  "inject the config into"
-                                  .format(platform.BOOTSTRAP_DISK_TYPE))
-            (cont_type, drive_address) = vm.find_device_location(drive_device)
+        # Find the disk drive where the config should be injected
+        # First, look for any previously-injected config disk to overwrite:
+        if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
+            (f, d, ci, drive_device) = vm.search_from_filename('config.iso')
+        elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
+            (f, d, ci, drive_device) = vm.search_from_filename('config.vmdk')
+        else:
+            raise ValueUnsupportedError("bootstrap disk type",
+                                        platform.BOOTSTRAP_DISK_TYPE,
+                                        "'cdrom' or 'harddisk'")
+        if f is not None:
+            file_id = vm.get_id_from_file(f)
+            self.UI.confirm_or_die(
+                "Existing configuration disk '{0}' found.\n"
+                "Continue and overwrite it?".format(file_id))
+            logger.warning("Overwriting existing config disk '{0}'"
+                           .format(file_id))
+        else:
+            file_id = None
+            # Find the empty slot where we should inject the config
+            drive_device = vm.find_empty_drive(platform.BOOTSTRAP_DISK_TYPE)
 
-            # Copy config file(s) to per-platform name in working directory
-            config_files = []
-            if config_file:
-                dest = os.path.join(vm.working_dir, platform.CONFIG_TEXT_FILE)
-                shutil.copy(config_file, dest)
-                config_files.append(dest)
-            if secondary_config_file:
-                dest = os.path.join(vm.working_dir,
-                                    platform.SECONDARY_CONFIG_TEXT_FILE)
-                shutil.copy(secondary_config_file, dest)
-                config_files.append(dest)
+        if drive_device is None:
+            raise LookupError("Could not find an empty {0} drive to "
+                              "inject the config into"
+                              .format(platform.BOOTSTRAP_DISK_TYPE))
+        (cont_type, drive_address) = vm.find_device_location(drive_device)
 
-            # Package the config files into a disk image
-            if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
-                bootstrap_file = os.path.join(vm.working_dir, 'config.iso')
-                create_disk_image(bootstrap_file, contents=config_files)
-            elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
-                bootstrap_file = os.path.join(vm.working_dir, 'config.img')
-                create_disk_image(bootstrap_file, file_format='raw',
-                                  contents=config_files)
-            else:
-                raise ValueUnsupportedError("bootstrap disk type",
-                                            platform.BOOTSTRAP_DISK_TYPE,
-                                            "'cdrom' or 'harddisk'")
+        # Copy config file(s) to per-platform name in working directory
+        config_files = []
+        if config_file:
+            dest = os.path.join(vm.working_dir, platform.CONFIG_TEXT_FILE)
+            shutil.copy(config_file, dest)
+            config_files.append(dest)
+        if secondary_config_file:
+            dest = os.path.join(vm.working_dir,
+                                platform.SECONDARY_CONFIG_TEXT_FILE)
+            shutil.copy(secondary_config_file, dest)
+            config_files.append(dest)
 
-            # Inject the disk image into the OVA, using "add-disk" functionality
-            add_disk_worker(
-                UI=self.UI,
-                vm=vm,
-                DISK_IMAGE=bootstrap_file,
-                type=platform.BOOTSTRAP_DISK_TYPE,
-                file_id=file_id,
-                controller=cont_type,
-                address=drive_address,
-                subtype=None,
-                description='Configuration disk',
-                diskname=None,
-            )
+        # Package the config files into a disk image
+        if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
+            bootstrap_file = os.path.join(vm.working_dir, 'config.iso')
+            create_disk_image(bootstrap_file, contents=config_files)
+        elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
+            bootstrap_file = os.path.join(vm.working_dir, 'config.img')
+            create_disk_image(bootstrap_file, file_format='raw',
+                              contents=config_files)
+        else:
+            raise ValueUnsupportedError("bootstrap disk type",
+                                        platform.BOOTSTRAP_DISK_TYPE,
+                                        "'cdrom' or 'harddisk'")
+
+        # Inject the disk image into the OVA, using "add-disk" functionality
+        add_disk_worker(
+            UI=self.UI,
+            vm=vm,
+            DISK_IMAGE=bootstrap_file,
+            type=platform.BOOTSTRAP_DISK_TYPE,
+            file_id=file_id,
+            controller=cont_type,
+            address=drive_address,
+            subtype=None,
+            description='Configuration disk',
+            diskname=None,
+        )
 
 
     def create_subparser(self, parent):

@@ -71,26 +71,27 @@ class COTAddFile(COTSubmodule):
 
         FILE = self.get_value("FILE")
         file_id = self.get_value("file_id")
+        vm = self.vm
 
-        with self.vm as vm:
-            filename = os.path.basename(FILE)
-            (file, _, _, _) = vm.search_from_filename(filename)
-            if file_id is not None:
-                (f2, _, _, _) = vm.search_from_file_id(file_id)
-                file = check_for_conflict("File to overwrite", [file, f2])
-            if file_id is None:
-                if file is not None:
-                    file_id = vm.get_id_from_file(file)
-                else:
-                    file_id = filename
-
+        filename = os.path.basename(FILE)
+        (file, _, _, _) = vm.search_from_filename(filename)
+        if file_id is not None:
+            (f2, _, _, _) = vm.search_from_file_id(file_id)
+            file = check_for_conflict("File to overwrite", [file, f2])
+        if file_id is None:
             if file is not None:
-                self.UI.confirm_or_die("Replace existing file {0} with {1}?"
-                                       .format(vm.get_path_from_file(file),
-                                               FILE))
-                logger.warning("Overwriting existing File in VM")
+                file_id = vm.get_id_from_file(file)
+            else:
+                file_id = filename
 
-            vm.add_file(FILE, file_id, file)
+        if file is not None:
+            self.UI.confirm_or_die("Replace existing file {0} with {1}?"
+                                   .format(vm.get_path_from_file(file),
+                                           FILE))
+            logger.warning("Overwriting existing File in VM")
+
+        vm.add_file(FILE, file_id, file)
+
 
     def create_subparser(self, parent):
         p = parent.add_parser(

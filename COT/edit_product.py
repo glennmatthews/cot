@@ -55,13 +55,12 @@ class COTEditProduct(COTSubmodule):
     def run(self):
         super(COTEditProduct, self).run()
 
-        with self.vm as vm:
-            version = self.get_value("version")
-            if version is not None:
-                vm.set_short_version(version)
-            full_version = self.get_value("full_version")
-            if full_version is not None:
-                vm.set_long_version(full_version)
+        version = self.get_value("version")
+        if version is not None:
+            self.vm.set_short_version(version)
+        full_version = self.get_value("full_version")
+        if full_version is not None:
+            self.vm.set_long_version(full_version)
 
 
     def create_subparser(self, parent):

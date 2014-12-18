@@ -16,15 +16,10 @@
 
 import logging
 import os.path
-import re
 import shutil
-import sys
 import tempfile
-import traceback
 
-from .ovf import OVF
-from .vm_description import VMInitError
-from .data_validation import ValueUnsupportedError
+from .vm_factory import VMFactory
 
 logger = logging.getLogger(__name__)
 
@@ -36,41 +31,7 @@ class VMContextManager:
     """
 
     def __init__(self, input_file, output_file):
-        vm_class = None
-
-        supported_types = []
-        # Add other VMDescription subclasses as needed
-        for candidate_class in [OVF]:
-            try:
-                filetype = candidate_class.detect_type_from_name(input_file)
-                vm_class = candidate_class
-                break
-            except ValueUnsupportedError as e:
-                supported_types += [e.expected_value]
-
-        if not vm_class:
-            raise VMInitError(2,
-                              "Unknown VM description type for input file "
-                              "'{0}' - only supported types are {1}"
-                              .format(input_file, supported_types))
-
-        if output_file:
-            # Make sure the output format is supported by this class
-            try:
-                vm_class.detect_type_from_name(output_file)
-            except ValueUnsupportedError as e:
-                raise VMInitError(2,
-                                  "Unsupported format for output file '{0}' - "
-                                  "only support {1} for output from {2}"
-                                  .format(output_file, e.expected_value,
-                                          vm_class.__name__))
-
-        tempdir = tempfile.mkdtemp(prefix="cot")
-        try:
-            self.obj = vm_class(input_file, tempdir, output_file)
-        except Exception as e:
-            shutil.rmtree(tempdir)
-            raise
+        self.obj = VMFactory.create(input_file, output_file)
 
 
     def __enter__(self):
