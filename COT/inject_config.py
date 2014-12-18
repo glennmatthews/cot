@@ -52,16 +52,30 @@ class COTInjectConfig(COTSubmodule):
             return valid, value_or_reason
         value = value_or_reason
 
+        if self.vm:
+            platform = self.vm.get_platform()
+        else:
+            platform = None
+
         if arg == "config_file":
+            value = str(value)
             if not os.path.exists(value):
                 return False, ("Primary config file {0} does not exist!"
                                .format(value))
+            if platform and not platform.CONFIG_TEXT_FILE:
+                return (False,
+                        "Configuration file not supported for platform {0}"
+                        .format(platform.__name__))
         elif arg == "secondary_config_file":
+            value = str(value)
             if not os.path.exists(value):
                 return False, ("Secondary config file {0} does not exist!"
                                .format(value))
+            if platform and not platform.SECONDARY_CONFIG_TEXT_FILE:
+                return (False, "Secondary configuration file not supported "
+                        "for platform {0}".format(platform.__name__))
 
-        return valid, value_or_reason
+        return valid, value
 
 
     def ready_to_run(self):
@@ -89,18 +103,6 @@ class COTInjectConfig(COTSubmodule):
 
         config_file = self.get_value("config_file")
         secondary_config_file = self.get_value("secondary_config_file")
-        # Platform-specific input validation - TODO move to validate_input
-        if config_file and not platform.CONFIG_TEXT_FILE:
-            # All reference platforms support config files, but be safe...
-            raise InvalidInputError(
-                "Configuration file not supported for platform {0}"
-                .format(platform.__name__))
-
-        if (secondary_config_file and
-            not platform.SECONDARY_CONFIG_TEXT_FILE):
-            raise InvalidInputError(
-                "Secondary configuration file not supported for "
-                "platform '{0}'".format(platform.__name__))
 
         # Find the disk drive where the config should be injected
         # First, look for any previously-injected config disk to overwrite:

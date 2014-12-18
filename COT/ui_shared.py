@@ -19,7 +19,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 class UI(object):
-    """Abstract user interface functionality."""
+    """Abstract user interface functionality.
+    Can also be used in test code as a stub that autoconfirms everything."""
 
     def __init__(self, force=False):
         self.force = force
@@ -30,7 +31,7 @@ class UI(object):
         if self.force:
             logger.warning("Automatically agreeing to '{0}'".format(prompt))
             return True
-        return False
+        return True
 
     def confirm_or_die(self, prompt):
         """If the user doesn't agree, abort!"""

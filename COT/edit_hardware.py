@@ -62,40 +62,55 @@ class COTEditHardware(COTSubmodule):
             return valid, value_or_reason
         value = value_or_reason
 
-        if arg == "cpus":
-            if value < 1:
-                return False, "CPU count must be at least 1"
-        elif arg == "memory":
-            match = re.match(self.MEMORY_REGEXP, value)
-            if not match:
-                return (False,
-                        "Could not parse memory string '{0}'".format(value))
-            mem_value = int(match.group(1))
-            if mem_value <= 0:
-                return False, "Memory must be greater than zero"
-            if match.group(2) == 'M' or match.group(2) == 'm':
-                # default
-                logger.debug("Memory specified in megabytes")
-                pass
-            elif match.group(2) == 'G' or match.group(2) == 'g':
-                logger.debug("Memory specified in gigabytes - "
-                             "converting to megabytes")
-                mem_value *= 1024
-            else:
-                # Try to be clever and guess the units
-                if mem_value <= 64:
-                    logger.warning("Memory units not specified, "
-                                   "guessing '{0}' means '{0}GB'"
-                                   .format(mem_value))
+        try:
+            if arg == "cpus":
+                value = int(value)
+                if value < 1:
+                    return False, "CPU count must be at least 1"
+                self.vm.get_platform().validate_cpu_count(value)
+            elif arg == "memory":
+                value = str(value)
+                match = re.match(self.MEMORY_REGEXP, value)
+                if not match:
+                    return (False,
+                            "Could not parse memory string '{0}'".format(value))
+                mem_value = int(match.group(1))
+                if mem_value <= 0:
+                    return False, "Memory must be greater than zero"
+                if match.group(2) == 'M' or match.group(2) == 'm':
+                    # default
+                    logger.debug("Memory specified in megabytes")
+                    pass
+                elif match.group(2) == 'G' or match.group(2) == 'g':
+                    logger.debug("Memory specified in gigabytes - "
+                                 "converting to megabytes")
                     mem_value *= 1024
                 else:
-                    logger.warning("Memory units not specified, "
-                                   "guessing '{0}' means '{0}MB'"
-                                   .format(mem_value))
-                    pass
-            return True, mem_value
+                    # Try to be clever and guess the units
+                    if mem_value <= 64:
+                        logger.warning("Memory units not specified, "
+                                       "guessing '{0}' means '{0}GB'"
+                                       .format(mem_value))
+                        mem_value *= 1024
+                    else:
+                        logger.warning("Memory units not specified, "
+                                       "guessing '{0}' means '{0}MB'"
+                                       .format(mem_value))
+                        pass
+                self.vm.get_platform().validate_memory_amount(mem_value)
+                return True, mem_value
+            elif arg == "nics":
+                value = int(value)
+                self.vm.get_platform().validate_nic_count(value)
+            elif arg == "nic_type":
+                self.vm.get_platform().validate_nic_type(value)
+            elif arg == "serial_ports":
+                value = int(value)
+                self.vm.get_platform().validate_serial_count(value)
+        except ValueError as e:
+            return False, str(e)
 
-        return valid, value_or_reason
+        return valid, value
 
 
     def ready_to_run(self):
@@ -161,7 +176,6 @@ class COTEditHardware(COTSubmodule):
 
         nics = self.get_value("nics")
         if nics is not None:
-            platform.validate_nic_count(nics) # TODO move to validate_arg
             nics_dict = vm.get_nic_count(profiles)
             for (profile, count) in nics_dict.items():
                 if nics < count:
@@ -196,7 +210,6 @@ class COTEditHardware(COTSubmodule):
 
         serial_ports = self.get_value("serial_ports")
         if serial_ports is not None:
-            platform.validate_serial_count(serial_ports) # TODO validate_arg
             serial_dict = vm.get_serial_count(profiles)
             for (profile, count) in serial_dict.items():
                 if serial_ports < count:

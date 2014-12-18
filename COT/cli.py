@@ -43,6 +43,9 @@ class CLI(UI):
 
         self.create_parser()
         self.create_subparsers()
+
+
+    def run(self):
         args = self.parse_args()
         super(CLI, self).__init__(args.force)
         self.main(args)
@@ -227,4 +230,4 @@ Cisco IOS XRv platforms."""),
         return 0
 
 def main():
-    CLI()
+    CLI().run()
