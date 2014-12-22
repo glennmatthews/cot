@@ -2664,3 +2664,36 @@ expected="""
          <rasd:ElementName>flash2</rasd:ElementName>
 """.format(input_size=self.FILE_SIZE['input.vmdk'],
            config_size=os.path.getsize(os.path.join(self.temp_dir, 'config.vmdk'))))
+
+    def test_inject_config_secondary_unsupported(self):
+        """inject-config for a secondary file, platform doesn't support it"""
+        self.call_cot(['inject-config', "--secondary-config-file",
+                       self.config_file, "-o", self.temp_file,
+                       self.input_ovf], result=2)
+
+
+    def test_inject_config_repeatedly(self):
+        """inject-config repeatedly"""
+        # Add initial config file
+        self.call_cot(['inject-config', self.input_ovf, '-o', self.temp_file,
+                       '-c', self.config_file])
+        # Overwrite it with a new one
+        self.call_cot(['inject-config', self.temp_file,
+                       '-c', self.config_file])
+        # And again.
+        self.call_cot(['inject-config', self.temp_file,
+                       '-c', self.config_file])
+        self.check_diff(
+"""
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="config.iso" ovf:id="config.iso" ovf:size="{config_size}" />
+   </ovf:References>
+...
+         <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
++        <rasd:Description>Configuration disk</rasd:Description>
+         <rasd:ElementName>CD-ROM 2</rasd:ElementName>
++        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
+         <rasd:InstanceID>8</rasd:InstanceID>
+""".format(iso_size=self.FILE_SIZE['input.iso'],
+           config_size=os.path.getsize(os.path.join(self.temp_dir,
+                                                    'config.iso'))))

@@ -21,7 +21,7 @@ import shutil
 import sys
 
 from .add_disk import add_disk_worker
-from .cli import subparsers, subparser_lookup
+from .cli import subparsers, subparser_lookup, confirm_or_die
 from .data_validation import ValueUnsupportedError
 from .helper_tools import create_disk_image
 from .vm_context_manager import VMContextManager
@@ -62,7 +62,27 @@ def inject_config(args):
                              "platform '{0}'".format(platform.__name__))
 
         # Find the disk drive where the config should be injected
-        drive_device = vm.find_empty_drive(platform.BOOTSTRAP_DISK_TYPE)
+        # First, look for any previously-injected config disk to overwrite:
+        if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
+            (f, d, ci, drive_device) = vm.search_from_filename('config.iso')
+        elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
+            (f, d, ci, drive_device) = vm.search_from_filename('config.vmdk')
+        else:
+            raise ValueUnsupportedError("bootstrap disk type",
+                                        platform.BOOTSTRAP_DISK_TYPE,
+                                        "'cdrom' or 'harddisk'")
+        if f is not None:
+            file_id = vm.get_id_from_file(f)
+            confirm_or_die("Existing configuration disk '{0}' found. "
+                           "Continue and overwrite it?"
+                           .format(file_id), args.force)
+            logger.warning("Overwriting existing config disk '{0}'"
+                           .format(file_id))
+        else:
+            file_id = None
+            # Find the empty slot where we should inject the config
+            drive_device = vm.find_empty_drive(platform.BOOTSTRAP_DISK_TYPE)
+
         if drive_device is None:
             raise LookupError("Could not find an empty {0} drive to "
                               "inject the config into"
@@ -98,7 +118,7 @@ def inject_config(args):
         new_args = argparse.Namespace(
             DISK_IMAGE=bootstrap_file,
             type=platform.BOOTSTRAP_DISK_TYPE,
-            file_id=None,
+            file_id=file_id,
             controller=cont_type,
             address=drive_address,
             subtype=None,
