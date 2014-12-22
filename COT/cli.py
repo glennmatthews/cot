@@ -221,16 +221,17 @@ def main():
                 subp.error("Specified package {0} does not exist!"
                            .format(package))
 
-    # Do any general-purpose input validation:
-    if hasattr(args, "output"):
-        if args.output is None:
-            args.output = args.PACKAGE
-        if os.path.exists(args.output):
-            confirm_or_die("Overwrite existing file {0}?".format(args.output),
-                           args.force)
-
-    # Call the appropriate subcommand function and handle any resulting errors
     try:
+        # Do any general-purpose input validation:
+        if hasattr(args, "output"):
+            if args.output is None:
+                args.output = args.PACKAGE
+            if os.path.exists(args.output):
+                confirm_or_die("Overwrite existing file {0}?"
+                               .format(args.output),
+                               args.force)
+
+        # Call the appropriate subcommand func and handle any resulting errors
         args.func(args)
     except NotImplementedError as e:
         sys.exit("Missing functionality:\n{0}\n"
@@ -239,6 +240,8 @@ def main():
     except EnvironmentError as e:
         print(e.strerror)
         sys.exit(e.errno)
+    except KeyboardInterrupt:
+        sys.exit("\nAborted by user.")
     # All exceptions not handled explicitly above will result in a
     # stack trace and exit - this is ugly so the more specific handling we
     # can provide, the better!
