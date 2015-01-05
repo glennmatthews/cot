@@ -101,6 +101,7 @@ def deploy_esxi(args):
         # ovftool does not create serial ports when deploying to a VM,
         # so we'll have to fix this up manually later.
         serial_count = vm.get_serial_count([args.configuration])
+        serial_count = serial_count[args.configuration]
 
     # pass network settings on to ovftool
     if args.network_map is not None:
