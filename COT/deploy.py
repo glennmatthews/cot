@@ -136,10 +136,10 @@ def deploy_esxi(args):
         # TODO - fixup not implemented yet
         # add serial ports as requested
         # power on VM if args.power_on
-        logger.warning("Package '{0}' contains {1} serial ports, but ovftool "
-                       "ignores serial port declarations. If these ports are "
-                       "needed, you must add them manually to the new VM."
-                       .format(args.PACKAGE, serial_count))
+        print("WARNING: Package '{0}' contains {1} serial ports, but ovftool "
+              "ignores serial port declarations. If these ports are "
+              "needed, you must add them manually to the new VM."
+              .format(args.PACKAGE, serial_count))
 
 
 # Add ourselves to the parser options
