@@ -3,7 +3,7 @@
 # deploy.py - Implements "cot deploy" command
 #
 # June 2014, Kevin A. Keim
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 #
 # This file is part of the Common OVF Tool (COT) project.
