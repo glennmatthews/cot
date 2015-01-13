@@ -316,18 +316,30 @@ class TestCLIDeploy(COT_UT):
         self.call_cot(['deploy', '/foo'], result=2)
         # Hypervisor not specified
         self.call_cot(['deploy', self.input_ovf], result=2)
-        # No server specified
-        self.call_cot(['deploy', '-p', 'password', 'esxi', self.input_ovf],
+        # Invalid hypervisor
+        self.call_cot(['deploy', self.input_ovf, 'MyHypervisor'], result=2)
+
+
+class TestCLIDeployESXi(COT_UT):
+    """CLI test cases for 'cot deploy PACKAGE esxi' command"""
+
+    def test_help(self):
+        "Verifying help menu"
+        self.call_cot(['deploy', self.input_ovf, '-h'])
+
+    def test_invalid_args(self):
+        # No locator specified
+        self.call_cot(['deploy', self.input_ovf, 'esxi'],
                       result=2)
-        # No password specified
-        self.call_cot(['deploy', '-s', 'localhost', 'esxi', self.input_ovf],
+        # No password specified - required if running noninteractively
+        self.call_cot(['deploy', self.input_ovf, 'esxi', 'localhost'],
                       result=2)
         # Missing strings
-        for param in ['-c', '-n', '-N', '-u', '-p', '-s']:
-            self.call_cot(['deploy', '-s', 'localhost', param,
-                           '-p', 'password', 'esxi', self.input_ovf],
+        for param in ['-c', '-n', '-N', '-u', '-p', '-d', '-o']:
+            self.call_cot(['deploy', self.input_ovf, 'esxi', 'localhost',
+                           '-p', 'password', param],
                           result=2)
         # Invalid configuration profile
-        self.call_cot(['deploy', '-s', 'localhost', '-p', 'password',
-                       '-c', 'nonexistent', 'esxi', self.input_ovf],
+        self.call_cot(['deploy', self.input_ovf, 'esxi', 'localhost',
+                       '-p', 'password', '-c', 'nonexistent'],
                       result=2)

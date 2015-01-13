@@ -4,7 +4,7 @@
 #                   helper software not part of a standard Python distro.
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -28,6 +28,7 @@ from .data_validation import ValueUnsupportedError
 logger = logging.getLogger(__name__)
 
 QEMU_IMG_VERSION = None
+OVFTOOL_VERSION = None
 
 class HelperNotFoundError(OSError):
     """Error thrown when a helper program cannot be located."""
@@ -355,6 +356,23 @@ def create_disk_image(file_path, file_format=None,
                                     "'iso' or 'raw' or 'img'")
 
     return True
+
+
+def get_ovftool_version():
+    """Get the installed 'ovftool' version as a StrictVersion object."""
+    global OVFTOOL_VERSION
+    if OVFTOOL_VERSION is None:
+        logger.debug("Checking ovftool version")
+        stdout = check_output(['ovftool', '--version'])
+        match = re.search("VMware ovftool ([0-9.]+)", stdout)
+        if not match:
+            raise RuntimeError("Did not find version number in the output "
+                               "from ovftool:\n{0}".format(stdout))
+        OVFTOOL_VERSION = StrictVersion(match.group(1))
+        logger.info("ovftool version is '{0}'".format(OVFTOOL_VERSION))
+
+    return OVFTOOL_VERSION
+
 
 def validate_ovf_for_esxi(ovf_file):
     """Use VMware's 'ovftool' program to validate an OVF or OVA against the

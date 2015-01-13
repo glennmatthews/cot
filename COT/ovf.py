@@ -39,8 +39,7 @@ import COT.platform as Platform
 
 logger = logging.getLogger(__name__)
 
-# Where do we want to wrap lines when pretty-printing?
-TEXT_WIDTH = 79
+from .cli import TEXT_WIDTH
 
 def byte_count(base_val, multiplier):
     """Convert an OVF-style value + multiplier into decimal byte count.

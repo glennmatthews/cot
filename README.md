@@ -18,6 +18,7 @@ Table of Contents
   * [`cot add-disk`](#cot-add-disk)
   * [`cot add-file`](#cot-add-file)
   * [`cot deploy`](#cot-deploy)
+    * [`cot deploy esxi`](#cot-deploy-esxi)
   * [`cot edit-hardware`](#cot-edit-hardware)
   * [`cot edit-product`](#cot-edit-product)
   * [`cot edit-properties`](#cot-edit-properties)
@@ -35,8 +36,8 @@ COT's capabilities include:
 * Edit OVF environment properties
 * Display a descriptive summary of the contents of an OVA or OVF package
 * Embed a bootstrap configuration text file into an OVF/OVA.
-* Deploy an OVF/OVA to an ESXi (VMware vCenter) server to provision a new
-  virtual machine (VM).
+* Deploy an OVF/OVA to an ESXi (VMware vSphere or vCenter) server to provision
+  a new virtual machine (VM).
 
 System Requirements
 ===================
@@ -287,57 +288,85 @@ You can always get detailed help for COT by running `cot --help` or
 
     > cot deploy --help
     usage:
-       cot deploy --help
-       cot [-f] [-v] deploy [-c CONFIGURATION] [-n VM_NAME] [-N FROM=to] [-P]
-                            [-u USERNAME] [-p PASSWORD] [-s SERVER]
-                            HYPERVISOR PACKAGE [ovftool_args ...]
+      cot deploy --help
+      cot [-f] [-v] deploy PACKAGE esxi ...
 
     Deploy a virtual machine to a specified server.
 
     positional arguments:
-      {esxi}                The hypervisor to be used
       PACKAGE               OVF descriptor or OVA file
+      hypervisors supported:
+        esxi                Deploy to ESXi, vSphere, or vCenter
 
-    General options:
-      -h, --help            Show this help message and exit
+    optional arguments:
+      -h, --help            show this help message and exit
 
-    Configuration options:
+### `cot deploy esxi` ###
+
+    > cot deploy PACKAGE esxi --help
+    usage:
+      cot deploy PACKAGE esxi --help
+      cot [-f] [-v] deploy PACKAGE esxi LOCATOR
+                           [-u USERNAME] [-p PASSWORD]
+                           [-c CONFIGURATION] [-n VM_NAME] [-P]
+                           [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
+                           [-d DATASTORE] [-o=OVFTOOL_ARGS]
+
+    Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor
+
+    positional arguments:
+      LOCATOR               vSphere target locator. Examples: "192.0.2.100"
+                            (deploy directly to ESXi server),
+                            "192.0.2.101/mydatacenter/host/192.0.2.100" (deploy
+                            via vCenter server)
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -u USERNAME, --username USERNAME
+                            Server login username
+      -p PASSWORD, --password PASSWORD
+                            Server login password
       -c CONFIGURATION, --configuration CONFIGURATION
-                            Use the specified configuration (as defined in the
-                            OVF). If unspecified the user will be prompted or the
-                            default configuration will be used.
-
-    VM info:
+                            Use the specified configuration profile defined in the
+                            OVF. If unspecified and the OVF has multiple profiles,
+                            the user will be prompted or the default configuration
+                            will be used.
       -n VM_NAME, --vm-name VM_NAME
                             Name to use for the VM (if applicable) and any files
                             created. If unspecified, the name of the OVF will be
                             used.
-      -N NETWORK_MAP, --network-map NETWORK_MAP
-                            Map networks named in the OVF to networks (bridges,
-                            vSwitches, etc.) in the hypervisor environment. Syntax
-                            should be as follows: -N <OVF name>=<target name>
       -P, --power-on        Power on the created VM to begin booting immediately.
-
-    Target info:
-      -u USERNAME, --username USERNAME
-                            Username to log into the server that will run this VM
-      -p PASSWORD, --password PASSWORD
-                            Password to log into the server that will run this VM
-      -s SERVER, --server SERVER
-                            Server (IP address or URL) to run the VM on (default:
-                            localhost)
-
-    Optional arguments:
-      ovf_args              Additional optional arguments to be sent to ovftool
+      -N OVF_NET=HOST_NET, --network-map OVF_NET=HOST_NET
+                            Map networks named in the OVF to networks (bridges,
+                            vSwitches, etc.) in the hypervisor environment. This
+                            argument may be repeated as needed to specify multiple
+                            mappings.
+      -d DATASTORE, -ds DATASTORE, --datastore DATASTORE
+                            ESXi datastore to use for the new VM
+      -o OVFTOOL_ARGS, --ovftool-args OVFTOOL_ARGS
+                            Quoted string describing additional CLI parameters to
+                            pass through to "ovftool". Examples: -o="--foo",
+                            --ovftool-args="--foo --bar"
 
     Examples:
-       cot deploy -u admin -p admin -s 192.0.2.100 esxi foo.ova
-       cot deploy -s 192.0.2.100 -n test_vm esxi foo.ova -o
-       cot deploy -u admin -s 192.0.2.100 -c 1CPU-2.5GB esxi foo.ova
-       cot deploy -u admin -s 192.0.2.100 -N 'GigabitEthernet1=VM Network'
-       cot deploy -u admin -s 192.0.2.100 esxi foo.ova --overwrite
-       cot -f deploy -u admin -p admin -s 192.0.2.100 esxi foo.ova
-       cot deploy -s 192.0.2.100 esxi foo.ova -ds=datastore1
+      cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test_vm
+        Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
+        creating a VM named 'test_vm' from foo.ova.
+
+      cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
+        Deploy to vSphere/ESXi server 192.0.2.100 with username admin (prompting
+        the user to input the password at runtime) creating a VM based on the
+        '1CPU-2.5GB' profile in foo.ova.
+
+      cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1" -u administrator \
+            -N 'GigabitEthernet1=VM Network' -N 'GigabitEthernet2=myvswitch'
+        Deploy to vSphere server 192.0.2.1 which belongs to datacenter 'mydc' on
+        vCenter server 192.0.2.100, and map the two NIC networks to vSwitches.
+        Note that in this case -u specifies the vCenter login username.
+
+      cot deploy foo.ova esxi 192.0.2.100 -u admin -p password \
+            --ovftool-args="--overwrite --acceptAllEulas"
+        Deploy with passthrough arguments to ovftool.
 
 
 `cot edit-hardware`

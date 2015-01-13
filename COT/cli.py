@@ -19,10 +19,14 @@ import argparse
 import logging
 import os.path
 import re
+import textwrap
 
 from COT import __version__, __version_long__
 
 logger = logging.getLogger(__name__)
+
+# Where do we want to wrap lines when pretty-printing?
+TEXT_WIDTH = 79
 
 # In python 2.7, we want raw_input, but in python 3 we want input.
 try: input = raw_input
@@ -96,6 +100,12 @@ def confirm(prompt, force=False):
     if force:
         logger.warning("Automatically agreeing to '{0}'".format(prompt))
         return True
+
+    # Wrap prompt to screen
+    prompt_w = []
+    for line in prompt.splitlines():
+        prompt_w.append(textwrap.fill(line, TEXT_WIDTH, break_on_hyphens=False))
+    prompt = "\n".join(prompt_w)
 
     while True:
         ans = input("{0} [y] ".format(prompt))
@@ -209,7 +219,10 @@ def main():
     if not args.subcommand:
         parser.error("too few arguments")
 
-    subp = subparser_lookup[args.subcommand]
+    if hasattr(args, 'subsubcommand') and args.subsubcommand:
+        subp = subparser_lookup[args.subsubcommand]
+    else:
+        subp = subparser_lookup[args.subcommand]
 
     # General input sanity:
     if hasattr(args, "PACKAGE") and not os.path.exists(args.PACKAGE):
