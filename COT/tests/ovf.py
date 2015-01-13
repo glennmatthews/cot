@@ -1986,11 +1986,29 @@ class TestOVFEditProperties(COT_UT):
 +      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
          <ovf:Label>Login Username</ovf:Label>
 """)
-        # Set two properties in one go
-        self.call_edit_properties(['-p', 'login-password=cisco123',
-                                   'enable-ssh-server=1'])
-        self.check_diff(
+        # Set several properties in one go
+        # This can be done either with multiple -p arguments or
+        # a single -p with multiple key-value pairs - try 'em both and more.
+        for args in (['-p', 'login-username=admin', # Individual
+                      '-p', 'login-password=cisco123',
+                      '-p', 'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin', # All for one
+                            'login-password=cisco123',
+                            'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin', # Mixed!
+                      '-p', 'login-password=cisco123',
+                            'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin', # Differently mixed!
+                            'login-password=cisco123',
+                      '-p', 'enable-ssh-server=1']):
+            self.call_edit_properties(args)
+            self.check_diff(
 """
+       <ovf:Category>1. Bootstrap Properties</ovf:Category>
+-      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
+         <ovf:Label>Login Username</ovf:Label>
+...
        </ovf:Property>
 -      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
 +      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="cisco123">

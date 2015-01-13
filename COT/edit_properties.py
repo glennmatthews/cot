@@ -37,6 +37,9 @@ def edit_properties(args):
             vm.config_file_to_properties(args.config_file)
 
         if args.properties is not None:
+            # Because we used both "nargs='+'" and "append",
+            # this is a nested list - let's flatten it out
+            args.properties = [kvp for l in args.properties for kvp in l]
             for key_value_pair in args.properties:
                 try:
                     (key, value) = key_value_pair.split('=',1)
@@ -155,9 +158,9 @@ p_epp_conf.add_argument('-c', '--config-file',
                         help="""Read configuration CLI from this text file
                                 and generate generic properties for each
                                 line of CLI""")
-p_epp_conf.add_argument('-p','--properties',
-                        nargs='+',
-                        metavar=('KEY1=VALUE1', 'KEY2=VALUE2'),
-                        help="""Set the given property key-value pairs""")
+p_epp_conf.add_argument('-p', '--properties', action='append', nargs='+',
+                        metavar=('KEY1=VALUE1', 'KEY2=VALUE2'), help=
+"Set the given property key-value pair(s). This argument may be repeated "
+"as needed to specify multiple properties to edit.")
 
 p_edit_prop.set_defaults(func=edit_properties)
