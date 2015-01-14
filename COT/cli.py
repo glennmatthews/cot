@@ -203,12 +203,22 @@ Cisco IOS XRv platforms."""),
         subp = self.subparser_lookup[args.subcommand]
 
         # Call the appropriate submodule and handle any resulting errors
+        arg_hash = vars(args)
+        for (arg, value) in arg_hash.iteritems():
+            # When argparse is using both "nargs='+'" and "action=append",
+            # this allows some flexibility in the user CLI, but the parsed
+            # output is a nested list of lists. E.g., "-a 1 2 -a 3" would parse
+            # as [[1, 2][3]] rather than the desired [1, 2, 3].
+            # Flatten it back out before we pass it through to the submodule!
+            if (isinstance(value, list) and
+                all(isinstance(v, list) for v in value)):
+                arg_hash[arg] = [v for l in value for v in l]
         try:
             # Set mandatory (CAPITALIZED) args first, then optional args
-            for (arg, value) in vars(args).iteritems():
+            for (arg, value) in arg_hash.iteritems():
                 if arg[0].isupper():
                     args.instance.set_value(arg, value)
-            for (arg, value) in vars(args).iteritems():
+            for (arg, value) in arg_hash.iteritems():
                 if not arg[0].isupper():
                     args.instance.set_value(arg, value)
             args.instance.run()

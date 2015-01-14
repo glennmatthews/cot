@@ -21,7 +21,6 @@ import getpass
 
 from distutils.version import StrictVersion
 
-from .data_validation import InvalidInputError
 from .submodule import COTSubmodule
 from COT.helper_tools import check_call, get_ovftool_version
 from COT.ovf import *
@@ -61,7 +60,18 @@ class COTDeploy(COTSubmodule):
             if value != "esxi":
                 return False, ("'{0}' is not a supported hypervisor"
                                .format(value))
-        return valid, value_or_reason
+        elif arg == 'configuration' and self.vm is not None:
+            profiles = self.vm.get_configuration_profile_ids()
+            if value is not None and not (value in profiles):
+                return False, ("'Configuration '{0}' is not a recognized "
+                               "profile for '{1}'.\nValid options are:\n{2}"
+                               .format(value, self.get_value("PACKAGE"),
+                                       "\n".join(profiles)))
+        elif arg == 'power_on':
+            if value is not True and value is not False:
+                return False, "power_on accepts boolean values only"
+
+        return valid, value
 
 
     def ready_to_run(self):
@@ -216,14 +226,6 @@ class COTDeployESXi(COTDeploy):
         # if not specified and force not specified prompt for selection
         profile_list = vm.get_configuration_profile_ids()
 
-        if (configuration is not None and
-            not (configuration in profile_list)):
-            raise InvalidInputError(
-                "Configuration '{0}' is not a recognized profile for '{1}'. "
-                "Valid options are:\n{2}"
-                .format(configuration, PACKAGE,
-                        "\n".join(profile_list)))
-
         if profile_list and configuration is None:
             if len(profile_list) == 1:
                 # No need to prompt the user
@@ -238,8 +240,8 @@ class COTDeployESXi(COTDeploy):
             while configuration is None:
                 if not profile_info_string:
                     profile_info_string = vm.profile_info_string(enumerate=True)
-                print(profile_info_string)
-                user_input = self.UI.get_input("Choose a Configuration:", "0")
+                user_input = self.UI.get_input(profile_info_string +
+                                               "\nChoose a Configuration:", "0")
                 if user_input in profile_list:
                     configuration = user_input
                 else:
@@ -249,7 +251,7 @@ class COTDeployESXi(COTDeploy):
                             raise ValueError
                         configuration = profile_list[i]
                     except ValueError:
-                        print("\nInvalid input. Please try again.")
+                        print("\nInvalid input. Please try again.") # TODO
 
         if configuration is not None:
             ovftool_args.append("--deploymentOption=" + configuration)
@@ -263,9 +265,6 @@ class COTDeployESXi(COTDeploy):
         # pass network settings on to ovftool
         network_map = self.get_value("network_map")
         if network_map is not None:
-            # This is a list of lists because we use both "nargs" and "append".
-            # Flatten it!
-            network_map = [nm for l in network_map for nm in l]
             for nm in network_map:
                 ovftool_args.append("--net:" + nm)
 
@@ -295,7 +294,7 @@ class COTDeployESXi(COTDeploy):
         cmd = ['ovftool'] + ovftool_args
 
         # use the new list to call ovftool
-        print("Deploying VM...")
+        print("Deploying VM...") # TODO
         check_call(cmd)
 
         # Post-fix of serial ports (ovftool will not implement)
@@ -303,6 +302,7 @@ class COTDeployESXi(COTDeploy):
             # TODO - fixup not implemented yet
             # add serial ports as requested
             # power on VM if power_on
+            # TODO use logger.warning instead
             print("Package '{0}' contains {1} serial ports, but ovftool "
                   "ignores serial port declarations. If these ports are "
                   "needed, you must add them manually to the new VM."

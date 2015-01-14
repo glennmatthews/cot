@@ -51,9 +51,6 @@ class COTEditProperties(COTSubmodule):
                 return False, ("Specified config file {0} does not exist!"
                                .format(value))
         elif arg == "properties":
-            # Because we used both "nargs='+'" and "append",
-            # this is a nested list - let's flatten it out - TODO
-            value = [kvp for l in value for kvp in l]
             for key_value_pair in value:
                 try:
                     (k, v) = key_value_pair.split('=',1)
@@ -71,9 +68,6 @@ class COTEditProperties(COTSubmodule):
     def set_value(self, arg, value):
         super(COTEditProperties, self).set_value(arg, value)
         if arg == "properties" and value is not None:
-            # Because we used both "nargs='+'" and "append",
-            # this is a nested list - let's flatten it out - TODO
-            value = [kvp for l in value for kvp in l]
             self.args[arg] = value
 
     def ready_to_run(self):
