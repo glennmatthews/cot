@@ -85,9 +85,7 @@ class COTGenericSubmodule(object):
 
 
     def finished(self):
-        # do any submodule-specific work here, then:
-        if self.vm is not None:
-            self.vm.write()
+        pass
 
 
     def create_subparser(self, parent):
@@ -148,3 +146,10 @@ class COTSubmodule(COTGenericSubmodule):
             if not output:
                 self.set_value("output", self.get_value("PACKAGE"))
         # Do the work now...
+
+
+    def finished(self):
+        # do any submodule-specific work here, then:
+        if self.vm is not None:
+            self.vm.write()
+        super(COTSubmodule, self).finished()

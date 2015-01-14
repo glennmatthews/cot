@@ -132,7 +132,7 @@ class COTDeploy(COTReadOnlySubmodule):
 
         self.parser.usage="""
   {0} deploy --help
-  {0} [-f] [-v] deploy PACKAGE esxi ...""".format(os.path.basename(sys.argv[0]))
+  {0} <opts> deploy PACKAGE esxi ...""".format(os.path.basename(sys.argv[0]))
 
         return 'deploy', self.parser
 
@@ -294,7 +294,7 @@ class COTDeployESXi(COTDeploy):
         cmd = ['ovftool'] + ovftool_args
 
         # use the new list to call ovftool
-        print("Deploying VM...") # TODO
+        logger.info("Deploying VM...")
         check_call(cmd)
 
         # Post-fix of serial ports (ovftool will not implement)
@@ -302,11 +302,11 @@ class COTDeployESXi(COTDeploy):
             # TODO - fixup not implemented yet
             # add serial ports as requested
             # power on VM if power_on
-            # TODO use logger.warning instead
-            print("Package '{0}' contains {1} serial ports, but ovftool "
-                  "ignores serial port declarations. If these ports are "
-                  "needed, you must add them manually to the new VM."
-                  .format(PACKAGE, serial_count))
+            logger.warning(
+                "Package '{0}' contains {1} serial ports, but ovftool "
+                "ignores serial port declarations. If these ports are "
+                "needed, you must add them manually to the new VM."
+                .format(PACKAGE, serial_count))
 
 
     def create_subparser(self, parent):
@@ -318,11 +318,11 @@ class COTDeployESXi(COTDeploy):
             'esxi', parents=[self.generic_parser],
             usage=("""
   {0} deploy PACKAGE esxi --help
-  {0} [-f] [-v] deploy PACKAGE esxi LOCATOR
-                       [-u USERNAME] [-p PASSWORD]
-                       [-c CONFIGURATION] [-n VM_NAME] [-P]
-                       [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
-                       [-d DATASTORE] [-o=OVFTOOL_ARGS]"""
+  {0} <opts> deploy PACKAGE esxi LOCATOR
+                                 [-u USERNAME] [-p PASSWORD]
+                                 [-c CONFIGURATION] [-n VM_NAME] [-P]
+                                 [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
+                                 [-d DATASTORE] [-o=OVFTOOL_ARGS]"""
                    .format(os.path.basename(sys.argv[0]))),
             formatter_class=argparse.RawDescriptionHelpFormatter,
             help="Deploy to ESXi, vSphere, or vCenter",

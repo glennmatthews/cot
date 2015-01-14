@@ -867,6 +867,8 @@ class OVF(VMDescription, XML):
     def set_nic_count(self, count, profile_list):
         """Set the given profile(s) to have the given number of NICs.
         """
+        logger.info("Updating NIC count in OVF under profile {0} to {1}"
+                    .format(profile_list, count))
         self.platform.validate_nic_count(count)
         self.hardware.set_item_count_per_profile('ethernet', count,
                                                  profile_list)
@@ -955,6 +957,8 @@ class OVF(VMDescription, XML):
     def set_serial_count(self, count, profile_list):
         """Set the given profile(s) to have the given number of serial portss.
         """
+        logger.info("Updating serial port count in OVF under profile {0} to {1}"
+                    .format(profile_list, count))
         self.hardware.set_item_count_per_profile('serial', count, profile_list)
 
 
@@ -2218,8 +2222,8 @@ class OVFHardware:
         ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profile_list)
         ovfitem.modified = True
         self.item_dict[instance] = ovfitem
-        logger.info("Added clone of {0} under {1}, instance is {2}"
-                    .format(parent_item, profile_list, instance))
+        logger.debug("Added clone of {0} under {1}, instance is {2}"
+                     .format(parent_item, profile_list, instance))
         return (instance, ovfitem)
 
 
@@ -2642,9 +2646,11 @@ class OVFItem:
             return
         if from_item is None:
             from_item = self
-        logger.info("Adding profile {0} to item {1} from item {2}"
-                    .format(new_profile, self.property_dict.get(self.INSTANCE_ID, "?"),
-                            from_item.property_dict[self.INSTANCE_ID]))
+        logger.debug("Adding profile {0} to item {1} from item {2}"
+                     .format(new_profile,
+                             self.property_dict.get(self.INSTANCE_ID,
+                                                    "<unknown instance>"),
+                             from_item.property_dict[self.INSTANCE_ID]))
         p_set = set([new_profile])
         for key in from_item.property_dict.keys():
             found = False

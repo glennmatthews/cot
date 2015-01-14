@@ -3,9 +3,24 @@ Contributing to COT
 
 Please do! We only have a few simple requirements for diffs and pull requests.
 
+* [Follow coding guidelines](#follow-coding-guidelines)
 * [Add automated unit tests](#add-automated-unit-tests)
 * [Update README](#update-readme)
 * [Add yourself as a contributor](#add-yourself-as-a-contributor)
+
+Follow coding guidelines
+------------------------
+
+### Logging ###
+
+Log level | Usage guidelines
+--------- | ----------------
+ERROR     | Internal errors. Use sparingly - usually you should just raise an `Error` of appropriate type instead of logging an ERROR message.
+WARNING   | Something unexpected or risky happened that the user needs a heads-up about. This includes cases where the software had to make an uncertain choice on its own due to lack of information from the user.
+INFO      | Important status updates. As this is the lowest logging level enabled by default, you should keep the logs generated at this level relatively brief but meaningful.
+VERBOSE   | Detailed information of interest to an advanced or inquisitive user.
+DEBUG     | Highly detailed information only useful to a developer familiar with the code.
+
 
 Add automated unit tests
 ------------------------

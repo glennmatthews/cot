@@ -170,10 +170,10 @@ class COTEditProperties(COTSubmodule):
             help="""Edit environment properties of an OVF""",
             usage=("""
   {0} edit-properties --help
-  {0} [-f] [-v] edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
-                                [-o OUTPUT]
-  {0} [-f] [-v] edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
-  {0} [-f] [-v] edit-properties PACKAGE [-o OUTPUT]"""
+  {0} <opts> edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
+                             [-o OUTPUT]
+  {0} <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
+  {0} <opts> edit-properties PACKAGE [-o OUTPUT]"""
                    .format(os.path.basename(sys.argv[0]))),
             description="""
 Configure environment properties of the given OVF or OVA. The user may specify

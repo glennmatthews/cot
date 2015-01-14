@@ -21,6 +21,74 @@ import os.path
 import re
 import textwrap
 
+# Set logging defaults for all of COT
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
+
+from coloredlogs import ColoredStreamHandler
+class COTStreamHandler(ColoredStreamHandler):
+
+    def __init__(self, level=logging.DEBUG, **kwargs):
+        super(COTStreamHandler, self).__init__(
+            level=level,
+            show_hostname=False,
+            show_name=False,
+            show_timestamps=False,
+            **kwargs)
+
+    def emit(self, record):
+        if record.levelno < self.level:
+            return
+        # Make sure the message is a string
+        message = record.msg
+        try:
+            if not isinstance(message, basestring):
+                message = unicode(message)
+        except NameError:
+            if not isinstance(message, str):
+                message = str(message)
+        # Colorize the log message text
+        severity = record.levelname
+        if severity in self.severity_to_style:
+            style = self.severity_to_style[severity]
+        else:
+            style = {}
+        message = self.wrap_style(text=message, **style)
+        # Compose the formatted log message
+        # We adjust the message verbosity based on the configured level
+        parts = []
+        if self.level <= logging.DEBUG:
+            parts.append(self.wrap_style(
+                text=self.render_timestamp(record.created, record.msecs),
+                **style))
+        parts.append(self.wrap_style(
+            text=("{0:9}".format(severity + ':')), **style))
+        if self.level <= logging.DEBUG:
+            parts.append(self.wrap_style(
+                text=self.render_name(record.name), faint=True, **style))
+        parts.append(message)
+        message = ' '.join(parts)
+        # Copy the original record so we don't break other handlers
+        import copy
+        record = copy.copy(record)
+        record.msg = message
+        logging.StreamHandler.emit(self, record)
+
+    def render_timestamp(self, created, msecs):
+        import time
+        return "%s.%03d" % (time.strftime('%H:%M:%S',
+                                         time.localtime(created)),
+                            msecs)
+
+    def render_name(self, name):
+        return "{0:22}".format(name + ':')
+
+COTHandler = COTStreamHandler()
+logging.getLogger('COT').addHandler(COTHandler)
+
+
+# Proceed with importing the rest of the needed modules now that we have logging
+
 from COT import __version__, __version_long__
 from .data_validation import InvalidInputError
 from .data_validation import *
@@ -79,7 +147,7 @@ class CLI(UI):
         """Prompt the user to enter a string, or auto-accepts the default if
         force is set to True."""
         if self.force:
-            logger.warning("Automatically entering {0} in response to '{1}'"
+            logger.warning("Automatically entering '{0}' in response to '{1}'"
                            .format(default_value, prompt))
             return default_value
 
@@ -106,10 +174,6 @@ class CLI(UI):
             # a number of ways. Hence we leave usage to the default here then
             # manually set it in parse_args() once all of the subparsers
             # have been initialized with the correct prog.
-            # usage=("\n  %(prog)s --help"
-            #        "\n  %(prog)s --version"
-            #        "\n  %(prog)s <command> --help"
-            #        "\n  %(prog)s [-f] [-v] <command> <options>"),
             description=(__version_long__ + """
 A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
 with a focus on virtualized network appliances such as the Cisco CSR 1000V and
@@ -130,12 +194,17 @@ Cisco IOS XRv platforms."""),
                             help="""Perform requested actions without """
                             """prompting for confirmation""")
 
+        parser.set_defaults(_verbosity=logging.INFO)
         debug_group = parser.add_mutually_exclusive_group()
-        #debug_group.add_argument('-q', '--quiet', action='store_true',
-        #                         help="""Suppress normal program output""")
-        debug_group.add_argument('-v', '--verbose', action='count', default=0,
-                                 help="""Increase verbosity of the program """
-                                 """(repeatable)""")
+        debug_group.add_argument('-q', '--quiet', dest='_verbosity',
+            action='store_const', const=logging.WARNING,
+            help="Quiet output and logging (warnings and errors only)")
+        debug_group.add_argument('-v', '--verbose', dest='_verbosity',
+            action='store_const', const=logging.VERBOSE,
+            help="Verbose output and logging")
+        debug_group.add_argument('-vv', '-d', '--debug', dest='_verbosity',
+            action='store_const', const=logging.DEBUG,
+            help="Debug (most verbose) output and logging")
 
         self.parser = parser
 
@@ -172,10 +241,11 @@ Cisco IOS XRv platforms."""),
     def parse_args(self):
         # By now all subparsers have been created so we can safely set usage.
         # See comment above.
-        self.parser.usage=("\n  %(prog)s --help"
-                           "\n  %(prog)s --version"
-                           "\n  %(prog)s <command> --help"
-                           "\n  %(prog)s [-f] [-v] <command> <options>"
+        self.parser.usage=(
+"\n  %(prog)s --help"
+"\n  %(prog)s --version"
+"\n  %(prog)s <command> --help"
+"\n  %(prog)s <options> <command> <command-options>"
                            .format(prog=os.path.basename(sys.argv[0])))
         # Parse the user input
         args = self.parser.parse_args()
@@ -189,13 +259,8 @@ Cisco IOS XRv platforms."""),
 
 
     def main(self, args):
-        logger = logging.getLogger('COT')
-        # Map verbosity to logging level
-        log_level = {0: logging.ERROR,
-                     1: logging.WARNING,
-                     2: logging.INFO}
-        # Any verbosity in excess of 2 gets mapped to logging.DEBUG
-        logger.setLevel(log_level.get(args.verbose, logging.DEBUG))
+        logging.getLogger('COT').setLevel(args._verbosity)
+        COTHandler.setLevel(args._verbosity)
 
         if not args.subcommand:
             self.parser.error("too few arguments")
@@ -213,6 +278,7 @@ Cisco IOS XRv platforms."""),
             if (isinstance(value, list) and
                 all(isinstance(v, list) for v in value)):
                 arg_hash[arg] = [v for l in value for v in l]
+        del arg_hash["_verbosity"]
         try:
             # Set mandatory (CAPITALIZED) args first, then optional args
             for (arg, value) in arg_hash.iteritems():

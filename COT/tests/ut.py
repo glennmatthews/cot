@@ -3,7 +3,7 @@
 # ut.py - Test case wrapper for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -23,8 +23,14 @@ import tempfile
 import shutil
 import re
 import time
+import logging
+from verboselogs import VerboseLogger
+
+logging.setLoggerClass(VerboseLogger)
 
 from COT.helper_tools import *
+
+logger = logging.getLogger(__name__)
 
 class COT_UT(unittest.TestCase):
     """Subclass of unittest.TestCase adding some additional behaviors we want
@@ -106,6 +112,9 @@ class COT_UT(unittest.TestCase):
 
     def setUp(self):
         """Test case setup function called automatically prior to each test"""
+        # keep log messages from interfering with our tests
+        logging.getLogger('COT').setLevel(logging.CRITICAL)
+
         self.start_time = time.time()
         # Set default OVF file. Individual test cases can use others
         self.input_ovf = os.path.join(os.path.dirname(__file__), "input.ovf")
@@ -125,6 +134,7 @@ class COT_UT(unittest.TestCase):
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
+        logger.debug("Created temp dir {0}".format(self.temp_dir))
 
 
     def tearDown(self):
@@ -145,6 +155,7 @@ class COT_UT(unittest.TestCase):
 
         # Delete the temporary directory
         if os.path.exists(self.temp_dir):
+            logger.debug("Deleting temp dir {0}".format(self.temp_dir))
             shutil.rmtree(self.temp_dir)
         self.temp_dir = None
         self.temp_file = None

@@ -65,6 +65,8 @@ class VMFactory:
         logger.debug("Temporary directory for VM created from {0}: {1}"
                      .format(input_file, tempdir))
         try:
+            logger.info("Loading '{0}' as {1}".format(input_file,
+                                                      vm_class.__name__))
             vm = vm_class(input_file, tempdir, output_file)
         except Exception as e:
             shutil.rmtree(tempdir)

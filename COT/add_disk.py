@@ -111,10 +111,10 @@ class COTAddDisk(COTSubmodule):
             'add-disk', add_help=False,
             usage=("""
   {0} add-disk --help
-  {0} [-f] [-v] add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
-                         [-f FILE_ID] [-t {{harddisk,cdrom}}]
-                         [-c {{ide,scsi}}] [-s SUBTYPE] [-a ADDRESS]
-                         [-d DESCRIPTION] [-n DISKNAME]"""
+  {0} <opts> add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
+                      [-f FILE_ID] [-t {{harddisk,cdrom}}]
+                      [-c {{ide,scsi}}] [-s SUBTYPE] [-a ADDRESS]
+                      [-d DESCRIPTION] [-n DISKNAME]"""
                    .format(os.path.basename(sys.argv[0]))),
             help="""Add a disk image to an OVF package and map it as a disk
 in the guest environment""",
@@ -277,7 +277,7 @@ def add_disk_worker(vm,
             if file is None:
                 # This will happen if we're replacing a placeholder entry
                 # (disk exists but has no associated file)
-                logger.info("Found Disk but not File - placeholder?")
+                logger.verbose("Found Disk but not File - maybe a placeholder?")
 
         if disk_item is not None:
             if type is not None:
@@ -360,7 +360,7 @@ def add_disk_worker(vm,
             if subtype is None:
                 # Look for any existing controller of this type;
                 # if found, re-use its subtype for consistency
-                logger.info("Looking for subtype of existing controllers")
+                logger.verbose("Looking for subtype of existing controllers")
                 subtype = vm.get_common_subtype(controller)
 
         # OK - let's add things!

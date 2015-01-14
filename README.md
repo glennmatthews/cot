@@ -171,10 +171,10 @@ You can always get detailed help for COT by running `cot --help` or
       cot --help
       cot --version
       cot <command> --help
-      cot [-f] [-v] <command> <options>
+      cot <options> <command> <command-options>
 
-    Common OVF Tool (COT), version 1.1.1
-    Copyright (C) 2013-2014 the COT project developers.
+    Common OVF Tool (COT), version 1.2.0
+    Copyright (C) 2013-2015 the COT project developers.
     A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
     with a focus on virtualized network appliances such as the Cisco CSR 1000V and
     Cisco IOS XRv platforms.
@@ -184,7 +184,9 @@ You can always get detailed help for COT by running `cot --help` or
       -V, --version    show program's version number and exit
       -f, --force      Perform requested actions without prompting for
                        confirmation
-      -v, --verbose    Increase verbosity of the program (repeatable)
+      -q, --quiet       Quiet output and logging (warnings and errors only)
+      -v, --verbose     Verbose output and logging
+      -vv, -d, --debug  Debug (most verbose) output and logging
 
     commands:
       <command>
@@ -212,10 +214,10 @@ You can always get detailed help for COT by running `cot --help` or
     > cot add-disk --help
     usage:
       cot add-disk --help
-      cot [-f] [-v] add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
-                             [-f FILE_ID] [-t {harddisk,cdrom}]
-                             [-c {ide,scsi}] [-s SUBTYPE] [-a ADDRESS]
-                             [-d DESCRIPTION] [-n DISKNAME]
+      cot <opts> add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
+                          [-f FILE_ID] [-t {harddisk,cdrom}]
+                          [-c {ide,scsi}] [-s SUBTYPE] [-a ADDRESS]
+                          [-d DESCRIPTION] [-n DISKNAME]
 
     Add or replace a disk image in the specified OVF or OVA. If the specified disk
     image, controller/address, file-id, and/or instance match an existing entry in
@@ -266,7 +268,7 @@ You can always get detailed help for COT by running `cot --help` or
     > cot add-file --help
     usage:
       cot add-file --help
-      cot [-f] [-v] add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]
+      cot <opts> add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]
 
     Add or replace a file in the given OVF. If the specified file and/or file-id
     match existing package contents, will replace it (prompting for confirmation
@@ -291,7 +293,7 @@ You can always get detailed help for COT by running `cot --help` or
     > cot deploy --help
     usage:
       cot deploy --help
-      cot [-f] [-v] deploy PACKAGE esxi ...
+      cot <opts> deploy PACKAGE esxi ...
 
     Deploy a virtual machine to a specified server.
 
@@ -308,11 +310,11 @@ You can always get detailed help for COT by running `cot --help` or
     > cot deploy PACKAGE esxi --help
     usage:
       cot deploy PACKAGE esxi --help
-      cot [-f] [-v] deploy PACKAGE esxi LOCATOR
-                           [-u USERNAME] [-p PASSWORD]
-                           [-c CONFIGURATION] [-n VM_NAME] [-P]
-                           [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
-                           [-d DATASTORE] [-o=OVFTOOL_ARGS]
+      cot <opts> deploy PACKAGE esxi LOCATOR
+                                     [-u USERNAME] [-p PASSWORD]
+                                     [-c CONFIGURATION] [-n VM_NAME] [-P]
+                                     [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
+                                     [-d DATASTORE] [-o=OVFTOOL_ARGS]
 
     Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor
 
@@ -377,15 +379,15 @@ You can always get detailed help for COT by running `cot --help` or
     > cot edit-hardware --help
     usage:
       cot edit-hardware --help
-      cot [-f] [-v] edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
-      cot [-f] [-v] edit-hardware PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]]
-                                  [-c CPUS] [-m MEMORY]
-                                  [-n NICS] [--nic-type {e1000,virtio,vmxnet3}]
-                                  [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
-                                  [--nic-names NAME1 [NAME2 ...]]
-                                  [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
-                                  [--scsi-subtype SCSI_SUBTYPE]
-                                  [--ide-subtype IDE_SUBTYPE]
+      cot <opts> edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
+      cot <opts> edit-hardware PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]]
+                               [-c CPUS] [-m MEMORY]
+                               [-n NICS] [--nic-type {e1000,virtio,vmxnet3}]
+                               [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
+                               [--nic-names NAME1 [NAME2 ...]]
+                               [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
+                               [--scsi-subtype SCSI_SUBTYPE]
+                               [--ide-subtype IDE_SUBTYPE]
 
     Edit hardware properties of the specified OVF or OVA
 
@@ -549,10 +551,10 @@ You can always get detailed help for COT by running `cot --help` or
     > cot inject-config -h
     usage:
       cot inject-config --help
-      cot [-f] [-v] inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
-      cot [-f] [-v] inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
-      cot [-f] [-v] inject-config PACKAGE -c CONFIG_FILE
-                                  -s SECONDARY_CONFIG_FILE [-o OUTPUT]
+      cot <opts> inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
+      cot <opts> inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
+      cot <opts> inject-config PACKAGE -c CONFIG_FILE
+                               -s SECONDARY_CONFIG_FILE [-o OUTPUT]
 
     Add one or more "bootstrap" configuration file(s) to the given OVF or OVA.
 

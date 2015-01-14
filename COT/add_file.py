@@ -98,7 +98,7 @@ class COTAddFile(COTSubmodule):
             'add-file',
             usage=("""
   {0} add-file --help
-  {0} [-f] [-v] add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"""
+  {0} <opts> add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"""
                    .format(os.path.basename(sys.argv[0]))),
             help="Add a file to an OVF package",
             description="""

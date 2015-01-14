@@ -69,8 +69,8 @@ class COTEditProduct(COTSubmodule):
             help="""Edit product info in an OVF""",
             usage=("""
   {0} edit-product --help
-  {0} [-f] [-v] edit-product PACKAGE [-o OUTPUT]
-                             [-v SHORT_VERSION] [-V FULL_VERSION]"""
+  {0} <opts> edit-product PACKAGE [-o OUTPUT]
+                          [-v SHORT_VERSION] [-V FULL_VERSION]"""
                    .format(os.path.basename(sys.argv[0]))),
             description="""
 Edit product information attributes of the given OVF or OVA""")

@@ -178,10 +178,10 @@ class COTInjectConfig(COTSubmodule):
             help="Inject a configuration file into an OVF package",
             usage=("""
   {0} inject-config --help
-  {0} [-f] [-v] inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
-  {0} [-f] [-v] inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
-  {0} [-f] [-v] inject-config PACKAGE -c CONFIG_FILE
-                              -s SECONDARY_CONFIG_FILE [-o OUTPUT]"""
+  {0} <opts> inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
+  {0} <opts> inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
+  {0} <opts> inject-config PACKAGE -c CONFIG_FILE
+                           -s SECONDARY_CONFIG_FILE [-o OUTPUT]"""
                    .format(os.path.basename(sys.argv[0]))),
             description="""Add one or more "bootstrap" configuration file(s) """
             """to the given OVF or OVA.""")

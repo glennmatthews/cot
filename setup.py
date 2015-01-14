@@ -3,7 +3,7 @@
 # setup.py - installer script for COT package
 #
 # April 2014, Glenn F. Matthews
-#
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -101,5 +101,5 @@ setup(
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
     test_suite='COT.tests',
-    install_requires=['argparse'],
+    install_requires=['argparse', 'coloredlogs>=0.8', 'verboselogs'],
 )

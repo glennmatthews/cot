@@ -47,7 +47,7 @@ def check_call(args, require_success=True):
     all output from the subprocess will be sent to stdout/stderr as normal.
     """
     cmd = args[0]
-    logger.debug("Calling {0}".format(" ".join(args)))
+    logger.verbose("Calling '{0}'".format(" ".join(args)))
     try:
         subprocess.check_call(args)
     except OSError as e:
@@ -62,31 +62,35 @@ def check_call(args, require_success=True):
     logger.debug("{0} exited successfully".format(cmd))
 
 
-def check_output(args, require_success=True):
+def check_output(args, require_success=True, suppress_stderr=False):
     """Wrapper for subprocess.check_output.
     1) Raises a HelperNotFoundError if the command doesn't exist, instead of
        an OSError.
     2) Raises a HelperError if the command doesn't return 0 when run,
        instead of subprocess.CalledProcessError. (Setting the optional
        require_success parameter to False will suppress this error.)
-    3) Automatically redirects stderr to stdout, captures both, and generates
-       a debug message with the stdout contents.
+    3) Automatically redirects stderr to stdout (unless asked not to),
+       captures both, and generates a debug message with the stdout contents.
     """
     cmd = args[0]
-    logger.debug("Calling {0}".format(" ".join(args)))
+    logger.verbose("Calling '{0}'".format(" ".join(args)))
+    if suppress_stderr:
+        stderr = subprocess.PIPE
+    else:
+        stderr = subprocess.STDOUT
     # In 2.7+ we can use subprocess.check_output(), but in 2.6,
     # we have to work around its absence.
     try:
         if "check_output" not in dir( subprocess ):
             process = subprocess.Popen(args,
                                        stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
+                                       stderr=stderr)
             stdout, _ = process.communicate()
             retcode = process.poll()
             if retcode and require_success:
                 raise subprocess.CalledProcessError(retcode, " ".join(args))
         else:
-            stdout = (subprocess.check_output(args, stderr=subprocess.STDOUT)
+            stdout = (subprocess.check_output(args, stderr=stderr)
                       .decode())
     except OSError as e:
         raise HelperNotFoundError(e.errno,
@@ -104,7 +108,7 @@ def check_output(args, require_success=True):
                               "> {2}\n{3}".format(cmd, e.returncode,
                                                   " ".join(args),
                                                   stdout))
-    logger.debug("{0} output:\n{1}".format(cmd, stdout))
+    logger.verbose("{0} output:\n{1}".format(cmd, stdout))
     return stdout
 
 
@@ -211,7 +215,7 @@ def get_disk_capacity(file_path):
                            "qemu-img:\n{0}"
                            .format(qemu_stdout))
     capacity = match.group(1)
-    logger.info("Disk {0} capacity is {1} bytes".format(file_path, capacity))
+    logger.verbose("Disk {0} capacity is {1} bytes".format(file_path, capacity))
     return capacity
 
 
@@ -305,7 +309,7 @@ def create_disk_image(file_path, file_format=None,
         file_format = os.path.splitext(file_path)[1][1:]
         if file_format == 'img':
             file_format = 'raw'
-        logger.debug("guessed file format is {0}".format(file_format))
+        logger.debug("Guessed file format is {0}".format(file_format))
 
     if not contents:
         qemu_stdout = check_output(['qemu-img', 'create', '-f',

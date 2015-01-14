@@ -2097,7 +2097,7 @@ class TestOVFInfo(COT_UT):
         argv.insert(0, os.path.join(os.path.dirname(__file__),
                                     "..", "..", "bin", "cot"))
         try:
-            output = check_output(argv).decode()
+            output = check_output(argv, suppress_stderr=True).decode()
         except subprocess.CalledProcessError as e:
             self.fail("{0} returned {1} (error) instead of 0 (success):\n{2}"
                       .format(e.cmd, e.returncode, e.output))

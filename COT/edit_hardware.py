@@ -248,15 +248,15 @@ class COTEditHardware(COTSubmodule):
             formatter_class=argparse.RawDescriptionHelpFormatter,
             usage=("""
   {0} edit-hardware --help
-  {0} [-f] [-v] edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
-  {0} [-f] [-v] edit-hardware PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]]
-                              [-c CPUS] [-m MEMORY]
-                              [-n NICS] [--nic-type {{e1000,virtio,vmxnet3}}]
-                              [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
-                              [--nic-names NAME1 [NAME2 ...]]
-                              [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
-                              [--scsi-subtype SCSI_SUBTYPE]
-                              [--ide-subtype IDE_SUBTYPE]"""
+  {0} <opts> edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
+  {0} <opts> edit-hardware PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]]
+                           [-c CPUS] [-m MEMORY]
+                           [-n NICS] [--nic-type {{e1000,virtio,vmxnet3}}]
+                           [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
+                           [--nic-names NAME1 [NAME2 ...]]
+                           [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
+                           [--scsi-subtype SCSI_SUBTYPE]
+                           [--ide-subtype IDE_SUBTYPE]"""
                    .format(os.path.basename(sys.argv[0]))),
             help="""Edit virtual machine hardware properties of an OVF""",
             description="""Edit hardware properties of the specified OVF or OVA""",
