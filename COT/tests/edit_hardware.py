@@ -28,9 +28,6 @@ class TestCOTEditHardware(COT_UT):
         self.instance = COTEditHardware(UI())
         self.instance.set_value("PACKAGE", self.input_ovf)
 
-    def tearDown(self):
-        pass
-
     def test_not_ready_with_no_args(self):
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)

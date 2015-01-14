@@ -3,7 +3,7 @@
 # submodule.py - Abstract interface for COT 'command' submodules.
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -44,7 +44,8 @@ class COTSubmodule(object):
                 return False, ("Specified package {0} does not exist!"
                                .format(value))
         elif arg == "output":
-            if value is not None and os.path.exists(value):
+            if (value is not None and value != self.get_value(arg) and
+                os.path.exists(value)):
                 self.UI.confirm_or_die("Overwrite existing file {0}?"
                                        .format(value))
 
@@ -81,11 +82,6 @@ class COTSubmodule(object):
         Returns the tuple (ready, reason)"""
         # do any subclass-specific work here, then call super()
 
-        if "output" in self.args.keys() and "PACKAGE" in self.args.keys():
-            output = self.get_value("output")
-            if not output:
-                self.set_value("output", self.get_value("PACKAGE"))
-
         if "PACKAGE" in self.args.keys() and not self.get_value("PACKAGE"):
             return False, "PACKAGE is a mandatory argument!"
 
@@ -96,6 +92,12 @@ class COTSubmodule(object):
         (ready, reason) = self.ready_to_run()
         if not ready:
             raise InvalidInputError(reason)
+
+        if "output" in self.args.keys() and "PACKAGE" in self.args.keys():
+            output = self.get_value("output")
+            if not output:
+                self.set_value("output", self.get_value("PACKAGE"))
+
         # do the work now...
 
     def finished(self):
