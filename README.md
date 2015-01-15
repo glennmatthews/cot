@@ -45,7 +45,7 @@ System Requirements
 ===================
 
 * COT is supported under Mac OS X and Ubuntu at present and requires either
-  Python 2.7 or Python 3.x.
+  Python 2.7 or Python 3.2 or later.
 * COT now has limited support for CentOS and Python 2.6 as well.
 * COT uses [`qemu-img`](http://www.qemu.org) as a helper program for various
   operations involving the creation, inspection, and modification of

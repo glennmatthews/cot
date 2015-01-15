@@ -10,7 +10,7 @@ are insufficient.
 
 # Check installed Python version #
 
-Make sure your Python version is ideally at least 2.7 or 3.x:
+Make sure your Python version is ideally at least 2.7 or 3.2:
 
     > python --version
     Python 2.7.4
