@@ -9,4 +9,4 @@ python:
 install:
   - "pip install -r requirements.txt --use-mirrors"
   - "sudo python setup.py install_helpers --force"
-script: "sudo python setup.py test"
+script: "python setup.py test"
