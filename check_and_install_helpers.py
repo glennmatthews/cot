@@ -139,7 +139,7 @@ def install_qemu_and_vmdktool(force):
                                        'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
                                        '--directory', 'vmdktool-1.4'])
                 if not os.path.exists('/usr/local/man/man8'):
-                    os.makedirs('/usr/local/man/man8', 0755)
+                    os.makedirs('/usr/local/man/man8', 493) # 0o755
                 subprocess.check_call(['make', '--directory', 'vmdktool-1.4',
                                        'install'])
             finally:
