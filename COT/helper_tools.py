@@ -23,6 +23,9 @@ import subprocess
 from distutils.version import StrictVersion
 from distutils.spawn import find_executable
 
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
+
 from .data_validation import ValueUnsupportedError
 
 logger = logging.getLogger(__name__)
