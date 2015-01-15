@@ -1,0 +1,3 @@
+argparse
+coloredlogs>=0.8
+verboselogs>=1.0
