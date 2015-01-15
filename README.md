@@ -1,6 +1,8 @@
 Common OVF Tool (COT)
 =====================
 
+[![build status](https://api.travis-ci.org/glennmatthews/cot.svg?branch=master)](https://travis-ci.org/glennmatthews/cot)
+
 COT (the Common OVF Tool) is a tool for editing
 [Open Virtualization Format](http://dmtf.org/standards/ovf)
 (`.ovf`, `.ova`) virtual appliances, with a focus on virtualized network
