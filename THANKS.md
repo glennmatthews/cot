@@ -6,7 +6,6 @@ We would like to thank:
   * Rick Ogg
   * David Rosenfeld
   * Perumal Venkatesh
-
 * For initial design review and comments:
   * Andy Dalton
   * Jusheng Feng
@@ -15,9 +14,10 @@ We would like to thank:
   * Neil McGill
   * Vinod Pandarinathan
   * Rich Wellum
-
 * Ray Romney, Sanjeev Tondale, and Taskin Ucpinar, for providing managerial
   support for the development and release of COT as open source.
-
 * Rich Wellum, for creating "Build, Deploy, Execute OVA" (`bdeo.sh`),
   the precursor to COT.
+* Neil McGill, for creating and maintaining
+  [`fatdisk`](http://github.com/goblinhack/fatdisk)
+* Brian Somers, for creating and maintaining `vmdktool`
