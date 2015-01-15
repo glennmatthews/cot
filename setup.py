@@ -52,16 +52,25 @@ class custom_build(cmd_build):
 # Add a custom 'install_helpers' command:
 class custom_install_helpers(Command):
     description = "Install executable helper programs needed by COT"
-    user_options = []
+    user_options = [
+        ('force', 'f', 'No prompting for confirmation of installation'),
+    ]
+    boolean_options = ['force']
+
     def initialize_options(self):
-        pass
+        self.force = False
 
     def finalize_options(self):
         pass
 
     def run(self):
         try:
-            subprocess.check_call(["./check_and_install_helpers.py", "install"])
+            if self.force:
+                subprocess.check_call(["./check_and_install_helpers.py",
+                                       "install", '-f'])
+            else:
+                subprocess.check_call(["./check_and_install_helpers.py",
+                                       "install"])
         except subprocess.CalledProcessError:
             exit('Aborting')
 
@@ -92,4 +101,5 @@ setup(
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
     test_suite='COT.tests',
+    install_requires=['argparse'],
 )

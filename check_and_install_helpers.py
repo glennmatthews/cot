@@ -65,28 +65,6 @@ def check_executable(name):
         print("'{0}' not found".format(name))
         return False
 
-def check_argparse():
-    print("Checking for Python 'argparse' library...")
-    try:
-        import argparse
-        return True
-    except ImportError:
-        return False
-
-def install_argparse():
-    if check_argparse():
-        return True
-
-    confirm_or_die("Python 'argparse' library not found. Try to install it?")
-    # Should be available by default in 2.7 and later. So really we only need
-    # to worry about CentOS for now...
-    if YUM:
-        subprocess.check_call(['yum', 'install', 'python-argparse'])
-    else:
-        exit("Not sure how to install Python 'argparse' library!")
-    print("installed 'argparse'")
-    return True
-
 def check_qemu_and_vmdktool():
     if not check_executable('qemu-img'):
         return False
@@ -103,14 +81,14 @@ def check_qemu_and_vmdktool():
     return check_executable('vmdktool')
 
 
-def install_qemu_and_vmdktool():
+def install_qemu_and_vmdktool(force):
     if check_qemu_and_vmdktool():
         return True
 
     try:
         qemu_version = COT.helper_tools.get_qemu_img_version()
     except HelperNotFoundError:
-        confirm_or_die("qemu-img not found. Try to install it?")
+        confirm_or_die("qemu-img not found. Try to install it?", force)
         if PORT:
             subprocess.check_call(['port', 'install', 'qemu'])
         elif APT_GET:
@@ -130,7 +108,7 @@ def install_qemu_and_vmdktool():
         return True
 
     if not distutils.spawn.find_executable('vmdktool'):
-        confirm_or_die("vmdktool not found. Try to install it?")
+        confirm_or_die("vmdktool not found. Try to install it?", force)
         if PORT:
             subprocess.check_call(['port', 'install', 'vmdktool'])
         elif APT_GET or YUM:
@@ -181,12 +159,12 @@ def check_fatdisk():
     return check_executable('fatdisk')
 
 
-def install_fatdisk():
+def install_fatdisk(force):
     if check_fatdisk():
         return True
 
     if not confirm("Optional dependency 'fatdisk' not found. "
-                   "Try to install it?"):
+                   "Try to install it?", force):
         return False
 
     if PORT:
@@ -216,12 +194,12 @@ def check_mkisofs():
     return (check_executable('mkisofs') or check_executable('genisoimage'))
 
 
-def install_mkisofs():
+def install_mkisofs(force):
     if check_mkisofs():
         return True
 
     if not confirm("Optional dependency 'mkisofs'/'genisoimage' not found. "
-                   "Try to install it?"):
+                   "Try to install it?", force):
         return False
 
     if PORT:
@@ -240,7 +218,7 @@ def check_ovftool():
     return check_executable('ovftool')
 
 
-def install_ovftool():
+def install_ovftool(force):
     if check_ovftool():
         return True
 
@@ -254,13 +232,17 @@ def main():
         exit("Usage: {0} [check, install]".format(sys.argv[0]))
     if sys.argv[1] == "check":
         print("Checking for required and optional helper programs...")
-        check_argparse()
         check_qemu_and_vmdktool()
         check_fatdisk()
         check_mkisofs()
         check_ovftool()
     elif sys.argv[1] == "install":
         print("Installing required and optional helper programs...")
+
+        if len(sys.argv) > 2 and sys.argv[2] == '-f':
+            force = True
+        else:
+            force = False
 
         if sys.platform == 'darwin' and not PORT:
             confirm_or_die("It appears you are running on a Mac but "
@@ -271,19 +253,18 @@ def main():
                            "to automatically install them for you... "
                            "if it were installed!\n"
                            "See https://www.macports.org/\n"
-                           "Continue?")
+                           "Continue?", force)
         elif sys.platform == 'linux2' and (not APT_GET and not YUM):
             confirm_or_die("It appears you are running on a Linux that doesn't "
                            "have 'apt-get' or 'yum' capability.\n"
                            "If you've already installed all helper programs "
                            "that COT needs, this is not a problem.\n"
-                           "Continue?")
+                           "Continue?", force)
 
-        install_argparse()
-        install_qemu_and_vmdktool()
-        install_fatdisk()
-        install_mkisofs()
-        install_ovftool()
+        install_qemu_and_vmdktool(force)
+        install_fatdisk(force)
+        install_mkisofs(force)
+        install_ovftool(force)
     else:
         exit("Unknown subcommand '{0}'!".format(sys.argv[1]))
 
