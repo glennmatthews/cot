@@ -238,6 +238,9 @@ class OVF(VMDescription, XML):
             attrib=self.VIRTUAL_HW_SECTION_ATTRIB,
             required=True)
 
+        # Initialize various caches
+        self.configuration_profiles = []
+
         try:
             self.hardware = OVFHardware(self)
         except OVFHardwareDataError as e:
@@ -555,9 +558,7 @@ class OVF(VMDescription, XML):
                                            subsequent_indent=' ' * 33)
             for network in self.network_section.findall(self.NETWORK):
                 network_name = network.get(self.NETWORK_NAME)
-                network_desc = XML.find_child(network, self.NWK_DESC)
-                if network_desc is not None:
-                    network_desc = network_desc.text
+                network_desc = network.findtext(self.NWK_DESC, None)
                 if verbosity_option == 'verbose' and network_desc:
                     str_list.append(wrapper.fill("{0:30} {1}"
                                                  .format(network_name,
@@ -581,7 +582,7 @@ class OVF(VMDescription, XML):
                     str_list.append(wrapper.fill(nic.get_value(self.ITEM_DESCRIPTION)))
 
         # Property information
-        properties = self.get_property_keys()
+        properties = self.get_property_array()
         if properties:
             str_list.append("")
             str_list.append("Properties:")
@@ -589,14 +590,13 @@ class OVF(VMDescription, XML):
                 wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
                                                initial_indent='      ',
                                                subsequent_indent='      ')
-            for key in properties:
+            for ph in properties:
                 str_list.append('  {0:30} : {1}'
-                                .format(key, self.get_property_value(key)))
+                                .format(ph['key'], ph['value']))
                 if verbosity_option != 'brief':
-                    str_list.append('      "{0}"'
-                                    .format(self.get_property_label(key)))
+                    str_list.append('      "{0}"'.format(ph['label']))
                 if verbosity_option == 'verbose':
-                    for line in self.get_property_description(key).splitlines():
+                    for line in ph['description'].splitlines():
                         str_list.append(wrapper.fill(line))
 
         return "\n".join(str_list)
@@ -668,10 +668,10 @@ class OVF(VMDescription, XML):
                                           attrib={self.CONFIG_ID: profile_id})
                 str_list.append(wrapper.fill('{0:15} "{1}"'.format(
                             "Label:",
-                            profile.find(self.CFG_LABEL).text)))
+                            profile.findtext(self.CFG_LABEL))))
                 str_list.append(wrapper.fill(
                         '{0:15} "{1}"'.format("Description:",
-                                profile.find(self.CFG_DESC).text)))
+                                profile.findtext(self.CFG_DESC))))
             index += 1
 
 
@@ -771,8 +771,9 @@ class OVF(VMDescription, XML):
         If this OVF has no defined profiles, returns an empty list.
         If there is a default profile, it will be first in the list.
         """
-        profile_ids = []
-        if self.deploy_opt_section is not None:
+        if ((not self.configuration_profiles) and
+            (self.deploy_opt_section is not None)):
+            profile_ids = []
             profiles = self.find_all_children(self.deploy_opt_section,
                                               self.CONFIG)
             for profile in profiles:
@@ -782,8 +783,9 @@ class OVF(VMDescription, XML):
                     profile_ids.insert(0, profile.get(self.CONFIG_ID))
                 else:
                     profile_ids.append(profile.get(self.CONFIG_ID))
-        logger.debug("Configuration profiles are: {0}".format(profile_ids))
-        return profile_ids
+            logger.verbose("Configuration profiles are: {0}".format(profile_ids))
+            self.configuration_profiles = profile_ids
+        return self.configuration_profiles
 
 
     def create_configuration_profile(self, id, label, description):
@@ -800,6 +802,8 @@ class OVF(VMDescription, XML):
 
         self.set_or_make_child(cfg, self.CFG_LABEL, label)
         self.set_or_make_child(cfg, self.CFG_DESC, description)
+        # Clear cache
+        self.configuration_profiles = []
 
 
     def set_system_type(self, type_list):
@@ -1004,13 +1008,26 @@ class OVF(VMDescription, XML):
                                version_string)
 
 
-    def get_property_keys(self):
-        """Get a list of property keys"""
+    def get_property_array(self):
+        """Get an array of property hashes, each with the keys
+        {key, value, qualifiers, type, label, description}"""
+        result = []
         if self.product_section is None:
-            return []
-        return [p.get(self.PROP_KEY) for p in
-                self.find_all_children(self.product_section, self.PROPERTY)]
+            return result
+        elems = self.find_all_children(self.product_section, self.PROPERTY)
+        for elem in elems:
+            label = elem.findtext(self.PROPERTY_LABEL, "")
+            descr = elem.findtext(self.PROPERTY_DESC, "")
+            result.append({
+                'key': elem.get(self.PROP_KEY),
+                'value': elem.get(self.PROP_VALUE),
+                'qualifiers': elem.get(self.PROP_QUAL, ""),
+                'type': elem.get(self.PROP_TYPE, ""),
+                'label': label,
+                'description': descr,
+            })
 
+        return result
 
     def get_property_value(self, key):
         """Get the value of the given property, or None
@@ -1038,14 +1055,14 @@ class OVF(VMDescription, XML):
             return value
 
         # Else, make sure the requested value is valid
-        prop_type = self.get_property_type(key)
+        prop_type = property.get(self.PROP_TYPE, "")
         if prop_type == "boolean":
             # OVF contains a string representation of a boolean
             value = str(bool(value)).lower()
         elif prop_type == "string":
             value = str(value)
 
-        prop_qual = self.get_property_qualifiers(key)
+        prop_qual = property.get(self.PROP_QUAL, "")
         if prop_qual:
             m = re.search("MaxLen\((\d+)\)", prop_qual)
             if m:
@@ -1064,52 +1081,6 @@ class OVF(VMDescription, XML):
 
         property.set(self.PROP_VALUE, value)
         return value
-
-
-    def get_property_qualifiers(self, key):
-        """Get the list of qualifiers applicable to the given key
-        """
-        property = self.find_child(self.product_section, self.PROPERTY,
-                                   attrib={self.PROP_KEY: key})
-        if property is None:
-            return None
-        return property.get(self.PROP_QUAL, "")
-
-
-    def get_property_type(self, key):
-        """Get the type (string/boolean) applicable to the given key
-        """
-        property = self.find_child(self.product_section, self.PROPERTY,
-                                   attrib={self.PROP_KEY: key})
-        if property is None:
-            return None
-        return property.get(self.PROP_TYPE, "")
-
-
-    def get_property_label(self, key):
-        """Get the descriptive label corresponding to the given key
-        """
-        property = self.find_child(self.product_section, self.PROPERTY,
-                                   attrib={self.PROP_KEY: key})
-        if property is None:
-            return None
-        label = self.find_child(property, self.PROPERTY_LABEL)
-        if label is None:
-            return ""
-        return label.text
-
-
-    def get_property_description(self, key):
-        """Get the detailed description corresponding to the given key
-        """
-        property = self.find_child(self.product_section, self.PROPERTY,
-                                   attrib={self.PROP_KEY: key})
-        if property is None:
-            return None
-        desc = self.find_child(property, self.PROPERTY_DESC)
-        if desc is None:
-            return ""
-        return desc.text
 
 
     def config_file_to_properties(self, file):
@@ -2162,10 +2133,10 @@ class OVFHardware:
                     # Mask away the nitty-gritty details from our caller
                     raise OVFHardwareDataError("Data conflict for instance {0}"
                                                .format(instance))
-        logger.info("OVF contains {0} hardware Item elements describing {1} "
-                    "unique devices"
-                    .format(len(ovf.virtual_hw_section.findall(self.ovf.ITEM)),
-                            len(self.item_dict)))
+        logger.verbose("OVF contains {0} hardware Item elements describing {1} "
+                       "unique devices"
+                       .format(len(ovf.virtual_hw_section.findall(self.ovf.ITEM)),
+                               len(self.item_dict)))
         # Treat the current state as golden:
         for ovfitem in self.item_dict.values():
             ovfitem.modified = False
@@ -2316,7 +2287,7 @@ class OVFHardware:
                 if ovfitem.has_profile(profile):
                     count_dict[profile] += 1
         for (profile, count) in count_dict.items():
-            logger.debug("{0} has {1} {2} Item(s)"
+            logger.debug("Profile '{0}' has {1} {2} Item(s)"
                          .format(profile, count, resource_type))
         return count_dict
 

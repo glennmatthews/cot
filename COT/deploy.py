@@ -188,7 +188,7 @@ class COTDeployESXi(COTDeploy):
         # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
         # then environment properties will always be used.
         # Otherwise we may need to help and/or warn the user:
-        if vm.get_property_keys() and not re.search("/host/", LOCATOR):
+        if vm.get_property_array() and not re.search("/host/", LOCATOR):
             if get_ovftool_version() < StrictVersion("4.0.0"):
                 self.UI.confirm_or_die(
 "When deploying an OVF directly to a vSphere target using ovftool prior to "

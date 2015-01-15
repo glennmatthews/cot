@@ -3,7 +3,7 @@
 # vm_description.py - Abstract class for reading, editing, and writing VMs
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -251,9 +251,10 @@ class VMDescription(object):
         raise NotImplementedError("set_version not implemented")
 
     # API methods needed for edit-properties
-    def get_property_keys(self):
-        """Get a list of property keys"""
-        raise NotImplementedError("get_property_keys not implemented")
+    def get_property_array(self):
+        """Get an array of property hashes, each with the keys
+        {key, value, qualifiers, type, label, description}"""
+        raise NotImplementedError("get_property_array not implemented")
 
     def get_property_value(self, key):
         """Get the value of the given property, or None
@@ -265,26 +266,6 @@ class VMDescription(object):
         Returns the value that was set.
         """
         raise NotImplementedError("set_property_value not implemented")
-
-    def get_property_qualifiers(self, key):
-        """Get the list of qualifiers applicable to the given key
-        """
-        raise NotImplementedError("get_property_qualifiers not implemented")
-
-    def get_property_type(self, key):
-        """Get the type (string/boolean) applicable to the given key
-        """
-        raise NotImplementedError("get_property_type not implemented")
-
-    def get_property_label(self, key):
-        """Get the descriptive label corresponding to the given key
-        """
-        raise NotImplementedError("get_property_label not implemented")
-
-    def get_property_description(self, key):
-        """Get the detailed description corresponding to the given key
-        """
-        raise NotImplementedError("get_property_description not implemented")
 
     def config_file_to_properties(self, file):
         """Import each line of the provided file into a configuration property

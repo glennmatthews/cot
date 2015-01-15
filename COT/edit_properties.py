@@ -112,15 +112,14 @@ class COTEditProperties(COTSubmodule):
         wrapper = textwrap.TextWrapper(initial_indent='',
                                        subsequent_indent='                 ')
         format_str = '{0:15} "{1}"'
-        keys = vm.get_property_keys()
+        pa = vm.get_property_array()
         while True:
             print("")
             print("Please choose a property to edit:")
             i = 1
-            for key in keys:
-                label = vm.get_property_label(key)
+            for p in pa:
                 print("""{i:4d}) {label:40} ({key})"""
-                      .format(i=i, label='"'+label+'"', key=key))
+                      .format(i=i, label='"'+p['label']+'"', key=p['key']))
                 i += 1
 
             input = self.UI.get_input("""Enter property number to edit, """
@@ -130,21 +129,20 @@ class COTEditProperties(COTSubmodule):
             if input is None or input == 'q' or input == 'Q':
                 break
             input = int(input)
-            if input <= 0 or input > len(keys):
+            if input <= 0 or input > len(pa):
                 continue
 
             print("")
-            key = keys[input-1]
-            old_value = vm.get_property_value(key)
-            print(wrapper.fill(format_str.format("Key:", key)))
-            print(wrapper.fill(format_str.format("Label:",
-                                                 vm.get_property_label(key))))
+            p = pa[input-1]
+            key = p['key']
+            old_value = p['value']
+            print(wrapper.fill(format_str.format("Key:", p['key'])))
+            print(wrapper.fill(format_str.format("Label:", p['label'])))
             print(wrapper.fill(format_str.format("Description:",
-                                                 vm.get_property_description(key))))
-            print(wrapper.fill(format_str.format("Type:",
-                                                 vm.get_property_type(key))))
+                                                 p['description'])))
+            print(wrapper.fill(format_str.format("Type:", p['type'])))
             print(wrapper.fill(format_str.format("Qualifiers:",
-                                                 vm.get_property_qualifiers(key))))
+                                                 p['qualifiers'])))
             print(wrapper.fill(format_str.format("Current Value:", old_value)))
             print("")
 
