@@ -3,7 +3,7 @@
 # check_and_install_helpers.py - installer helper script for COT package
 #
 # October 2014, Glenn F. Matthews
-#
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -18,12 +18,10 @@ import distutils.spawn
 from distutils.version import StrictVersion
 import os
 import os.path
+import re
 import shutil
 import subprocess
 import sys
-
-import COT.helper_tools
-from COT.helper_tools import HelperNotFoundError
 
 # In python 2.x, we want raw_input, but in python 3 we want input.
 try: input = raw_input
@@ -49,6 +47,26 @@ def confirm_or_die(prompt, force=False):
     if not confirm(prompt, force):
         sys.exit("Aborting.")
 
+def check_output(args):
+    # In 2.7+ we can use subprocess.check_output(), but in 2.6,
+    # we have to work around its absence.
+    if "check_output" not in dir( subprocess ):
+        process = subprocess.Popen(args,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
+        stdout, _ = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            raise subprocess.CalledProcessError(retcode, " ".join(args))
+    else:
+        stdout = (subprocess.check_output(args, stderr=subprocess.STDOUT)
+                  .decode())
+    return stdout
+
+def get_qemu_img_version():
+    qemu_stdout = check_output(['qemu-img', '--version'])
+    qemu_match = re.search("qemu-img version ([0-9.]+)", qemu_stdout)
+    return StrictVersion(qemu_match.group(1))
 
 # Look for various package managers:
 PORT = distutils.spawn.find_executable('port')
@@ -69,7 +87,7 @@ def check_qemu_and_vmdktool():
     if not check_executable('qemu-img'):
         return False
 
-    qemu_version = COT.helper_tools.get_qemu_img_version()
+    qemu_version = get_qemu_img_version()
     print("QEMU version is {0}".format(qemu_version))
 
     if qemu_version >= StrictVersion("2.1.0"):
@@ -85,9 +103,7 @@ def install_qemu_and_vmdktool(force):
     if check_qemu_and_vmdktool():
         return True
 
-    try:
-        qemu_version = COT.helper_tools.get_qemu_img_version()
-    except HelperNotFoundError:
+    if not check_executable('qemu-img'):
         confirm_or_die("qemu-img not found. Try to install it?", force)
         if PORT:
             subprocess.check_call(['port', 'install', 'qemu'])
@@ -99,7 +115,7 @@ def install_qemu_and_vmdktool(force):
             exit("Not sure how to install QEMU without 'port' or 'apt-get'!\n"
                  "Please install QEMU before proceeding.\n"
                  "See http://en.wikibooks.org/wiki/QEMU/Installing_QEMU")
-        qemu_version = COT.helper_tools.get_qemu_img_version()
+    qemu_version = get_qemu_img_version()
 
     print("installed qemu version is {0}".format(qemu_version))
 
