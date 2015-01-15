@@ -32,7 +32,7 @@ except NameError: pass
 def confirm(prompt, force=False):
     """Prompts user to confirm the requested operation, or auto-accepts if
        args.force is set to True."""
-    if force:
+    if force or not sys.__stdin__.isatty():
         return True
 
     while True:
