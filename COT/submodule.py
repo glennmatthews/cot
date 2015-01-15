@@ -22,7 +22,7 @@ from .vm_factory import VMFactory
 
 logger = logging.getLogger(__name__)
 
-class COTSubmodule(object):
+class COTGenericSubmodule(object):
     """Abstract interface for COT command submodules."""
 
     def __init__(self, UI, arg_names):
@@ -43,11 +43,6 @@ class COTSubmodule(object):
             if not os.path.exists(value):
                 return False, ("Specified package {0} does not exist!"
                                .format(value))
-        elif arg == "output":
-            if (value is not None and value != self.get_value(arg) and
-                os.path.exists(value)):
-                self.UI.confirm_or_die("Overwrite existing file {0}?"
-                                       .format(value))
 
         return True, value
 
@@ -62,12 +57,6 @@ class COTSubmodule(object):
         else:
             value = value_or_reason
         self.args[arg] = value
-        # Generic operations
-        if arg == "PACKAGE":
-            self.vm = VMFactory.create(value, self.get_value("output"))
-        elif arg == "output":
-            if self.vm is not None:
-                self.vm.set_output_file(value)
 
 
     def get_value(self, arg):
@@ -92,13 +81,8 @@ class COTSubmodule(object):
         (ready, reason) = self.ready_to_run()
         if not ready:
             raise InvalidInputError(reason)
+        # Do the work now...
 
-        if "output" in self.args.keys() and "PACKAGE" in self.args.keys():
-            output = self.get_value("output")
-            if not output:
-                self.set_value("output", self.get_value("PACKAGE"))
-
-        # do the work now...
 
     def finished(self):
         # do any submodule-specific work here, then:
@@ -110,3 +94,57 @@ class COTSubmodule(object):
         """Add subparser under the given parent parser, representing the CLI.
         Returns (label, subparser)"""
         return "", None
+
+
+class COTReadOnlySubmodule(COTGenericSubmodule):
+    "Submodule to be used by classes that do not modify the OVF, such as 'info'"
+
+    def set_value(self, arg, value):
+        super(COTReadOnlySubmodule, self).set_value(arg, value)
+
+        if arg == "PACKAGE":
+            self.vm = VMFactory.create(value, None)
+
+
+class COTSubmodule(COTGenericSubmodule):
+    "Submodule to be used by classes that read and write the OVF"
+
+    def __init__(self, UI, arg_names):
+        super(COTSubmodule, self).__init__(
+            UI, ["PACKAGE", "output"] + arg_names)
+        # Default to an unspecified output rather than no output
+        self.args["output"] = ""
+
+
+    def validate_arg(self, arg, value):
+        valid, value = super(COTSubmodule, self).validate_arg(arg, value)
+        if not valid:
+            return valid, value
+
+        if arg == "output":
+            if (value is not None and value != self.get_value(arg) and
+                os.path.exists(value)):
+                self.UI.confirm_or_die("Overwrite existing file {0}?"
+                                       .format(value))
+
+        return True, value
+
+
+    def set_value(self, arg, value):
+        super(COTSubmodule, self).set_value(arg, value)
+
+        if arg == "PACKAGE":
+            self.vm = VMFactory.create(value, self.get_value("output"))
+        elif arg == "output":
+            if self.vm is not None:
+                self.vm.set_output_file(value)
+
+
+    def run(self):
+        super(COTSubmodule, self).run()
+
+        if "output" in self.args.keys() and "PACKAGE" in self.args.keys():
+            output = self.get_value("output")
+            if not output:
+                self.set_value("output", self.get_value("PACKAGE"))
+        # Do the work now...

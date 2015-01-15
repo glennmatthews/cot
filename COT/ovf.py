@@ -121,7 +121,10 @@ class OVF(VMDescription, XML):
 
 
     def __init__(self, input_file, working_dir, output_file):
-        """Open the specified OVF and read its XML into memory."""
+        """Open the specified OVF and read its XML into memory.
+        Note that an output_file of None means we're operating as read-only,
+        while an output_file of "" means we plan to write but don't know where.
+        """
 
         super(OVF, self).__init__(input_file, working_dir, output_file)
 
@@ -245,8 +248,8 @@ class OVF(VMDescription, XML):
         # Check any file references in the ovf descriptor
         self.validate_file_references()
 
-        if self.output_file and (os.path.dirname(self.ovf_descriptor) !=
-                                 self.working_dir):
+        if (self.output_file is not None and
+            os.path.dirname(self.ovf_descriptor) != self.working_dir):
             # Copy all referenced files to the working directory
             # Not needed if we're in read-only mode (no output_file)
             input_dir = os.path.dirname(self.ovf_descriptor)
@@ -260,29 +263,14 @@ class OVF(VMDescription, XML):
                                            self.working_dir))
                     continue
                 logger.debug("Copying {0} to {1}"
-                             .format(filepath, self.working_dir))
+                            .format(filepath, self.working_dir))
                 shutil.copy(filepath, self.working_dir)
+
 
     def set_output_file(self, output_file):
         # Make sure we can write the requested output format, or abort:
         if output_file:
             self.detect_type_from_name(output_file)
-        if not self.output_file:
-            # Copy all referenced files to the working directory
-            # Not needed if we're in read-only mode (no output_file)
-            input_dir = os.path.dirname(self.ovf_descriptor)
-            for file in self.find_all_children(self.references, self.FILE):
-                filepath = os.path.join(input_dir, file.get(self.FILE_HREF))
-                if not os.path.exists(filepath):
-                    logger.warning("File '{0}' referenced in the OVF does not "
-                                   "exist. It will not be copied to the "
-                                   "working directory '{1}'."
-                                   .format(file.get(self.FILE_HREF),
-                                           self.working_dir))
-                    continue
-                logger.debug("Copying {0} to {1}"
-                             .format(filepath, self.working_dir))
-                shutil.copy(filepath, self.working_dir)
         self.output_file = output_file
 
 
@@ -307,9 +295,9 @@ class OVF(VMDescription, XML):
             file_path = os.path.join(self.working_dir,
                                      file.get(self.FILE_HREF))
             if not os.path.exists(file_path):
-                logger.error("Referenced file '{0}' does not exist and so "
-                             "will not be included in the output."
-                             .format(file.get(self.FILE_HREF)))
+                logger.error("Referenced file '{0}' does not exist in working "
+                    "directory {1} and so will not be included in the output."
+                    .format(file.get(self.FILE_HREF), self.working_dir))
                 continue
             file_size_string = str(os.path.getsize(file_path))
             if file_size_string != file.get(self.FILE_SIZE):
@@ -1167,8 +1155,8 @@ class OVF(VMDescription, XML):
         ctrl_item = None
         disk_item = None
 
-        logger.info("Looking for existing disk info based on filename {0}"
-                    .format(filename))
+        logger.verbose("Looking for existing disk info based on filename {0}"
+                       .format(filename))
 
         file = self.find_child(self.references, self.FILE,
                                attrib={self.FILE_HREF: filename})
@@ -1201,8 +1189,8 @@ class OVF(VMDescription, XML):
         if file_id is None:
             return (None, None, None, None)
 
-        logger.info("Looking for existing disk information based on file_id {0}"
-                    .format(file_id))
+        logger.verbose("Looking for existing disk information based on file_id {0}"
+                       .format(file_id))
 
         file = None
         disk = None
@@ -1243,9 +1231,9 @@ class OVF(VMDescription, XML):
         if controller is None or address is None:
             return (None, None, None, None)
 
-        logger.info("Looking for existing disk information based on controller "
-                    "type ({0}) and disk address ({1})"
-                    .format(controller, address))
+        logger.verbose("Looking for existing disk information based on "
+                       "controller type ({0}) and disk address ({1})"
+                       .format(controller, address))
 
         file = None
         disk = None
@@ -1596,6 +1584,9 @@ class OVF(VMDescription, XML):
 
         import glob
 
+        logger.verbose("Untarring {0} to working directory {1}"
+                       .format(file, self.working_dir))
+
         try:
             tarf = tarfile.open(file, 'r')
         except tarfile.TarError as e:
@@ -1631,14 +1622,16 @@ class OVF(VMDescription, XML):
                     raise VMInitError(1, "Tar file contains malicious/unsafe "
                                       "file path '{0}'!".format(n))
 
-            if self.output_file:
+            if self.output_file is not None:
                 # Extract all of the contents
                 tarf.extractall(path=self.working_dir)
+                logger.verbose("Extracted all files in {0} to working dir {1}"
+                               .format(file, self.working_dir))
             else:
                 # Read-only mode - only extract the OVF descriptor file.
                 tarf.extract(ovf_descriptor, path=self.working_dir)
-            logger.info("Extracted {0} to working directory {1}"
-                        .format(file, self.working_dir))
+                logger.verbose("Extracted OVF descriptor from {0} to working dir {1}"
+                               .format(file, self.working_dir))
         finally:
             tarf.close()
 
@@ -1653,7 +1646,7 @@ class OVF(VMDescription, XML):
         unavailable).
         """
         (prefix, extension) = os.path.splitext(ovf_file)
-        logger.info("Generating manifest for {0}".format(ovf_file))
+        logger.verbose("Generating manifest for {0}".format(ovf_file))
         manifest = prefix + '.mf'
         try:
             sha1sum = get_checksum(ovf_file, 'sha1')
@@ -1687,7 +1680,7 @@ class OVF(VMDescription, XML):
     def tar(self, ovf_descriptor, tar_file):
         """Tar the provided .ovf to generate the requested .ova"""
 
-        logger.info("Tarring {0} to {1}".format(ovf_descriptor, tar_file))
+        logger.verbose("Creating tar file {0}".format(tar_file))
         tarfile_name = os.path.basename(tar_file)
 
         dir = os.path.dirname(ovf_descriptor)
@@ -1697,12 +1690,12 @@ class OVF(VMDescription, XML):
 
         try:
             # OVF is always first
-            logger.info("Adding {0} to {1}".format(ovf_descriptor, tar_file))
+            logger.verbose("Adding {0} to {1}".format(ovf_descriptor, tar_file))
             tarf.add(ovf_descriptor, os.path.basename(ovf_descriptor))
             # Add manifest if present
             manifest_path = prefix + '.mf'
             if os.path.exists(manifest_path):
-                logger.info("Adding manifest to {0}".format(tar_file))
+                logger.verbose("Adding manifest to {0}".format(tar_file))
                 tarf.add(manifest_path, os.path.basename(manifest_path))
             if os.path.exists("{0}.cert".format(prefix)):
                 logger.warning("Don't know how to re-sign a certificate file, "
@@ -1717,7 +1710,7 @@ class OVF(VMDescription, XML):
                                  .format(file.get(self.FILE_HREF)))
                     continue
                 tarf.add(file_path, os.path.basename(file_path))
-                logger.info("Added {0} to {1}".format(file_path, tar_file))
+                logger.verbose("Added {0} to {1}".format(file_path, tar_file))
         finally:
             tarf.close()
 
@@ -2204,11 +2197,11 @@ class OVFHardware:
             logger.debug("Generated {0} items".format(len(new_items)))
             for item in new_items:
                 XML.add_child(self.ovf.virtual_hw_section, item, ordering)
-        logger.info("Updated XML VirtualHardwareSection, now contains {0} "
-                    "Items representing {1} devices"
-                    .format(len(self.ovf.virtual_hw_section.findall(
-                                self.ovf.ITEM)),
-                            len(self.item_dict)))
+        logger.verbose("Updated XML VirtualHardwareSection, now contains {0} "
+                       "Items representing {1} devices"
+                       .format(len(self.ovf.virtual_hw_section.findall(
+                           self.ovf.ITEM)),
+                               len(self.item_dict)))
 
 
     def find_unused_instance_id(self):

@@ -18,12 +18,12 @@ import logging
 import os.path
 import sys
 
-from .submodule import COTSubmodule
+from .submodule import COTReadOnlySubmodule
 from .vm_context_manager import VMContextManager
 
 logger = logging.getLogger(__name__)
 
-class COTInfo(COTSubmodule):
+class COTInfo(COTReadOnlySubmodule):
     """Display VM information string"""
     def __init__(self, UI):
         super(COTInfo, self).__init__(

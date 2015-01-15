@@ -21,13 +21,13 @@ import getpass
 
 from distutils.version import StrictVersion
 
-from .submodule import COTSubmodule
+from .submodule import COTReadOnlySubmodule
 from COT.helper_tools import check_call, get_ovftool_version
 from COT.ovf import *
 
 logger = logging.getLogger(__name__)
 
-class COTDeploy(COTSubmodule):
+class COTDeploy(COTReadOnlySubmodule):
     def __init__(self, UI, arg_names=None):
         if arg_names is None:
             arg_names = []
