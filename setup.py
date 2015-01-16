@@ -101,5 +101,5 @@ setup(
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
     test_suite='COT.tests',
-    install_requires=['argparse', 'coloredlogs>=0.8', 'verboselogs'],
+    install_requires=['argparse', 'coloredlogs>=0.8', 'verboselogs>=1.0'],
 )
