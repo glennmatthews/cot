@@ -1,0 +1,7 @@
+# .coveragerc to control coverage.py
+[run]
+omit =
+    COT/tests/*
+    COT/_version.py
+    setup.py
+    versioneer.py
