@@ -66,7 +66,7 @@ class TestCOTDeployESXi(COT_UT):
 
     def stub_get_ovftool_version(self):
         logger.info("stub_get_ovftool_version()")
-        return StrictVersion("4.0.0")
+        return self.ovftool_version
 
 
     def setUp(self):
@@ -80,6 +80,7 @@ class TestCOTDeployESXi(COT_UT):
         self.last_argv = []
         COT.deploy.check_call = self.stub_check_call
         # Ditto
+        self.ovftool_version = StrictVersion("4.0.0")
         self._get_ovftool_version = COT.deploy.get_ovftool_version
         COT.deploy.get_ovftool_version = self.stub_get_ovftool_version
 
@@ -146,3 +147,38 @@ class TestCOTDeployESXi(COT_UT):
             self.input_ovf,
             'vi://u:p@localhost/host/foo',
         ], self.last_argv)
+
+    def test_ovftool_vsphere_env_fixup(self):
+        "Test fixup of environment when deploying directly to vSphere"
+
+        # With 4.0.0 (our default) and no power_on, there's no fixup.
+        # This is tested by test_ovftool_args_basic() above.
+
+        # With 4.0.0 and power_on, we fixup when deploying to vSphere:
+        self.instance.set_value("LOCATOR", "vsphere")
+        self.instance.set_value("power_on", True)
+        self.instance.run()
+        self.assertEqual([
+            'ovftool',
+            '--X:injectOvfEnv',
+            '--deploymentOption=4CPU-4GB-3NIC', # default configuration
+            '--powerOn',
+            self.input_ovf,
+            'vi://{user}:passwd@vsphere'.format(user=getpass.getuser()),
+        ], self.last_argv)
+
+        # With 4.0.0, we don't (need to) fixup when deploying to vCenter.
+        # This is tested by test_ovftool_args_advanced() above.
+
+        # With <4.0.0, we don't (can't) fixup, regardless:
+        self.ovftool_version = StrictVersion("3.5.0")
+        self.instance.run()
+        self.assertEqual([
+            'ovftool',
+            # Nope! #'--X:injectOvfEnv',
+            '--deploymentOption=4CPU-4GB-3NIC', # default configuration
+            '--powerOn',
+            self.input_ovf,
+            'vi://{user}:passwd@vsphere'.format(user=getpass.getuser()),
+        ], self.last_argv)
+
