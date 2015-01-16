@@ -47,24 +47,33 @@ def confirm_or_die(prompt, force=False):
     if not confirm(prompt, force):
         sys.exit("Aborting.")
 
-def check_output(args):
-    # In 2.7+ we can use subprocess.check_output(), but in 2.6,
-    # we have to work around its absence.
-    if "check_output" not in dir( subprocess ):
-        process = subprocess.Popen(args,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        stdout, _ = process.communicate()
-        retcode = process.poll()
-        if retcode:
-            raise subprocess.CalledProcessError(retcode, " ".join(args))
-    else:
-        stdout = (subprocess.check_output(args, stderr=subprocess.STDOUT)
-                  .decode())
+def check_output(args, require_success=True):
+    try:
+        # In 2.7+ we can use subprocess.check_output(), but in 2.6,
+        # we have to work around its absence.
+        if "check_output" not in dir( subprocess ):
+            process = subprocess.Popen(args,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT)
+            stdout, _ = process.communicate()
+            retcode = process.poll()
+            if retcode and require_success:
+                raise subprocess.CalledProcessError(retcode, " ".join(args))
+        else:
+            stdout = (subprocess.check_output(args, stderr=subprocess.STDOUT)
+                      .decode())
+    except subprocess.CalledProcessError as e:
+        if require_success:
+            raise
+        try:
+            stdout = e.output.decode()
+        except AttributeError:
+            # CalledProcessError doesn't have 'output' in 2.6
+            stdout = "(output unavailable)"
     return stdout
 
 def get_qemu_img_version():
-    qemu_stdout = check_output(['qemu-img', '--version'])
+    qemu_stdout = check_output(['qemu-img', '--version'], require_success=False)
     qemu_match = re.search("qemu-img version ([0-9.]+)", qemu_stdout)
     return StrictVersion(qemu_match.group(1))
 
