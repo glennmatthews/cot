@@ -40,6 +40,11 @@ class COTEditProduct(COTSubmodule):
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
+
+        ready, reason = super(COTEditProduct, self).ready_to_run()
+        if not ready:
+            return ready, reason
+
         work_to_do = False
         if self.get_value("version") is not None:
             work_to_do = True
@@ -49,7 +54,7 @@ class COTEditProduct(COTSubmodule):
         if not work_to_do:
             return False, ("Neither version nor full version was specified "
                            "- nothing to do!")
-        return super(COTEditProduct, self).ready_to_run()
+        return ready, reason
 
 
     def run(self):
