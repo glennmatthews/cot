@@ -163,13 +163,16 @@ class OVF(VMDescription, XML):
                                   self.root.tag))
 
         root_namespace = XML.get_ns(self.root.tag)
+        logger.verbose("Root namespace is " + root_namespace)
         if root_namespace == 'http://www.vmware.com/schema/ovf/1/envelope':
             logger.info("OVF version is 0.9")
             self.ovf_version = 0.9
         elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/1':
-            logger.info("OVF version is 1.0 or later")
-            # TODO, be more granular here?
+            logger.info("OVF version is 1.x")
             self.ovf_version = 1.0
+        elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/2':
+            logger.info("OVF version is 2.x")
+            self.ovf_version = 2.0
         else:
             raiseVMInitError(
                 2,
@@ -226,8 +229,6 @@ class OVF(VMDescription, XML):
                                               required=True)
         self.product_section = self.find_child(self.virtual_system,
                                                self.PRODUCT_SECTION)
-        self.eula_section = self.find_child(self.virtual_system,
-                                            self.EULA_SECTION)
         self.annotation_section = self.find_child(
             self.virtual_system,
             self.ANNOTATION_SECTION,
@@ -425,19 +426,25 @@ class OVF(VMDescription, XML):
                         first = False
 
         # End user license agreement information
-        e = self.eula_section
-        if e is not None:
+        # An OVF may have zero, one, or more
+        eula_header = False
+        for e in self.find_all_children(self.virtual_system, self.EULA_SECTION):
+            info = e.find(self.INFO)
             lic = e.find(self.EULA_LICENSE)
             if lic is not None and lic.text:
                 str_list.append("")
-                if verbosity_option == 'brief':
-                    str_list.append("End User License Agreement: "
-                                    "(not displayed)")
+                if not eula_header:
+                    str_list.append("End User License Agreement(s):")
+                    eula_header = True
+                if info is not None and info.text:
+                    str_list.append('  ' + info.text)
+                if verbosity_option != 'verbose':
+                    str_list.append("    (not displayed, use 'cot info "
+                                    "--verbose' if desired)")
                 else:
-                    str_list.append("End User License Agreement:")
                     wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
-                                                   initial_indent='  ',
-                                                   subsequent_indent='  ')
+                                                   initial_indent='    ',
+                                                   subsequent_indent='    ')
                     for line in lic.text.splitlines():
                         str_list.append(wrapper.fill(line))
 
@@ -572,7 +579,8 @@ class OVF(VMDescription, XML):
             str_list.append("")
             str_list.append("NICs and Associated Networks:")
             wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
-                                           initial_indent=   '    ')
+                                           initial_indent=   '    ',
+                                           subsequent_indent='    ')
             for nic in nics:
                 network_name = nic.get_value(self.CONNECTION)
                 str_list.append("  {0:30} : {1}"
@@ -1851,8 +1859,10 @@ class OVFNameHelper(object):
 
         if self.ovf_version < 1.0:
             self.NSM['ovf'] = "http://www.vmware.com/schema/ovf/1/envelope"
-        else:
+        elif self.ovf_version < 2.0:
             self.NSM['ovf'] = "http://schemas.dmtf.org/ovf/envelope/1"
+        else:
+            self.NSM['ovf'] = "http://schemas.dmtf.org/ovf/envelope/2"
 
         # Shortcuts for finding/creating elements in various namespaces
         self.OVF =  ('{' + self.NSM['ovf'] + '}')
