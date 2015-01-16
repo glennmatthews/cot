@@ -119,7 +119,7 @@ class COTEditHardware(COTSubmodule):
 
         # Need some work to do!
         work_to_do = False
-        for (key, value) in self.args.iteritems():
+        for (key, value) in self.args.items():
             if key == "PACKAGE" or key == "output":
                 continue
             elif value is not None:

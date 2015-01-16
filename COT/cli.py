@@ -269,7 +269,7 @@ Cisco IOS XRv platforms."""),
 
         # Call the appropriate submodule and handle any resulting errors
         arg_hash = vars(args)
-        for (arg, value) in arg_hash.iteritems():
+        for (arg, value) in arg_hash.items():
             # When argparse is using both "nargs='+'" and "action=append",
             # this allows some flexibility in the user CLI, but the parsed
             # output is a nested list of lists. E.g., "-a 1 2 -a 3" would parse
@@ -281,10 +281,10 @@ Cisco IOS XRv platforms."""),
         del arg_hash["_verbosity"]
         try:
             # Set mandatory (CAPITALIZED) args first, then optional args
-            for (arg, value) in arg_hash.iteritems():
+            for (arg, value) in arg_hash.items():
                 if arg[0].isupper():
                     args.instance.set_value(arg, value)
-            for (arg, value) in arg_hash.iteritems():
+            for (arg, value) in arg_hash.items():
                 if not arg[0].isupper():
                     args.instance.set_value(arg, value)
             args.instance.run()
