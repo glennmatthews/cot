@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import re
+
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.edit_hardware import COTEditHardware
@@ -31,7 +33,7 @@ class TestCOTEditHardware(COT_UT):
     def test_not_ready_with_no_args(self):
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
-        self.assertRegexpMatches(reason, "No work requested")
+        self.assertTrue(re.search("No work requested", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
     def test_valid_args(self):

@@ -16,6 +16,9 @@
 
 import getpass
 import logging
+import re
+
+from distutils.version import StrictVersion
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -37,7 +40,7 @@ class TestCOTDeploy(COT_UT):
     def test_not_ready_with_no_args(self):
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
-        self.assertRegexpMatches(reason, "HYPERVISOR.*mandatory")
+        self.assertTrue(re.search("HYPERVISOR.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
 
@@ -61,6 +64,11 @@ class TestCOTDeployESXi(COT_UT):
         return _check_call(argv, require_success)
 
 
+    def stub_get_ovftool_version(self):
+        logger.info("stub_get_ovftool_version()")
+        return StrictVersion("4.0.0")
+
+
     def setUp(self):
         "Test case setup function called automatically prior to each test"
         super(TestCOTDeployESXi, self).setUp()
@@ -71,19 +79,23 @@ class TestCOTDeployESXi(COT_UT):
         self._check_call = COT.deploy.check_call
         self.last_argv = []
         COT.deploy.check_call = self.stub_check_call
+        # Ditto
+        self._get_ovftool_version = COT.deploy.get_ovftool_version
+        COT.deploy.get_ovftool_version = self.stub_get_ovftool_version
 
 
     def tearDown(self):
         "Test case cleanup function called automatically"
         # Remove our stub
         COT.deploy.check_call = self._check_call
+        COT.deploy.get_ovftool_version = self._get_ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
 
     def test_not_ready_with_no_args(self):
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
-        self.assertRegexpMatches(reason, "LOCATOR.*mandatory")
+        self.assertTrue(re.search("LOCATOR.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
 

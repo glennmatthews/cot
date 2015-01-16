@@ -3,7 +3,7 @@
 # inject_config.py - test cases for the COTInjectConfig class
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -15,6 +15,7 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import os.path
+import re
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -33,7 +34,7 @@ class TestCOTInjectConfig(COT_UT):
     def test_not_ready_with_no_args(self):
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
-        self.assertRegexpMatches(reason, "No configuration files")
+        self.assertTrue(re.search("No configuration files", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
     def test_invalid_always_args(self):
