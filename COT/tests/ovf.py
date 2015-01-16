@@ -505,34 +505,6 @@ class TestOVFItem(COT_UT):
 
 
 
-class TestOVFAddFile(COT_UT):
-    """Test cases for "cot add-file" command with OVF files.
-    Since add-file is a subset of add-disk, there aren't many of these.
-    """
-
-    def test_add_file(self):
-        self.call_cot(['add-file', self.iosv_ovf, self.input_ovf,
-                      '-o', self.temp_file])
-        self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
-+    <ovf:File ovf:href="iosv.ovf" ovf:id="iosv.ovf" ovf:size="{ovf_size}" />
-   </ovf:References>
-""".format(iso_size=self.FILE_SIZE['input.iso'],
-           ovf_size=os.path.getsize(self.iosv_ovf)))
-
-    def test_add_file_with_id(self):
-        """Call 'cot add-file' with explicit '--file-id' argument.
-        """
-        self.call_cot(['add-file', self.iosv_ovf, self.input_ovf,
-                       '-o', self.temp_file, '--file-id', 'myfile'])
-        self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
-+    <ovf:File ovf:href="iosv.ovf" ovf:id="myfile" ovf:size="{ovf_size}" />
-   </ovf:References>
-""".format(iso_size=self.FILE_SIZE['input.iso'],
-           ovf_size=os.path.getsize(self.iosv_ovf)))
-
-
 class TestOVFEditHardware(COT_UT):
     """Test cases for "cot edit-hardware" command with OVF files"""
 
