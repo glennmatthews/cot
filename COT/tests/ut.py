@@ -22,6 +22,7 @@ import os.path
 import tempfile
 import shutil
 import re
+import sys
 import time
 import logging
 from verboselogs import VerboseLogger
@@ -47,11 +48,17 @@ class COT_UT(unittest.TestCase):
         """Calls diff on the two files and compares it to the expected output.
         If the files are unspecified, defaults to comparing the input OVF file
         and the temporary output OVF file.
+        Note that comparison of OVF files is currently skipped under Python 2.6.
         """
         if file1 is None:
             file1 = self.input_ovf
         if file2 is None:
             file2 = self.temp_file
+
+        if file1 == self.input_ovf and sys.hexversion < 0x02070000:
+            print("OVF file diff comparison skipped due to old Python")
+            return
+
         with open(file1) as f1:
             with open(file2) as f2:
                 diff = unified_diff(f1.readlines(), f2.readlines(),
