@@ -8,5 +8,5 @@ python:
 install:
   - "pip install -r requirements.txt"
   - "sudo python setup.py install_helpers --force"
-  - "python setup.py install"
+  - "python setup.py develop"
 script: "python setup.py test"
