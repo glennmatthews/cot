@@ -134,6 +134,7 @@ class COTDeploy(COTReadOnlySubmodule):
   {0} deploy --help
   {0} <opts> deploy PACKAGE esxi ...""".format(os.path.basename(sys.argv[0]))
 
+        self.parser.set_defaults(instance=self)
         return 'deploy', self.parser
 
 
