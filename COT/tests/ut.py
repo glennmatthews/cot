@@ -55,8 +55,9 @@ class COT_UT(unittest.TestCase):
         if file2 is None:
             file2 = self.temp_file
 
-        if file1 == self.input_ovf and sys.hexversion < 0x02070000:
-            print("OVF file diff comparison skipped due to old Python")
+        if re.search("ovf", file1) and sys.hexversion < 0x02070000:
+            print("OVF file diff comparison skipped "
+                  "due to old Python version ({0})".format(sys.version))
             return
 
         with open(file1) as f1:

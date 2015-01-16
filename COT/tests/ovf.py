@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 import re
+import sys
 import tarfile
 import unittest
 
@@ -197,6 +198,10 @@ class TestOVFInputOutput(COT_UT):
         # Make sure everything propagated over successfully
         input_dir = os.path.dirname(self.input_ovf)
         for ext in ['.ovf', '.mf', '.iso', '.vmdk']:
+            if ext == '.ovf' and sys.hexversion < 0x02070000:
+                print("OVF file comparison skipped due to "
+                      "old Python version ({0})".format(sys.version))
+                continue
             self.assertTrue(filecmp.cmp(
                     os.path.join(input_dir, "input" + ext),
                     os.path.join(self.temp_dir, "input" + ext)),
