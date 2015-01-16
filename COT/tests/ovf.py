@@ -518,15 +518,7 @@ class TestOVFEditProperties(COT_UT):
         """Call 'cot edit-properties' to set an existing property.
         """
 
-        # Set one property
-        self.call_edit_properties(['-p', 'login-username=admin'])
-        self.check_diff(
-"""
-       <ovf:Category>1. Bootstrap Properties</ovf:Category>
--      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
-+      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
-         <ovf:Label>Login Username</ovf:Label>
-""")
+        # TODO - keep this one for now as it exercises the nargs/append logic
         # Set several properties in one go
         # This can be done either with multiple -p arguments or
         # a single -p with multiple key-value pairs - try 'em both and more.
@@ -559,71 +551,6 @@ class TestOVFEditProperties(COT_UT):
 -      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
 +      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="true">
          <ovf:Label>Enable SSH Login</ovf:Label>
-""")
-
-        # Create property and set its value
-        self.call_edit_properties(['-p', 'new-property=hello'])
-        self.check_diff(
-"""
-       </ovf:Property>
-+      <ovf:Property ovf:key="new-property" ovf:type="string" ovf:value="hello" />
-     </ovf:ProductSection>
-""")
-
-        # Create property with empty string for value
-        self.call_edit_properties(['-p', 'new-property-2='])
-        self.check_diff(
-"""
-       </ovf:Property>
-+      <ovf:Property ovf:key="new-property-2" ovf:type="string" ovf:value="" />
-     </ovf:ProductSection>
-""")
-
-
-    def test_config_file(self):
-        """Inject a sequence of properties from a config file.
-        """
-        self.call_edit_properties(['--config-file',
-                                   os.path.join(os.path.dirname(__file__),
-                                                "sample_cfg.txt")])
-        self.check_diff(
-"""
-       </ovf:Property>
-+      <ovf:Property ovf:key="config-0001" ovf:type="string" ovf:value="interface GigabitEthernet0/0/0/0" />
-+      <ovf:Property ovf:key="config-0002" ovf:type="string" ovf:value="no shutdown" />
-+      <ovf:Property ovf:key="config-0003" ovf:type="string" ovf:value="interface Loopback0" />
-+      <ovf:Property ovf:key="config-0004" ovf:type="string" ovf:value="end" />
-     </ovf:ProductSection>
-""")
-
-
-    def test_combined(self):
-        """Set individual properties AND add from a config file
-        """
-
-        self.call_edit_properties(['--config-file',
-                                   os.path.join(os.path.dirname(__file__),
-                                                "sample_cfg.txt"),
-                                   '-p', 'login-password=cisco123',
-                                   'enable-ssh-server=1'])
-        self.check_diff(
-"""
-       </ovf:Property>
--      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
-+      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="cisco123">
-         <ovf:Label>Login Password</ovf:Label>
-...
-       <ovf:Category>2. Features</ovf:Category>
--      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
-+      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="true">
-         <ovf:Label>Enable SSH Login</ovf:Label>
-...
-       </ovf:Property>
-+      <ovf:Property ovf:key="config-0001" ovf:type="string" ovf:value="interface GigabitEthernet0/0/0/0" />
-+      <ovf:Property ovf:key="config-0002" ovf:type="string" ovf:value="no shutdown" />
-+      <ovf:Property ovf:key="config-0003" ovf:type="string" ovf:value="interface Loopback0" />
-+      <ovf:Property ovf:key="config-0004" ovf:type="string" ovf:value="end" />
-     </ovf:ProductSection>
 """)
 
 
