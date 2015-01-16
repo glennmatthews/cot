@@ -97,8 +97,8 @@ class COT_UT(unittest.TestCase):
     def call_cot(self, argv, result=0):
         """Invoke cot with the specified arguments, suppressing stdout and
         stderr, and return its return code"""
-        argv.insert(0, os.path.join(os.path.dirname(__file__),
-                                    "..", "..", "bin", "cot"))
+        argv = ["python", os.path.join(os.path.dirname(__file__),
+                                       "..", "..", "bin", "cot")] + argv
         import glob
         tmps = set(glob.glob(os.path.join("/tmp", "cot*")))
         rc = self.call_no_output(argv, result)
