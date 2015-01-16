@@ -26,7 +26,7 @@ from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
 
 from coloredlogs import ColoredStreamHandler
-class COTStreamHandler(ColoredStreamHandler):
+class COTStreamHandler(ColoredStreamHandler, object):
 
     def __init__(self, level=logging.DEBUG, **kwargs):
         super(COTStreamHandler, self).__init__(

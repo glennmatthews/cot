@@ -5,8 +5,8 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-# command to install dependencies
 install:
-  - "pip install -r requirements.txt --use-mirrors"
+  - "pip install -r requirements.txt"
   - "sudo python setup.py install_helpers --force"
+  - "python setup.py install"
 script: "python setup.py test"
