@@ -90,9 +90,9 @@ logging.getLogger('COT').addHandler(COTHandler)
 # Proceed with importing the rest of the needed modules now that we have logging
 
 from COT import __version__, __version_long__
-from .data_validation import InvalidInputError
-from .data_validation import *
-from .ui_shared import UI
+from COT.data_validation import InvalidInputError
+from COT.data_validation import *
+from COT.ui_shared import UI
 
 logger = logging.getLogger(__name__)
 
@@ -307,3 +307,7 @@ Cisco IOS XRv platforms."""),
 
 def main():
     CLI().run()
+
+
+if __name__ == "__main__":
+    main()
