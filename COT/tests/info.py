@@ -15,7 +15,10 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import sys
-import StringIO
+try:
+    import StringIO
+except ImportError:
+    import io as StringIO
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
