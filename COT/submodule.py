@@ -56,6 +56,11 @@ class COTGenericSubmodule(object):
             raise InvalidInputError(value_or_reason)
         else:
             value = value_or_reason
+
+        if arg == "PACKAGE" and self.vm is not None:
+            # Delete existing VM before child class (below) creates a new one
+            self.vm.destroy()
+
         self.args[arg] = value
 
 
@@ -86,6 +91,12 @@ class COTGenericSubmodule(object):
 
     def finished(self):
         pass
+
+
+    def destroy(self):
+        if self.vm is not None:
+            self.vm.destroy()
+            self.vm = None
 
 
     def create_subparser(self, parent):

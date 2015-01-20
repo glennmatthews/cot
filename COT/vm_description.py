@@ -14,6 +14,14 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import atexit
+import logging
+import os.path
+import shutil
+import tempfile
+
+logger = logging.getLogger(__name__)
+
 class VMInitError(EnvironmentError):
     """Class representing errors encountered when trying to init/load a VM.
     """
@@ -32,14 +40,26 @@ class VMDescription(object):
         """
         raise NotImplementedError("detect_type_from_name not implemented")
 
-    def __init__(self, input_file, working_dir, output_file):
+    def __init__(self, input_file, output_file=None):
         """Read the given VM description file into memory and
         make note of the requested working directory and eventual output file.
         Note that if the output_file is unknown at present, a value of ""
         should be passed, as None indicates there will not be an output_file."""
         self.input_file = input_file
-        self.working_dir = working_dir
+        self.working_dir = tempfile.mkdtemp(prefix="cot")
+        logger.verbose("Temporary directory for VM created from {0}: {1}"
+                       .format(input_file, self.working_dir))
         self.output_file = output_file
+        atexit.register(self.destroy)
+
+    def destroy(self):
+        if hasattr(self, 'working_dir') and os.path.exists(self.working_dir):
+            logger.verbose("Removing temporary directory '{0}"
+                           .format(self.working_dir))
+            shutil.rmtree(self.working_dir)
+
+    def __del__(self):
+        self.destroy()
 
     def set_output_file(self, output_file):
         self.output_file = output_file

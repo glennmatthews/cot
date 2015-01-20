@@ -31,6 +31,7 @@ from COT.ovf import byte_count, byte_string, factor_bytes
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
 from COT.helper_tools import *
+from COT.vm_context_manager import VMContextManager
 
 class TestByteString(unittest.TestCase):
     """Test cases for byte-count to string conversion functions"""
@@ -55,13 +56,11 @@ class TestOVFInputOutput(COT_UT):
 
     def setUp(self):
         super(TestOVFInputOutput, self).setUp()
-        self.working_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio")
         # Additional temp directory used by some test cases
         self.staging_dir = None
 
 
     def tearDown(self):
-        shutil.rmtree(self.working_dir)
         if self.staging_dir:
             shutil.rmtree(self.staging_dir)
         super(TestOVFInputOutput, self).tearDown()
@@ -86,29 +85,29 @@ class TestOVFInputOutput(COT_UT):
 
     def test_input_output(self):
         """Read an OVF then write it again, verify no changes"""
-        ovf = OVF(self.input_ovf, self.working_dir, self.temp_file)
-        ovf.write()
+        with VMContextManager(self.input_ovf, self.temp_file) as ovf:
+            pass
         self.check_diff('')
 
         # Filename output too
-        ovf = OVF(self.input_ovf, self.working_dir, self.temp_file + ".a.b.c")
-        ovf.write()
+        with VMContextManager(self.input_ovf, self.temp_file + '.a.b.c') as ovf:
+            pass
         self.check_diff('', file2=(self.temp_file + ".a.b.c"))
 
 
     def test_input_output_v09(self):
         """Test reading/writing of a v0.9 OVF.
         """
-        ovf = OVF(self.v09_ovf, self.working_dir, self.temp_file)
-        ovf.write()
+        with VMContextManager(self.v09_ovf, self.temp_file) as ovf:
+            pass
         self.check_diff('', file1=self.v09_ovf)
 
 
     def test_input_output_custom(self):
         """Test reading/writing of an OVF with custom extensions.
         """
-        ovf = OVF(self.vmware_ovf, self.working_dir, self.temp_file)
-        ovf.write()
+        with VMContextManager(self.vmware_ovf, self.temp_file) as ovf:
+            pass
         # VMware disagrees with COT on some fiddly details of the XML formatting
         self.check_diff(
 """
@@ -131,22 +130,16 @@ class TestOVFInputOutput(COT_UT):
         shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
         shutil.copy(os.path.join(input_dir, 'input.vmdk'), self.staging_dir)
         # Don't copy input.iso to the staging directory.
-        ovf = OVF(os.path.join(self.staging_dir, 'input.ovf'),
-                  self.working_dir,
-                  os.path.join(self.temp_dir, "temp.ova"))
-
-        self.assertFalse(ovf.validate_file_references(),
-                         "OVF references missing file - contents are invalid")
+        with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
+                              os.path.join(self.temp_dir, "temp.ova")) as ovf:
+            self.assertFalse(ovf.validate_file_references(),
+                             "OVF references missing file - contents are invalid")
 
         # Write out to OVA then read the OVA in as well.
-        ovf.write()
-
-        ova = OVF(os.path.join(self.temp_dir, "temp.ova"),
-                  self.working_dir,
-                  os.path.join(self.temp_dir, "temp.ovf"))
-        self.assertFalse(ova.validate_file_references(),
-                         "OVA references missing file - contents are invalid")
-        ova.write()
+        with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
+                              os.path.join(self.temp_dir, "temp.ovf")) as ova:
+            self.assertFalse(ova.validate_file_references(),
+                             "OVA references missing file - contents are invalid")
 
 
     def test_input_output_bad_file(self):
@@ -160,40 +153,34 @@ class TestOVFInputOutput(COT_UT):
         shutil.copy(os.path.join(input_dir, 'input.vmdk'),
                     os.path.join(self.staging_dir, 'input.iso'))
         # Don't copy input.iso to the staging directory.
-        ovf = OVF(os.path.join(self.staging_dir, 'input.ovf'),
-                  self.working_dir,
-                  os.path.join(self.temp_dir, "temp.ova"))
-
-        self.assertFalse(ovf.validate_file_references(),
-                         "OVF has wrong file size - contents are invalid")
+        with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
+                              os.path.join(self.temp_dir, "temp.ova")) as ovf:
+            self.assertFalse(ovf.validate_file_references(),
+                             "OVF has wrong file size - contents are invalid")
 
         # Write out to OVA (which will correct the file size information)
-        ovf.write()
 
         # Now read in the OVA
-        ova = OVF(os.path.join(self.temp_dir, "temp.ova"),
-                  self.working_dir,
-                  os.path.join(self.temp_dir, "temp.ovf"))
-        # Replace the extracted fake .iso with the real .iso
-        shutil.copy(os.path.join(input_dir, 'input.iso'), self.working_dir)
-        self.assertFalse(ova.validate_file_references(),
-                         "OVA has wrong file size - contents are invalid")
-
-        # Write out to OVF
-        ova.write()
+        with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
+                              os.path.join(self.temp_dir, "temp.ovf")) as ova:
+            # Replace the extracted fake .iso with the real .iso
+            shutil.copy(os.path.join(input_dir, 'input.iso'), ova.working_dir)
+            self.assertFalse(ova.validate_file_references(),
+                             "OVA has wrong file size - contents are invalid")
 
 
     def test_tar_untar(self):
         """Output OVF to OVA and vice versa"""
         # Read OVF and write to OVA
-        ovf = OVF(self.input_ovf, self.working_dir,
+        ovf = OVF(self.input_ovf,
                   os.path.join(self.temp_dir, "temp.ova"))
         ovf.write()
-        ovf = None
+        ovf.destroy()
         # Read OVA and write to OVF
-        ovf2 = OVF(os.path.join(self.temp_dir, "temp.ova"), self.working_dir,
+        ovf2 = OVF(os.path.join(self.temp_dir, "temp.ova"),
                    os.path.join(self.temp_dir, "input.ovf"))
         ovf2.write()
+        ovf2.destroy()
 
         # Make sure everything propagated over successfully
         input_dir = os.path.dirname(self.input_ovf)
@@ -219,21 +206,21 @@ class TestOVFInputOutput(COT_UT):
         # .ovf that is an empty file
         with open(fake_file, 'w+') as f:
             f.write("")
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ovf that isn't actually XML at all
         with open(fake_file, 'w+') as f:
             f.write("< hello world!")
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ovf that is XML but not OVF XML
         with open(fake_file, 'w+') as f:
             f.write("<?xml version='1.0' encoding='utf-8'?>")
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
         with open(fake_file, 'w+') as f:
             f.write("<?xml version='1.0' encoding='utf-8'?>")
             f.write("<foo/>")
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
 
     def test_invalid_ova_file(self):
@@ -244,12 +231,12 @@ class TestOVFInputOutput(COT_UT):
         # .ova that is an empty file
         with open(fake_file, 'w+') as f:
             f.write("")
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ova that is not a TAR file
         with open(fake_file, 'w+') as f:
             f.write("< hello world!")
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ova that is a TAR file but does not contain an OVF descriptor
         tarf = tarfile.open(fake_file, 'w')
@@ -258,7 +245,7 @@ class TestOVFInputOutput(COT_UT):
             tarf.add(disk_path, os.path.basename(disk_path))
         finally:
             tarf.close()
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ova that contains an OVF descriptor but in the wrong position
         tarf = tarfile.open(fake_file, 'a')
@@ -266,7 +253,7 @@ class TestOVFInputOutput(COT_UT):
             tarf.add(self.input_ovf, os.path.basename(self.input_ovf))
         finally:
             tarf.close()
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
 
     def test_invalid_ovf_contents(self):
@@ -281,7 +268,7 @@ class TestOVFInputOutput(COT_UT):
         if COT_UT.OVFTOOL_PRESENT:
             # Make sure ovftool also sees this as invalid
             self.assertRaises(HelperError, validate_ovf_for_esxi, fake_file)
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # Item referencing a nonexistent Configuration
         with open(fake_file, "w") as f:
@@ -291,7 +278,7 @@ class TestOVFInputOutput(COT_UT):
         if COT_UT.OVFTOOL_PRESENT:
             # Make sure ovftool also sees this as invalid
             self.assertRaises(HelperError, validate_ovf_for_esxi, fake_file)
-        self.assertRaises(VMInitError, OVF, fake_file, self.working_dir, None)
+        self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # TODO - inconsistent order of File versus Disk?
         # TODO - Sections in wrong order?
@@ -300,22 +287,18 @@ class TestOVFInputOutput(COT_UT):
         """Check profile id list APIs"""
 
         # No profiles defined
-        ovf = OVF(self.vmware_ovf, self.working_dir, None)
-
-        self.assertEqual(ovf.get_configuration_profile_ids(), [])
-
-        self.assertEqual(ovf.get_default_profile_name(), None)
+        with VMContextManager(self.vmware_ovf, None) as ovf:
+            self.assertEqual(ovf.get_configuration_profile_ids(), [])
+            self.assertEqual(ovf.get_default_profile_name(), None)
 
         # Profile list exists
-        ovf = OVF(self.input_ovf, self.working_dir, None)
-
-        # default profile is first in the list
-        self.assertEqual(ovf.get_configuration_profile_ids(),
-                         ["4CPU-4GB-3NIC",
-                          "1CPU-1GB-1NIC",
-                          "2CPU-2GB-1NIC"])
-
-        self.assertEqual(ovf.get_default_profile_name(), "4CPU-4GB-3NIC")
+        with VMContextManager(self.input_ovf, None) as ovf:
+            # default profile is first in the list
+            self.assertEqual(ovf.get_configuration_profile_ids(),
+                             ["4CPU-4GB-3NIC",
+                              "1CPU-1GB-1NIC",
+                              "2CPU-2GB-1NIC"])
+            self.assertEqual(ovf.get_default_profile_name(), "4CPU-4GB-3NIC")
 
 
 class TestOVFItem(COT_UT):
@@ -370,40 +353,39 @@ class TestOVFItem(COT_UT):
     def test_remove_profile(self):
         """Test case for remove_profile() method
         """
-        ovf = OVF(self.input_ovf, self.working_dir, self.temp_file)
-        hw = ovf.hardware
-        # InstanceID 11, NIC 0 (default, under all profiles)
-        item = hw.item_dict['11']
-        self.assertTrue(item.has_profile(None))
-        self.assertTrue(item.has_profile("1CPU-1GB-1NIC"))
-        self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
-        self.assertTrue(item.has_profile("4CPU-4GB-3NIC"))
-        # nonexistent profile
-        self.assertFalse(item.has_profile("nonexistent"))
+        with VMContextManager(self.input_ovf, self.temp_file) as ovf:
+            hw = ovf.hardware
+            # InstanceID 11, NIC 0 (default, under all profiles)
+            item = hw.item_dict['11']
+            self.assertTrue(item.has_profile(None))
+            self.assertTrue(item.has_profile("1CPU-1GB-1NIC"))
+            self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
+            self.assertTrue(item.has_profile("4CPU-4GB-3NIC"))
+            # nonexistent profile
+            self.assertFalse(item.has_profile("nonexistent"))
 
-        # Remove one profile
-        item.remove_profile("1CPU-1GB-1NIC")
-        self.assertTrue(item.has_profile("4CPU-4GB-3NIC"))
-        self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
-        # no longer available
-        self.assertFalse(item.has_profile(None))
-        self.assertFalse(item.has_profile("1CPU-1GB-1NIC"))
-        self.assertFalse(item.has_profile("nonexistent"))
+            # Remove one profile
+            item.remove_profile("1CPU-1GB-1NIC")
+            self.assertTrue(item.has_profile("4CPU-4GB-3NIC"))
+            self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
+            # no longer available
+            self.assertFalse(item.has_profile(None))
+            self.assertFalse(item.has_profile("1CPU-1GB-1NIC"))
+            self.assertFalse(item.has_profile("nonexistent"))
 
-        self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
-                                        ["2CPU-2GB-1NIC", "4CPU-4GB-3NIC"]),
-                         "11")
-        self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
-                                        ["1CPU-1GB-1NIC"]),
-                         None)
-        self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT, [None]),
-                         None)
-        self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
-                                        ["1CPU-1GB-1NIC", "2CPU-2GB-1NIC",
-                                         "4CPU-4GB-3NIC"]),
-                         None)
+            self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
+                                            ["2CPU-2GB-1NIC", "4CPU-4GB-3NIC"]),
+                             "11")
+            self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
+                                            ["1CPU-1GB-1NIC"]),
+                             None)
+            self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT, [None]),
+                             None)
+            self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
+                                            ["1CPU-1GB-1NIC", "2CPU-2GB-1NIC",
+                                             "4CPU-4GB-3NIC"]),
+                             None)
 
-        ovf.write()
         self.check_diff("""
        </ovf:Item>
 -      <ovf:Item>
@@ -415,7 +397,7 @@ class TestOVFItem(COT_UT):
     def test_set_property(self):
         """Test cases for set_property() and related methods
         """
-        ovf = OVF(self.input_ovf, self.working_dir, self.temp_file)
+        ovf = OVF(self.input_ovf, self.temp_file)
         hw = ovf.hardware
         # InstanceID 1, 'CPU' - entries for 'default' plus two other profiles
         item = hw.item_dict['1']
@@ -502,56 +484,7 @@ class TestOVFItem(COT_UT):
 -      </ovf:Item>
        <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
 """)
-
-
-class TestOVFEditProperties(COT_UT):
-    """Test cases for "cot edit-properties" command with OVF files
-    """
-
-    def call_edit_properties(self, argv, result=0):
-        """Call 'cot edit-properties' with typical arguments"""
-        new_argv = ['edit-properties', self.input_ovf,
-                    '-o', self.temp_file] + argv
-        return self.call_cot(new_argv, result)
-
-    def test_set_property_valid(self):
-        """Call 'cot edit-properties' to set an existing property.
-        """
-
-        # TODO - keep this one for now as it exercises the nargs/append logic
-        # Set several properties in one go
-        # This can be done either with multiple -p arguments or
-        # a single -p with multiple key-value pairs - try 'em both and more.
-        for args in (['-p', 'login-username=admin', # Individual
-                      '-p', 'login-password=cisco123',
-                      '-p', 'enable-ssh-server=1'],
-                     ['-p', 'login-username=admin', # All for one
-                            'login-password=cisco123',
-                            'enable-ssh-server=1'],
-                     ['-p', 'login-username=admin', # Mixed!
-                      '-p', 'login-password=cisco123',
-                            'enable-ssh-server=1'],
-                     ['-p', 'login-username=admin', # Differently mixed!
-                            'login-password=cisco123',
-                      '-p', 'enable-ssh-server=1']):
-            self.call_edit_properties(args)
-            self.check_diff(
-"""
-       <ovf:Category>1. Bootstrap Properties</ovf:Category>
--      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
-+      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
-         <ovf:Label>Login Username</ovf:Label>
-...
-       </ovf:Property>
--      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
-+      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="cisco123">
-         <ovf:Label>Login Password</ovf:Label>
-...
-       <ovf:Category>2. Features</ovf:Category>
--      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
-+      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="true">
-         <ovf:Label>Enable SSH Login</ovf:Label>
-""")
+        ovf.destroy()
 
 
 class TestOVFInfo(COT_UT):

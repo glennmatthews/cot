@@ -103,6 +103,7 @@ class CLI(UI):
     """Command-line user interface for COT"""
 
     def __init__(self):
+        super(CLI, self).__init__(force=True)
         # In python 2.7, we want raw_input, but in python 3 we want input.
         try:
             self.input = raw_input
@@ -113,10 +114,9 @@ class CLI(UI):
         self.create_subparsers()
 
 
-    def run(self):
-        args = self.parse_args()
-        super(CLI, self).__init__(args.force)
-        self.main(args)
+    def run(self, argv):
+        args = self.parse_args(argv)
+        return self.main(args)
 
 
     def confirm(self, prompt):
@@ -238,22 +238,23 @@ Cisco IOS XRv platforms."""),
             name, subparser = klass(self).create_subparser(self.subparsers)
             self.subparser_lookup[name] = subparser
 
-    def parse_args(self):
+    def parse_args(self, argv):
         # By now all subparsers have been created so we can safely set usage.
         # See comment above.
-        self.parser.usage=(
-"\n  %(prog)s --help"
-"\n  %(prog)s --version"
-"\n  %(prog)s <command> --help"
-"\n  %(prog)s <options> <command> <command-options>"
-                           .format(prog=os.path.basename(sys.argv[0])))
+        self.parser.usage=("""
+  cot --help
+  cot --version
+  cot <command> --help
+  cot <options> <command> <command-options>""")
         # Parse the user input
-        args = self.parser.parse_args()
+        args = self.parser.parse_args(argv)
 
         # If being run non-interactively, treat as if --force is set, in order
         # to avoid hanging while trying to read input that will never come.
-        if not sys.__stdin__.isatty():
+        if not sys.stdin.isatty():
             args.force = True
+
+        self.force = args.force
 
         return args
 
@@ -300,13 +301,15 @@ Cisco IOS XRv platforms."""),
             sys.exit(e.errno)
         except KeyboardInterrupt:
             sys.exit("\nAborted by user.")
+        finally:
+            args.instance.destroy()
         # All exceptions not handled explicitly above will result in a
         # stack trace and exit - this is ugly so the more specific handling we
         # can provide, the better!
         return 0
 
 def main():
-    CLI().run()
+    CLI().run(sys.argv[1:])
 
 
 if __name__ == "__main__":
