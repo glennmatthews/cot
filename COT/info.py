@@ -48,6 +48,14 @@ class COTInfo(COTReadOnlySubmodule):
 
         return valid, value_or_reason
 
+    def ready_to_run(self):
+        """Are we ready to go?
+        Returns the tuple (ready, reason)
+        """
+        if not self.get_value("PACKAGE_LIST"):
+            return False, "At least one package must be specified"
+        return super(COTInfo, self).ready_to_run()
+
 
     def run(self):
         super(COTInfo, self).run()
