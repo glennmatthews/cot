@@ -44,7 +44,9 @@ from versioneer import cmd_build
 class custom_build(cmd_build):
     def run(self):
         try:
-            subprocess.check_call(["./check_and_install_helpers.py", "check"])
+            subprocess.check_call([os.path.join(os.path.dirname(__file__),
+                                                "check_and_install_helpers.py"),
+                                   "check"])
         except subprocess.CalledProcessError:
             exit()
         cmd_build.run(self)
@@ -66,10 +68,12 @@ class custom_install_helpers(Command):
     def run(self):
         try:
             if self.force:
-                subprocess.check_call(["./check_and_install_helpers.py",
+                subprocess.check_call([os.path.join(os.path.dirname(__file__),
+                                                "check_and_install_helpers.py"),
                                        "install", '-f'])
             else:
-                subprocess.check_call(["./check_and_install_helpers.py",
+                subprocess.check_call([os.path.join(os.path.dirname(__file__),
+                                                "check_and_install_helpers.py"),
                                        "install"])
         except subprocess.CalledProcessError:
             exit('Aborting')
