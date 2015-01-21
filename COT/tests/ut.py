@@ -15,9 +15,7 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import unittest
-import subprocess
 from difflib import unified_diff
-from os import devnull
 import os.path
 import glob
 import tempfile
@@ -84,23 +82,6 @@ class COT_UT(unittest.TestCase):
         if clean_diff.strip() != expected.strip():
             self.fail("'diff {0} {1}' failed - expected:\n{2}\ngot:\n{3}"
                       .format(file1, file2, expected, clean_diff))
-
-
-    def call_no_output(self, argv, result=0):
-        """Like subprocess.call, but suppress stdout and stderr by default"""
-        p = subprocess.Popen(argv, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-        self.assertEqual(result, p.returncode,
-                         "expected return code {0} when calling '{1}'\n"
-                         "but got {2}:\n{3}\n{4}"
-                         .format(result,
-                                 " ".join(argv),
-                                 p.returncode,
-                                 stdout.decode(),
-                                 stderr.decode()))
-        return p.returncode
 
 
     def setUp(self):
