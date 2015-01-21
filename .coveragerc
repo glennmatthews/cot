@@ -7,3 +7,5 @@ omit =
     versioneer.py
     .tox/*
     */pypy/*
+    */lib_pypy/*
+    */distutils/*
