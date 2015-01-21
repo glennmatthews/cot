@@ -5,3 +5,5 @@ omit =
     COT/_version.py
     setup.py
     versioneer.py
+    .tox/*
+    */pypy/*
