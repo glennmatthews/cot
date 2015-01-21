@@ -1575,7 +1575,7 @@ class OVF(VMDescription, XML):
 
         try:
             tarf = tarfile.open(file, 'r')
-        except tarfile.TarError as e:
+        except (EOFError, tarfile.TarError) as e:
             raise VMInitError(1, "Could not untar {0}: {1}"
                               .format(file, e.args))
 

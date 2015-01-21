@@ -204,20 +204,20 @@ class TestOVFInputOutput(COT_UT):
         """
         fake_file = os.path.join(self.temp_dir, "foo.ovf")
         # .ovf that is an empty file
-        with open(fake_file, 'w+') as f:
+        with open(fake_file, 'w') as f:
             f.write("")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ovf that isn't actually XML at all
-        with open(fake_file, 'w+') as f:
+        with open(fake_file, 'w') as f:
             f.write("< hello world!")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ovf that is XML but not OVF XML
-        with open(fake_file, 'w+') as f:
+        with open(fake_file, 'w') as f:
             f.write("<?xml version='1.0' encoding='utf-8'?>")
         self.assertRaises(VMInitError, OVF, fake_file, None)
-        with open(fake_file, 'w+') as f:
+        with open(fake_file, 'w') as f:
             f.write("<?xml version='1.0' encoding='utf-8'?>")
             f.write("<foo/>")
         self.assertRaises(VMInitError, OVF, fake_file, None)
@@ -229,12 +229,12 @@ class TestOVFInputOutput(COT_UT):
         """
         fake_file = os.path.join(self.temp_dir, "foo.ova")
         # .ova that is an empty file
-        with open(fake_file, 'w+') as f:
+        with open(fake_file, 'w') as f:
             f.write("")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ova that is not a TAR file
-        with open(fake_file, 'w+') as f:
+        with open(fake_file, 'w') as f:
             f.write("< hello world!")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
