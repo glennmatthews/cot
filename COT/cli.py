@@ -17,8 +17,6 @@
 import sys
 import argparse
 import logging
-import os.path
-import re
 import textwrap
 
 # Set logging defaults for all of COT
@@ -26,6 +24,8 @@ from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
 
 from coloredlogs import ColoredStreamHandler
+
+
 class COTStreamHandler(ColoredStreamHandler, object):
 
     def __init__(self, level=logging.DEBUG, **kwargs):
@@ -77,7 +77,7 @@ class COTStreamHandler(ColoredStreamHandler, object):
     def render_timestamp(self, created, msecs):
         import time
         return "%s.%03d" % (time.strftime('%H:%M:%S',
-                                         time.localtime(created)),
+                                          time.localtime(created)),
                             msecs)
 
     def render_name(self, name):
@@ -86,18 +86,17 @@ class COTStreamHandler(ColoredStreamHandler, object):
 COTHandler = COTStreamHandler()
 logging.getLogger('COT').addHandler(COTHandler)
 
+# Proceed with importing the rest of the needed modules now that logging is set
 
-# Proceed with importing the rest of the needed modules now that we have logging
-
-from COT import __version__, __version_long__
+from COT import __version_long__
 from COT.data_validation import InvalidInputError
-from COT.data_validation import *
 from COT.ui_shared import UI
 
 logger = logging.getLogger(__name__)
 
 # Where do we want to wrap lines when pretty-printing?
 TEXT_WIDTH = 79
+
 
 class CLI(UI):
     """Command-line user interface for COT"""
@@ -113,11 +112,9 @@ class CLI(UI):
         self.create_parser()
         self.create_subparsers()
 
-
     def run(self, argv):
         args = self.parse_args(argv)
         return self.main(args)
-
 
     def confirm(self, prompt):
         """Prompts user to confirm the requested operation, or auto-accepts if
@@ -142,7 +139,6 @@ class CLI(UI):
             else:
                 print("Please enter 'y' or 'n'")
 
-
     def get_input(self, prompt, default_value):
         """Prompt the user to enter a string, or auto-accepts the default if
         force is set to True."""
@@ -165,7 +161,6 @@ class CLI(UI):
         return getpass.getpass("Password for {0}@{1}: "
                                .format(username, host))
 
-
     def create_parser(self):
         # Top-level command definition and any global options
         parser = argparse.ArgumentParser(
@@ -178,8 +173,8 @@ class CLI(UI):
 A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
 with a focus on virtualized network appliances such as the Cisco CSR 1000V and
 Cisco IOS XRv platforms."""),
-            epilog=(
-"""Note: some subcommands rely on external software tools, including:
+            epilog=("""
+Note: some subcommands rely on external software tools, including:
 * qemu-img (http://www.qemu.org/)
 * mkisofs  (http://cdrecord.org/)
 * ovftool  (https://www.vmware.com/support/developer/ovf/)
@@ -196,13 +191,16 @@ Cisco IOS XRv platforms."""),
 
         parser.set_defaults(_verbosity=logging.INFO)
         debug_group = parser.add_mutually_exclusive_group()
-        debug_group.add_argument('-q', '--quiet', dest='_verbosity',
+        debug_group.add_argument(
+            '-q', '--quiet', dest='_verbosity',
             action='store_const', const=logging.WARNING,
             help="Quiet output and logging (warnings and errors only)")
-        debug_group.add_argument('-v', '--verbose', dest='_verbosity',
+        debug_group.add_argument(
+            '-v', '--verbose', dest='_verbosity',
             action='store_const', const=logging.VERBOSE,
             help="Verbose output and logging")
-        debug_group.add_argument('-vv', '-d', '--debug', dest='_verbosity',
+        debug_group.add_argument(
+            '-vv', '-d', '--debug', dest='_verbosity',
             action='store_const', const=logging.DEBUG,
             help="Debug (most verbose) output and logging")
 
@@ -214,7 +212,6 @@ Cisco IOS XRv platforms."""),
                                                 title="commands")
 
         self.subparser_lookup = {}
-
 
     def create_subparsers(self):
         from COT.add_disk import COTAddDisk
@@ -241,7 +238,7 @@ Cisco IOS XRv platforms."""),
     def parse_args(self, argv):
         # By now all subparsers have been created so we can safely set usage.
         # See comment above.
-        self.parser.usage=("""
+        self.parser.usage = ("""
   cot --help
   cot --version
   cot <command> --help
@@ -257,7 +254,6 @@ Cisco IOS XRv platforms."""),
         self.force = args.force
 
         return args
-
 
     def main(self, args):
         logging.getLogger('COT').setLevel(args._verbosity)
@@ -277,7 +273,7 @@ Cisco IOS XRv platforms."""),
             # as [[1, 2][3]] rather than the desired [1, 2, 3].
             # Flatten it back out before we pass it through to the submodule!
             if (isinstance(value, list) and
-                all(isinstance(v, list) for v in value)):
+                    all(isinstance(v, list) for v in value)):
                 arg_hash[arg] = [v for l in value for v in l]
         del arg_hash["_verbosity"]
         try:
@@ -307,6 +303,7 @@ Cisco IOS XRv platforms."""),
         # stack trace and exit - this is ugly so the more specific handling we
         # can provide, the better!
         return 0
+
 
 def main():
     CLI().run(sys.argv[1:])

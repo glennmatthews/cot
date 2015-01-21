@@ -20,9 +20,10 @@ import sys
 import textwrap
 
 from .submodule import COTSubmodule
-from .data_validation import ValueUnsupportedError, InvalidInputError
+from .data_validation import ValueUnsupportedError
 
 logger = logging.getLogger(__name__)
+
 
 class COTEditProperties(COTSubmodule):
 
@@ -53,7 +54,7 @@ class COTEditProperties(COTSubmodule):
         elif arg == "properties":
             for key_value_pair in value:
                 try:
-                    (k, v) = key_value_pair.split('=',1)
+                    (k, v) = key_value_pair.split('=', 1)
                     logger.debug("key: {0} value: {1}".format(k, v))
                     if k == '':
                         raise ValueError()
@@ -64,7 +65,6 @@ class COTEditProperties(COTSubmodule):
 
         return valid, value_or_reason
 
-
     def set_value(self, arg, value):
         super(COTEditProperties, self).set_value(arg, value)
         if arg == "properties" and value is not None:
@@ -74,7 +74,6 @@ class COTEditProperties(COTSubmodule):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
         return super(COTEditProperties, self).ready_to_run()
-
 
     def run(self):
         super(COTEditProperties, self).run()
@@ -89,7 +88,7 @@ class COTEditProperties(COTSubmodule):
 
         if properties is not None:
             for key_value_pair in properties:
-                (key, value) = key_value_pair.split('=',1)
+                (key, value) = key_value_pair.split('=', 1)
                 logger.debug("key: {0} value: {1}".format(key, value))
                 if value == '':
                     value = self.UI.get_input(
@@ -106,7 +105,6 @@ class COTEditProperties(COTSubmodule):
         if config_file is None and properties is None:
             # Interactive mode!
             self.edit_properties_interactive(vm)
-
 
     def edit_properties_interactive(self, vm):
         wrapper = textwrap.TextWrapper(initial_indent='',
@@ -147,7 +145,7 @@ class COTEditProperties(COTSubmodule):
             print("")
 
             while True:
-                new_value = self.UI.get_input("""New value for this property""",
+                new_value = self.UI.get_input("New value for this property",
                                               default_value=old_value)
                 if new_value == old_value:
                     print("(no change)")
@@ -183,23 +181,24 @@ read from. If neither are specified, the program will run interactively.""")
         p.add_argument('PACKAGE',
                        help="""OVF descriptor or OVA file to edit""")
 
-        group = p.add_argument_group("general options")
+        g = p.add_argument_group("general options")
 
-        group.add_argument('-h', '--help', action='help',
-                           help="""Show this help message and exit""")
-        group.add_argument('-o', '--output',
-                           help="""Name/path of new OVF/OVA package to create """
-                           """instead of updating the existing OVF""")
+        g.add_argument('-h', '--help', action='help',
+                       help="""Show this help message and exit""")
+        g.add_argument('-o', '--output',
+                       help="Name/path of new OVF/OVA package to create "
+                       "instead of updating the existing OVF")
 
-        group = p.add_argument_group("property setting options")
+        g = p.add_argument_group("property setting options")
 
-        group.add_argument('-c', '--config-file', help=
-"Read configuration CLI from this text file and generate generic properties "
-"for each line of CLI")
-        group.add_argument('-p', '--properties', action='append', nargs='+',
-                           metavar=('KEY1=VALUE1', 'KEY2=VALUE2'), help=
-"Set the given property key-value pair(s). This argument may be repeated "
-"as needed to specify multiple properties to edit.")
+        g.add_argument('-c', '--config-file',
+                       help="Read configuration CLI from this text file and "
+                       "generate generic properties for each line of CLI")
+        g.add_argument('-p', '--properties', action='append', nargs='+',
+                       metavar=('KEY1=VALUE1', 'KEY2=VALUE2'),
+                       help="Set the given property key-value pair(s). "
+                       "This argument may be repeated as needed to specify "
+                       "multiple properties to edit.")
 
         p.set_defaults(instance=self)
 

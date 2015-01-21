@@ -20,7 +20,7 @@ import sys
 
 from COT.tests.ut import COT_UT
 from COT.cli import CLI
-from COT.cli import mac_address, device_address
+from COT.data_validation import mac_address, device_address
 from argparse import ArgumentTypeError
 
 class TestCOTCLI(COT_UT):

@@ -20,11 +20,12 @@ import os.path
 import re
 import sys
 
-from .data_validation import *
-from .data_validation import ValueUnsupportedError, InvalidInputError
+from .data_validation import natural_sort, no_whitespace, mac_address
+from .data_validation import non_negative_int, positive_int
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
+
 
 class COTEditHardware(COTSubmodule):
     """Edit hardware information (CPUs, RAM, NICs, etc.)"""
@@ -72,8 +73,8 @@ class COTEditHardware(COTSubmodule):
                 value = str(value)
                 match = re.match(self.MEMORY_REGEXP, value)
                 if not match:
-                    return (False,
-                            "Could not parse memory string '{0}'".format(value))
+                    return (False, "Could not parse memory string '{0}'"
+                            .format(value))
                 mem_value = int(match.group(1))
                 if mem_value <= 0:
                     return False, "Memory must be greater than zero"
@@ -112,7 +113,6 @@ class COTEditHardware(COTSubmodule):
 
         return valid, value
 
-
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
@@ -130,32 +130,33 @@ class COTEditHardware(COTSubmodule):
                     "one hardware change")
         return super(COTEditHardware, self).ready_to_run()
 
-
     def run(self):
         super(COTEditHardware, self).run()
 
         profiles = self.get_value("profiles")
         virtual_system_type = self.get_value("virtual_system_type")
         if profiles is not None and virtual_system_type is not None:
-            self.UI.confirm_or_die("VirtualSystemType is not filtered by configuration "
-                                   "profile. Requested system type(s) '{0}' will be set "
-                                   "for ALL profiles, not just profile(s) {1}. Continue?"
-                                   .format(" ".join(virtual_system_type), profiles))
+            self.UI.confirm_or_die(
+                "VirtualSystemType is not filtered by configuration profile. "
+                "Requested system type(s) '{0}' will be set for ALL profiles, "
+                "not just profile(s) {1}. Continue?"
+                .format(" ".join(virtual_system_type), profiles))
 
         vm = self.vm
-
-        platform = vm.get_platform()
 
         if profiles is not None:
             profile_list = vm.get_configuration_profile_ids()
             for profile in profiles:
-                if not profile in profile_list:
-                    self.UI.confirm_or_die("Profile '{0}' does not exist. Create it?"
-                                           .format(profile))
-                    label = self.UI.get_input("Please enter a label for this "
-                                              "configuration profile", profile)
-                    desc = self.UI.get_input("Please enter a description for this "
-                                             "configuration profile", label)
+                if profile not in profile_list:
+                    self.UI.confirm_or_die(
+                        "Profile '{0}' does not exist. Create it?"
+                        .format(profile))
+                    label = self.UI.get_input(
+                        "Please enter a label for this configuration profile",
+                        profile)
+                    desc = self.UI.get_input(
+                        "Please enter a description for this "
+                        "configuration profile", label)
                     vm.create_configuration_profile(profile, label=label,
                                                     description=desc)
 
@@ -179,12 +180,10 @@ class COTEditHardware(COTSubmodule):
             nics_dict = vm.get_nic_count(profiles)
             for (profile, count) in nics_dict.items():
                 if nics < count:
-                    self.UI.confirm_or_die("Profile {0} currently has {1} NIC(s). "
-                                           "Delete {2} NIC(s) to reduce to "
-                                           "{3} total?"
-                                           .format(profile, count,
-                                                   (count - nics),
-                                                   nics))
+                    self.UI.confirm_or_die(
+                        "Profile {0} currently has {1} NIC(s). "
+                        "Delete {2} NIC(s) to reduce to {3} total?"
+                        .format(profile, count, (count - nics), nics))
             vm.set_nic_count(nics, profiles)
 
         nic_networks = self.get_value("nic_networks")
@@ -192,11 +191,12 @@ class COTEditHardware(COTSubmodule):
             existing_networks = vm.get_network_list()
             # Convert nic_networks to a set to merge duplicate entries
             for network in natural_sort(set(nic_networks)):
-                if not network in existing_networks:
-                    self.UI.confirm_or_die("Network {0} is not currently defined. "
-                                           "Create it?".format(network))
-                    desc = self.UI.get_input("Please enter a description for "
-                                             "this network", network)
+                if network not in existing_networks:
+                    self.UI.confirm_or_die(
+                        "Network {0} is not currently defined. "
+                        "Create it?".format(network))
+                    desc = self.UI.get_input(
+                        "Please enter a description for this network", network)
                     vm.create_network(network, desc)
             vm.set_nic_networks(nic_networks, profiles)
 
@@ -217,7 +217,7 @@ class COTEditHardware(COTSubmodule):
                         "Profile {0} currently has {1} serial port(s). "
                         "Delete {2} port(s) to reduce to {3} total?"
                         .format(profile, count, (count - serial_ports),
-                            serial_ports))
+                                serial_ports))
             vm.set_serial_count(serial_ports, profiles)
 
         serial_connectivity = self.get_value("serial_connectivity")
@@ -226,8 +226,9 @@ class COTEditHardware(COTSubmodule):
             for (profile, count) in serial_dict.items():
                 if len(serial_connectivity) < count:
                     self.UI.confirm_or_die(
-                        "There are {0} serial port(s) under profile {1}, but you "
-                        "have specified connectivity information for only {2}. "
+                        "There are {0} serial port(s) under profile {1}, but "
+                        "you have specified connectivity information for only "
+                        "{2}. "
                         "\nThe remaining ports will be unreachable. Continue?"
                         .format(count, profile,
                                 len(serial_connectivity)))
@@ -240,7 +241,6 @@ class COTEditHardware(COTSubmodule):
         ide_subtype = self.get_value("ide_subtype")
         if ide_subtype is not None:
             vm.set_ide_subtype(ide_subtype, profiles)
-
 
     def create_subparser(self, parent):
         p = parent.add_parser(
@@ -258,8 +258,8 @@ class COTEditHardware(COTSubmodule):
                            [--scsi-subtype SCSI_SUBTYPE]
                            [--ide-subtype IDE_SUBTYPE]"""
                    .format(os.path.basename(sys.argv[0]))),
-            help="""Edit virtual machine hardware properties of an OVF""",
-            description="""Edit hardware properties of the specified OVF or OVA""",
+            help="Edit virtual machine hardware properties of an OVF",
+            description="Edit hardware properties of the specified OVF or OVA",
             epilog="""
 Examples:
 
@@ -267,8 +267,8 @@ Examples:
         --profile 1CPU-4GB --cpus 1 --memory 4GB
     Create a new profile named "1CPU-4GB" with 1 CPU and 4 GB of RAM
 
-  {0} edit-hardware input.ova -o output.ova --nic-names 'management' 'eth{{0}}'
-    Rename the NICs in the output OVA as 'management', 'eth0', 'eth1', 'eth2'...
+  {0} edit-hardware input.ova -o output.ova --nic-names 'mgmt' 'eth{{0}}'
+    Rename the NICs in the output OVA as 'mgmt', 'eth0', 'eth1', 'eth2'...
 
   {0} edit-hardware input.ova -o output.ova --nic-names 'Ethernet0/{{10}}'
     Rename the NICs in the output OVA as 'Ethernet0/10', 'Ethernet0/11',
@@ -276,88 +276,88 @@ Examples:
 
     """.format(os.path.basename(sys.argv[0])))
 
-        group = p.add_argument_group("general options")
+        g = p.add_argument_group("general options")
 
-        group.add_argument('-h', '--help', action='help',
-                           help="""Show this help message and exit""")
-        group.add_argument('-o', '--output',
-                           help="""Name/path of new OVF/OVA package to create """
-                           """instead of updating the existing OVF""")
-        group.add_argument('-v', '--virtual-system-type', nargs='+',
-                           type=no_whitespace, metavar=('TYPE', 'TYPE2'),
-                           help="""Change virtual system type(s) supported by """
-                           """this OVF/OVA package.""")
-        group.add_argument('-p', '--profiles', nargs='+', type=no_whitespace,
-                           metavar=('PROFILE', 'PROFILE2'),
-                           help="""Make hardware changes only under the given """
-                           """configuration profile(s). (default: changes apply """
-                           """to all profiles)""")
+        g.add_argument('-h', '--help', action='help',
+                       help="Show this help message and exit")
+        g.add_argument('-o', '--output',
+                       help="Name/path of new OVF/OVA package to create "
+                       "instead of updating the existing OVF")
+        g.add_argument('-v', '--virtual-system-type', nargs='+',
+                       type=no_whitespace, metavar=('TYPE', 'TYPE2'),
+                       help="Change virtual system type(s) supported by "
+                       "this OVF/OVA package.")
+        g.add_argument('-p', '--profiles', nargs='+', type=no_whitespace,
+                       metavar=('PROFILE', 'PROFILE2'),
+                       help="Make hardware changes only under the given "
+                       "configuration profile(s). (default: changes apply "
+                       "to all profiles)")
 
-        group = p.add_argument_group("computational hardware options")
+        g = p.add_argument_group("computational hardware options")
 
-        group.add_argument('-c', '--cpus', type=positive_int,
-                       help="""Set the number of CPUs.""")
-        group.add_argument('-m', '--memory',
-                           help="""Set the amount of RAM. """
-                           """(Examples: "4096MB", "4GB")""")
+        g.add_argument('-c', '--cpus', type=positive_int,
+                       help="Set the number of CPUs.")
+        g.add_argument('-m', '--memory',
+                       help="Set the amount of RAM. "
+                       '(Examples: "4096MB", "4GB")')
 
-        group = p.add_argument_group("network interface options")
+        g = p.add_argument_group("network interface options")
 
-        group.add_argument('-n', '--nics', type=non_negative_int,
-                           help="""Set the number of NICs.""")
-        group.add_argument('--nic-type',
-                           choices=['e1000', 'virtio', 'vmxnet3'],
-                           help="""Set the hardware type for all NICs. """
-                           """(default: do not change existing NICs, and new """
-                           """NICs added will match the existing type.)""")
-        group.add_argument('-N', '--nic-networks', nargs='+',
-                           metavar=('NETWORK', 'NETWORK2'),
-                           help="""Specify a series of one or more network names """
-                           """to map NICs to. If N network names are specified, """
-                           """the first (N-1) NICs will be mapped to the first """
-                           """(N-1) networks and all remaining NICs will be """
-                           """mapped to the Nth network.""")
-        group.add_argument('-M', '--mac-addresses-list', type=mac_address,
-                           metavar=('MAC1', 'MAC2'), nargs='+',
-                           help="""Specify a list of MAC addresses for the NICs. """
-                           """If N MACs are specified, the first (N-1) NICs """
-                           """will receive the first (N-1) MACs, and all """
-                           """remaining NICs will receive the Nth MAC""")
-        group.add_argument('--nic-names', nargs='+',
-                           metavar=('NAME1', 'NAME2'),
-                           help="""Specify a list of one or more NIC names or """
-                           """patterns to apply to NIC devices. """
-                           """If N names/patterns are specified, the first (N-1) """
-                           """NICs will receive the first (N-1) names and """
-                           """remaining NICs will be named based on the """
-                           """name or pattern of the Nth item. See examples.""")
+        g.add_argument('-n', '--nics', type=non_negative_int,
+                       help="Set the number of NICs.")
+        g.add_argument('--nic-type',
+                       choices=['e1000', 'virtio', 'vmxnet3'],
+                       help="Set the hardware type for all NICs. "
+                       "(default: do not change existing NICs, and new "
+                       "NICs added will match the existing type.)")
+        g.add_argument('-N', '--nic-networks', nargs='+',
+                       metavar=('NETWORK', 'NETWORK2'),
+                       help="Specify a series of one or more network names "
+                       "to map NICs to. If N network names are specified, "
+                       "the first (N-1) NICs will be mapped to the first "
+                       "(N-1) networks and all remaining NICs will be "
+                       "mapped to the Nth network.")
+        g.add_argument('-M', '--mac-addresses-list', type=mac_address,
+                       metavar=('MAC1', 'MAC2'), nargs='+',
+                       help="Specify a list of MAC addresses for the NICs. "
+                       "If N MACs are specified, the first (N-1) NICs "
+                       "will receive the first (N-1) MACs, and all "
+                       "remaining NICs will receive the Nth MAC")
+        g.add_argument('--nic-names', nargs='+',
+                       metavar=('NAME1', 'NAME2'),
+                       help="Specify a list of one or more NIC names or "
+                       "patterns to apply to NIC devices. "
+                       "If N names/patterns are specified, the first (N-1) "
+                       "NICs will receive the first (N-1) names and "
+                       "remaining NICs will be named based on the "
+                       "name or pattern of the Nth item. See examples.")
 
-        group = p.add_argument_group("serial port options")
+        g = p.add_argument_group("serial port options")
 
-        group.add_argument('-s', '--serial-ports', type=non_negative_int,
-                           help="""Set the number of serial ports.""")
-        group.add_argument('-S', '--serial-connectivity',
-                           metavar=('URI1', 'URI2'), nargs='+',
-                           help="""Specify a series of connectivity strings """
-                           """(URIs such as "telnet://localhost:9101") to map """
-                           """serial ports to. If fewer URIs than serial ports """
-                           """are specified, the remaining ports will be """
-                           """unmapped.""")
+        g.add_argument('-s', '--serial-ports', type=non_negative_int,
+                       help="Set the number of serial ports.")
+        g.add_argument('-S', '--serial-connectivity',
+                       metavar=('URI1', 'URI2'), nargs='+',
+                       help="Specify a series of connectivity strings "
+                       '(URIs such as "telnet://localhost:9101") to map '
+                       "serial ports to. If fewer URIs than serial ports "
+                       "are specified, the remaining ports will be "
+                       "unmapped.""")
 
-        group = p.add_argument_group("disk and disk controller options")
+        g = p.add_argument_group("disk and disk controller options")
 
-        group.add_argument('--scsi-subtype',
-                           help="""Set resource subtype (such as "lsilogic" or """
-                           """"virtio") for all SCSI controllers. If an empty """
-                           """string is provided, any existing subtype will be """
-                           """removed.""")
-        group.add_argument('--ide-subtype',
-                           help="""Set resource subtype (such as "virtio") for """
-                           """all IDE controllers. If an empty string is """
-                           """provided, any existing subtype will be removed.""")
+        g.add_argument('--scsi-subtype',
+                       help='Set resource subtype (such as "lsilogic" or '
+                       '"virtio") for all SCSI controllers. If an empty '
+                       "string is provided, any existing subtype will be "
+                       "removed.")
+        g.add_argument('--ide-subtype',
+                       help='Set resource subtype (such as "virtio") for '
+                       "all IDE controllers. If an empty string is "
+                       "provided, any existing subtype will be removed.")
 
         p.add_argument('PACKAGE',
-                       help="""OVF descriptor or OVA file to edit""")
+                       help="OVF descriptor or OVA file to edit")
         p.set_defaults(instance=self)
 
         return 'edit-hardware', p
