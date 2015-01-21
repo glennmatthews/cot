@@ -1,7 +1,7 @@
 Common OVF Tool (COT)
 =====================
 
-[![build status](https://api.travis-ci.org/glennmatthews/cot.svg?branch=master)](https://travis-ci.org/glennmatthews/cot)
+[![build status](https://api.travis-ci.org/glennmatthews/cot.svg?branch=master)](https://travis-ci.org/glennmatthews/cot) [![Coverage Status](https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=feature%2Fmodule_ut)](https://coveralls.io/r/glennmatthews/cot?branch=feature%2Fmodule_ut)
 
 COT (the Common OVF Tool) is a tool for editing
 [Open Virtualization Format](http://dmtf.org/standards/ovf)
@@ -69,7 +69,7 @@ Installation
 ============
 
 Refer to the included
-[INSTALL.md](https://github.com/glennmatthews/cot/blob/master/INSTALL.md)
+[INSTALL.md](INSTALL.md)
 for installation instructions, including how to download COT to your system.
 
 Examples

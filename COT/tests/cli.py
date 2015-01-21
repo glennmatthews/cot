@@ -14,13 +14,54 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import os
 import os.path
+import sys
 
 from COT.tests.ut import COT_UT
+from COT.cli import CLI
 from COT.cli import mac_address, device_address
 from argparse import ArgumentTypeError
 
-class TestCLIGeneral(COT_UT):
+class TestCOTCLI(COT_UT):
+    """Parent class for CLI test cases"""
+
+    def setUp(self):
+        """Test case setup function called automatically prior to each test"""
+        self.cli = CLI()
+        super(TestCOTCLI, self).setUp()
+
+
+    def call_cot(self, argv, result=0, fixup_args=True):
+        """Invoke COT CLI with the specified arguments, suppressing stdout and
+        stderr, and return its return code"""
+        rc = -1
+        if fixup_args:
+            argv = ['--quiet'] + argv
+        try:
+            with open(os.devnull, 'w') as devnull:
+                sys.stdin = devnull
+                sys.stdout = devnull
+                sys.stderr = devnull
+                rc = self.cli.run(argv)
+        except SystemExit as se:
+            sys.stdin = sys.__stdin__
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+            rc = se.code
+            try:
+                rc = int(rc)
+            except TypeError:
+                rc = 1
+        finally:
+            sys.stdin = sys.__stdin__
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+
+        self.assertEqual(rc, result)
+
+
+class TestCLIGeneral(TestCOTCLI):
     """CLI Test cases for top-level "cot" command"""
 
     def test_help(self):
@@ -40,10 +81,10 @@ class TestCLIGeneral(COT_UT):
         # No args at all
         self.call_cot([], result=2)
         # Optional args but no subcommand
-        self.call_cot(['-f', '-vvv'], result=2)
+        self.call_cot(['-f', '-v'], fixup_args=False, result=2)
 
 
-class TestCLIAddDisk(COT_UT):
+class TestCLIAddDisk(TestCOTCLI):
     """CLI test cases for "cot add-disk" command"""
 
     def test_help(self):
@@ -122,7 +163,7 @@ class TestCLIAddDisk(COT_UT):
                       result=2)
 
 
-class TestCLIAddFile(COT_UT):
+class TestCLIAddFile(TestCOTCLI):
     """CLI test cases for "cot add-file" command"""
 
     def test_help(self):
@@ -154,7 +195,7 @@ class TestCLIAddFile(COT_UT):
                       result=2)
 
 
-class TestCLIEditHardware(COT_UT):
+class TestCLIEditHardware(TestCOTCLI):
     """CLI test cases for "cot edit-hardware" command"""
 
     def test_help(self):
@@ -196,7 +237,7 @@ class TestCLIEditHardware(COT_UT):
         self.call_cot(base_args + ['--nic_type', 'GLENN'], result=2)
 
 
-class TestCLIEditProduct(COT_UT):
+class TestCLIEditProduct(TestCOTCLI):
     """CLI test cases for "cot edit-product" command"""
 
     def test_help(self):
@@ -216,7 +257,7 @@ class TestCLIEditProduct(COT_UT):
         self.call_cot(['edit-product', self.input_ovf, '-V', '-v'], result=2)
 
 
-class TestCLIEditProperties(COT_UT):
+class TestCLIEditProperties(TestCOTCLI):
     """CLI test cases for "cot edit-properties" command"""
 
     def test_help(self):
@@ -249,7 +290,43 @@ class TestCLIEditProperties(COT_UT):
                        '=foo'], result=2)
 
 
-class TestCLIInfo(COT_UT):
+    def test_set_property_valid(self):
+        """Various methods of property setting, exercising CLI nargs/append"""
+
+        for args in (['-p', 'login-username=admin', # Individual
+                      '-p', 'login-password=cisco123',
+                      '-p', 'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin', # All for one
+                            'login-password=cisco123',
+                            'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin', # Mixed!
+                      '-p', 'login-password=cisco123',
+                            'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin', # Differently mixed!
+                            'login-password=cisco123',
+                      '-p', 'enable-ssh-server=1']):
+            self.call_cot(['edit-properties', self.input_ovf,
+                           '-o', self.temp_file] + args)
+            self.check_diff(
+"""
+       <ovf:Category>1. Bootstrap Properties</ovf:Category>
+-      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
+         <ovf:Label>Login Username</ovf:Label>
+...
+       </ovf:Property>
+-      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="cisco123">
+         <ovf:Label>Login Password</ovf:Label>
+...
+       <ovf:Category>2. Features</ovf:Category>
+-      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
++      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="true">
+         <ovf:Label>Enable SSH Login</ovf:Label>
+""")
+
+
+class TestCLIInfo(TestCOTCLI):
     """CLI test cases for "cot info" command"""
 
     def test_help(self):
@@ -257,7 +334,7 @@ class TestCLIInfo(COT_UT):
         self.call_cot(['info', "-h"])
 
 
-class TestCLIInjectConfig(COT_UT):
+class TestCLIInjectConfig(TestCOTCLI):
     """CLI test cases for "cot inject-config" command"""
 
     def test_help(self):
@@ -279,7 +356,7 @@ class TestCLIInjectConfig(COT_UT):
         self.call_cot(['inject-config', self.input_ovf,
                        '-s', '/foo'], result=2)
 
-class TestCLIDeploy(COT_UT):
+class TestCLIDeploy(TestCOTCLI):
     """CLI test cases for "cot deploy" command"""
 
     def test_help(self):
@@ -297,7 +374,7 @@ class TestCLIDeploy(COT_UT):
         self.call_cot(['deploy', self.input_ovf, 'MyHypervisor'], result=2)
 
 
-class TestCLIDeployESXi(COT_UT):
+class TestCLIDeployESXi(TestCOTCLI):
     """CLI test cases for 'cot deploy PACKAGE esxi' command"""
 
     def test_help(self):

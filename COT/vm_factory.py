@@ -3,7 +3,7 @@
 # vm_factory.py - Factory for virtual machine objects
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,11 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import atexit
 import logging
 import os
-import shutil
-import tempfile
 
 from .ovf import OVF
 from .vm_description import VMInitError
@@ -61,22 +58,9 @@ class VMFactory:
                                   .format(output_file, e.expected_value,
                                           vm_class.__name__))
 
-        tempdir = tempfile.mkdtemp(prefix="cot")
-        logger.debug("Temporary directory for VM created from {0}: {1}"
-                     .format(input_file, tempdir))
-        try:
-            logger.info("Loading '{0}' as {1}".format(input_file,
-                                                      vm_class.__name__))
-            vm = vm_class(input_file, tempdir, output_file)
-        except Exception as e:
-            shutil.rmtree(tempdir)
-            raise
+        logger.info("Loading '{0}' as {1}".format(input_file,
+                                                  vm_class.__name__))
+        vm = vm_class(input_file, output_file)
         logger.debug("Loaded VM object from {0}".format(input_file))
 
-        def cleanup():
-            if os.path.exists(tempdir):
-                logger.debug("Removing temporary directory "+ tempdir)
-                shutil.rmtree(tempdir)
-
-        atexit.register(cleanup)
         return vm

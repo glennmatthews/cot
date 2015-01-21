@@ -120,156 +120,159 @@ class OVF(VMDescription, XML):
         raise ValueUnsupportedError("filename", filename, ('.ovf', '.ova'))
 
 
-    def __init__(self, input_file, working_dir, output_file):
+    def __init__(self, input_file, output_file):
         """Open the specified OVF and read its XML into memory.
         Note that an output_file of None means we're operating as read-only,
         while an output_file of "" means we plan to write but don't know where.
         """
 
-        super(OVF, self).__init__(input_file, working_dir, output_file)
+        super(OVF, self).__init__(input_file, output_file)
 
-        # Make sure we can write the requested output format, or abort:
-        if output_file:
-            self.detect_type_from_name(output_file)
-
-        # Make sure we know how to read the input
-        extension = self.detect_type_from_name(input_file)
-        if extension == '.ova':
-            # Untar the ova to our working directory
-            self.ovf_descriptor = self.untar(input_file)
-        elif extension == '.ovf':
-            self.ovf_descriptor = input_file
-        else:
-            # We should never get here, but be safe...
-            raise VMInitError(2,
-                              "File {0} does not appear to be an OVA or OVF"
-                              .format(input_file))
-
-        # Open the provided OVF
         try:
-            self.read_xml(self.ovf_descriptor)
-        except ParseError as e:
-            raise VMInitError(2, "XML parser error in reading {0}: {1}"
-                              .format(self.ovf_descriptor, str(e)))
+            # Make sure we can write the requested output format, or abort:
+            if output_file:
+                self.detect_type_from_name(output_file)
 
-        # Quick sanity check before we go any further:
-        if ((not re.search("Envelope", self.root.tag)) or
-            (XML.strip_ns(self.root.tag) != 'Envelope')):
-            raise VMInitError(
-                2,
-                "File {0} does not appear to be an OVF descriptor - "
-                "expected top-level element {1} but found {2} "
-                "instead!".format(self.ovf_descriptor, 'Envelope',
-                                  self.root.tag))
+            # Make sure we know how to read the input
+            extension = self.detect_type_from_name(input_file)
+            if extension == '.ova':
+                # Untar the ova to our working directory
+                self.ovf_descriptor = self.untar(input_file)
+            elif extension == '.ovf':
+                self.ovf_descriptor = input_file
+            else:
+                # We should never get here, but be safe...
+                raise VMInitError(2,
+                                  "File {0} does not appear to be an OVA or OVF"
+                                  .format(input_file))
 
-        root_namespace = XML.get_ns(self.root.tag)
-        logger.verbose("Root namespace is " + root_namespace)
-        if root_namespace == 'http://www.vmware.com/schema/ovf/1/envelope':
-            logger.info("OVF version is 0.9")
-            self.ovf_version = 0.9
-        elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/1':
-            logger.info("OVF version is 1.x")
-            self.ovf_version = 1.0
-        elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/2':
-            logger.info("OVF version is 2.x")
-            self.ovf_version = 2.0
-        else:
-            raiseVMInitError(
-                2,
-                "File {0} has an Envelope but it is in unknown namespace {1}"
-                .format(self.ovf_descriptor, root_namespace))
-        self.name_helper = OVFNameHelper(self.ovf_version)
+            # Open the provided OVF
+            try:
+                self.read_xml(self.ovf_descriptor)
+            except ParseError as e:
+                raise VMInitError(2, "XML parser error in reading {0}: {1}"
+                                  .format(self.ovf_descriptor, str(e)))
 
-        # Some OVF sources are lazy about their XML namespacing, treating the
-        #"OVF" namespace as default but not explicitly declaring it as such.
-        # So fix things up if necessary:
-        try:
-            for elem in self.root.iter():
-                # A namespaced element will have its namespace prepended
-                # to the tag like so:
-                # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
-                if elem.tag[0] != '{':
-                    logger.debug("Fixing up missing namespace for element {0}"
-                                 .format(elem.tag))
-                    elem.tag = self.OVF + elem.tag
-        except AttributeError:
-            # 2.6 has getiterator() but not iter()
-            for elem in self.root.getiterator():
-                # A namespaced element will have its namespace prepended
-                # to the tag like so:
-                # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
-                if elem.tag[0] != '{':
-                    logger.debug("Fixing up missing namespace for element {0}"
-                                 .format(elem.tag))
-                    elem.tag = self.OVF + elem.tag
+            # Quick sanity check before we go any further:
+            if ((not re.search("Envelope", self.root.tag)) or
+                (XML.strip_ns(self.root.tag) != 'Envelope')):
+                raise VMInitError(
+                    2,
+                    "File {0} does not appear to be an OVF descriptor - "
+                    "expected top-level element {1} but found {2} "
+                    "instead!".format(self.ovf_descriptor, 'Envelope',
+                                      self.root.tag))
 
-        for (prefix, URI) in self.NSM.items():
-            self.register_namespace(prefix, URI)
+            root_namespace = XML.get_ns(self.root.tag)
+            logger.verbose("Root namespace is " + root_namespace)
+            if root_namespace == 'http://www.vmware.com/schema/ovf/1/envelope':
+                logger.info("OVF version is 0.9")
+                self.ovf_version = 0.9
+            elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/1':
+                logger.info("OVF version is 1.x")
+                self.ovf_version = 1.0
+            elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/2':
+                logger.info("OVF version is 2.x")
+                self.ovf_version = 2.0
+            else:
+                raiseVMInitError(
+                    2,
+                    "File {0} has an Envelope but it is in unknown namespace {1}"
+                    .format(self.ovf_descriptor, root_namespace))
+            self.name_helper = OVFNameHelper(self.ovf_version)
 
-        # Register additional non-standard namespaces we're aware of:
-        self.register_namespace('vmw', "http://www.vmware.com/schema/ovf")
+            # Some OVF sources are lazy about their XML namespacing, treating the
+            #"OVF" namespace as default but not explicitly declaring it as such.
+            # So fix things up if necessary:
+            try:
+                for elem in self.root.iter():
+                    # A namespaced element will have its namespace prepended
+                    # to the tag like so:
+                    # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
+                    if elem.tag[0] != '{':
+                        logger.debug("Fixing up missing namespace for element {0}"
+                                     .format(elem.tag))
+                        elem.tag = self.OVF + elem.tag
+            except AttributeError:
+                # 2.6 has getiterator() but not iter()
+                for elem in self.root.getiterator():
+                    # A namespaced element will have its namespace prepended
+                    # to the tag like so:
+                    # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
+                    if elem.tag[0] != '{':
+                        logger.debug("Fixing up missing namespace for element {0}"
+                                     .format(elem.tag))
+                        elem.tag = self.OVF + elem.tag
 
-        # Go ahead and set pointers to some of the most useful XML sections
-        self.envelope = self.root
-        self.references = self.find_child(self.envelope, self.REFERENCES,
-                                          required=True)
-        self.disk_section = self.find_child(self.envelope,
-                                            self.DISK_SECTION,
-                                            attrib=self.DISK_SECTION_ATTRIB)
-        self.network_section = self.find_child(
-            self.envelope,
-            self.NETWORK_SECTION,
-            attrib=self.NETWORK_SECTION_ATTRIB)
-        self.deploy_opt_section = self.find_child(self.envelope,
-                                                  self.DEPLOY_OPT_SECTION,
-                                                  required=False)
-        self.virtual_system = self.find_child(self.envelope,
-                                              self.VIRTUAL_SYSTEM,
-                                              attrib=self.VIRTUAL_SYSTEM_ATTRIB,
+            for (prefix, URI) in self.NSM.items():
+                self.register_namespace(prefix, URI)
+
+            # Register additional non-standard namespaces we're aware of:
+            self.register_namespace('vmw', "http://www.vmware.com/schema/ovf")
+
+            # Go ahead and set pointers to some of the most useful XML sections
+            self.envelope = self.root
+            self.references = self.find_child(self.envelope, self.REFERENCES,
                                               required=True)
-        self.product_section = self.find_child(self.virtual_system,
-                                               self.PRODUCT_SECTION)
-        self.annotation_section = self.find_child(
-            self.virtual_system,
-            self.ANNOTATION_SECTION,
-            attrib=self.ANNOTATION_SECTION_ATTRIB)
-        self.virtual_hw_section = self.find_child(
-            self.virtual_system,
-            self.VIRTUAL_HW_SECTION,
-            attrib=self.VIRTUAL_HW_SECTION_ATTRIB,
-            required=True)
+            self.disk_section = self.find_child(self.envelope,
+                                                self.DISK_SECTION,
+                                                attrib=self.DISK_SECTION_ATTRIB)
+            self.network_section = self.find_child(
+                self.envelope,
+                self.NETWORK_SECTION,
+                attrib=self.NETWORK_SECTION_ATTRIB)
+            self.deploy_opt_section = self.find_child(self.envelope,
+                                                      self.DEPLOY_OPT_SECTION,
+                                                      required=False)
+            self.virtual_system = self.find_child(self.envelope,
+                                                  self.VIRTUAL_SYSTEM,
+                                                  attrib=self.VIRTUAL_SYSTEM_ATTRIB,
+                                                  required=True)
+            self.product_section = self.find_child(self.virtual_system,
+                                                   self.PRODUCT_SECTION)
+            self.annotation_section = self.find_child(
+                self.virtual_system,
+                self.ANNOTATION_SECTION,
+                attrib=self.ANNOTATION_SECTION_ATTRIB)
+            self.virtual_hw_section = self.find_child(
+                self.virtual_system,
+                self.VIRTUAL_HW_SECTION,
+                attrib=self.VIRTUAL_HW_SECTION_ATTRIB,
+                required=True)
 
-        # Initialize various caches
-        self.configuration_profiles = []
+            # Initialize various caches
+            self.configuration_profiles = []
 
-        try:
-            self.hardware = OVFHardware(self)
-        except OVFHardwareDataError as e:
-            raise VMInitError(1, "OVF descriptor is invalid: {0}".format(e))
+            try:
+                self.hardware = OVFHardware(self)
+            except OVFHardwareDataError as e:
+                raise VMInitError(1, "OVF descriptor is invalid: {0}".format(e))
 
-        self.get_platform()
+            self.get_platform()
 
-        # Check any file references in the ovf descriptor
-        self.validate_file_references()
+            # Check any file references in the ovf descriptor
+            self.validate_file_references()
 
-        if (self.output_file is not None and
-            os.path.dirname(self.ovf_descriptor) != self.working_dir):
-            # Copy all referenced files to the working directory
-            # Not needed if we're in read-only mode (no output_file)
-            input_dir = os.path.dirname(self.ovf_descriptor)
-            for file in self.find_all_children(self.references, self.FILE):
-                filepath = os.path.join(input_dir, file.get(self.FILE_HREF))
-                if not os.path.exists(filepath):
-                    logger.warning("File '{0}' referenced in the OVF does not "
-                                   "exist. It will not be copied to the "
-                                   "working directory '{1}'."
-                                   .format(file.get(self.FILE_HREF),
-                                           self.working_dir))
-                    continue
-                logger.debug("Copying {0} to {1}"
-                            .format(filepath, self.working_dir))
-                shutil.copy(filepath, self.working_dir)
-
+            if (self.output_file is not None and
+                os.path.dirname(self.ovf_descriptor) != self.working_dir):
+                # Copy all referenced files to the working directory
+                # Not needed if we're in read-only mode (no output_file)
+                input_dir = os.path.dirname(self.ovf_descriptor)
+                for file in self.find_all_children(self.references, self.FILE):
+                    filepath = os.path.join(input_dir, file.get(self.FILE_HREF))
+                    if not os.path.exists(filepath):
+                        logger.warning("File '{0}' referenced in the OVF does not "
+                                       "exist. It will not be copied to the "
+                                       "working directory '{1}'."
+                                       .format(file.get(self.FILE_HREF),
+                                               self.working_dir))
+                        continue
+                    logger.debug("Copying {0} to {1}"
+                                .format(filepath, self.working_dir))
+                    shutil.copy(filepath, self.working_dir)
+        except Exception as e:
+            self.destroy()
+            raise
 
     def set_output_file(self, output_file):
         # Make sure we can write the requested output format, or abort:

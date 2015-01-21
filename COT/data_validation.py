@@ -19,9 +19,8 @@ import sys
 import re
 
 def to_string(obj):
-    """String representation of an object. Has special-case handling for XML
-    ElementTree objects"""
-    if isinstance(obj, ET.Element):
+    """String representation of an object. Special-case for XML Element"""
+    if ET.iselement(obj):
         return ET.tostring(obj)
     else:
         return str(obj)

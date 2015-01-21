@@ -15,10 +15,9 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import unittest
-import subprocess
 from difflib import unified_diff
-from os import devnull
 import os.path
+import glob
 import tempfile
 import shutil
 import re
@@ -85,39 +84,6 @@ class COT_UT(unittest.TestCase):
                       .format(file1, file2, expected, clean_diff))
 
 
-    def call_no_output(self, argv, result=0):
-        """Like subprocess.call, but suppress stdout and stderr by default"""
-        p = subprocess.Popen(argv, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-        self.assertEqual(result, p.returncode,
-                         "expected return code {0} when calling '{1}'\n"
-                         "but got {2}:\n{3}\n{4}"
-                         .format(result,
-                                 " ".join(argv),
-                                 p.returncode,
-                                 stdout.decode(),
-                                 stderr.decode()))
-        return p.returncode
-
-
-    def call_cot(self, argv, result=0):
-        """Invoke cot with the specified arguments, suppressing stdout and
-        stderr, and return its return code"""
-        argv = ["python", os.path.join(os.path.dirname(__file__),
-                                       "..", "..", "bin", "cot")] + argv
-        import glob
-        tmps = set(glob.glob(os.path.join("/tmp", "cot*")))
-        rc = self.call_no_output(argv, result)
-        tmps2 = set(glob.glob(os.path.join("/tmp", "cot*")))
-        delta = tmps2 - tmps
-        if delta:
-            self.fail("Temp directory(s) {0} left over after calling '{1}'!"
-                      .format(delta, " ".join(argv)))
-        return rc
-
-
     def setUp(self):
         """Test case setup function called automatically prior to each test"""
         # keep log messages from interfering with our tests
@@ -143,10 +109,16 @@ class COT_UT(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
         logger.debug("Created temp dir {0}".format(self.temp_dir))
+        # Monitor the global temp directory to make sure COT cleans up
+        self.tmps=set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
 
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test"""
+
+        if hasattr(self, 'instance'):
+            self.instance.destroy()
+            self.instance = None
 
         if COT_UT.OVFTOOL_PRESENT and os.path.exists(self.temp_file):
             # Ask OVFtool to validate that the output file is sane
@@ -167,6 +139,12 @@ class COT_UT(unittest.TestCase):
             shutil.rmtree(self.temp_dir)
         self.temp_dir = None
         self.temp_file = None
+
+        tmps2 = set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
+        delta = tmps2 - self.tmps
+        if delta:
+            self.fail("Temp directory(s) {0} left over after test!"
+                      .format(delta))
 
         # Let's try to keep things lean...
         delta_t = time.time() - self.start_time
