@@ -20,8 +20,7 @@ import sys
 
 from COT.tests.ut import COT_UT
 from COT.cli import CLI
-from COT.cli import mac_address, device_address
-from argparse import ArgumentTypeError
+
 
 class TestCOTCLI(COT_UT):
     """Parent class for CLI test cases"""
@@ -30,7 +29,6 @@ class TestCOTCLI(COT_UT):
         """Test case setup function called automatically prior to each test"""
         self.cli = CLI()
         super(TestCOTCLI, self).setUp()
-
 
     def call_cot(self, argv, result=0, fixup_args=True):
         """Invoke COT CLI with the specified arguments, suppressing stdout and
@@ -69,12 +67,10 @@ class TestCLIGeneral(TestCOTCLI):
         self.call_cot(['-h'])
         self.call_cot(['--help'])
 
-
     def test_version(self):
         """Verifying --version command"""
         self.call_cot(['-V'])
         self.call_cot(['--version'])
-
 
     def test_incomplete_cli(self):
         """Verifying command with no subcommand is not valid"""
@@ -90,7 +86,6 @@ class TestCLIAddDisk(TestCOTCLI):
     def test_help(self):
         """Verifying help menu"""
         self.call_cot(['add-disk', "-h"])
-
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
@@ -170,7 +165,6 @@ class TestCLIAddFile(TestCOTCLI):
         """Verifying help menu"""
         self.call_cot(['add-file', "-h"])
 
-
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
@@ -201,7 +195,6 @@ class TestCLIEditHardware(TestCOTCLI):
     def test_help(self):
         """Verifying help menu"""
         self.call_cot(['edit-hardware', "-h"])
-
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
@@ -244,7 +237,6 @@ class TestCLIEditProduct(TestCOTCLI):
         """Verifying help menu"""
         self.call_cot(['edit-product', "-h"])
 
-
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
         # No VM specified
@@ -263,7 +255,6 @@ class TestCLIEditProperties(TestCOTCLI):
     def test_help(self):
         """Verifying help menu"""
         self.call_cot(['edit-properties', '-h'])
-
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
@@ -289,39 +280,45 @@ class TestCLIEditProperties(TestCOTCLI):
         self.call_cot(['edit-properties', self.input_ovf, '--properties',
                        '=foo'], result=2)
 
-
     def test_set_property_valid(self):
         """Various methods of property setting, exercising CLI nargs/append"""
 
-        for args in (['-p', 'login-username=admin', # Individual
+        for args in (['-p', 'login-username=admin',   # Individual
                       '-p', 'login-password=cisco123',
                       '-p', 'enable-ssh-server=1'],
-                     ['-p', 'login-username=admin', # All for one
+                     ['-p', 'login-username=admin',   # All for one
                             'login-password=cisco123',
                             'enable-ssh-server=1'],
-                     ['-p', 'login-username=admin', # Mixed!
+                     ['-p', 'login-username=admin',   # Mixed!
                       '-p', 'login-password=cisco123',
                             'enable-ssh-server=1'],
-                     ['-p', 'login-username=admin', # Differently mixed!
+                     ['-p', 'login-username=admin',   # Differently mixed!
                             'login-password=cisco123',
                       '-p', 'enable-ssh-server=1']):
             self.call_cot(['edit-properties', self.input_ovf,
                            '-o', self.temp_file] + args)
-            self.check_diff(
-"""
+            self.check_diff("""
        <ovf:Category>1. Bootstrap Properties</ovf:Category>
--      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
-+      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
+-      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
          <ovf:Label>Login Username</ovf:Label>
 ...
        </ovf:Property>
--      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
-+      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="cisco123">
+-      <ovf:Property ovf:key="login-password" ovf:password="true" \
+ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" \
+ovf:value="">
++      <ovf:Property ovf:key="login-password" ovf:password="true" \
+ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" \
+ovf:value="cisco123">
          <ovf:Label>Login Password</ovf:Label>
 ...
        <ovf:Category>2. Features</ovf:Category>
--      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
-+      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="true">
+-      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="false">
++      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="true">
          <ovf:Label>Enable SSH Login</ovf:Label>
 """)
 
@@ -356,6 +353,7 @@ class TestCLIInjectConfig(TestCOTCLI):
         self.call_cot(['inject-config', self.input_ovf,
                        '-s', '/foo'], result=2)
 
+
 class TestCLIDeploy(TestCOTCLI):
     """CLI test cases for "cot deploy" command"""
 
@@ -365,7 +363,7 @@ class TestCLIDeploy(TestCOTCLI):
 
     def test_invalid_args(self):
         # No VM specified
-        self.call_cot(['deploy'], result = 2)
+        self.call_cot(['deploy'], result=2)
         # VM does not exist
         self.call_cot(['deploy', '/foo'], result=2)
         # Hypervisor not specified

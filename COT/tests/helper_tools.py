@@ -3,7 +3,7 @@
 # helper_tools.py - Unit test cases for helper tools module.
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -15,13 +15,14 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import os
-import shutil
-import tempfile
-import unittest
 
 from COT.data_validation import ValueUnsupportedError
-from COT.helper_tools import *
+from COT.helper_tools import get_checksum
+from COT.helper_tools import create_disk_image, convert_disk_image
+from COT.helper_tools import get_disk_format, get_disk_capacity
+from COT.helper_tools import HelperNotFoundError
 from COT.tests.ut import COT_UT
+
 
 class TestGetChecksum(COT_UT):
     """Test cases for get_checksum() function"""
@@ -52,7 +53,6 @@ class TestGetChecksum(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
 
-
     def test_get_checksum_unsupported(self):
         """Test invalid options to get_checksum().
         """
@@ -65,6 +65,7 @@ class TestGetChecksum(COT_UT):
                           get_checksum,
                           self.input_ovf,
                           'crc')
+
 
 class TestGetDiskFormat(COT_UT):
     """Test cases for get_disk_format() function"""
@@ -112,6 +113,7 @@ class TestGetDiskCapacity(COT_UT):
         disk_path = os.path.join(os.path.dirname(__file__), "input.vmdk")
         capacity = get_disk_capacity(disk_path)
         self.assertEqual(capacity, "1073741824")
+
 
 class TestConvertDiskImage(COT_UT):
     """Test cases for convert_disk_image().

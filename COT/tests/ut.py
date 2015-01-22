@@ -22,15 +22,18 @@ import tempfile
 import shutil
 import re
 import sys
+import platform
 import time
 import logging
 from verboselogs import VerboseLogger
 
 logging.setLoggerClass(VerboseLogger)
 
-from COT.helper_tools import *
+from COT.helper_tools import validate_ovf_for_esxi
+from COT.helper_tools import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
+
 
 class COT_UT(unittest.TestCase):
     """Subclass of unittest.TestCase adding some additional behaviors we want
@@ -47,7 +50,9 @@ class COT_UT(unittest.TestCase):
         """Calls diff on the two files and compares it to the expected output.
         If the files are unspecified, defaults to comparing the input OVF file
         and the temporary output OVF file.
-        Note that comparison of OVF files is currently skipped under Python 2.6.
+        Note that comparison of OVF files is currently skipped when
+        running under Python 2.6, as it produces different XML output than
+        later Python versions.
         """
         if file1 is None:
             file1 = self.input_ovf
@@ -56,14 +61,15 @@ class COT_UT(unittest.TestCase):
 
         if re.search("ovf", file1) and sys.hexversion < 0x02070000:
             print("OVF file diff comparison skipped "
-                  "due to old Python version ({0})".format(sys.version))
+                  "due to old Python version ({0})"
+                  .format(platform.python_version()))
             return
 
         with open(file1) as f1:
             with open(file2) as f2:
                 diff = unified_diff(f1.readlines(), f2.readlines(),
                                     fromfile=file1, tofile=file2,
-                                    n=1) # number of context lines
+                                    n=1)   # number of context lines
         # Strip line numbers and file names from the diff
         # to keep the UT more maintainable
         clean_diff = ""
@@ -82,7 +88,6 @@ class COT_UT(unittest.TestCase):
         if clean_diff.strip() != expected.strip():
             self.fail("'diff {0} {1}' failed - expected:\n{2}\ngot:\n{3}"
                       .format(file1, file2, expected, clean_diff))
-
 
     def setUp(self):
         """Test case setup function called automatically prior to each test"""
@@ -110,8 +115,7 @@ class COT_UT(unittest.TestCase):
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
         logger.debug("Created temp dir {0}".format(self.temp_dir))
         # Monitor the global temp directory to make sure COT cleans up
-        self.tmps=set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
-
+        self.tmps = set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test"""

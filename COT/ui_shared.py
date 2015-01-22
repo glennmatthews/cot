@@ -3,7 +3,7 @@
 # ui_shared.py - abstraction between CLI and GUI
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -15,8 +15,10 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
+
 
 class UI(object):
     """Abstract user interface functionality.

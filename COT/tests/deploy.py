@@ -28,6 +28,7 @@ from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
+
 class TestCOTDeploy(COT_UT):
 
     def setUp(self):
@@ -36,13 +37,11 @@ class TestCOTDeploy(COT_UT):
         self.instance = COTDeploy(UI())
         self.instance.set_value("PACKAGE", self.input_ovf)
 
-
     def test_not_ready_with_no_args(self):
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("HYPERVISOR.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
-
 
     def test_invalid_args(self):
         self.assertRaises(InvalidInputError,
@@ -61,13 +60,11 @@ class TestCOTDeployESXi(COT_UT):
             self.last_argv = argv
             logger.info("Caught ovftool invocation")
             return
-        return _check_call(argv, require_success)
-
+        return self._check_call(argv, require_success)
 
     def stub_get_ovftool_version(self):
         logger.info("stub_get_ovftool_version()")
         return self.ovftool_version
-
 
     def setUp(self):
         "Test case setup function called automatically prior to each test"
@@ -84,7 +81,6 @@ class TestCOTDeployESXi(COT_UT):
         self._get_ovftool_version = COT.deploy.get_ovftool_version
         COT.deploy.get_ovftool_version = self.stub_get_ovftool_version
 
-
     def tearDown(self):
         "Test case cleanup function called automatically"
         # Remove our stub
@@ -92,13 +88,11 @@ class TestCOTDeployESXi(COT_UT):
         COT.deploy.get_ovftool_version = self._get_ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
-
     def test_not_ready_with_no_args(self):
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("LOCATOR.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
-
 
     def test_invalid_args(self):
         self.assertRaises(InvalidInputError,
@@ -108,18 +102,16 @@ class TestCOTDeployESXi(COT_UT):
         self.assertRaises(InvalidInputError,
                           self.instance.set_value, "power_on", "frobozz")
 
-
     def test_ovftool_args_basic(self):
         "Test that ovftool is called with the expected arguments"
         self.instance.set_value("LOCATOR", "localhost")
         self.instance.run()
         self.assertEqual([
             'ovftool',
-            '--deploymentOption=4CPU-4GB-3NIC', # default configuration
+            '--deploymentOption=4CPU-4GB-3NIC',    # default configuration
             self.input_ovf,
             'vi://{user}:passwd@localhost'.format(user=getpass.getuser())
         ], self.last_argv)
-
 
     def test_ovftool_args_advanced(self):
         "Test that ovftool is called with the expected arguments"
@@ -161,7 +153,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertEqual([
             'ovftool',
             '--X:injectOvfEnv',
-            '--deploymentOption=4CPU-4GB-3NIC', # default configuration
+            '--deploymentOption=4CPU-4GB-3NIC',     # default configuration
             '--powerOn',
             self.input_ovf,
             'vi://{user}:passwd@vsphere'.format(user=getpass.getuser()),
@@ -176,9 +168,8 @@ class TestCOTDeployESXi(COT_UT):
         self.assertEqual([
             'ovftool',
             # Nope! #'--X:injectOvfEnv',
-            '--deploymentOption=4CPU-4GB-3NIC', # default configuration
+            '--deploymentOption=4CPU-4GB-3NIC',     # default configuration
             '--powerOn',
             self.input_ovf,
             'vi://{user}:passwd@vsphere'.format(user=getpass.getuser()),
         ], self.last_argv)
-

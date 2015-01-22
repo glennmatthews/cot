@@ -15,13 +15,13 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import logging
-import os
 
 from .ovf import OVF
 from .vm_description import VMInitError
 from .data_validation import ValueUnsupportedError
 
 logger = logging.getLogger(__name__)
+
 
 class VMFactory:
     """Class for creating a VMDescription instance (of indeterminate subclass)
@@ -35,7 +35,7 @@ class VMFactory:
         # Add other VMDescription subclasses as needed
         for candidate_class in [OVF]:
             try:
-                filetype = candidate_class.detect_type_from_name(input_file)
+                candidate_class.detect_type_from_name(input_file)
                 vm_class = candidate_class
                 break
             except ValueUnsupportedError as e:

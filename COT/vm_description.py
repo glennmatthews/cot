@@ -22,6 +22,7 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
+
 class VMInitError(EnvironmentError):
     """Class representing errors encountered when trying to init/load a VM.
     """
@@ -44,7 +45,8 @@ class VMDescription(object):
         """Read the given VM description file into memory and
         make note of the requested working directory and eventual output file.
         Note that if the output_file is unknown at present, a value of ""
-        should be passed, as None indicates there will not be an output_file."""
+        should be passed, as None indicates there will not be an output_file.
+        """
         self.input_file = input_file
         self.working_dir = tempfile.mkdtemp(prefix="cot")
         logger.verbose("Temporary directory for VM created from {0}: {1}"
@@ -69,7 +71,7 @@ class VMDescription(object):
         raise NotImplementedError("write not implemented")
 
     def get_platform(self):
-        """Returns the Platform class object described by this VM description"""
+        """Returns the Platform class object associated with this VM"""
         raise NotImplementedError("get_platform not implemented")
 
     def validate_file_references(self):
@@ -83,7 +85,7 @@ class VMDescription(object):
     def convert_disk_if_needed(self, filename, kind):
         """Converts the disk to a new format (and returns the path to the new
         disk), if appropriate"""
-        # Some VMs may not need this, so do nothing by default rather than error
+        # Some VMs may not need this, so default to do nothing, not error
         return filename
 
     def search_from_filename(self, filename):
@@ -139,7 +141,8 @@ class VMDescription(object):
     def check_sanity_of_disk_device(self, disk, file, disk_item, ctrl_item):
         """Make sure the indicated disk device has appropriate linkage to any
         disk, file, and controller provided. Die if it does not."""
-        raise NotImplementedError("check_sanity_of_disk_device not implemented")
+        raise NotImplementedError(
+            "check_sanity_of_disk_device not implemented")
 
     def add_file(self, file_path, file_id, file=None, disk=None):
         """Add a new file object to the VM or overwrite the provided one"""
@@ -298,6 +301,7 @@ class VMDescription(object):
         None: 1,
         'verbose': 2
         }
+
     def info_string(self, verbosity_option=None):
         """Returns a descriptive string summarizing the contents of this VM
         """

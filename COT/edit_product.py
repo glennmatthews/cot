@@ -18,10 +18,10 @@ import logging
 import os.path
 import sys
 
-from .data_validation import InvalidInputError
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
+
 
 class COTEditProduct(COTSubmodule):
     """Edit product information (short version, long version)"""
@@ -35,7 +35,6 @@ class COTEditProduct(COTSubmodule):
                 "version",
                 "full_version",
             ])
-
 
     def ready_to_run(self):
         """Are we ready to go?
@@ -56,7 +55,6 @@ class COTEditProduct(COTSubmodule):
                            "- nothing to do!")
         return ready, reason
 
-
     def run(self):
         super(COTEditProduct, self).run()
 
@@ -66,7 +64,6 @@ class COTEditProduct(COTSubmodule):
         full_version = self.get_value("full_version")
         if full_version is not None:
             self.vm.set_long_version(full_version)
-
 
     def create_subparser(self, parent):
         p = parent.add_parser(

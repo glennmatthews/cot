@@ -24,8 +24,11 @@ import subprocess
 import sys
 
 # In python 2.x, we want raw_input, but in python 3 we want input.
-try: input = raw_input
-except NameError: pass
+try:
+    input = raw_input
+except NameError:
+    pass
+
 
 def confirm(prompt, force=False):
     """Prompts user to confirm the requested operation, or auto-accepts if
@@ -42,16 +45,18 @@ def confirm(prompt, force=False):
         else:
             print("Please enter 'y' or 'n'")
 
+
 def confirm_or_die(prompt, force=False):
     """If the user doesn't agree, abort!"""
     if not confirm(prompt, force):
         sys.exit("Aborting.")
 
+
 def check_output(args, require_success=True):
     try:
         # In 2.7+ we can use subprocess.check_output(), but in 2.6,
         # we have to work around its absence.
-        if "check_output" not in dir( subprocess ):
+        if "check_output" not in dir(subprocess):
             process = subprocess.Popen(args,
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT)
@@ -72,8 +77,10 @@ def check_output(args, require_success=True):
             stdout = "(output unavailable)"
     return stdout
 
+
 def get_qemu_img_version():
-    qemu_stdout = check_output(['qemu-img', '--version'], require_success=False)
+    qemu_stdout = check_output(['qemu-img', '--version'],
+                               require_success=False)
     qemu_match = re.search("qemu-img version ([0-9.]+)", qemu_stdout)
     return StrictVersion(qemu_match.group(1))
 
@@ -81,6 +88,7 @@ def get_qemu_img_version():
 PORT = distutils.spawn.find_executable('port')
 APT_GET = distutils.spawn.find_executable('apt-get')
 YUM = distutils.spawn.find_executable('yum')
+
 
 def check_executable(name):
     print("Checking for '{0}' executable...".format(name))
@@ -91,6 +99,7 @@ def check_executable(name):
     else:
         print("'{0}' not found".format(name))
         return False
+
 
 def check_qemu_and_vmdktool():
     if not check_executable('qemu-img'):
@@ -164,7 +173,7 @@ def install_qemu_and_vmdktool(force):
                                        'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
                                        '--directory', 'vmdktool-1.4'])
                 if not os.path.exists('/usr/local/man/man8'):
-                    os.makedirs('/usr/local/man/man8', 493) # 0o755
+                    os.makedirs('/usr/local/man/man8', 493)    # 493 == 0o755
                 subprocess.check_call(['make', '--directory', 'vmdktool-1.4',
                                        'install'])
             finally:
@@ -202,8 +211,9 @@ def install_fatdisk(force):
                 subprocess.check_call(['apt-get', 'install', 'make'])
             else:
                 exit("Not sure how to install 'make', sorry!")
-        subprocess.check_call(['wget', '-O', 'fatdisk.tgz',
-            'https://github.com/goblinhack/fatdisk/archive/master.tar.gz'])
+        subprocess.check_call(
+            ['wget', '-O', 'fatdisk.tgz',
+             'https://github.com/goblinhack/fatdisk/archive/master.tar.gz'])
         subprocess.check_call(['tar', 'zxf', 'fatdisk.tgz'])
         subprocess.check_call(['./RUNME'], cwd='fatdisk-master')
         shutil.copy2('fatdisk-master/fatdisk', '/usr/local/bin/fatdisk')
@@ -280,8 +290,8 @@ def main():
                            "See https://www.macports.org/\n"
                            "Continue?", force)
         elif sys.platform == 'linux2' and (not APT_GET and not YUM):
-            confirm_or_die("It appears you are running on a Linux that doesn't "
-                           "have 'apt-get' or 'yum' capability.\n"
+            confirm_or_die("It appears you are running on a Linux that "
+                           "doesn't have 'apt-get' or 'yum' capability.\n"
                            "If you've already installed all helper programs "
                            "that COT needs, this is not a problem.\n"
                            "Continue?", force)

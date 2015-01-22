@@ -25,6 +25,7 @@ from COT.ui_shared import UI
 from COT.info import COTInfo
 from COT.data_validation import InvalidInputError
 
+
 class TestCOTInfo(COT_UT):
     """Test cases for the COTInfo module"""
     def setUp(self):
@@ -32,8 +33,7 @@ class TestCOTInfo(COT_UT):
         super(TestCOTInfo, self).setUp()
         self.instance = COTInfo(UI())
 
-
-    def check_cot_output(self,expected):
+    def check_cot_output(self, expected):
         """Grab the output from COTInfo and check it against expected output"""
         sys.stdout = StringIO.StringIO()
         output = None
@@ -54,9 +54,8 @@ class TestCOTInfo(COT_UT):
             while (expected_lines and not expected_line):
                 expected_line = expected_lines.pop(0).strip()
             if not output_line and not expected_line:
-                break # Done with both!
+                break     # Done with both!
             self.assertEqual(output_line, expected_line)
-
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
@@ -69,11 +68,10 @@ class TestCOTInfo(COT_UT):
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
-
     def test_minimal_ovf(self):
         """Get info for minimal OVF with no real content."""
         # For an OVF this simple, standard/brief/verbose output are the same
-        expected_output="""
+        expected_output = """
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
@@ -90,7 +88,6 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
 
         self.instance.set_value('verbosity', 'verbose')
         self.check_cot_output(expected_output)
-
 
     def test_multiple_minimal_ovf(self):
         """Test multiple OVFs at once"""
@@ -111,7 +108,6 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
   None (default)                     0      0 MB      0       0   0 /       0 B
 """.format(self.minimal_ovf))
-
 
     def test_input_ovf(self):
         """Test the standard input ovf"""
@@ -306,7 +302,6 @@ Properties:
       Network domain name (such as "cisco.com")
 """.format(self.input_ovf))
 
-
     def test_iosv_ovf(self):
         """Test an IOSv OVF."""
         self.instance.set_value('PACKAGE_LIST', [self.iosv_ovf])
@@ -368,7 +363,8 @@ Product:  Cisco IOSv Virtual Router
 Vendor:   Cisco Systems, Inc.
           http://www.cisco.com
 Version:  15.4(2.4)T
-          Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version 15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
+          Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version \
+15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
 
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
@@ -451,7 +447,6 @@ NICs and Associated Networks:
     NIC representing GigabitEthernet0/15 interface
 """.format(self.iosv_ovf))
 
-
     def test_v09_ovf(self):
         """Test a legacy v0.9 OVF."""
         self.instance.set_value('PACKAGE_LIST', [self.v09_ovf])
@@ -508,7 +503,6 @@ NICs and Associated Networks:
   ethernet0                      : bridged
     PCNet32 ethernet adapter
 """.format(self.v09_ovf))
-
 
     def test_vmware_ovf(self):
         """Test info string for an OVF with VMware custom extensions."""

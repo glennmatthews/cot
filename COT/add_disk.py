@@ -18,12 +18,12 @@ import sys
 import logging
 import os.path
 
-from .data_validation import InvalidInputError
-from .data_validation import *
-
+from .data_validation import InvalidInputError, ValueUnsupportedError
+from .data_validation import check_for_conflict, device_address, match_or_die
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
+
 
 class COTAddDisk(COTSubmodule):
     """Add or replace a disk in a virtual machine"""
@@ -64,7 +64,6 @@ class COTAddDisk(COTSubmodule):
 
         return valid, value_or_reason
 
-
     def validate_controller_address(self, controller, address):
         if controller is not None:
             input_value = controller
@@ -85,7 +84,6 @@ class COTAddDisk(COTSubmodule):
 
         return True, input_value
 
-
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
@@ -97,14 +95,12 @@ class COTAddDisk(COTSubmodule):
                                "specify the controller type")
         return super(COTAddDisk, self).ready_to_run()
 
-
     def run(self):
         super(COTAddDisk, self).run()
 
         add_disk_worker(self.vm,
                         UI=self.UI,
                         **self.args)
-
 
     def create_subparser(self, parent):
         p = parent.add_parser(
@@ -130,8 +126,8 @@ otherwise, will create a new disk entry.""")
         group.add_argument('-h', '--help', action='help',
                            help="""Show this help message and exit""")
         group.add_argument('-o', '--output',
-                           help="""Name/path of new OVF/OVA package to create """
-                           """instead of updating the existing OVF""")
+                           help="""Name/path of new OVF/OVA package to """
+                           """create instead of updating the existing OVF""")
 
         group = p.add_argument_group("disk-related options")
 
@@ -148,24 +144,24 @@ otherwise, will create a new disk entry.""")
 
         group.add_argument('-c', '--controller',
                            choices=['ide', 'scsi'],
-                           help="""Disk controller type (default: determined by """
-                           """disk type and platform)""")
+                           help="""Disk controller type (default: """
+                           """determined by disk type and platform)""")
         group.add_argument('-a', '--address', type=device_address,
-                           help="""Address of the disk, such as "1:0". Requires """
-                           """that --controller be explicitly set. """
-                            """(default: use first unused address on the """
-                            """controller)""")
+                           help="""Address of the disk, such as "1:0". """
+                           """Requires that --controller be explicitly set. """
+                           """(default: use first unused address on the """
+                           """controller)""")
         group.add_argument('-s', '--subtype',
-                           help="""Disk controller subtype such as "virtio" or """
-                           """"lsilogic".""")
+                           help="""Disk controller subtype such as "virtio" """
+                           """or "lsilogic".""")
 
         group = p.add_argument_group("descriptive options")
 
         group.add_argument('-d', '--description',
                            help="""Description of this disk (optional)""")
         group.add_argument('-n', '--name', dest='diskname',
-                           help="""Name of this disk (default: "Hard disk #" or """
-                           """"CD-ROM #" as appropriate)""")
+                           help="""Name of this disk (default: """
+                           """"Hard disk #" or "CD-ROM #" as appropriate)""")
 
         p.add_argument('DISK_IMAGE',
                        help="""Disk image file to add to the package""")
@@ -208,8 +204,8 @@ def add_disk_worker(vm,
                     "Please specify '--type harddisk' or '--type cdrom'."
                     .format(DISK_IMAGE, disk_extension,
                             ext_type_map.keys()))
-            logger.warning("New disk type not specified, guessing it should be "
-                           "'{0}' based on file extension".format(type))
+            logger.warning("New disk type not specified, guessing it should "
+                           "be '{0}' based on file extension".format(type))
 
         # Convert the disk to a new format if needed...
         DISK_IMAGE = vm.convert_disk_if_needed(DISK_IMAGE, type)
@@ -224,7 +220,7 @@ def add_disk_worker(vm,
         # Item (defines the disk drive, links to controller and File or Disk)
         #
         # For each of these four sections, we need to know whether to add
-        # a new one or overwrite an existing one. Depending on the user-provided
+        # a new one or overwrite an existing one. Depending on the user
         # arguments, we can do this by as many as three different approaches:
         #
         # 1) Check whether the DISK_IMAGE file name matches an existing File
@@ -277,7 +273,7 @@ def add_disk_worker(vm,
             if file is None:
                 # This will happen if we're replacing a placeholder entry
                 # (disk exists but has no associated file)
-                logger.verbose("Found Disk but not File - maybe a placeholder?")
+                logger.verbose("Found Disk but not File - maybe placeholder?")
 
         if disk_item is not None:
             if type is not None:
@@ -334,8 +330,9 @@ def add_disk_worker(vm,
             logger.warning("Overwriting existing File in OVF")
 
         if file is None and (disk is not None or disk_item is not None):
-            UI.confirm_or_die("Add disk file to existing (but empty) {0} drive?"
-                              .format(type))
+            UI.confirm_or_die(
+                "Add disk file to existing (but empty) {0} drive?"
+                .format(type))
 
         if disk is not None:
             logger.warning("Overwriting existing Disk in OVF")
@@ -382,7 +379,8 @@ def add_disk_worker(vm,
             ctrl_addr = address.split(":")[0]
             disk_addr = address.split(":")[1]
         else:
-            ctrl_addr = None # let VM choose it if necessary
+            # let VM choose controller address if necessary
+            ctrl_addr = None
             disk_addr = 0
 
         ctrl_item = vm.add_controller_device(controller, subtype,

@@ -15,12 +15,12 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import os.path
-import re
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.add_file import COTAddFile
 from COT.data_validation import InvalidInputError
+
 
 class TestCOTAddFile(COT_UT):
     """Test cases for the COTAddFile module"""
@@ -29,7 +29,6 @@ class TestCOTAddFile(COT_UT):
         super(TestCOTAddFile, self).setUp()
         self.instance = COTAddFile(UI())
         self.instance.set_value("output", self.temp_file)
-
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
@@ -48,7 +47,6 @@ class TestCOTAddFile(COT_UT):
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
-
     def test_add_file(self):
         """Basic file addition"""
         self.instance.set_value("PACKAGE", self.input_ovf)
@@ -61,7 +59,6 @@ class TestCOTAddFile(COT_UT):
    </ovf:References>
 """.format(iso_size=self.FILE_SIZE['input.iso'],
            ovf_size=os.path.getsize(self.iosv_ovf)))
-
 
     def test_add_file_with_id(self):
         """Add a file with explicit 'file_id' argument."""

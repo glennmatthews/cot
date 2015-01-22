@@ -14,18 +14,18 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import argparse
 import logging
 import os.path
 import shutil
 import sys
 
 from .add_disk import add_disk_worker
-from .data_validation import ValueUnsupportedError, InvalidInputError
+from .data_validation import ValueUnsupportedError
 from .helper_tools import create_disk_image
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
+
 
 class COTInjectConfig(COTSubmodule):
     """Wrap the given configuration file(s) into an appropriate disk image file
@@ -41,7 +41,6 @@ class COTInjectConfig(COTSubmodule):
                 "config_file",
                 "secondary_config_file",
             ])
-
 
     def validate_arg(self, arg, value):
         """Check whether it's OK to set the given argument to the given value.
@@ -77,7 +76,6 @@ class COTInjectConfig(COTSubmodule):
 
         return valid, value
 
-
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
@@ -92,7 +90,6 @@ class COTInjectConfig(COTSubmodule):
         if not work_to_do:
             return False, "No configuration files specified - nothing to do!"
         return super(COTInjectConfig, self).ready_to_run()
-
 
     def run(self):
         super(COTInjectConfig, self).run()
@@ -171,7 +168,6 @@ class COTInjectConfig(COTSubmodule):
             diskname=None,
         )
 
-
     def create_subparser(self, parent):
         p = parent.add_parser(
             'inject-config',
@@ -183,12 +179,12 @@ class COTInjectConfig(COTSubmodule):
   {0} <opts> inject-config PACKAGE -c CONFIG_FILE
                            -s SECONDARY_CONFIG_FILE [-o OUTPUT]"""
                    .format(os.path.basename(sys.argv[0]))),
-            description="""Add one or more "bootstrap" configuration file(s) """
-            """to the given OVF or OVA.""")
+            description="""Add one or more "bootstrap" configuration """
+            """file(s) to the given OVF or OVA.""")
 
         p.add_argument('-o', '--output',
-                       help="""Name/path of new VM package to create instead """
-                       """of updating the existing package""")
+                       help="""Name/path of new VM package to create """
+                       """instead of updating the existing package""")
 
         p.add_argument('-c', '--config-file',
                        help="""Primary configuration text file to embed""")

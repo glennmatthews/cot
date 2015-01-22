@@ -1,7 +1,7 @@
-# platform.py - Unit test cases for COT platform handling
+# platforms.py - Unit test cases for COT platform handling
 #
 # January 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -13,9 +13,10 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import unittest
-from COT.platform import IOSXRv, CSR1000V, IOSv, NXOSv, IOSXRvRP, IOSXRvLC
+from COT.platforms import IOSXRv, CSR1000V, IOSv, NXOSv, IOSXRvRP, IOSXRvLC
 from COT.data_validation import ValueUnsupportedError
 from COT.data_validation import ValueTooLowError, ValueTooHighError
+
 
 class TestIOSXRv(unittest.TestCase):
     """Test cases for IOS XRv platform handling"""
@@ -148,7 +149,8 @@ class TestCSR1000V(unittest.TestCase):
         self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
         self.cls.validate_cpu_count(1)
         self.cls.validate_cpu_count(2)
-        self.assertRaises(ValueUnsupportedError, self.cls.validate_cpu_count, 3)
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_cpu_count, 3)
         self.cls.validate_cpu_count(4)
         self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 5)
 

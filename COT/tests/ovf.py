@@ -3,7 +3,7 @@
 # ovf.py - Unit test cases for COT OVF/OVA handling
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -20,7 +20,6 @@ import tempfile
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
-import re
 import sys
 import tarfile
 import unittest
@@ -30,8 +29,9 @@ from COT.ovf import OVF, OVFNameHelper, OVFItem
 from COT.ovf import byte_count, byte_string, factor_bytes
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
-from COT.helper_tools import *
+from COT.helper_tools import HelperError, validate_ovf_for_esxi
 from COT.vm_context_manager import VMContextManager
+
 
 class TestByteString(unittest.TestCase):
     """Test cases for byte-count to string conversion functions"""
@@ -59,12 +59,10 @@ class TestOVFInputOutput(COT_UT):
         # Additional temp directory used by some test cases
         self.staging_dir = None
 
-
     def tearDown(self):
         if self.staging_dir:
             shutil.rmtree(self.staging_dir)
         super(TestOVFInputOutput, self).tearDown()
-
 
     def test_filename_validation(self):
         """Test class method(s) for filename validation.
@@ -82,49 +80,57 @@ class TestOVFInputOutput(COT_UT):
         self.assertRaises(ValueUnsupportedError, OVF.detect_type_from_name,
                           "/foo/bar.zip")
 
-
     def test_input_output(self):
         """Read an OVF then write it again, verify no changes"""
-        with VMContextManager(self.input_ovf, self.temp_file) as ovf:
+        with VMContextManager(self.input_ovf, self.temp_file):
             pass
         self.check_diff('')
 
         # Filename output too
-        with VMContextManager(self.input_ovf, self.temp_file + '.a.b.c') as ovf:
+        with VMContextManager(self.input_ovf, self.temp_file + '.a.b.c'):
             pass
         self.check_diff('', file2=(self.temp_file + ".a.b.c"))
-
 
     def test_input_output_v09(self):
         """Test reading/writing of a v0.9 OVF.
         """
-        with VMContextManager(self.v09_ovf, self.temp_file) as ovf:
+        with VMContextManager(self.v09_ovf, self.temp_file):
             pass
         self.check_diff('', file1=self.v09_ovf)
-
 
     def test_input_output_custom(self):
         """Test reading/writing of an OVF with custom extensions.
         """
-        with VMContextManager(self.vmware_ovf, self.temp_file) as ovf:
+        with VMContextManager(self.vmware_ovf, self.temp_file):
             pass
-        # VMware disagrees with COT on some fiddly details of the XML formatting
-        self.check_diff(
-"""
+        # VMware disagrees with COT on some fiddly details of XML formatting
+        self.check_diff("""
 -<?xml version="1.0" encoding="UTF-8"?>
--<ovf:Envelope vmw:buildId="build-880146" xmlns="http://schemas.dmtf.org/ovf/envelope/1" xmlns:cim="http://schemas.dmtf.org/wbem/wscim/1/common" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+-<ovf:Envelope vmw:buildId="build-880146" \
+xmlns="http://schemas.dmtf.org/ovf/envelope/1" \
+xmlns:cim="http://schemas.dmtf.org/wbem/wscim/1/common" \
+xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" \
+xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_ResourceAllocationSettingData" \
+xmlns:vmw="http://www.vmware.com/schema/ovf" \
+xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_VirtualSystemSettingData" \
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 +<?xml version='1.0' encoding='utf-8'?>
-+<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
++<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" \
+xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_ResourceAllocationSettingData" \
+xmlns:vmw="http://www.vmware.com/schema/ovf" \
+xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
    <ovf:References>
 ...
    </ovf:VirtualSystem>
 -</ovf:Envelope>        
-+</ovf:Envelope>""", file1=self.vmware_ovf)
-
++</ovf:Envelope>""", file1=self.vmware_ovf)  # noqa - trailing whitespace above
 
     def test_input_output_missing_file(self):
-        """Test reading/writing of an OVF with missing file references.
-        """
+        """Test reading/writing of an OVF with missing file references"""
         self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
         input_dir = os.path.dirname(self.input_ovf)
         shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
@@ -133,14 +139,13 @@ class TestOVFInputOutput(COT_UT):
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               os.path.join(self.temp_dir, "temp.ova")) as ovf:
             self.assertFalse(ovf.validate_file_references(),
-                             "OVF references missing file - contents are invalid")
+                             "OVF references missing file - contents invalid")
 
         # Write out to OVA then read the OVA in as well.
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
                               os.path.join(self.temp_dir, "temp.ovf")) as ova:
             self.assertFalse(ova.validate_file_references(),
-                             "OVA references missing file - contents are invalid")
-
+                             "OVA references missing file - contents invalid")
 
     def test_input_output_bad_file(self):
         """Test reading/writing of an OVF with incorrect file references.
@@ -168,7 +173,6 @@ class TestOVFInputOutput(COT_UT):
             self.assertFalse(ova.validate_file_references(),
                              "OVA has wrong file size - contents are invalid")
 
-
     def test_tar_untar(self):
         """Output OVF to OVA and vice versa"""
         # Read OVF and write to OVA
@@ -191,12 +195,11 @@ class TestOVFInputOutput(COT_UT):
                 print("'{0}' file comparison skipped due to "
                       "old Python version ({1})".format(ext, sys.version))
                 continue
-            self.assertTrue(filecmp.cmp(
-                    os.path.join(input_dir, "input" + ext),
-                    os.path.join(self.temp_dir, "input" + ext)),
-                            "{0} file changed after OVF->OVA->OVF conversion"
-                            .format(ext))
-
+            self.assertTrue(
+                filecmp.cmp(os.path.join(input_dir, "input" + ext),
+                            os.path.join(self.temp_dir, "input" + ext)),
+                "{0} file changed after OVF->OVA->OVF conversion"
+                .format(ext))
 
     def test_invalid_ovf_file(self):
         """Check that various invalid input OVF files result in VMInitError
@@ -221,7 +224,6 @@ class TestOVFInputOutput(COT_UT):
             f.write("<?xml version='1.0' encoding='utf-8'?>")
             f.write("<foo/>")
         self.assertRaises(VMInitError, OVF, fake_file, None)
-
 
     def test_invalid_ova_file(self):
         """Check that various invalid input OVA files result in VMInitError
@@ -254,7 +256,6 @@ class TestOVFInputOutput(COT_UT):
         finally:
             tarf.close()
         self.assertRaises(VMInitError, OVF, fake_file, None)
-
 
     def test_invalid_ovf_contents(self):
         """Check for rejection of OVF files with valid XML but invalid data"""
@@ -308,16 +309,19 @@ class TestOVFItem(COT_UT):
         super(TestOVFItem, self).setUp()
         self.working_dir = tempfile.mkdtemp(prefix="cot_ut_ovfiitem")
 
-
     def tearDown(self):
         shutil.rmtree(self.working_dir)
         super(TestOVFItem, self).tearDown()
 
     def test_1_to_1(self):
         """Convert one Item to an OVFItem and back"""
-        root = ET.fromstring(
-"""<?xml version='1.0' encoding='utf-8'?>
-<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData">
+        root = ET.fromstring("""<?xml version='1.0' encoding='utf-8'?>
+<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" \
+xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_ResourceAllocationSettingData" \
+xmlns:vmw="http://www.vmware.com/schema/ovf" \
+xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_VirtualSystemSettingData">
   <ovf:VirtualSystem ovf:id="test">
     <ovf:VirtualHardwareSection ovf:transport="iso">
       <ovf:Item>
@@ -349,7 +353,6 @@ class TestOVFItem(COT_UT):
             self.assertEqual(child.text,
                              output_item.find(child.tag).text)
 
-
     def test_remove_profile(self):
         """Test case for remove_profile() method
         """
@@ -374,7 +377,8 @@ class TestOVFItem(COT_UT):
             self.assertFalse(item.has_profile("nonexistent"))
 
             self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
-                                            ["2CPU-2GB-1NIC", "4CPU-4GB-3NIC"]),
+                                            ["2CPU-2GB-1NIC",
+                                             "4CPU-4GB-3NIC"]),
                              "11")
             self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
                                             ["1CPU-1GB-1NIC"]),
@@ -382,7 +386,8 @@ class TestOVFItem(COT_UT):
             self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT, [None]),
                              None)
             self.assertEqual(item.get_value(ovf.ADDRESS_ON_PARENT,
-                                            ["1CPU-1GB-1NIC", "2CPU-2GB-1NIC",
+                                            ["1CPU-1GB-1NIC",
+                                             "2CPU-2GB-1NIC",
                                              "4CPU-4GB-3NIC"]),
                              None)
 
@@ -392,7 +397,6 @@ class TestOVFItem(COT_UT):
 +      <ovf:Item ovf:configuration="2CPU-2GB-1NIC 4CPU-4GB-3NIC">
          <rasd:AddressOnParent>11</rasd:AddressOnParent>
 """)
-
 
     def test_set_property(self):
         """Test cases for set_property() and related methods
@@ -485,4 +489,3 @@ class TestOVFItem(COT_UT):
        <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
 """)
         ovf.destroy()
-

@@ -3,7 +3,7 @@
 # data_validation.py - Unit test cases for COT.data_validation module
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -16,7 +16,11 @@
 
 import unittest
 
-from COT.data_validation import *
+from COT.data_validation import mac_address, device_address, no_whitespace
+from COT.data_validation import validate_int, non_negative_int, positive_int
+from COT.data_validation import InvalidInputError, ValueUnsupportedError
+from COT.data_validation import ValueTooLowError, ValueTooHighError
+
 
 class TestValidationFunctions(unittest.TestCase):
     """Test cases for input validation APIs."""
@@ -34,10 +38,12 @@ class TestValidationFunctions(unittest.TestCase):
 
     def test_device_address(self):
         for valid_string in ["0:0", "1:1", "3:7", "1:10", " 2:3 "]:
-            self.assertEqual(device_address(valid_string), valid_string.strip())
+            self.assertEqual(device_address(valid_string),
+                             valid_string.strip())
 
         for invalid_string in ["0", "-1:0", "1:-1", "1:1:1", "1:a"]:
-            self.assertRaises(InvalidInputError, device_address, invalid_string)
+            self.assertRaises(InvalidInputError,
+                              device_address, invalid_string)
 
     def test_no_whitespace(self):
         for valid_string in ["", "a", " a ",

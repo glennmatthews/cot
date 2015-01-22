@@ -3,7 +3,7 @@
 # xml_file.py - class for reading/editing/writing XML-based data
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -20,6 +20,7 @@ import re
 
 logger = logging.getLogger(__name__)
 
+
 class XML(object):
 
     @classmethod
@@ -32,7 +33,6 @@ class XML(object):
             return ""
         return match.group(1)
 
-
     @classmethod
     def strip_ns(cls, text):
         """Remove the namespace prefix from an XML element or attribute name
@@ -44,7 +44,6 @@ class XML(object):
         else:
             return match.group(1)
 
-
     def read_xml(self, xml_file):
         """Read the given XML file and store it as self.tree / self.root.
         May raise an ET.ParseError.
@@ -53,14 +52,12 @@ class XML(object):
         self.tree = ET.parse(xml_file)
         self.root = self.tree.getroot()
 
-
     def register_namespace(self, prefix, URI):
         try:
             ET.register_namespace(prefix, URI)
         except AttributeError:
             # 2.6 doesn't have the above API so we must write directly
             ET._namespace_map[URI] = prefix
-
 
     def write_xml(self, file):
         """Output the given XML tree to the given file"""
@@ -105,7 +102,6 @@ class XML(object):
             # Add newline at end of file
             parent.tail = "\n"
 
-
     @classmethod
     def find_child(cls, parent, tag, children={}, attrib={}, required=False):
         """Find the child element with the given tag and children and/or
@@ -117,9 +113,9 @@ class XML(object):
                 "Found multiple matching <{0}> children (each with "
                 "attributes '{1}' and children '{2}') under "
                 "<{3}>:\n{4}"
-                        .format(XML.strip_ns(tag), attrib, children,
-                                XML.strip_ns(parent.tag),
-                                "\n".join([ET.tostring(e) for e in matches])))
+                .format(XML.strip_ns(tag), attrib, children,
+                        XML.strip_ns(parent.tag),
+                        "\n".join([ET.tostring(e) for e in matches])))
         elif len(matches) == 0:
             if required:
                 raise KeyError("Mandatory element <{0}> not found under <{1}>"
@@ -128,7 +124,6 @@ class XML(object):
             return None
         else:
             return matches[0]
-
 
     @classmethod
     def find_all_children(cls, parent, tag, children={}, attrib={}):
@@ -177,9 +172,9 @@ class XML(object):
                      .format(len(list), XML.strip_ns(tag)))
         return list
 
-
     @classmethod
-    def add_child(cls, parent, new_child, ordering=None, known_namespaces=None):
+    def add_child(cls, parent, new_child, ordering=None,
+                  known_namespaces=None):
         """Add the given child element under the given parent element.
         If ordering is unspecified, the child will be appended after
         all existing children; otherwise, the placement of the child
@@ -187,7 +182,7 @@ class XML(object):
         """
         if ordering and not (new_child.tag in ordering):
             if (known_namespaces and
-                (XML.get_ns(new_child.tag) in known_namespaces)):
+                    (XML.get_ns(new_child.tag) in known_namespaces)):
                 logger.warning("New child '{0}' is not in the list of "
                                "expected children under '{1}': {2}"
                                .format(new_child.tag,
@@ -208,15 +203,15 @@ class XML(object):
                     if ordering.index(child.tag) > new_index:
                         found_position = True
                         break
-                except ValueError as e:
+                except ValueError:
                     if (known_namespaces and (XML.get_ns(child.tag) in
                                               known_namespaces)):
-                        logger.warning("Existing child element '{0}' is not in "
-                                       "expected list of children under '{1}': "
-                                       "\n{2}"
-                                       .format(child.tag,
-                                               XML.strip_ns(parent.tag),
-                                               ordering))
+                        logger.warning(
+                            "Existing child element '{0}' is not in expected "
+                            "list of children under '{1}': \n{2}"
+                            .format(child.tag,
+                                    XML.strip_ns(parent.tag),
+                                    ordering))
                     # Assume this is some sort of custom element - all known
                     # elements should implicitly come before it.
                     found_position = True
@@ -226,7 +221,6 @@ class XML(object):
                 parent.insert(i, new_child)
             else:
                 parent.append(new_child)
-
 
     @classmethod
     def set_or_make_child(cls, parent, tag, text=None, attrib=None,
