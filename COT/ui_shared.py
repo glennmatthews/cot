@@ -26,6 +26,8 @@ class UI(object):
 
     def __init__(self, force=False):
         self.force = force
+        # Stub for API testing
+        self.default_confirm_response = True
 
     def confirm(self, prompt):
         """Prompts user to confirm the requested operation, or auto-accepts
@@ -33,7 +35,7 @@ class UI(object):
         if self.force:
             logger.warning("Automatically agreeing to '{0}'".format(prompt))
             return True
-        return True
+        return self.default_confirm_response
 
     def confirm_or_die(self, prompt):
         """If the user doesn't agree, abort!"""
