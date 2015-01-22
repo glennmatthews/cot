@@ -21,6 +21,7 @@ from COT.ui_shared import UI
 from COT.edit_product import COTEditProduct
 from COT.data_validation import InvalidInputError
 
+
 class TestCOTEditProduct(COT_UT):
     """Unit tests for COTEditProduct submodule"""
     def setUp(self):
@@ -28,7 +29,6 @@ class TestCOTEditProduct(COT_UT):
         super(TestCOTEditProduct, self).setUp()
         self.instance = COTEditProduct(UI())
         self.instance.set_value("output", self.temp_file)
-
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
@@ -58,21 +58,18 @@ class TestCOTEditProduct(COT_UT):
         self.assertTrue(re.search("nothing to do", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
-
     def test_edit_short_version(self):
         """Editing the short version alone."""
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("version", "5.3.1")
         self.instance.run()
         self.instance.finished()
-        self.check_diff(
-"""
+        self.check_diff("""
        <ovf:Vendor>Cisco Systems, Inc.</ovf:Vendor>
 -      <ovf:Version>DEV</ovf:Version>
 +      <ovf:Version>5.3.1</ovf:Version>
        <ovf:FullVersion>DEVELOPMENT IMAGE</ovf:FullVersion>
 """)
-
 
     def test_edit_full_version(self):
         """Editing the full version alone."""
@@ -81,14 +78,14 @@ class TestCOTEditProduct(COT_UT):
                                 "Some arbitrary product, version 3.14159")
         self.instance.run()
         self.instance.finished()
-        self.check_diff(
-"""
+        self.check_diff("""
        <ovf:Version>DEV</ovf:Version>
 -      <ovf:FullVersion>DEVELOPMENT IMAGE</ovf:FullVersion>
-+      <ovf:FullVersion>Some arbitrary product, version 3.14159</ovf:FullVersion>
-       <ovf:ProductUrl>http://www.cisco.com/en/US/products/ps12559/index.html</ovf:ProductUrl>
++      <ovf:FullVersion>Some arbitrary product, version 3.14159\
+</ovf:FullVersion>
+       <ovf:ProductUrl>http://www.cisco.com/en/US/products/ps12559/index.html\
+</ovf:ProductUrl>
 """)
-
 
     def test_edit_both_versions(self):
         """Edit both version strings"""
@@ -97,16 +94,15 @@ class TestCOTEditProduct(COT_UT):
         self.instance.set_value("full_version", "Cisco IOS XRv, Version 5.2")
         self.instance.run()
         self.instance.finished()
-        self.check_diff(
-"""
+        self.check_diff("""
        <ovf:Vendor>Cisco Systems, Inc.</ovf:Vendor>
 -      <ovf:Version>DEV</ovf:Version>
 -      <ovf:FullVersion>DEVELOPMENT IMAGE</ovf:FullVersion>
 +      <ovf:Version>5.2.0.01I</ovf:Version>
 +      <ovf:FullVersion>Cisco IOS XRv, Version 5.2</ovf:FullVersion>
-       <ovf:ProductUrl>http://www.cisco.com/en/US/products/ps12559/index.html</ovf:ProductUrl>
+       <ovf:ProductUrl>http://www.cisco.com/en/US/products/ps12559/index.html\
+</ovf:ProductUrl>
 """)
-
 
     def test_edit_no_existing(self):
         """Edit both version strings in an OVF with no previous values."""
@@ -116,7 +112,7 @@ class TestCOTEditProduct(COT_UT):
         self.instance.run()
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
-expected="""
+                        expected="""
      </ovf:VirtualHardwareSection>
 +    <ovf:ProductSection>
 +      <ovf:Info>Product Information</ovf:Info>

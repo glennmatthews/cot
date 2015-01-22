@@ -396,6 +396,7 @@ class OVF(VMDescription, XML):
             # All elements in this section are optional
             product = p.find(self.PRODUCT)
             product_url = p.find(self.PRODUCT_URL)
+            # TODO: wrap all of these to screen width...
             str_list.append(template.format(
                 "Product:",
                 (product.text if product is not None
