@@ -14,7 +14,10 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 from difflib import unified_diff
 import os.path
 import glob
