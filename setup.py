@@ -26,7 +26,7 @@ import versioneer
 
 versioneer.VCS = 'git'
 versioneer.versionfile_source = 'COT/_version.py'
-versioneer.versionfile_build = versioneer.versionfile_source # TODO
+versioneer.versionfile_build = versioneer.versionfile_source    # TODO
 versioneer.tag_prefix = 'v'
 versioneer.parentdir_prefix = 'cot-'
 
@@ -44,6 +44,8 @@ cmd_class = versioneer.get_cmdclass()
 
 # Extend the "build" command a bit further:
 from versioneer import cmd_build
+
+
 class custom_build(cmd_build):
     def run(self):
         try:
@@ -51,6 +53,7 @@ class custom_build(cmd_build):
         except subprocess.CalledProcessError:
             exit()
         cmd_build.run(self)
+
 
 # Add a custom 'install_helpers' command:
 class custom_install_helpers(Command):
@@ -75,6 +78,7 @@ class custom_install_helpers(Command):
         except subprocess.CalledProcessError:
             exit('Aborting')
 
+
 # 'bdist_egg' (called automatically by 'install') to include 'install_helpers'
 class custom_bdist_egg(bdist_egg):
     def run(self):
@@ -92,7 +96,7 @@ setup(
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
     packages=['COT'],
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'cot = COT.cli:main',
         ],
