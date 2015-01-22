@@ -1,4 +1,4 @@
-# platform.py - Unit test cases for COT platform handling
+# platforms.py - Unit test cases for COT platform handling
 #
 # January 2014, Glenn F. Matthews
 # Copyright (c) 2014-2015 the COT project developers.
@@ -13,7 +13,7 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import unittest
-from COT.platform import IOSXRv, CSR1000V, IOSv, NXOSv, IOSXRvRP, IOSXRvLC
+from COT.platforms import IOSXRv, CSR1000V, IOSv, NXOSv, IOSXRvRP, IOSXRvLC
 from COT.data_validation import ValueUnsupportedError
 from COT.data_validation import ValueTooLowError, ValueTooHighError
 

@@ -22,6 +22,7 @@ import tempfile
 import shutil
 import re
 import sys
+import platform
 import time
 import logging
 from verboselogs import VerboseLogger
@@ -60,7 +61,8 @@ class COT_UT(unittest.TestCase):
 
         if re.search("ovf", file1) and sys.hexversion < 0x02070000:
             print("OVF file diff comparison skipped "
-                  "due to old Python version ({0})".format(sys.version))
+                  "due to old Python version ({0})"
+                  .format(platform.python_version()))
             return
 
         with open(file1) as f1:

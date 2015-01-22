@@ -34,7 +34,7 @@ from .vm_description import VMDescription, VMInitError
 from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
 from .helper_tools import get_checksum, get_disk_capacity, convert_disk_image
-import COT.platform as Platform
+import COT.platforms as Platform
 from .cli import TEXT_WIDTH
 
 logger = logging.getLogger(__name__)

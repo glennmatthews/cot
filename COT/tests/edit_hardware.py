@@ -3,7 +3,7 @@
 # edit_hardware.py - test cases for the COTEditHardware class
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -20,7 +20,7 @@ from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.edit_hardware import COTEditHardware
 from COT.data_validation import InvalidInputError
-from COT.platform import IOSv, IOSXRv
+from COT.platforms import IOSv, IOSXRv
 
 
 class TestCOTEditHardware(COT_UT):

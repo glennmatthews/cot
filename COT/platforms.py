@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
-# platform.py - Module for methods related to variations between
-#               guest platforms (Cisco CSR1000V, Cisco IOS XRv, etc.)
+# platforms.py - Module for methods related to variations between
+#                guest platforms (Cisco CSR1000V, Cisco IOS XRv, etc.)
 #
 # October 2013, Glenn F. Matthews
 # Copyright (c) 2013-2015 the COT project developers.

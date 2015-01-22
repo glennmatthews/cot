@@ -21,7 +21,7 @@ from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.inject_config import COTInjectConfig
 from COT.data_validation import InvalidInputError
-from COT.platform import IOSv, IOSXRv, IOSXRvLC
+from COT.platforms import IOSv, IOSXRv, IOSXRvLC
 
 
 class TestCOTInjectConfig(COT_UT):
