@@ -17,19 +17,59 @@
 import os
 
 from COT.data_validation import ValueUnsupportedError
-from COT.helper_tools import get_checksum
+from COT.helper_tools import check_call, check_output, get_checksum
 from COT.helper_tools import create_disk_image, convert_disk_image
 from COT.helper_tools import get_disk_format, get_disk_capacity
-from COT.helper_tools import HelperNotFoundError
+from COT.helper_tools import HelperError, HelperNotFoundError
 from COT.tests.ut import COT_UT
+
+
+class TestCheckCall(COT_UT):
+    """Test cases for check_call() function"""
+
+    def test_check_call_helpernotfounderror(self):
+        """HelperNotFoundError if executable doesn't exist"""
+        self.assertRaises(HelperNotFoundError,
+                          check_call, ["not_a_command"])
+        self.assertRaises(HelperNotFoundError,
+                          check_call, ["not_a_command"], require_success=True)
+
+    def test_check_call_helpererror(self):
+        """HelperError if executable fails and require_success is set"""
+
+        with self.assertRaises(HelperError) as cm:
+            check_call(["false"])
+        self.assertEqual(cm.exception.errno, 1)
+
+        check_call(["false"], require_success=False)
+
+
+class TestCheckOutput(COT_UT):
+    """Test cases for check_output() function"""
+
+    def test_check_output_helpernotfounderror(self):
+        """HelperNotFoundError if executable doesn't exist"""
+        self.assertRaises(HelperNotFoundError,
+                          check_output, ["not_a_command"])
+        self.assertRaises(HelperNotFoundError,
+                          check_output, ["not_a_command"],
+                          require_success=True)
+
+    def test_check_output_helpererror(self):
+        """HelperError if executable fails and require_success is set"""
+
+        with self.assertRaises(HelperError) as cm:
+            check_output(["false"])
+        self.assertEqual(cm.exception.errno, 1)
+
+        check_output(["false"], require_success=False)
 
 
 class TestGetChecksum(COT_UT):
     """Test cases for get_checksum() function"""
 
     def test_get_checksum_md5(self):
-        """Test case for get_checksum() with md5 sum.
-        """
+        """Test case for get_checksum() with md5 sum."""
         try:
             checksum = get_checksum(self.input_ovf, 'md5')
             self.assertEqual(checksum, "5aa4e3defb16e02ea16dd07cff77bfdf")
@@ -40,8 +80,7 @@ class TestGetChecksum(COT_UT):
             self.fail(e.strerror)
 
     def test_get_checksum_sha1(self):
-        """Test case for get_checksum() with sha1 sum.
-        """
+        """Test case for get_checksum() with sha1 sum."""
         try:
             checksum = get_checksum(self.input_ovf, 'sha1')
             self.assertEqual(checksum,
@@ -54,8 +93,7 @@ class TestGetChecksum(COT_UT):
             self.fail(e.strerror)
 
     def test_get_checksum_unsupported(self):
-        """Test invalid options to get_checksum().
-        """
+        """Test invalid options to get_checksum()."""
 
         self.assertRaises(ValueUnsupportedError,
                           get_checksum,
@@ -99,8 +137,7 @@ class TestGetDiskFormat(COT_UT):
 
 
 class TestGetDiskCapacity(COT_UT):
-    """Test cases for get_disk_capacity().
-    """
+    """Test cases for get_disk_capacity()."""
 
     def test_get_disk_capacity(self):
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
@@ -116,12 +153,10 @@ class TestGetDiskCapacity(COT_UT):
 
 
 class TestConvertDiskImage(COT_UT):
-    """Test cases for convert_disk_image().
-    """
+    """Test cases for convert_disk_image()."""
 
     def test_convert_no_work_needed(self):
-        """Convert a disk to its own format.
-        """
+        """Convert a disk to its own format."""
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         try:
             new_disk_path = convert_disk_image(disk_path, self.temp_dir,
@@ -161,8 +196,7 @@ class TestConvertDiskImage(COT_UT):
 
 
 class TestCreateDiskImage(COT_UT):
-    """Test cases for create_disk_image().
-    """
+    """Test cases for create_disk_image()."""
 
     def test_create_iso_with_contents(self):
         """Creation of ISO image containing files.
@@ -178,8 +212,7 @@ class TestCreateDiskImage(COT_UT):
     # above - no need to repeat that here
 
     def test_create_raw_with_contents(self):
-        """Creation of raw disk image containing files.
-        """
+        """Creation of raw disk image containing files."""
         disk_path = os.path.join(self.temp_dir, "out.img")
         try:
             create_disk_image(disk_path, contents=[self.input_ovf])
