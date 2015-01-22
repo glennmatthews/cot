@@ -20,6 +20,7 @@ from .vm_factory import VMFactory
 
 logger = logging.getLogger(__name__)
 
+
 class VMContextManager:
     """Context manager for virtual machine definitions. Use as follows:
     with VM_Context_manager(input_file, output_file) as vm:
@@ -30,10 +31,8 @@ class VMContextManager:
     def __init__(self, input_file, output_file):
         self.obj = VMFactory.create(input_file, output_file)
 
-
     def __enter__(self):
         return self.obj
-
 
     def __exit__(self, type, value, trace):
         # Did we exit cleanly?
