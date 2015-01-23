@@ -17,6 +17,7 @@
 import sys
 import argparse
 import logging
+import getpass
 import textwrap
 
 # Set logging defaults for all of COT
@@ -108,6 +109,7 @@ class CLI(UI):
             self.input = raw_input
         except NameError:
             self.input = input
+        self.getpass = getpass.getpass
 
         self.create_parser()
         self.create_subparsers()
@@ -157,9 +159,8 @@ class CLI(UI):
         if self.force:
             raise InvalidInputError("No password specified for {0}@{1}"
                                     .format(username, host))
-        import getpass
-        return getpass.getpass("Password for {0}@{1}: "
-                               .format(username, host))
+        return self.getpass("Password for {0}@{1}: "
+                            .format(username, host))
 
     def create_parser(self):
         # Top-level command definition and any global options

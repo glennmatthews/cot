@@ -20,6 +20,7 @@ import sys
 
 from COT.tests.ut import COT_UT
 from COT.cli import CLI
+from COT.data_validation import InvalidInputError
 
 
 class TestCOTCLI(COT_UT):
@@ -57,6 +58,68 @@ class TestCOTCLI(COT_UT):
             sys.stderr = sys.__stderr__
 
         self.assertEqual(rc, result)
+
+
+class TestCLIModule(TestCOTCLI):
+    """Test cases for the CLI module itself"""
+
+    def test_apis_without_force(self):
+        self.cli.force = False
+
+        self.cli.input = lambda _: 'y'
+        self.assertTrue(self.cli.confirm("prompt"))
+        self.cli.confirm_or_die("prompt")
+
+        self.cli.input = lambda _: 'n'
+        self.assertFalse(self.cli.confirm("prompt"))
+        self.assertRaises(SystemExit, self.cli.confirm_or_die, "prompt")
+
+        self.cli.input = lambda _: 'hello'
+        self.assertEqual("hello", self.cli.get_input("Prompt:", "goodbye"))
+
+        # get_input and confirm return default value if no user input
+        self.cli.input = lambda _: ''
+        self.assertTrue(self.cli.confirm("prompt"))
+        self.assertEqual("goodbye", self.cli.get_input("Prompt:", "goodbye"))
+
+        # confirm will complain and loop until receiving valid input
+        self.first_call = True
+
+        def not_at_first(*args):
+            if self.first_call:
+                self.first_call = False
+                return 'dunno'
+            return 'y'
+        self.cli.input = not_at_first
+        try:
+            with open(os.devnull, 'w') as devnull:
+                sys.stdout = devnull
+                self.assertTrue(self.cli.confirm("prompt"))
+        finally:
+            sys.stdout = sys.__stdout__
+
+        self.cli.getpass = lambda _: 'password'
+        self.assertEqual("password", self.cli.get_password("user", "host"))
+
+    def test_apis_with_force(self):
+        # When --force is set, CLI uses defaults and does not read user input
+        self.cli.force = True
+
+        self.cli.input = lambda _: 'y'
+        self.assertTrue(self.cli.confirm("prompt"))
+        self.cli.confirm_or_die("prompt")
+
+        self.cli.input = lambda _: 'n'
+        self.assertTrue(self.cli.confirm("prompt"))
+        self.cli.confirm_or_die("prompt")
+
+        self.cli.input = lambda _: 'hello'
+        self.assertEqual("goodbye", self.cli.get_input("Prompt:", "goodbye"))
+
+        # CLI doesn't provide a default password if --force
+        self.cli.getpass = lambda _: 'password'
+        self.assertRaises(InvalidInputError,
+                          self.cli.get_password, "user", "host")
 
 
 class TestCLIGeneral(TestCOTCLI):
