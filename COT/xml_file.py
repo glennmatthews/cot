@@ -103,19 +103,20 @@ class XML(object):
             parent.tail = "\n"
 
     @classmethod
-    def find_child(cls, parent, tag, children={}, attrib={}, required=False):
-        """Find the child element with the given tag and children and/or
-        attributes under the specified parent element. Will abort if
-        more than one child element matches the given information."""
-        matches = cls.find_all_children(parent, tag, children, attrib)
+    def find_child(cls, parent, tag, attrib={}, required=False):
+        """Find the child element with the given tag (and attributes)
+        under the specified parent element. Will abort if
+        more than one child element matches the given information.
+        """
+        matches = cls.find_all_children(parent, tag, attrib)
         if len(matches) > 1:
             raise LookupError(
                 "Found multiple matching <{0}> children (each with "
-                "attributes '{1}' and children '{2}') under "
-                "<{3}>:\n{4}"
-                .format(XML.strip_ns(tag), attrib, children,
+                "attributes '{1}') under <{2}>:\n{3}"
+                .format(XML.strip_ns(tag),
+                        attrib,
                         XML.strip_ns(parent.tag),
-                        "\n".join([ET.tostring(e) for e in matches])))
+                        "\n".join([ET.tostring(e).decode() for e in matches])))
         elif len(matches) == 0:
             if required:
                 raise KeyError("Mandatory element <{0}> not found under <{1}>"
@@ -126,9 +127,10 @@ class XML(object):
             return matches[0]
 
     @classmethod
-    def find_all_children(cls, parent, tag, children={}, attrib={}):
-        """Find all child elements with the given tag and children and/or
-        attributes under the specified parent element"""
+    def find_all_children(cls, parent, tag, attrib={}):
+        """Find all child elements with the given tag (and attributes)
+        under the specified parent element
+        """
         assert parent is not None
         elements = parent.findall(tag)
         logger.debug("Examining {0} {1} elements under {2}"
@@ -147,25 +149,6 @@ class XML(object):
                     found = False
                     break
 
-            if not found:
-                continue
-
-            for child_tag in children.keys():
-                child = e.find(child_tag)
-                if child is None:
-                    logger.debug("{0} does not have child {1}"
-                                 .format(XML.strip_ns(tag),
-                                         XML.strip_ns(child_tag)))
-                    found = False
-                    break
-                if child.text != children[child_tag]:
-                    logger.debug("Child '{0}' text ({1}) does not match "
-                                 "expected value ({2})"
-                                 .format(XML.strip_ns(child_tag),
-                                         child.text,
-                                         children[child_tag]))
-                    found = False
-                    break
             if found:
                 list.append(e)
         logger.debug("Found {0} matching {1} elements"

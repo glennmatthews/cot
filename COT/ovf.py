@@ -2864,11 +2864,12 @@ class OVFItem:
                 if attrib_match:
                     item.set(attrib_string, val)
                 elif child_attrib:
-                    child = XML.set_or_make_child(item,
-                                                  child_attrib.group(1),
-                                                  None,
-                                                  ordering=self.ITEM_CHILDREN,
-                                                  known_namespaces=self.NSM)
+                    child = XML.set_or_make_child(
+                        item,
+                        child_attrib.group(1),
+                        None,
+                        ordering=self.ITEM_CHILDREN,
+                        known_namespaces=self.NSM.values())
                     child.set(child_attrib.group(2), val)
                 elif custom_elem:
                     # Recreate the element in question and append it
@@ -2877,7 +2878,7 @@ class OVFItem:
                     # Children of Item must be in sorted order
                     XML.set_or_make_child(item, key, val,
                                           ordering=self.ITEM_CHILDREN,
-                                          known_namespaces=self.NSM)
+                                          known_namespaces=self.NSM.values())
             logger.debug("Item is:\n{0}".format(ET.tostring(item)))
             item_list.append(item)
 
