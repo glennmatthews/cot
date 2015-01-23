@@ -153,10 +153,10 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
         input_dir = os.path.dirname(self.input_ovf)
         shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
-        shutil.copy(os.path.join(input_dir, 'input.vmdk'), self.staging_dir)
-        # Copy input.vmdk to input.iso so as to have the wrong size/checksum
-        shutil.copy(os.path.join(input_dir, 'input.vmdk'),
-                    os.path.join(self.staging_dir, 'input.iso'))
+        shutil.copy(os.path.join(input_dir, 'input.iso'), self.staging_dir)
+        # Copy blank.vmdk to input.vmdk so as to have the wrong size/checksum
+        shutil.copy(os.path.join(input_dir, 'blank.vmdk'),
+                    os.path.join(self.staging_dir, 'input.vmdk'))
         # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               os.path.join(self.temp_dir, "temp.ova")) as ovf:
@@ -168,8 +168,8 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # Now read in the OVA
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
                               os.path.join(self.temp_dir, "temp.ovf")) as ova:
-            # Replace the extracted fake .iso with the real .iso
-            shutil.copy(os.path.join(input_dir, 'input.iso'), ova.working_dir)
+            # Replace the extracted fake .vmdk with the real .vmdk
+            shutil.copy(os.path.join(input_dir, 'input.vmdk'), ova.working_dir)
             self.assertFalse(ova.validate_file_references(),
                              "OVA has wrong file size - contents are invalid")
 
