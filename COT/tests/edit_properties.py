@@ -19,6 +19,7 @@ import os.path
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.edit_properties import COTEditProperties
+from COT.data_validation import ValueUnsupportedError
 
 
 class TestCOTEditProperties(COT_UT):
@@ -160,3 +161,18 @@ ovf:value="interface Loopback0" />
 +      <ovf:Property ovf:key="config-0004" ovf:type="string" ovf:value="end" />
      </ovf:ProductSection>
 """)
+
+    def test_qualifiers(self):
+        """Ensure property values are limited by qualifiers."""
+
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        vm = self.instance.vm
+
+        self.assertRaises(ValueUnsupportedError,
+                          vm.set_property_value,
+                          "login-password",
+                          # max length 25 characters according to OVF
+                          "abcdefghijklmnopqrstuvwxyz")
+
+        # TODO - we don't currently have any qualifiers other than MaxLen
+        # in our example OVF files. Need to get some good samples to use here.

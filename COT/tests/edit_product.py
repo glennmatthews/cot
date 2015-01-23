@@ -87,6 +87,22 @@ class TestCOTEditProduct(COT_UT):
 </ovf:ProductUrl>
 """)
 
+    def test_edit_full_no_existing(self):
+        """Edit full version in an OVF with no previous values."""
+        self.instance.set_value("PACKAGE", self.minimal_ovf)
+        self.instance.set_value("full_version", "Full Version")
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.minimal_ovf,
+                        expected="""
+     </ovf:VirtualHardwareSection>
++    <ovf:ProductSection>
++      <ovf:Info>Product Information</ovf:Info>
++      <ovf:FullVersion>Full Version</ovf:FullVersion>
++    </ovf:ProductSection>
+   </ovf:VirtualSystem>
+""")
+
     def test_edit_both_versions(self):
         """Edit both version strings"""
         self.instance.set_value("PACKAGE", self.input_ovf)
@@ -104,7 +120,7 @@ class TestCOTEditProduct(COT_UT):
 </ovf:ProductUrl>
 """)
 
-    def test_edit_no_existing(self):
+    def test_edit_both_no_existing(self):
         """Edit both version strings in an OVF with no previous values."""
         self.instance.set_value("PACKAGE", self.minimal_ovf)
         self.instance.set_value("version", "Version")
