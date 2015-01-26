@@ -240,6 +240,18 @@ specifications/vmdk.html#streamOptimized" />
      </ovf:Section>""".format(input_size=self.FILE_SIZE['input.vmdk'],
                               blank_size=self.FILE_SIZE['blank.vmdk']))
 
+    def test_new_hard_disk_v20_vbox(self):
+        """Test adding a new hard disk to a v2.0 OVF from VirtualBox"""
+        self.instance.set_value("PACKAGE", self.v20_vbox_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.run()
+        self.instance.finished()
+        # TODO - vbox XML is not very clean so the diffs are large...
+        # self.check_diff('', file1=self.v20_vbox_ovf)
+
+        # ovftool does not consider vbox ovfs to be valid
+        self.validate_output_with_ovftool = False
+
     def test_overwrite_hard_disk_fileid(self):
         """Overwrite an existing disk by specifying matching file-id."""
         self.instance.set_value("PACKAGE", self.input_ovf)

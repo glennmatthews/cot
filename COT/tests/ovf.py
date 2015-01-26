@@ -92,15 +92,24 @@ class TestOVFInputOutput(COT_UT):
         self.check_diff('', file2=(self.temp_file + ".a.b.c"))
 
     def test_input_output_v09(self):
-        """Test reading/writing of a v0.9 OVF.
-        """
+        """Test reading/writing of a v0.9 OVF."""
         with VMContextManager(self.v09_ovf, self.temp_file):
             pass
         self.check_diff('', file1=self.v09_ovf)
 
-    def test_input_output_custom(self):
-        """Test reading/writing of an OVF with custom extensions.
-        """
+    def test_input_output_v20_vbox(self):
+        """Test reading/writing of a v2.0 OVF from VirtualBox."""
+        with VMContextManager(self.v20_vbox_ovf, self.temp_file):
+            pass
+
+        # TODO - vbox XML is not very clean so the diffs are large...
+        # self.check_diff('', file1=self.v20_vbox_ovf)
+
+        # ovftool does not consider vbox ovfs to be valid
+        self.validate_output_with_ovftool = False
+
+    def test_input_output_vmware(self):
+        """Test reading/writing of an OVF with custom extensions."""
         with VMContextManager(self.vmware_ovf, self.temp_file):
             pass
         # VMware disagrees with COT on some fiddly details of XML formatting
