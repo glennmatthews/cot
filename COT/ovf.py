@@ -778,6 +778,8 @@ class OVF(VMDescription, XML):
                 # In this case we only untarred the ovf descriptor
                 # and not any other contents of the OVA, so there's
                 # nothing to check here.
+                # TODO - it would be nice to at least make sure the
+                # files exist in the TAR file...
                 return True
         base_dir = os.path.dirname(self.ovf_descriptor)
         rc = True

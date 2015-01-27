@@ -156,6 +156,13 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             self.assertFalse(ova.validate_file_references(),
                              "OVA references missing file - contents invalid")
 
+        # Also test read-only OVA logic:
+        with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
+                              None) as ova:
+            # Currently we don't detect missing files in the OVA archive,
+            # so this returns True. TODO
+            ova.validate_file_references()
+
     def test_input_output_bad_file(self):
         """Test reading/writing of an OVF with incorrect file references.
         """
@@ -249,6 +256,11 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             f.write("< hello world!")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
+        # .ova that is an empty TAR file
+        tarf = tarfile.open(fake_file, 'w')
+        tarf.close()
+        self.assertRaises(VMInitError, OVF, fake_file, None)
+
         # .ova that is a TAR file but does not contain an OVF descriptor
         tarf = tarfile.open(fake_file, 'w')
         try:
@@ -262,6 +274,23 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         tarf = tarfile.open(fake_file, 'a')
         try:
             tarf.add(self.input_ovf, os.path.basename(self.input_ovf))
+        finally:
+            tarf.close()
+        self.assertRaises(VMInitError, OVF, fake_file, None)
+
+        # .ova with unsafe absolute path references
+        tarf = tarfile.open(fake_file, 'w')
+        try:
+            # tarfile.add() is sometimes smart enough to protect us against
+            # such unsafe references, but we can overrule it by using
+            # gettarinfo() and addfile() instead of just add().
+            tari = tarf.gettarinfo(self.minimal_ovf)
+            tari.name = os.path.abspath(
+                os.path.join(os.path.dirname(self.minimal_ovf),
+                             "..", "..", "..",
+                             os.path.basename(self.minimal_ovf)))
+            with open(self.minimal_ovf, 'rb') as f:
+                tarf.addfile(tari, f)
         finally:
             tarf.close()
         self.assertRaises(VMInitError, OVF, fake_file, None)
