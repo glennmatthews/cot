@@ -376,7 +376,7 @@ def add_disk_worker(vm,
         else:
             # let VM choose controller address if necessary
             ctrl_addr = None
-            disk_addr = 0
+            disk_addr = None
 
         ctrl_item = vm.add_controller_device(controller, subtype,
                                              ctrl_addr, ctrl_item)
