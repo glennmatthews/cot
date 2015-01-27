@@ -181,31 +181,6 @@ class OVF(VMDescription, XML):
                     .format(self.ovf_descriptor, root_namespace))
             self.name_helper = OVFNameHelper(self.ovf_version)
 
-            # Some OVF sources are lazy about their XML namespacing, treating
-            # the "OVF" namespace as default but not explicitly declaring it
-            # as such. So fix things up if necessary:
-            try:
-                for elem in self.root.iter():
-                    # A namespaced element will have its namespace prepended
-                    # to the tag like so:
-                    # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
-                    if elem.tag[0] != '{':
-                        logger.debug(
-                            "Fixing up missing namespace for element {0}"
-                            .format(elem.tag))
-                        elem.tag = self.OVF + elem.tag
-            except AttributeError:
-                # 2.6 has getiterator() but not iter()
-                for elem in self.root.getiterator():
-                    # A namespaced element will have its namespace prepended
-                    # to the tag like so:
-                    # "{http://schemas.dmtf.org/ovf/envelope/1}Envelope"
-                    if elem.tag[0] != '{':
-                        logger.debug(
-                            "Fixing up missing namespace for element {0}"
-                            .format(elem.tag))
-                        elem.tag = self.OVF + elem.tag
-
             for (prefix, URI) in self.NSM.items():
                 self.register_namespace(prefix, URI)
 
