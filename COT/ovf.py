@@ -1070,6 +1070,12 @@ class OVF(VMDescription, XML):
         """Set the value of the given property (converting value if needed).
         Returns the value that was set.
         """
+        if self.product_section is None:
+            self.product_section = self.set_or_make_child(
+                self.virtual_system, self.PRODUCT_SECTION)
+            # Any Section must have an Info as child
+            self.set_or_make_child(self.product_section, self.INFO,
+                                   "Product Information")
         property = self.find_child(self.product_section, self.PROPERTY,
                                    attrib={self.PROP_KEY: key})
         if property is None:

@@ -176,3 +176,27 @@ ovf:value="interface Loopback0" />
 
         # TODO - we don't currently have any qualifiers other than MaxLen
         # in our example OVF files. Need to get some good samples to use here.
+
+    def test_create_property_no_prexisting(self):
+        """Set property values for an OVF that has none previously"""
+        self.instance.set_value("PACKAGE", self.minimal_ovf)
+        self.instance.set_value("properties", ["hello=world"])
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.minimal_ovf, expected="""
+     </ovf:VirtualHardwareSection>
++    <ovf:ProductSection>
++      <ovf:Info>Product Information</ovf:Info>
++      <ovf:Property ovf:key="hello" ovf:type="string" ovf:value="world" />
++    </ovf:ProductSection>
+   </ovf:VirtualSystem>
+""")
+
+    def test_config_file_not_supported(self):
+        """Platform doesn't support literal CLI configuration."""
+        self.instance.set_value("PACKAGE", self.iosv_ovf)
+        self.instance.set_value("config_file",
+                                os.path.join(os.path.dirname(__file__),
+                                             "sample_cfg.txt"))
+        self.assertRaises(NotImplementedError,
+                          self.instance.run)
