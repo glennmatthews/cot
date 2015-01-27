@@ -184,3 +184,11 @@ ovf:size="{config_size}" />
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.vm.platform = IOSv
         self.assertRaises(LookupError, self.instance.run)
+
+    def test_find_parent_fail_no_parent(self):
+        """Negative testing of some inject-config related APIs."""
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        cpu_item = self.instance.vm.hardware.find_item(
+            resource_type='cpu')
+        self.assertRaises(LookupError,
+                          self.instance.vm.find_device_location, cpu_item)
