@@ -446,7 +446,8 @@ class OVF(VMDescription, XML):
         # An OVF may have zero, one, or more
         eula_header = False
         for e in self.find_all_children(self.virtual_system,
-                                        self.EULA_SECTION):
+                                        self.EULA_SECTION,
+                                        self.EULA_SECTION_ATTRIB):
             info = e.find(self.INFO)
             lic = e.find(self.EULA_LICENSE)
             if lic is not None and lic.text:
@@ -1346,9 +1347,7 @@ class OVF(VMDescription, XML):
         for key in self.RES_MAP.keys():
             if type == self.RES_MAP[key]:
                 return key
-        raise ValueUnsupportedError(self.RESOURCE_TYPE,
-                                    type,
-                                    self.RES_MAP.values())
+        return "unknown ({0})".format(type)
 
     def get_subtype_from_device(self, device):
         """Return the subtype string for the given device"""
@@ -1996,7 +1995,15 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
         self.PROPERTY_DESC = OVF + 'Description'
 
         # Envelope -> VirtualSystem -> EulaSection -> License
-        self.EULA_SECTION = OVF + 'EulaSection'
+        if self.ovf_version < 1.0:
+            self.EULA_SECTION = OVF + 'Section'
+            self.EULA_SECTION_ATTRIB = {
+                XSI + 'type': "ovf:EulaSection_Type"
+            }
+        else:
+            self.EULA_SECTION = OVF + 'EulaSection'
+            self.EULA_SECTION_ATTRIB = {}
+
         self.EULA_LICENSE = OVF + 'License'
 
         # Envelope -> VirtualSystem -> VirtualHardwareSection -> Item(s)
@@ -2119,6 +2126,8 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
         self.VIRTUAL_SYSTEM_TYPE = VSSD + 'VirtualSystemType'
 
         # List of ResourceType string values we know about
+        # http://schemas.dmtf.org/wbem/cim-html/2/
+        #        CIM_ResourceAllocationSettingData.html
         self.RES_MAP = {
             'cpu':       '3',
             'memory':    '4',

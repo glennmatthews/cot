@@ -456,6 +456,10 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 Annotation: Hello world! This is a version 0.9 OVF.
 
+End User License Agreement(s):
+  Licensing agreement
+    (not displayed, use 'cot info --verbose' if desired)
+
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
   input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
@@ -482,6 +486,11 @@ NICs and Associated Networks:
 {0}
 -------------------------------------------------------------------------------
 Annotation: Hello world! This is a version 0.9 OVF.
+
+End User License Agreement(s):
+  Licensing agreement
+    Licensing text, oh licensing text!
+    How lovely is thy legalese!
 
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
