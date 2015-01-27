@@ -257,6 +257,8 @@ specifications/vmdk.html#streamOptimized" />
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("DISK_IMAGE", self.new_vmdk)
         self.instance.set_value("file_id", 'file1')
+        # For coverage's sake, let's change the controller subtype too
+        self.instance.set_value("subtype", "virtio")
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -273,6 +275,11 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
 ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
 "http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
+...
+         <rasd:InstanceID>3</rasd:InstanceID>
+-        <rasd:ResourceSubType>lsilogic</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
+         <rasd:ResourceType>6</rasd:ResourceType>
 """.format(input_size=self.FILE_SIZE['input.vmdk'],
            blank_size=self.FILE_SIZE['blank.vmdk'],
            iso_size=self.FILE_SIZE['input.iso']))

@@ -276,14 +276,9 @@ def add_disk_worker(vm,
                 logger.verbose("Found Disk but not File - maybe placeholder?")
 
         if disk_item is not None:
-            if type is not None:
-                match_or_die("disk Item ResourceType",
-                             vm.get_type_from_device(disk_item),
-                             "--type", type)
-            else:
-                type = vm.get_type_from_device(disk_item)
-                logger.info("Guessing disk type '{0}' from existing disk Item"
-                            .format(type))
+            match_or_die("disk Item ResourceType",
+                         vm.get_type_from_device(disk_item),
+                         "--type", type)
             vm.check_sanity_of_disk_device(disk, file, disk_item, ctrl_item)
 
         if ctrl_item is not None:
