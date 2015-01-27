@@ -1788,13 +1788,16 @@ class OVF(VMDescription, XML):
             # different way to indicate an empty drive. By convention,
             # we do this with a small placeholder disk (one with a Disk entry
             # but no corresponding File included in the OVF package).
+            if self.disk_section is None:
+                logger.verbose("No DiskSection, so no placeholder disk!")
+                return None
             for disk in self.disk_section.findall(self.DISK):
                 file_id = disk.get(self.DISK_FILE_REF)
                 if file_id is None:
                     # Found placeholder disk!
                     # Now find the drive that's using this disk.
                     return self.find_item_from_disk(disk)
-            logger.debug("No placeholder disk found.")
+            logger.verbose("No placeholder disk found.")
             return None
         else:
             raise ValueUnsupportedError("drive type",

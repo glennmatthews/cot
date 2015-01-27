@@ -21,7 +21,7 @@ from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.inject_config import COTInjectConfig
 from COT.data_validation import InvalidInputError
-from COT.platforms import IOSv, IOSXRv, IOSXRvLC
+from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
 
 
 class TestCOTInjectConfig(COT_UT):
@@ -168,3 +168,19 @@ ovf:size="{config_size}" />
                         .format(iso_size=self.FILE_SIZE['input.iso'],
                                 config_size=os.path.getsize(os.path.join(
                                     self.temp_dir, 'config.iso'))))
+
+    def test_inject_config_fail_no_disk_available(self):
+        """Error handling if the OVF doesn't have an appropriate drive."""
+        self.instance.set_value("PACKAGE", self.minimal_ovf)
+        self.instance.set_value("config_file", self.config_file)
+        # CSR1000V wants a CD-ROM drive
+        self.instance.vm.platform = CSR1000V
+        self.assertRaises(LookupError, self.instance.run)
+        # IOSv wants a hard disk - will fail due to no DiskSection
+        self.instance.vm.platform = IOSv
+        self.assertRaises(LookupError, self.instance.run)
+
+        # Also fail due to DiskSection but no placeholder:
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.vm.platform = IOSv
+        self.assertRaises(LookupError, self.instance.run)
