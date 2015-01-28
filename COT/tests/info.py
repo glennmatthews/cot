@@ -604,3 +604,29 @@ NICs and Associated Networks:
   <instance 10>                  : NAT
     Ethernet adapter on 'NAT'
 """.format(self.v20_vbox_ovf))
+
+    def test_invalid_ovf(self):
+        """Test info string for OVF with various invalid/atypical contents"""
+        self.instance.set_value("PACKAGE_LIST", [self.invalid_ovf])
+        self.instance.set_value("verbosity", "verbose")
+        self.check_cot_output("""
+-------------------------------------------------------------------------------
+{0}
+-------------------------------------------------------------------------------
+
+Product:  (No product string)
+          (No product URL)
+Vendor:   (No vendor string)
+          (No vendor URL)
+Version:  (No version string)
+          (No detailed version string)
+
+Files and Disks:                      File Size   Capacity Device
+                                     ---------- ---------- --------------------
+  this_is_a_really_long_filename_...  149.00 kB    1.00 GB 
+  (disk placeholder)                         --  128.00 MB 
+
+Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
+                                  ---- --------- ------ ------- ---------------
+  None (default)                     0      0 MB      0       0   1 /   1.12 GB
+""".format(self.invalid_ovf))    # noqa - trailing whitespace above is expected

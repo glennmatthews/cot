@@ -710,34 +710,28 @@ class OVF(VMDescription, XML):
         platform = None
         product_class = None
         class_to_platform_map = {
-            'csr1000v':   Platform.CSR1000V,
-            'iosv':       Platform.IOSv,
-            'nx-osv':     Platform.NXOSv,
-            'ios-xrv':    Platform.IOSXRv,
-            'ios-xrv.rp': Platform.IOSXRvRP,
-            'ios-xrv.lc': Platform.IOSXRvLC,
+            'com.cisco.csr1000v':   Platform.CSR1000V,
+            'com.cisco.iosv':       Platform.IOSv,
+            'com.cisco.nx-osv':     Platform.NXOSv,
+            'com.cisco.ios-xrv':    Platform.IOSXRv,
+            'com.cisco.ios-xrv.rp': Platform.IOSXRvRP,
+            'com.cisco.ios-xrv.lc': Platform.IOSXRvLC,
+            None:                   Platform.GenericPlatform,
             }
 
         if self.product_section is None:
             platform = Platform.GenericPlatform
         else:
             product_class = self.product_section.get(self.PRODUCT_CLASS)
-            if product_class is None:
+            try:
+                platform = class_to_platform_map[product_class]
+            except KeyError:
+                logger.warning(
+                    "Unrecognized product class '{0}' - known classes "
+                    "are {1}. Treating as a generic product..."
+                    .format(product_class,
+                            class_to_platform_map.keys()))
                 platform = Platform.GenericPlatform
-            else:
-                match = re.match("com\.cisco\.(.*)", product_class)
-                if match:
-                    class_type = match.group(1)
-                    try:
-                        platform = class_to_platform_map[class_type]
-                    except KeyError:
-                        pass
-        if not platform:
-            logger.warning("Unrecognized product class '{0}' - known classes "
-                           "are {1}. Treating as generic product..."
-                           .format(product_class,
-                                   class_to_platform_map.keys()))
-            platform = Platform.GenericPlatform
         logger.info("OVF product class {0} --> platform {1}"
                     .format(product_class, platform.__name__))
         self.platform = platform

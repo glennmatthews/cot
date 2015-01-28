@@ -116,6 +116,9 @@ class COT_UT(unittest.TestCase):
                                          "ubuntu.2.0.ovf")
         # OVF with lots of custom VMware extensions
         self.vmware_ovf = os.path.join(os.path.dirname(__file__), "vmware.ovf")
+        # OVF with various odd/invalid contents
+        self.invalid_ovf = os.path.join(os.path.dirname(__file__),
+                                        "invalid.ovf")
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
