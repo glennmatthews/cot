@@ -62,17 +62,41 @@ class TestCOTAddDisk(COT_UT):
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
-    def test_conflicting_args(self):
+    def test_conflicting_args_1(self):
         """Test conflicting arguments are detected and rejected"""
         # TODO - it would be nice to detect this in ready_to_run()
         # rather than run()
-
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("DISK_IMAGE", self.new_vmdk)
         # file2 exists and is mapped to IDE 1:0 but we request IDE 1:1
         self.instance.set_value("controller", "ide")
         self.instance.set_value("address", "1:1")
         self.instance.set_value("file_id", "file2")
+        self.assertRaises(ValueMismatchError, self.instance.run)
+
+    def test_conflicting_args_2(self):
+        """Test conflicting arguments are detected and rejected"""
+        # TODO - it would be nice to detect this in ready_to_run()
+        # rather than run()
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             "input.iso"))
+        # ovf contains input.iso but we're asking it to overwrite input.vmdk
+        self.instance.set_value("file_id", "vmdisk1")
+        self.assertRaises(ValueMismatchError, self.instance.run)
+
+    def test_conflicting_args_3(self):
+        """Test conflicting arguments are detected and rejected"""
+        # TODO - it would be nice to detect this in ready_to_run()
+        # rather than run()
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             "input.vmdk"))
+        # ovf contains input.vmdk but we're asking it to overwrite input.iso
+        self.instance.set_value("controller", "ide")
+        self.instance.set_value("address", "1:0")
         self.assertRaises(ValueMismatchError, self.instance.run)
 
     def test_new_hard_disk(self):
