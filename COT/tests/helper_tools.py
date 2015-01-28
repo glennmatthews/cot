@@ -281,7 +281,7 @@ class TestGetDiskCapacity(HelperToolsUT):
         self.assertRaises(RuntimeError, get_disk_capacity, "/foo/bar")
 
 
-class TestConvertDiskImage(COT_UT):
+class TestConvertDiskImage(HelperToolsUT):
     """Test cases for convert_disk_image()."""
 
     def test_convert_no_work_needed(self):
@@ -322,6 +322,47 @@ class TestConvertDiskImage(COT_UT):
         (f, sf) = get_disk_format(new_disk_path)
         self.assertEqual(f, 'vmdk')
         self.assertEqual(sf, 'streamOptimized')
+
+    def test_convert_to_vmdk_streamoptimized_old_qemu(self):
+        """Code flow for old QEMU version"""
+        COT.helper_tools.QEMU_IMG_VERSION = StrictVersion("1.0.0")
+        self.match_argv = ['vmdktool']
+        try:
+            temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
+            create_disk_image(temp_disk, capacity="16M")
+            new_disk_path = convert_disk_image(temp_disk, self.temp_dir,
+                                               'vmdk', 'streamOptimized')
+            # convert_disk_image will use qemu to convert qcow2 to img
+            self.assertEqual(self.last_argv,
+                             ['vmdktool', '-z9', '-v',
+                              os.path.join(self.temp_dir, 'foo.vmdk'),
+                              os.path.join(self.temp_dir, 'foo.img')])
+            self.assertEqual(new_disk_path,
+                             os.path.join(self.temp_dir, "foo.vmdk"))
+        except HelperNotFoundError as e:
+            self.fail(e.strerror)
+        finally:
+            COT.helper_tools.QEMU_IMG_VERSION = None
+
+    def test_convert_to_vmdk_streamoptimized_new_qemu(self):
+        """Code flow for new QEMU version"""
+        COT.helper_tools.QEMU_IMG_VERSION = StrictVersion("2.1.0")
+        self.match_argv = ['qemu-img', 'convert']
+        try:
+            temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
+            create_disk_image(temp_disk, capacity="16M")
+            new_disk_path = convert_disk_image(temp_disk, self.temp_dir,
+                                               'vmdk', 'streamOptimized')
+            self.assertEqual(self.last_argv,
+                             ['qemu-img', 'convert', '-O', 'vmdk',
+                              '-o', 'subformat=streamOptimized', temp_disk,
+                              new_disk_path])
+            self.assertEqual(new_disk_path,
+                             os.path.join(self.temp_dir, 'foo.vmdk'))
+        except HelperNotFoundError as e:
+            self.fail(e.strerror)
+        finally:
+            COT.helper_tools.QEMU_IMG_VERSION = None
 
     def test_convert_to_raw(self):
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
@@ -403,3 +444,21 @@ class TestCreateDiskImage(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
         # TODO check raw file contents
+
+
+class TestGetOvftoolVersion(HelperToolsUT):
+    """Test cases for get_ovftool_version() function"""
+
+    def setUp(self):
+        super(TestGetOvftoolVersion, self).setUp()
+        COT.helper_tools.OVFTOOL_VERSION = None
+        self.match_argv = ['ovftool', '--version']
+
+    def tearDown(self):
+        COT.helper_tools.OVFTOOL_VERSION = None
+        super(TestGetOvftoolVersion, self).tearDown()
+
+    def test_invalid_version(self):
+        self.fake_output = "Error: Unknown option: 'version'"
+        self.assertRaises(RuntimeError,
+                          COT.helper_tools.get_ovftool_version)
