@@ -68,6 +68,21 @@ class TestCOTInfo(COT_UT):
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
+    def test_invalid_args(self):
+        self.assertRaises(InvalidInputError,
+                          self.instance.set_value,
+                          "PACKAGE_LIST", ["/foo/bar/baz"])
+        self.assertRaises(InvalidInputError,
+                          self.instance.set_value,
+                          "verbosity", True)
+        self.assertRaises(InvalidInputError,
+                          self.instance.set_value,
+                          "verbosity", 0)
+        # info takes a PACKAGE_LIST not a PACKAGE at present
+        self.assertRaises(InvalidInputError,
+                          self.instance.set_value,
+                          "PACKAGE", self.input_ovf)
+
     def test_minimal_ovf(self):
         """Get info for minimal OVF with no real content."""
         # For an OVF this simple, standard/brief/verbose output are the same

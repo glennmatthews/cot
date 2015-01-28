@@ -45,6 +45,9 @@ class COTInfo(COTReadOnlySubmodule):
                 if not os.path.exists(package):
                     return False, ("Specified package {0} does not exist!"
                                    .format(package))
+        elif arg == "verbosity":
+            if value not in ['brief', 'verbose', None]:
+                return False, "Verbosity must be 'brief', 'verbose', or None"
 
         return valid, value_or_reason
 
