@@ -643,5 +643,10 @@ Files and Disks:                      File Size   Capacity Device
 
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
-  None (default)                     0      0 MB      0       0   1 /   1.12 GB
+  myprofile (default)                3      0 MB      0       0   1 /   1.12 GB
+    Label:          "what a profile"
+    Description:    "this is"
+  howlongofaprofilenamecanweuse      0      1 MB      0       0   1 /   1.12 GB
+    Label:          "howlongofaprofilenamecanweusehere"
+    Description:    "prettylongitappears"
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected

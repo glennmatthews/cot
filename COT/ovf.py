@@ -2280,10 +2280,14 @@ class OVFHardware:
             if resource_type and (self.ovf.RES_MAP[resource_type] !=
                                   ovfitem.get_value(self.ovf.RESOURCE_TYPE)):
                 continue
-            if profile_list and not [ovfitem.has_profile(profile) for
-                                     profile in profile_list]:
-                continue
             valid = True
+            if profile_list:
+                for profile in profile_list:
+                    if not ovfitem.has_profile(profile):
+                        valid = False
+                        break
+            if not valid:
+                continue
             for (property, value) in properties.items():
                 if ovfitem.get_value(property) != value:
                     valid = False
@@ -2298,7 +2302,7 @@ class OVFHardware:
         """Find the only OVFItem of the given resource_type, or None.
         Will raise a LookupError if more than one such item exists.
         """
-        matches = self.find_all_items(resource_type, properties, profile)
+        matches = self.find_all_items(resource_type, properties, [profile])
         if len(matches) > 1:
             raise LookupError("Found multiple matching {0} Items:\n{2}"
                               .format(resource_type, "\n".join(matches)))
