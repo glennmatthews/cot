@@ -98,6 +98,28 @@ ovf:size="{config_size}" />
                                 config_size=os.path.getsize(os.path.join(
                                     self.temp_dir, 'config.iso'))))
 
+    def test_inject_config_iso_secondary(self):
+        """Inject secondary config file on an ISO."""
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.vm.platform = IOSXRv
+        self.instance.set_value("secondary_config_file", self.config_file)
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="config.iso" ovf:id="config.iso" \
+ovf:size="{config_size}" />
+   </ovf:References>
+...
+         <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
++        <rasd:Description>Configuration disk</rasd:Description>
+         <rasd:ElementName>CD-ROM 2</rasd:ElementName>
++        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
+         <rasd:InstanceID>8</rasd:InstanceID>"""
+                        .format(iso_size=self.FILE_SIZE['input.iso'],
+                                config_size=os.path.getsize(os.path.join(
+                                    self.temp_dir, 'config.iso'))))
+
     def test_inject_config_vmdk(self):
         """Inject config file on a VMDK"""
         self.instance.set_value("PACKAGE", self.iosv_ovf)
