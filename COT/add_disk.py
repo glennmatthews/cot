@@ -240,7 +240,12 @@ def add_disk_worker(vm,
 
         # 2) Check whether the --file-id matches an existing File and/or Disk
         #    in the OVF (and from there, find the associated Items)
-        (f2, d2, ci2, di2) = vm.search_from_file_id(file_id)
+        # In the case where no file_id is specified, we may default to the
+        # filename, so check that instead
+        if file_id is not None:
+            (f2, d2, ci2, di2) = vm.search_from_file_id(file_id)
+        else:
+            (f2, d2, ci2, di2) = vm.search_from_file_id(disk_file)
 
         # 3) Check whether the --controller and --address match existing Items
         #    in the OVF (and from there, find the associated Disk and/or File)

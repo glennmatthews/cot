@@ -602,3 +602,31 @@ vmdk.html#streamOptimized" />
         self.instance.set_value("PACKAGE", self.temp_file)
         self.instance.set_value("DISK_IMAGE", new_qcow2)
         self.assertRaises(ValueTooHighError, self.instance.run)
+
+    def test_overwrite_implicit_file_id(self):
+        """file_id defaults to filename if not set."""
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             "input.vmdk"))
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.invalid_ovf, expected="""
+   <ovf:References>
+-    <ovf:File ovf:href="this_is_a_really_long_filename_for_a_disk.vmdk" \
+ovf:id="input.vmdk" ovf:size="{input_size}" />
++    <ovf:File ovf:href="input.vmdk" ovf:id="input.vmdk" \
+ovf:size="{input_size}" />
+   </ovf:References>
+...
+       </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>1</rasd:AddressOnParent>
++        <rasd:ElementName>Hard Disk Drive</rasd:ElementName>
++        <rasd:HostResource>ovf:/disk/input.vmdk</rasd:HostResource>
++        <rasd:InstanceID>6</rasd:InstanceID>
++        <rasd:Parent>1</rasd:Parent>
++        <rasd:ResourceType>17</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+        """.format(input_size=self.FILE_SIZE['input.vmdk']))
