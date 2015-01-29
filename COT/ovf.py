@@ -478,15 +478,7 @@ class OVF(VMDescription, XML):
                     disk_cap_string = byte_string(
                         self.get_capacity_from_disk(disk))
                     device_item = self.find_item_from_disk(disk)
-                if device_item is None:
-                    device_str = ""
-                else:
-                    controller_item = self.find_parent_from_item(device_item)
-                    device_str = ("{0} @ {1} {2}:{3}".format(
-                        self.get_type_from_device(device_item),
-                        self.get_type_from_device(controller_item).upper(),
-                        controller_item.get_value(self.ADDRESS),
-                        device_item.get_value(self.ADDRESS_ON_PARENT)))
+                device_str = self.device_info_str(device_item)
 
                 href_str = "  "+file.get(self.FILE_HREF)
                 # Truncate to fit in available space
@@ -507,15 +499,7 @@ class OVF(VMDescription, XML):
                 disk_cap_string = byte_string(
                     self.get_capacity_from_disk(disk))
                 device_item = self.find_item_from_disk(disk)
-                if device_item is None:
-                    device_str = ""
-                else:
-                    controller_item = self.find_parent_from_item(device_item)
-                    device_str = ("{0} @ {1} {2}:{3}".format(
-                        self.get_type_from_device(device_item),
-                        self.get_type_from_device(controller_item).upper(),
-                        controller_item.get_value(self.ADDRESS),
-                        device_item.get_value(self.ADDRESS_ON_PARENT)))
+                device_str = self.device_info_str(device_item)
                 str_list.append(template.format("  (disk placeholder)",
                                                 "--",
                                                 disk_cap_string,
@@ -620,6 +604,23 @@ class OVF(VMDescription, XML):
                         str_list.append(wrapper.fill(line))
 
         return "\n".join(str_list)
+
+    def device_info_str(self, device_item):
+        if device_item is None:
+            return ""
+        controller_item = self.find_parent_from_item(device_item)
+        if controller_item is None:
+            ctrl_type = "(?)"
+            ctrl_addr = "?"
+        else:
+            ctrl_type = self.get_type_from_device(
+                controller_item).upper()
+            ctrl_addr = controller_item.get_value(self.ADDRESS)
+        return "{0} @ {1} {2}:{3}".format(
+            self.get_type_from_device(device_item),
+            ctrl_type,
+            ctrl_addr,
+            device_item.get_value(self.ADDRESS_ON_PARENT))
 
     def profile_info_string(self, verbosity_option=None, enumerate=False):
         str_list = []
@@ -1267,8 +1268,10 @@ class OVF(VMDescription, XML):
                 disk = self.find_child(self.disk_section, self.DISK,
                                        attrib={self.DISK_FILE_REF: file_id})
         else:
-            raise LookupError("Unrecognized HostResource format '{0}'"
-                              .format(host_resource))
+            logger.warning(
+                "Unrecognized HostResource format '{0}'; unable to identify "
+                "which File and Disk are associated with this disk Item"
+                .format(host_resource))
 
         return (file, disk, ctrl_item, disk_item)
 
@@ -1359,12 +1362,19 @@ class OVF(VMDescription, XML):
                 match_or_die("disk Item HostResource",
                              os.path.basename(host_resource),
                              "Disk diskId", disk.get(self.DISK_ID))
-            if ((host_resource.startswith(self.HOST_RSRC_FILE_REF) or
-                 host_resource.startswith(self.OLD_HOST_RSRC_FILE_REF))
-                    and file is not None):
+            elif ((host_resource.startswith(self.HOST_RSRC_FILE_REF) or
+                   host_resource.startswith(self.OLD_HOST_RSRC_FILE_REF))
+                  and file is not None):
                 match_or_die("disk Item HostResource",
                              os.path.basename(host_resource),
                              "File id", file.get(self.FILE_ID))
+            else:
+                raise ValueUnsupportedError("HostResource prefix",
+                                            host_resource,
+                                            [self.HOST_RSRC_FILE_REF,
+                                             self.HOST_RSRC_DISK_REF,
+                                             self.OLD_HOST_RSRC_FILE_REF,
+                                             self.OLD_HOST_RSRC_DISK_REF])
 
     def add_file(self, file_path, file_id, file=None, disk=None):
         """Add the given file path and ID to the VM, overwriting the

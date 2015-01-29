@@ -639,6 +639,7 @@ Version:  (No version string)
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
   this_is_a_really_long_filename_...  149.00 kB    1.00 GB 
+  input.iso                           352.00 kB            cdrom @ (?) ?:0
   (disk placeholder)                         --  128.00 MB 
 
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity

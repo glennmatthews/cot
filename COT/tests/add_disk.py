@@ -22,7 +22,7 @@ from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.add_disk import COTAddDisk
 from COT.data_validation import InvalidInputError, ValueMismatchError
-from COT.data_validation import ValueTooHighError
+from COT.data_validation import ValueUnsupportedError, ValueTooHighError
 from COT.helper_tools import create_disk_image, get_disk_format
 
 
@@ -617,7 +617,7 @@ vmdk.html#streamOptimized" />
 ovf:id="input.vmdk" ovf:size="{input_size}" />
 +    <ovf:File ovf:href="input.vmdk" ovf:id="input.vmdk" \
 ovf:size="{input_size}" />
-   </ovf:References>
+     <ovf:File ovf:href="input.iso" ovf:id="input.iso" ovf:size="360448" />
 ...
        </ovf:Item>
 +      <ovf:Item>
@@ -630,3 +630,26 @@ ovf:size="{input_size}" />
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
         """.format(input_size=self.FILE_SIZE['input.vmdk']))
+
+    def test_overwrite_disk_with_bad_host_resource(self):
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.set_value("controller", "ide")
+        self.instance.set_value("address", "0:0")
+        with self.assertRaises(ValueUnsupportedError) as cm:
+            self.instance.run()
+        self.assertRegexpMatches(str(cm.exception),
+                                 "HostResource")
+
+    def test_overwrite_disk_with_bad_parent_by_file(self):
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             'input.iso'))
+        self.assertRaises(LookupError, self.instance.run)
+
+    def test_overwrite_disk_with_bad_parent_by_fileid(self):
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.set_value("file_id", "input.iso")
+        self.assertRaises(LookupError, self.instance.run)
