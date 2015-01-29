@@ -74,6 +74,14 @@ class TestCOTAddFile(COT_UT):
 """.format(iso_size=self.FILE_SIZE['input.iso'],
            ovf_size=os.path.getsize(self.iosv_ovf)))
 
+    def test_overwrite_file(self):
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.set_value("FILE", os.path.join(
+            os.path.dirname(__file__), 'input.iso'))
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("")
+
     def test_add_file_then_change_to_disk(self):
         """Add a disk as a file, then make it a proper disk."""
         self.instance.set_value("PACKAGE", self.minimal_ovf)
