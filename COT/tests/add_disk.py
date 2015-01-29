@@ -631,6 +631,8 @@ ovf:size="{input_size}" />
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
         """.format(input_size=self.FILE_SIZE['input.vmdk']))
+        # ovftool will fail because invalid_ovf has an invalid Disk fileRef
+        self.validate_output_with_ovftool = False
 
     def test_overwrite_disk_with_bad_host_resource(self):
         self.instance.set_value("PACKAGE", self.invalid_ovf)
@@ -639,8 +641,7 @@ ovf:size="{input_size}" />
         self.instance.set_value("address", "0:0")
         with self.assertRaises(ValueUnsupportedError) as cm:
             self.instance.run()
-        self.assertRegexpMatches(str(cm.exception),
-                                 "HostResource")
+        self.assertTrue(re.search("HostResource", str(cm.exception)))
 
     def test_overwrite_disk_with_bad_parent_by_file(self):
         self.instance.set_value("PACKAGE", self.invalid_ovf)
@@ -653,4 +654,10 @@ ovf:size="{input_size}" />
         self.instance.set_value("PACKAGE", self.invalid_ovf)
         self.instance.set_value("DISK_IMAGE", self.new_vmdk)
         self.instance.set_value("file_id", "input.iso")
+        self.assertRaises(LookupError, self.instance.run)
+
+    def test_overwrite_disk_with_bad_fileref(self):
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.set_value("file_id", "flash2")
         self.assertRaises(LookupError, self.instance.run)

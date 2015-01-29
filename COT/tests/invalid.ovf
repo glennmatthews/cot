@@ -7,7 +7,7 @@
   <ovf:DiskSection>
     <ovf:Info>Virtual disk information</ovf:Info>
     <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="input.vmdk" ovf:fileRef="input.vmdk" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
-    <ovf:Disk ovf:capacity="128" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="flash2" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+    <ovf:Disk ovf:capacity="128" ovf:capacityAllocationUnits="byte * 2^20" ovf:diskId="flash2" ovf:fileRef="flash2" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
   </ovf:DiskSection>
   <ovf:DeploymentOptionSection>
     <ovf:Info>Configuration Profiles</ovf:Info>
