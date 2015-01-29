@@ -42,3 +42,8 @@ class TestCOTSubmodule(COT_UT):
     def test_set_value_fail(self):
         self.assertRaises(InvalidInputError,
                           self.instance.set_value, "hello", "world")
+
+    def test_create_subparser_noop(self):
+        label, subparser = self.instance.create_subparser(None)
+        self.assertEqual(label, "")
+        self.assertEqual(subparser, None)
