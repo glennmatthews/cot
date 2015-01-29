@@ -476,6 +476,7 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         self.instance.set_value("DISK_IMAGE", self.new_vmdk)
         self.instance.set_value("type", "cdrom")
         self.instance.set_value("controller", "scsi")
+        self.instance.set_value("address", "0:1")
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
