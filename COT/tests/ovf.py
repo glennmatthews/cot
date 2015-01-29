@@ -22,7 +22,10 @@ import subprocess
 import xml.etree.ElementTree as ET
 import sys
 import tarfile
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from COT.tests.ut import COT_UT
 from COT.ovf import OVF, OVFNameHelper, OVFItem
@@ -379,6 +382,23 @@ CIM_VirtualSystemSettingData">
                       .find(helper.ITEM))
 
         ovfitem = OVFItem(None, input_item)
+        ovfitem_string = """\
+OVFItem:
+  Address
+    0                    : [None]
+  Description
+    SCSI Controller      : [None]
+  ElementName
+    SCSI Controller 0    : [None]
+  InstanceID
+    3                    : [None]
+  ResourceSubType
+    lsilogic             : [None]
+  ResourceType
+    6                    : [None]
+"""
+        self.assertEqual(str(ovfitem), ovfitem_string)
+        self.assertEqual("{0}".format(ovfitem), ovfitem_string)
         item_list = ovfitem.generate_items()
         self.assertEqual(len(item_list), 1,
                          "Item list {0} should contain one Item"
@@ -392,8 +412,7 @@ CIM_VirtualSystemSettingData">
                              output_item.find(child.tag).text)
 
     def test_remove_profile(self):
-        """Test case for remove_profile() method
-        """
+        """Test case for remove_profile() method"""
         with VMContextManager(self.input_ovf, self.temp_file) as ovf:
             hw = ovf.hardware
             # InstanceID 11, NIC 0 (default, under all profiles)
@@ -437,8 +456,7 @@ CIM_VirtualSystemSettingData">
 """)
 
     def test_set_property(self):
-        """Test cases for set_property() and related methods
-        """
+        """Test cases for set_property() and related methods."""
         ovf = OVF(self.input_ovf, self.temp_file)
         hw = ovf.hardware
         # InstanceID 1, 'CPU' - entries for 'default' plus two other profiles

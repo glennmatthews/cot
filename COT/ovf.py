@@ -268,8 +268,11 @@ class OVF(VMDescription, XML):
         self.output_file = output_file
 
     def __getattr__(self, name):
-        """Transparently pass constant name lookups off to our OVFNameHelper.
-        """
+        """Transparently pass attribute lookups off to OVFNameHelper."""
+        # Don't pass 'special' attributes through to the helper
+        if re.match("^__", name):
+            raise AttributeError("'OVF' object has no attribute '{0}'"
+                                 .format(name))
         return getattr(self.name_helper, name)
 
     def write(self):
@@ -2523,18 +2526,22 @@ class OVFItem:
         if item is not None:
             self.add_item(item)
 
-    def __repr__(self):
-        return ("<OVFItem: {0}>".format(self.property_dict.items()))
-
     def __str__(self):
         str = "OVFItem:\n"
-        for (key, value_dict) in self.property_dict.items():
+        for key in sorted(self.property_dict.keys()):
             str += "  " + key + "\n"
-            for (value, profile_set) in value_dict.items():
-                str += "    {0:20} : {1}\n".format(value, profile_set)
+            value_dict = self.property_dict[key]
+            for value in sorted(value_dict.keys()):
+                profile_set = value_dict[value]
+                str += "    {0:20} : {1}\n".format(value, sorted(profile_set))
         return str
 
     def __getattr__(self, name):
+        """Transparently pass attribute lookups off to OVF/OVFNameHelper."""
+        # Don't pass 'special' attributes through to the helper
+        if re.match("^__", name):
+            raise AttributeError("'OVFItem' object has no attribute '{0}'"
+                                 .format(name))
         # Pass through to designated helper
         return getattr(self.name_helper, name)
 
