@@ -84,9 +84,6 @@ class COTDeploy(COTReadOnlySubmodule):
     def create_subparser(self, parent):
         import argparse
 
-        if self.parser:
-            return 'deploy', self.parser
-
         # Create a generic parser with arguments to be shared by all
         self.generic_parser = argparse.ArgumentParser(add_help=False)
 
@@ -234,11 +231,6 @@ class COTDeployESXi(COTDeploy):
                 configuration = profile_list[0]
                 logger.debug("Auto-selected only profile '{0}'"
                              .format(configuration))
-            elif self.UI.force:
-                # TODO this should be handled by the UI
-                configuration = vm.get_default_profile_name()
-                logger.warning("Auto-selecting default profile '{0}'"
-                               .format(configuration))
             profile_info_string = None
             while configuration is None:
                 if not profile_info_string:
@@ -251,10 +243,8 @@ class COTDeployESXi(COTDeploy):
                 else:
                     try:
                         i = int(user_input)
-                        if i >= len(profile_list):
-                            raise ValueError
                         configuration = profile_list[i]
-                    except ValueError:
+                    except (ValueError, IndexError):
                         # TODO this should be handled by the UI
                         print("\nInvalid input. Please try again.")
 
