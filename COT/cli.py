@@ -17,6 +17,7 @@
 import sys
 import argparse
 import logging
+import getpass
 import textwrap
 
 # Set logging defaults for all of COT
@@ -108,6 +109,7 @@ class CLI(UI):
             self.input = raw_input
         except NameError:
             self.input = input
+        self.getpass = getpass.getpass
 
         self.create_parser()
         self.create_subparsers()
@@ -118,7 +120,7 @@ class CLI(UI):
 
     def confirm(self, prompt):
         """Prompts user to confirm the requested operation, or auto-accepts if
-        args.force is set to True."""
+        force is set to True."""
         if self.force:
             logger.warning("Automatically agreeing to '{0}'".format(prompt))
             return True
@@ -157,9 +159,8 @@ class CLI(UI):
         if self.force:
             raise InvalidInputError("No password specified for {0}@{1}"
                                     .format(username, host))
-        import getpass
-        return getpass.getpass("Password for {0}@{1}: "
-                               .format(username, host))
+        return self.getpass("Password for {0}@{1}: "
+                            .format(username, host))
 
     def create_parser(self):
         # Top-level command definition and any global options
@@ -185,7 +186,8 @@ Note: some subcommands rely on external software tools, including:
 
         parser.add_argument('-V', '--version', action='version',
                             version=__version_long__)
-        parser.add_argument('-f', '--force',  action='store_true',
+        parser.add_argument('-f', '--force', dest='_force',
+                            action='store_true',
                             help="""Perform requested actions without """
                             """prompting for confirmation""")
 
@@ -207,7 +209,7 @@ Note: some subcommands rely on external software tools, including:
         self.parser = parser
 
         # Subcommand definitions
-        self.subparsers = parser.add_subparsers(dest='subcommand',
+        self.subparsers = parser.add_subparsers(dest='_subcommand',
                                                 metavar="<command>",
                                                 title="commands")
 
@@ -249,9 +251,9 @@ Note: some subcommands rely on external software tools, including:
         # If being run non-interactively, treat as if --force is set, in order
         # to avoid hanging while trying to read input that will never come.
         if not sys.stdin.isatty():
-            args.force = True
+            args._force = True
 
-        self.force = args.force
+        self.force = args._force
 
         return args
 
@@ -259,10 +261,10 @@ Note: some subcommands rely on external software tools, including:
         logging.getLogger('COT').setLevel(args._verbosity)
         COTHandler.setLevel(args._verbosity)
 
-        if not args.subcommand:
+        if not args._subcommand:
             self.parser.error("too few arguments")
 
-        subp = self.subparser_lookup[args.subcommand]
+        subp = self.subparser_lookup[args._subcommand]
 
         # Call the appropriate submodule and handle any resulting errors
         arg_hash = vars(args)
@@ -276,13 +278,15 @@ Note: some subcommands rely on external software tools, including:
                     all(isinstance(v, list) for v in value)):
                 arg_hash[arg] = [v for l in value for v in l]
         del arg_hash["_verbosity"]
+        del arg_hash["_force"]
+        del arg_hash["_subcommand"]
         try:
             # Set mandatory (CAPITALIZED) args first, then optional args
             for (arg, value) in arg_hash.items():
                 if arg[0].isupper():
                     args.instance.set_value(arg, value)
             for (arg, value) in arg_hash.items():
-                if not arg[0].isupper():
+                if not arg[0].isupper() and arg != "instance":
                     args.instance.set_value(arg, value)
             args.instance.run()
             args.instance.finished()

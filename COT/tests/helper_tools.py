@@ -15,13 +15,74 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import os
+import logging
+
+from distutils.version import StrictVersion
+from verboselogs import VerboseLogger
+
+logging.setLoggerClass(VerboseLogger)
+logger = logging.getLogger(__name__)
 
 from COT.data_validation import ValueUnsupportedError
-from COT.helper_tools import check_call, check_output, get_checksum
+import COT.helper_tools
+from COT.helper_tools import get_checksum
 from COT.helper_tools import create_disk_image, convert_disk_image
 from COT.helper_tools import get_disk_format, get_disk_capacity
 from COT.helper_tools import HelperError, HelperNotFoundError
 from COT.tests.ut import COT_UT
+
+
+class HelperToolsUT(COT_UT):
+    """Generic class for testing helper tools methods"""
+
+    def stub_check_call(self, argv, require_success=True):
+        logger.info("stub_check_call({0}, {1})"
+                    .format(argv, require_success))
+        if self.match_argv:
+            found_match = True
+            for a, b in zip(self.match_argv, argv):
+                if a != b:
+                    found_match = False
+                    break
+            if found_match:
+                self.last_argv = argv
+                logger.info("Caught call to {0}: {1}"
+                            .format(" ".join(self.match_argv),
+                                    " ".join(argv)))
+                return
+        return self._check_call(argv, require_success)
+
+    def stub_check_output(self, argv, require_success=True):
+        logger.info("stub_check_output({0}, {1})"
+                    .format(argv, require_success))
+        if self.match_argv:
+            found_match = True
+            for a, b in zip(self.match_argv, argv):
+                if a != b:
+                    found_match = False
+                    break
+            if found_match:
+                self.last_argv = argv
+                logger.info("Caught call to {0}: {1}"
+                            .format(" ".join(self.match_argv),
+                                    " ".join(argv)))
+                return self.fake_output
+        return self._check_output(argv, require_success)
+
+    def setUp(self):
+        super(HelperToolsUT, self).setUp()
+        self.match_argv = None
+        self.fake_output = None
+        self.last_argv = None
+        self._check_call = COT.helper_tools.check_call
+        COT.helper_tools.check_call = self.stub_check_call
+        self._check_output = COT.helper_tools.check_output
+        COT.helper_tools.check_output = self.stub_check_output
+
+    def tearDown(self):
+        COT.helper_tools.check_call = self._check_call
+        COT.helper_tools.check_output = self._check_output
+        super(HelperToolsUT, self).tearDown()
 
 
 class TestCheckCall(COT_UT):
@@ -30,18 +91,19 @@ class TestCheckCall(COT_UT):
     def test_check_call_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist"""
         self.assertRaises(HelperNotFoundError,
-                          check_call, ["not_a_command"])
+                          COT.helper_tools.check_call, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
-                          check_call, ["not_a_command"], require_success=True)
+                          COT.helper_tools.check_call,
+                          ["not_a_command"], require_success=True)
 
     def test_check_call_helpererror(self):
         """HelperError if executable fails and require_success is set"""
 
         with self.assertRaises(HelperError) as cm:
-            check_call(["false"])
+            COT.helper_tools.check_call(["false"])
         self.assertEqual(cm.exception.errno, 1)
 
-        check_call(["false"], require_success=False)
+        COT.helper_tools.check_call(["false"], require_success=False)
 
 
 class TestCheckOutput(COT_UT):
@@ -50,19 +112,19 @@ class TestCheckOutput(COT_UT):
     def test_check_output_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist"""
         self.assertRaises(HelperNotFoundError,
-                          check_output, ["not_a_command"])
+                          COT.helper_tools.check_output, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
-                          check_output, ["not_a_command"],
+                          COT.helper_tools.check_output, ["not_a_command"],
                           require_success=True)
 
     def test_check_output_helpererror(self):
         """HelperError if executable fails and require_success is set"""
 
         with self.assertRaises(HelperError) as cm:
-            check_output(["false"])
+            COT.helper_tools.check_output(["false"])
         self.assertEqual(cm.exception.errno, 1)
 
-        check_output(["false"], require_success=False)
+        COT.helper_tools.check_output(["false"], require_success=False)
 
 
 class TestGetChecksum(COT_UT):
@@ -105,7 +167,50 @@ class TestGetChecksum(COT_UT):
                           'crc')
 
 
-class TestGetDiskFormat(COT_UT):
+class TestGetQEMUImgVersion(HelperToolsUT):
+    """Test cases for get_qemu_img_version() function"""
+
+    def setUp(self):
+        super(TestGetQEMUImgVersion, self).setUp()
+        COT.helper_tools.QEMU_IMG_VERSION = None
+        self.match_argv = ['qemu-img', '--version']
+
+    def tearDown(self):
+        COT.helper_tools.QEMU_IMG_VERSION = None
+        super(TestGetQEMUImgVersion, self).tearDown()
+
+    def test_older_version(self):
+        self.fake_output = """
+qemu-img version 1.4.2, Copyright (c) 2004-2008 Fabrice Bellard
+usage: qemu-img command [command options]
+QEMU disk image utility
+
+Command syntax:
+..."""
+        version = COT.helper_tools.get_qemu_img_version()
+        self.assertEqual(self.match_argv, self.last_argv)
+        self.assertEqual(version, StrictVersion("1.4.2"))
+
+        # Output should be cached rather than re-invoking qemu-img
+        self.last_argv = None
+        self.fake_output = "Gotcha!"
+        version = COT.helper_tools.get_qemu_img_version()
+        self.assertEqual(self.last_argv, None)
+        self.assertEqual(version, StrictVersion("1.4.2"))
+
+    def test_newer_version(self):
+        self.fake_output = \
+            "qemu-img version 2.1.2, Copyright (c) 2004-2008 Fabrice Bellard"
+        self.assertEqual(COT.helper_tools.get_qemu_img_version(),
+                         StrictVersion("2.1.2"))
+
+    def test_invalid_version(self):
+        self.fake_output = "qemu-img: error: unknown argument --version"
+        self.assertRaises(RuntimeError,
+                          COT.helper_tools.get_qemu_img_version)
+
+
+class TestGetDiskFormat(HelperToolsUT):
     """Test cases for get_disk_format() function"""
 
     def test_get_disk_format(self):
@@ -126,7 +231,7 @@ class TestGetDiskFormat(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
 
-        # Now a test that uses both qemu-img and vmdktool
+        # Now a test that uses both qemu-img and file inspection
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         try:
             (f, sf) = get_disk_format(disk_path)
@@ -135,8 +240,20 @@ class TestGetDiskFormat(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
 
+    def test_get_disk_format_no_file(self):
+        self.assertRaises(HelperError, get_disk_format, "")
+        self.assertRaises(HelperError, get_disk_format, "/foo/bar/baz")
 
-class TestGetDiskCapacity(COT_UT):
+    def test_get_disk_format_not_available(self):
+        # Haven't found a way yet to make qemu-img actually fail here
+        # without returning a non-zero RC and triggering a HelperError,
+        # so we'll have to fake it
+        self.match_argv = ['qemu-img', 'info']
+        self.fake_output = "qemu-img info: unsupported command"
+        self.assertRaises(RuntimeError, get_disk_format, "/foo/bar")
+
+
+class TestGetDiskCapacity(HelperToolsUT):
     """Test cases for get_disk_capacity()."""
 
     def test_get_disk_capacity(self):
@@ -151,8 +268,20 @@ class TestGetDiskCapacity(COT_UT):
         capacity = get_disk_capacity(disk_path)
         self.assertEqual(capacity, "1073741824")
 
+    def test_get_disk_format_no_file(self):
+        self.assertRaises(HelperError, get_disk_capacity, "")
+        self.assertRaises(HelperError, get_disk_capacity, "/foo/bar/baz")
 
-class TestConvertDiskImage(COT_UT):
+    def test_get_disk_format_not_available(self):
+        # Haven't found a way yet to make qemu-img actually fail here
+        # without returning a non-zero RC and triggering a HelperError,
+        # so we'll have to fake it
+        self.match_argv = ['qemu-img', 'info']
+        self.fake_output = "qemu-img info: unsupported command"
+        self.assertRaises(RuntimeError, get_disk_capacity, "/foo/bar")
+
+
+class TestConvertDiskImage(HelperToolsUT):
     """Test cases for convert_disk_image()."""
 
     def test_convert_no_work_needed(self):
@@ -194,13 +323,87 @@ class TestConvertDiskImage(COT_UT):
         self.assertEqual(f, 'vmdk')
         self.assertEqual(sf, 'streamOptimized')
 
+    def test_convert_to_vmdk_streamoptimized_old_qemu(self):
+        """Code flow for old QEMU version"""
+        COT.helper_tools.QEMU_IMG_VERSION = StrictVersion("1.0.0")
+        self.match_argv = ['vmdktool']
+        try:
+            temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
+            create_disk_image(temp_disk, capacity="16M")
+            new_disk_path = convert_disk_image(temp_disk, self.temp_dir,
+                                               'vmdk', 'streamOptimized')
+            # convert_disk_image will use qemu to convert qcow2 to img
+            self.assertEqual(self.last_argv,
+                             ['vmdktool', '-z9', '-v',
+                              os.path.join(self.temp_dir, 'foo.vmdk'),
+                              os.path.join(self.temp_dir, 'foo.img')])
+            self.assertEqual(new_disk_path,
+                             os.path.join(self.temp_dir, "foo.vmdk"))
+        except HelperNotFoundError as e:
+            self.fail(e.strerror)
+        finally:
+            COT.helper_tools.QEMU_IMG_VERSION = None
+
+    def test_convert_to_vmdk_streamoptimized_new_qemu(self):
+        """Code flow for new QEMU version"""
+        COT.helper_tools.QEMU_IMG_VERSION = StrictVersion("2.1.0")
+        self.match_argv = ['qemu-img', 'convert']
+        try:
+            temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
+            create_disk_image(temp_disk, capacity="16M")
+            new_disk_path = convert_disk_image(temp_disk, self.temp_dir,
+                                               'vmdk', 'streamOptimized')
+            self.assertEqual(self.last_argv,
+                             ['qemu-img', 'convert', '-O', 'vmdk',
+                              '-o', 'subformat=streamOptimized', temp_disk,
+                              new_disk_path])
+            self.assertEqual(new_disk_path,
+                             os.path.join(self.temp_dir, 'foo.vmdk'))
+        except HelperNotFoundError as e:
+            self.fail(e.strerror)
+        finally:
+            COT.helper_tools.QEMU_IMG_VERSION = None
+
+    def test_convert_to_raw(self):
+        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
+        self.assertRaises(ValueUnsupportedError,
+                          convert_disk_image,
+                          disk_path, self.temp_dir, 'raw', None)
+
 
 class TestCreateDiskImage(COT_UT):
     """Test cases for create_disk_image()."""
 
+    def test_create_invalid(self):
+        """Invalid arguments."""
+        # Must specify contents or capacity
+        self.assertRaises(RuntimeError,
+                          create_disk_image,
+                          os.path.join(self.temp_dir, "out.iso"))
+        # If extension not given, cannot guess file format
+        self.assertRaises(RuntimeError,
+                          create_disk_image,
+                          os.path.join(self.temp_dir, "out"),
+                          capacity="1M")
+        # Trying to create a VHD format image, not currently possible
+        self.assertRaises(HelperError,
+                          create_disk_image,
+                          os.path.join(self.temp_dir, "out.vhd"),
+                          capacity="1M")
+        self.assertRaises(HelperError,
+                          create_disk_image,
+                          os.path.join(self.temp_dir, "out.vmdk"),
+                          file_format="vhd",
+                          capacity="1M")
+        # Don't know how to populate a qcow2 image with a file
+        self.assertRaises(ValueUnsupportedError,
+                          create_disk_image,
+                          os.path.join(self.temp_dir, "out.vmdk"),
+                          file_format="qcow2",
+                          contents=[self.input_ovf])
+
     def test_create_iso_with_contents(self):
-        """Creation of ISO image containing files.
-        """
+        """Creation of ISO image containing files."""
         disk_path = os.path.join(self.temp_dir, "out.iso")
         try:
             create_disk_image(disk_path, contents=[self.input_ovf])
@@ -241,3 +444,21 @@ class TestCreateDiskImage(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
         # TODO check raw file contents
+
+
+class TestGetOvftoolVersion(HelperToolsUT):
+    """Test cases for get_ovftool_version() function"""
+
+    def setUp(self):
+        super(TestGetOvftoolVersion, self).setUp()
+        COT.helper_tools.OVFTOOL_VERSION = None
+        self.match_argv = ['ovftool', '--version']
+
+    def tearDown(self):
+        COT.helper_tools.OVFTOOL_VERSION = None
+        super(TestGetOvftoolVersion, self).tearDown()
+
+    def test_invalid_version(self):
+        self.fake_output = "Error: Unknown option: 'version'"
+        self.assertRaises(RuntimeError,
+                          COT.helper_tools.get_ovftool_version)

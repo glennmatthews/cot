@@ -48,9 +48,6 @@ class COTGenericSubmodule(object):
 
     def set_value(self, arg, value):
         """Set the given argument to the given value"""
-        if arg not in self.args.keys():
-            # TODO this should probably be an error?
-            return
         valid, value_or_reason = self.validate_arg(arg, value)
         if not valid:
             raise InvalidInputError(value_or_reason)

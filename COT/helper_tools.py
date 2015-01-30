@@ -68,35 +68,31 @@ def check_call(args, require_success=True):
     logger.debug("{0} exited successfully".format(cmd))
 
 
-def check_output(args, require_success=True, suppress_stderr=False):
+def check_output(args, require_success=True):
     """Wrapper for subprocess.check_output.
     1) Raises a HelperNotFoundError if the command doesn't exist, instead of
        an OSError.
     2) Raises a HelperError if the command doesn't return 0 when run,
        instead of subprocess.CalledProcessError. (Setting the optional
        require_success parameter to False will suppress this error.)
-    3) Automatically redirects stderr to stdout (unless asked not to),
-       captures both, and generates a debug message with the stdout contents.
+    3) Automatically redirects stderr to stdout captures both, and
+       generates a debug message with the stdout contents.
     """
     cmd = args[0]
     logger.verbose("Calling '{0}'".format(" ".join(args)))
-    if suppress_stderr:
-        stderr = subprocess.PIPE
-    else:
-        stderr = subprocess.STDOUT
     # In 2.7+ we can use subprocess.check_output(), but in 2.6,
     # we have to work around its absence.
     try:
         if "check_output" not in dir(subprocess):
             process = subprocess.Popen(args,
                                        stdout=subprocess.PIPE,
-                                       stderr=stderr)
+                                       stderr=subprocess.STDOUT)
             stdout, _ = process.communicate()
             retcode = process.poll()
             if retcode and require_success:
                 raise subprocess.CalledProcessError(retcode, " ".join(args))
         else:
-            stdout = (subprocess.check_output(args, stderr=stderr)
+            stdout = (subprocess.check_output(args, stderr=subprocess.STDOUT)
                       .decode())
     except OSError as e:
         raise HelperNotFoundError(e.errno,
@@ -185,13 +181,7 @@ def get_disk_format(file_path):
     logger.info("File format of '{0}' is '{1}'"
                 .format(os.path.basename(file_path), file_format))
 
-    if file_format == 'raw':
-        # No applicable sub-format
-        return (file_format, None)
-    elif file_format == 'qcow2':
-        # No applicable sub-format
-        return (file_format, None)
-    elif file_format == 'vmdk':
+    if file_format == 'vmdk':
         # Look at the VMDK file header to determine the sub-format
         with open(file_path, 'rb') as f:
             # The header contains a fun mix of binary and ASCII, so ignore
@@ -206,9 +196,8 @@ def get_disk_format(file_path):
         logger.info("VMDK sub-format is '{0}'".format(vmdk_format))
         return (file_format, vmdk_format)
     else:
-        raise ValueUnsupportedError("disk file format",
-                                    file_format,
-                                    "'raw' or 'qcow2' or 'vmdk'")
+        # No known/applicable sub-format
+        return (file_format, None)
 
 
 def get_disk_capacity(file_path):
@@ -315,6 +304,10 @@ def create_disk_image(file_path, file_format=None,
     if not file_format:
         # Guess format from file extension
         file_format = os.path.splitext(file_path)[1][1:]
+        if not file_format:
+            raise RuntimeError(
+                "Unable to guess file format from desired filename {0}"
+                .format(file_path))
         if file_format == 'img':
             file_format = 'raw'
         logger.debug("Guessed file format is {0}".format(file_format))

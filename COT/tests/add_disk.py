@@ -22,6 +22,7 @@ from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.add_disk import COTAddDisk
 from COT.data_validation import InvalidInputError, ValueMismatchError
+from COT.data_validation import ValueUnsupportedError, ValueTooHighError
 from COT.helper_tools import create_disk_image, get_disk_format
 
 
@@ -62,17 +63,41 @@ class TestCOTAddDisk(COT_UT):
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
-    def test_conflicting_args(self):
+    def test_conflicting_args_1(self):
         """Test conflicting arguments are detected and rejected"""
         # TODO - it would be nice to detect this in ready_to_run()
         # rather than run()
-
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("DISK_IMAGE", self.new_vmdk)
         # file2 exists and is mapped to IDE 1:0 but we request IDE 1:1
         self.instance.set_value("controller", "ide")
         self.instance.set_value("address", "1:1")
         self.instance.set_value("file_id", "file2")
+        self.assertRaises(ValueMismatchError, self.instance.run)
+
+    def test_conflicting_args_2(self):
+        """Test conflicting arguments are detected and rejected"""
+        # TODO - it would be nice to detect this in ready_to_run()
+        # rather than run()
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             "input.iso"))
+        # ovf contains input.iso but we're asking it to overwrite input.vmdk
+        self.instance.set_value("file_id", "vmdisk1")
+        self.assertRaises(ValueMismatchError, self.instance.run)
+
+    def test_conflicting_args_3(self):
+        """Test conflicting arguments are detected and rejected"""
+        # TODO - it would be nice to detect this in ready_to_run()
+        # rather than run()
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             "input.vmdk"))
+        # ovf contains input.vmdk but we're asking it to overwrite input.iso
+        self.instance.set_value("controller", "ide")
+        self.instance.set_value("address", "1:0")
         self.assertRaises(ValueMismatchError, self.instance.run)
 
     def test_new_hard_disk(self):
@@ -240,11 +265,25 @@ specifications/vmdk.html#streamOptimized" />
      </ovf:Section>""".format(input_size=self.FILE_SIZE['input.vmdk'],
                               blank_size=self.FILE_SIZE['blank.vmdk']))
 
+    def test_new_hard_disk_v20_vbox(self):
+        """Test adding a new hard disk to a v2.0 OVF from VirtualBox"""
+        self.instance.set_value("PACKAGE", self.v20_vbox_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.run()
+        self.instance.finished()
+        # TODO - vbox XML is not very clean so the diffs are large...
+        # self.check_diff('', file1=self.v20_vbox_ovf)
+
+        # ovftool does not consider vbox ovfs to be valid
+        self.validate_output_with_ovftool = False
+
     def test_overwrite_hard_disk_fileid(self):
         """Overwrite an existing disk by specifying matching file-id."""
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("DISK_IMAGE", self.new_vmdk)
         self.instance.set_value("file_id", 'file1')
+        # For coverage's sake, let's change the controller subtype too
+        self.instance.set_value("subtype", "virtio")
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -261,6 +300,11 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
 ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
 "http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
    </ovf:DiskSection>
+...
+         <rasd:InstanceID>3</rasd:InstanceID>
+-        <rasd:ResourceSubType>lsilogic</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
+         <rasd:ResourceType>6</rasd:ResourceType>
 """.format(input_size=self.FILE_SIZE['input.vmdk'],
            blank_size=self.FILE_SIZE['blank.vmdk'],
            iso_size=self.FILE_SIZE['input.iso']))
@@ -426,3 +470,194 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
 """.format(blank_size=self.FILE_SIZE['blank.vmdk']))
+
+    def test_add_cdrom_to_existing_controller(self):
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.set_value("type", "cdrom")
+        self.instance.set_value("controller", "scsi")
+        self.instance.set_value("address", "0:1")
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" \
+ovf:size="{blank_size}" />
+   </ovf:References>
+...
+       </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>1</rasd:AddressOnParent>
++        <rasd:ElementName>CD-ROM Drive</rasd:ElementName>
++        <rasd:HostResource>ovf:/file/blank.vmdk</rasd:HostResource>
++        <rasd:InstanceID>14</rasd:InstanceID>
++        <rasd:Parent>3</rasd:Parent>
++        <rasd:ResourceType>15</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+""".format(blank_size=self.FILE_SIZE['blank.vmdk']))
+
+    def test_add_disk_no_room(self):
+        # iosv.ovf already has two disks. Add a third disk...
+        self.instance.set_value("PACKAGE", self.iosv_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.iosv_ovf, expected="""
+     <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" \
+ovf:size="152576" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" \
+ovf:size="{blank_size}" />
+   </ovf:References>
+...
+     <ovf:Disk ovf:capacity="1073741824" ovf:capacityAllocationUnits="byte" \
+ovf:diskId="vios-adventerprisek9-m.vmdk" \
+ovf:fileRef="vios-adventerprisek9-m.vmdk" \
+ovf:format="http://www.vmware.com/interfaces/specifications/\
+vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" \
+ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" \
+ovf:format="http://www.vmware.com/interfaces/specifications/\
+vmdk.html#streamOptimized" />
+   </ovf:DiskSection>
+...
+       </ovf:Item>
++      <ovf:Item>
++        <rasd:Address>1</rasd:Address>
++        <rasd:Description>IDE Controller 1</rasd:Description>
++        <rasd:ElementName>IDE Controller</rasd:ElementName>
++        <rasd:InstanceID>6</rasd:InstanceID>
++        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
++        <rasd:ResourceType>5</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>0</rasd:AddressOnParent>
++        <rasd:ElementName>Hard Disk Drive</rasd:ElementName>
++        <rasd:HostResource>ovf:/disk/blank.vmdk</rasd:HostResource>
++        <rasd:InstanceID>7</rasd:InstanceID>
++        <rasd:Parent>6</rasd:Parent>
++        <rasd:ResourceType>17</rasd:ResourceType>
++      </ovf:Item>
+       <ovf:Item ovf:required="false">
+""".format(blank_size=self.FILE_SIZE['blank.vmdk']))
+
+        # Add a fourth disk...
+        self.instance.set_value("PACKAGE", self.temp_file)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             'input.iso'))
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.iosv_ovf, expected="""
+     <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" \
+ovf:size="152576" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" \
+ovf:size="{blank_size}" />
++    <ovf:File ovf:href="input.iso" ovf:id="input.iso" ovf:size="{iso_size}" />
+   </ovf:References>
+...
+     <ovf:Disk ovf:capacity="1073741824" ovf:capacityAllocationUnits="byte" \
+ovf:diskId="vios-adventerprisek9-m.vmdk" \
+ovf:fileRef="vios-adventerprisek9-m.vmdk" ovf:format="http://www.vmware.com/\
+interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" \
+ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" \
+ovf:format="http://www.vmware.com/interfaces/specifications/\
+vmdk.html#streamOptimized" />
+   </ovf:DiskSection>
+...
+       </ovf:Item>
++      <ovf:Item>
++        <rasd:Address>1</rasd:Address>
++        <rasd:Description>IDE Controller 1</rasd:Description>
++        <rasd:ElementName>IDE Controller</rasd:ElementName>
++        <rasd:InstanceID>6</rasd:InstanceID>
++        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
++        <rasd:ResourceType>5</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>0</rasd:AddressOnParent>
++        <rasd:ElementName>Hard Disk Drive</rasd:ElementName>
++        <rasd:HostResource>ovf:/disk/blank.vmdk</rasd:HostResource>
++        <rasd:InstanceID>7</rasd:InstanceID>
++        <rasd:Parent>6</rasd:Parent>
++        <rasd:ResourceType>17</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>1</rasd:AddressOnParent>
++        <rasd:ElementName>CD-ROM Drive</rasd:ElementName>
++        <rasd:HostResource>ovf:/file/input.iso</rasd:HostResource>
++        <rasd:InstanceID>8</rasd:InstanceID>
++        <rasd:Parent>6</rasd:Parent>
++        <rasd:ResourceType>15</rasd:ResourceType>
++      </ovf:Item>
+       <ovf:Item ovf:required="false">
+""".format(blank_size=self.FILE_SIZE['blank.vmdk'],
+           iso_size=self.FILE_SIZE['input.iso']))
+
+        # Create a qcow2 image
+        new_qcow2 = os.path.join(self.temp_dir, "foozle.qcow2")
+        # Keep it small!
+        create_disk_image(new_qcow2, capacity="16M")
+        # Try to add a fifth disk - IDE controllers are full!
+        self.instance.set_value("PACKAGE", self.temp_file)
+        self.instance.set_value("DISK_IMAGE", new_qcow2)
+        self.assertRaises(ValueTooHighError, self.instance.run)
+
+    def test_overwrite_implicit_file_id(self):
+        """file_id defaults to filename if not set."""
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             "input.vmdk"))
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.invalid_ovf, expected="""
+   <ovf:References>
+-    <ovf:File ovf:href="this_is_a_really_long_filename_for_a_disk.vmdk" \
+ovf:id="input.vmdk" ovf:size="{input_size}" />
++    <ovf:File ovf:href="input.vmdk" ovf:id="input.vmdk" \
+ovf:size="{input_size}" />
+     <ovf:File ovf:href="input.iso" ovf:id="input.iso" ovf:size="360448" />
+...
+       </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>1</rasd:AddressOnParent>
++        <rasd:ElementName>Hard Disk Drive</rasd:ElementName>
++        <rasd:HostResource>ovf:/disk/input.vmdk</rasd:HostResource>
++        <rasd:InstanceID>6</rasd:InstanceID>
++        <rasd:Parent>1</rasd:Parent>
++        <rasd:ResourceType>17</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+        """.format(input_size=self.FILE_SIZE['input.vmdk']))
+        # ovftool will fail because invalid_ovf has an invalid Disk fileRef
+        self.validate_output_with_ovftool = False
+
+    def test_overwrite_disk_with_bad_host_resource(self):
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.set_value("controller", "ide")
+        self.instance.set_value("address", "0:0")
+        with self.assertRaises(ValueUnsupportedError) as cm:
+            self.instance.run()
+        self.assertTrue(re.search("HostResource", str(cm.exception)))
+
+    def test_overwrite_disk_with_bad_parent_by_file(self):
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE",
+                                os.path.join(os.path.dirname(__file__),
+                                             'input.iso'))
+        self.assertRaises(LookupError, self.instance.run)
+
+    def test_overwrite_disk_with_bad_parent_by_fileid(self):
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.set_value("file_id", "input.iso")
+        self.assertRaises(LookupError, self.instance.run)
+
+    def test_overwrite_disk_with_bad_fileref(self):
+        self.instance.set_value("PACKAGE", self.invalid_ovf)
+        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.set_value("file_id", "flash2")
+        self.assertRaises(LookupError, self.instance.run)

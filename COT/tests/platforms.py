@@ -13,9 +13,42 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import unittest
+from COT.platforms import GenericPlatform
 from COT.platforms import IOSXRv, CSR1000V, IOSv, NXOSv, IOSXRvRP, IOSXRvLC
 from COT.data_validation import ValueUnsupportedError
 from COT.data_validation import ValueTooLowError, ValueTooHighError
+
+
+class TestGenericPlatform(unittest.TestCase):
+    """Test cases for generic platform handling"""
+    def setUp(self):
+        self.cls = GenericPlatform
+
+    def test_controller_type_for_device(self):
+        self.assertEqual(self.cls.controller_type_for_device('harddisk'),
+                         'ide')
+        self.assertEqual(self.cls.controller_type_for_device('cdrom'),
+                         'ide')
+
+    def test_nic_name(self):
+        self.assertEqual(self.cls.guess_nic_name(1), "Ethernet1")
+        self.assertEqual(self.cls.guess_nic_name(100), "Ethernet100")
+
+    def test_cpu_count(self):
+        self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
+        self.cls.validate_cpu_count(1)
+
+    def test_memory_amount(self):
+        self.assertRaises(ValueTooLowError, self.cls.validate_memory_amount, 0)
+        self.cls.validate_memory_amount(1)
+
+    def test_nic_count(self):
+        self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, -1)
+        self.cls.validate_nic_count(0)
+
+    def test_serial_count(self):
+        self.assertRaises(ValueTooLowError, self.cls.validate_serial_count, -1)
+        self.cls.validate_serial_count(0)
 
 
 class TestIOSXRv(unittest.TestCase):
@@ -132,6 +165,16 @@ class TestCSR1000V(unittest.TestCase):
     """Test cases for CSR 1000V platform handling"""
     def setUp(self):
         self.cls = CSR1000V
+
+    def test_controller_type_for_device(self):
+        """Test platform-specific logic for device controllers."""
+        self.assertEqual(self.cls.controller_type_for_device('harddisk'),
+                         'scsi')
+        self.assertEqual(self.cls.controller_type_for_device('cdrom'),
+                         'ide')
+        # fallthrough to parent class
+        self.assertEqual(self.cls.controller_type_for_device('dvd'),
+                         'ide')
 
     def test_nic_name(self):
         """Test NIC name construction"""

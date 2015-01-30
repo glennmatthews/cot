@@ -116,7 +116,12 @@ class TestCOTEditHardware(COT_UT):
         self.instance.set_value(
             "virtual_system_type",
             ['vmx-07', 'vmx-08', 'vmx-09', 'Cisco:Internal:VMCloud-01'])
+        # 'profiles' will be ignored in this case,
+        # as VirtualSystemType is not filtered by profile
+        self.instance.set_value("profiles", ['2CPU-2GB-1NIC'])
         self.instance.run()
+        # TODO - catch warning logger message that should be generated
+        # due to profiles being ignored.
         self.instance.finished()
         self.check_diff("""
          <vssd:VirtualSystemIdentifier>test</vssd:VirtualSystemIdentifier>
@@ -457,6 +462,20 @@ CIM_ResourceAllocationSettingData">
 +        <rasd:ResourceType>10</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
+""")
+
+    def test_set_nic_count_delete_nics(self):
+        """Set NIC count to a lower value, deleting some NICs."""
+        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.set_value("nics", 0)
+        self.instance.set_value("profiles", ['1CPU-1GB-1NIC'])
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       </ovf:Item>
+-      <ovf:Item>
++      <ovf:Item ovf:configuration="2CPU-2GB-1NIC 4CPU-4GB-3NIC">
+         <rasd:AddressOnParent>11</rasd:AddressOnParent>
 """)
 
     def test_set_nic_network_one_profile(self):

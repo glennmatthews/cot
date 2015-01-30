@@ -97,5 +97,10 @@
       <ovf:Info>A human-readable annotation</ovf:Info>
       <ovf:Annotation>Hello world! This is a version 0.9 OVF.</ovf:Annotation>
     </ovf:Section>
+    <ovf:Section ovf:required="false" xsi:type="ovf:EulaSection_Type">
+      <ovf:Info>Licensing agreement</ovf:Info>
+      <ovf:License>Licensing text, oh licensing text!
+How lovely is thy legalese!</ovf:License>
+    </ovf:Section>
   </ovf:Content>
 </ovf:Envelope>

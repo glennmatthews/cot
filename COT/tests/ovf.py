@@ -22,7 +22,10 @@ import subprocess
 import xml.etree.ElementTree as ET
 import sys
 import tarfile
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from COT.tests.ut import COT_UT
 from COT.ovf import OVF, OVFNameHelper, OVFItem
@@ -92,15 +95,24 @@ class TestOVFInputOutput(COT_UT):
         self.check_diff('', file2=(self.temp_file + ".a.b.c"))
 
     def test_input_output_v09(self):
-        """Test reading/writing of a v0.9 OVF.
-        """
+        """Test reading/writing of a v0.9 OVF."""
         with VMContextManager(self.v09_ovf, self.temp_file):
             pass
         self.check_diff('', file1=self.v09_ovf)
 
-    def test_input_output_custom(self):
-        """Test reading/writing of an OVF with custom extensions.
-        """
+    def test_input_output_v20_vbox(self):
+        """Test reading/writing of a v2.0 OVF from VirtualBox."""
+        with VMContextManager(self.v20_vbox_ovf, self.temp_file):
+            pass
+
+        # TODO - vbox XML is not very clean so the diffs are large...
+        # self.check_diff('', file1=self.v20_vbox_ovf)
+
+        # ovftool does not consider vbox ovfs to be valid
+        self.validate_output_with_ovftool = False
+
+    def test_input_output_vmware(self):
+        """Test reading/writing of an OVF with custom extensions."""
         with VMContextManager(self.vmware_ovf, self.temp_file):
             pass
         # VMware disagrees with COT on some fiddly details of XML formatting
@@ -147,16 +159,23 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             self.assertFalse(ova.validate_file_references(),
                              "OVA references missing file - contents invalid")
 
+        # Also test read-only OVA logic:
+        with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
+                              None) as ova:
+            # Currently we don't detect missing files in the OVA archive,
+            # so this returns True. TODO
+            ova.validate_file_references()
+
     def test_input_output_bad_file(self):
         """Test reading/writing of an OVF with incorrect file references.
         """
         self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
         input_dir = os.path.dirname(self.input_ovf)
         shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
-        shutil.copy(os.path.join(input_dir, 'input.vmdk'), self.staging_dir)
-        # Copy input.vmdk to input.iso so as to have the wrong size/checksum
-        shutil.copy(os.path.join(input_dir, 'input.vmdk'),
-                    os.path.join(self.staging_dir, 'input.iso'))
+        shutil.copy(os.path.join(input_dir, 'input.iso'), self.staging_dir)
+        # Copy blank.vmdk to input.vmdk so as to have the wrong size/checksum
+        shutil.copy(os.path.join(input_dir, 'blank.vmdk'),
+                    os.path.join(self.staging_dir, 'input.vmdk'))
         # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               os.path.join(self.temp_dir, "temp.ova")) as ovf:
@@ -168,8 +187,8 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # Now read in the OVA
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
                               os.path.join(self.temp_dir, "temp.ovf")) as ova:
-            # Replace the extracted fake .iso with the real .iso
-            shutil.copy(os.path.join(input_dir, 'input.iso'), ova.working_dir)
+            # Replace the extracted fake .vmdk with the real .vmdk
+            shutil.copy(os.path.join(input_dir, 'input.vmdk'), ova.working_dir)
             self.assertFalse(ova.validate_file_references(),
                              "OVA has wrong file size - contents are invalid")
 
@@ -240,6 +259,11 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             f.write("< hello world!")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
+        # .ova that is an empty TAR file
+        tarf = tarfile.open(fake_file, 'w')
+        tarf.close()
+        self.assertRaises(VMInitError, OVF, fake_file, None)
+
         # .ova that is a TAR file but does not contain an OVF descriptor
         tarf = tarfile.open(fake_file, 'w')
         try:
@@ -253,6 +277,23 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         tarf = tarfile.open(fake_file, 'a')
         try:
             tarf.add(self.input_ovf, os.path.basename(self.input_ovf))
+        finally:
+            tarf.close()
+        self.assertRaises(VMInitError, OVF, fake_file, None)
+
+        # .ova with unsafe absolute path references
+        tarf = tarfile.open(fake_file, 'w')
+        try:
+            # tarfile.add() is sometimes smart enough to protect us against
+            # such unsafe references, but we can overrule it by using
+            # gettarinfo() and addfile() instead of just add().
+            tari = tarf.gettarinfo(self.minimal_ovf)
+            tari.name = os.path.abspath(
+                os.path.join(os.path.dirname(self.minimal_ovf),
+                             "..", "..", "..",
+                             os.path.basename(self.minimal_ovf)))
+            with open(self.minimal_ovf, 'rb') as f:
+                tarf.addfile(tari, f)
         finally:
             tarf.close()
         self.assertRaises(VMInitError, OVF, fake_file, None)
@@ -341,6 +382,23 @@ CIM_VirtualSystemSettingData">
                       .find(helper.ITEM))
 
         ovfitem = OVFItem(None, input_item)
+        ovfitem_string = """\
+OVFItem:
+  Address
+    0                    : [None]
+  Description
+    SCSI Controller      : [None]
+  ElementName
+    SCSI Controller 0    : [None]
+  InstanceID
+    3                    : [None]
+  ResourceSubType
+    lsilogic             : [None]
+  ResourceType
+    6                    : [None]
+"""
+        self.assertEqual(str(ovfitem), ovfitem_string)
+        self.assertEqual("{0}".format(ovfitem), ovfitem_string)
         item_list = ovfitem.generate_items()
         self.assertEqual(len(item_list), 1,
                          "Item list {0} should contain one Item"
@@ -354,8 +412,7 @@ CIM_VirtualSystemSettingData">
                              output_item.find(child.tag).text)
 
     def test_remove_profile(self):
-        """Test case for remove_profile() method
-        """
+        """Test case for remove_profile() method"""
         with VMContextManager(self.input_ovf, self.temp_file) as ovf:
             hw = ovf.hardware
             # InstanceID 11, NIC 0 (default, under all profiles)
@@ -399,8 +456,7 @@ CIM_VirtualSystemSettingData">
 """)
 
     def test_set_property(self):
-        """Test cases for set_property() and related methods
-        """
+        """Test cases for set_property() and related methods."""
         ovf = OVF(self.input_ovf, self.temp_file)
         hw = ovf.hardware
         # InstanceID 1, 'CPU' - entries for 'default' plus two other profiles

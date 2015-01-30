@@ -111,14 +111,22 @@ class COT_UT(unittest.TestCase):
         self.iosv_ovf = os.path.join(os.path.dirname(__file__), "iosv.ovf")
         # v0.9 OVF
         self.v09_ovf = os.path.join(os.path.dirname(__file__), "v0.9.ovf")
+        # v2.0 OVF from VirtualBox
+        self.v20_vbox_ovf = os.path.join(os.path.dirname(__file__),
+                                         "ubuntu.2.0.ovf")
         # OVF with lots of custom VMware extensions
         self.vmware_ovf = os.path.join(os.path.dirname(__file__), "vmware.ovf")
+        # OVF with various odd/invalid contents
+        self.invalid_ovf = os.path.join(os.path.dirname(__file__),
+                                        "invalid.ovf")
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
         logger.debug("Created temp dir {0}".format(self.temp_dir))
         # Monitor the global temp directory to make sure COT cleans up
         self.tmps = set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
+
+        self.validate_output_with_ovftool = True
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test"""
@@ -127,7 +135,8 @@ class COT_UT(unittest.TestCase):
             self.instance.destroy()
             self.instance = None
 
-        if COT_UT.OVFTOOL_PRESENT and os.path.exists(self.temp_file):
+        if (COT_UT.OVFTOOL_PRESENT and self.validate_output_with_ovftool
+                and os.path.exists(self.temp_file)):
             # Ask OVFtool to validate that the output file is sane
             try:
                 validate_ovf_for_esxi(self.temp_file)

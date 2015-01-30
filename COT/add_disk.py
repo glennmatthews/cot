@@ -240,7 +240,12 @@ def add_disk_worker(vm,
 
         # 2) Check whether the --file-id matches an existing File and/or Disk
         #    in the OVF (and from there, find the associated Items)
-        (f2, d2, ci2, di2) = vm.search_from_file_id(file_id)
+        # In the case where no file_id is specified, we may default to the
+        # filename, so check that instead
+        if file_id is not None:
+            (f2, d2, ci2, di2) = vm.search_from_file_id(file_id)
+        else:
+            (f2, d2, ci2, di2) = vm.search_from_file_id(disk_file)
 
         # 3) Check whether the --controller and --address match existing Items
         #    in the OVF (and from there, find the associated Disk and/or File)
@@ -276,14 +281,9 @@ def add_disk_worker(vm,
                 logger.verbose("Found Disk but not File - maybe placeholder?")
 
         if disk_item is not None:
-            if type is not None:
-                match_or_die("disk Item ResourceType",
-                             vm.get_type_from_device(disk_item),
-                             "--type", type)
-            else:
-                type = vm.get_type_from_device(disk_item)
-                logger.info("Guessing disk type '{0}' from existing disk Item"
-                            .format(type))
+            match_or_die("disk Item ResourceType",
+                         vm.get_type_from_device(disk_item),
+                         "--type", type)
             vm.check_sanity_of_disk_device(disk, file, disk_item, ctrl_item)
 
         if ctrl_item is not None:
@@ -381,7 +381,7 @@ def add_disk_worker(vm,
         else:
             # let VM choose controller address if necessary
             ctrl_addr = None
-            disk_addr = 0
+            disk_addr = None
 
         ctrl_item = vm.add_controller_device(controller, subtype,
                                              ctrl_addr, ctrl_item)
