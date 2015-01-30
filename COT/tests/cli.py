@@ -14,6 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import logging
 import os
 import os.path
 import sys
@@ -31,12 +32,20 @@ class TestCOTCLI(COT_UT):
         self.cli = CLI()
         super(TestCOTCLI, self).setUp()
 
+    def tearDown(self):
+        if self.cli.master_logger:
+            self.cli.master_logger.removeHandler(self.cli.handler)
+        super(TestCOTCLI, self).tearDown()
+
     def call_cot(self, argv, result=0, fixup_args=True):
         """Invoke COT CLI with the specified arguments, suppressing stdout and
         stderr, and return its return code"""
         rc = -1
         if fixup_args:
             argv = ['--quiet'] + argv
+        _si = sys.stdin
+        _so = sys.stdout
+        _se = sys.stderr
         try:
             with open(os.devnull, 'w') as devnull:
                 sys.stdin = devnull
@@ -44,18 +53,15 @@ class TestCOTCLI(COT_UT):
                 sys.stderr = devnull
                 rc = self.cli.run(argv)
         except SystemExit as se:
-            sys.stdin = sys.__stdin__
-            sys.stdout = sys.__stdout__
-            sys.stderr = sys.__stderr__
             rc = se.code
             try:
                 rc = int(rc)
             except TypeError:
                 rc = 1
         finally:
-            sys.stdin = sys.__stdin__
-            sys.stdout = sys.__stdout__
-            sys.stderr = sys.__stderr__
+            sys.stdin = _si
+            sys.stdout = _so
+            sys.stderr = _se
 
         self.assertEqual(rc, result)
 
@@ -91,12 +97,13 @@ class TestCLIModule(TestCOTCLI):
                 return 'dunno'
             return 'y'
         self.cli.input = not_at_first
+        tmp = sys.stdout
         try:
             with open(os.devnull, 'w') as devnull:
                 sys.stdout = devnull
                 self.assertTrue(self.cli.confirm("prompt"))
         finally:
-            sys.stdout = sys.__stdout__
+            sys.stdout = tmp
 
         self.cli.getpass = lambda _: 'password'
         self.assertEqual("password", self.cli.get_password("user", "host"))
@@ -104,6 +111,7 @@ class TestCLIModule(TestCOTCLI):
     def test_apis_with_force(self):
         # When --force is set, CLI uses defaults and does not read user input
         self.cli.force = True
+        self.cli.set_verbosity(logging.ERROR)
 
         self.cli.input = lambda _: 'y'
         self.assertTrue(self.cli.confirm("prompt"))
@@ -212,12 +220,14 @@ class TestCLIAddDisk(TestCOTCLI):
         # Unknown extension
         mystery_file = os.path.join(self.temp_dir, "foo.bar")
         open(mystery_file, 'a').close()
-        self.call_cot(['add-disk', mystery_file, self.input_ovf],
+        self.call_cot(['add-disk', mystery_file, self.input_ovf,
+                       '-o', self.temp_file],
                       result=2)
         # No extension
         mystery_file = os.path.join(self.temp_dir, "foo")
         open(mystery_file, 'a').close()
-        self.call_cot(['add-disk', mystery_file, self.input_ovf],
+        self.call_cot(['add-disk', mystery_file, self.input_ovf,
+                       '-o', self.temp_file],
                       result=2)
 
 

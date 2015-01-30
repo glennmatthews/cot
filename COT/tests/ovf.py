@@ -152,12 +152,23 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
                               os.path.join(self.temp_dir, "temp.ova")) as ovf:
             self.assertFalse(ovf.validate_file_references(),
                              "OVF references missing file - contents invalid")
+        # TODO - three separate messages? are all of these needed?
+        self.assertLogged(levelname="ERROR",
+                          msg="does not exist in working directory")
+        self.assertLogged(levelname="ERROR",
+                          msg="unable to determine its checksum")
+        self.assertLogged(levelname="ERROR",
+                          msg="will not be added to the OVA")
 
         # Write out to OVA then read the OVA in as well.
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
                               os.path.join(self.temp_dir, "temp.ovf")) as ova:
             self.assertFalse(ova.validate_file_references(),
                              "OVA references missing file - contents invalid")
+        self.assertLogged(levelname="ERROR",
+                          msg="does not exist in working directory")
+        self.assertLogged(levelname="ERROR",
+                          msg="unable to determine its checksum")
 
         # Also test read-only OVA logic:
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),

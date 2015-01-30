@@ -28,14 +28,81 @@ import sys
 import platform
 import time
 import logging
-from verboselogs import VerboseLogger
+from logging.handlers import BufferingHandler
 
+from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
 
 from COT.helper_tools import validate_ovf_for_esxi
 from COT.helper_tools import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
+
+# Make sure there's always a "no-op" logging handler.
+try:
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+
+logging.getLogger('COT').addHandler(NullHandler())
+
+
+class UTLoggingHandler(BufferingHandler):
+    """Captures log messages to a buffer so we can inspect them for testing"""
+
+    def __init__(self, testcase):
+        BufferingHandler.__init__(self, capacity=0)
+        self.setLevel(logging.DEBUG)
+        self.testcase = testcase
+
+    def emit(self, record):
+        self.buffer.append(record.__dict__)
+
+    def shouldFlush(self, record):
+        return False
+
+    def has_logged(self, **kwargs):
+        """Look for log entries matching the given dict"""
+        matches = []
+        for record in self.buffer:
+            found_match = True
+            for (key, value) in kwargs.items():
+                if key == 'msg':
+                    # Regexp match
+                    if not re.search(value, record.get(key)):
+                        found_match = False
+                        break
+                elif not value == record.get(key):
+                    found_match = False
+                    break
+            if found_match:
+                matches.append(record)
+        return matches
+
+    def assertLogged(self, **kwargs):
+        matches = self.has_logged(**kwargs)
+        if not matches:
+            self.testcase.fail(
+                "Expected logs matching {0} but none were logged!"
+                .format(kwargs))
+        for r in matches:
+            self.buffer.remove(r)
+
+    def assertNoLogsOver(self, max_level):
+        """Fails if any logs are logged higher than the given level"""
+        for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
+                      logging.INFO, logging.VERBOSE, logging.DEBUG):
+            if level <= max_level:
+                return
+            matches = self.has_logged(levelno=level)
+            if matches:
+                self.testcase.fail(
+                    "Found {length} unexpected {level} message(s):\n{messages}"
+                    .format(length=len(matches),
+                            level=logging.getLevelName(level),
+                            messages="\n".join([r['msg'] for r in matches])))
 
 
 class COT_UT(unittest.TestCase):
@@ -48,6 +115,10 @@ class COT_UT(unittest.TestCase):
     for filename in ['input.iso', 'input.vmdk', 'blank.vmdk']:
         FILE_SIZE[filename] = os.path.getsize(os.path.join(
             os.path.dirname(__file__), filename))
+
+    def __init__(self, method_name='runTest'):
+        super(COT_UT, self).__init__(method_name)
+        self.logging_handler = UTLoggingHandler(self)
 
     def check_diff(self, expected, file1=None, file2=None):
         """Calls diff on the two files and compares it to the expected output.
@@ -95,7 +166,9 @@ class COT_UT(unittest.TestCase):
     def setUp(self):
         """Test case setup function called automatically prior to each test"""
         # keep log messages from interfering with our tests
-        logging.getLogger('COT').setLevel(logging.CRITICAL)
+        logging.getLogger('COT').setLevel(logging.DEBUG)
+        self.logging_handler.flush()
+        logging.getLogger('COT').addHandler(self.logging_handler)
 
         self.start_time = time.time()
         # Set default OVF file. Individual test cases can use others
@@ -130,6 +203,11 @@ class COT_UT(unittest.TestCase):
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test"""
+
+        # Fail if any ERROR/CRITICAL logs were generated
+        self.logging_handler.assertNoLogsOver(logging.WARNING)
+
+        logging.getLogger('COT').removeHandler(self.logging_handler)
 
         if hasattr(self, 'instance'):
             self.instance.destroy()
@@ -168,3 +246,6 @@ class COT_UT(unittest.TestCase):
             print("\nWARNING: Test {0} took {1:.3f} seconds to execute. "
                   "Consider refactoring it to be more efficient."
                   .format(self.id(), delta_t))
+
+    def assertLogged(self, **kwargs):
+        self.logging_handler.assertLogged(**kwargs)

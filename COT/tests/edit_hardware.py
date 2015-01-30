@@ -651,6 +651,8 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("nic_names", ['foo', 'bar', 'baz', 'bat'])
         self.instance.run()
+        self.assertLogged(levelname="ERROR",
+                          msg="not all ElementName values were used")
         self.instance.finished()
         self.check_diff("""
          <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
@@ -1270,6 +1272,8 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("profiles", ['UT'])
         self.instance.set_value("nic_networks", ["VM Network"])
         self.instance.run()
+        self.assertLogged(levelname="ERROR",
+                          msg="not all Connection values were used")
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""

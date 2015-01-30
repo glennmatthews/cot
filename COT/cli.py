@@ -41,6 +41,8 @@ class CLI(UI):
         except NameError:
             self.input = input
         self.getpass = getpass.getpass
+        self.handler = None
+        self.master_logger = None
 
         self.create_parser()
         self.create_subparsers()
@@ -73,12 +75,14 @@ class CLI(UI):
                                 log_colors=log_colors)
 
     def set_verbosity(self, level):
-        handler = logging.StreamHandler()
-        handler.setLevel(level)
-        handler.setFormatter(self.formatter(level))
-        master_logger = logging.getLogger('COT')
-        master_logger.setLevel(level)
-        master_logger.addHandler(handler)
+        if not self.handler:
+            self.handler = logging.StreamHandler()
+        self.handler.setLevel(level)
+        self.handler.setFormatter(self.formatter(level))
+        if not self.master_logger:
+            self.master_logger = logging.getLogger('COT')
+            self.master_logger.addHandler(self.handler)
+        self.master_logger.setLevel(level)
 
     def run(self, argv):
         args = self.parse_args(argv)
@@ -266,6 +270,8 @@ Note: some subcommands rely on external software tools, including:
         except KeyboardInterrupt:
             sys.exit("\nAborted by user.")
         finally:
+            if self.master_logger:
+                self.master_logger.removeHandler(self.handler)
             args.instance.destroy()
         # All exceptions not handled explicitly above will result in a
         # stack trace and exit - this is ugly so the more specific handling we

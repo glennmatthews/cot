@@ -214,3 +214,5 @@ ovf:size="{config_size}" />
             resource_type='cpu')
         self.assertRaises(LookupError,
                           self.instance.vm.find_device_location, cpu_item)
+        self.assertLogged(levelname="ERROR",
+                          msg="Item has no .*Parent element")
