@@ -20,75 +20,6 @@ import logging
 import getpass
 import textwrap
 
-# Set logging defaults for all of COT
-from verboselogs import VerboseLogger
-logging.setLoggerClass(VerboseLogger)
-
-from coloredlogs import ColoredStreamHandler
-
-
-class COTStreamHandler(ColoredStreamHandler, object):
-
-    def __init__(self, level=logging.DEBUG, **kwargs):
-        super(COTStreamHandler, self).__init__(
-            level=level,
-            show_hostname=False,
-            show_name=False,
-            show_timestamps=False,
-            **kwargs)
-
-    def emit(self, record):
-        if record.levelno < self.level:
-            return
-        # Make sure the message is a string
-        message = record.msg
-        try:
-            if not isinstance(message, basestring):
-                message = unicode(message)
-        except NameError:
-            if not isinstance(message, str):
-                message = str(message)
-        # Colorize the log message text
-        severity = record.levelname
-        if severity in self.severity_to_style:
-            style = self.severity_to_style[severity]
-        else:
-            style = {}
-        message = self.wrap_style(text=message, **style)
-        # Compose the formatted log message
-        # We adjust the message verbosity based on the configured level
-        parts = []
-        if self.level <= logging.DEBUG:
-            parts.append(self.wrap_style(
-                text=self.render_timestamp(record.created, record.msecs),
-                **style))
-        parts.append(self.wrap_style(
-            text=("{0:9}".format(severity + ':')), **style))
-        if self.level <= logging.DEBUG:
-            parts.append(self.wrap_style(
-                text=self.render_name(record.name), faint=True, **style))
-        parts.append(message)
-        message = ' '.join(parts)
-        # Copy the original record so we don't break other handlers
-        import copy
-        record = copy.copy(record)
-        record.msg = message
-        logging.StreamHandler.emit(self, record)
-
-    def render_timestamp(self, created, msecs):
-        import time
-        return "%s.%03d" % (time.strftime('%H:%M:%S',
-                                          time.localtime(created)),
-                            msecs)
-
-    def render_name(self, name):
-        return "{0:22}".format(name + ':')
-
-COTHandler = COTStreamHandler()
-logging.getLogger('COT').addHandler(COTHandler)
-
-# Proceed with importing the rest of the needed modules now that logging is set
-
 from COT import __version_long__
 from COT.data_validation import InvalidInputError
 from COT.ui_shared import UI
@@ -113,6 +44,41 @@ class CLI(UI):
 
         self.create_parser()
         self.create_subparsers()
+
+    def formatter(self, verbosity=logging.INFO):
+        """Create formatter for log output.
+        We offer different (more verbose) formatting when debugging is enabled,
+        hence this need.
+        """
+        from colorlog import ColoredFormatter
+        log_colors = {
+            'DEBUG':    'blue',
+            'VERBOSE':  'cyan',
+            'INFO':     'green',
+            'WARNING':  'yellow',
+            'ERROR':    'red',
+            'CRITICAL': 'red',
+        }
+        format_string = "%(log_color)s"
+        datefmt = None
+        if verbosity <= logging.DEBUG:
+            format_string += "%(asctime)s.%(msecs)d "
+            datefmt = "%H:%M:%S"
+        format_string += "%(levelname)8s: "
+        if verbosity <= logging.VERBOSE:
+            format_string += "%(name)-22s "
+        format_string += "%(message)s"
+        return ColoredFormatter(format_string,
+                                datefmt=datefmt,
+                                log_colors=log_colors)
+
+    def set_verbosity(self, level):
+        handler = logging.StreamHandler()
+        handler.setLevel(level)
+        handler.setFormatter(self.formatter(level))
+        master_logger = logging.getLogger('COT')
+        master_logger.setLevel(level)
+        master_logger.addHandler(handler)
 
     def run(self, argv):
         args = self.parse_args(argv)
@@ -253,13 +219,11 @@ Note: some subcommands rely on external software tools, including:
         if not sys.stdin.isatty():
             args._force = True
 
-        self.force = args._force
-
         return args
 
     def main(self, args):
-        logging.getLogger('COT').setLevel(args._verbosity)
-        COTHandler.setLevel(args._verbosity)
+        self.force = args._force
+        self.set_verbosity(args._verbosity)
 
         if not args._subcommand:
             self.parser.error("too few arguments")
@@ -268,6 +232,9 @@ Note: some subcommands rely on external software tools, including:
 
         # Call the appropriate submodule and handle any resulting errors
         arg_hash = vars(args)
+        del arg_hash["_verbosity"]
+        del arg_hash["_force"]
+        del arg_hash["_subcommand"]
         for (arg, value) in arg_hash.items():
             # When argparse is using both "nargs='+'" and "action=append",
             # this allows some flexibility in the user CLI, but the parsed
@@ -277,9 +244,6 @@ Note: some subcommands rely on external software tools, including:
             if (isinstance(value, list) and
                     all(isinstance(v, list) for v in value)):
                 arg_hash[arg] = [v for l in value for v in l]
-        del arg_hash["_verbosity"]
-        del arg_hash["_force"]
-        del arg_hash["_subcommand"]
         try:
             # Set mandatory (CAPITALIZED) args first, then optional args
             for (arg, value) in arg_hash.items():
@@ -311,7 +275,3 @@ Note: some subcommands rely on external software tools, including:
 
 def main():
     CLI().run(sys.argv[1:])
-
-
-if __name__ == "__main__":
-    main()
