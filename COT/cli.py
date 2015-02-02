@@ -272,6 +272,8 @@ Note: some subcommands rely on external software tools, including:
         finally:
             if self.master_logger:
                 self.master_logger.removeHandler(self.handler)
+                self.master_logger = None
+                self.handler = None
             args.instance.destroy()
         # All exceptions not handled explicitly above will result in a
         # stack trace and exit - this is ugly so the more specific handling we

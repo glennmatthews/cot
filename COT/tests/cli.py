@@ -33,8 +33,14 @@ class TestCOTCLI(COT_UT):
         super(TestCOTCLI, self).setUp()
 
     def tearDown(self):
+        # If we set the verbosity of the CLI directly, the CLI logger is on.
+        # The CLI normally turns the logger back off at the end of cli.main()
+        # but in some of our CLI test cases we don't call cli.main(), so
+        # to prevent leakage of logs, we clean up manually if needed.
         if self.cli.master_logger:
             self.cli.master_logger.removeHandler(self.cli.handler)
+            self.cli.master_logger = None
+            self.cli.handler = None
         super(TestCOTCLI, self).tearDown()
 
     def call_cot(self, argv, result=0, fixup_args=True):
