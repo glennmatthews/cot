@@ -129,7 +129,7 @@ class OVF(VMDescription, XML):
         try:
             # Make sure we can write the requested output format, or abort:
             if output_file:
-                self.detect_type_from_name(output_file)
+                self.output_extension = self.detect_type_from_name(output_file)
 
             # Make sure we know how to read the input
             extension = self.detect_type_from_name(input_file)
@@ -264,7 +264,7 @@ class OVF(VMDescription, XML):
     def set_output_file(self, output_file):
         # Make sure we can write the requested output format, or abort:
         if output_file:
-            self.detect_type_from_name(output_file)
+            self.output_extension = self.detect_type_from_name(output_file)
         self.output_file = output_file
 
     def __getattr__(self, name):
@@ -280,7 +280,7 @@ class OVF(VMDescription, XML):
             return
 
         prefix = os.path.splitext(self.output_file)[0]
-        extension = self.detect_type_from_name(self.output_file)
+        extension = self.output_extension
 
         # Update the XML ElementTree to reflect any hardware changes
         self.hardware.update_xml()
@@ -2407,8 +2407,8 @@ class OVFHardware:
                     count_dict[profile] += 1
                     items_seen[profile] += 1
             if last_item is None:
-                logger.warning("No existing items found for {0}. "
-                               "Creating new {0}"
+                logger.warning("No existing items of type {0} found. "
+                               "Will create new {0} from scratch."
                                .format(resource_type))
                 (new_instance, new_item) = self.new_item(resource_type,
                                                          new_item_profiles)
@@ -2942,6 +2942,7 @@ class OVFItem:
                 # no config profile
                 item = ET.Element(ITEM)
                 final_set = set([None])
+                set_string = '<generic>'
             else:
                 item = ET.Element(ITEM, {self.ITEM_CONFIG: set_string})
                 final_set = set(set_string.split())
@@ -2962,8 +2963,12 @@ class OVFItem:
                         default_val = val
                 if not found:
                     if default_val is None:
-                        logger.warning("Attribute '{0}' not found under '{1}'"
-                                       .format(key, set_string))
+                        # TODO should this really be a warning?
+                        logger.warning(
+                            "Attribute '{0}' not found for instance {1} "
+                            "under profile set '{2}'"
+                            .format(key, self.get_value(self.INSTANCE_ID),
+                                    set_string))
                         continue
                     val = default_val
                 # Regenerate text that depends on the VirtualQuantity

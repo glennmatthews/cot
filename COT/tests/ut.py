@@ -87,6 +87,10 @@ class UTLoggingHandler(BufferingHandler):
             self.testcase.fail(
                 "Expected logs matching {0} but none were logged!"
                 .format(kwargs))
+        if len(matches) > 1:
+            self.testcase.fail(
+                "Message {0} was logged {1} times instead of once!"
+                .format(kwargs, len(matches)))
         for r in matches:
             self.buffer.remove(r)
 
@@ -115,6 +119,40 @@ class COT_UT(unittest.TestCase):
     for filename in ['input.iso', 'input.vmdk', 'blank.vmdk']:
         FILE_SIZE[filename] = os.path.getsize(os.path.join(
             os.path.dirname(__file__), filename))
+
+    # Standard WARNING logger messages we may expect at various points:
+    TYPE_NOT_SPECIFIED_GUESS_HARDDISK = {
+        'levelname': 'WARNING',
+        'msg': "disk type not specified.*guessing.*harddisk.*extension",
+    }
+    TYPE_NOT_SPECIFIED_GUESS_CDROM = {
+        'levelname': 'WARNING',
+        'msg': "disk type not specified.*guessing.*cdrom.*extension",
+    }
+    CONTROLLER_NOT_SPECIFIED_GUESS_IDE = {
+        'levelname': 'WARNING',
+        'msg': "Guessing controller type.*ide.*based on disk type",
+    }
+    UNRECOGNIZED_PRODUCT_CLASS = {
+        'levelname': 'WARNING',
+        'msg': "Unrecognized product class.*Treating as a generic product",
+    }
+    ADDRESS_ON_PARENT_NOT_SPECIFIED = {   # TODO!
+        'levelname': 'WARNING',
+        'msg': "New disk address on parent not specified, guessing.*0",
+    }
+    OVERWRITING_FILE = {
+        'levelname': 'WARNING',
+        'msg': "Overwriting existing File in OVF",
+    }
+    OVERWRITING_DISK = {
+        'levelname': 'WARNING',
+        'msg': "Overwriting existing Disk in OVF",
+    }
+    OVERWRITING_DISK_ITEM = {
+        'levelname': 'WARNING',
+        'msg': "Overwriting existing disk Item in OVF",
+    }
 
     def __init__(self, method_name='runTest'):
         super(COT_UT, self).__init__(method_name)
@@ -204,8 +242,8 @@ class COT_UT(unittest.TestCase):
     def tearDown(self):
         """Test case cleanup function called automatically after each test"""
 
-        # Fail if any ERROR/CRITICAL logs were generated
-        self.logging_handler.assertNoLogsOver(logging.WARNING)
+        # Fail if any WARNING/ERROR/CRITICAL logs were generated
+        self.logging_handler.assertNoLogsOver(logging.INFO)
 
         logging.getLogger('COT').removeHandler(self.logging_handler)
 

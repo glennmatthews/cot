@@ -25,6 +25,19 @@ from COT.platforms import IOSv, IOSXRv
 
 class TestCOTEditHardware(COT_UT):
 
+    NEW_HW_FROM_SCRATCH = {
+        'levelname': 'WARNING',
+        'msg': "No existing items.*Will create new.*from scratch",
+    }
+    MEMORY_UNIT_GUESS = {
+        'levelname': 'WARNING',
+        'msg': "Memory units not specified, guessing",
+    }
+    NO_ITEMS_NO_WORK = {
+        'levelname': 'WARNING',
+        'msg': "No items.*found. Nothing to do.",
+    }
+
     def setUp(self):
         """Test case setup function called automatically prior to each test"""
         super(TestCOTEditHardware, self).setUp()
@@ -51,6 +64,7 @@ class TestCOTEditHardware(COT_UT):
         self.instance.set_value("memory", "256M")
         self.assertEqual(self.instance.get_value("memory"), 256)
         self.instance.set_value("memory", "1024")
+        self.assertLogged(**self.MEMORY_UNIT_GUESS)
         self.assertEqual(self.instance.get_value("memory"), 1024)
         self.instance.set_value("nics", 1)
         self.assertEqual(self.instance.get_value("nics"), 1)
@@ -93,6 +107,7 @@ class TestCOTEditHardware(COT_UT):
         self.assertRaises(InvalidInputError,
                           self.instance.set_value, "cpus", 9)
         self.instance.set_value("memory", "4")
+        self.assertLogged(**self.MEMORY_UNIT_GUESS)
         self.instance.set_value("memory", "8GB")
         self.assertRaises(InvalidInputError,
                           self.instance.set_value, "memory", "9GB")
@@ -230,6 +245,7 @@ CIM_VirtualSystemSettingData">
         self.instance.set_value("PACKAGE", self.minimal_ovf)
         self.instance.set_value("cpus", 1)
         self.instance.run()
+        self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
@@ -254,6 +270,7 @@ CIM_ResourceAllocationSettingData">
         """Set memory allocation under one profile."""
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("memory", 3072)
+        self.assertLogged(**self.MEMORY_UNIT_GUESS)
         self.instance.set_value("profiles", ['2CPU-2GB-1NIC'])
         self.instance.run()
         self.instance.finished()
@@ -306,6 +323,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("PACKAGE", self.minimal_ovf)
         self.instance.set_value("memory", "4GB")
         self.instance.run()
+        self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
@@ -419,6 +437,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("PACKAGE", self.minimal_ovf)
         self.instance.set_value("nic_type", "virtio")
         self.instance.run()
+        self.assertLogged(**self.NO_ITEMS_NO_WORK)
         self.instance.finished()
         self.check_diff("", file1=self.minimal_ovf)
 
@@ -886,6 +905,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("nic_networks", ['testme'])
         self.instance.set_value("mac_addresses_list", ['12:34:56:78:9a:bc'])
         self.instance.run()
+        self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
@@ -972,6 +992,7 @@ ovf:required="false">
         self.instance.set_value("PACKAGE", self.minimal_ovf)
         self.instance.set_value("serial_ports", 1)
         self.instance.run()
+        self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
@@ -1129,6 +1150,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("PACKAGE", self.minimal_ovf)
         self.instance.set_value("scsi_subtype", "virtio")
         self.instance.run()
+        self.assertLogged(**self.NO_ITEMS_NO_WORK)
         self.instance.finished()
         self.check_diff("", file1=self.minimal_ovf)
 
@@ -1157,6 +1179,11 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("profiles", ['4CPU-4GB-3NIC'])
         self.instance.run()
         self.instance.finished()
+        # Note: this message is generated at output time (finished()) not run()
+        self.assertLogged(
+            msg="Attribute 'ResourceSubType' not found for instance 4")
+        self.assertLogged(
+            msg="Attribute 'ResourceSubType' not found for instance 5")
         # Here we have to create new controllers under this profile
         # while leaving the default alone
         self.check_diff("""
@@ -1188,6 +1215,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("PACKAGE", self.minimal_ovf)
         self.instance.set_value("ide_subtype", "virtio")
         self.instance.run()
+        self.assertLogged(**self.NO_ITEMS_NO_WORK)
         self.instance.finished()
         self.check_diff("", file1=self.minimal_ovf)
 
@@ -1240,6 +1268,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("profiles", ['UT', 'UT2'])
         self.instance.set_value("memory", 8192)
+        self.assertLogged(**self.MEMORY_UNIT_GUESS)
         self.instance.run()
         self.instance.finished()
         self.check_diff("""

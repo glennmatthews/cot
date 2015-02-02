@@ -85,7 +85,7 @@ class COTAddFile(COTSubmodule):
             self.UI.confirm_or_die("Replace existing file {0} with {1}?"
                                    .format(vm.get_path_from_file(file),
                                            FILE))
-            logger.warning("Overwriting existing File in VM")
+            logger.warning("Overwriting existing File in OVF")
 
         vm.add_file(FILE, file_id, file)
 

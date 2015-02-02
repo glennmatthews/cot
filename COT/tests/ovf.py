@@ -75,8 +75,12 @@ class TestOVFInputOutput(COT_UT):
         # Lazy filenames should be OK too
         self.assertEqual('.ovf',
                          OVF.detect_type_from_name("/foo/bar/foo.ovf.5.2.2"))
+        self.assertLogged(levelname='WARNING',
+                          msg="found '.ovf' in mid-filename; treating as such")
         self.assertEqual('.ova',
                          OVF.detect_type_from_name("/foo/bar/foo.ova.15.4.T"))
+        self.assertLogged(levelname='WARNING',
+                          msg="found '.ova' in mid-filename; treating as such")
         # Unsupported formats
         self.assertRaises(ValueUnsupportedError, OVF.detect_type_from_name,
                           "/foo/bar.ovf/baz")
@@ -91,6 +95,9 @@ class TestOVFInputOutput(COT_UT):
 
         # Filename output too
         with VMContextManager(self.input_ovf, self.temp_file + '.a.b.c'):
+            self.assertLogged(
+                levelname='WARNING',
+                msg="found '.ovf' in mid-filename; treating as such")
             pass
         self.check_diff('', file2=(self.temp_file + ".a.b.c"))
 
@@ -150,8 +157,12 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               os.path.join(self.temp_dir, "temp.ova")) as ovf:
+            # TODO - two separate messages? are both needed?
+            self.assertLogged(msg="file does not exist!")
+            self.assertLogged(msg="will not be copied")
             self.assertFalse(ovf.validate_file_references(),
                              "OVF references missing file - contents invalid")
+            self.assertLogged(msg="file does not exist!")
         # TODO - three separate messages? are all of these needed?
         self.assertLogged(levelname="ERROR",
                           msg="does not exist in working directory")
@@ -163,8 +174,10 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # Write out to OVA then read the OVA in as well.
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
                               os.path.join(self.temp_dir, "temp.ovf")) as ova:
+            self.assertLogged(msg="file does not exist!")
             self.assertFalse(ova.validate_file_references(),
                              "OVA references missing file - contents invalid")
+            self.assertLogged(msg="file does not exist!")
         self.assertLogged(levelname="ERROR",
                           msg="does not exist in working directory")
         self.assertLogged(levelname="ERROR",
@@ -187,11 +200,16 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # Copy blank.vmdk to input.vmdk so as to have the wrong size/checksum
         shutil.copy(os.path.join(input_dir, 'blank.vmdk'),
                     os.path.join(self.staging_dir, 'input.vmdk'))
-        # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               os.path.join(self.temp_dir, "temp.ova")) as ovf:
+            self.assertLogged(msg="file.*as having size.*but file is actually")
             self.assertFalse(ovf.validate_file_references(),
                              "OVF has wrong file size - contents are invalid")
+            self.assertLogged(msg="file.*as having size.*but file is actually")
+        self.assertLogged(msg="Size of file.*seems to have changed.*"
+                          "The updated OVF will reflect this change.")
+        self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
+                          "The updated OVF will reflect this change.")
 
         # Write out to OVA (which will correct the file size information)
 
@@ -202,6 +220,11 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             shutil.copy(os.path.join(input_dir, 'input.vmdk'), ova.working_dir)
             self.assertFalse(ova.validate_file_references(),
                              "OVA has wrong file size - contents are invalid")
+            self.assertLogged(msg="file.*as having size.*but file is actually")
+        self.assertLogged(msg="Size of file.*seems to have changed.*"
+                          "The updated OVF will reflect this change.")
+        self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
+                          "The updated OVF will reflect this change.")
 
     def test_tar_untar(self):
         """Output OVF to OVA and vice versa"""

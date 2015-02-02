@@ -47,20 +47,12 @@ class VMFactory:
                               "'{0}' - only supported types are {1}"
                               .format(input_file, supported_types))
 
-        if output_file:
-            # Make sure the output format is supported by this class
-            try:
-                vm_class.detect_type_from_name(output_file)
-            except ValueUnsupportedError as e:
-                raise VMInitError(2,
-                                  "Unsupported format for output file '{0}' - "
-                                  "only support {1} for output from {2}"
-                                  .format(output_file, e.expected_value,
-                                          vm_class.__name__))
-
         logger.info("Loading '{0}' as {1}".format(input_file,
                                                   vm_class.__name__))
-        vm = vm_class(input_file, output_file)
+        try:
+            vm = vm_class(input_file, output_file)
+        except ValueUnsupportedError as e:
+            raise VMInitError(2, str(e))
         logger.debug("Loaded VM object from {0}".format(input_file))
 
         return vm
