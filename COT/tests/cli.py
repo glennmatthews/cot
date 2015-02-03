@@ -40,6 +40,7 @@ class TestCOTCLI(COT_UT):
         if self.cli.master_logger:
             self.cli.master_logger.removeHandler(self.cli.handler)
             self.cli.master_logger = None
+            self.cli.handler.close()
             self.cli.handler = None
         super(TestCOTCLI, self).tearDown()
 
@@ -155,6 +156,69 @@ class TestCLIGeneral(TestCOTCLI):
         self.call_cot([], result=2)
         # Optional args but no subcommand
         self.call_cot(['-f', '-v'], fixup_args=False, result=2)
+
+    def test_verbosity(self):
+        """Verifying various verbosity options"""
+        self.logging_handler.flush()
+
+        # Default verbosity is INFO
+        self.call_cot(['info', self.invalid_ovf], fixup_args=False)
+        self.assertNotEqual(
+            [], self.logging_handler.logs(levelname='ERROR'))
+        self.assertNotEqual(
+            [], self.logging_handler.logs(levelname='WARNING'))
+        self.assertNotEqual(
+            [], self.logging_handler.logs(levelname='INFO'))
+        self.assertEqual(
+            [], self.logging_handler.logs(levelname='VERBOSE'))
+        self.assertEqual(
+            [], self.logging_handler.logs(levelname='DEBUG'))
+        self.logging_handler.flush()
+
+        # -v/--verbose gives VERBOSE
+        for OPT in ['-v', '--verbose']:
+            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='ERROR'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='WARNING'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='INFO'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='VERBOSE'))
+            self.assertEqual(
+                [], self.logging_handler.logs(levelname='DEBUG'))
+            self.logging_handler.flush()
+
+        # -vv/-d/--debug gives DEBUG
+        for OPT in ['-vv', '-d', '--debug']:
+            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='ERROR'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='WARNING'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='INFO'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='VERBOSE'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='DEBUG'))
+            self.logging_handler.flush()
+
+        # -q/--quiet gives WARNING
+        for OPT in ['-q', '--quiet']:
+            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='ERROR'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='WARNING'))
+            self.assertEqual(
+                [], self.logging_handler.logs(levelname='INFO'))
+            self.assertEqual(
+                [], self.logging_handler.logs(levelname='VERBOSE'))
+            self.assertEqual(
+                [], self.logging_handler.logs(levelname='DEBUG'))
+            self.logging_handler.flush()
 
 
 class TestCLIAddDisk(TestCOTCLI):

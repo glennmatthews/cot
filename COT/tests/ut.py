@@ -63,7 +63,7 @@ class UTLoggingHandler(BufferingHandler):
     def shouldFlush(self, record):
         return False
 
-    def has_logged(self, **kwargs):
+    def logs(self, **kwargs):
         """Look for log entries matching the given dict"""
         matches = []
         for record in self.buffer:
@@ -82,7 +82,7 @@ class UTLoggingHandler(BufferingHandler):
         return matches
 
     def assertLogged(self, **kwargs):
-        matches = self.has_logged(**kwargs)
+        matches = self.logs(**kwargs)
         if not matches:
             self.testcase.fail(
                 "Expected logs matching {0} but none were logged!"
@@ -100,7 +100,7 @@ class UTLoggingHandler(BufferingHandler):
                       logging.INFO, logging.VERBOSE, logging.DEBUG):
             if level <= max_level:
                 return
-            matches = self.has_logged(levelno=level)
+            matches = self.logs(levelno=level)
             if matches:
                 self.testcase.fail(
                     "Found {length} unexpected {level} message(s):\n{messages}"
@@ -219,6 +219,7 @@ class COT_UT(unittest.TestCase):
         """Test case setup function called automatically prior to each test"""
         # keep log messages from interfering with our tests
         logging.getLogger('COT').setLevel(logging.DEBUG)
+        self.logging_handler.setLevel(logging.NOTSET)
         self.logging_handler.flush()
         logging.getLogger('COT').addHandler(self.logging_handler)
 
