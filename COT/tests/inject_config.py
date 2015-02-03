@@ -27,6 +27,12 @@ from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
 class TestCOTInjectConfig(COT_UT):
     """Test cases for COTInjectConfig class"""
 
+    # Expected WARNING message
+    OVERWRITE_CONFIG_DISK = {
+        'levelname': 'WARNING',
+        'msg': "Overwriting existing config disk",
+    }
+
     def setUp(self):
         """Test case setup function called automatically prior to each test"""
         super(TestCOTInjectConfig, self).setUp()
@@ -175,7 +181,7 @@ for bootstrap configuration.</rasd:Description>
         self.instance.set_value("PACKAGE", self.temp_file)
         self.instance.set_value("config_file", self.config_file)
         self.instance.run()
-        self.assertLogged(msg="Overwriting existing config disk")   # TODO
+        self.assertLogged(**self.OVERWRITE_CONFIG_DISK)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
@@ -183,7 +189,7 @@ for bootstrap configuration.</rasd:Description>
         self.instance.set_value("PACKAGE", self.temp_file)
         self.instance.set_value("config_file", self.config_file)
         self.instance.run()
-        self.assertLogged(msg="Overwriting existing config disk")   # TODO
+        self.assertLogged(**self.OVERWRITE_CONFIG_DISK)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
