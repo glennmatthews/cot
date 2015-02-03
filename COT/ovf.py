@@ -2940,10 +2940,9 @@ class OVFItem:
                         default_val = val
                 if not found:
                     if default_val is None:
-                        # TODO should this really be a warning?
-                        logger.warning(
-                            "Attribute '{0}' not found for instance {1} "
-                            "under profile set '{2}'"
+                        logger.info(
+                            "No value defined for attribute '{0}' "
+                            "under profile set '{2}' for instance {1} "
                             .format(key, self.get_value(self.INSTANCE_ID),
                                     set_string))
                         continue

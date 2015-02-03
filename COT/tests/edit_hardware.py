@@ -1179,13 +1179,6 @@ CIM_ResourceAllocationSettingData">
         self.instance.set_value("profiles", ['4CPU-4GB-3NIC'])
         self.instance.run()
         self.instance.finished()
-        # Note: this message is generated at output time (finished()) not run()
-        self.assertLogged(
-            levelname='WARNING',
-            msg="Attribute 'ResourceSubType' not found for instance 4")
-        self.assertLogged(
-            levelname='WARNING',
-            msg="Attribute 'ResourceSubType' not found for instance 5")
         # Here we have to create new controllers under this profile
         # while leaving the default alone
         self.check_diff("""
