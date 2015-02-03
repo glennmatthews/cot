@@ -147,7 +147,7 @@ class COT_UT(unittest.TestCase):
         'levelname': 'WARNING',
         'msg': "Unrecognized product class.*Treating as a generic product",
     }
-    ADDRESS_ON_PARENT_NOT_SPECIFIED = {   # TODO!
+    ADDRESS_ON_PARENT_NOT_SPECIFIED = {
         'levelname': 'WARNING',
         'msg': "New disk address on parent not specified, guessing.*0",
     }
