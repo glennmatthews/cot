@@ -6,6 +6,8 @@ omit =
     setup.py
     versioneer.py
     .tox/*
+    .eggs/*
+    *easy_install*
     */pypy/*
     */lib_pypy/*
     */distutils/*

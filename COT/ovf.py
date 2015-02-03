@@ -129,7 +129,7 @@ class OVF(VMDescription, XML):
         try:
             # Make sure we can write the requested output format, or abort:
             if output_file:
-                self.detect_type_from_name(output_file)
+                self.output_extension = self.detect_type_from_name(output_file)
 
             # Make sure we know how to read the input
             extension = self.detect_type_from_name(input_file)
@@ -236,27 +236,51 @@ class OVF(VMDescription, XML):
 
             self.get_platform()
 
-            # Check any file references in the ovf descriptor
-            self.validate_file_references()
-
-            if (self.output_file is not None and
-                    os.path.dirname(self.ovf_descriptor) != self.working_dir):
-                # Copy all referenced files to the working directory
-                # Not needed if we're in read-only mode (no output_file)
+            # Let's go ahead and walk the file references in the OVF descriptor
+            # and make sure they look sane.
+            file_list = [f.get(self.FILE_HREF) for f in
+                         self.find_all_children(self.references, self.FILE)]
+            self.invalid_files = []
+            if (self.output_file is not None or
+                    self.input_file == self.ovf_descriptor):
+                # Read OVF: input_file == ovf_descriptor, output_file = None
+                #   In this case, walk the file list but do not copy files
+                # R/W OVF: input_file == ovf_descriptor, output_file != None
+                #   In this case, walk the file list and copy to working dir
+                # R/W OVA: input_file != ovf_descriptor, output_file != None
+                #   In this case, walk the file list but do not copy files,
+                #   as they were already moved by untar() above.
                 input_dir = os.path.dirname(self.ovf_descriptor)
-                for file in self.find_all_children(self.references, self.FILE):
-                    filepath = os.path.join(input_dir,
-                                            file.get(self.FILE_HREF))
+                for f in file_list:
+                    filepath = os.path.join(input_dir, f)
                     if not os.path.exists(filepath):
-                        logger.warning(
-                            "File '{0}' referenced in the OVF does not exist. "
-                            "It will not be copied to the working dir '{1}'."
-                            .format(file.get(self.FILE_HREF),
-                                    self.working_dir))
+                        logger.error(
+                            "File '{0}' referenced in the OVF does not exist."
+                            .format(f))
+                        self.invalid_files.append(f)
                         continue
-                    logger.debug("Copying {0} to {1}"
-                                 .format(filepath, self.working_dir))
-                    shutil.copy(filepath, self.working_dir)
+                    if (input_dir != self.working_dir and
+                            self.output_file is not None):
+                        logger.debug("Copying {0} to {1}"
+                                     .format(filepath, self.working_dir))
+                        shutil.copy(filepath, self.working_dir)
+            else:
+                # Read-only OVA:
+                #   We didn't extract the other files from the archive,
+                #   but we can check to make sure they're in there...
+                try:
+                    tarf = tarfile.open(self.input_file, 'r')
+                    for f in file_list:
+                        try:
+                            tarf.getmember(f)
+                        except KeyError:
+                            logger.error("File '{0}' referenced in the OVF "
+                                         "descriptor does not exist in the OVA"
+                                         .format(f))
+                            self.invalid_files.append(f)
+                finally:
+                    tarf.close()
+
         except Exception as e:
             self.destroy()
             raise
@@ -264,7 +288,7 @@ class OVF(VMDescription, XML):
     def set_output_file(self, output_file):
         # Make sure we can write the requested output format, or abort:
         if output_file:
-            self.detect_type_from_name(output_file)
+            self.output_extension = self.detect_type_from_name(output_file)
         self.output_file = output_file
 
     def __getattr__(self, name):
@@ -280,7 +304,7 @@ class OVF(VMDescription, XML):
             return
 
         prefix = os.path.splitext(self.output_file)[0]
-        extension = self.detect_type_from_name(self.output_file)
+        extension = self.output_extension
 
         # Update the XML ElementTree to reflect any hardware changes
         self.hardware.update_xml()
@@ -290,10 +314,17 @@ class OVF(VMDescription, XML):
             file_path = os.path.join(self.working_dir,
                                      file.get(self.FILE_HREF))
             if not os.path.exists(file_path):
-                logger.error(
-                    "Referenced file '{0}' does not exist in working "
-                    "directory {1} and so will not be included in the output."
-                    .format(file.get(self.FILE_HREF), self.working_dir))
+                if not file.get(self.FILE_HREF) in self.invalid_files:
+                    # otherwise we already warned about it at read time.
+                    logger.error(
+                        "Referenced file '{0}' does not exist in working "
+                        "directory {1}"
+                        .format(file.get(self.FILE_HREF), self.working_dir))
+                # TODO this should probably have a confirm() check...
+                logger.warning("Removing reference to missing file {0}"
+                               .format(file.get(self.FILE_HREF)))
+                self.references.remove(file)
+                # TODO remove references to this file from Disk, Item?
                 continue
             # FILE_SIZE is optional in the OVF standard
             reported_size = file.get(self.FILE_SIZE)
@@ -340,9 +371,6 @@ class OVF(VMDescription, XML):
             for file in self.find_all_children(self.references, self.FILE):
                 file_path = os.path.join(self.working_dir,
                                          file.get(self.FILE_HREF))
-                if not os.path.exists(file_path):
-                    # We already warned about this above
-                    continue
                 logger.info("Copying {0} to {1}"
                             .format(file.get(self.FILE_HREF),
                                     dest_dir))
@@ -740,47 +768,6 @@ class OVF(VMDescription, XML):
                     .format(product_class, platform.__name__))
         self.platform = platform
         return self.platform
-
-    def validate_file_references(self):
-        """Check whether all files in the References exist and are correctly
-        described.
-        Returns True (all files valid) or False (one or more missing/invalid).
-        """
-        if not self.output_file:
-            if self.input_file != self.ovf_descriptor:
-                # Read-only mode, handling an OVA input file.
-                # In this case we only untarred the ovf descriptor
-                # and not any other contents of the OVA, so there's
-                # nothing to check here.
-                # TODO - it would be nice to at least make sure the
-                # files exist in the TAR file...
-                return True
-        base_dir = os.path.dirname(self.ovf_descriptor)
-        rc = True
-        for file in XML.find_all_children(self.references, self.FILE):
-            # Does the file exist?
-            file_name = file.get(self.FILE_HREF)
-            file_path = os.path.join(base_dir, file_name)
-            if not os.path.exists(file_path):
-                logger.warning("OVF descriptor references file '{0}', "
-                               "but file does not exist!".format(file_name))
-                rc = False
-                continue
-
-            # Is the file size correct?
-            expected_size = file.get(self.FILE_SIZE)
-            actual_size = str(os.path.getsize(file_path))
-            if expected_size is not None and expected_size != actual_size:
-                logger.warning(
-                    "OVF descriptor describes file '{0}' as having "
-                    "size {1} bytes, but file is actually {2} bytes."
-                    .format(file_name, expected_size, actual_size))
-                rc = False
-                continue
-
-            # Does the file checksum match the manifest, if any? TODO
-
-        return rc
 
     def get_configuration_profile_ids(self):
         """Get the list of supported configuration profile identifiers.
@@ -1632,11 +1619,6 @@ class OVF(VMDescription, XML):
             for file in self.find_all_children(self.references, self.FILE):
                 file_name = file.get(self.FILE_HREF)
                 file_path = os.path.join(os.path.dirname(ovf_file), file_name)
-                if not os.path.exists(file_path):
-                    logger.error("File {0} does not exist - unable to "
-                                 "determine its checksum for the manifest."
-                                 .format(file_name))
-                    continue
                 sha1sum = get_checksum(file_path, 'sha1')
                 f.write("SHA1({file})= {sum}\n"
                         .format(file=file_name, sum=sha1sum)
@@ -1671,11 +1653,6 @@ class OVF(VMDescription, XML):
             # Add all other files mentioned in the OVF
             for file in self.find_all_children(self.references, self.FILE):
                 file_path = os.path.join(dir, file.get(self.FILE_HREF))
-                if not os.path.exists(file_path):
-                    logger.error("As referenced file '{0}' does not exist, "
-                                 "it will not be added to the OVA"
-                                 .format(file.get(self.FILE_HREF)))
-                    continue
                 tarf.add(file_path, os.path.basename(file_path))
                 logger.verbose("Added {0} to {1}".format(file_path, tar_file))
         finally:
@@ -2407,8 +2384,8 @@ class OVFHardware:
                     count_dict[profile] += 1
                     items_seen[profile] += 1
             if last_item is None:
-                logger.warning("No existing items found for {0}. "
-                               "Creating new {0}"
+                logger.warning("No existing items of type {0} found. "
+                               "Will create new {0} from scratch."
                                .format(resource_type))
                 (new_instance, new_item) = self.new_item(resource_type,
                                                          new_item_profiles)
@@ -2942,6 +2919,7 @@ class OVFItem:
                 # no config profile
                 item = ET.Element(ITEM)
                 final_set = set([None])
+                set_string = '<generic>'
             else:
                 item = ET.Element(ITEM, {self.ITEM_CONFIG: set_string})
                 final_set = set(set_string.split())
@@ -2962,8 +2940,11 @@ class OVFItem:
                         default_val = val
                 if not found:
                     if default_val is None:
-                        logger.warning("Attribute '{0}' not found under '{1}'"
-                                       .format(key, set_string))
+                        logger.info(
+                            "No value defined for attribute '{0}' "
+                            "under profile set '{2}' for instance {1} "
+                            .format(key, self.get_value(self.INSTANCE_ID),
+                                    set_string))
                         continue
                     val = default_val
                 # Regenerate text that depends on the VirtualQuantity

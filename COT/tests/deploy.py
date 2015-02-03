@@ -55,6 +55,20 @@ class TestCOTDeploy(COT_UT):
 
 class TestCOTDeployESXi(COT_UT):
 
+    # Some WARNING logger messages we may expect at various points:
+    SERIAL_PORT_FIXUP = {
+        'levelname': 'WARNING',
+        'msg': 'Package.*2 serial ports.*must add them manually',
+    }
+    VSPHERE_ENV_WARNING = {
+        'levelname': 'WARNING',
+        'msg': "deploying.*vSphere.*power-on.*environment properties.*ignored",
+    }
+    OVFTOOL_VER_TOO_LOW = {
+        'levelname': 'WARNING',
+        'msg': "ovftool version is too low.*environment properties.*ignored",
+    }
+
     def stub_check_call(self, argv, require_success=True):
         logger.info("stub_check_call({0}, {1})".format(argv, require_success))
         if argv[0] == 'ovftool':
@@ -119,6 +133,8 @@ class TestCOTDeployESXi(COT_UT):
             self.input_ovf,
             'vi://{user}:passwd@localhost'.format(user=getpass.getuser())
         ], self.last_argv)
+        self.assertLogged(**self.VSPHERE_ENV_WARNING)
+        self.assertLogged(**self.SERIAL_PORT_FIXUP)
 
     def test_ovftool_args_advanced(self):
         "Test that ovftool is called with the expected arguments"
@@ -146,6 +162,7 @@ class TestCOTDeployESXi(COT_UT):
             self.input_ovf,
             'vi://u:p@localhost/host/foo',
         ], self.last_argv)
+        self.assertLogged(**self.SERIAL_PORT_FIXUP)
 
     def test_ovftool_vsphere_env_fixup(self):
         "Test fixup of environment when deploying directly to vSphere"
@@ -165,6 +182,9 @@ class TestCOTDeployESXi(COT_UT):
             self.input_ovf,
             'vi://{user}:passwd@vsphere'.format(user=getpass.getuser()),
         ], self.last_argv)
+        self.assertLogged(**self.SERIAL_PORT_FIXUP)
+        # Make sure we DON'T see the ENV_WARNING message
+        self.logging_handler.assertNoLogsOver(logging.INFO)
 
         # With 4.0.0, we don't (need to) fixup when deploying to vCenter.
         # This is tested by test_ovftool_args_advanced() above.
@@ -182,3 +202,5 @@ class TestCOTDeployESXi(COT_UT):
             self.input_ovf,
             'vi://{user}:passwd@vsphere'.format(user=getpass.getuser()),
         ], self.last_argv)
+        self.assertLogged(**self.OVFTOOL_VER_TOO_LOW)
+        self.assertLogged(**self.SERIAL_PORT_FIXUP)

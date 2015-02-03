@@ -27,6 +27,12 @@ from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
 class TestCOTInjectConfig(COT_UT):
     """Test cases for COTInjectConfig class"""
 
+    # Expected WARNING message
+    OVERWRITE_CONFIG_DISK = {
+        'levelname': 'WARNING',
+        'msg': "Overwriting existing config disk",
+    }
+
     def setUp(self):
         """Test case setup function called automatically prior to each test"""
         super(TestCOTInjectConfig, self).setUp()
@@ -82,6 +88,7 @@ class TestCOTInjectConfig(COT_UT):
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("config_file", self.config_file)
         self.instance.run()
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         self.check_diff("""
      <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
@@ -104,6 +111,7 @@ ovf:size="{config_size}" />
         self.instance.vm.platform = IOSXRv
         self.instance.set_value("secondary_config_file", self.config_file)
         self.instance.run()
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         self.check_diff("""
      <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
@@ -125,6 +133,8 @@ ovf:size="{config_size}" />
         self.instance.set_value("PACKAGE", self.iosv_ovf)
         self.instance.set_value("config_file", self.config_file)
         self.instance.run()
+        self.assertLogged(**self.OVERWRITING_DISK)
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         # Note that in this case there is an existing placeholder Disk;
         # to be OVF standard compliant, the new File must be created in the
@@ -165,16 +175,23 @@ for bootstrap configuration.</rasd:Description>
         self.instance.set_value("PACKAGE", self.input_ovf)
         self.instance.set_value("config_file", self.config_file)
         self.instance.run()
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         # Overwrite it with a new one
         self.instance.set_value("PACKAGE", self.temp_file)
         self.instance.set_value("config_file", self.config_file)
         self.instance.run()
+        self.assertLogged(**self.OVERWRITE_CONFIG_DISK)
+        self.assertLogged(**self.OVERWRITING_FILE)
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         # And again.
         self.instance.set_value("PACKAGE", self.temp_file)
         self.instance.set_value("config_file", self.config_file)
         self.instance.run()
+        self.assertLogged(**self.OVERWRITE_CONFIG_DISK)
+        self.assertLogged(**self.OVERWRITING_FILE)
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         self.check_diff("""
      <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
@@ -214,3 +231,5 @@ ovf:size="{config_size}" />
             resource_type='cpu')
         self.assertRaises(LookupError,
                           self.instance.vm.find_device_location, cpu_item)
+        self.assertLogged(levelname="ERROR",
+                          msg="Item has no .*Parent element")

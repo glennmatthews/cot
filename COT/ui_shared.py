@@ -17,6 +17,10 @@
 import logging
 import sys
 
+# VerboseLogger adds a log level 'verbose' between 'info' and 'debug'.
+# This lets us be a bit more fine-grained in our logging verbosity.
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
 

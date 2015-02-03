@@ -79,6 +79,7 @@ class TestCOTAddFile(COT_UT):
         self.instance.set_value("FILE", os.path.join(
             os.path.dirname(__file__), 'input.iso'))
         self.instance.run()
+        self.assertLogged(**self.OVERWRITING_FILE)
         self.instance.finished()
         self.check_diff("")
 
@@ -110,6 +111,10 @@ class TestCOTAddFile(COT_UT):
         ad.set_value("DISK_IMAGE", disk_file)
         ad.set_value("file_id", "mydisk")
         ad.run()
+        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.OVERWRITING_FILE)
+        self.assertLogged(**self.ADDRESS_ON_PARENT_NOT_SPECIFIED)
         ad.finished()
         ad.destroy()
         self.check_diff(file1=intermediate_ovf, expected="""

@@ -75,8 +75,12 @@ class TestOVFInputOutput(COT_UT):
         # Lazy filenames should be OK too
         self.assertEqual('.ovf',
                          OVF.detect_type_from_name("/foo/bar/foo.ovf.5.2.2"))
+        self.assertLogged(levelname='WARNING',
+                          msg="found '.ovf' in mid-filename; treating as such")
         self.assertEqual('.ova',
                          OVF.detect_type_from_name("/foo/bar/foo.ova.15.4.T"))
+        self.assertLogged(levelname='WARNING',
+                          msg="found '.ova' in mid-filename; treating as such")
         # Unsupported formats
         self.assertRaises(ValueUnsupportedError, OVF.detect_type_from_name,
                           "/foo/bar.ovf/baz")
@@ -91,6 +95,9 @@ class TestOVFInputOutput(COT_UT):
 
         # Filename output too
         with VMContextManager(self.input_ovf, self.temp_file + '.a.b.c'):
+            self.assertLogged(
+                levelname='WARNING',
+                msg="found '.ovf' in mid-filename; treating as such")
             pass
         self.check_diff('', file2=(self.temp_file + ".a.b.c"))
 
@@ -143,28 +150,64 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
 
     def test_input_output_missing_file(self):
         """Test reading/writing of an OVF with missing file references"""
+
+        # Read OVF, write OVF - make sure invalid file reference is removed
         self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
         input_dir = os.path.dirname(self.input_ovf)
         shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
         shutil.copy(os.path.join(input_dir, 'input.vmdk'), self.staging_dir)
         # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
-                              os.path.join(self.temp_dir, "temp.ova")) as ovf:
-            self.assertFalse(ovf.validate_file_references(),
-                             "OVF references missing file - contents invalid")
+                              self.temp_file) as ovf:
+            self.assertLogged(**self.NONEXISTENT_FILE)
+        self.assertLogged(**self.REMOVING_FILE)
+        self.check_diff("""
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="152576" />
+-    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
+   </ovf:References>
+""")
 
-        # Write out to OVA then read the OVA in as well.
-        with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
-                              os.path.join(self.temp_dir, "temp.ovf")) as ova:
-            self.assertFalse(ova.validate_file_references(),
-                             "OVA references missing file - contents invalid")
+        # Read-only OVF
+        with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
+                              None) as ovf:
+            self.assertLogged(**self.NONEXISTENT_FILE)
+
+        # File exists at read time but has disappeared by write time
+        with VMContextManager(self.input_ovf, self.temp_file) as ovf:
+            os.remove(os.path.join(ovf.working_dir, 'input.iso'))
+        self.assertLogged(**self.FILE_DISAPPEARED)
+        self.assertLogged(**self.REMOVING_FILE)
+        self.check_diff("""
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="152576" />
+-    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
+   </ovf:References>
+""")
+
+        # Read OVA, write OVF
+        try:
+            tarf = tarfile.open(os.path.join(self.staging_dir, 'input.ova'),
+                                'w')
+            tarf.add(os.path.join(self.staging_dir, 'input.ovf'), 'input.ovf')
+            tarf.add(os.path.join(self.staging_dir, 'input.vmdk'),
+                     'input.vmdk')
+        finally:
+            tarf.close()
+        with VMContextManager(
+                os.path.join(self.staging_dir, 'input.ova'),
+                os.path.join(self.temp_dir, 'output.ovf')) as ovf:
+            self.assertLogged(**self.NONEXISTENT_FILE)
+        self.assertLogged(**self.REMOVING_FILE)
+        self.check_diff(file2=os.path.join(self.temp_dir, 'output.ovf'),
+                        expected="""
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="152576" />
+-    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
+   </ovf:References>
+""")
 
         # Also test read-only OVA logic:
-        with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
-                              None) as ova:
-            # Currently we don't detect missing files in the OVA archive,
-            # so this returns True. TODO
-            ova.validate_file_references()
+        with VMContextManager(os.path.join(self.staging_dir, "input.ova"),
+                              None):
+            self.assertLogged(**self.NONEXISTENT_FILE)
 
     def test_input_output_bad_file(self):
         """Test reading/writing of an OVF with incorrect file references.
@@ -176,11 +219,13 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # Copy blank.vmdk to input.vmdk so as to have the wrong size/checksum
         shutil.copy(os.path.join(input_dir, 'blank.vmdk'),
                     os.path.join(self.staging_dir, 'input.vmdk'))
-        # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
-                              os.path.join(self.temp_dir, "temp.ova")) as ovf:
-            self.assertFalse(ovf.validate_file_references(),
-                             "OVF has wrong file size - contents are invalid")
+                              os.path.join(self.temp_dir, "temp.ova")):
+            pass
+        self.assertLogged(msg="Size of file.*seems to have changed.*"
+                          "The updated OVF will reflect this change.")
+        self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
+                          "The updated OVF will reflect this change.")
 
         # Write out to OVA (which will correct the file size information)
 
@@ -189,8 +234,10 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
                               os.path.join(self.temp_dir, "temp.ovf")) as ova:
             # Replace the extracted fake .vmdk with the real .vmdk
             shutil.copy(os.path.join(input_dir, 'input.vmdk'), ova.working_dir)
-            self.assertFalse(ova.validate_file_references(),
-                             "OVA has wrong file size - contents are invalid")
+        self.assertLogged(msg="Size of file.*seems to have changed.*"
+                          "The updated OVF will reflect this change.")
+        self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
+                          "The updated OVF will reflect this change.")
 
     def test_tar_untar(self):
         """Output OVF to OVA and vice versa"""
