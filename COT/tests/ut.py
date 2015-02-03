@@ -14,24 +14,100 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import unittest
-import subprocess
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 from difflib import unified_diff
-from os import devnull
 import os.path
+import glob
 import tempfile
 import shutil
 import re
 import sys
+import platform
 import time
 import logging
-from verboselogs import VerboseLogger
+from logging.handlers import BufferingHandler
 
+from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
 
-from COT.helper_tools import *
+from COT.helper_tools import validate_ovf_for_esxi
+from COT.helper_tools import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
+
+# Make sure there's always a "no-op" logging handler.
+try:
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+
+logging.getLogger('COT').addHandler(NullHandler())
+
+
+class UTLoggingHandler(BufferingHandler):
+    """Captures log messages to a buffer so we can inspect them for testing"""
+
+    def __init__(self, testcase):
+        BufferingHandler.__init__(self, capacity=0)
+        self.setLevel(logging.DEBUG)
+        self.testcase = testcase
+
+    def emit(self, record):
+        self.buffer.append(record.__dict__)
+
+    def shouldFlush(self, record):
+        return False
+
+    def logs(self, **kwargs):
+        """Look for log entries matching the given dict"""
+        matches = []
+        for record in self.buffer:
+            found_match = True
+            for (key, value) in kwargs.items():
+                if key == 'msg':
+                    # Regexp match
+                    if not re.search(value, record.get(key)):
+                        found_match = False
+                        break
+                elif not value == record.get(key):
+                    found_match = False
+                    break
+            if found_match:
+                matches.append(record)
+        return matches
+
+    def assertLogged(self, **kwargs):
+        matches = self.logs(**kwargs)
+        if not matches:
+            self.testcase.fail(
+                "Expected logs matching {0} but none were logged!"
+                .format(kwargs))
+        if len(matches) > 1:
+            self.testcase.fail(
+                "Message {0} was logged {1} times instead of once!"
+                .format(kwargs, len(matches)))
+        for r in matches:
+            self.buffer.remove(r)
+
+    def assertNoLogsOver(self, max_level):
+        """Fails if any logs are logged higher than the given level"""
+        for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
+                      logging.INFO, logging.VERBOSE, logging.DEBUG):
+            if level <= max_level:
+                return
+            matches = self.logs(levelno=level)
+            if matches:
+                self.testcase.fail(
+                    "Found {length} unexpected {level} message(s):\n{messages}"
+                    .format(length=len(matches),
+                            level=logging.getLevelName(level),
+                            messages="\n".join([r['msg'] for r in matches])))
+
 
 class COT_UT(unittest.TestCase):
     """Subclass of unittest.TestCase adding some additional behaviors we want
@@ -44,11 +120,65 @@ class COT_UT(unittest.TestCase):
         FILE_SIZE[filename] = os.path.getsize(os.path.join(
             os.path.dirname(__file__), filename))
 
+    # Standard ERROR logger messages we may expect at various points:
+    NONEXISTENT_FILE = {
+        'levelname': 'ERROR',
+        'msg': "File '.*' referenced in the OVF.*does not exist",
+    }
+    FILE_DISAPPEARED = {
+        'levelname': 'ERROR',
+        'msg': "Referenced file '.*' does not exist in working directory",
+    }
+
+    # Standard WARNING logger messages we may expect at various points:
+    TYPE_NOT_SPECIFIED_GUESS_HARDDISK = {
+        'levelname': 'WARNING',
+        'msg': "disk type not specified.*guessing.*harddisk.*extension",
+    }
+    TYPE_NOT_SPECIFIED_GUESS_CDROM = {
+        'levelname': 'WARNING',
+        'msg': "disk type not specified.*guessing.*cdrom.*extension",
+    }
+    CONTROLLER_NOT_SPECIFIED_GUESS_IDE = {
+        'levelname': 'WARNING',
+        'msg': "Guessing controller type.*ide.*based on disk type",
+    }
+    UNRECOGNIZED_PRODUCT_CLASS = {
+        'levelname': 'WARNING',
+        'msg': "Unrecognized product class.*Treating as a generic product",
+    }
+    ADDRESS_ON_PARENT_NOT_SPECIFIED = {
+        'levelname': 'WARNING',
+        'msg': "New disk address on parent not specified, guessing.*0",
+    }
+    REMOVING_FILE = {
+        'levelname': 'WARNING',
+        'msg': "Removing reference to missing file",
+    }
+    OVERWRITING_FILE = {
+        'levelname': 'WARNING',
+        'msg': "Overwriting existing File in OVF",
+    }
+    OVERWRITING_DISK = {
+        'levelname': 'WARNING',
+        'msg': "Overwriting existing Disk in OVF",
+    }
+    OVERWRITING_DISK_ITEM = {
+        'levelname': 'WARNING',
+        'msg': "Overwriting existing disk Item in OVF",
+    }
+
+    def __init__(self, method_name='runTest'):
+        super(COT_UT, self).__init__(method_name)
+        self.logging_handler = UTLoggingHandler(self)
+
     def check_diff(self, expected, file1=None, file2=None):
         """Calls diff on the two files and compares it to the expected output.
         If the files are unspecified, defaults to comparing the input OVF file
         and the temporary output OVF file.
-        Note that comparison of OVF files is currently skipped under Python 2.6.
+        Note that comparison of OVF files is currently skipped when
+        running under Python 2.6, as it produces different XML output than
+        later Python versions.
         """
         if file1 is None:
             file1 = self.input_ovf
@@ -57,14 +187,15 @@ class COT_UT(unittest.TestCase):
 
         if re.search("ovf", file1) and sys.hexversion < 0x02070000:
             print("OVF file diff comparison skipped "
-                  "due to old Python version ({0})".format(sys.version))
+                  "due to old Python version ({0})"
+                  .format(platform.python_version()))
             return
 
         with open(file1) as f1:
             with open(file2) as f2:
                 diff = unified_diff(f1.readlines(), f2.readlines(),
                                     fromfile=file1, tofile=file2,
-                                    n=1) # number of context lines
+                                    n=1)   # number of context lines
         # Strip line numbers and file names from the diff
         # to keep the UT more maintainable
         clean_diff = ""
@@ -84,44 +215,13 @@ class COT_UT(unittest.TestCase):
             self.fail("'diff {0} {1}' failed - expected:\n{2}\ngot:\n{3}"
                       .format(file1, file2, expected, clean_diff))
 
-
-    def call_no_output(self, argv, result=0):
-        """Like subprocess.call, but suppress stdout and stderr by default"""
-        p = subprocess.Popen(argv, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-        self.assertEqual(result, p.returncode,
-                         "expected return code {0} when calling '{1}'\n"
-                         "but got {2}:\n{3}\n{4}"
-                         .format(result,
-                                 " ".join(argv),
-                                 p.returncode,
-                                 stdout.decode(),
-                                 stderr.decode()))
-        return p.returncode
-
-
-    def call_cot(self, argv, result=0):
-        """Invoke cot with the specified arguments, suppressing stdout and
-        stderr, and return its return code"""
-        argv = ["python", os.path.join(os.path.dirname(__file__),
-                                       "..", "..", "bin", "cot")] + argv
-        import glob
-        tmps = set(glob.glob(os.path.join("/tmp", "cot*")))
-        rc = self.call_no_output(argv, result)
-        tmps2 = set(glob.glob(os.path.join("/tmp", "cot*")))
-        delta = tmps2 - tmps
-        if delta:
-            self.fail("Temp directory(s) {0} left over after calling '{1}'!"
-                      .format(delta, " ".join(argv)))
-        return rc
-
-
     def setUp(self):
         """Test case setup function called automatically prior to each test"""
         # keep log messages from interfering with our tests
-        logging.getLogger('COT').setLevel(logging.CRITICAL)
+        logging.getLogger('COT').setLevel(logging.DEBUG)
+        self.logging_handler.setLevel(logging.NOTSET)
+        self.logging_handler.flush()
+        logging.getLogger('COT').addHandler(self.logging_handler)
 
         self.start_time = time.time()
         # Set default OVF file. Individual test cases can use others
@@ -137,18 +237,37 @@ class COT_UT(unittest.TestCase):
         self.iosv_ovf = os.path.join(os.path.dirname(__file__), "iosv.ovf")
         # v0.9 OVF
         self.v09_ovf = os.path.join(os.path.dirname(__file__), "v0.9.ovf")
+        # v2.0 OVF from VirtualBox
+        self.v20_vbox_ovf = os.path.join(os.path.dirname(__file__),
+                                         "ubuntu.2.0.ovf")
         # OVF with lots of custom VMware extensions
         self.vmware_ovf = os.path.join(os.path.dirname(__file__), "vmware.ovf")
+        # OVF with various odd/invalid contents
+        self.invalid_ovf = os.path.join(os.path.dirname(__file__),
+                                        "invalid.ovf")
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
         logger.debug("Created temp dir {0}".format(self.temp_dir))
+        # Monitor the global temp directory to make sure COT cleans up
+        self.tmps = set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
 
+        self.validate_output_with_ovftool = True
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test"""
 
-        if COT_UT.OVFTOOL_PRESENT and os.path.exists(self.temp_file):
+        # Fail if any WARNING/ERROR/CRITICAL logs were generated
+        self.logging_handler.assertNoLogsOver(logging.INFO)
+
+        logging.getLogger('COT').removeHandler(self.logging_handler)
+
+        if hasattr(self, 'instance'):
+            self.instance.destroy()
+            self.instance = None
+
+        if (COT_UT.OVFTOOL_PRESENT and self.validate_output_with_ovftool
+                and os.path.exists(self.temp_file)):
             # Ask OVFtool to validate that the output file is sane
             try:
                 validate_ovf_for_esxi(self.temp_file)
@@ -168,9 +287,18 @@ class COT_UT(unittest.TestCase):
         self.temp_dir = None
         self.temp_file = None
 
+        tmps2 = set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
+        delta = tmps2 - self.tmps
+        if delta:
+            self.fail("Temp directory(s) {0} left over after test!"
+                      .format(delta))
+
         # Let's try to keep things lean...
         delta_t = time.time() - self.start_time
         if delta_t > 5.0:
             print("\nWARNING: Test {0} took {1:.3f} seconds to execute. "
                   "Consider refactoring it to be more efficient."
                   .format(self.id(), delta_t))
+
+    def assertLogged(self, **kwargs):
+        self.logging_handler.assertLogged(**kwargs)

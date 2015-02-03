@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# platform.py - Module for methods related to variations between
-#               guest platforms (Cisco CSR1000V, Cisco IOS XRv, etc.)
+# platforms.py - Module for methods related to variations between
+#                guest platforms (Cisco CSR1000V, Cisco IOS XRv, etc.)
 #
 # October 2013, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -20,6 +20,7 @@ from .data_validation import ValueTooLowError, ValueTooHighError
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class GenericPlatform(object):
     """Generic class for operations that depend on guest platform.
@@ -46,7 +47,6 @@ class GenericPlatform(object):
         # For most platforms IDE is the correct default.
         return 'ide'
 
-
     @classmethod
     def guess_nic_name(cls, nic_number):
         """Guess the name of the Nth NIC for this platform.
@@ -54,13 +54,11 @@ class GenericPlatform(object):
         """
         return ("Ethernet" + str(nic_number))
 
-
     @classmethod
     def validate_cpu_count(cls, cpus):
         """Throw an error if the number of CPUs is not a supported value"""
         if cpus < 1:
             raise ValueTooLowError("CPUs", cpus, 1)
-
 
     @classmethod
     def validate_memory_amount(cls, megabytes):
@@ -68,7 +66,6 @@ class GenericPlatform(object):
         """
         if megabytes < 1:
             raise ValueTooLowError("RAM", megabytes, 1)
-
 
     @classmethod
     def validate_nic_count(cls, count):
@@ -85,7 +82,6 @@ class GenericPlatform(object):
         cls.valid_list_only("NIC type", type_string.upper(),
                             ["E1000", "VIRTIO", "VMXNET3"])
 
-
     @classmethod
     def validate_serial_count(cls, count):
         """Throw an error if the number of serial ports is not supported.
@@ -98,7 +94,7 @@ class GenericPlatform(object):
         """Helper function - throw an error if the given value is not
         an item in the provided list.
         """
-        if not val in supported_list:
+        if val not in supported_list:
             raise ValueUnsupportedError(desc, val, supported_list)
 
 
@@ -125,7 +121,6 @@ class IOSXRv(GenericPlatform):
             raise ValueTooLowError("CPUs", cpus, 1)
         elif cpus > 8:
             raise ValueTooHighError("CPUs", cpus, 8)
-
 
     @classmethod
     def validate_memory_amount(cls, megabytes):
@@ -219,14 +214,12 @@ class CSR1000V(GenericPlatform):
         else:
             return super(CSR1000V, cls).controller_type_for_device(device_type)
 
-
     @classmethod
     def guess_nic_name(cls, nic_number):
         # In all current CSR releases, NICs start at GigabitEthernet1
         # Some early versions started at GigabitEthernet0 but we don't
         # support that...
         return ("GigabitEthernet" + str(nic_number))
-
 
     @classmethod
     def validate_cpu_count(cls, cpus):
@@ -238,7 +231,6 @@ class CSR1000V(GenericPlatform):
         elif cpus != 1 and cpus != 2 and cpus != 4:
             raise ValueUnsupportedError("CPUs", cpus, [1, 2, 4])
 
-
     @classmethod
     def validate_memory_amount(cls, megabytes):
         # Minimum 2.5 GB, max 8 GB
@@ -246,7 +238,6 @@ class CSR1000V(GenericPlatform):
             raise ValueTooLowError("RAM", str(megabytes) + "MB", "2.5GB")
         elif megabytes > 8192:
             raise ValueTooHighError("RAM", str(megabytes) + "MB", "8GB")
-
 
     @classmethod
     def validate_nic_count(cls, count):
@@ -278,7 +269,6 @@ class IOSv(GenericPlatform):
     def guess_nic_name(cls, nic_number):
         # GigabitEthernet0/0, GigabitEthernet0/1, etc.
         return ("GigabitEthernet0/" + str(nic_number - 1))
-
 
     @classmethod
     def validate_cpu_count(cls, cpus):

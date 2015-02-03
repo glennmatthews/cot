@@ -14,13 +14,130 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import logging
+import os
 import os.path
+import sys
 
 from COT.tests.ut import COT_UT
-from COT.cli import mac_address, device_address
-from argparse import ArgumentTypeError
+from COT.cli import CLI
+from COT.data_validation import InvalidInputError
 
-class TestCLIGeneral(COT_UT):
+
+class TestCOTCLI(COT_UT):
+    """Parent class for CLI test cases"""
+
+    def setUp(self):
+        """Test case setup function called automatically prior to each test"""
+        self.cli = CLI()
+        super(TestCOTCLI, self).setUp()
+
+    def tearDown(self):
+        # If we set the verbosity of the CLI directly, the CLI logger is on.
+        # The CLI normally turns the logger back off at the end of cli.main()
+        # but in some of our CLI test cases we don't call cli.main(), so
+        # to prevent leakage of logs, we clean up manually if needed.
+        if self.cli.master_logger:
+            self.cli.master_logger.removeHandler(self.cli.handler)
+            self.cli.master_logger = None
+            self.cli.handler.close()
+            self.cli.handler = None
+        super(TestCOTCLI, self).tearDown()
+
+    def call_cot(self, argv, result=0, fixup_args=True):
+        """Invoke COT CLI with the specified arguments, suppressing stdout and
+        stderr, and return its return code"""
+        rc = -1
+        if fixup_args:
+            argv = ['--quiet'] + argv
+        _si = sys.stdin
+        _so = sys.stdout
+        _se = sys.stderr
+        try:
+            with open(os.devnull, 'w') as devnull:
+                sys.stdin = devnull
+                sys.stdout = devnull
+                sys.stderr = devnull
+                rc = self.cli.run(argv)
+        except SystemExit as se:
+            rc = se.code
+            try:
+                rc = int(rc)
+            except TypeError:
+                rc = 1
+        finally:
+            sys.stdin = _si
+            sys.stdout = _so
+            sys.stderr = _se
+
+        self.assertEqual(rc, result)
+
+
+class TestCLIModule(TestCOTCLI):
+    """Test cases for the CLI module itself"""
+
+    def test_apis_without_force(self):
+        self.cli.force = False
+
+        self.cli.input = lambda _: 'y'
+        self.assertTrue(self.cli.confirm("prompt"))
+        self.cli.confirm_or_die("prompt")
+
+        self.cli.input = lambda _: 'n'
+        self.assertFalse(self.cli.confirm("prompt"))
+        self.assertRaises(SystemExit, self.cli.confirm_or_die, "prompt")
+
+        self.cli.input = lambda _: 'hello'
+        self.assertEqual("hello", self.cli.get_input("Prompt:", "goodbye"))
+
+        # get_input and confirm return default value if no user input
+        self.cli.input = lambda _: ''
+        self.assertTrue(self.cli.confirm("prompt"))
+        self.assertEqual("goodbye", self.cli.get_input("Prompt:", "goodbye"))
+
+        # confirm will complain and loop until receiving valid input
+        self.first_call = True
+
+        def not_at_first(*args):
+            if self.first_call:
+                self.first_call = False
+                return 'dunno'
+            return 'y'
+        self.cli.input = not_at_first
+        tmp = sys.stdout
+        try:
+            with open(os.devnull, 'w') as devnull:
+                sys.stdout = devnull
+                self.assertTrue(self.cli.confirm("prompt"))
+        finally:
+            sys.stdout = tmp
+
+        self.cli.getpass = lambda _: 'password'
+        self.assertEqual("password", self.cli.get_password("user", "host"))
+
+    def test_apis_with_force(self):
+        # When --force is set, CLI uses defaults and does not read user input
+        self.cli.force = True
+        self.cli.set_verbosity(logging.ERROR)
+
+        self.cli.input = lambda _: 'y'
+        self.assertTrue(self.cli.confirm("prompt"))
+        self.cli.confirm_or_die("prompt")
+
+        self.cli.input = lambda _: 'n'
+        self.assertTrue(self.cli.confirm("prompt"))
+        self.cli.confirm_or_die("prompt")
+
+        self.cli.input = lambda _: 'hello'
+        self.assertEqual("goodbye", self.cli.get_input("Prompt:", "goodbye"))
+
+        # CLI doesn't provide a default password if --force
+        self.cli.getpass = lambda _: 'password'
+        self.assertRaises(InvalidInputError,
+                          self.cli.get_password, "user", "host")
+
+
+class TestCLIGeneral(TestCOTCLI):
     """CLI Test cases for top-level "cot" command"""
 
     def test_help(self):
@@ -28,28 +145,88 @@ class TestCLIGeneral(COT_UT):
         self.call_cot(['-h'])
         self.call_cot(['--help'])
 
-
     def test_version(self):
         """Verifying --version command"""
         self.call_cot(['-V'])
         self.call_cot(['--version'])
-
 
     def test_incomplete_cli(self):
         """Verifying command with no subcommand is not valid"""
         # No args at all
         self.call_cot([], result=2)
         # Optional args but no subcommand
-        self.call_cot(['-f', '-vvv'], result=2)
+        self.call_cot(['-f', '-v'], fixup_args=False, result=2)
+
+    def test_verbosity(self):
+        """Verifying various verbosity options"""
+        self.logging_handler.flush()
+
+        # Default verbosity is INFO
+        self.call_cot(['info', self.invalid_ovf], fixup_args=False)
+        self.assertNotEqual(
+            [], self.logging_handler.logs(levelname='ERROR'))
+        self.assertNotEqual(
+            [], self.logging_handler.logs(levelname='WARNING'))
+        self.assertNotEqual(
+            [], self.logging_handler.logs(levelname='INFO'))
+        self.assertEqual(
+            [], self.logging_handler.logs(levelname='VERBOSE'))
+        self.assertEqual(
+            [], self.logging_handler.logs(levelname='DEBUG'))
+        self.logging_handler.flush()
+
+        # -v/--verbose gives VERBOSE
+        for OPT in ['-v', '--verbose']:
+            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='ERROR'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='WARNING'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='INFO'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='VERBOSE'))
+            self.assertEqual(
+                [], self.logging_handler.logs(levelname='DEBUG'))
+            self.logging_handler.flush()
+
+        # -vv/-d/--debug gives DEBUG
+        for OPT in ['-vv', '-d', '--debug']:
+            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='ERROR'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='WARNING'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='INFO'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='VERBOSE'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='DEBUG'))
+            self.logging_handler.flush()
+
+        # -q/--quiet gives WARNING
+        for OPT in ['-q', '--quiet']:
+            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='ERROR'))
+            self.assertNotEqual(
+                [], self.logging_handler.logs(levelname='WARNING'))
+            self.assertEqual(
+                [], self.logging_handler.logs(levelname='INFO'))
+            self.assertEqual(
+                [], self.logging_handler.logs(levelname='VERBOSE'))
+            self.assertEqual(
+                [], self.logging_handler.logs(levelname='DEBUG'))
+            self.logging_handler.flush()
 
 
-class TestCLIAddDisk(COT_UT):
+class TestCLIAddDisk(TestCOTCLI):
     """CLI test cases for "cot add-disk" command"""
 
     def test_help(self):
         """Verifying help menu"""
         self.call_cot(['add-disk', "-h"])
-
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
@@ -113,22 +290,23 @@ class TestCLIAddDisk(COT_UT):
         # Unknown extension
         mystery_file = os.path.join(self.temp_dir, "foo.bar")
         open(mystery_file, 'a').close()
-        self.call_cot(['add-disk', mystery_file, self.input_ovf],
+        self.call_cot(['add-disk', mystery_file, self.input_ovf,
+                       '-o', self.temp_file],
                       result=2)
         # No extension
         mystery_file = os.path.join(self.temp_dir, "foo")
         open(mystery_file, 'a').close()
-        self.call_cot(['add-disk', mystery_file, self.input_ovf],
+        self.call_cot(['add-disk', mystery_file, self.input_ovf,
+                       '-o', self.temp_file],
                       result=2)
 
 
-class TestCLIAddFile(COT_UT):
+class TestCLIAddFile(TestCOTCLI):
     """CLI test cases for "cot add-file" command"""
 
     def test_help(self):
         """Verifying help menu"""
         self.call_cot(['add-file', "-h"])
-
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
@@ -154,13 +332,12 @@ class TestCLIAddFile(COT_UT):
                       result=2)
 
 
-class TestCLIEditHardware(COT_UT):
+class TestCLIEditHardware(TestCOTCLI):
     """CLI test cases for "cot edit-hardware" command"""
 
     def test_help(self):
         """Verifying help menu"""
         self.call_cot(['edit-hardware', "-h"])
-
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
@@ -196,13 +373,12 @@ class TestCLIEditHardware(COT_UT):
         self.call_cot(base_args + ['--nic_type', 'GLENN'], result=2)
 
 
-class TestCLIEditProduct(COT_UT):
+class TestCLIEditProduct(TestCOTCLI):
     """CLI test cases for "cot edit-product" command"""
 
     def test_help(self):
         """Verifying help menu"""
         self.call_cot(['edit-product', "-h"])
-
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
@@ -216,13 +392,12 @@ class TestCLIEditProduct(COT_UT):
         self.call_cot(['edit-product', self.input_ovf, '-V', '-v'], result=2)
 
 
-class TestCLIEditProperties(COT_UT):
+class TestCLIEditProperties(TestCOTCLI):
     """CLI test cases for "cot edit-properties" command"""
 
     def test_help(self):
         """Verifying help menu"""
         self.call_cot(['edit-properties', '-h'])
-
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters"""
@@ -248,8 +423,50 @@ class TestCLIEditProperties(COT_UT):
         self.call_cot(['edit-properties', self.input_ovf, '--properties',
                        '=foo'], result=2)
 
+    def test_set_property_valid(self):
+        """Various methods of property setting, exercising CLI nargs/append"""
 
-class TestCLIInfo(COT_UT):
+        for args in (['-p', 'login-username=admin',   # Individual
+                      '-p', 'login-password=cisco123',
+                      '-p', 'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin',   # All for one
+                            'login-password=cisco123',
+                            'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin',   # Mixed!
+                      '-p', 'login-password=cisco123',
+                            'enable-ssh-server=1'],
+                     ['-p', 'login-username=admin',   # Differently mixed!
+                            'login-password=cisco123',
+                      '-p', 'enable-ssh-server=1']):
+            self.call_cot(['edit-properties', self.input_ovf,
+                           '-o', self.temp_file] + args)
+            self.check_diff("""
+       <ovf:Category>1. Bootstrap Properties</ovf:Category>
+-      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
+         <ovf:Label>Login Username</ovf:Label>
+...
+       </ovf:Property>
+-      <ovf:Property ovf:key="login-password" ovf:password="true" \
+ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" \
+ovf:value="">
++      <ovf:Property ovf:key="login-password" ovf:password="true" \
+ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" \
+ovf:value="cisco123">
+         <ovf:Label>Login Password</ovf:Label>
+...
+       <ovf:Category>2. Features</ovf:Category>
+-      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="false">
++      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="true">
+         <ovf:Label>Enable SSH Login</ovf:Label>
+""")
+
+
+class TestCLIInfo(TestCOTCLI):
     """CLI test cases for "cot info" command"""
 
     def test_help(self):
@@ -257,7 +474,7 @@ class TestCLIInfo(COT_UT):
         self.call_cot(['info', "-h"])
 
 
-class TestCLIInjectConfig(COT_UT):
+class TestCLIInjectConfig(TestCOTCLI):
     """CLI test cases for "cot inject-config" command"""
 
     def test_help(self):
@@ -279,7 +496,8 @@ class TestCLIInjectConfig(COT_UT):
         self.call_cot(['inject-config', self.input_ovf,
                        '-s', '/foo'], result=2)
 
-class TestCLIDeploy(COT_UT):
+
+class TestCLIDeploy(TestCOTCLI):
     """CLI test cases for "cot deploy" command"""
 
     def test_help(self):
@@ -288,7 +506,7 @@ class TestCLIDeploy(COT_UT):
 
     def test_invalid_args(self):
         # No VM specified
-        self.call_cot(['deploy'], result = 2)
+        self.call_cot(['deploy'], result=2)
         # VM does not exist
         self.call_cot(['deploy', '/foo'], result=2)
         # Hypervisor not specified
@@ -297,7 +515,7 @@ class TestCLIDeploy(COT_UT):
         self.call_cot(['deploy', self.input_ovf, 'MyHypervisor'], result=2)
 
 
-class TestCLIDeployESXi(COT_UT):
+class TestCLIDeployESXi(TestCOTCLI):
     """CLI test cases for 'cot deploy PACKAGE esxi' command"""
 
     def test_help(self):

@@ -3,7 +3,7 @@
 # vm_context_manager.py - Context manager for virtual machine definitions
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -15,13 +15,11 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import logging
-import os.path
-import shutil
-import tempfile
 
 from .vm_factory import VMFactory
 
 logger = logging.getLogger(__name__)
+
 
 class VMContextManager:
     """Context manager for virtual machine definitions. Use as follows:
@@ -33,16 +31,11 @@ class VMContextManager:
     def __init__(self, input_file, output_file):
         self.obj = VMFactory.create(input_file, output_file)
 
-
     def __enter__(self):
         return self.obj
-
 
     def __exit__(self, type, value, trace):
         # Did we exit cleanly?
         if type is None:
             self.obj.write()
-
-        # Clean up after ourselves
-        if os.path.exists(self.obj.working_dir):
-            shutil.rmtree(self.obj.working_dir)
+        self.obj.destroy()

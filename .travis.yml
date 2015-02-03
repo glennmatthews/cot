@@ -1,12 +1,14 @@
 language: python
 python:
-  - "2.6"
   - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
+
 install:
-  - "pip install -r requirements.txt"
-  - "sudo python setup.py install_helpers --force"
-  - "python setup.py develop"
-script: "python setup.py test"
+  - pip install -r requirements.txt
+  - pip install tox
+  - pip install coveralls
+  - sudo python setup.py install_helpers --force
+
+script: tox
+
+after_success:
+  - coveralls

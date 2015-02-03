@@ -14,6 +14,15 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import atexit
+import logging
+import os.path
+import shutil
+import tempfile
+
+logger = logging.getLogger(__name__)
+
+
 class VMInitError(EnvironmentError):
     """Class representing errors encountered when trying to init/load a VM.
     """
@@ -32,14 +41,27 @@ class VMDescription(object):
         """
         raise NotImplementedError("detect_type_from_name not implemented")
 
-    def __init__(self, input_file, working_dir, output_file):
+    def __init__(self, input_file, output_file=None):
         """Read the given VM description file into memory and
         make note of the requested working directory and eventual output file.
         Note that if the output_file is unknown at present, a value of ""
-        should be passed, as None indicates there will not be an output_file."""
+        should be passed, as None indicates there will not be an output_file.
+        """
         self.input_file = input_file
-        self.working_dir = working_dir
+        self.working_dir = tempfile.mkdtemp(prefix="cot")
+        logger.verbose("Temporary directory for VM created from {0}: {1}"
+                       .format(input_file, self.working_dir))
         self.output_file = output_file
+        atexit.register(self.destroy)
+
+    def destroy(self):
+        if hasattr(self, 'working_dir') and os.path.exists(self.working_dir):
+            logger.verbose("Removing temporary directory '{0}"
+                           .format(self.working_dir))
+            shutil.rmtree(self.working_dir)
+
+    def __del__(self):
+        self.destroy()
 
     def set_output_file(self, output_file):
         self.output_file = output_file
@@ -49,21 +71,14 @@ class VMDescription(object):
         raise NotImplementedError("write not implemented")
 
     def get_platform(self):
-        """Returns the Platform class object described by this VM description"""
+        """Returns the Platform class object associated with this VM"""
         raise NotImplementedError("get_platform not implemented")
-
-    def validate_file_references(self):
-        """Check whether all files referenced by this VM description exist and
-        are correctly described.
-        Returns True (all files valid) or False (one or more missing/invalid).
-        """
-        raise NotImplementedError("validate_file_references not implemented")
 
     # API methods needed for add-disk
     def convert_disk_if_needed(self, filename, kind):
         """Converts the disk to a new format (and returns the path to the new
         disk), if appropriate"""
-        # Some VMs may not need this, so do nothing by default rather than error
+        # Some VMs may not need this, so default to do nothing, not error
         return filename
 
     def search_from_filename(self, filename):
@@ -119,7 +134,8 @@ class VMDescription(object):
     def check_sanity_of_disk_device(self, disk, file, disk_item, ctrl_item):
         """Make sure the indicated disk device has appropriate linkage to any
         disk, file, and controller provided. Die if it does not."""
-        raise NotImplementedError("check_sanity_of_disk_device not implemented")
+        raise NotImplementedError(
+            "check_sanity_of_disk_device not implemented")
 
     def add_file(self, file_path, file_id, file=None, disk=None):
         """Add a new file object to the VM or overwrite the provided one"""
@@ -278,6 +294,7 @@ class VMDescription(object):
         None: 1,
         'verbose': 2
         }
+
     def info_string(self, verbosity_option=None):
         """Returns a descriptive string summarizing the contents of this VM
         """

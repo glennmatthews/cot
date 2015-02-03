@@ -3,7 +3,7 @@
 # ui_shared.py - abstraction between CLI and GUI
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -15,8 +15,14 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import logging
+import sys
 
+# VerboseLogger adds a log level 'verbose' between 'info' and 'debug'.
+# This lets us be a bit more fine-grained in our logging verbosity.
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
+
 
 class UI(object):
     """Abstract user interface functionality.
@@ -24,6 +30,8 @@ class UI(object):
 
     def __init__(self, force=False):
         self.force = force
+        # Stub for API testing
+        self.default_confirm_response = True
 
     def confirm(self, prompt):
         """Prompts user to confirm the requested operation, or auto-accepts
@@ -31,7 +39,7 @@ class UI(object):
         if self.force:
             logger.warning("Automatically agreeing to '{0}'".format(prompt))
             return True
-        return True
+        return self.default_confirm_response
 
     def confirm_or_die(self, prompt):
         """If the user doesn't agree, abort!"""

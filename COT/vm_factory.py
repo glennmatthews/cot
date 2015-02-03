@@ -3,7 +3,7 @@
 # vm_factory.py - Factory for virtual machine objects
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2014 the COT project developers.
+# Copyright (c) 2013-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,17 +14,14 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import atexit
 import logging
-import os
-import shutil
-import tempfile
 
 from .ovf import OVF
 from .vm_description import VMInitError
 from .data_validation import ValueUnsupportedError
 
 logger = logging.getLogger(__name__)
+
 
 class VMFactory:
     """Class for creating a VMDescription instance (of indeterminate subclass)
@@ -38,7 +35,7 @@ class VMFactory:
         # Add other VMDescription subclasses as needed
         for candidate_class in [OVF]:
             try:
-                filetype = candidate_class.detect_type_from_name(input_file)
+                candidate_class.detect_type_from_name(input_file)
                 vm_class = candidate_class
                 break
             except ValueUnsupportedError as e:
@@ -50,33 +47,12 @@ class VMFactory:
                               "'{0}' - only supported types are {1}"
                               .format(input_file, supported_types))
 
-        if output_file:
-            # Make sure the output format is supported by this class
-            try:
-                vm_class.detect_type_from_name(output_file)
-            except ValueUnsupportedError as e:
-                raise VMInitError(2,
-                                  "Unsupported format for output file '{0}' - "
-                                  "only support {1} for output from {2}"
-                                  .format(output_file, e.expected_value,
-                                          vm_class.__name__))
-
-        tempdir = tempfile.mkdtemp(prefix="cot")
-        logger.debug("Temporary directory for VM created from {0}: {1}"
-                     .format(input_file, tempdir))
+        logger.info("Loading '{0}' as {1}".format(input_file,
+                                                  vm_class.__name__))
         try:
-            logger.info("Loading '{0}' as {1}".format(input_file,
-                                                      vm_class.__name__))
-            vm = vm_class(input_file, tempdir, output_file)
-        except Exception as e:
-            shutil.rmtree(tempdir)
-            raise
+            vm = vm_class(input_file, output_file)
+        except ValueUnsupportedError as e:
+            raise VMInitError(2, str(e))
         logger.debug("Loaded VM object from {0}".format(input_file))
 
-        def cleanup():
-            if os.path.exists(tempdir):
-                logger.debug("Removing temporary directory "+ tempdir)
-                shutil.rmtree(tempdir)
-
-        atexit.register(cleanup)
         return vm

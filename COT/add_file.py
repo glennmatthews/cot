@@ -18,10 +18,11 @@ import os.path
 import logging
 import sys
 
-from .data_validation import check_for_conflict, InvalidInputError
+from .data_validation import check_for_conflict
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
+
 
 class COTAddFile(COTSubmodule):
     """Add a file (such as a README) to the package."""
@@ -35,7 +36,6 @@ class COTAddFile(COTSubmodule):
                 "output",
                 "file_id"
             ])
-
 
     def validate_arg(self, arg, value):
         """Check whether it's OK to set the given argument to the given value.
@@ -53,10 +53,8 @@ class COTAddFile(COTSubmodule):
 
         return valid, value_or_reason
 
-
     def set_value(self, arg, value):
         super(COTAddFile, self).set_value(arg, value)
-
 
     def ready_to_run(self):
         """Are we ready to go?
@@ -64,7 +62,6 @@ class COTAddFile(COTSubmodule):
         if self.get_value("FILE") is None:
             return False, "FILE is a mandatory argument!"
         return super(COTAddFile, self).ready_to_run()
-
 
     def run(self):
         super(COTAddFile, self).run()
@@ -88,10 +85,9 @@ class COTAddFile(COTSubmodule):
             self.UI.confirm_or_die("Replace existing file {0} with {1}?"
                                    .format(vm.get_path_from_file(file),
                                            FILE))
-            logger.warning("Overwriting existing File in VM")
+            logger.warning("Overwriting existing File in OVF")
 
         vm.add_file(FILE, file_id, file)
-
 
     def create_subparser(self, parent):
         p = parent.add_parser(

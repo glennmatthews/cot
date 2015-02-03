@@ -15,13 +15,12 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import xml.etree.ElementTree as ET
-import sys
 import re
 
+
 def to_string(obj):
-    """String representation of an object. Has special-case handling for XML
-    ElementTree objects"""
-    if isinstance(obj, ET.Element):
+    """String representation of an object. Special-case for XML Element"""
+    if ET.iselement(obj):
         return ET.tostring(obj)
     else:
         return str(obj)
@@ -35,7 +34,7 @@ def natural_sort(l):
     # Convert number strings to ints, leave other strings as text
     convert = lambda text: int(text) if text.isdigit() else text
     # Split the key into a list of [text, int, text, int, ...]
-    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     # Sort based on alphanum_key
     return sorted(l, key=alphanum_key)
 
@@ -132,6 +131,7 @@ def positive_int(string):
     """
     return validate_int(string, min=1)
 
+
 # Some handy exception and error types we can throw
 class ValueMismatchError(ValueError):
     """Error class indicating that values which were expected to be equal
@@ -139,9 +139,11 @@ class ValueMismatchError(ValueError):
     """
     pass
 
+
 class InvalidInputError(ValueError):
     """Error class indicating a failure during validation of user input"""
     pass
+
 
 class ValueUnsupportedError(InvalidInputError):
     """Error class indicating an unsupported value was provided.
@@ -160,6 +162,7 @@ class ValueUnsupportedError(InvalidInputError):
         return ("Unsupported value '{0}' for {1} - expected {2}"
                 .format(self.actual_value, self.value_type,
                         self.expected_value))
+
 
 class ValueTooLowError(ValueUnsupportedError):
     """Error class indicating a number lower than the lowest supported value.
@@ -187,4 +190,3 @@ class ValueTooHighError(ValueUnsupportedError):
         return ("Value '{0}' for {1} is too high - must be at most {2}"
                 .format(self.actual_value, self.value_type,
                         self.expected_value))
-

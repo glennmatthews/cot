@@ -1,7 +1,7 @@
-# platform.py - Unit test cases for COT platform handling
+# platforms.py - Unit test cases for COT platform handling
 #
 # January 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -13,9 +13,43 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import unittest
-from COT.platform import IOSXRv, CSR1000V, IOSv, NXOSv, IOSXRvRP, IOSXRvLC
+from COT.platforms import GenericPlatform
+from COT.platforms import IOSXRv, CSR1000V, IOSv, NXOSv, IOSXRvRP, IOSXRvLC
 from COT.data_validation import ValueUnsupportedError
 from COT.data_validation import ValueTooLowError, ValueTooHighError
+
+
+class TestGenericPlatform(unittest.TestCase):
+    """Test cases for generic platform handling"""
+    def setUp(self):
+        self.cls = GenericPlatform
+
+    def test_controller_type_for_device(self):
+        self.assertEqual(self.cls.controller_type_for_device('harddisk'),
+                         'ide')
+        self.assertEqual(self.cls.controller_type_for_device('cdrom'),
+                         'ide')
+
+    def test_nic_name(self):
+        self.assertEqual(self.cls.guess_nic_name(1), "Ethernet1")
+        self.assertEqual(self.cls.guess_nic_name(100), "Ethernet100")
+
+    def test_cpu_count(self):
+        self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
+        self.cls.validate_cpu_count(1)
+
+    def test_memory_amount(self):
+        self.assertRaises(ValueTooLowError, self.cls.validate_memory_amount, 0)
+        self.cls.validate_memory_amount(1)
+
+    def test_nic_count(self):
+        self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, -1)
+        self.cls.validate_nic_count(0)
+
+    def test_serial_count(self):
+        self.assertRaises(ValueTooLowError, self.cls.validate_serial_count, -1)
+        self.cls.validate_serial_count(0)
+
 
 class TestIOSXRv(unittest.TestCase):
     """Test cases for IOS XRv platform handling"""
@@ -132,6 +166,16 @@ class TestCSR1000V(unittest.TestCase):
     def setUp(self):
         self.cls = CSR1000V
 
+    def test_controller_type_for_device(self):
+        """Test platform-specific logic for device controllers."""
+        self.assertEqual(self.cls.controller_type_for_device('harddisk'),
+                         'scsi')
+        self.assertEqual(self.cls.controller_type_for_device('cdrom'),
+                         'ide')
+        # fallthrough to parent class
+        self.assertEqual(self.cls.controller_type_for_device('dvd'),
+                         'ide')
+
     def test_nic_name(self):
         """Test NIC name construction"""
         self.assertEqual(self.cls.guess_nic_name(1),
@@ -148,7 +192,8 @@ class TestCSR1000V(unittest.TestCase):
         self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
         self.cls.validate_cpu_count(1)
         self.cls.validate_cpu_count(2)
-        self.assertRaises(ValueUnsupportedError, self.cls.validate_cpu_count, 3)
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_cpu_count, 3)
         self.cls.validate_cpu_count(4)
         self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 5)
 

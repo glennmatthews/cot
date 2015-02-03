@@ -22,6 +22,7 @@ from .vm_factory import VMFactory
 
 logger = logging.getLogger(__name__)
 
+
 class COTGenericSubmodule(object):
     """Abstract interface for COT command submodules."""
 
@@ -32,11 +33,10 @@ class COTGenericSubmodule(object):
         self.vm = None
         self.UI = UI
 
-
     def validate_arg(self, arg, value):
         """Check whether it's OK to set the given argument to the given value.
         Returns either (True, massaged_value) or (False, reason)"""
-        if not arg in self.args.keys():
+        if arg not in self.args.keys():
             return False, "unrecognized argument '{0}'".format(arg)
         # Generic input validation common across all submodules
         if arg == "PACKAGE":
@@ -46,25 +46,25 @@ class COTGenericSubmodule(object):
 
         return True, value
 
-
     def set_value(self, arg, value):
         """Set the given argument to the given value"""
-        if not arg in self.args.keys():
-            return
         valid, value_or_reason = self.validate_arg(arg, value)
         if not valid:
             raise InvalidInputError(value_or_reason)
         else:
             value = value_or_reason
-        self.args[arg] = value
 
+        if arg == "PACKAGE" and self.vm is not None:
+            # Delete existing VM before child class (below) creates a new one
+            self.vm.destroy()
+
+        self.args[arg] = value
 
     def get_value(self, arg):
         """Get the current value of the given arg"""
         value = self.args.get(arg, None)
 
         return value
-
 
     def ready_to_run(self):
         """Are we ready to go?
@@ -76,17 +76,19 @@ class COTGenericSubmodule(object):
 
         return True, "Ready to go!"
 
-
     def run(self):
         (ready, reason) = self.ready_to_run()
         if not ready:
             raise InvalidInputError(reason)
         # Do the work now...
 
-
     def finished(self):
         pass
 
+    def destroy(self):
+        if self.vm is not None:
+            self.vm.destroy()
+            self.vm = None
 
     def create_subparser(self, parent):
         """Add subparser under the given parent parser, representing the CLI.
@@ -95,7 +97,7 @@ class COTGenericSubmodule(object):
 
 
 class COTReadOnlySubmodule(COTGenericSubmodule):
-    "Submodule to be used by classes that do not modify the OVF, such as 'info'"
+    "Class for submodules that do not modify the OVF, such as 'info'"
 
     def set_value(self, arg, value):
         super(COTReadOnlySubmodule, self).set_value(arg, value)
@@ -105,14 +107,13 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
 
 
 class COTSubmodule(COTGenericSubmodule):
-    "Submodule to be used by classes that read and write the OVF"
+    "Class for submodules that read and write the OVF"
 
     def __init__(self, UI, arg_names):
         super(COTSubmodule, self).__init__(
             UI, ["PACKAGE", "output"] + arg_names)
         # Default to an unspecified output rather than no output
         self.args["output"] = ""
-
 
     def validate_arg(self, arg, value):
         valid, value = super(COTSubmodule, self).validate_arg(arg, value)
@@ -121,12 +122,11 @@ class COTSubmodule(COTGenericSubmodule):
 
         if arg == "output":
             if (value is not None and value != self.get_value(arg) and
-                os.path.exists(value)):
+                    os.path.exists(value)):
                 self.UI.confirm_or_die("Overwrite existing file {0}?"
                                        .format(value))
 
         return True, value
-
 
     def set_value(self, arg, value):
         super(COTSubmodule, self).set_value(arg, value)
@@ -137,7 +137,6 @@ class COTSubmodule(COTGenericSubmodule):
             if self.vm is not None:
                 self.vm.set_output_file(value)
 
-
     def run(self):
         super(COTSubmodule, self).run()
 
@@ -146,7 +145,6 @@ class COTSubmodule(COTGenericSubmodule):
             if not output:
                 self.set_value("output", self.get_value("PACKAGE"))
         # Do the work now...
-
 
     def finished(self):
         # do any submodule-specific work here, then:

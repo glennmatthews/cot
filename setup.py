@@ -26,7 +26,7 @@ import versioneer
 
 versioneer.VCS = 'git'
 versioneer.versionfile_source = 'COT/_version.py'
-versioneer.versionfile_build = versioneer.versionfile_source # TODO
+versioneer.versionfile_build = versioneer.versionfile_source    # TODO
 versioneer.tag_prefix = 'v'
 versioneer.parentdir_prefix = 'cot-'
 
@@ -35,19 +35,25 @@ import subprocess
 from setuptools.command.bdist_egg import bdist_egg
 from setuptools import Command
 
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
+README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           'README.md')
+HELPER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "check_and_install_helpers.py")
 
 cmd_class = versioneer.get_cmdclass()
 
 # Extend the "build" command a bit further:
 from versioneer import cmd_build
+
+
 class custom_build(cmd_build):
     def run(self):
         try:
-            subprocess.check_call(["./check_and_install_helpers.py", "check"])
+            subprocess.check_call([HELPER_SCRIPT, "check"])
         except subprocess.CalledProcessError:
             exit()
         cmd_build.run(self)
+
 
 # Add a custom 'install_helpers' command:
 class custom_install_helpers(Command):
@@ -66,13 +72,12 @@ class custom_install_helpers(Command):
     def run(self):
         try:
             if self.force:
-                subprocess.check_call(["./check_and_install_helpers.py",
-                                       "install", '-f'])
+                subprocess.check_call([HELPER_SCRIPT, "install", '-f'])
             else:
-                subprocess.check_call(["./check_and_install_helpers.py",
-                                       "install"])
+                subprocess.check_call([HELPER_SCRIPT, "install"])
         except subprocess.CalledProcessError:
             exit('Aborting')
+
 
 # 'bdist_egg' (called automatically by 'install') to include 'install_helpers'
 class custom_bdist_egg(bdist_egg):
@@ -91,7 +96,7 @@ setup(
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
     packages=['COT'],
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'cot = COT.cli:main',
         ],
@@ -101,5 +106,5 @@ setup(
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
     test_suite='COT.tests',
-    install_requires=['argparse', 'coloredlogs>=0.8', 'verboselogs>=1.0'],
+    install_requires=['argparse', 'colorlog>=2.5.0', 'verboselogs>=1.0'],
 )

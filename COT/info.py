@@ -23,6 +23,7 @@ from .vm_context_manager import VMContextManager
 
 logger = logging.getLogger(__name__)
 
+
 class COTInfo(COTReadOnlySubmodule):
     """Display VM information string"""
     def __init__(self, UI):
@@ -32,7 +33,6 @@ class COTInfo(COTReadOnlySubmodule):
                 "PACKAGE_LIST",
                 "verbosity",
             ])
-
 
     def validate_arg(self, arg, value):
         valid, value_or_reason = super(COTInfo, self).validate_arg(arg, value)
@@ -45,9 +45,19 @@ class COTInfo(COTReadOnlySubmodule):
                 if not os.path.exists(package):
                     return False, ("Specified package {0} does not exist!"
                                    .format(package))
+        elif arg == "verbosity":
+            if value not in ['brief', 'verbose', None]:
+                return False, "Verbosity must be 'brief', 'verbose', or None"
 
         return valid, value_or_reason
 
+    def ready_to_run(self):
+        """Are we ready to go?
+        Returns the tuple (ready, reason)
+        """
+        if not self.get_value("PACKAGE_LIST"):
+            return False, "At least one package must be specified"
+        return super(COTInfo, self).ready_to_run()
 
     def run(self):
         super(COTInfo, self).run()
@@ -57,7 +67,6 @@ class COTInfo(COTReadOnlySubmodule):
         for package in PACKAGE_LIST:
             with VMContextManager(package, None) as vm:
                 print(vm.info_string(verbosity))
-
 
     def create_subparser(self, parent):
         p = parent.add_parser(
@@ -84,7 +93,7 @@ Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
         p.add_argument('PACKAGE_LIST',
                        nargs='+',
                        metavar='PACKAGE [PACKAGE ...]',
-                       help="""OVF descriptor(s) and/or OVA file(s) to describe""")
+                       help="OVF descriptor(s) and/or OVA file(s) to describe")
         p.set_defaults(instance=self)
 
         return 'info', p

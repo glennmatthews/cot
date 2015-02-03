@@ -33,11 +33,14 @@ logger = logging.getLogger(__name__)
 QEMU_IMG_VERSION = None
 OVFTOOL_VERSION = None
 
+
 class HelperNotFoundError(OSError):
     """Error thrown when a helper program cannot be located."""
 
+
 class HelperError(EnvironmentError):
     """Error thrown when a helper program exits with non-zero return code."""
+
 
 def check_call(args, require_success=True):
     """Wrapper for subprocess.check_call.
@@ -65,35 +68,31 @@ def check_call(args, require_success=True):
     logger.debug("{0} exited successfully".format(cmd))
 
 
-def check_output(args, require_success=True, suppress_stderr=False):
+def check_output(args, require_success=True):
     """Wrapper for subprocess.check_output.
     1) Raises a HelperNotFoundError if the command doesn't exist, instead of
        an OSError.
     2) Raises a HelperError if the command doesn't return 0 when run,
        instead of subprocess.CalledProcessError. (Setting the optional
        require_success parameter to False will suppress this error.)
-    3) Automatically redirects stderr to stdout (unless asked not to),
-       captures both, and generates a debug message with the stdout contents.
+    3) Automatically redirects stderr to stdout captures both, and
+       generates a debug message with the stdout contents.
     """
     cmd = args[0]
     logger.verbose("Calling '{0}'".format(" ".join(args)))
-    if suppress_stderr:
-        stderr = subprocess.PIPE
-    else:
-        stderr = subprocess.STDOUT
     # In 2.7+ we can use subprocess.check_output(), but in 2.6,
     # we have to work around its absence.
     try:
-        if "check_output" not in dir( subprocess ):
+        if "check_output" not in dir(subprocess):
             process = subprocess.Popen(args,
                                        stdout=subprocess.PIPE,
-                                       stderr=stderr)
+                                       stderr=subprocess.STDOUT)
             stdout, _ = process.communicate()
             retcode = process.poll()
             if retcode and require_success:
                 raise subprocess.CalledProcessError(retcode, " ".join(args))
         else:
-            stdout = (subprocess.check_output(args, stderr=stderr)
+            stdout = (subprocess.check_output(args, stderr=subprocess.STDOUT)
                       .decode())
     except OSError as e:
         raise HelperNotFoundError(e.errno,
@@ -170,7 +169,7 @@ def get_disk_format(file_path):
     """
 
     logger.debug("Invoking qemu-img to determine disk format of {0}"
-                .format(file_path))
+                 .format(file_path))
     qemu_stdout = check_output(['qemu-img', 'info', file_path])
     # Read the format from the output
     match = re.search("file format: (\S*)", qemu_stdout)
@@ -182,13 +181,7 @@ def get_disk_format(file_path):
     logger.info("File format of '{0}' is '{1}'"
                 .format(os.path.basename(file_path), file_format))
 
-    if file_format == 'raw':
-        # No applicable sub-format
-        return (file_format, None)
-    elif file_format == 'qcow2':
-        # No applicable sub-format
-        return (file_format, None)
-    elif file_format == 'vmdk':
+    if file_format == 'vmdk':
         # Look at the VMDK file header to determine the sub-format
         with open(file_path, 'rb') as f:
             # The header contains a fun mix of binary and ASCII, so ignore
@@ -203,9 +196,8 @@ def get_disk_format(file_path):
         logger.info("VMDK sub-format is '{0}'".format(vmdk_format))
         return (file_format, vmdk_format)
     else:
-        raise ValueUnsupportedError("disk file format",
-                                    file_format,
-                                    "'raw' or 'qcow2' or 'vmdk'")
+        # No known/applicable sub-format
+        return (file_format, None)
 
 
 def get_disk_capacity(file_path):
@@ -218,7 +210,8 @@ def get_disk_capacity(file_path):
                            "qemu-img:\n{0}"
                            .format(qemu_stdout))
     capacity = match.group(1)
-    logger.verbose("Disk {0} capacity is {1} bytes".format(file_path, capacity))
+    logger.verbose("Disk {0} capacity is {1} bytes".format(file_path,
+                                                           capacity))
     return capacity
 
 
@@ -248,7 +241,8 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
     (file_string, file_extension) = os.path.splitext(file_name)
 
     new_file_path = None
-    temp_path = None # any temporary file we should delete before returning
+    # any temporary file we should delete before returning
+    temp_path = None
 
     if new_format == 'vmdk' and new_subformat == 'streamOptimized':
         new_file_path = os.path.join(output_dir, file_string + '.vmdk')
@@ -257,9 +251,9 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
             logger.debug("Invoking qemu-img to convert {0} to "
                          "streamOptimized VMDK {1}"
                          .format(file_path, new_file_path))
-            qemu_stdout = check_output(['qemu-img', 'convert', '-O', 'vmdk',
-                                        '-o', 'subformat=streamOptimized',
-                                        file_path, new_file_path])
+            check_output(['qemu-img', 'convert', '-O', 'vmdk',
+                          '-o', 'subformat=streamOptimized',
+                          file_path, new_file_path])
         else:
             # Older versions of qemu-img don't support streamOptimized VMDKs,
             # so we have to use qemu-img + vmdktool to get the desired result.
@@ -271,8 +265,8 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
                 temp_path = os.path.join(output_dir, file_string + '.img')
                 logger.debug("Invoking qemu-img to convert {0} to RAW {1}"
                              .format(file_path, temp_path))
-                qemu_stdout = check_output(['qemu-img', 'convert', '-O', 'raw',
-                                            file_path, temp_path])
+                check_output(['qemu-img', 'convert', '-O', 'raw',
+                              file_path, temp_path])
                 file_path = temp_path
 
             # Use vmdktool to convert raw image to stream-optimized VMDK
@@ -281,15 +275,15 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
                          .format(file_path, new_file_path))
             # Note that vmdktool takes its arguments in unusual order -
             # output file comes before input file
-            vmdktool_so = check_output(['vmdktool', '-z9', '-v',
-                                        new_file_path, file_path])
+            check_output(['vmdktool', '-z9', '-v', new_file_path, file_path])
     else:
         raise ValueUnsupportedError("new file format/subformat",
                                     (new_format, new_subformat),
                                     "(vmdk,streamOptimized)")
 
     logger.info("Successfully converted from ({0},{1}) to ({2},{3})"
-                .format(curr_format, curr_subformat, new_format, new_subformat))
+                .format(curr_format, curr_subformat,
+                        new_format, new_subformat))
 
     if temp_path is not None:
         os.remove(temp_path)
@@ -310,13 +304,17 @@ def create_disk_image(file_path, file_format=None,
     if not file_format:
         # Guess format from file extension
         file_format = os.path.splitext(file_path)[1][1:]
+        if not file_format:
+            raise RuntimeError(
+                "Unable to guess file format from desired filename {0}"
+                .format(file_path))
         if file_format == 'img':
             file_format = 'raw'
         logger.debug("Guessed file format is {0}".format(file_format))
 
     if not contents:
-        qemu_stdout = check_output(['qemu-img', 'create', '-f',
-                                    file_format, file_path, capacity])
+        check_output(['qemu-img', 'create', '-f', file_format,
+                      file_path, capacity])
         return True
 
     if file_format == 'iso':
@@ -344,12 +342,13 @@ def create_disk_image(file_path, file_format=None,
             # Round capacity to the next larger multiple of 8 MB
             # just to be safe...
             capacity = "{0}M".format(((capacity/1024/1024/8) + 1)*8)
-            logger.info("To contain files {0}, disk capacity of {1} will be {2}"
-                         .format(contents, file_path, capacity))
+            logger.info(
+                "To contain files {0}, disk capacity of {1} will be {2}"
+                .format(contents, file_path, capacity))
         # TODO - if fatdisk not available, use qemu-img and guestfish?
         fatdisk_args = ['fatdisk', file_path, 'format',
                         'size', capacity,
-                        'fat32', # TODO make user-configurable?
+                        'fat32',           # TODO make user-configurable?
                         ]
         check_output(fatdisk_args)
         # Upload files to the root of the disk

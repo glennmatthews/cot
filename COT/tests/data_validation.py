@@ -3,7 +3,7 @@
 # data_validation.py - Unit test cases for COT.data_validation module
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014 the COT project developers.
+# Copyright (c) 2014-2015 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,12 +14,29 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
-from COT.data_validation import *
+from COT.data_validation import match_or_die
+from COT.data_validation import mac_address, device_address, no_whitespace
+from COT.data_validation import validate_int, non_negative_int, positive_int
+from COT.data_validation import InvalidInputError
+from COT.data_validation import ValueMismatchError, ValueUnsupportedError
+from COT.data_validation import ValueTooLowError, ValueTooHighError
+
 
 class TestValidationFunctions(unittest.TestCase):
     """Test cases for input validation APIs."""
+
+    def test_match_or_die(self):
+        with self.assertRaises(ValueMismatchError) as cm:
+            match_or_die("input", "a", "output", "b")
+        self.assertEqual(str(cm.exception),
+                         "input a does not match output b")
+
+        match_or_die("input", "a", "output", "a")
 
     def test_mac_address(self):
         for valid_string in ["01:08:ab:cd:e0:f9", "00-00-00-00-00-00",
@@ -34,10 +51,12 @@ class TestValidationFunctions(unittest.TestCase):
 
     def test_device_address(self):
         for valid_string in ["0:0", "1:1", "3:7", "1:10", " 2:3 "]:
-            self.assertEqual(device_address(valid_string), valid_string.strip())
+            self.assertEqual(device_address(valid_string),
+                             valid_string.strip())
 
         for invalid_string in ["0", "-1:0", "1:-1", "1:1:1", "1:a"]:
-            self.assertRaises(InvalidInputError, device_address, invalid_string)
+            self.assertRaises(InvalidInputError,
+                              device_address, invalid_string)
 
     def test_no_whitespace(self):
         for valid_string in ["", "a", " a ",
@@ -68,3 +87,30 @@ class TestValidationFunctions(unittest.TestCase):
     def test_positive_int(self):
         self.assertEqual(positive_int("10"), 10)
         self.assertRaises(ValueTooLowError, positive_int, "0")
+
+    def test_custom_error_attributes(self):
+        with self.assertRaises(ValueUnsupportedError) as cm:
+            validate_int("a")
+        self.assertEqual(cm.exception.value_type, "input")
+        self.assertEqual(cm.exception.actual_value, "a")
+        self.assertEqual(cm.exception.expected_value, "integer")
+        self.assertEqual(str(cm.exception),
+                         "Unsupported value 'a' for input - expected integer")
+
+        with self.assertRaises(ValueTooLowError) as cm:
+            non_negative_int(-1)
+        self.assertEqual(cm.exception.value_type, "input")
+        self.assertEqual(cm.exception.actual_value, -1)
+        self.assertEqual(cm.exception.expected_value, 0)
+        self.assertEqual(
+            str(cm.exception),
+            "Value '-1' for input is too low - must be at least 0")
+
+        with self.assertRaises(ValueTooHighError) as cm:
+            validate_int("100", max=10, label="score")
+        self.assertEqual(cm.exception.value_type, "score")
+        self.assertEqual(cm.exception.actual_value, 100)
+        self.assertEqual(cm.exception.expected_value, 10)
+        self.assertEqual(
+            str(cm.exception),
+            "Value '100' for score is too high - must be at most 10")
