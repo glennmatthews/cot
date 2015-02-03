@@ -120,6 +120,16 @@ class COT_UT(unittest.TestCase):
         FILE_SIZE[filename] = os.path.getsize(os.path.join(
             os.path.dirname(__file__), filename))
 
+    # Standard ERROR logger messages we may expect at various points:
+    NONEXISTENT_FILE = {
+        'levelname': 'ERROR',
+        'msg': "File '.*' referenced in the OVF.*does not exist",
+    }
+    FILE_DISAPPEARED = {
+        'levelname': 'ERROR',
+        'msg': "Referenced file '.*' does not exist in working directory",
+    }
+
     # Standard WARNING logger messages we may expect at various points:
     TYPE_NOT_SPECIFIED_GUESS_HARDDISK = {
         'levelname': 'WARNING',
@@ -140,6 +150,10 @@ class COT_UT(unittest.TestCase):
     ADDRESS_ON_PARENT_NOT_SPECIFIED = {   # TODO!
         'levelname': 'WARNING',
         'msg': "New disk address on parent not specified, guessing.*0",
+    }
+    REMOVING_FILE = {
+        'levelname': 'WARNING',
+        'msg': "Removing reference to missing file",
     }
     OVERWRITING_FILE = {
         'levelname': 'WARNING',

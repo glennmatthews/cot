@@ -42,8 +42,6 @@ class TestVMDescription(unittest.TestCase):
                           ins.write)
         self.assertRaises(NotImplementedError,
                           ins.get_platform)
-        self.assertRaises(NotImplementedError,
-                          ins.validate_file_references)
 
         self.assertRaises(NotImplementedError,
                           ins.search_from_filename, self.TEXT_FILE)

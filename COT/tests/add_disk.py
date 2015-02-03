@@ -200,8 +200,7 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         self.instance.set_value("DISK_IMAGE", self.new_vmdk)
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(levelname='WARNING',
-                          msg="controller type.*ide.*harddisk.*IOSv")
+        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
         self.assertLogged(**self.ADDRESS_ON_PARENT_NOT_SPECIFIED)
         self.instance.finished()
         self.check_diff(file1=self.iosv_ovf,
@@ -650,11 +649,7 @@ vmdk.html#streamOptimized" />
                                              "input.vmdk"))
         self.instance.run()
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
-        self.assertLogged(levelname='WARNING',
-                          msg="this_is_a_really_long_filename_for_a_disk.vmdk.*\
-file does not exist!")
-        self.assertLogged(levelname='WARNING',
-                          msg="does not exist.*will not be copied")
+        self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
         self.assertLogged(**self.OVERWRITING_FILE)
@@ -691,11 +686,7 @@ ovf:size="{input_size}" />
             self.instance.run()
         self.assertTrue(re.search("HostResource", str(cm.exception)))
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
-        self.assertLogged(levelname='WARNING',
-                          msg="this_is_a_really_long_filename_for_a_disk.vmdk.*\
-file does not exist!")
-        self.assertLogged(levelname='WARNING',
-                          msg="does not exist.*will not be copied")
+        self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(levelname='WARNING',
                           msg="Unrecognized HostResource format")
@@ -707,11 +698,7 @@ file does not exist!")
                                              'input.iso'))
         self.assertRaises(LookupError, self.instance.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
-        self.assertLogged(levelname='WARNING',
-                          msg="this_is_a_really_long_filename_for_a_disk.vmdk.*\
-file does not exist!")
-        self.assertLogged(levelname='WARNING',
-                          msg="will not be copied")
+        self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_CDROM)
 
     def test_overwrite_disk_with_bad_parent_by_fileid(self):
@@ -720,11 +707,7 @@ file does not exist!")
         self.instance.set_value("file_id", "input.iso")
         self.assertRaises(LookupError, self.instance.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
-        self.assertLogged(levelname='WARNING',
-                          msg="this_is_a_really_long_filename_for_a_disk.vmdk.*\
-file does not exist!")
-        self.assertLogged(levelname='WARNING',
-                          msg="will not be copied")
+        self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
 
     def test_overwrite_disk_with_bad_fileref(self):
@@ -733,9 +716,5 @@ file does not exist!")
         self.instance.set_value("file_id", "flash2")
         self.assertRaises(LookupError, self.instance.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
-        self.assertLogged(levelname='WARNING',
-                          msg="this_is_a_really_long_filename_for_a_disk.vmdk.*\
-file does not exist!")
-        self.assertLogged(levelname='WARNING',
-                          msg="will not be copied")
+        self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)

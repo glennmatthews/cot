@@ -652,5 +652,4 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
     Description:    "prettylongitappears"
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
-        self.assertLogged(levelname='WARNING',
-                          msg="file does not exist!")
+        self.assertLogged(**self.NONEXISTENT_FILE)

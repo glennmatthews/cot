@@ -74,13 +74,6 @@ class VMDescription(object):
         """Returns the Platform class object associated with this VM"""
         raise NotImplementedError("get_platform not implemented")
 
-    def validate_file_references(self):
-        """Check whether all files referenced by this VM description exist and
-        are correctly described.
-        Returns True (all files valid) or False (one or more missing/invalid).
-        """
-        raise NotImplementedError("validate_file_references not implemented")
-
     # API methods needed for add-disk
     def convert_disk_if_needed(self, filename, kind):
         """Converts the disk to a new format (and returns the path to the new
