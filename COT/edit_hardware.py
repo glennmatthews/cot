@@ -249,7 +249,7 @@ class COTEditHardware(COTSubmodule):
   cot <opts> edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
   cot <opts> edit-hardware PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]]
                            [-c CPUS] [-m MEMORY]
-                           [-n NICS] [--nic-type {{e1000,virtio,vmxnet3}}]
+                           [-n NICS] [--nic-type {e1000,virtio,vmxnet3}]
                            [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
                            [--nic-names NAME1 [NAME2 ...]]
                            [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
@@ -264,10 +264,10 @@ Examples:
         --profile 1CPU-4GB --cpus 1 --memory 4GB
     Create a new profile named "1CPU-4GB" with 1 CPU and 4 GB of RAM
 
-  cot edit-hardware input.ova -o output.ova --nic-names 'mgmt' 'eth{{0}}'
+  cot edit-hardware input.ova -o output.ova --nic-names 'mgmt' 'eth{0}'
     Rename the NICs in the output OVA as 'mgmt', 'eth0', 'eth1', 'eth2'...
 
-  cot edit-hardware input.ova -o output.ova --nic-names 'Ethernet0/{{10}}'
+  cot edit-hardware input.ova -o output.ova --nic-names 'Ethernet0/{10}'
     Rename the NICs in the output OVA as 'Ethernet0/10', 'Ethernet0/11',
     'Ethernet0/12', etc.""")
 

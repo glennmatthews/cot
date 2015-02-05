@@ -107,8 +107,8 @@ class COTAddDisk(COTSubmodule):
             usage="""
   cot add-disk --help
   cot <opts> add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
-                      [-f FILE_ID] [-t {{harddisk,cdrom}}]
-                      [-c {{ide,scsi}}] [-s SUBTYPE] [-a ADDRESS]
+                      [-f FILE_ID] [-t {harddisk,cdrom}]
+                      [-c {ide,scsi}] [-s SUBTYPE] [-a ADDRESS]
                       [-d DESCRIPTION] [-n DISKNAME]""",
             help="""Add a disk image to an OVF package and map it as a disk
 in the guest environment""",
