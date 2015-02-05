@@ -42,6 +42,12 @@ class UI(object):
         return "\n".join(["{0} {1}".format(subcommand, usage)
                           for usage in usage_list])
 
+    def fill_examples(self, example_list):
+        """Pretty-print a set of usage examples.
+        example_list == [(example1, desc1), (example2, desc2), ...]
+        """
+        raise NotImplementedError("No implementation for fill_examples()")
+
     def confirm(self, prompt):
         """Prompts user to confirm the requested operation, or auto-accepts
         if 'force' is set to True."""

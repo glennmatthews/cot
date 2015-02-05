@@ -66,16 +66,6 @@ class CLI(UI):
         self.textwrap.break_on_hyphens = break_on_hyphens
         return self.textwrap.fill(text)
 
-    def wrap(self, text,
-             initial_indent='',
-             subsequent_indent='',
-             break_on_hyphens=True):
-        self.textwrap.width = self._terminal_width()
-        self.textwrap.initial_indent = initial_indent
-        self.textwrap.subsequent_indent = subsequent_indent
-        self.textwrap.break_on_hyphens = break_on_hyphens
-        return self.textwrap.wrap(text)
-
     def _terminal_width(self):
         """Returns the width of the terminal in columns."""
         return get_terminal_size().columns
@@ -133,6 +123,38 @@ class CLI(UI):
                     wrapped_line = indent_line
                 wrapped_line += " " + group
             output_lines.append(wrapped_line)
+        return "\n".join(output_lines)
+
+    def fill_examples(self, example_list):
+        """Pretty-print a set of usage examples.
+        example_list == [(example1, desc1), (example2, desc2), ...]
+        """
+        output_lines = ["Examples:"]
+        # Just as in fill_usage, the default textwrap behavior
+        # results in less-than-ideal formatting for CLI examples.
+        # So we'll do it ourselves:
+        splitter = re.compile(r"""
+          -\S+[ =]\S+   |  # Dashed arg followed by simple value
+          -\S+[ =]".*?" |  # Dashed arg followed by quoted value
+          \S+              # Positional arg
+        """, re.VERBOSE)
+        width = self._terminal_width()
+        for (example, desc) in example_list:
+            if len(output_lines) > 1:
+                output_lines.append("")
+            wrapped_line = " "
+            for param in re.findall(splitter, example):
+                if len(wrapped_line) + len(param) >= (width - 2):
+                    wrapped_line += " \\"
+                    output_lines.append(wrapped_line)
+                    wrapped_line = "       "
+                wrapped_line += " " + param
+            output_lines.append(wrapped_line)
+            desc = self.fill(desc,
+                             initial_indent='    ',
+                             subsequent_indent='    ',
+                             break_on_hyphens=False)
+            output_lines.append(desc)
         return "\n".join(output_lines)
 
     def formatter(self, verbosity=logging.INFO):
