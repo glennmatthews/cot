@@ -15,8 +15,6 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import logging
-import os.path
-import sys
 
 from .submodule import COTSubmodule
 
@@ -69,11 +67,10 @@ class COTEditProduct(COTSubmodule):
         p = parent.add_parser(
             'edit-product',
             help="""Edit product info in an OVF""",
-            usage=("""
-  {0} edit-product --help
-  {0} <opts> edit-product PACKAGE [-o OUTPUT]
-                          [-v SHORT_VERSION] [-V FULL_VERSION]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage="""
+  cot edit-product --help
+  cot <opts> edit-product PACKAGE [-o OUTPUT]
+                          [-v SHORT_VERSION] [-V FULL_VERSION]""",
             description="""
 Edit product information attributes of the given OVF or OVA""")
 

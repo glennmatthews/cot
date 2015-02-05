@@ -16,7 +16,6 @@
 
 import logging
 import os.path
-import sys
 import textwrap
 
 from .submodule import COTSubmodule
@@ -166,13 +165,12 @@ class COTEditProperties(COTSubmodule):
         p = parent.add_parser(
             'edit-properties', add_help=False,
             help="""Edit environment properties of an OVF""",
-            usage=("""
-  {0} edit-properties --help
-  {0} <opts> edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
+            usage="""
+  cot edit-properties --help
+  cot <opts> edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
                              [-o OUTPUT]
-  {0} <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
-  {0} <opts> edit-properties PACKAGE [-o OUTPUT]"""
-                   .format(os.path.basename(sys.argv[0]))),
+  cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
+  cot <opts> edit-properties PACKAGE [-o OUTPUT]""",
             description="""
 Configure environment properties of the given OVF or OVA. The user may specify
 key-value pairs as command-line arguments or may provide a config-file to

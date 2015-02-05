@@ -16,7 +16,6 @@
 
 import os.path
 import logging
-import sys
 
 from .data_validation import check_for_conflict
 from .submodule import COTSubmodule
@@ -92,10 +91,9 @@ class COTAddFile(COTSubmodule):
     def create_subparser(self, parent):
         p = parent.add_parser(
             'add-file',
-            usage=("""
-  {0} add-file --help
-  {0} <opts> add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage="""
+  cot add-file --help
+  cot <opts> add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]""",
             help="Add a file to an OVF package",
             description="""
 Add or replace a file in the given OVF. If the specified file

@@ -135,11 +135,12 @@ class CLI(UI):
     def create_parser(self):
         # Top-level command definition and any global options
         parser = argparse.ArgumentParser(
-            # If we set "usage" here, it apparently overrides the value of
-            # "prog" as well, which results in subparser help being ugly in
-            # a number of ways. Hence we leave usage to the default here then
-            # manually set it in parse_args() once all of the subparsers
-            # have been initialized with the correct prog.
+            prog="cot",
+            usage="""
+  cot --help
+  cot --version
+  cot <command> --help
+  cot <options> <command> <command-options>""",
             description=(__version_long__ + """
 A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
 with a focus on virtualized network appliances such as the Cisco CSR 1000V and
@@ -179,7 +180,8 @@ Note: some subcommands rely on external software tools, including:
         self.parser = parser
 
         # Subcommand definitions
-        self.subparsers = parser.add_subparsers(dest='_subcommand',
+        self.subparsers = parser.add_subparsers(prog="cot",
+                                                dest='_subcommand',
                                                 metavar="<command>",
                                                 title="commands")
 
@@ -208,13 +210,6 @@ Note: some subcommands rely on external software tools, including:
             self.subparser_lookup[name] = subparser
 
     def parse_args(self, argv):
-        # By now all subparsers have been created so we can safely set usage.
-        # See comment above.
-        self.parser.usage = ("""
-  cot --help
-  cot --version
-  cot <command> --help
-  cot <options> <command> <command-options>""")
         # Parse the user input
         args = self.parser.parse_args(argv)
 
@@ -229,6 +224,7 @@ Note: some subcommands rely on external software tools, including:
         self.force = args._force
         self.set_verbosity(args._verbosity)
 
+        # In python3.3+ we can get here even without a subcommand:
         if not args._subcommand:
             self.parser.error("too few arguments")
 
@@ -284,3 +280,6 @@ Note: some subcommands rely on external software tools, including:
 
 def main():
     CLI().run(sys.argv[1:])
+
+if __name__ == "__main__":
+    main()

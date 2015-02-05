@@ -17,7 +17,6 @@
 import logging
 import os.path
 import shutil
-import sys
 
 from .add_disk import add_disk_worker
 from .data_validation import ValueUnsupportedError
@@ -172,13 +171,12 @@ class COTInjectConfig(COTSubmodule):
         p = parent.add_parser(
             'inject-config',
             help="Inject a configuration file into an OVF package",
-            usage=("""
-  {0} inject-config --help
-  {0} <opts> inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
-  {0} <opts> inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
-  {0} <opts> inject-config PACKAGE -c CONFIG_FILE
-                           -s SECONDARY_CONFIG_FILE [-o OUTPUT]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage="""
+  cot inject-config --help
+  cot <opts> inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
+  cot <opts> inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
+  cot <opts> inject-config PACKAGE -c CONFIG_FILE
+                           -s SECONDARY_CONFIG_FILE [-o OUTPUT]""",
             description="""Add one or more "bootstrap" configuration """
             """file(s) to the given OVF or OVA.""")
 

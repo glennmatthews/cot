@@ -16,7 +16,6 @@
 
 import logging
 import os.path
-import sys
 
 from .submodule import COTReadOnlySubmodule
 from .vm_context_manager import VMContextManager
@@ -72,10 +71,9 @@ class COTInfo(COTReadOnlySubmodule):
         p = parent.add_parser(
             'info',
             help="""Generate a description of an OVF package""",
-            usage=("""
-  {0} info --help
-  {0} info [-b | -v] PACKAGE [PACKAGE ...]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage="""
+  cot info --help
+  cot info [-b | -v] PACKAGE [PACKAGE ...]""",
             description="""
 Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
 

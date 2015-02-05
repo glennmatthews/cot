@@ -14,7 +14,6 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import sys
 import logging
 import os.path
 
@@ -105,13 +104,12 @@ class COTAddDisk(COTSubmodule):
     def create_subparser(self, parent):
         p = parent.add_parser(
             'add-disk', add_help=False,
-            usage=("""
-  {0} add-disk --help
-  {0} <opts> add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
+            usage="""
+  cot add-disk --help
+  cot <opts> add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
                       [-f FILE_ID] [-t {{harddisk,cdrom}}]
                       [-c {{ide,scsi}}] [-s SUBTYPE] [-a ADDRESS]
-                      [-d DESCRIPTION] [-n DISKNAME]"""
-                   .format(os.path.basename(sys.argv[0]))),
+                      [-d DESCRIPTION] [-n DISKNAME]""",
             help="""Add a disk image to an OVF package and map it as a disk
 in the guest environment""",
             description="""
