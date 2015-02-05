@@ -116,9 +116,9 @@ class COTDeploy(COTReadOnlySubmodule):
         # Create 'cot deploy' parser
         self.parser = parent.add_parser(
             'deploy',
-            usage="""
-  cot deploy --help
-  cot <opts> deploy PACKAGE esxi ...""",
+            usage=self.UI.fill_usage("deploy", [
+                "PACKAGE esxi ...",
+            ]),
             help="Create a new VM on the target hypervisor from the given OVF",
             description="""Deploy a virtual machine to a specified server.""")
 
@@ -309,13 +309,11 @@ class COTDeployESXi(COTDeploy):
         # Create 'cot deploy ... esxi' parser
         p = self.subparsers.add_parser(
             'esxi', parents=[self.generic_parser],
-            usage="""
-  cot deploy PACKAGE esxi --help
-  cot <opts> deploy PACKAGE esxi LOCATOR
-                                 [-u USERNAME] [-p PASSWORD]
-                                 [-c CONFIGURATION] [-n VM_NAME] [-P]
-                                 [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
-                                 [-d DATASTORE] [-o=OVFTOOL_ARGS]""",
+            usage=self.UI.fill_usage("deploy PACKAGE esxi", [
+                "LOCATOR [-u USERNAME] [-p PASSWORD] [-c CONFIGURATION] "
+                "[-n VM_NAME] [-P] [-N OVF1=HOST1 [-N OVF2=HOST2 ...]] "
+                "[-d DATASTORE] [-o=OVFTOOL_ARGS]",
+            ]),
             formatter_class=argparse.RawDescriptionHelpFormatter,
             help="Deploy to ESXi, vSphere, or vCenter",
             description="Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor",

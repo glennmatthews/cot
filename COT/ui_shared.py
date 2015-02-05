@@ -33,6 +33,15 @@ class UI(object):
         # Stub for API testing
         self.default_confirm_response = True
 
+    def fill(self, text, **kwargs):
+        """Wrap the given text if appropriate to this UI."""
+        return text
+
+    def fill_usage(self, subcommand, usage_list):
+        """Pretty-print a list of usage strings."""
+        return "\n".join(["{0} {1}".format(subcommand, usage)
+                          for usage in usage_list])
+
     def confirm(self, prompt):
         """Prompts user to confirm the requested operation, or auto-accepts
         if 'force' is set to True."""

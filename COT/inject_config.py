@@ -171,12 +171,11 @@ class COTInjectConfig(COTSubmodule):
         p = parent.add_parser(
             'inject-config',
             help="Inject a configuration file into an OVF package",
-            usage="""
-  cot inject-config --help
-  cot <opts> inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
-  cot <opts> inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
-  cot <opts> inject-config PACKAGE -c CONFIG_FILE
-                           -s SECONDARY_CONFIG_FILE [-o OUTPUT]""",
+            usage=self.UI.fill_usage("inject-config", [
+                "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
+                "PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]",
+                "PACKAGE -c CONFIG_FILE -s SECONDARY_CONFIG_FILE [-o OUTPUT]",
+            ]),
             description="""Add one or more "bootstrap" configuration """
             """file(s) to the given OVF or OVA.""")
 

@@ -104,12 +104,11 @@ class COTAddDisk(COTSubmodule):
     def create_subparser(self, parent):
         p = parent.add_parser(
             'add-disk', add_help=False,
-            usage="""
-  cot add-disk --help
-  cot <opts> add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
-                      [-f FILE_ID] [-t {harddisk,cdrom}]
-                      [-c {ide,scsi}] [-s SUBTYPE] [-a ADDRESS]
-                      [-d DESCRIPTION] [-n DISKNAME]""",
+            usage=self.UI.fill_usage("add-disk", [
+                "DISK_IMAGE PACKAGE [-o OUTPUT] [-f FILE_ID] \
+[-t {harddisk,cdrom}] [-c {ide,scsi}] [-s SUBTYPE] [-a ADDRESS] \
+[-d DESCRIPTION] [-n DISKNAME]"
+            ]),
             help="""Add a disk image to an OVF package and map it as a disk
 in the guest environment""",
             description="""

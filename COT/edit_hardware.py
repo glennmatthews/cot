@@ -244,17 +244,14 @@ class COTEditHardware(COTSubmodule):
         p = parent.add_parser(
             'edit-hardware', add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            usage="""
-  cot edit-hardware --help
-  cot <opts> edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
-  cot <opts> edit-hardware PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]]
-                           [-c CPUS] [-m MEMORY]
-                           [-n NICS] [--nic-type {e1000,virtio,vmxnet3}]
-                           [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
-                           [--nic-names NAME1 [NAME2 ...]]
-                           [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
-                           [--scsi-subtype SCSI_SUBTYPE]
-                           [--ide-subtype IDE_SUBTYPE]""",
+            usage=self.UI.fill_usage("edit-hardware", [
+                "PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]",
+                "PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]] [-c CPUS] \
+[-m MEMORY] [-n NICS] [--nic-type {e1000,virtio,vmxnet3}] \
+[-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]] \
+[--nic-names NAME1 [NAME2 ...]] [-s SERIAL_PORTS] [-S URI1 [URI2 ...]] \
+[--scsi-subtype SCSI_SUBTYPE] [--ide-subtype IDE_SUBTYPE]",
+            ]),
             help="Edit virtual machine hardware properties of an OVF",
             description="Edit hardware properties of the specified OVF or OVA",
             epilog="""
