@@ -43,19 +43,8 @@ class TestCOTInfo(COT_UT):
         finally:
             sys.stdout = sys.__stdout__
 
-        output_lines = output.splitlines()
-        expected_lines = expected.splitlines()
-        while (output_lines or expected_lines):
-            # Compare line-by-line, but skip any whitespace-only lines
-            output_line = ""
-            while (output_lines and not output_line):
-                output_line = output_lines.pop(0).strip()
-            expected_line = ""
-            while (expected_lines and not expected_line):
-                expected_line = expected_lines.pop(0).strip()
-            if not output_line and not expected_line:
-                break     # Done with both!
-            self.assertEqual(output_line, expected_line)
+        self.maxDiff = None
+        self.assertMultiLineEqual(expected.strip(), output.strip())
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
@@ -90,6 +79,7 @@ class TestCOTInfo(COT_UT):
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
   None (default)                     0      0 MB      0       0   0 /       0 B
@@ -112,6 +102,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
   None (default)                     0      0 MB      0       0   0 /       0 B
@@ -119,6 +110,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                                   ---- --------- ------ ------- ---------------
   None (default)                     0      0 MB      0       0   0 /       0 B
@@ -131,6 +123,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Product:  generic platform
           http://www.cisco.com/en/US/products/ps12559/index.html
 Vendor:   Cisco Systems, Inc.
@@ -169,26 +162,16 @@ NICs and Associated Networks:
   GigabitEthernet3               : VM Network
 
 Properties:
-  login-username                 :
-      "Login Username"
-  login-password                 :
-      "Login Password"
-  mgmt-ipv4-addr                 :
-      "Management IPv4 Address/Mask"
-  mgmt-ipv4-gateway              :
-      "Management IPv4 Default Gateway"
-  hostname                       :
-      "Router Name"
-  enable-ssh-server              : false
-      "Enable SSH Login"
-  enable-http-server             : false
-      "Enable HTTP Server"
-  enable-https-server            : false
-      "Enable HTTPS Server"
-  privilege-password             :
-      "Enable Password"
-  domain-name                    :
-      "Domain Name"
+  login-username       Login Username                   ""
+  login-password       Login Password                   ""
+  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
+  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
+  hostname             Router Name                      ""
+  enable-ssh-server    Enable SSH Login                 "false"
+  enable-http-server   Enable HTTP Server               "false"
+  enable-https-server  Enable HTTPS Server              "false"
+  privilege-password   Enable Password                  ""
+  domain-name          Domain Name                      ""
 """.format(self.input_ovf))
 
         self.instance.set_value('verbosity', 'brief')
@@ -196,6 +179,7 @@ Properties:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Product:  generic platform
 Vendor:   Cisco Systems, Inc.
 Version:  DEV
@@ -220,16 +204,16 @@ Networks:
   VM Network
 
 Properties:
-  login-username                 :
-  login-password                 :
-  mgmt-ipv4-addr                 :
-  mgmt-ipv4-gateway              :
-  hostname                       :
-  enable-ssh-server              : false
-  enable-http-server             : false
-  enable-https-server            : false
-  privilege-password             :
-  domain-name                    :
+  login-username       Login Username                   ""
+  login-password       Login Password                   ""
+  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
+  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
+  hostname             Router Name                      ""
+  enable-ssh-server    Enable SSH Login                 "false"
+  enable-http-server   Enable HTTP Server               "false"
+  enable-https-server  Enable HTTPS Server              "false"
+  privilege-password   Enable Password                  ""
+  domain-name          Domain Name                      ""
 """.format(self.input_ovf))
 
         self.instance.set_value('verbosity', 'verbose')
@@ -237,6 +221,7 @@ Properties:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Product:  generic platform
           http://www.cisco.com/en/US/products/ps12559/index.html
 Vendor:   Cisco Systems, Inc.
@@ -278,42 +263,32 @@ NICs and Associated Networks:
     VMXNET3 ethernet adapter on "VM Network"
 
 Properties:
-  login-username                 :
-      "Login Username"
+  login-username       Login Username                   ""
       Username for remote login
-  login-password                 :
-      "Login Password"
+  login-password       Login Password                   ""
       Password for remote login.
       WARNING: While this password will be stored securely within IOS, the
       plain-text password will be recoverable from the OVF descriptor file.
-  mgmt-ipv4-addr                 :
-      "Management IPv4 Address/Mask"
+  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
       IPv4 address and mask for management interface (such as "10.1.1.100/24"
       or "10.1.1.100 255.255.255.0"), or "dhcp" to configure via DHCP
-  mgmt-ipv4-gateway              :
-      "Management IPv4 Default Gateway"
+  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
       IPv4 default gateway address (such as "10.1.1.1") for management
       interface, or "dhcp" to configure via DHCP
-  hostname                       :
-      "Router Name"
+  hostname             Router Name                      ""
       Hostname of this router
-  enable-ssh-server              : false
-      "Enable SSH Login"
+  enable-ssh-server    Enable SSH Login                 "false"
       Enable remote login via SSH and disable remote login via telnet. Requires
       login-username and login-password to be set!
-  enable-http-server             : false
-      "Enable HTTP Server"
+  enable-http-server   Enable HTTP Server               "false"
       Enable HTTP server capability for REST API
-  enable-https-server            : false
-      "Enable HTTPS Server"
+  enable-https-server  Enable HTTPS Server              "false"
       Enable HTTPS server capability for REST API
-  privilege-password             :
-      "Enable Password"
+  privilege-password   Enable Password                  ""
       Password for privileged (enable) access.
       WARNING: While this password will be stored securely within IOS, the
       plain-text password will be recoverable from the OVF descriptor file.
-  domain-name                    :
-      "Domain Name"
+  domain-name          Domain Name                      ""
       Network domain name (such as "cisco.com")
 """.format(self.input_ovf))
 
@@ -327,6 +302,7 @@ Properties:
 {0}
 COT detected platform type: Cisco IOSv
 -------------------------------------------------------------------------------
+
 Product:  Cisco IOSv Virtual Router
 Vendor:   Cisco Systems, Inc.
 Version:  15.4(2.4)T
@@ -373,13 +349,14 @@ Networks:
 {0}
 COT detected platform type: Cisco IOSv
 -------------------------------------------------------------------------------
+
 Product:  Cisco IOSv Virtual Router
           http://www.cisco.com/en/US/products/index.html
 Vendor:   Cisco Systems, Inc.
           http://www.cisco.com
 Version:  15.4(2.4)T
-          Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version \
-15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
+          Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version
+          15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
 
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
@@ -469,6 +446,7 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Annotation: Hello world! This is a version 0.9 OVF.
 
 End User License Agreement(s):
@@ -500,6 +478,7 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Annotation: Hello world! This is a version 0.9 OVF.
 
 End User License Agreement(s):
@@ -535,6 +514,7 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
   input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
@@ -563,6 +543,7 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
+
 Files and Disks:                      File Size   Capacity Device
                                      ---------- ---------- --------------------
   input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0

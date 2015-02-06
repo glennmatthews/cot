@@ -35,7 +35,6 @@ from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
 from .helper_tools import get_checksum, get_disk_capacity, convert_disk_image
 import COT.platforms as Platform
-from .cli import TEXT_WIDTH
 
 logger = logging.getLogger(__name__)
 
@@ -384,10 +383,10 @@ class OVF(VMDescription, XML):
             raise NotImplementedError("Not sure how to write a '{0}' file"
                                       .format(extension))
 
-    def info_string(self, verbosity_option=None):
-        """Returns a string summarizing the contents of this OVF.
-        """
+    def info_string(self, UI, verbosity_option=None):
+        """Returns a string summarizing the contents of this OVF."""
         str_list = []
+        TEXT_WIDTH = UI.terminal_width() - 1
         # File description
         str_list.append('-' * TEXT_WIDTH)
         str_list.append(self.input_file)
@@ -397,39 +396,40 @@ class OVF(VMDescription, XML):
         str_list.append('-' * TEXT_WIDTH)
 
         # Product information
-        if verbosity_option == 'brief':
-            template = "{0:9} {1}"
-        else:
-            template = "{0:9} {1}\n          {2}"
         p = self.product_section
         if p is not None:
             str_list.append("")
             # All elements in this section are optional
-            product = p.find(self.PRODUCT)
-            product_url = p.find(self.PRODUCT_URL)
+            product = p.findtext(self.PRODUCT, "(No product string)")
+            str_list.append(UI.fill(product,
+                                    initial_indent="Product:  ",
+                                    subsequent_indent="          "))
+            if verbosity_option != 'brief':
+                product_url = p.findtext(self.PRODUCT_URL, "(No product URL)")
+                str_list.append(UI.fill(product_url,
+                                        initial_indent="          ",
+                                        subsequent_indent="          "))
             # TODO: wrap all of these to screen width...
-            str_list.append(template.format(
-                "Product:",
-                (product.text if product is not None
-                 else "(No product string)"),
-                (product_url.text if product_url is not None
-                 else "(No product URL)")))
-            vendor = p.find(self.VENDOR)
-            vendor_url = p.find(self.VENDOR_URL)
-            str_list.append(template.format(
-                "Vendor:",
-                (vendor.text if vendor is not None
-                 else "(No vendor string)"),
-                (vendor_url.text if vendor_url is not None
-                 else "(No vendor URL)")))
-            version = p.find(self.VERSION)
-            full_version = p.find(self.FULL_VERSION)
-            str_list.append(template.format(
-                "Version:",
-                (version.text if version is not None
-                 else "(No version string)"),
-                (full_version.text if full_version is not None
-                 else "(No detailed version string)")))
+            vendor = p.findtext(self.VENDOR, "(No vendor string)")
+            str_list.append(UI.fill(vendor,
+                                    initial_indent="Vendor:   ",
+                                    subsequent_indent="          "))
+            if verbosity_option != 'brief':
+                vendor_url = p.findtext(self.VENDOR_URL, "(No vendor URL)")
+                str_list.append(UI.fill(vendor_url,
+                                        initial_indent="          ",
+                                        subsequent_indent="          "))
+            version = p.findtext(self.VERSION, "(No version string)")
+            str_list.append(UI.fill(version,
+                                    initial_indent="Version:  ",
+                                    subsequent_indent="          "))
+            if verbosity_option != 'brief':
+                full_version = p.findtext(self.FULL_VERSION,
+                                          "(No detailed version string)")
+                str_list.append(UI.fill(full_version,
+                                        initial_indent="          ",
+                                        subsequent_indent="          ",
+                                        break_on_hyphens=False))
 
         # Annotation information
         a = self.annotation_section
@@ -438,14 +438,15 @@ class OVF(VMDescription, XML):
             if ann is not None and ann.text:
                 str_list.append("")
                 first = True
-                wrapper = textwrap.TextWrapper(
-                    width=TEXT_WIDTH,
-                    initial_indent='Annotation: ',
-                    subsequent_indent='            ')
+                initial_indent = 'Annotation: '
+                subsequent_indent = '            '
                 for line in ann.text.splitlines():
-                    str_list.append(wrapper.fill(line))
+                    str_list.append(
+                        UI.fill(line,
+                                initial_indent=initial_indent,
+                                subsequent_indent=subsequent_indent))
                     if first:
-                        wrapper.initial_indent = wrapper.subsequent_indent
+                        initial_indent = subsequent_indent
                         first = False
 
         # End user license agreement information
@@ -567,7 +568,7 @@ class OVF(VMDescription, XML):
                     "Ethernet device types:", " ".join(sorted(eth_subtypes))))
 
         # Profile information
-        profile_str = self.profile_info_string(verbosity_option)
+        profile_str = self.profile_info_string(UI, verbosity_option)
         if profile_str:
             str_list.append("")
             str_list.append(profile_str)
@@ -618,18 +619,38 @@ class OVF(VMDescription, XML):
         if properties:
             str_list.append("")
             str_list.append("Properties:")
-            if verbosity_option == 'verbose':
-                wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
-                                               initial_indent='      ',
-                                               subsequent_indent='      ')
+            # Brief: key : value
+            # Normal: label (key) : value
+            # Verbose: key, value, label, description
+            max_key = max([len(str(ph['key'])) for ph in properties])
+            max_label = max([len(str(ph['label'])) for ph in properties])
+            max_value = max([len(str(ph['value'])) for ph in properties])
+            max_width = max(max_key, max_label)
             for ph in properties:
-                str_list.append('  {0:30} : {1}'
-                                .format(ph['key'], ph['value']))
-                if verbosity_option != 'brief':
-                    str_list.append('      "{0}"'.format(ph['label']))
+                # If the terminal is wide enough, display "key label value",
+                # else only display "label value"
+                if max_key + max_label + max_value < TEXT_WIDTH - 8:
+                    str_list.append('  {key:{kw}}  {label:{lw}}  {val}'.format(
+                        key=ph['key'],
+                        kw=max_key,
+                        label=ph['label'],
+                        lw=max_label,
+                        val=('"{0}"'.format(ph['value'])
+                             if ph['value'] is not None
+                             else '--')))
+                else:
+                    str_list.append('  {label:{width}}  {val}'.format(
+                        label=(ph['label'] if ph['label']
+                               else "<{0}>".format(ph['key'])),
+                        width=max_width,
+                        val=('"{0}"'.format(ph['value'])
+                             if ph['value'] is not None
+                             else '--')))
                 if verbosity_option == 'verbose':
                     for line in ph['description'].splitlines():
-                        str_list.append(wrapper.fill(line))
+                        str_list.append(UI.fill(line,
+                                                initial_indent='      ',
+                                                subsequent_indent='      '))
 
         return "\n".join(str_list)
 
@@ -650,7 +671,8 @@ class OVF(VMDescription, XML):
             ctrl_addr,
             device_item.get_value(self.ADDRESS_ON_PARENT))
 
-    def profile_info_string(self, verbosity_option=None, enumerate=False):
+    def profile_info_string(self, UI, verbosity_option=None, enumerate=False):
+        TEXT_WIDTH = UI.terminal_width() - 1
         str_list = []
         # Profile information
         PROF_W = 33

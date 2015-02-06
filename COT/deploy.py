@@ -233,7 +233,7 @@ class COTDeployESXi(COTDeploy):
             while configuration is None:
                 if not profile_info_string:
                     profile_info_string = vm.profile_info_string(
-                        enumerate=True)
+                        self.UI, enumerate=True)
                 user_input = self.UI.get_input(
                     profile_info_string + "\nChoose a Configuration:", "0")
                 if user_input in profile_list:

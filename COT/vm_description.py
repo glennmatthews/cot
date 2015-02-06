@@ -295,12 +295,12 @@ class VMDescription(object):
         'verbose': 2
         }
 
-    def info_string(self, verbosity_option=None):
+    def info_string(self, UI, verbosity_option=None):
         """Returns a descriptive string summarizing the contents of this VM
         """
         raise NotImplementedError("info_string not implemented")
 
-    def profile_info_string(self):
+    def profile_info_string(self, UI, verbosity_option=None, enumerate=False):
         """Returns a descriptive string summarizing the different configuration
            profiles of this VM."""
         raise NotImplementedError("profile_info_string not implemented")

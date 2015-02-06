@@ -34,9 +34,6 @@ from COT.ui_shared import UI
 
 logger = logging.getLogger(__name__)
 
-# Where do we want to wrap lines when pretty-printing?
-TEXT_WIDTH = 79
-
 
 class CLI(UI):
     """Command-line user interface for COT"""
@@ -56,17 +53,7 @@ class CLI(UI):
         self.create_parser()
         self.create_subparsers()
 
-    def fill(self, text,
-             initial_indent='',
-             subsequent_indent='',
-             break_on_hyphens=True):
-        self.textwrap.width = self._terminal_width()
-        self.textwrap.initial_indent = initial_indent
-        self.textwrap.subsequent_indent = subsequent_indent
-        self.textwrap.break_on_hyphens = break_on_hyphens
-        return self.textwrap.fill(text)
-
-    def _terminal_width(self):
+    def terminal_width(self):
         """Returns the width of the terminal in columns."""
         return get_terminal_size().columns
 
@@ -92,7 +79,7 @@ class CLI(UI):
           -\S+\s+\S+ |  # Dashed arg followed by metavar
           \S+           # Positional arg
         """, re.VERBOSE)
-        width = self._terminal_width()
+        width = self.terminal_width()
         for line in usage_list:
             usage_groups = re.findall(splitter, line)
 
@@ -138,7 +125,7 @@ class CLI(UI):
           -\S+[ =]".*?" |  # Dashed arg followed by quoted value
           \S+              # Positional arg
         """, re.VERBOSE)
-        width = self._terminal_width()
+        width = self.terminal_width()
         for (example, desc) in example_list:
             if len(output_lines) > 1:
                 output_lines.append("")
@@ -246,7 +233,7 @@ class CLI(UI):
 
         # Argparse checks the environment variable COLUMNS to control
         # its line-wrapping
-        os.environ['COLUMNS'] = str(self._terminal_width())
+        os.environ['COLUMNS'] = str(self.terminal_width())
         parser = argparse.ArgumentParser(
             prog="cot",
             usage="""
