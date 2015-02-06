@@ -409,7 +409,6 @@ class OVF(VMDescription, XML):
                 str_list.append(UI.fill(product_url,
                                         initial_indent="          ",
                                         subsequent_indent="          "))
-            # TODO: wrap all of these to screen width...
             vendor = p.findtext(self.VENDOR, "(No vendor string)")
             str_list.append(UI.fill(vendor,
                                     initial_indent="Vendor:   ",
@@ -474,15 +473,20 @@ class OVF(VMDescription, XML):
                                                 subsequent_indent='    '))
 
         # File information
-        HREF_W = 36
         SIZE_W = 10
         CAP_W = 10
         DEV_W = 20
-        template = ("{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:.{3}}}"
-                    .format(HREF_W, SIZE_W, CAP_W, DEV_W))
         file_list = self.references.findall(self.FILE)
         disk_list = (self.disk_section.findall(self.DISK)
                      if self.disk_section is not None else [])
+        HREF_W = 0
+        if file_list:
+            HREF_W = max([len(f.get(self.FILE_HREF)) for f in file_list])
+        HREF_W = min(HREF_W, (TEXT_WIDTH - SIZE_W - CAP_W - DEV_W - 5))
+        HREF_W = max(HREF_W, 18)   # len("(placeholder disk)")
+        HREF_W += 2    # leading whitespace for disks
+        template = ("{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:.{3}}}"
+                    .format(HREF_W, SIZE_W, CAP_W, DEV_W))
         if file_list or disk_list:
             str_list.append("")
             str_list.append(template.format("Files and Disks:",
@@ -508,7 +512,7 @@ class OVF(VMDescription, XML):
                     device_item = self.find_item_from_disk(disk)
                 device_str = self.device_info_str(device_item)
 
-                href_str = "  "+file.get(self.FILE_HREF)
+                href_str = "  " + file.get(self.FILE_HREF)
                 # Truncate to fit in available space
                 if len(href_str) > HREF_W:
                     href_str = href_str[:(HREF_W-3)] + "..."

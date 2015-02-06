@@ -131,10 +131,10 @@ Vendor:   Cisco Systems, Inc.
 Version:  DEV
           DEVELOPMENT IMAGE
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso                           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+  input.iso           352.00 kB            cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -184,10 +184,10 @@ Product:  generic platform
 Vendor:   Cisco Systems, Inc.
 Version:  DEV
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso                           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+  input.iso           352.00 kB            cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -229,10 +229,10 @@ Vendor:   Cisco Systems, Inc.
 Version:  DEV
           DEVELOPMENT IMAGE
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso                           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+  input.iso           352.00 kB            cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -307,10 +307,10 @@ Product:  Cisco IOSv Virtual Router
 Vendor:   Cisco Systems, Inc.
 Version:  15.4(2.4)T
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ IDE 0:0
-  (disk placeholder)                         --  128.00 MB harddisk @ IDE 0:1
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ IDE 0:0
+  (disk placeholder)         --  128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
   System types:             vmx-08 Cisco:Internal:VMCloud-01
@@ -358,10 +358,10 @@ Version:  15.4(2.4)T
           Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version
           15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ IDE 0:0
-  (disk placeholder)                         --  128.00 MB harddisk @ IDE 0:1
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ IDE 0:0
+  (disk placeholder)         --  128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
   System types:             vmx-08 Cisco:Internal:VMCloud-01
@@ -453,9 +453,9 @@ End User License Agreement(s):
   Licensing agreement
     (not displayed, use 'cot info --verbose' if desired)
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-04
@@ -486,9 +486,9 @@ End User License Agreement(s):
     Licensing text, oh licensing text!
     How lovely is thy legalese!
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-04
@@ -515,9 +515,9 @@ NICs and Associated Networks:
 {0}
 -------------------------------------------------------------------------------
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-08
@@ -544,9 +544,9 @@ NICs and Associated Networks:
 {0}
 -------------------------------------------------------------------------------
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:      File Size   Capacity Device
+                     ---------- ---------- --------------------
+  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-08
@@ -580,9 +580,9 @@ NICs and Associated Networks:
 {0}
 -------------------------------------------------------------------------------
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  ubuntu.2.0-disk1.vmdk                            8.00 GB harddisk @ SATA 0:0
+Files and Disks:         File Size   Capacity Device
+                        ---------- ---------- --------------------
+  ubuntu.2.0-disk1.vmdk               8.00 GB harddisk @ SATA 0:0
 
 Hardware Variants:
   System types:             virtualbox-2.2
