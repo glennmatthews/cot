@@ -154,7 +154,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
 Networks:
-  VM Network
+  VM Network  "VM Network"
 
 NICs and Associated Networks:
   GigabitEthernet1               : VM Network
@@ -201,7 +201,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
 
 Networks:
-  VM Network
+  VM Network  "VM Network"
 
 Properties:
   login-username       Login Username                   ""
@@ -252,7 +252,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
 Networks:
-  VM Network                     VM Network
+  VM Network  "VM Network"
 
 NICs and Associated Networks:
   GigabitEthernet1               : VM Network
@@ -325,22 +325,22 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   1.12 GB
 
 Networks:
-  GigabitEthernet0_0
-  GigabitEthernet0_1
-  GigabitEthernet0_2
-  GigabitEthernet0_3
-  GigabitEthernet0_4
-  GigabitEthernet0_5
-  GigabitEthernet0_6
-  GigabitEthernet0_7
-  GigabitEthernet0_8
-  GigabitEthernet0_9
-  GigabitEthernet0_10
-  GigabitEthernet0_11
-  GigabitEthernet0_12
-  GigabitEthernet0_13
-  GigabitEthernet0_14
-  GigabitEthernet0_15
+  GigabitEthernet0_0   "Data network 1"
+  GigabitEthernet0_1   "Data network 2"
+  GigabitEthernet0_2   "Data network 3"
+  GigabitEthernet0_3   "Data network 4"
+  GigabitEthernet0_4   "Data network 5"
+  GigabitEthernet0_5   "Data network 6"
+  GigabitEthernet0_6   "Data network 7"
+  GigabitEthernet0_7   "Data network 8"
+  GigabitEthernet0_8   "Data network 9"
+  GigabitEthernet0_9   "Data network 10"
+  GigabitEthernet0_10  "Data network 11"
+  GigabitEthernet0_11  "Data network 12"
+  GigabitEthernet0_12  "Data network 13"
+  GigabitEthernet0_13  "Data network 14"
+  GigabitEthernet0_14  "Data network 15"
+  GigabitEthernet0_15  "Data network 16"
 """.format(self.iosv_ovf))
 
         self.instance.set_value('verbosity', 'verbose')
@@ -387,22 +387,22 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
                      so this profile is unsupported on ESXi.)"
 
 Networks:
-  GigabitEthernet0_0             Data network 1
-  GigabitEthernet0_1             Data network 2
-  GigabitEthernet0_2             Data network 3
-  GigabitEthernet0_3             Data network 4
-  GigabitEthernet0_4             Data network 5
-  GigabitEthernet0_5             Data network 6
-  GigabitEthernet0_6             Data network 7
-  GigabitEthernet0_7             Data network 8
-  GigabitEthernet0_8             Data network 9
-  GigabitEthernet0_9             Data network 10
-  GigabitEthernet0_10            Data network 11
-  GigabitEthernet0_11            Data network 12
-  GigabitEthernet0_12            Data network 13
-  GigabitEthernet0_13            Data network 14
-  GigabitEthernet0_14            Data network 15
-  GigabitEthernet0_15            Data network 16
+  GigabitEthernet0_0   "Data network 1"
+  GigabitEthernet0_1   "Data network 2"
+  GigabitEthernet0_2   "Data network 3"
+  GigabitEthernet0_3   "Data network 4"
+  GigabitEthernet0_4   "Data network 5"
+  GigabitEthernet0_5   "Data network 6"
+  GigabitEthernet0_6   "Data network 7"
+  GigabitEthernet0_7   "Data network 8"
+  GigabitEthernet0_8   "Data network 9"
+  GigabitEthernet0_9   "Data network 10"
+  GigabitEthernet0_10  "Data network 11"
+  GigabitEthernet0_11  "Data network 12"
+  GigabitEthernet0_12  "Data network 13"
+  GigabitEthernet0_13  "Data network 14"
+  GigabitEthernet0_14  "Data network 15"
+  GigabitEthernet0_15  "Data network 16"
 
 NICs and Associated Networks:
   GigabitEthernet0/0             : GigabitEthernet0_0
@@ -467,7 +467,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
 
 Networks:
-  bridged
+  bridged  "The bridged network"
 
 NICs and Associated Networks:
   ethernet0                      : bridged
@@ -500,7 +500,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
 
 Networks:
-  bridged                        The bridged network
+  bridged  "The bridged network"
 
 NICs and Associated Networks:
   ethernet0                      : bridged
@@ -529,7 +529,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
 
 Networks:
-  lanethernet0
+  lanethernet0  "The lanethernet0 network"
 
 NICs and Associated Networks:
   Network adapter 1              : lanethernet0
@@ -558,7 +558,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
 
 Networks:
-  lanethernet0                   The lanethernet0 network
+  lanethernet0  "The lanethernet0 network"
 
 NICs and Associated Networks:
   Network adapter 1              : lanethernet0
@@ -594,7 +594,7 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
   None (default)                     1    512 MB      1       0   1 /   8.00 GB
 
 Networks:
-  NAT                            Logical network used by this appliance.
+  NAT  "Logical network used by this appliance."
 
 NICs and Associated Networks:
   <instance 10>                  : NAT

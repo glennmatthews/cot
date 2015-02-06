@@ -468,11 +468,10 @@ class OVF(VMDescription, XML):
                     str_list.append("    (not displayed, use 'cot info "
                                     "--verbose' if desired)")
                 else:
-                    wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
-                                                   initial_indent='    ',
-                                                   subsequent_indent='    ')
                     for line in lic.text.splitlines():
-                        str_list.append(wrapper.fill(line))
+                        str_list.append(UI.fill(line,
+                                                initial_indent='    ',
+                                                subsequent_indent='    '))
 
         # File information
         HREF_W = 36
@@ -553,19 +552,26 @@ class OVF(VMDescription, XML):
                 (scsi_subtypes or ide_subtypes or eth_subtypes)):
             str_list.append("")
             str_list.append("Hardware Variants:")
-            template = "  {0:25} {1}"
             if virtual_system_type is not None:
-                str_list.append(template.format(
-                    "System types:", virtual_system_type.text))
+                str_list.append(UI.fill(
+                    virtual_system_type.text,
+                    initial_indent="  System types:             ",
+                    subsequent_indent=" " * 28))
             if scsi_subtypes:
-                str_list.append(template.format(
-                    "SCSI device types:", " ".join(sorted(scsi_subtypes))))
+                str_list.append(UI.fill(
+                    " ".join(sorted(scsi_subtypes)),
+                    initial_indent="  SCSI device types:        ",
+                    subsequent_indent=" " * 28))
             if ide_subtypes:
-                str_list.append(template.format(
-                    "IDE device types:", " ".join(sorted(ide_subtypes))))
+                str_list.append(UI.fill(
+                    " ".join(sorted(ide_subtypes)),
+                    initial_indent="  IDE device types:         ",
+                    subsequent_indent=" " * 28))
             if eth_subtypes:
-                str_list.append(template.format(
-                    "Ethernet device types:", " ".join(sorted(eth_subtypes))))
+                str_list.append(UI.fill(
+                    " ".join(sorted(eth_subtypes)),
+                    initial_indent="  Ethernet device types:    ",
+                    subsequent_indent=" " * 28))
 
         # Profile information
         profile_str = self.profile_info_string(UI, verbosity_option)
@@ -577,18 +583,29 @@ class OVF(VMDescription, XML):
         if self.network_section is not None:
             str_list.append("")
             str_list.append("Networks:")
-            wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
-                                           initial_indent='  ',
-                                           subsequent_indent=' ' * 33)
+            names = []
+            descs = []
             for network in self.network_section.findall(self.NETWORK):
-                network_name = network.get(self.NETWORK_NAME)
-                network_desc = network.findtext(self.NWK_DESC, None)
-                if verbosity_option == 'verbose' and network_desc:
-                    str_list.append(wrapper.fill("{0:30} {1}"
-                                                 .format(network_name,
-                                                         network_desc)))
+                names.append(network.get(self.NETWORK_NAME))
+                descs.append(network.findtext(self.NWK_DESC, None))
+            max_n = max([len(name) for name in names])
+            max_d = max([len(str(desc)) for desc in descs])
+            truncate = (max_n + max_d + 6 >= TEXT_WIDTH and
+                        verbosity_option != 'verbose')
+            if truncate:
+                max_d = TEXT_WIDTH - 6 - max_n
+            for name, desc in zip(names, descs):
+                if not desc:
+                    str_list.append("  " + name)
+                elif truncate and len(desc) > max_d:
+                    str_list.append('  {name:{w}}  "{tdesc}..."'.format(
+                        name=name, w=max_n, tdesc=desc[:max_d-3]))
                 else:
-                    str_list.append("  " + network_name)
+                    str_list.append(UI.fill(
+                        '{name:{w}}  "{desc}"'.format(name=name, w=max_n,
+                                                      desc=desc),
+                        initial_indent="  ",
+                        subsequent_indent=" " * (4 + max_n)))
 
         # NIC information
         nics = self.hardware.find_all_items('ethernet')
@@ -605,8 +622,7 @@ class OVF(VMDescription, XML):
                     nic_name = "<instance {0}>".format(
                         nic.get_value(self.INSTANCE_ID))
                 str_list.append("  {0:30} : {1}"
-                                .format(nic_name,
-                                        nic.get_value(self.CONNECTION)))
+                                .format(nic_name, network_name))
                 if verbosity_option == 'verbose':
                     desc = nic.get_value(self.ITEM_DESCRIPTION)
                     if desc is None:
