@@ -68,7 +68,7 @@ class COTInfo(COTReadOnlySubmodule):
             if not first:
                 print("")
             with VMContextManager(package, None) as vm:
-                print(vm.info_string(self.UI, verbosity))
+                print(vm.info_string(self.UI.terminal_width() - 1, verbosity))
             first = False
 
     def create_subparser(self, parent):

@@ -16,7 +16,6 @@
 
 import logging
 import sys
-import textwrap
 
 # VerboseLogger adds a log level 'verbose' between 'info' and 'debug'.
 # This lets us be a bit more fine-grained in our logging verbosity.
@@ -33,14 +32,6 @@ class UI(object):
         self.force = force
         # Stub for API testing
         self.default_confirm_response = True
-        self.textwrap = textwrap.TextWrapper()
-
-    def fill(self, text, **kwargs):
-        """Wrap the given text if appropriate to this UI."""
-        self.textwrap.width = self.terminal_width() - 1
-        for (arg, value) in kwargs.items():
-            self.textwrap.__dict__[arg] = value
-        return self.textwrap.fill(text)
 
     def terminal_width(self):
         """Returns the width of the terminal in columns."""

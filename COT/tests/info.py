@@ -79,10 +79,9 @@ class TestCOTInfo(COT_UT):
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     0      0 MB      0       0   0 /       0 B
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            0      0 MB    0       0  0 /       0 B
 """.format(self.minimal_ovf)
         self.instance.set_value("PACKAGE_LIST", [self.minimal_ovf])
 
@@ -102,18 +101,16 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     0      0 MB      0       0   0 /       0 B
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            0      0 MB    0       0  0 /       0 B
 
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     0      0 MB      0       0   0 /       0 B
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            0      0 MB    0       0  0 /       0 B
 """.format(self.minimal_ovf))
 
     def test_input_ovf(self):
@@ -123,7 +120,6 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
 Product:  generic platform
           http://www.cisco.com/en/US/products/ps12559/index.html
 Vendor:   Cisco Systems, Inc.
@@ -131,25 +127,25 @@ Vendor:   Cisco Systems, Inc.
 Version:  DEV
           DEVELOPMENT IMAGE
 
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.iso          352.00 kB           cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
   SCSI device types:        lsilogic
   Ethernet device types:    VMXNET3
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
+Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
+                          ---- --------- ---- ------- --------------
+  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
-  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
+  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
     Label:          "1 vCPU, 1 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC"
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
+  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
@@ -179,26 +175,25 @@ Properties:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
 Product:  generic platform
 Vendor:   Cisco Systems, Inc.
 Version:  DEV
 
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.iso          352.00 kB           cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
   SCSI device types:        lsilogic
   Ethernet device types:    VMXNET3
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
-  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
+Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
+                          ---- --------- ---- ------- --------------
+  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
+  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
+  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
 
 Networks:
   VM Network  "VM Network"
@@ -221,7 +216,6 @@ Properties:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
 Product:  generic platform
           http://www.cisco.com/en/US/products/ps12559/index.html
 Vendor:   Cisco Systems, Inc.
@@ -229,25 +223,25 @@ Vendor:   Cisco Systems, Inc.
 Version:  DEV
           DEVELOPMENT IMAGE
 
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.iso          352.00 kB           cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
   SCSI device types:        lsilogic
   Ethernet device types:    VMXNET3
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
+Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
+                          ---- --------- ---- ------- --------------
+  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
-  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
+  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
     Label:          "1 vCPU, 1 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC"
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
+  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
@@ -302,27 +296,26 @@ Properties:
 {0}
 COT detected platform type: Cisco IOSv
 -------------------------------------------------------------------------------
-
 Product:  Cisco IOSv Virtual Router
 Vendor:   Cisco Systems, Inc.
 Version:  15.4(2.4)T
 
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ IDE 0:0
-  (disk placeholder)         --  128.00 MB harddisk @ IDE 0:1
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ IDE 0:0
+  (disk placeholder)        -- 128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
   System types:             vmx-08 Cisco:Internal:VMCloud-01
   IDE device types:         virtio
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  1CPU-384MB-2NIC (default)          1    384 MB      2       2   2 /   1.12 GB
-  1CPU-1GB-8NIC                      1    384 MB      8       2   2 /   1.12 GB
-  1CPU-3GB-10NIC                     1    384 MB     10       2   2 /   1.12 GB
-  1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   1.12 GB
+Configuration Profiles:     CPUs    Memory NICs Serials Disks/Capacity
+                            ---- --------- ---- ------- --------------
+  1CPU-384MB-2NIC (default)    1    384 MB    2       2  2 /   1.12 GB
+  1CPU-1GB-8NIC                1    384 MB    8       2  2 /   1.12 GB
+  1CPU-3GB-10NIC               1    384 MB   10       2  2 /   1.12 GB
+  1CPU-3GB-16NIC               1    384 MB   16       2  2 /   1.12 GB
 
 Networks:
   GigabitEthernet0_0   "Data network 1"
@@ -349,7 +342,6 @@ Networks:
 {0}
 COT detected platform type: Cisco IOSv
 -------------------------------------------------------------------------------
-
 Product:  Cisco IOSv Virtual Router
           http://www.cisco.com/en/US/products/index.html
 Vendor:   Cisco Systems, Inc.
@@ -358,29 +350,29 @@ Version:  15.4(2.4)T
           Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version
           15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
 
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ IDE 0:0
-  (disk placeholder)         --  128.00 MB harddisk @ IDE 0:1
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ IDE 0:0
+  (disk placeholder)        -- 128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
   System types:             vmx-08 Cisco:Internal:VMCloud-01
   IDE device types:         virtio
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  1CPU-384MB-2NIC (default)          1    384 MB      2       2   2 /   1.12 GB
+Configuration Profiles:     CPUs    Memory NICs Serials Disks/Capacity
+                            ---- --------- ---- ------- --------------
+  1CPU-384MB-2NIC (default)    1    384 MB    2       2  2 /   1.12 GB
     Label:          "Small"
     Description:    "Minimal hardware profile - 1 vCPU, 384 MB RAM, 2 NICs"
-  1CPU-1GB-8NIC                      1    384 MB      8       2   2 /   1.12 GB
+  1CPU-1GB-8NIC                1    384 MB    8       2  2 /   1.12 GB
     Label:          "Medium"
     Description:    "Medium hardware profile - 1 vCPU, 1 GB RAM, 8 NICs"
-  1CPU-3GB-10NIC                     1    384 MB     10       2   2 /   1.12 GB
+  1CPU-3GB-10NIC               1    384 MB   10       2  2 /   1.12 GB
     Label:          "Large (ESXi)"
     Description:    "Large hardware profile for ESXi - 1 vCPU, 3 GB RAM, 10
                      NICs"
-  1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   1.12 GB
+  1CPU-3GB-16NIC               1    384 MB   16       2  2 /   1.12 GB
     Label:          "Large (non-ESXi)"
     Description:    "Large hardware profile for other hypervisors - 1 vCPU, 3
                      GB RAM, 16 NICs. (Note: ESXi only permits 10 NICs in a VM
@@ -446,25 +438,24 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
 Annotation: Hello world! This is a version 0.9 OVF.
 
 End User License Agreement(s):
   Licensing agreement
     (not displayed, use 'cot info --verbose' if desired)
 
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-04
   SCSI device types:        lsilogic
   Ethernet device types:    PCNet32
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            1   8.00 GB    1       0  1 /   1.00 GB
 
 Networks:
   bridged  "The bridged network"
@@ -478,7 +469,6 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
 Annotation: Hello world! This is a version 0.9 OVF.
 
 End User License Agreement(s):
@@ -486,18 +476,18 @@ End User License Agreement(s):
     Licensing text, oh licensing text!
     How lovely is thy legalese!
 
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-04
   SCSI device types:        lsilogic
   Ethernet device types:    PCNet32
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            1   8.00 GB    1       0  1 /   1.00 GB
 
 Networks:
   bridged  "The bridged network"
@@ -514,19 +504,18 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-08
   SCSI device types:        virtio lsilogic
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            2   1.50 GB    4       0  1 /   1.00 GB
 
 Networks:
   lanethernet0  "The lanethernet0 network"
@@ -543,19 +532,18 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
-Files and Disks:      File Size   Capacity Device
-                     ---------- ---------- --------------------
-  input.vmdk          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-08
   SCSI device types:        virtio lsilogic
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            2   1.50 GB    4       0  1 /   1.00 GB
 
 Networks:
   lanethernet0  "The lanethernet0 network"
@@ -579,19 +567,18 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
-Files and Disks:         File Size   Capacity Device
-                        ---------- ---------- --------------------
-  ubuntu.2.0-disk1.vmdk               8.00 GB harddisk @ SATA 0:0
+Files and Disks:        File Size  Capacity Device
+                        --------- --------- --------------------
+  ubuntu.2.0-disk1.vmdk             8.00 GB harddisk @ SATA 0:0
 
 Hardware Variants:
   System types:             virtualbox-2.2
   IDE device types:         PIIX4
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     1    512 MB      1       0   1 /   8.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            1    512 MB    1       0  1 /   8.00 GB
 
 Networks:
   NAT  "Logical network used by this appliance."
@@ -609,7 +596,6 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
 Product:  (No product string)
           (No product URL)
 Vendor:   (No vendor string)
@@ -617,18 +603,18 @@ Vendor:   (No vendor string)
 Version:  (No version string)
           (No detailed version string)
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  this_is_a_really_long_filename_...  149.00 kB    1.00 GB 
-  input.iso                           352.00 kB            cdrom @ (?) ?:0
-  (disk placeholder)                         --  128.00 MB 
+Files and Disks:                       File Size  Capacity Device
+                                       --------- --------- --------------------
+  this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB 
+  input.iso                            352.00 kB           cdrom @ (?) ?:0
+  (disk placeholder)                          -- 128.00 MB 
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  myprofile (default)                3      0 MB      0       0   1 /   1.12 GB
+Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
+                                    ---- --------- ---- ------- --------------
+  myprofile (default)                  3      0 MB    0       0  1 /   1.12 GB
     Label:          "what a profile"
     Description:    "this is"
-  howlongofaprofilenamecanweuse      0      1 MB      0       0   1 /   1.12 GB
+  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
     Label:          "howlongofaprofilenamecanweusehere"
     Description:    "prettylongitappears"
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected

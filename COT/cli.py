@@ -48,7 +48,7 @@ class CLI(UI):
         self.getpass = getpass.getpass
         self.handler = None
         self.master_logger = None
-        self.textwrap = textwrap.TextWrapper()
+        self.wrapper = textwrap.TextWrapper(width=self.terminal_width() - 1)
 
         self.create_parser()
         self.create_subparsers()
@@ -126,6 +126,9 @@ class CLI(UI):
           \S+              # Positional arg
         """, re.VERBOSE)
         width = self.terminal_width()
+        self.wrapper.initial_indent = '    '
+        self.wrapper.subsequent_indent = '    '
+        self.wrapper.break_on_hyphens = False
         for (example, desc) in example_list:
             if len(output_lines) > 1:
                 output_lines.append("")
@@ -137,11 +140,7 @@ class CLI(UI):
                     wrapped_line = "       "
                 wrapped_line += " " + param
             output_lines.append(wrapped_line)
-            desc = self.fill(desc,
-                             initial_indent='    ',
-                             subsequent_indent='    ',
-                             break_on_hyphens=False)
-            output_lines.append(desc)
+            output_lines.extend(self.wrapper.wrap(desc))
         return "\n".join(output_lines)
 
     def formatter(self, verbosity=logging.INFO):
@@ -194,8 +193,14 @@ class CLI(UI):
 
         # Wrap prompt to screen
         prompt_w = []
+        self.wrapper.initial_indent = ''
+        self.wrapper.subsequent_indent = ''
+        self.wrapper.break_on_hyphens = False
         for line in prompt.splitlines():
-            prompt_w.append(self.fill(line, break_on_hyphens=False))
+            if not line:
+                prompt_w.append("")
+            else:
+                prompt_w.extend(self.wrapper.wrap(line))
         prompt = "\n".join(prompt_w)
 
         while True:
@@ -234,6 +239,8 @@ class CLI(UI):
         # Argparse checks the environment variable COLUMNS to control
         # its line-wrapping
         os.environ['COLUMNS'] = str(self.terminal_width())
+        self.wrapper.initial_indent = ''
+        self.wrapper.subsequent_indent = ''
         parser = argparse.ArgumentParser(
             prog="cot",
             usage="""
@@ -241,7 +248,7 @@ class CLI(UI):
   cot --version
   cot <command> --help
   cot <options> <command> <command-options>""",
-            description=(__version_long__ + "\n" + self.fill(
+            description=(__version_long__ + "\n" + self.wrapper.fill(
                 "A tool for editing Open Virtualization Format (.ovf, .ova) "
                 "virtual appliances, with a focus on virtualized network "
                 "appliances such as the Cisco CSR 1000V and Cisco IOS XRv "

@@ -383,70 +383,75 @@ class OVF(VMDescription, XML):
             raise NotImplementedError("Not sure how to write a '{0}' file"
                                       .format(extension))
 
-    def info_string(self, UI, verbosity_option=None):
+    def info_string(self, TEXT_WIDTH=79, verbosity_option=None):
         """Returns a string summarizing the contents of this OVF."""
-        str_list = []
-        TEXT_WIDTH = UI.terminal_width() - 1
+        # Supposedly it's quicker to construct a list of strings then merge
+        # them all together with 'join()' rather than it is to repeatedly
+        # append to an existing string with '+'.
+        # I haven't profiled this to verify - it's fast enough for now.
+        # To make some of the formatting a bit cleverer, we actually do this
+        # in two stages - each 'section' of the info_string is constructed as
+        # a list which is joined with '\n' then appended to the section_list,
+        # then at the end, we join section_list with '\n\n'.
+        section_list = []
+        wrapper = textwrap.TextWrapper(width=TEXT_WIDTH)
+
         # File description
+        str_list = []
         str_list.append('-' * TEXT_WIDTH)
         str_list.append(self.input_file)
         if self.platform and self.platform is not Platform.GenericPlatform:
             str_list.append("COT detected platform type: {0}"
                             .format(self.platform.PLATFORM_NAME))
         str_list.append('-' * TEXT_WIDTH)
+        header = '\n'.join(str_list)
 
         # Product information
         p = self.product_section
         if p is not None:
-            str_list.append("")
+            str_list = []
+            wrapper.initial_indent = ''
+            wrapper.subsequent_indent = '          '
             # All elements in this section are optional
             product = p.findtext(self.PRODUCT, "(No product string)")
-            str_list.append(UI.fill(product,
-                                    initial_indent="Product:  ",
-                                    subsequent_indent="          "))
+            str_list.extend(wrapper.wrap("Product:  {0}".format(product)))
             if verbosity_option != 'brief':
                 product_url = p.findtext(self.PRODUCT_URL, "(No product URL)")
-                str_list.append(UI.fill(product_url,
-                                        initial_indent="          ",
-                                        subsequent_indent="          "))
+                str_list.extend(wrapper.wrap(
+                    "          {0}".format(product_url)))
             vendor = p.findtext(self.VENDOR, "(No vendor string)")
-            str_list.append(UI.fill(vendor,
-                                    initial_indent="Vendor:   ",
-                                    subsequent_indent="          "))
+            str_list.extend(wrapper.wrap("Vendor:   {0}".format(vendor)))
             if verbosity_option != 'brief':
                 vendor_url = p.findtext(self.VENDOR_URL, "(No vendor URL)")
-                str_list.append(UI.fill(vendor_url,
-                                        initial_indent="          ",
-                                        subsequent_indent="          "))
+                str_list.extend(wrapper.wrap(
+                    "          {0}".format(vendor_url)))
             version = p.findtext(self.VERSION, "(No version string)")
-            str_list.append(UI.fill(version,
-                                    initial_indent="Version:  ",
-                                    subsequent_indent="          "))
+            str_list.extend(wrapper.wrap("Version:  {0}".format(version)))
             if verbosity_option != 'brief':
                 full_version = p.findtext(self.FULL_VERSION,
                                           "(No detailed version string)")
-                str_list.append(UI.fill(full_version,
-                                        initial_indent="          ",
-                                        subsequent_indent="          ",
-                                        break_on_hyphens=False))
+                str_list.extend(wrapper.wrap(
+                    "          {0}".format(full_version)))
+            section_list.append("\n".join(str_list))
 
         # Annotation information
         a = self.annotation_section
         if a is not None:
             ann = a.find(self.ANNOTATION)
             if ann is not None and ann.text:
-                str_list.append("")
+                str_list = []
                 first = True
-                initial_indent = 'Annotation: '
-                subsequent_indent = '            '
+                wrapper.initial_indent = 'Annotation: '
+                wrapper.subsequent_indent = '            '
                 for line in ann.text.splitlines():
-                    str_list.append(
-                        UI.fill(line,
-                                initial_indent=initial_indent,
-                                subsequent_indent=subsequent_indent))
+                    if not line:
+                        str_list.append("")
+                    else:
+                        str_list.extend(wrapper.wrap(line))
                     if first:
-                        initial_indent = subsequent_indent
+                        wrapper.initial_indent = wrapper.subsequent_indent
                         first = False
+                section_list.append("\n".join(str_list))
 
         # End user license agreement information
         # An OVF may have zero, one, or more
@@ -457,25 +462,31 @@ class OVF(VMDescription, XML):
             info = e.find(self.INFO)
             lic = e.find(self.EULA_LICENSE)
             if lic is not None and lic.text:
-                str_list.append("")
+                str_list = []
                 if not eula_header:
                     str_list.append("End User License Agreement(s):")
                     eula_header = True
                 if info is not None and info.text:
-                    str_list.append('  ' + info.text)
+                    wrapper.initial_indent = '  '
+                    wrapper.subsequent_indent = '  '
+                    str_list.extend(wrapper.wrap(info.text))
                 if verbosity_option != 'verbose':
                     str_list.append("    (not displayed, use 'cot info "
                                     "--verbose' if desired)")
                 else:
+                    wrapper.initial_indent = '    '
+                    wrapper.subsequent_indent = '    '
                     for line in lic.text.splitlines():
-                        str_list.append(UI.fill(line,
-                                                initial_indent='    ',
-                                                subsequent_indent='    '))
+                        if not line:
+                            str_list.append("")
+                        else:
+                            str_list.extend(wrapper.wrap(line))
+                section_list.append("\n".join(str_list))
 
         # File information
-        SIZE_W = 10
-        CAP_W = 10
-        DEV_W = 20
+        SIZE_W = 9  # "999.99 MB"
+        CAP_W = 9   # "999.99 MB"
+        DEV_W = 20  # "harddisk @ SCSI 1:15"
         file_list = self.references.findall(self.FILE)
         disk_list = (self.disk_section.findall(self.DISK)
                      if self.disk_section is not None else [])
@@ -488,11 +499,10 @@ class OVF(VMDescription, XML):
         template = ("{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:.{3}}}"
                     .format(HREF_W, SIZE_W, CAP_W, DEV_W))
         if file_list or disk_list:
-            str_list.append("")
-            str_list.append(template.format("Files and Disks:",
-                                            "File Size", "Capacity", "Device"))
-            str_list.append(template.format("", "----------", "----------",
-                                            "--------------------"))
+            str_list = [template.format("Files and Disks:",
+                                        "File Size", "Capacity", "Device"),
+                        template.format("", "-" * SIZE_W, "-" * CAP_W,
+                                        "-" * DEV_W)]
             for file in file_list:
                 # FILE_SIZE is optional
                 reported_size = file.get(self.FILE_SIZE)
@@ -536,12 +546,13 @@ class OVF(VMDescription, XML):
                                                 "--",
                                                 disk_cap_string,
                                                 device_str))
+            section_list.append("\n".join(str_list))
 
         # Supported hardware information
         virtual_system_type = None
         system = self.virtual_hw_section.find(self.SYSTEM)
         if system is not None:
-            virtual_system_type = system.find(self.VIRTUAL_SYSTEM_TYPE)
+            virtual_system_type = system.findtext(self.VIRTUAL_SYSTEM_TYPE)
         scsi_subtypes = set()
         for scsi_ctrl in self.hardware.find_all_items('scsi'):
             scsi_subtypes |= scsi_ctrl.get_all_values(self.RESOURCE_SUB_TYPE)
@@ -554,39 +565,30 @@ class OVF(VMDescription, XML):
 
         if ((virtual_system_type is not None) or
                 (scsi_subtypes or ide_subtypes or eth_subtypes)):
-            str_list.append("")
-            str_list.append("Hardware Variants:")
+            str_list = ["Hardware Variants:"]
+            wrapper.subsequent_indent = ' ' * 28
             if virtual_system_type is not None:
-                str_list.append(UI.fill(
-                    virtual_system_type.text,
-                    initial_indent="  System types:             ",
-                    subsequent_indent=" " * 28))
+                wrapper.initial_indent = "  System types:             "
+                str_list.extend(wrapper.wrap(virtual_system_type))
             if scsi_subtypes:
-                str_list.append(UI.fill(
-                    " ".join(sorted(scsi_subtypes)),
-                    initial_indent="  SCSI device types:        ",
-                    subsequent_indent=" " * 28))
+                wrapper.initial_indent = "  SCSI device types:        "
+                str_list.extend(wrapper.wrap(" ".join(sorted(scsi_subtypes))))
             if ide_subtypes:
-                str_list.append(UI.fill(
-                    " ".join(sorted(ide_subtypes)),
-                    initial_indent="  IDE device types:         ",
-                    subsequent_indent=" " * 28))
+                wrapper.initial_indent = "  IDE device types:         "
+                str_list.extend(wrapper.wrap(" ".join(sorted(ide_subtypes))))
             if eth_subtypes:
-                str_list.append(UI.fill(
-                    " ".join(sorted(eth_subtypes)),
-                    initial_indent="  Ethernet device types:    ",
-                    subsequent_indent=" " * 28))
+                wrapper.initial_indent = "  Ethernet device types:    "
+                str_list.extend(wrapper.wrap(" ".join(sorted(eth_subtypes))))
+            section_list.append("\n".join(str_list))
 
         # Profile information
-        profile_str = self.profile_info_string(UI, verbosity_option)
+        profile_str = self.profile_info_string(TEXT_WIDTH, verbosity_option)
         if profile_str:
-            str_list.append("")
-            str_list.append(profile_str)
+            section_list.append(profile_str)
 
         # Network information
         if self.network_section is not None:
-            str_list.append("")
-            str_list.append("Networks:")
+            str_list = ["Networks:"]
             names = []
             descs = []
             for network in self.network_section.findall(self.NETWORK):
@@ -596,6 +598,8 @@ class OVF(VMDescription, XML):
             max_d = max([len(str(desc)) for desc in descs])
             truncate = (max_n + max_d + 6 >= TEXT_WIDTH and
                         verbosity_option != 'verbose')
+            wrapper.initial_indent = "  "
+            wrapper.subsequent_indent = ' ' * (5 + max_n)
             if truncate:
                 max_d = TEXT_WIDTH - 6 - max_n
             for name, desc in zip(names, descs):
@@ -605,20 +609,17 @@ class OVF(VMDescription, XML):
                     str_list.append('  {name:{w}}  "{tdesc}..."'.format(
                         name=name, w=max_n, tdesc=desc[:max_d-3]))
                 else:
-                    str_list.append(UI.fill(
+                    str_list.extend(wrapper.wrap(
                         '{name:{w}}  "{desc}"'.format(name=name, w=max_n,
-                                                      desc=desc),
-                        initial_indent="  ",
-                        subsequent_indent=" " * (4 + max_n)))
+                                                      desc=desc)))
+            section_list.append("\n".join(str_list))
 
         # NIC information
         nics = self.hardware.find_all_items('ethernet')
         if nics and verbosity_option != 'brief':
-            str_list.append("")
-            str_list.append("NICs and Associated Networks:")
-            wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
-                                           initial_indent='    ',
-                                           subsequent_indent='    ')
+            str_list = ["NICs and Associated Networks:"]
+            wrapper.initial_indent = '    '
+            wrapper.subsequent_indent = '    '
             for nic in nics:
                 network_name = nic.get_value(self.CONNECTION)
                 nic_name = nic.get_value(self.ELEMENT_NAME)
@@ -632,20 +633,19 @@ class OVF(VMDescription, XML):
                     if desc is None:
                         desc = nic.get_value(self.CAPTION)
                     if desc is not None:
-                        str_list.append(wrapper.fill(desc))
+                        str_list.extend(wrapper.wrap(desc))
+            section_list.append("\n".join(str_list))
 
         # Property information
         properties = self.get_property_array()
         if properties:
-            str_list.append("")
-            str_list.append("Properties:")
-            # Brief: key : value
-            # Normal: label (key) : value
-            # Verbose: key, value, label, description
+            str_list = ["Properties:"]
             max_key = max([len(str(ph['key'])) for ph in properties])
             max_label = max([len(str(ph['label'])) for ph in properties])
             max_value = max([len(str(ph['value'])) for ph in properties])
             max_width = max(max_key, max_label)
+            wrapper.initial_indent = '      '
+            wrapper.subsequent_indent = '      '
             for ph in properties:
                 # If the terminal is wide enough, display "key label value",
                 # else only display "label value"
@@ -668,11 +668,13 @@ class OVF(VMDescription, XML):
                              else '--')))
                 if verbosity_option == 'verbose':
                     for line in ph['description'].splitlines():
-                        str_list.append(UI.fill(line,
-                                                initial_indent='      ',
-                                                subsequent_indent='      '))
+                        if not line:
+                            str_list.append("")
+                        else:
+                            str_list.extend(wrapper.wrap(line))
+            section_list.append("\n".join(str_list))
 
-        return "\n".join(str_list)
+        return header + '\n' + "\n\n".join(section_list)
 
     def device_info_str(self, device_item):
         if device_item is None:
@@ -691,30 +693,40 @@ class OVF(VMDescription, XML):
             ctrl_addr,
             device_item.get_value(self.ADDRESS_ON_PARENT))
 
-    def profile_info_string(self, UI, verbosity_option=None, enumerate=False):
-        TEXT_WIDTH = UI.terminal_width() - 1
+    def profile_info_string(self, TEXT_WIDTH=79, verbosity_option=None,
+                            enumerate=False):
         str_list = []
+
+        default_profile_id = self.get_default_profile_name()
+        profile_ids = self.get_configuration_profile_ids()
+        if not profile_ids:
+            profile_ids = [None]
+
+        indent = 2 if not enumerate else 6
+        PROF_W = max(len("Configuration Profiles: "),
+                     indent + max([(len(str(id))) for id in profile_ids]),
+                     indent + len(str(default_profile_id) + " (default)"))
+
         # Profile information
-        PROF_W = 33
-        CPU_W = 4
-        MEM_W = 9
-        NIC_W = 6
-        SER_W = 7
-        HD_W = 15
+        CPU_W = 4   # "CPUs"
+        MEM_W = 9   # "999.99 MB"
+        NIC_W = 4   # "NICs"
+        SER_W = 7   # "Serials"
+        HD_W = 14   # "Disks/Capacity", "10 / 999.99 MB"
         template = (
             "{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:>{3}}} {{4:>{4}}} {{5:>{5}}}"
             .format(PROF_W, CPU_W, MEM_W, NIC_W, SER_W, HD_W))
         str_list.append(template
                         .format("Configuration Profiles:", "CPUs", "Memory",
                                 "NICs", "Serials", "Disks/Capacity"))
-        str_list.append(template.format("", "----", "---------",
-                                        "------", "-------",
-                                        "---------------"))
-        default_profile_id = self.get_default_profile_name()
-        profile_ids = self.get_configuration_profile_ids()
-        if not profile_ids:
-            profile_ids = [None]
+        str_list.append(template.format("", "-" * CPU_W, "-" * MEM_W,
+                                        "-" * NIC_W, "-" * SER_W,
+                                        "-" * HD_W))
         # Print a table of profiles vs. their hardware
+        if verbosity_option != 'brief':
+            wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
+                                           initial_indent='    ',
+                                           subsequent_indent=' ' * 21)
         index = 0
         for profile_id in profile_ids:
             cpus = 0
@@ -752,16 +764,13 @@ class OVF(VMDescription, XML):
                 "{0:2} / {1:>9}".format(disk_count,
                                         byte_string(disks_size))))
             if profile_id is not None and verbosity_option != 'brief':
-                wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
-                                               initial_indent='    ',
-                                               subsequent_indent=(' ' * 21))
                 profile = self.find_child(self.deploy_opt_section,
                                           self.CONFIG,
                                           attrib={self.CONFIG_ID: profile_id})
-                str_list.append(wrapper.fill(
+                str_list.extend(wrapper.wrap(
                     '{0:15} "{1}"'.format("Label:",
                                           profile.findtext(self.CFG_LABEL))))
-                str_list.append(wrapper.fill(
+                str_list.extend(wrapper.wrap(
                     '{0:15} "{1}"'.format("Description:",
                                           profile.findtext(self.CFG_DESC))))
             index += 1

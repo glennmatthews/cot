@@ -15,7 +15,7 @@
       <ovf:Label>what a profile</ovf:Label>
       <ovf:Description>this is</ovf:Description>
     </ovf:Configuration>
-    <ovf:Configuration ovf:id="howlongofaprofilenamecanweuse">
+    <ovf:Configuration ovf:id="howlongofaprofilenamecanweusehere">
       <ovf:Label>howlongofaprofilenamecanweusehere</ovf:Label>
       <ovf:Description>prettylongitappears</ovf:Description>
     </ovf:Configuration>
@@ -53,7 +53,7 @@
         <rasd:ResourceType>3</rasd:ResourceType>
         <rasd:VirtualQuantity>3</rasd:VirtualQuantity>
       </ovf:Item>
-      <ovf:Item ovf:configuration="howlongofaprofilenamecanweuse">
+      <ovf:Item ovf:configuration="howlongofaprofilenamecanweusehere">
         <rasd:ElementName>memory</rasd:ElementName>
         <rasd:InstanceID>5</rasd:InstanceID>
         <rasd:ResourceType>4</rasd:ResourceType>

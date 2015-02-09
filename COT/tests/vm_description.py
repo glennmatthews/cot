@@ -128,9 +128,9 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.config_file_to_properties, self.TEXT_FILE)
         self.assertRaises(NotImplementedError,
-                          ins.info_string, None)
+                          ins.info_string)
         self.assertRaises(NotImplementedError,
-                          ins.profile_info_string, None)
+                          ins.profile_info_string)
         self.assertRaises(NotImplementedError,
                           ins.get_default_profile_name)
 
