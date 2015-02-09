@@ -126,6 +126,7 @@ class CLI(UI):
           \S+              # Positional arg
         """, re.VERBOSE)
         width = self.terminal_width()
+        self.wrapper.width = width - 1
         self.wrapper.initial_indent = '    '
         self.wrapper.subsequent_indent = '    '
         self.wrapper.break_on_hyphens = False
@@ -193,14 +194,12 @@ class CLI(UI):
 
         # Wrap prompt to screen
         prompt_w = []
+        self.wrapper.width = self.terminal_width() - 1
         self.wrapper.initial_indent = ''
         self.wrapper.subsequent_indent = ''
         self.wrapper.break_on_hyphens = False
         for line in prompt.splitlines():
-            if not line:
-                prompt_w.append("")
-            else:
-                prompt_w.extend(self.wrapper.wrap(line))
+            prompt_w.extend(self.wrapper.wrap(line))
         prompt = "\n".join(prompt_w)
 
         while True:
@@ -239,6 +238,7 @@ class CLI(UI):
         # Argparse checks the environment variable COLUMNS to control
         # its line-wrapping
         os.environ['COLUMNS'] = str(self.terminal_width())
+        self.wrapper.width = self.terminal_width() - 1
         self.wrapper.initial_indent = ''
         self.wrapper.subsequent_indent = ''
         parser = argparse.ArgumentParser(

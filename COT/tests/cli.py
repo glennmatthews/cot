@@ -76,6 +76,16 @@ class TestCOTCLI(COT_UT):
 class TestCLIModule(TestCOTCLI):
     """Test cases for the CLI module itself"""
 
+    def setUp(self):
+        """Test case setup function called automatically prior to each test"""
+        super(TestCLIModule, self).setUp()
+        self.TERMINAL_WIDTH = 80
+
+        def magic_width():
+            return self.TERMINAL_WIDTH
+
+        self.cli.terminal_width = magic_width
+
     def test_apis_without_force(self):
         self.cli.force = False
 
@@ -135,6 +145,127 @@ class TestCLIModule(TestCOTCLI):
         self.cli.getpass = lambda _: 'password'
         self.assertRaises(InvalidInputError,
                           self.cli.get_password, "user", "host")
+
+    def test_fill_usage(self):
+        """Test fill_usage() API"""
+        self.maxDiff = None     # show full diffs in case of failure
+        usage = ["PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...] [-o OUTPUT]",
+                 "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
+                 "PACKAGE [-o OUTPUT]"]
+
+        self.TERMINAL_WIDTH = 100
+        self.assertMultiLineEqual(
+            self.cli.fill_usage("edit-properties", usage), """
+  cot edit-properties --help
+  cot <opts> edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...] \
+[-o OUTPUT]
+  cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
+  cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
+
+        self.TERMINAL_WIDTH = 80
+        self.assertMultiLineEqual(
+            self.cli.fill_usage("edit-properties", usage), """
+  cot edit-properties --help
+  cot <opts> edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
+                             [-o OUTPUT]
+  cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
+  cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
+
+        self.TERMINAL_WIDTH = 60
+        self.assertMultiLineEqual(
+            self.cli.fill_usage("edit-properties", usage), """
+  cot edit-properties --help
+  cot <opts> edit-properties PACKAGE -p KEY1=VALUE1
+                             [KEY2=VALUE2 ...] [-o OUTPUT]
+  cot <opts> edit-properties PACKAGE -c CONFIG_FILE
+                             [-o OUTPUT]
+  cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
+
+        self.TERMINAL_WIDTH = 40
+        self.assertMultiLineEqual(
+            self.cli.fill_usage("edit-properties", usage), """
+  cot edit-properties --help
+  cot <opts> edit-properties PACKAGE
+      -p KEY1=VALUE1 [KEY2=VALUE2 ...]
+      [-o OUTPUT]
+  cot <opts> edit-properties PACKAGE
+      -c CONFIG_FILE [-o OUTPUT]
+  cot <opts> edit-properties PACKAGE
+                             [-o OUTPUT]""")
+
+    def test_fill_examples(self):
+        """Test fill_examples() API"""
+        self.maxDiff = None
+        examples = [
+            ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test',
+             "Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+             " admin/admin, creating a VM named 'test' from foo.ova."),
+            ('cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB',
+             "Deploy to vSphere/ESXi server 192.0.2.100, with username"
+             " admin (prompting the user to input a password at runtime),"
+             " creating a VM based on profile '1CPU-2.5GB' in foo.ova."),
+        ]
+
+        self.TERMINAL_WIDTH = 100
+        self.assertMultiLineEqual(self.cli.fill_examples(examples), """\
+Examples:
+  cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test
+    Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin, \
+creating a VM named
+    'test' from foo.ova.
+
+  cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
+    Deploy to vSphere/ESXi server 192.0.2.100, with username admin (prompting \
+the user to input a
+    password at runtime), creating a VM based on profile '1CPU-2.5GB' in \
+foo.ova.""")
+
+        self.TERMINAL_WIDTH = 80
+        self.assertMultiLineEqual(self.cli.fill_examples(examples), """\
+Examples:
+  cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test
+    Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
+    creating a VM named 'test' from foo.ova.
+
+  cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
+    Deploy to vSphere/ESXi server 192.0.2.100, with username admin (prompting
+    the user to input a password at runtime), creating a VM based on profile
+    '1CPU-2.5GB' in foo.ova.""")
+
+        self.TERMINAL_WIDTH = 60
+        self.assertMultiLineEqual(self.cli.fill_examples(examples), """\
+Examples:
+  cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \\
+        -n test
+    Deploy to vSphere/ESXi server 192.0.2.100 with
+    credentials admin/admin, creating a VM named 'test'
+    from foo.ova.
+
+  cot deploy foo.ova esxi 192.0.2.100 -u admin \\
+        -c 1CPU-2.5GB
+    Deploy to vSphere/ESXi server 192.0.2.100, with
+    username admin (prompting the user to input a password
+    at runtime), creating a VM based on profile
+    '1CPU-2.5GB' in foo.ova.""")
+
+        self.TERMINAL_WIDTH = 40
+        self.assertMultiLineEqual(self.cli.fill_examples(examples), """\
+Examples:
+  cot deploy foo.ova esxi 192.0.2.100 \\
+        -u admin -p admin -n test
+    Deploy to vSphere/ESXi server
+    192.0.2.100 with credentials
+    admin/admin, creating a VM named
+    'test' from foo.ova.
+
+  cot deploy foo.ova esxi 192.0.2.100 \\
+        -u admin -c 1CPU-2.5GB
+    Deploy to vSphere/ESXi server
+    192.0.2.100, with username admin
+    (prompting the user to input a
+    password at runtime), creating a VM
+    based on profile '1CPU-2.5GB' in
+    foo.ova.""")
 
 
 class TestCLIGeneral(TestCOTCLI):
