@@ -67,10 +67,9 @@ class COTEditProduct(COTSubmodule):
         p = parent.add_parser(
             'edit-product',
             help="""Edit product info in an OVF""",
-            usage="""
-  cot edit-product --help
-  cot <opts> edit-product PACKAGE [-o OUTPUT]
-                          [-v SHORT_VERSION] [-V FULL_VERSION]""",
+            usage=self.UI.fill_usage("edit-product", [
+                "PACKAGE [-o OUTPUT] [-v SHORT_VERSION] [-V FULL_VERSION]",
+            ]),
             description="""
 Edit product information attributes of the given OVF or OVA""")
 

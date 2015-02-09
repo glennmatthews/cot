@@ -33,6 +33,21 @@ class UI(object):
         # Stub for API testing
         self.default_confirm_response = True
 
+    def terminal_width(self):
+        """Returns the width of the terminal in columns."""
+        return 80
+
+    def fill_usage(self, subcommand, usage_list):
+        """Pretty-print a list of usage strings."""
+        return "\n".join(["{0} {1}".format(subcommand, usage)
+                          for usage in usage_list])
+
+    def fill_examples(self, example_list):
+        """Pretty-print a set of usage examples.
+        example_list == [(example1, desc1), (example2, desc2), ...]
+        """
+        raise NotImplementedError("No implementation for fill_examples()")
+
     def confirm(self, prompt):
         """Prompts user to confirm the requested operation, or auto-accepts
         if 'force' is set to True."""

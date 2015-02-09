@@ -43,19 +43,8 @@ class TestCOTInfo(COT_UT):
         finally:
             sys.stdout = sys.__stdout__
 
-        output_lines = output.splitlines()
-        expected_lines = expected.splitlines()
-        while (output_lines or expected_lines):
-            # Compare line-by-line, but skip any whitespace-only lines
-            output_line = ""
-            while (output_lines and not output_line):
-                output_line = output_lines.pop(0).strip()
-            expected_line = ""
-            while (expected_lines and not expected_line):
-                expected_line = expected_lines.pop(0).strip()
-            if not output_line and not expected_line:
-                break     # Done with both!
-            self.assertEqual(output_line, expected_line)
+        self.maxDiff = None
+        self.assertMultiLineEqual(expected.strip(), output.strip())
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
@@ -90,9 +79,9 @@ class TestCOTInfo(COT_UT):
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     0      0 MB      0       0   0 /       0 B
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            0      0 MB    0       0  0 /       0 B
 """.format(self.minimal_ovf)
         self.instance.set_value("PACKAGE_LIST", [self.minimal_ovf])
 
@@ -112,16 +101,16 @@ Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     0      0 MB      0       0   0 /       0 B
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            0      0 MB    0       0  0 /       0 B
 
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     0      0 MB      0       0   0 /       0 B
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            0      0 MB    0       0  0 /       0 B
 """.format(self.minimal_ovf))
 
     def test_input_ovf(self):
@@ -138,57 +127,47 @@ Vendor:   Cisco Systems, Inc.
 Version:  DEV
           DEVELOPMENT IMAGE
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso                           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.iso          352.00 kB           cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
   SCSI device types:        lsilogic
   Ethernet device types:    VMXNET3
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
+Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
+                          ---- --------- ---- ------- --------------
+  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
-  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
+  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
     Label:          "1 vCPU, 1 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC"
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
+  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
 Networks:
-  VM Network
+  VM Network  "VM Network"
 
 NICs and Associated Networks:
-  GigabitEthernet1               : VM Network
-  GigabitEthernet2               : VM Network
-  GigabitEthernet3               : VM Network
+  GigabitEthernet1 : VM Network
+  GigabitEthernet2 : VM Network
+  GigabitEthernet3 : VM Network
 
 Properties:
-  login-username                 :
-      "Login Username"
-  login-password                 :
-      "Login Password"
-  mgmt-ipv4-addr                 :
-      "Management IPv4 Address/Mask"
-  mgmt-ipv4-gateway              :
-      "Management IPv4 Default Gateway"
-  hostname                       :
-      "Router Name"
-  enable-ssh-server              : false
-      "Enable SSH Login"
-  enable-http-server             : false
-      "Enable HTTP Server"
-  enable-https-server            : false
-      "Enable HTTPS Server"
-  privilege-password             :
-      "Enable Password"
-  domain-name                    :
-      "Domain Name"
+  login-username       Login Username                   ""
+  login-password       Login Password                   ""
+  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
+  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
+  hostname             Router Name                      ""
+  enable-ssh-server    Enable SSH Login                 "false"
+  enable-http-server   Enable HTTP Server               "false"
+  enable-https-server  Enable HTTPS Server              "false"
+  privilege-password   Enable Password                  ""
+  domain-name          Domain Name                      ""
 """.format(self.input_ovf))
 
         self.instance.set_value('verbosity', 'brief')
@@ -200,36 +179,36 @@ Product:  generic platform
 Vendor:   Cisco Systems, Inc.
 Version:  DEV
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso                           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.iso          352.00 kB           cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
   SCSI device types:        lsilogic
   Ethernet device types:    VMXNET3
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
-  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
+Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
+                          ---- --------- ---- ------- --------------
+  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
+  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
+  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
 
 Networks:
-  VM Network
+  VM Network  "VM Network"
 
 Properties:
-  login-username                 :
-  login-password                 :
-  mgmt-ipv4-addr                 :
-  mgmt-ipv4-gateway              :
-  hostname                       :
-  enable-ssh-server              : false
-  enable-http-server             : false
-  enable-https-server            : false
-  privilege-password             :
-  domain-name                    :
+  login-username       Login Username                   ""
+  login-password       Login Password                   ""
+  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
+  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
+  hostname             Router Name                      ""
+  enable-ssh-server    Enable SSH Login                 "false"
+  enable-http-server   Enable HTTP Server               "false"
+  enable-https-server  Enable HTTPS Server              "false"
+  privilege-password   Enable Password                  ""
+  domain-name          Domain Name                      ""
 """.format(self.input_ovf))
 
         self.instance.set_value('verbosity', 'verbose')
@@ -244,76 +223,66 @@ Vendor:   Cisco Systems, Inc.
 Version:  DEV
           DEVELOPMENT IMAGE
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
-  input.iso                           352.00 kB            cdrom @ IDE 1:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.iso          352.00 kB           cdrom @ IDE 1:0
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
   SCSI device types:        lsilogic
   Ethernet device types:    VMXNET3
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  4CPU-4GB-3NIC (default)            4   4.00 GB      3       2   1 /   1.00 GB
+Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
+                          ---- --------- ---- ------- --------------
+  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
-  1CPU-1GB-1NIC                      1   1.00 GB      1       2   1 /   1.00 GB
+  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
     Label:          "1 vCPU, 1 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC"
-  2CPU-2GB-1NIC                      2   2.00 GB      1       2   1 /   1.00 GB
+  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
 Networks:
-  VM Network                     VM Network
+  VM Network  "VM Network"
 
 NICs and Associated Networks:
-  GigabitEthernet1               : VM Network
+  GigabitEthernet1 : VM Network
     VMXNET3 ethernet adapter on "VM Network"
-  GigabitEthernet2               : VM Network
+  GigabitEthernet2 : VM Network
     VMXNET3 ethernet adapter on "VM Network"
-  GigabitEthernet3               : VM Network
+  GigabitEthernet3 : VM Network
     VMXNET3 ethernet adapter on "VM Network"
 
 Properties:
-  login-username                 :
-      "Login Username"
+  login-username       Login Username                   ""
       Username for remote login
-  login-password                 :
-      "Login Password"
+  login-password       Login Password                   ""
       Password for remote login.
       WARNING: While this password will be stored securely within IOS, the
       plain-text password will be recoverable from the OVF descriptor file.
-  mgmt-ipv4-addr                 :
-      "Management IPv4 Address/Mask"
+  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
       IPv4 address and mask for management interface (such as "10.1.1.100/24"
       or "10.1.1.100 255.255.255.0"), or "dhcp" to configure via DHCP
-  mgmt-ipv4-gateway              :
-      "Management IPv4 Default Gateway"
+  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
       IPv4 default gateway address (such as "10.1.1.1") for management
       interface, or "dhcp" to configure via DHCP
-  hostname                       :
-      "Router Name"
+  hostname             Router Name                      ""
       Hostname of this router
-  enable-ssh-server              : false
-      "Enable SSH Login"
+  enable-ssh-server    Enable SSH Login                 "false"
       Enable remote login via SSH and disable remote login via telnet. Requires
       login-username and login-password to be set!
-  enable-http-server             : false
-      "Enable HTTP Server"
+  enable-http-server   Enable HTTP Server               "false"
       Enable HTTP server capability for REST API
-  enable-https-server            : false
-      "Enable HTTPS Server"
+  enable-https-server  Enable HTTPS Server              "false"
       Enable HTTPS server capability for REST API
-  privilege-password             :
-      "Enable Password"
+  privilege-password   Enable Password                  ""
       Password for privileged (enable) access.
       WARNING: While this password will be stored securely within IOS, the
       plain-text password will be recoverable from the OVF descriptor file.
-  domain-name                    :
-      "Domain Name"
+  domain-name          Domain Name                      ""
       Network domain name (such as "cisco.com")
 """.format(self.input_ovf))
 
@@ -331,40 +300,40 @@ Product:  Cisco IOSv Virtual Router
 Vendor:   Cisco Systems, Inc.
 Version:  15.4(2.4)T
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ IDE 0:0
-  (disk placeholder)                         --  128.00 MB harddisk @ IDE 0:1
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ IDE 0:0
+  (disk placeholder)        -- 128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
   System types:             vmx-08 Cisco:Internal:VMCloud-01
   IDE device types:         virtio
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  1CPU-384MB-2NIC (default)          1    384 MB      2       2   2 /   1.12 GB
-  1CPU-1GB-8NIC                      1    384 MB      8       2   2 /   1.12 GB
-  1CPU-3GB-10NIC                     1    384 MB     10       2   2 /   1.12 GB
-  1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   1.12 GB
+Configuration Profiles:     CPUs    Memory NICs Serials Disks/Capacity
+                            ---- --------- ---- ------- --------------
+  1CPU-384MB-2NIC (default)    1    384 MB    2       2  2 /   1.12 GB
+  1CPU-1GB-8NIC                1    384 MB    8       2  2 /   1.12 GB
+  1CPU-3GB-10NIC               1    384 MB   10       2  2 /   1.12 GB
+  1CPU-3GB-16NIC               1    384 MB   16       2  2 /   1.12 GB
 
 Networks:
-  GigabitEthernet0_0
-  GigabitEthernet0_1
-  GigabitEthernet0_2
-  GigabitEthernet0_3
-  GigabitEthernet0_4
-  GigabitEthernet0_5
-  GigabitEthernet0_6
-  GigabitEthernet0_7
-  GigabitEthernet0_8
-  GigabitEthernet0_9
-  GigabitEthernet0_10
-  GigabitEthernet0_11
-  GigabitEthernet0_12
-  GigabitEthernet0_13
-  GigabitEthernet0_14
-  GigabitEthernet0_15
+  GigabitEthernet0_0   "Data network 1"
+  GigabitEthernet0_1   "Data network 2"
+  GigabitEthernet0_2   "Data network 3"
+  GigabitEthernet0_3   "Data network 4"
+  GigabitEthernet0_4   "Data network 5"
+  GigabitEthernet0_5   "Data network 6"
+  GigabitEthernet0_6   "Data network 7"
+  GigabitEthernet0_7   "Data network 8"
+  GigabitEthernet0_8   "Data network 9"
+  GigabitEthernet0_9   "Data network 10"
+  GigabitEthernet0_10  "Data network 11"
+  GigabitEthernet0_11  "Data network 12"
+  GigabitEthernet0_12  "Data network 13"
+  GigabitEthernet0_13  "Data network 14"
+  GigabitEthernet0_14  "Data network 15"
+  GigabitEthernet0_15  "Data network 16"
 """.format(self.iosv_ovf))
 
         self.instance.set_value('verbosity', 'verbose')
@@ -378,87 +347,87 @@ Product:  Cisco IOSv Virtual Router
 Vendor:   Cisco Systems, Inc.
           http://www.cisco.com
 Version:  15.4(2.4)T
-          Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version \
-15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
+          Cisco IOS Software, IOSv Software (VIOS-ADVENTERPRISEK9-M), Version
+          15.4(2.4)T,  ENGINEERING WEEKLY BUILD, synced to  V153_3_M1_9
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ IDE 0:0
-  (disk placeholder)                         --  128.00 MB harddisk @ IDE 0:1
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ IDE 0:0
+  (disk placeholder)        -- 128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
   System types:             vmx-08 Cisco:Internal:VMCloud-01
   IDE device types:         virtio
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  1CPU-384MB-2NIC (default)          1    384 MB      2       2   2 /   1.12 GB
+Configuration Profiles:     CPUs    Memory NICs Serials Disks/Capacity
+                            ---- --------- ---- ------- --------------
+  1CPU-384MB-2NIC (default)    1    384 MB    2       2  2 /   1.12 GB
     Label:          "Small"
     Description:    "Minimal hardware profile - 1 vCPU, 384 MB RAM, 2 NICs"
-  1CPU-1GB-8NIC                      1    384 MB      8       2   2 /   1.12 GB
+  1CPU-1GB-8NIC                1    384 MB    8       2  2 /   1.12 GB
     Label:          "Medium"
     Description:    "Medium hardware profile - 1 vCPU, 1 GB RAM, 8 NICs"
-  1CPU-3GB-10NIC                     1    384 MB     10       2   2 /   1.12 GB
+  1CPU-3GB-10NIC               1    384 MB   10       2  2 /   1.12 GB
     Label:          "Large (ESXi)"
     Description:    "Large hardware profile for ESXi - 1 vCPU, 3 GB RAM, 10
                      NICs"
-  1CPU-3GB-16NIC                     1    384 MB     16       2   2 /   1.12 GB
+  1CPU-3GB-16NIC               1    384 MB   16       2  2 /   1.12 GB
     Label:          "Large (non-ESXi)"
     Description:    "Large hardware profile for other hypervisors - 1 vCPU, 3
                      GB RAM, 16 NICs. (Note: ESXi only permits 10 NICs in a VM
                      so this profile is unsupported on ESXi.)"
 
 Networks:
-  GigabitEthernet0_0             Data network 1
-  GigabitEthernet0_1             Data network 2
-  GigabitEthernet0_2             Data network 3
-  GigabitEthernet0_3             Data network 4
-  GigabitEthernet0_4             Data network 5
-  GigabitEthernet0_5             Data network 6
-  GigabitEthernet0_6             Data network 7
-  GigabitEthernet0_7             Data network 8
-  GigabitEthernet0_8             Data network 9
-  GigabitEthernet0_9             Data network 10
-  GigabitEthernet0_10            Data network 11
-  GigabitEthernet0_11            Data network 12
-  GigabitEthernet0_12            Data network 13
-  GigabitEthernet0_13            Data network 14
-  GigabitEthernet0_14            Data network 15
-  GigabitEthernet0_15            Data network 16
+  GigabitEthernet0_0   "Data network 1"
+  GigabitEthernet0_1   "Data network 2"
+  GigabitEthernet0_2   "Data network 3"
+  GigabitEthernet0_3   "Data network 4"
+  GigabitEthernet0_4   "Data network 5"
+  GigabitEthernet0_5   "Data network 6"
+  GigabitEthernet0_6   "Data network 7"
+  GigabitEthernet0_7   "Data network 8"
+  GigabitEthernet0_8   "Data network 9"
+  GigabitEthernet0_9   "Data network 10"
+  GigabitEthernet0_10  "Data network 11"
+  GigabitEthernet0_11  "Data network 12"
+  GigabitEthernet0_12  "Data network 13"
+  GigabitEthernet0_13  "Data network 14"
+  GigabitEthernet0_14  "Data network 15"
+  GigabitEthernet0_15  "Data network 16"
 
 NICs and Associated Networks:
-  GigabitEthernet0/0             : GigabitEthernet0_0
+  GigabitEthernet0/0  : GigabitEthernet0_0
     NIC representing GigabitEthernet0/0 interface
-  GigabitEthernet0/1             : GigabitEthernet0_1
+  GigabitEthernet0/1  : GigabitEthernet0_1
     NIC representing GigabitEthernet0/1 interface
-  GigabitEthernet0/2             : GigabitEthernet0_2
+  GigabitEthernet0/2  : GigabitEthernet0_2
     NIC representing GigabitEthernet0/2 interface
-  GigabitEthernet0/3             : GigabitEthernet0_3
+  GigabitEthernet0/3  : GigabitEthernet0_3
     NIC representing GigabitEthernet0/3 interface
-  GigabitEthernet0/4             : GigabitEthernet0_4
+  GigabitEthernet0/4  : GigabitEthernet0_4
     NIC representing GigabitEthernet0/4 interface
-  GigabitEthernet0/5             : GigabitEthernet0_5
+  GigabitEthernet0/5  : GigabitEthernet0_5
     NIC representing GigabitEthernet0/5 interface
-  GigabitEthernet0/6             : GigabitEthernet0_6
+  GigabitEthernet0/6  : GigabitEthernet0_6
     NIC representing GigabitEthernet0/6 interface
-  GigabitEthernet0/7             : GigabitEthernet0_7
+  GigabitEthernet0/7  : GigabitEthernet0_7
     NIC representing GigabitEthernet0/7 interface
-  GigabitEthernet0/8             : GigabitEthernet0_8
+  GigabitEthernet0/8  : GigabitEthernet0_8
     NIC representing GigabitEthernet0/8 interface
-  GigabitEthernet0/9             : GigabitEthernet0_9
+  GigabitEthernet0/9  : GigabitEthernet0_9
     NIC representing GigabitEthernet0/9 interface
-  GigabitEthernet0/10            : GigabitEthernet0_10
+  GigabitEthernet0/10 : GigabitEthernet0_10
     NIC representing GigabitEthernet0/10 interface
-  GigabitEthernet0/11            : GigabitEthernet0_11
+  GigabitEthernet0/11 : GigabitEthernet0_11
     NIC representing GigabitEthernet0/11 interface
-  GigabitEthernet0/12            : GigabitEthernet0_12
+  GigabitEthernet0/12 : GigabitEthernet0_12
     NIC representing GigabitEthernet0/12 interface
-  GigabitEthernet0/13            : GigabitEthernet0_13
+  GigabitEthernet0/13 : GigabitEthernet0_13
     NIC representing GigabitEthernet0/13 interface
-  GigabitEthernet0/14            : GigabitEthernet0_14
+  GigabitEthernet0/14 : GigabitEthernet0_14
     NIC representing GigabitEthernet0/14 interface
-  GigabitEthernet0/15            : GigabitEthernet0_15
+  GigabitEthernet0/15 : GigabitEthernet0_15
     NIC representing GigabitEthernet0/15 interface
 """.format(self.iosv_ovf))
 
@@ -471,28 +440,30 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 Annotation: Hello world! This is a version 0.9 OVF.
 
+            Are you still reading this?
+
 End User License Agreement(s):
   Licensing agreement
     (not displayed, use 'cot info --verbose' if desired)
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-04
   SCSI device types:        lsilogic
   Ethernet device types:    PCNet32
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            1   8.00 GB    1       0  1 /   1.00 GB
 
 Networks:
-  bridged
+  bridged  "The bridged network"
 
 NICs and Associated Networks:
-  ethernet0                      : bridged
+  ethernet0     : bridged
 """.format(self.v09_ovf))
 
         self.instance.set_value('verbosity', 'verbose')
@@ -502,29 +473,35 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 Annotation: Hello world! This is a version 0.9 OVF.
 
+            Are you still reading this?
+
 End User License Agreement(s):
   Licensing agreement
     Licensing text, oh licensing text!
     How lovely is thy legalese!
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+    1. Open Virtualization Format
+    2. ????
+    3. Profit!
+
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-04
   SCSI device types:        lsilogic
   Ethernet device types:    PCNet32
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     1   8.00 GB      1       0   1 /   1.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            1   8.00 GB    1       0  1 /   1.00 GB
 
 Networks:
-  bridged                        The bridged network
+  bridged  "The bridged network"
 
 NICs and Associated Networks:
-  ethernet0                      : bridged
+  ethernet0     : bridged
     PCNet32 ethernet adapter
 """.format(self.v09_ovf))
 
@@ -535,27 +512,27 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-08
   SCSI device types:        virtio lsilogic
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            2   1.50 GB    4       0  1 /   1.00 GB
 
 Networks:
-  lanethernet0
+  lanethernet0  "The lanethernet0 network"
 
 NICs and Associated Networks:
-  Network adapter 1              : lanethernet0
-  Network adapter 2              : lanethernet0
-  Network adapter 3              : lanethernet0
-  Network adapter 4              : lanethernet0
+  Network adapter 1 : lanethernet0
+  Network adapter 2 : lanethernet0
+  Network adapter 3 : lanethernet0
+  Network adapter 4 : lanethernet0
 """.format(self.vmware_ovf))
 
         self.instance.set_value('verbosity', 'verbose')
@@ -563,30 +540,30 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  input.vmdk                          149.00 kB    1.00 GB harddisk @ SCSI 0:0
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-08
   SCSI device types:        virtio lsilogic
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     2   1.50 GB      4       0   1 /   1.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            2   1.50 GB    4       0  1 /   1.00 GB
 
 Networks:
-  lanethernet0                   The lanethernet0 network
+  lanethernet0  "The lanethernet0 network"
 
 NICs and Associated Networks:
-  Network adapter 1              : lanethernet0
+  Network adapter 1 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
-  Network adapter 2              : lanethernet0
+  Network adapter 2 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
-  Network adapter 3              : lanethernet0
+  Network adapter 3 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
-  Network adapter 4              : lanethernet0
+  Network adapter 4 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
 """.format(self.vmware_ovf))
 
@@ -598,25 +575,24 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  ubuntu.2.0-disk1.vmdk                            8.00 GB harddisk @ SATA 0:0
+Files and Disks:        File Size  Capacity Device
+                        --------- --------- --------------------
+  ubuntu.2.0-disk1.vmdk             8.00 GB harddisk @ SATA 0:0
 
 Hardware Variants:
   System types:             virtualbox-2.2
   IDE device types:         PIIX4
   Ethernet device types:    E1000
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  None (default)                     1    512 MB      1       0   1 /   8.00 GB
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            1    512 MB    1       0  1 /   8.00 GB
 
 Networks:
-  NAT                            Logical network used by this appliance.
+  NAT  "Logical network used by this appliance."
 
 NICs and Associated Networks:
-  <instance 10>                  : NAT
+  <instance 10> : NAT
     Ethernet adapter on 'NAT'
 """.format(self.v20_vbox_ovf))
 
@@ -628,7 +604,6 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-
 Product:  (No product string)
           (No product URL)
 Vendor:   (No vendor string)
@@ -636,20 +611,135 @@ Vendor:   (No vendor string)
 Version:  (No version string)
           (No detailed version string)
 
-Files and Disks:                      File Size   Capacity Device
-                                     ---------- ---------- --------------------
-  this_is_a_really_long_filename_...  149.00 kB    1.00 GB 
-  input.iso                           352.00 kB            cdrom @ (?) ?:0
-  (disk placeholder)                         --  128.00 MB 
+Files and Disks:                       File Size  Capacity Device
+                                       --------- --------- --------------------
+  this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB 
+  input.iso                            352.00 kB           cdrom @ (?) ?:0
+  (disk placeholder)                          -- 128.00 MB 
 
-Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                  ---- --------- ------ ------- ---------------
-  myprofile (default)                3      0 MB      0       0   1 /   1.12 GB
+Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
+                                    ---- --------- ---- ------- --------------
+  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
     Label:          "what a profile"
     Description:    "this is"
-  howlongofaprofilenamecanweuse      0      1 MB      0       0   1 /   1.12 GB
+  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
     Label:          "howlongofaprofilenamecanweusehere"
     Description:    "prettylongitappears"
+
+Networks:
+  This is a rather verbose network name, eh what?  "Why yes, it is!"
+  name-but-no-description
+
+NICs and Associated Networks:
+  <instance 27> : This is a rather verbose network name, eh what?
+
+Properties:
+  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+      Anti-
+      dis-
+      establishment-
+      arian-
+
+      ...
+
+      ism!
+""".format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
+        self.assertLogged(**self.NONEXISTENT_FILE)
+
+    def test_wrapping(self):
+        """Test info string on a narrower-than-usual terminal"""
+        def narrow_width():
+            return 60
+
+        self.instance.UI.terminal_width = narrow_width
+
+        self.instance.set_value("PACKAGE_LIST", [self.invalid_ovf])
+        self.check_cot_output("""
+-----------------------------------------------------------
+{0}
+-----------------------------------------------------------
+Product:  (No product string)
+          (No product URL)
+Vendor:   (No vendor string)
+          (No vendor URL)
+Version:  (No version string)
+          (No detailed version string)
+
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  this_is_a_reall... 149.00 kB   1.00 GB 
+  input.iso          352.00 kB           cdrom @ (?) ?:0
+  (disk placeholder)        -- 128.00 MB 
+
+Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
+                                    ---- --------- ---- ------- --------------
+  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
+    Label:          "what a profile"
+    Description:    "this is"
+  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+    Label:          "howlongofaprofilenamecanweusehere"
+    Description:    "prettylongitappears"
+
+Networks:
+  This is a rather verbose network name, eh what?  "Why..."
+  name-but-no-description
+
+NICs and Associated Networks:
+  <instance 27> : This is a rather verbose network name, eh what?
+
+Properties:
+  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+""".format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
+        self.assertLogged(**self.NONEXISTENT_FILE)
+
+        self.instance.set_value("verbosity", "verbose")
+        self.check_cot_output("""
+-----------------------------------------------------------
+{0}
+-----------------------------------------------------------
+Product:  (No product string)
+          (No product URL)
+Vendor:   (No vendor string)
+          (No vendor URL)
+Version:  (No version string)
+          (No detailed version string)
+
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  this_is_a_reall... 149.00 kB   1.00 GB 
+  input.iso          352.00 kB           cdrom @ (?) ?:0
+  (disk placeholder)        -- 128.00 MB 
+
+Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
+                                    ---- --------- ---- ------- --------------
+  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
+    Label:          "what a profile"
+    Description:    "this is"
+  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+    Label:          "howlongofaprofilenamecanweusehere"
+    Description:    "prettylongitappears"
+
+Networks:
+  This is a rather verbose network name, eh what?  "Why
+                                                    yes, it
+                                                    is!"
+  name-but-no-description
+
+NICs and Associated Networks:
+  <instance 27> : This is a rather verbose network name, eh what?
+
+Properties:
+  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+      Anti-
+      dis-
+      establishment-
+      arian-
+
+      ...
+
+      ism!
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)

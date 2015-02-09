@@ -91,9 +91,9 @@ class COTAddFile(COTSubmodule):
     def create_subparser(self, parent):
         p = parent.add_parser(
             'add-file',
-            usage="""
-  cot add-file --help
-  cot <opts> add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]""",
+            usage=self.UI.fill_usage("add-file", [
+                "FILE PACKAGE [-o OUTPUT] [-f FILE_ID]",
+            ]),
             help="Add a file to an OVF package",
             description="""
 Add or replace a file in the given OVF. If the specified file

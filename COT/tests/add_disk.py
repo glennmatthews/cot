@@ -672,7 +672,7 @@ ovf:size="{input_size}" />
 +        <rasd:Parent>1</rasd:Parent>
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
-     </ovf:VirtualHardwareSection>
+       <ovf:Item ovf:configuration="myprofile">
         """.format(input_size=self.FILE_SIZE['input.vmdk']))
         # ovftool will fail because invalid_ovf has an invalid Disk fileRef
         self.validate_output_with_ovftool = False

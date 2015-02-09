@@ -16,7 +16,6 @@ import logging
 import re
 import shlex
 import getpass
-import textwrap
 
 from distutils.version import StrictVersion
 
@@ -116,9 +115,9 @@ class COTDeploy(COTReadOnlySubmodule):
         # Create 'cot deploy' parser
         self.parser = parent.add_parser(
             'deploy',
-            usage="""
-  cot deploy --help
-  cot <opts> deploy PACKAGE esxi ...""",
+            usage=self.UI.fill_usage("deploy", [
+                "PACKAGE esxi ...",
+            ]),
             help="Create a new VM on the target hypervisor from the given OVF",
             description="""Deploy a virtual machine to a specified server.""")
 
@@ -234,7 +233,7 @@ class COTDeployESXi(COTDeploy):
             while configuration is None:
                 if not profile_info_string:
                     profile_info_string = vm.profile_info_string(
-                        enumerate=True)
+                        self.UI.terminal_width() - 1, enumerate=True)
                 user_input = self.UI.get_input(
                     profile_info_string + "\nChoose a Configuration:", "0")
                 if user_input in profile_list:
@@ -309,35 +308,34 @@ class COTDeployESXi(COTDeploy):
         # Create 'cot deploy ... esxi' parser
         p = self.subparsers.add_parser(
             'esxi', parents=[self.generic_parser],
-            usage="""
-  cot deploy PACKAGE esxi --help
-  cot <opts> deploy PACKAGE esxi LOCATOR
-                                 [-u USERNAME] [-p PASSWORD]
-                                 [-c CONFIGURATION] [-n VM_NAME] [-P]
-                                 [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
-                                 [-d DATASTORE] [-o=OVFTOOL_ARGS]""",
+            usage=self.UI.fill_usage("deploy PACKAGE esxi", [
+                "LOCATOR [-u USERNAME] [-p PASSWORD] [-c CONFIGURATION] "
+                "[-n VM_NAME] [-P] [-N OVF1=HOST1 [-N OVF2=HOST2 ...]] "
+                "[-d DATASTORE] [-o=OVFTOOL_ARGS]",
+            ]),
             formatter_class=argparse.RawDescriptionHelpFormatter,
             help="Deploy to ESXi, vSphere, or vCenter",
             description="Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor",
-            epilog=textwrap.dedent("""Examples:
-  cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test_vm
-    Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
-    creating a VM named 'test_vm' from foo.ova.
-
-  cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
-    Deploy to vSphere/ESXi server 192.0.2.100 with username admin (prompting
-    the user to input the password at runtime) creating a VM based on the
-    '1CPU-2.5GB' profile in foo.ova.
-
-  cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1" -u administrator \\
-        -N 'GigabitEthernet1=VM Network' -N 'GigabitEthernet2=myvswitch'
-    Deploy to vSphere server 192.0.2.1 which belongs to datacenter 'mydc' on
-    vCenter server 192.0.2.100, and map the two NIC networks to vSwitches.
-    Note that in this case -u specifies the vCenter login username.
-
-  cot deploy foo.ova esxi 192.0.2.100 -u admin -p password \\
-        --ovftool-args="--overwrite --acceptAllEulas"
-    Deploy with passthrough arguments to ovftool."""))
+            epilog=self.UI.fill_examples([
+                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
+                 ' -n test_vm',
+                 "Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+                 " admin/admin, creating a VM named 'test_vm' from foo.ova."),
+                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB',
+                 "Deploy to vSphere/ESXi server 192.0.2.100, with username"
+                 " admin (prompting the user to input a password at runtime),"
+                 " creating a VM based on profile '1CPU-2.5GB' in foo.ova."),
+                ('cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1"'
+                 ' -u administrator -N "GigabitEthernet1=VM Network"'
+                 ' -N "GigabitEthernet2=myvswitch"',
+                 "Deploy to vSphere server 192.0.2.1 which belongs to"
+                 " datacenter 'mydc' on vCenter server 192.0.2.100, and map"
+                 " the two NIC networks to vSwitches. Note that in this case"
+                 " -u specifies the vCenter login username."),
+                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p password'
+                 ' --ovftool-args="--overwrite --acceptAllEulas"',
+                 "Deploy with passthrough arguments to ovftool.")
+            ]))
 
         # ovftool uses '-ds' as shorthand for '--datastore', so let's allow it.
         p.add_argument("-d", "-ds", "--datastore",

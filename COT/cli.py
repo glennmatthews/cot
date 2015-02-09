@@ -14,20 +14,25 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import os
 import sys
 import argparse
+import re
 import logging
 import getpass
 import textwrap
+
+# get_terminal_size() is part of the standard library in python 3.3 and later
+try:
+    from shutil import get_terminal_size
+except ImportError:
+    from backports.shutil_get_terminal_size import get_terminal_size
 
 from COT import __version_long__
 from COT.data_validation import InvalidInputError
 from COT.ui_shared import UI
 
 logger = logging.getLogger(__name__)
-
-# Where do we want to wrap lines when pretty-printing?
-TEXT_WIDTH = 79
 
 
 class CLI(UI):
@@ -43,9 +48,101 @@ class CLI(UI):
         self.getpass = getpass.getpass
         self.handler = None
         self.master_logger = None
+        self.wrapper = textwrap.TextWrapper(width=self.terminal_width() - 1)
 
         self.create_parser()
         self.create_subparsers()
+
+    def terminal_width(self):
+        """Returns the width of the terminal in columns."""
+        return get_terminal_size().columns
+
+    def fill_usage(self, subcommand, usage_list):
+        """Pretty-print a list of usage strings for a COT subcommand.
+        Automatically prepends a --help usage string.
+        """
+        # Automatically add a line for --help to the usage
+        output_lines = ["\n  cot "+subcommand+" --help"]
+        # Prefix for all other usage lines:
+        prefix = "  cot <opts> {0}".format(subcommand)
+        # We don't want to use standard 'textwrap' because we'd like to keep
+        # usage groups together, while textwrap only pays attention to
+        # whitespace, so textwrap might wrap a line as follows:
+        # cot subcommand PACKAGE [-o
+        #                OUTPUT]
+        # ...but we instead want to wrap the whole command group, as:
+        # cot subcommand PACKAGE
+        #                [-o OUTPUT]
+        splitter = re.compile(r"""
+          \(.*?\)+   |  # Params inside (possibly nested) parens
+          \[.*?\]+   |  # Params inside (possibly nested) brackets
+          -\S+\s+\S+ |  # Dashed arg followed by metavar
+          \S+           # Positional arg
+        """, re.VERBOSE)
+        width = self.terminal_width()
+        for line in usage_list:
+            usage_groups = re.findall(splitter, line)
+
+            # Our preferred wrapping is like this:
+            #   cot <opts> subcommand1 FOO BAR [-b BAZ]
+            #                          [-t BAT] [-q | -v]
+            #   cot <opts> subcommand2 BAR [-b BAZ]
+            #                          [-t BAT] [-q | -v]
+            # (aligning wrapped params at the end of 'subcommand')
+            # but if the terminal is relatively narrow or the
+            # subcommand or params are very long, we can
+            # wrap with shorter indentation to the end of 'cot':
+            #   cot <opts> really-long-subcommand FOO
+            #       BAR [-b BAZ] [-t BAT] [-q | -v]
+            #   cot <opts> subcommand BAR [-b BAZ]
+            #       [-v VERBOSE_PARAM_NAME] [-t BAT]
+            max_group_len = max([len(s) for s in usage_groups])
+            if len(prefix) + max_group_len >= width:
+                indent_line = "     "
+            else:
+                indent_line = " "*len(prefix)
+
+            wrapped_line = prefix
+            for group in usage_groups:
+                if len(wrapped_line) + len(group) >= width:
+                    # time to save this line and start a new one
+                    output_lines.append(wrapped_line)
+                    wrapped_line = indent_line
+                wrapped_line += " " + group
+            output_lines.append(wrapped_line)
+        return "\n".join(output_lines)
+
+    def fill_examples(self, example_list):
+        """Pretty-print a set of usage examples.
+        example_list == [(example1, desc1), (example2, desc2), ...]
+        """
+        output_lines = ["Examples:"]
+        # Just as in fill_usage, the default textwrap behavior
+        # results in less-than-ideal formatting for CLI examples.
+        # So we'll do it ourselves:
+        splitter = re.compile(r"""
+          -\S+[ =]\S+   |  # Dashed arg followed by simple value
+          -\S+[ =]".*?" |  # Dashed arg followed by quoted value
+          \S+              # Positional arg
+        """, re.VERBOSE)
+        width = self.terminal_width()
+        self.wrapper.width = width - 1
+        self.wrapper.initial_indent = '    '
+        self.wrapper.subsequent_indent = '    '
+        self.wrapper.break_on_hyphens = False
+        for (example, desc) in example_list:
+            if len(output_lines) > 1:
+                output_lines.append("")
+            wrapped_line = " "
+            for param in re.findall(splitter, example):
+                if len(wrapped_line) + len(param) >= (width - 2):
+                    wrapped_line += " \\"
+                    output_lines.append(wrapped_line)
+                    wrapped_line = "       "
+                wrapped_line += " " + param
+            output_lines.append(wrapped_line)
+            output_lines.extend(self.wrapper.wrap(desc))
+        return "\n".join(output_lines)
 
     def formatter(self, verbosity=logging.INFO):
         """Create formatter for log output.
@@ -97,9 +194,12 @@ class CLI(UI):
 
         # Wrap prompt to screen
         prompt_w = []
+        self.wrapper.width = self.terminal_width() - 1
+        self.wrapper.initial_indent = ''
+        self.wrapper.subsequent_indent = ''
+        self.wrapper.break_on_hyphens = False
         for line in prompt.splitlines():
-            prompt_w.append(textwrap.fill(line, TEXT_WIDTH,
-                                          break_on_hyphens=False))
+            prompt_w.extend(self.wrapper.wrap(line))
         prompt = "\n".join(prompt_w)
 
         while True:
@@ -134,6 +234,13 @@ class CLI(UI):
 
     def create_parser(self):
         # Top-level command definition and any global options
+
+        # Argparse checks the environment variable COLUMNS to control
+        # its line-wrapping
+        os.environ['COLUMNS'] = str(self.terminal_width())
+        self.wrapper.width = self.terminal_width() - 1
+        self.wrapper.initial_indent = ''
+        self.wrapper.subsequent_indent = ''
         parser = argparse.ArgumentParser(
             prog="cot",
             usage="""
@@ -141,10 +248,11 @@ class CLI(UI):
   cot --version
   cot <command> --help
   cot <options> <command> <command-options>""",
-            description=(__version_long__ + """
-A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
-with a focus on virtualized network appliances such as the Cisco CSR 1000V and
-Cisco IOS XRv platforms."""),
+            description=(__version_long__ + "\n" + self.wrapper.fill(
+                "A tool for editing Open Virtualization Format (.ovf, .ova) "
+                "virtual appliances, with a focus on virtualized network "
+                "appliances such as the Cisco CSR 1000V and Cisco IOS XRv "
+                "platforms.")),
             epilog=("""
 Note: some subcommands rely on external software tools, including:
 * qemu-img (http://www.qemu.org/)

@@ -1,3 +1,4 @@
 argparse
+backports.shutil_get_terminal_size
 colorlog>=2.5.0
 verboselogs>=1.0

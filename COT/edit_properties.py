@@ -165,12 +165,11 @@ class COTEditProperties(COTSubmodule):
         p = parent.add_parser(
             'edit-properties', add_help=False,
             help="""Edit environment properties of an OVF""",
-            usage="""
-  cot edit-properties --help
-  cot <opts> edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
-                             [-o OUTPUT]
-  cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
-  cot <opts> edit-properties PACKAGE [-o OUTPUT]""",
+            usage=self.UI.fill_usage("edit-properties", [
+                "PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...] [-o OUTPUT]",
+                "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
+                "PACKAGE [-o OUTPUT]",
+            ]),
             description="""
 Configure environment properties of the given OVF or OVA. The user may specify
 key-value pairs as command-line arguments or may provide a config-file to
