@@ -620,14 +620,19 @@ class OVF(VMDescription, XML):
             str_list = ["NICs and Associated Networks:"]
             wrapper.initial_indent = '    '
             wrapper.subsequent_indent = '    '
+            max_len = max([len(str(nic.get_value(self.ELEMENT_NAME)))
+                           for nic in nics])
+            max_len = max(max_len, len("<instance 10>"))
+            template = "  {name:{len}} : {nwk}"
             for nic in nics:
                 network_name = nic.get_value(self.CONNECTION)
                 nic_name = nic.get_value(self.ELEMENT_NAME)
                 if nic_name is None:
                     nic_name = "<instance {0}>".format(
                         nic.get_value(self.INSTANCE_ID))
-                str_list.append("  {0:30} : {1}"
-                                .format(nic_name, network_name))
+                str_list.append(template.format(name=nic_name,
+                                                len=max_len,
+                                                nwk=network_name))
                 if verbosity_option == 'verbose':
                     desc = nic.get_value(self.ITEM_DESCRIPTION)
                     if desc is None:

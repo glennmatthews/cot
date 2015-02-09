@@ -153,9 +153,9 @@ Networks:
   VM Network  "VM Network"
 
 NICs and Associated Networks:
-  GigabitEthernet1               : VM Network
-  GigabitEthernet2               : VM Network
-  GigabitEthernet3               : VM Network
+  GigabitEthernet1 : VM Network
+  GigabitEthernet2 : VM Network
+  GigabitEthernet3 : VM Network
 
 Properties:
   login-username       Login Username                   ""
@@ -249,11 +249,11 @@ Networks:
   VM Network  "VM Network"
 
 NICs and Associated Networks:
-  GigabitEthernet1               : VM Network
+  GigabitEthernet1 : VM Network
     VMXNET3 ethernet adapter on "VM Network"
-  GigabitEthernet2               : VM Network
+  GigabitEthernet2 : VM Network
     VMXNET3 ethernet adapter on "VM Network"
-  GigabitEthernet3               : VM Network
+  GigabitEthernet3 : VM Network
     VMXNET3 ethernet adapter on "VM Network"
 
 Properties:
@@ -397,37 +397,37 @@ Networks:
   GigabitEthernet0_15  "Data network 16"
 
 NICs and Associated Networks:
-  GigabitEthernet0/0             : GigabitEthernet0_0
+  GigabitEthernet0/0  : GigabitEthernet0_0
     NIC representing GigabitEthernet0/0 interface
-  GigabitEthernet0/1             : GigabitEthernet0_1
+  GigabitEthernet0/1  : GigabitEthernet0_1
     NIC representing GigabitEthernet0/1 interface
-  GigabitEthernet0/2             : GigabitEthernet0_2
+  GigabitEthernet0/2  : GigabitEthernet0_2
     NIC representing GigabitEthernet0/2 interface
-  GigabitEthernet0/3             : GigabitEthernet0_3
+  GigabitEthernet0/3  : GigabitEthernet0_3
     NIC representing GigabitEthernet0/3 interface
-  GigabitEthernet0/4             : GigabitEthernet0_4
+  GigabitEthernet0/4  : GigabitEthernet0_4
     NIC representing GigabitEthernet0/4 interface
-  GigabitEthernet0/5             : GigabitEthernet0_5
+  GigabitEthernet0/5  : GigabitEthernet0_5
     NIC representing GigabitEthernet0/5 interface
-  GigabitEthernet0/6             : GigabitEthernet0_6
+  GigabitEthernet0/6  : GigabitEthernet0_6
     NIC representing GigabitEthernet0/6 interface
-  GigabitEthernet0/7             : GigabitEthernet0_7
+  GigabitEthernet0/7  : GigabitEthernet0_7
     NIC representing GigabitEthernet0/7 interface
-  GigabitEthernet0/8             : GigabitEthernet0_8
+  GigabitEthernet0/8  : GigabitEthernet0_8
     NIC representing GigabitEthernet0/8 interface
-  GigabitEthernet0/9             : GigabitEthernet0_9
+  GigabitEthernet0/9  : GigabitEthernet0_9
     NIC representing GigabitEthernet0/9 interface
-  GigabitEthernet0/10            : GigabitEthernet0_10
+  GigabitEthernet0/10 : GigabitEthernet0_10
     NIC representing GigabitEthernet0/10 interface
-  GigabitEthernet0/11            : GigabitEthernet0_11
+  GigabitEthernet0/11 : GigabitEthernet0_11
     NIC representing GigabitEthernet0/11 interface
-  GigabitEthernet0/12            : GigabitEthernet0_12
+  GigabitEthernet0/12 : GigabitEthernet0_12
     NIC representing GigabitEthernet0/12 interface
-  GigabitEthernet0/13            : GigabitEthernet0_13
+  GigabitEthernet0/13 : GigabitEthernet0_13
     NIC representing GigabitEthernet0/13 interface
-  GigabitEthernet0/14            : GigabitEthernet0_14
+  GigabitEthernet0/14 : GigabitEthernet0_14
     NIC representing GigabitEthernet0/14 interface
-  GigabitEthernet0/15            : GigabitEthernet0_15
+  GigabitEthernet0/15 : GigabitEthernet0_15
     NIC representing GigabitEthernet0/15 interface
 """.format(self.iosv_ovf))
 
@@ -439,6 +439,8 @@ NICs and Associated Networks:
 {0}
 -------------------------------------------------------------------------------
 Annotation: Hello world! This is a version 0.9 OVF.
+
+            Are you still reading this?
 
 End User License Agreement(s):
   Licensing agreement
@@ -461,7 +463,7 @@ Networks:
   bridged  "The bridged network"
 
 NICs and Associated Networks:
-  ethernet0                      : bridged
+  ethernet0     : bridged
 """.format(self.v09_ovf))
 
         self.instance.set_value('verbosity', 'verbose')
@@ -471,10 +473,16 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 Annotation: Hello world! This is a version 0.9 OVF.
 
+            Are you still reading this?
+
 End User License Agreement(s):
   Licensing agreement
     Licensing text, oh licensing text!
     How lovely is thy legalese!
+
+    1. Open Virtualization Format
+    2. ????
+    3. Profit!
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
@@ -493,7 +501,7 @@ Networks:
   bridged  "The bridged network"
 
 NICs and Associated Networks:
-  ethernet0                      : bridged
+  ethernet0     : bridged
     PCNet32 ethernet adapter
 """.format(self.v09_ovf))
 
@@ -521,10 +529,10 @@ Networks:
   lanethernet0  "The lanethernet0 network"
 
 NICs and Associated Networks:
-  Network adapter 1              : lanethernet0
-  Network adapter 2              : lanethernet0
-  Network adapter 3              : lanethernet0
-  Network adapter 4              : lanethernet0
+  Network adapter 1 : lanethernet0
+  Network adapter 2 : lanethernet0
+  Network adapter 3 : lanethernet0
+  Network adapter 4 : lanethernet0
 """.format(self.vmware_ovf))
 
         self.instance.set_value('verbosity', 'verbose')
@@ -549,13 +557,13 @@ Networks:
   lanethernet0  "The lanethernet0 network"
 
 NICs and Associated Networks:
-  Network adapter 1              : lanethernet0
+  Network adapter 1 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
-  Network adapter 2              : lanethernet0
+  Network adapter 2 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
-  Network adapter 3              : lanethernet0
+  Network adapter 3 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
-  Network adapter 4              : lanethernet0
+  Network adapter 4 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
 """.format(self.vmware_ovf))
 
@@ -584,7 +592,7 @@ Networks:
   NAT  "Logical network used by this appliance."
 
 NICs and Associated Networks:
-  <instance 10>                  : NAT
+  <instance 10> : NAT
     Ethernet adapter on 'NAT'
 """.format(self.v20_vbox_ovf))
 
@@ -611,12 +619,127 @@ Files and Disks:                       File Size  Capacity Device
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
                                     ---- --------- ---- ------- --------------
-  myprofile (default)                  3      0 MB    0       0  1 /   1.12 GB
+  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
     Label:          "what a profile"
     Description:    "this is"
   howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
     Label:          "howlongofaprofilenamecanweusehere"
     Description:    "prettylongitappears"
+
+Networks:
+  This is a rather verbose network name, eh what?  "Why yes, it is!"
+  name-but-no-description
+
+NICs and Associated Networks:
+  <instance 27> : This is a rather verbose network name, eh what?
+
+Properties:
+  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+      Anti-
+      dis-
+      establishment-
+      arian-
+
+      ...
+
+      ism!
+""".format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
+        self.assertLogged(**self.NONEXISTENT_FILE)
+
+    def test_wrapping(self):
+        """Test info string on a narrower-than-usual terminal"""
+        def narrow_width():
+            return 60
+
+        self.instance.UI.terminal_width = narrow_width
+
+        self.instance.set_value("PACKAGE_LIST", [self.invalid_ovf])
+        self.check_cot_output("""
+-----------------------------------------------------------
+{0}
+-----------------------------------------------------------
+Product:  (No product string)
+          (No product URL)
+Vendor:   (No vendor string)
+          (No vendor URL)
+Version:  (No version string)
+          (No detailed version string)
+
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  this_is_a_reall... 149.00 kB   1.00 GB 
+  input.iso          352.00 kB           cdrom @ (?) ?:0
+  (disk placeholder)        -- 128.00 MB 
+
+Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
+                                    ---- --------- ---- ------- --------------
+  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
+    Label:          "what a profile"
+    Description:    "this is"
+  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+    Label:          "howlongofaprofilenamecanweusehere"
+    Description:    "prettylongitappears"
+
+Networks:
+  This is a rather verbose network name, eh what?  "Why..."
+  name-but-no-description
+
+NICs and Associated Networks:
+  <instance 27> : This is a rather verbose network name, eh what?
+
+Properties:
+  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+""".format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
+        self.assertLogged(**self.NONEXISTENT_FILE)
+
+        self.instance.set_value("verbosity", "verbose")
+        self.check_cot_output("""
+-----------------------------------------------------------
+{0}
+-----------------------------------------------------------
+Product:  (No product string)
+          (No product URL)
+Vendor:   (No vendor string)
+          (No vendor URL)
+Version:  (No version string)
+          (No detailed version string)
+
+Files and Disks:     File Size  Capacity Device
+                     --------- --------- --------------------
+  this_is_a_reall... 149.00 kB   1.00 GB 
+  input.iso          352.00 kB           cdrom @ (?) ?:0
+  (disk placeholder)        -- 128.00 MB 
+
+Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
+                                    ---- --------- ---- ------- --------------
+  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
+    Label:          "what a profile"
+    Description:    "this is"
+  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+    Label:          "howlongofaprofilenamecanweusehere"
+    Description:    "prettylongitappears"
+
+Networks:
+  This is a rather verbose network name, eh what?  "Why
+                                                    yes, it
+                                                    is!"
+  name-but-no-description
+
+NICs and Associated Networks:
+  <instance 27> : This is a rather verbose network name, eh what?
+
+Properties:
+  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+      Anti-
+      dis-
+      establishment-
+      arian-
+
+      ...
+
+      ism!
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
