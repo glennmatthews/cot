@@ -44,11 +44,13 @@ class HelperError(EnvironmentError):
 
 def check_call(args, require_success=True):
     """Wrapper for subprocess.check_call.
-    1) Raises a HelperNotFoundError if the command doesn't exist, instead of
+
+    1. Raises a HelperNotFoundError if the command doesn't exist, instead of
        an OSError.
-    2) Raises a HelperError if the command doesn't return 0 when run,
+    2. Raises a HelperError if the command doesn't return 0 when run,
        instead of subprocess.CalledProcessError. (Setting the optional
        require_success parameter to False will suppress this error.)
+
     Unlike check_output() below, this does not redirect stdout/stderr;
     all output from the subprocess will be sent to stdout/stderr as normal.
     """
@@ -70,12 +72,13 @@ def check_call(args, require_success=True):
 
 def check_output(args, require_success=True):
     """Wrapper for subprocess.check_output.
-    1) Raises a HelperNotFoundError if the command doesn't exist, instead of
+
+    1. Raises a HelperNotFoundError if the command doesn't exist, instead of
        an OSError.
-    2) Raises a HelperError if the command doesn't return 0 when run,
+    2. Raises a HelperError if the command doesn't return 0 when run,
        instead of subprocess.CalledProcessError. (Setting the optional
        require_success parameter to False will suppress this error.)
-    3) Automatically redirects stderr to stdout captures both, and
+    3. Automatically redirects stderr to stdout captures both, and
        generates a debug message with the stdout contents.
     """
     cmd = args[0]

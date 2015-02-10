@@ -23,9 +23,11 @@ logger = logging.getLogger(__name__)
 
 class VMContextManager:
     """Context manager for virtual machine definitions. Use as follows:
-    with VM_Context_manager(input_file, output_file) as vm:
-        vm.foo()
-        vm.bar()
+    ::
+
+      with VM_Context_manager(input_file, output_file) as vm:
+          vm.foo()
+          vm.bar()
     """
 
     def __init__(self, input_file, output_file):
