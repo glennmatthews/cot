@@ -497,12 +497,13 @@ def git_versions_from_vcs(tag_prefix, root, verbose=False):
 
 
 def git2pep440(ver_str):
-    """Convert Git non-release version such as "1.2.1-17-gb92cc8d"
-    to a PEP400-compliant string such as "1.2.1+17-gb92cc8d-dirty"
+    """Convert Git version such as "1.2.1-17-gb92cc8d" to PEP440 compliant
+    version such as "1.2.1+17.gb92cc8d".
     """
     try:
-        tag, commits, local = ver_str.split('-', 2)
-        return "{0}+{1}-{2}".format(tag, commits, local)
+        tag, suffix = ver_str.split('-', 1)
+        suffix = '.'.join(suffix.split('-'))
+        return "{0}+{1}".format(tag, suffix)
     except ValueError:
         return ver_str
 
@@ -733,12 +734,13 @@ def vcs_function(vcs, suffix):
 
 
 def git2pep440(ver_str):
-    """Convert Git non-release version such as "1.2.1-17-gb92cc8d"
-    to a PEP400-compliant string such as "1.2.1+17-gb92cc8d-dirty"
+    """Convert Git version such as "1.2.1-17-gb92cc8d" to PEP440 compliant
+    version such as "1.2.1+17.gb92cc8d".
     """
     try:
-        tag, commits, local = ver_str.split('-', 2)
-        return "{0}+{1}-{2}".format(tag, commits, local)
+        tag, suffix = ver_str.split('-', 1)
+        suffix = '.'.join(suffix.split('-'))
+        return "{0}+{1}".format(tag, suffix)
     except ValueError:
         return ver_str
 
@@ -803,7 +805,7 @@ def get_versions(default=DEFAULT, verbose=False):
 
     if verbose:
         print("got version from default %s" % default)
-    return default
+    return rep_by_pep440(default)
 
 
 def get_version(verbose=False):
