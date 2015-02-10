@@ -77,42 +77,42 @@ Examples
 
 Displaying a summary of OVA contents:
 
-    cot info --brief iosxrv.5.1.1.ova
-    -------------------------------------------------------------------------------
+    > cot info --brief iosxrv.5.1.1.ova
+    ---------------------------------------------------------------------------
     iosxrv.5.1.1.ova
-    COT detected platform type: IOS XRv
-    -------------------------------------------------------------------------------
+    COT detected platform type: Cisco IOS XRv
+    ---------------------------------------------------------------------------
     Product:  Cisco IOS XRv
     Vendor:   Cisco Systems, Inc.
     Version:  5.1.1
 
-    Files and Disks:                      File Size   Capacity Device
-                                         ---------- ---------- --------------------
-      iosxrv.vmdk                         271.59 MB    3.00 GB harddisk @ IDE 0:0
+    Files and Disks:     File Size  Capacity Device
+                         --------- --------- --------------------
+      iosxrv.vmdk        271.59 MB   3.00 GB harddisk @ IDE 0:0
 
     Hardware Variants:
-      System types:        vmx-08 Cisco:Internal:VMCloud-01
-      Network card types:  virtio E1000
+      System types:             vmx-08 Cisco:Internal:VMCloud-01
+      Ethernet device types:    E1000
 
-    Configuration Profiles:           CPUs    Memory   NICs Serials  Disks/Capacity
-                                      ---- --------- ------ ------- ---------------
-      1CPU-3GB-2NIC (default)            1   3.00 GB      2       2   1 /   3.00 GB
-      2CPU-4GB-8NIC                      2   4.00 GB      8       2   1 /   3.00 GB
-      4CPU-6GB-10NIC                     4   6.00 GB     10       2   1 /   3.00 GB
-      4CPU-6GB-16NIC                     4   6.00 GB     16       2   1 /   3.00 GB
-      8CPU-8GB-10NIC                     8   8.00 GB     10       2   1 /   3.00 GB
-      8CPU-8GB-32NIC                     8   8.00 GB     32       2   1 /   3.00 GB
+    Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
+                              ---- --------- ---- ------- --------------
+      1CPU-3GB-2NIC (default)    1   3.00 GB    2       2  1 /   3.00 GB
+      2CPU-4GB-8NIC              2   4.00 GB    8       2  1 /   3.00 GB
+      4CPU-6GB-10NIC             4   6.00 GB   10       2  1 /   3.00 GB
+      4CPU-6GB-16NIC             4   6.00 GB   16       2  1 /   3.00 GB
+      8CPU-8GB-10NIC             8   8.00 GB   10       2  1 /   3.00 GB
+      8CPU-8GB-32NIC             8   8.00 GB   32       2  1 /   3.00 GB
 
 
 Adding a custom hardware configuration profile to an OVA:
 
-    cot edit-hardware csr1000v.ova --output csr1000v_custom.ova \
-        --profile 1CPU-4GB --cpus 1 --memory 4GB
+    > cot edit-hardware csr1000v.ova --output csr1000v_custom.ova \
+          --profile 1CPU-4GB --cpus 1 --memory 4GB
 
 
 Interactively customizing environment settings in an OVA:
 
-    cot edit-properties COT/tests/input.ovf --output output.ovf
+    > cot edit-properties COT/tests/input.ovf --output output.ovf
 
     Please choose a property to edit:
        1) "Login Username"                         (login-username)
@@ -155,9 +155,9 @@ Interactively customizing environment settings in an OVA:
 
 Non-interactively customizing environment properties:
 
-    cot edit-properties COT/tests/input.ovf --output output.ovf \
-        --properties mgmt-ipv4-addr=10.1.1.100/24 \
-                     mgmt-ipv4-gateway=10.1.1.1
+    > cot edit-properties COT/tests/input.ovf --output output.ovf \
+          --properties mgmt-ipv4-addr=10.1.1.100/24 \
+                       mgmt-ipv4-gateway=10.1.1.1
 
 
 Detailed Usage
@@ -170,36 +170,39 @@ You can always get detailed help for COT by running `cot --help` or
     usage:
       cot --help
       cot --version
+      cot help <command>
       cot <command> --help
       cot <options> <command> <command-options>
 
-    Common OVF Tool (COT), version 1.2.0
+    Common OVF Tool (COT), version 1.2.1
     Copyright (C) 2013-2015 the COT project developers.
-    A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
-    with a focus on virtualized network appliances such as the Cisco CSR 1000V and
-    Cisco IOS XRv platforms.
+    A tool for editing Open Virtualization Format (.ovf, .ova) virtual
+    appliances, with a focus on virtualized network appliances such as the
+    Cisco CSR 1000V and Cisco IOS XRv platforms.
 
     optional arguments:
-      -h, --help       show this help message and exit
-      -V, --version    show program's version number and exit
-      -f, --force      Perform requested actions without prompting for
-                       confirmation
+      -h, --help        show this help message and exit
+      -V, --version     show program's version number and exit
+      -f, --force       Perform requested actions without prompting for
+                        confirmation
       -q, --quiet       Quiet output and logging (warnings and errors only)
       -v, --verbose     Verbose output and logging
       -vv, -d, --debug  Debug (most verbose) output and logging
 
     commands:
       <command>
-        add-disk       Add a disk image to an OVF package and map it as a disk in
-                       the guest environment
-        add-file       Add a file to an OVF package
-        deploy         Create a new VM on the target hypervisor from the given OVF
-        edit-hardware  Edit virtual machine hardware properties of an OVF
-        edit-product   Edit product info in an OVF
+        add-disk        Add a disk image to an OVF package and map it as a
+                        disk in the guest environment
+        add-file        Add a file to an OVF package
+        deploy          Create a new VM on the target hypervisor from the
+                        given OVF
+        edit-hardware   Edit virtual machine hardware properties of an OVF
+        edit-product    Edit product info in an OVF
         edit-properties
-                       Edit environment properties of an OVF
-        info           Generate a description of an OVF package
-        inject-config  Inject a configuration file into an OVF package
+                        Edit environment properties of an OVF
+        info            Generate a description of an OVF package
+        inject-config   Inject a configuration file into an OVF package
+        help            Print help for a command
 
     Note: some subcommands rely on external software tools, including:
     * qemu-img (http://www.qemu.org/)
@@ -214,15 +217,15 @@ You can always get detailed help for COT by running `cot --help` or
     > cot add-disk --help
     usage:
       cot add-disk --help
-      cot <opts> add-disk DISK_IMAGE PACKAGE [-o OUTPUT]
-                          [-f FILE_ID] [-t {harddisk,cdrom}]
-                          [-c {ide,scsi}] [-s SUBTYPE] [-a ADDRESS]
-                          [-d DESCRIPTION] [-n DISKNAME]
+      cot <opts> add-disk DISK_IMAGE PACKAGE [-o OUTPUT] [-f FILE_ID]
+                          [-t {harddisk,cdrom}] [-c {ide,scsi}] [-s SUBTYPE]
+                          [-a ADDRESS] [-d DESCRIPTION] [-n DISKNAME]
 
-    Add or replace a disk image in the specified OVF or OVA. If the specified disk
-    image, controller/address, file-id, and/or instance match an existing entry in
-    the OVF, will replace the existing disk with the provided file (prompting for
-    confirmation if --force was not set); otherwise, will create a new disk entry.
+    Add or replace a disk image in the specified OVF or OVA. If the specified
+    disk image, controller/address, file-id, and/or instance match an existing
+    entry in the OVF, will replace the existing disk with the provided file
+    (prompting for confirmation if --force was not set); otherwise, will
+    create a new disk entry.
 
     positional arguments:
       DISK_IMAGE            Disk image file to add to the package
@@ -231,13 +234,13 @@ You can always get detailed help for COT by running `cot --help` or
     general options:
       -h, --help            Show this help message and exit
       -o OUTPUT, --output OUTPUT
-                            Name/path of new OVF/OVA package to create instead of
-                            updating the existing OVF
+                            Name/path of new OVF/OVA package to create instead
+                            of updating the existing OVF
 
     disk-related options:
       -f FILE_ID, --file-id FILE_ID
                             Disk image file ID string within the OVF package
-                            (default: same as disk image filename)
+                            (default: use disk image filename)
       -t {harddisk,cdrom}, --type {harddisk,cdrom}
                             Disk type (default: files ending in
                             .vmdk/.raw/.qcow2/.img will use harddisk and files
@@ -245,12 +248,12 @@ You can always get detailed help for COT by running `cot --help` or
 
     controller-related options:
       -c {ide,scsi}, --controller {ide,scsi}
-                            Disk controller type (default: determined by disk type
-                            and platform)
+                            Disk controller type (default: determined by disk
+                            type and platform)
       -a ADDRESS, --address ADDRESS
                             Address of the disk, such as "1:0". Requires that
-                            --controller be explicitly set. (default: use first
-                            unused address on the controller)
+                            --controller be explicitly set. (default: use
+                            first unused address on the controller)
       -s SUBTYPE, --subtype SUBTYPE
                             Disk controller subtype such as "virtio" or
                             "lsilogic".
@@ -259,8 +262,8 @@ You can always get detailed help for COT by running `cot --help` or
       -d DESCRIPTION, --description DESCRIPTION
                             Description of this disk (optional)
       -n DISKNAME, --name DISKNAME
-                            Name of this disk (default: "Hard disk #" or "CD-ROM
-                            #" as appropriate)
+                            Name of this disk (default: "Hard disk #" or "CD-
+                            ROM #" as appropriate)
 
 `cot add-file`
 --------------
@@ -270,9 +273,10 @@ You can always get detailed help for COT by running `cot --help` or
       cot add-file --help
       cot <opts> add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]
 
-    Add or replace a file in the given OVF. If the specified file and/or file-id
-    match existing package contents, will replace it (prompting for confirmation
-    if --force was not set); otherwise, will create a new file entry.
+    Add or replace a file in the given OVF. If the specified file and/or file-
+    id match existing package contents, will replace it (prompting for
+    confirmation if --force was not set); otherwise, will create a new file
+    entry.
 
     positional arguments:
       FILE                  File to add to the package
@@ -284,8 +288,8 @@ You can always get detailed help for COT by running `cot --help` or
                             Name/path of new VM package to create instead of
                             updating the existing package
       -f FILE_ID, --file-id FILE_ID
-                            File ID string within the package (default: same as
-                            filename)
+                            File ID string within the package (default: same
+                            as filename)
 
 `cot deploy`
 ------------
@@ -310,10 +314,9 @@ You can always get detailed help for COT by running `cot --help` or
     > cot deploy PACKAGE esxi --help
     usage:
       cot deploy PACKAGE esxi --help
-      cot <opts> deploy PACKAGE esxi LOCATOR
-                                     [-u USERNAME] [-p PASSWORD]
+      cot <opts> deploy PACKAGE esxi LOCATOR [-u USERNAME] [-p PASSWORD]
                                      [-c CONFIGURATION] [-n VM_NAME] [-P]
-                                     [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
+                                     [-N OVF1=HOST1 [-N OVF2=HOST2 ...]]
                                      [-d DATASTORE] [-o=OVFTOOL_ARGS]
 
     Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor
@@ -321,8 +324,8 @@ You can always get detailed help for COT by running `cot --help` or
     positional arguments:
       LOCATOR               vSphere target locator. Examples: "192.0.2.100"
                             (deploy directly to ESXi server),
-                            "192.0.2.101/mydatacenter/host/192.0.2.100" (deploy
-                            via vCenter server)
+                            "192.0.2.101/mydatacenter/host/192.0.2.100"
+                            (deploy via vCenter server)
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -331,26 +334,27 @@ You can always get detailed help for COT by running `cot --help` or
       -p PASSWORD, --password PASSWORD
                             Server login password
       -c CONFIGURATION, --configuration CONFIGURATION
-                            Use the specified configuration profile defined in the
-                            OVF. If unspecified and the OVF has multiple profiles,
-                            the user will be prompted or the default configuration
-                            will be used.
+                            Use the specified configuration profile defined in
+                            the OVF. If unspecified and the OVF has multiple
+                            profiles, the user will be prompted or the default
+                            configuration will be used.
       -n VM_NAME, --vm-name VM_NAME
-                            Name to use for the VM (if applicable) and any files
-                            created. If unspecified, the name of the OVF will be
-                            used.
-      -P, --power-on        Power on the created VM to begin booting immediately.
-      -N OVF_NET=HOST_NET, --network-map OVF_NET=HOST_NET
-                            Map networks named in the OVF to networks (bridges,
-                            vSwitches, etc.) in the hypervisor environment. This
-                            argument may be repeated as needed to specify multiple
-                            mappings.
+                            Name to use for the VM (if applicable) and any
+                            files created. If unspecified, the name of the OVF
+                            will be used.
+      -P, --power-on        Power on the created VM to begin booting
+                            immediately.
+      -N OVF_NET1=HOST_NET1 [OVF_NET2=HOST_NET2 ...]
+                            Map networks named in the OVF to networks
+                            (bridges, vSwitches, etc.) in the hypervisor
+                            environment. This argument may be repeated as
+                            needed to specify multiple mappings.
       -d DATASTORE, -ds DATASTORE, --datastore DATASTORE
                             ESXi datastore to use for the new VM
       -o OVFTOOL_ARGS, --ovftool-args OVFTOOL_ARGS
-                            Quoted string describing additional CLI parameters to
-                            pass through to "ovftool". Examples: -o="--foo",
-                            --ovftool-args="--foo --bar"
+                            Quoted string describing additional CLI parameters
+                            to pass through to "ovftool". Examples:
+                            -o="--foo", --ovftool-args="--foo --bar"
 
     Examples:
       cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test_vm
@@ -358,15 +362,17 @@ You can always get detailed help for COT by running `cot --help` or
         creating a VM named 'test_vm' from foo.ova.
 
       cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
-        Deploy to vSphere/ESXi server 192.0.2.100 with username admin (prompting
-        the user to input the password at runtime) creating a VM based on the
-        '1CPU-2.5GB' profile in foo.ova.
+        Deploy to vSphere/ESXi server 192.0.2.100, with username admin
+        (prompting the user to input a password at runtime), creating a VM
+        based on profile '1CPU-2.5GB' in foo.ova.
 
-      cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1" -u administrator \
-            -N 'GigabitEthernet1=VM Network' -N 'GigabitEthernet2=myvswitch'
-        Deploy to vSphere server 192.0.2.1 which belongs to datacenter 'mydc' on
-        vCenter server 192.0.2.100, and map the two NIC networks to vSwitches.
-        Note that in this case -u specifies the vCenter login username.
+      cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1" \
+            -u administrator -N "GigabitEthernet1=VM Network" \
+            -N "GigabitEthernet2=myvswitch"
+        Deploy to vSphere server 192.0.2.1 which belongs to datacenter 'mydc'
+        on vCenter server 192.0.2.100, and map the two NIC networks to
+        vSwitches. Note that in this case -u specifies the vCenter login
+        username.
 
       cot deploy foo.ova esxi 192.0.2.100 -u admin -p password \
             --ovftool-args="--overwrite --acceptAllEulas"
@@ -381,11 +387,11 @@ You can always get detailed help for COT by running `cot --help` or
       cot edit-hardware --help
       cot <opts> edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
       cot <opts> edit-hardware PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]]
-                               [-c CPUS] [-m MEMORY]
-                               [-n NICS] [--nic-type {e1000,virtio,vmxnet3}]
+                               [-c CPUS] [-m MEMORY] [-n NICS]
+                               [--nic-type {e1000,virtio,vmxnet3}]
                                [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
-                               [--nic-names NAME1 [NAME2 ...]]
-                               [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
+                               [--nic-names NAME1 [NAME2 ...]] [-s SERIAL_PORTS]
+                               [-S URI1 [URI2 ...]]
                                [--scsi-subtype SCSI_SUBTYPE]
                                [--ide-subtype IDE_SUBTYPE]
 
@@ -397,15 +403,15 @@ You can always get detailed help for COT by running `cot --help` or
     general options:
       -h, --help            Show this help message and exit
       -o OUTPUT, --output OUTPUT
-                            Name/path of new OVF/OVA package to create instead of
-                            updating the existing OVF
+                            Name/path of new OVF/OVA package to create instead
+                            of updating the existing OVF
       -v TYPE [TYPE2 ...], --virtual-system-type TYPE [TYPE2 ...]
                             Change virtual system type(s) supported by this
                             OVF/OVA package.
       -p PROFILE [PROFILE2 ...], --profiles PROFILE [PROFILE2 ...]
-                            Make hardware changes only under the specified
-                            configuration profile(s). (default: changes apply to
-                            all profiles)
+                            Make hardware changes only under the given
+                            configuration profile(s). (default: changes apply
+                            to all profiles)
 
     computational hardware options:
       -c CPUS, --cpus CPUS  Set the number of CPUs.
@@ -415,56 +421,57 @@ You can always get detailed help for COT by running `cot --help` or
     network interface options:
       -n NICS, --nics NICS  Set the number of NICs.
       --nic-type {e1000,virtio,vmxnet3}
-                            Set the hardware type for all NICs. (default: do not
-                            change existing NICs, and new NICs added will match
-                            the existing type.)
+                            Set the hardware type for all NICs. (default: do
+                            not change existing NICs, and new NICs added will
+                            match the existing type.)
       -N NETWORK [NETWORK2 ...], --nic-networks NETWORK [NETWORK2 ...]
-                            Specify a series of one or more network names to map
-                            NICs to. If N network names are specified, the first
-                            (N-1) NICs will be mapped to the first (N-1) networks
-                            and all remaining NICs will be mapped to the Nth
-                            network.
+                            Specify a series of one or more network names to
+                            map NICs to. If N network names are specified, the
+                            first (N-1) NICs will be mapped to the first (N-1)
+                            networks and all remaining NICs will be mapped to
+                            the Nth network.
       -M MAC1 [MAC2 ...], --mac-addresses-list MAC1 [MAC2 ...]
                             Specify a list of MAC addresses for the NICs. If N
-                            MACs are specified, the first (N-1) NICs will receive
-                            the first (N-1) MACs, and all remaining NICs will
-                            receive the Nth MAC
+                            MACs are specified, the first (N-1) NICs will
+                            receive the first (N-1) MACs, and all remaining
+                            NICs will receive the Nth MAC
       --nic-names NAME1 [NAME2 ...]
-                            Specify a list of one or more NIC names or patterns to
-                            apply to NIC devices. If N names/patterns are
-                            specified, the first (N-1) NICs will receive the first
-                            (N-1) names and remaining NICs will be named based on
-                            the name or pattern of the Nth item. See examples.
+                            Specify a list of one or more NIC names or
+                            patterns to apply to NIC devices. If N
+                            names/patterns are specified, the first (N-1) NICs
+                            will receive the first (N-1) names and remaining
+                            NICs will be named based on the name or pattern of
+                            the Nth item. See examples.
 
     serial port options:
       -s SERIAL_PORTS, --serial-ports SERIAL_PORTS
                             Set the number of serial ports.
       -S URI1 [URI2 ...], --serial-connectivity URI1 [URI2 ...]
-                            Specify a series of connectivity strings (URIs such as
-                            "telnet://localhost:9101") to map serial ports to. If
-                            fewer URIs than serial ports are specified, the
-                            remaining ports will be unmapped.
+                            Specify a series of connectivity strings (URIs
+                            such as "telnet://localhost:9101") to map serial
+                            ports to. If fewer URIs than serial ports are
+                            specified, the remaining ports will be unmapped.
 
     disk and disk controller options:
       --scsi-subtype SCSI_SUBTYPE
-                            Set resource subtype (such as "lsilogic" or "virtio")
-                            for all SCSI controllers. If an empty string is
-                            provided, any existing subtype will be removed.
+                            Set resource subtype (such as "lsilogic" or
+                            "virtio") for all SCSI controllers. If an empty
+                            string is provided, any existing subtype will be
+                            removed.
       --ide-subtype IDE_SUBTYPE
-                            Set resource subtype (such as "virtio") for all IDE
-                            controllers. If an empty string is provided, any
-                            existing subtype will be removed.
+                            Set resource subtype (such as "virtio") for all
+                            IDE controllers. If an empty string is provided,
+                            any existing subtype will be removed.
 
     Examples:
-
       cot edit-hardware csr1000v.ova --output csr1000v_custom.ova \
-            --profile 1CPU-4GB --cpus 1 --memory 4GB
-        Create a new profile named "1CPU-4GB" with 1 CPU and 4 GB of RAM
+            --profile 1CPU-4GB --cpus 1 --memory 8GB
+        Create a new profile named "1CPU-8GB" with 1 CPU and 8 gigabytes of RAM
 
-      cot edit-hardware input.ova -o output.ova --nic-names 'management' 'eth{0}'
-        Rename the NICs in the output OVA as 'management', 'eth0', 'eth1', 'eth2'...
+      cot edit-hardware input.ova -o output.ova --nic-names "mgmt" "eth{0}"
+        Rename the NICs in the output OVA as 'mgmt', 'eth0', 'eth1', 'eth2'...
 
-      cot edit-hardware input.ova -o output.ova --nic-names 'Ethernet0/{10}'
+      cot edit-hardware input.ova -o output.ova --nic-names "Ethernet0/{10}"
         Rename the NICs in the output OVA as 'Ethernet0/10', 'Ethernet0/11',
         'Ethernet0/12', etc.
 
@@ -475,8 +482,8 @@ You can always get detailed help for COT by running `cot --help` or
     > cot edit-product --help
     usage:
       cot edit-product --help
-      cot [-f] [-v] edit-product PACKAGE [-o OUTPUT]
-                                 [-v SHORT_VERSION] [-V FULL_VERSION]
+      cot <opts> edit-product PACKAGE [-o OUTPUT] [-v SHORT_VERSION]
+                              [-V FULL_VERSION]
 
     Edit product information attributes of the given OVF or OVA
 
@@ -486,14 +493,14 @@ You can always get detailed help for COT by running `cot --help` or
     optional arguments:
       -h, --help            show this help message and exit
       -o OUTPUT, --output OUTPUT
-                            Name/path of new OVF/OVA package to create instead of
-                            updating the existing OVF
+                            Name/path of new OVF/OVA package to create instead
+                            of updating the existing OVF
       -v SHORT_VERSION, --version SHORT_VERSION
-                            Software short version string, such as "15.3(4)S" or
-                            "5.2.0.01I"
+                            Software short version string, such as "15.3(4)S"
+                            or "5.2.0.01I"
       -V FULL_VERSION, --full-version FULL_VERSION
-                            Software long version string, such as "Cisco IOS-XE
-                            Software, Version 15.3(4)S"
+                            Software long version string, such as "Cisco IOS-
+                            XE Software, Version 15.3(4)S"
 
 `cot edit-properties`
 ---------------------
@@ -501,14 +508,15 @@ You can always get detailed help for COT by running `cot --help` or
     > cot edit-properties --help
     usage:
       cot edit-properties --help
-      cot [-f] [-v] edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
-                                    [-o OUTPUT]
-      cot [-f] [-v] edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
-      cot [-f] [-v] edit-properties PACKAGE [-o OUTPUT]
+      cot <opts> edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
+                                 [-o OUTPUT]
+      cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
+      cot <opts> edit-properties PACKAGE [-o OUTPUT]
 
-    Configure environment properties of the given OVF or OVA. The user may specify
-    key-value pairs as command-line arguments or may provide a config-file to read
-    from. If neither are specified, the program will run interactively.
+    Configure environment properties of the given OVF or OVA. The user may
+    specify key-value pairs as command-line arguments or may provide a config-
+    file to read from. If neither are specified, the program will run
+    interactively.
 
     positional arguments:
       PACKAGE               OVF descriptor or OVA file to edit
@@ -516,15 +524,17 @@ You can always get detailed help for COT by running `cot --help` or
     general options:
       -h, --help            Show this help message and exit
       -o OUTPUT, --output OUTPUT
-                            Name/path of new OVF/OVA package to create instead of
-                            updating the existing OVF
+                            Name/path of new OVF/OVA package to create instead
+                            of updating the existing OVF
 
     property setting options:
       -c CONFIG_FILE, --config-file CONFIG_FILE
                             Read configuration CLI from this text file and
                             generate generic properties for each line of CLI
       -p KEY1=VALUE1 [KEY2=VALUE2 ...], --properties KEY1=VALUE1 [KEY2=VALUE2 ...]
-                            Set the given property key-value pairs
+                            Set the given property key-value pair(s). This
+                            argument may be repeated as needed to specify
+                            multiple properties to edit.
 
 `cot info`
 ----------
@@ -553,8 +563,8 @@ You can always get detailed help for COT by running `cot --help` or
       cot inject-config --help
       cot <opts> inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
       cot <opts> inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
-      cot <opts> inject-config PACKAGE -c CONFIG_FILE
-                               -s SECONDARY_CONFIG_FILE [-o OUTPUT]
+      cot <opts> inject-config PACKAGE -c CONFIG_FILE -s SECONDARY_CONFIG_FILE
+                               [-o OUTPUT]
 
     Add one or more "bootstrap" configuration file(s) to the given OVF or OVA.
 
@@ -569,5 +579,6 @@ You can always get detailed help for COT by running `cot --help` or
       -c CONFIG_FILE, --config-file CONFIG_FILE
                             Primary configuration text file to embed
       -s SECONDARY_CONFIG_FILE, --secondary-config-file SECONDARY_CONFIG_FILE
-                            Secondary configuration text file to embed (currently
-                            only supported in IOS XRv for admin config)
+                            Secondary configuration text file to embed
+                            (currently only supported in IOS XRv for admin
+                            config)
