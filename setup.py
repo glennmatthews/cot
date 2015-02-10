@@ -22,7 +22,15 @@ except ImportError:
     ez_setup.use_setuptools()
     from setuptools import setup
 
+import os.path
+import subprocess
+import sys
+from setuptools.command.bdist_egg import bdist_egg
+from setuptools import Command
+
 import versioneer
+# Extend the "build" command a bit further:
+from versioneer import cmd_build
 
 versioneer.VCS = 'git'
 versioneer.versionfile_source = 'COT/_version.py'
@@ -30,21 +38,12 @@ versioneer.versionfile_build = versioneer.versionfile_source    # TODO
 versioneer.tag_prefix = 'v'
 versioneer.parentdir_prefix = 'cot-'
 
-import os.path
-import subprocess
-import sys
-from setuptools.command.bdist_egg import bdist_egg
-from setuptools import Command
-
 README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            'README.md')
 HELPER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                              "check_and_install_helpers.py")
 
 cmd_class = versioneer.get_cmdclass()
-
-# Extend the "build" command a bit further:
-from versioneer import cmd_build
 
 
 class custom_build(cmd_build):
