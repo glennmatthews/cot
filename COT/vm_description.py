@@ -20,6 +20,9 @@ import os.path
 import shutil
 import tempfile
 
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
+
 logger = logging.getLogger(__name__)
 
 

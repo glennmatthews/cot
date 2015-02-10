@@ -32,9 +32,13 @@ def natural_sort(l):
     See also http://nedbatchelder.com/blog/200712/human_sorting.html
     """
     # Convert number strings to ints, leave other strings as text
-    convert = lambda text: int(text) if text.isdigit() else text
+    def convert(text):
+        return int(text) if text.isdigit() else text
+
     # Split the key into a list of [text, int, text, int, ...]
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    def alphanum_key(key):
+        return [convert(c) for c in re.split('([0-9]+)', key)]
+
     # Sort based on alphanum_key
     return sorted(l, key=alphanum_key)
 

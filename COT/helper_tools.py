@@ -24,10 +24,10 @@ from distutils.version import StrictVersion
 from distutils.spawn import find_executable
 
 from verboselogs import VerboseLogger
-logging.setLoggerClass(VerboseLogger)
 
 from .data_validation import ValueUnsupportedError
 
+logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
 QEMU_IMG_VERSION = None

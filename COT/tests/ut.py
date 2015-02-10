@@ -30,11 +30,11 @@ import time
 import logging
 from logging.handlers import BufferingHandler
 
-from verboselogs import VerboseLogger
-logging.setLoggerClass(VerboseLogger)
-
 from COT.helper_tools import validate_ovf_for_esxi
 from COT.helper_tools import HelperError, HelperNotFoundError
+
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
 
 logger = logging.getLogger(__name__)
 
