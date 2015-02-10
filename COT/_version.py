@@ -165,6 +165,22 @@ def git_versions_from_vcs(tag_prefix, root, verbose=False):
     return {"version": tag, "full": full}
 
 
+def git2pep440(ver_str):
+    """Convert Git non-release version such as "1.2.1-17-gb92cc8d"
+    to a PEP400-compliant string such as "1.2.1+17-gb92cc8d-dirty"
+    """
+    try:
+        tag, commits, local = ver_str.split('-', 2)
+        return "{0}+{1}-{2}".format(tag, commits, local)
+    except ValueError:
+        return ver_str
+
+
+def rep_by_pep440(ver):
+    ver["version"] = git2pep440(ver["version"])
+    return ver
+
+
 def get_versions(default={"version": "unknown", "full": ""}, verbose=False):
     # I am in _version.py, which lives at ROOT/VERSIONFILE_SOURCE. If we have
     # __file__, we can work backwards from there to the root. Some
@@ -174,7 +190,7 @@ def get_versions(default={"version": "unknown", "full": ""}, verbose=False):
     keywords = {"refnames": git_refnames, "full": git_full}
     ver = git_versions_from_keywords(keywords, tag_prefix, verbose)
     if ver:
-        return ver
+        return rep_by_pep440(ver)
 
     try:
         root = os.path.realpath(__file__)
@@ -186,6 +202,7 @@ def get_versions(default={"version": "unknown", "full": ""}, verbose=False):
     except NameError:
         return default
 
-    return (git_versions_from_vcs(tag_prefix, root, verbose)
-            or versions_from_parentdir(parentdir_prefix, root, verbose)
-            or default)
+    return rep_by_pep440(git_versions_from_vcs(tag_prefix, root, verbose)
+                         or versions_from_parentdir(parentdir_prefix,
+                                                    root, verbose)
+                         or default)
