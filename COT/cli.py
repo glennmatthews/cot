@@ -246,6 +246,7 @@ class CLI(UI):
             usage="""
   cot --help
   cot --version
+  cot help <command>
   cot <command> --help
   cot <options> <command> <command-options>""",
             description=(__version_long__ + "\n" + self.wrapper.fill(
@@ -302,6 +303,7 @@ Note: some subcommands rely on external software tools, including:
         from COT.edit_hardware import COTEditHardware
         from COT.edit_product import COTEditProduct
         from COT.edit_properties import COTEditProperties
+        from COT.help import COTHelp
         from COT.info import COTInfo
         from COT.inject_config import COTInjectConfig
         for klass in [
@@ -313,6 +315,7 @@ Note: some subcommands rely on external software tools, including:
                 COTEditProperties,
                 COTInfo,
                 COTInjectConfig,
+                COTHelp,   # last so it can be aware of all of the above
         ]:
             name, subparser = klass(self).create_subparser(self.subparsers)
             self.subparser_lookup[name] = subparser

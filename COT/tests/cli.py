@@ -597,6 +597,27 @@ ovf:userConfigurable="true" ovf:value="true">
 """)
 
 
+class TestCLIHelp(TestCOTCLI):
+    """CLI test cases for "cot help" command"""
+
+    def test_help_positive(self):
+        self.call_cot(['help'])
+        self.call_cot(['help', 'add-disk'])
+        self.call_cot(['help', 'add-file'])
+        self.call_cot(['help', 'deploy'])
+        self.call_cot(['help', 'edit-hardware'])
+        self.call_cot(['help', 'edit-product'])
+        self.call_cot(['help', 'edit-properties'])
+        self.call_cot(['help', 'help'])
+        self.call_cot(['help', 'info'])
+        self.call_cot(['help', 'inject-config'])
+
+    def test_help_negative(self):
+        self.call_cot(['help', '-h'], result=2)
+        self.call_cot(['help', 'frobozz'], result=2)
+        self.call_cot(['help', 'add-disk', 'add-file'], result=2)
+
+
 class TestCLIInfo(TestCOTCLI):
     """CLI test cases for "cot info" command"""
 
