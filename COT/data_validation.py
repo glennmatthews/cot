@@ -19,7 +19,7 @@ import re
 
 
 def to_string(obj):
-    """Get string representation of an object. Special-case for XML Element"""
+    """Get string representation of an object, special-case for XML Element."""
     if ET.iselement(obj):
         return ET.tostring(obj)
     else:
@@ -28,6 +28,7 @@ def to_string(obj):
 
 def natural_sort(l):
     """Sort the given list "naturally" rather than in ASCII order.
+
     E.g, "10" comes after "9" rather than between "1" and "2".
 
     See also http://nedbatchelder.com/blog/200712/human_sorting.html
@@ -65,8 +66,7 @@ def match_or_die(first_label, first, second_label, second):
 
 
 def check_for_conflict(label, li):
-    """Make sure all references in the list either point to the same object
-    or point to ``None``.
+    """Make sure the list does not contain references to more than one object.
 
     :param str label: Descriptive label to be used if an error is raised
     :param list li: List of object references (which may include ``None``)
@@ -90,6 +90,7 @@ def check_for_conflict(label, li):
 
 def mac_address(string):
     """Parser helper function for MAC address arguments.
+
     Validate whether a string is a valid MAC address.
     Recognized formats are:
 
@@ -113,6 +114,7 @@ def mac_address(string):
 
 def device_address(string):
     """Parser helper function for device address arguments.
+
     Validate string is an appropriately formed device address such as '1:0'.
 
     :param str string: String to validate
@@ -165,6 +167,7 @@ def validate_int(string, min=None, max=None, label="input"):
 
 def non_negative_int(string):
     """Parser helper function for integer arguments that must be 0 or more.
+
     Alias for :func:`validate_int` setting :attr:`min` to 0.
     """
     return validate_int(string, min=0)
@@ -172,6 +175,7 @@ def non_negative_int(string):
 
 def positive_int(string):
     """Parser helper function for integer arguments that must be 1 or more.
+
     Alias for :func:`validate_int` setting :attr:`min` to 1.
     """
     return validate_int(string, min=1)
@@ -179,24 +183,28 @@ def positive_int(string):
 
 # Some handy exception and error types we can throw
 class ValueMismatchError(ValueError):
-    """Error class indicating that values which were expected to be equal
-    turned out to be not equal.
-    """
+
+    """Values which were expected to be equal turned out to be not equal."""
+
     pass
 
 
 class InvalidInputError(ValueError):
-    """Error class indicating a failure during validation of user input"""
+
+    """Error class indicating a failure during validation of user input."""
+
     pass
 
 
 class ValueUnsupportedError(InvalidInputError):
+
     """Error class indicating an unsupported value was provided.
 
     :ivar value_type: descriptive string
     :ivar actual_value: invalid value that was provided
     :ivar expected_value: expected (valid) value or values (item or list)
     """
+
     def __init__(self, value_type, actual, expected):
         self.value_type = value_type
         self.actual_value = actual
@@ -209,12 +217,14 @@ class ValueUnsupportedError(InvalidInputError):
 
 
 class ValueTooLowError(ValueUnsupportedError):
+
     """Error class indicating a number lower than the lowest supported value.
 
     :ivar value_type: descriptive string
     :ivar actual_value: invalid value that was provided
     :ivar expected_value: minimum supported value
     """
+
     def __str__(self):
         return ("Value '{0}' for {1} is too low - must be at least {2}"
                 .format(self.actual_value, self.value_type,
@@ -222,12 +232,14 @@ class ValueTooLowError(ValueUnsupportedError):
 
 
 class ValueTooHighError(ValueUnsupportedError):
+
     """Error class indicating a number higher than the highest supported value.
 
     :ivar value_type: descriptive string
     :ivar actual_value: invalid value that was provided
     :ivar expected_value: maximum supported value
     """
+
     def __str__(self):
         return ("Value '{0}' for {1} is too high - must be at most {2}"
                 .format(self.actual_value, self.value_type,

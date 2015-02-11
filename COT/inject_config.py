@@ -27,9 +27,8 @@ logger = logging.getLogger(__name__)
 
 
 class COTInjectConfig(COTSubmodule):
-    """Wrap the given configuration file(s) into an appropriate disk image file
-    and embed it into the given VM package.
-    """
+
+    """Wrap configuration file(s) into a disk image embedded into the VM."""
 
     def __init__(self, UI):
         super(COTInjectConfig, self).__init__(UI)
@@ -165,8 +164,7 @@ class COTInjectConfig(COTSubmodule):
         )
 
     def create_subparser(self, parent):
-        """Add subparser for the CLI of this submodule under the given parent
-        subparser grouping.
+        """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :func:`ArgumentParser.add_subparsers`

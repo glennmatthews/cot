@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 class COTEditProperties(COTSubmodule):
 
+    """Edit OVF environment XML properties."""
+
     def __init__(self, UI):
         super(COTEditProperties, self).__init__(UI)
         self._config_file = None
@@ -94,6 +96,8 @@ class COTEditProperties(COTSubmodule):
 
     def edit_properties_interactive(self, vm):
         """Present an interactive UI for the user to edit properties.
+
+        :param vm: TODO shouldn't be necessary - use self.vm?
         """
         wrapper = textwrap.TextWrapper(initial_indent='',
                                        subsequent_indent='                 ')
@@ -151,8 +155,7 @@ class COTEditProperties(COTSubmodule):
                 print("")
 
     def create_subparser(self, parent):
-        """Add subparser for the CLI of this submodule under the given parent
-        subparser grouping.
+        """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :func:`ArgumentParser.add_subparsers`

@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 class COTInfo(COTGenericSubmodule):
-    """Display VM information string"""
+
+    """Display VM information string."""
+
     def __init__(self, UI):
         super(COTInfo, self).__init__(UI)
         self._package_list = None
@@ -80,8 +82,7 @@ class COTInfo(COTGenericSubmodule):
             first = False
 
     def create_subparser(self, parent):
-        """Add subparser for the CLI of this submodule under the given parent
-        subparser grouping.
+        """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :func:`ArgumentParser.add_subparsers`

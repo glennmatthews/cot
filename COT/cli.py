@@ -36,7 +36,8 @@ logger = logging.getLogger(__name__)
 
 
 class CLI(UI):
-    """Command-line user interface for COT"""
+
+    """Command-line user interface for COT."""
 
     def __init__(self):
         super(CLI, self).__init__(force=True)
@@ -54,11 +55,12 @@ class CLI(UI):
         self.create_subparsers()
 
     def terminal_width(self):
-        """Returns the width of the terminal in columns."""
+        """Get the width of the terminal in columns."""
         return get_terminal_size().columns
 
     def fill_usage(self, subcommand, usage_list):
         """Pretty-print a list of usage strings for a COT subcommand.
+
         Automatically prepends a ``cot subcommand --help`` usage string
         to the provided list.
 
@@ -127,6 +129,7 @@ class CLI(UI):
 
     def fill_examples(self, example_list):
         """Pretty-print a set of usage examples.
+
         ::
 
           >>> fill_examples([
@@ -190,6 +193,7 @@ class CLI(UI):
 
     def formatter(self, verbosity=logging.INFO):
         """Create formatter for log output.
+
         We offer different (more verbose) formatting when debugging is enabled,
         hence this need.
 
@@ -221,6 +225,7 @@ class CLI(UI):
 
     def set_verbosity(self, level):
         """Enable logging and/or change the logging verbosity level.
+
         Will call :func:`formatter` and associate the resulting formatter
         with logging.
 
@@ -237,6 +242,7 @@ class CLI(UI):
 
     def run(self, argv):
         """Parse the given CLI args then run.
+
         Calls :func:`parse_args` followed by :func:`main`.
 
         :param list argv: The CLI argv value (not including argv[0])
@@ -246,7 +252,8 @@ class CLI(UI):
         return self.main(args)
 
     def confirm(self, prompt):
-        """Prompts user to confirm the requested operation.
+        """Prompt user to confirm the requested operation.
+
         Auto-accepts if :attr:`force` is set to ``True``.
 
         :param str prompt: Message to prompt the user with
@@ -278,6 +285,7 @@ class CLI(UI):
 
     def get_input(self, prompt, default_value):
         """Prompt the user to enter a string.
+
         Auto-inputs the :attr:`default_value` if :attr:`force` is set to
         ``True``.
 
@@ -313,8 +321,9 @@ class CLI(UI):
                             .format(username, host))
 
     def create_parser(self):
-        """Create :attr:`parser` object for global ``cot`` command
-        and globally applicable CLI options.
+        """Create :attr:`parser` object for global ``cot`` command.
+
+        Includes a number of globally applicable CLI options.
         """
         # Argparse checks the environment variable COLUMNS to control
         # its line-wrapping
@@ -378,7 +387,8 @@ Note: some subcommands rely on external software tools, including:
         self.subparser_lookup = {}
 
     def create_subparsers(self):
-        """Populates the CLI sub-parsers for all known submodules.
+        """Populate the CLI sub-parsers for all known submodules.
+
         Creates an instance of each :class:`~COT.submodule.COTGenericSubmodule`
         subclass, then calls
         :func:`~COT.submodule.COTGenericSubmodule.create_subparser` for each.
@@ -505,6 +515,7 @@ Note: some subcommands rely on external software tools, including:
 
 
 def main():
+    """Launch COT from the CLI."""
     CLI().run(sys.argv[1:])
 
 if __name__ == "__main__":

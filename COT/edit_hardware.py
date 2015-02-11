@@ -26,7 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 class COTEditHardware(COTSubmodule):
-    """Edit hardware information (CPUs, RAM, NICs, etc.)"""
+
+    """Edit hardware information (CPUs, RAM, NICs, etc.)."""
 
     def __init__(self, UI):
         super(COTEditHardware, self).__init__(UI)
@@ -263,8 +264,7 @@ class COTEditHardware(COTSubmodule):
             vm.set_ide_subtype(self.ide_subtype, self.profiles)
 
     def create_subparser(self, parent):
-        """Add subparser for the CLI of this submodule under the given parent
-        subparser grouping.
+        """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :func:`ArgumentParser.add_subparsers`

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class COTAddDisk(COTSubmodule):
+
     """Add or replace a disk in a virtual machine."""
 
     def __init__(self, UI):
@@ -123,8 +124,7 @@ class COTAddDisk(COTSubmodule):
                         description=self.description)
 
     def create_subparser(self, parent):
-        """Add subparser for the CLI of this submodule under the given parent
-        subparser grouping.
+        """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :func:`ArgumentParser.add_subparsers`
@@ -210,6 +210,7 @@ def add_disk_worker(vm,
                     description=None,
                     **kwargs):
     """Worker function for actually adding the disk.
+
     All parameters except `vm`, `UI`, and `DISK_IMAGE` are optional
     and will be automatically determined by COT if unspecified.
 
@@ -242,7 +243,6 @@ def add_disk_worker(vm,
     :param str description: Description of disk device
     :param \**kwargs: TODO
     """
-
     if type is None:
         disk_extension = os.path.splitext(DISK_IMAGE)[1]
         ext_type_map = {

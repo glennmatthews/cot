@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 class COTDeploy(COTReadOnlySubmodule):
 
     """Semi-abstract class for submodules used to deploy a VM to a hypervisor.
+
     Provides some baseline parameters and input validation that are expected
     to be common across all concrete subclasses.
     """
@@ -103,8 +104,7 @@ class COTDeploy(COTReadOnlySubmodule):
         return super(COTDeploy, self).ready_to_run()
 
     def create_subparser(self, parent):
-        """Add subparser for the CLI of this submodule under the given parent
-        subparser grouping.
+        """Add subparser for the CLI of this submodule.
 
         .. note::
           Unlike most submodules, this one has subparsers of its own -
@@ -172,7 +172,9 @@ class COTDeploy(COTReadOnlySubmodule):
 
 
 class COTDeployESXi(COTDeploy):
+
     """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere."""
+
     def __init__(self, UI):
         super(COTDeployESXi, self).__init__(UI)
         self.locator = None
@@ -344,6 +346,7 @@ class COTDeployESXi(COTDeploy):
 
     def create_subparser(self, parent):
         """Add subparser for the CLI of this submodule.
+
         This will create the shared :attr:`~COTDeploy.parser` under
         :attr:`parent`, then create our own sub-subparser under
         :attr:`~COTDeploy.subparsers`.

@@ -35,15 +35,17 @@ OVFTOOL_VERSION = None
 
 
 class HelperNotFoundError(OSError):
+
     """Error thrown when a helper program cannot be located."""
 
 
 class HelperError(EnvironmentError):
+
     """Error thrown when a helper program exits with non-zero return code."""
 
 
 def check_call(args, require_success=True):
-    """Wrapper for :func:`subprocess.check_call`
+    """Wrapper for :func:`subprocess.check_call`.
 
     Unlike :func:`check_output` below, this does not redirect stdout/stderr;
     all output from the subprocess will be sent to stdout/stderr as normal.
@@ -134,7 +136,6 @@ def get_checksum(file_path, checksum_type):
     :param str checksum_type: Supported values are 'md5' and 'sha1'.
     :return: String containing hexadecimal file checksum
     """
-
     if checksum_type == 'md5':
         h = hashlib.md5()
     elif checksum_type == 'sha1':
@@ -192,7 +193,6 @@ def get_disk_format(file_path):
       * ``format`` may be ``'vmdk'``, ``'raw'``, or ``'qcow2'``
       * ``subformat`` may be ``None``, or various strings for ``'vmdk'`` files.
     """
-
     logger.debug("Invoking qemu-img to determine disk format of {0}"
                  .format(file_path))
     qemu_stdout = check_output(['qemu-img', 'info', file_path])
@@ -245,6 +245,7 @@ def get_disk_capacity(file_path):
 
 def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
     """Convert the given disk image to the requested format/subformat.
+
     If the disk is already in this format then it is unchanged;
     otherwise, will convert to a new disk in the specified output_dir
     and return its path.
@@ -265,7 +266,6 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
     :raise ValueUnsupportedError: if the :attr:`new_format` and/or
       :attr:`new_subformat` are not supported conversion targets.
     """
-
     curr_format, curr_subformat = get_disk_format(file_path)
 
     if curr_format == new_format and curr_subformat == new_subformat:
@@ -333,6 +333,7 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
 def create_disk_image(file_path, file_format=None,
                       capacity=None, contents=[]):
     """Create a new disk image at the requested location.
+
     Either :attr:`capacity` or :attr:`contents` or both must be specified.
 
     :param str file_path: Desired location of new disk image
@@ -343,7 +344,6 @@ def create_disk_image(file_path, file_format=None,
     :param list contents: List of file paths to package into the created image.
       If not specified, the image will be left blank and unformatted.
     """
-
     if not capacity and not contents:
         raise RuntimeError("Either capacity or contents must be specified!")
 
@@ -431,8 +431,10 @@ def get_ovftool_version():
 
 
 def validate_ovf_for_esxi(ovf_file):
-    """Use VMware's ``ovftool`` program to validate an OVF or OVA against the
-    OVF standard and any VMware-specific requirements.
+    """Use VMware's ``ovftool`` program to validate an OVF or OVA.
+
+    This checks the file against the OVF standard and any VMware-specific
+    requirements.
 
     :param str ovf_file: File to validate
     :return: Output from ``ovftool``

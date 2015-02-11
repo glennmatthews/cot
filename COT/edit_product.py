@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 class COTEditProduct(COTSubmodule):
-    """Edit product information (short version, long version)"""
+
+    """Edit product information (short version, long version)."""
 
     def __init__(self, UI):
         super(COTEditProduct, self).__init__(UI)
@@ -62,8 +63,7 @@ class COTEditProduct(COTSubmodule):
             self.vm.set_long_version(self.full_version)
 
     def create_subparser(self, parent):
-        """Add subparser for the CLI of this submodule under the given parent
-        subparser grouping.
+        """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :func:`ArgumentParser.add_subparsers`

@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class COTAddFile(COTSubmodule):
+
     """Add a file (such as a README) to the package."""
 
     def __init__(self, UI):
@@ -80,8 +81,7 @@ class COTAddFile(COTSubmodule):
         vm.add_file(self.file, self.file_id, file)
 
     def create_subparser(self, parent):
-        """Add subparser for the CLI of this submodule under the given parent
-        subparser grouping.
+        """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :func:`ArgumentParser.add_subparsers`
