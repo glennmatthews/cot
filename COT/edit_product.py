@@ -31,8 +31,9 @@ class COTEditProduct(COTSubmodule):
 
     def ready_to_run(self):
         """Are we ready to go?
-        Returns the tuple (ready, reason)"""
 
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         ready, reason = super(COTEditProduct, self).ready_to_run()
         if not ready:
             return ready, reason
@@ -49,6 +50,10 @@ class COTEditProduct(COTSubmodule):
         return ready, reason
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTEditProduct, self).run()
 
         if self.version is not None:
@@ -57,6 +62,14 @@ class COTEditProduct(COTSubmodule):
             self.vm.set_long_version(self.full_version)
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('edit-product', subparser)``
+        """
         p = parent.add_parser(
             'edit-product',
             help="""Edit product info in an OVF""",

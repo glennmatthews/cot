@@ -72,8 +72,9 @@ class COTInjectConfig(COTSubmodule):
 
     def ready_to_run(self):
         """Are we ready to go?
-        Returns the tuple (ready, reason)"""
 
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         # Need some work to do!
         work_to_do = False
         if self.config_file is not None:
@@ -86,6 +87,10 @@ class COTInjectConfig(COTSubmodule):
         return super(COTInjectConfig, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTInjectConfig, self).run()
 
         vm = self.vm
@@ -160,6 +165,14 @@ class COTInjectConfig(COTSubmodule):
         )
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('inject-config', subparser)``
+        """
         p = parent.add_parser(
             'inject-config',
             help="Inject a configuration file into an OVF package",

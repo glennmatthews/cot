@@ -41,6 +41,7 @@ class COTHelp(COTGenericSubmodule):
         self._subcommand = value
 
     def run(self):
+        """Display the help menu for the specified subcommand."""
         super(COTHelp, self).run()
 
         if self.subcommand:
@@ -50,6 +51,14 @@ class COTHelp(COTGenericSubmodule):
             self.UI.parser.print_help()
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('help', subparser)``
+        """
         p = parent.add_parser(
             'help',
             add_help=False,

@@ -56,13 +56,18 @@ class COTInfo(COTGenericSubmodule):
 
     def ready_to_run(self):
         """Are we ready to go?
-        Returns the tuple (ready, reason)
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if not self.package_list:
             return False, "At least one package must be specified"
         return super(COTInfo, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTInfo, self).run()
 
         first = True
@@ -75,6 +80,14 @@ class COTInfo(COTGenericSubmodule):
             first = False
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('info', subparser)``
+        """
         p = parent.add_parser(
             'info',
             help="""Generate a description of an OVF package""",

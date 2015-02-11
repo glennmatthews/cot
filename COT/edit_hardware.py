@@ -135,8 +135,9 @@ class COTEditHardware(COTSubmodule):
 
     def ready_to_run(self):
         """Are we ready to go?
-        Returns the tuple (ready, reason)"""
 
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         # Need some work to do!
         if (
                 self.profiles is None and
@@ -158,6 +159,10 @@ class COTEditHardware(COTSubmodule):
         return super(COTEditHardware, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTEditHardware, self).run()
 
         if self.profiles is not None and self.virtual_system_type is not None:
@@ -258,6 +263,14 @@ class COTEditHardware(COTSubmodule):
             vm.set_ide_subtype(self.ide_subtype, self.profiles)
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('edit-hardware', subparser)``
+        """
         p = parent.add_parser(
             'edit-hardware', add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,

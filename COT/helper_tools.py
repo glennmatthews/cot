@@ -43,16 +43,20 @@ class HelperError(EnvironmentError):
 
 
 def check_call(args, require_success=True):
-    """Wrapper for subprocess.check_call.
+    """Wrapper for :func:`subprocess.check_call`
 
-    1. Raises a HelperNotFoundError if the command doesn't exist, instead of
-       an OSError.
-    2. Raises a HelperError if the command doesn't return 0 when run,
-       instead of subprocess.CalledProcessError. (Setting the optional
-       require_success parameter to False will suppress this error.)
-
-    Unlike check_output() below, this does not redirect stdout/stderr;
+    Unlike :func:`check_output` below, this does not redirect stdout/stderr;
     all output from the subprocess will be sent to stdout/stderr as normal.
+
+    :param list args: Command to invoke and its associated args
+    :param boolean require_success: If ``False``, do not raise an error
+      when the command exits with a return code other than 0
+
+    :raise HelperNotFoundError: if the command doesn't exist
+      (instead of a :class:`OSError`)
+
+    :raise HelperError: if the command returns a value other than 0 and
+      :attr:`require_success` is not ``False``
     """
     cmd = args[0]
     logger.verbose("Calling '{0}'".format(" ".join(args)))
@@ -71,15 +75,21 @@ def check_call(args, require_success=True):
 
 
 def check_output(args, require_success=True):
-    """Wrapper for subprocess.check_output.
+    """Wrapper for :func:`subprocess.check_output`.
 
-    1. Raises a HelperNotFoundError if the command doesn't exist, instead of
-       an OSError.
-    2. Raises a HelperError if the command doesn't return 0 when run,
-       instead of subprocess.CalledProcessError. (Setting the optional
-       require_success parameter to False will suppress this error.)
-    3. Automatically redirects stderr to stdout captures both, and
-       generates a debug message with the stdout contents.
+    Automatically redirects stderr to stdout, captures both to a buffer, and
+    generates a debug message with the stdout contents.
+
+    :param list args: Command to invoke and its associated args
+    :param boolean require_success: If ``False``, do not raise an error
+      when the command exits with a return code other than 0
+
+    :return: Captured stdout/stderr from the command
+    :raise HelperNotFoundError: if the command doesn't exist
+      (instead of a :class:`OSError`)
+
+    :raise HelperError: if the command returns a value other than 0 and
+      :attr:`require_success` is not ``False``
     """
     cmd = args[0]
     logger.verbose("Calling '{0}'".format(" ".join(args)))
@@ -119,7 +129,10 @@ def check_output(args, require_success=True):
 
 def get_checksum(file_path, checksum_type):
     """Get the checksum of the given file.
-    Supported checksum_type values are 'md5' and 'sha1'.
+
+    :param str file_path: Path to file to checksum
+    :param str checksum_type: Supported values are 'md5' and 'sha1'.
+    :return: String containing hexadecimal file checksum
     """
 
     if checksum_type == 'md5':
@@ -142,7 +155,10 @@ def get_checksum(file_path, checksum_type):
 
 
 def get_qemu_img_version():
-    """Get the installed 'qemu-img' version as a StrictVersion object.
+    """Get installed ``qemu-img`` version as a :class:`StrictVersion` object.
+
+    :return: :class:`StrictVersion` instance
+    :raise HelperNotFoundError: if ``qemu-img`` is not found.
     """
     global QEMU_IMG_VERSION
     if QEMU_IMG_VERSION is None:
@@ -164,11 +180,17 @@ def get_qemu_img_version():
 
 
 def get_disk_format(file_path):
-    """Returns a tuple (format, subformat) representing the given disk file's
-    file format.
+    """Get the disk image format of the given file.
 
-    format may be 'vmdk', 'raw', or 'qcow2'
-    subformat may be None, or one of many strings for 'vmdk' files.
+    .. warning::
+      If :attr:`file_path` refers to a file which is not a disk image at all,
+      this function will return ``('raw', None)``.
+
+    :param str file_path: Path to disk image file to inspect.
+    :return: ``(format, subformat)``
+
+      * ``format`` may be ``'vmdk'``, ``'raw'``, or ``'qcow2'``
+      * ``subformat`` may be ``None``, or various strings for ``'vmdk'`` files.
     """
 
     logger.debug("Invoking qemu-img to determine disk format of {0}"
@@ -205,6 +227,9 @@ def get_disk_format(file_path):
 
 def get_disk_capacity(file_path):
     """Get the storage capacity of the given disk image.
+
+    :param str file_path: Path to disk image file to inspect
+    :return: Disk capacity, in bytes
     """
     qemu_stdout = check_output(['qemu-img', 'info', file_path])
     match = re.search(r"(\d+) bytes", qemu_stdout)
@@ -219,15 +244,26 @@ def get_disk_capacity(file_path):
 
 
 def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
-    """Convert the given disk image to the requested format
-    (and optional subformat).
-    If the disk is already in this format then return the same file_path;
-    otherwise, create a new disk in the specified output_dir
+    """Convert the given disk image to the requested format/subformat.
+    If the disk is already in this format then it is unchanged;
+    otherwise, will convert to a new disk in the specified output_dir
     and return its path.
 
     Current supported conversions:
-    .vmdk (any format) to .vmdk (streamOptimized)
-    .img to .vmdk (streamOptimized)
+
+    * .vmdk (any format) to .vmdk (streamOptimized)
+    * .img to .vmdk (streamOptimized)
+
+    :param str file_path: Disk image file to inspect/convert
+    :param str output_dir: Directory to place converted image into, if needed
+    :param str new_format: Desired final format
+    :param str new_subformat: Desired final subformat
+    :return:
+      * :attr:`file_path`, if no conversion was required
+      * or a file path in :attr:`output_dir` containing the converted image
+
+    :raise ValueUnsupportedError: if the :attr:`new_format` and/or
+      :attr:`new_subformat` are not supported conversion targets.
     """
 
     curr_format, curr_subformat = get_disk_format(file_path)
@@ -297,8 +333,15 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
 def create_disk_image(file_path, file_format=None,
                       capacity=None, contents=[]):
     """Create a new disk image at the requested location.
-    Either 'capacity' (for a blank disk) or 'contents' (a list of files,
-    for a non-empty disk) or both must be specified.
+    Either :attr:`capacity` or :attr:`contents` or both must be specified.
+
+    :param str file_path: Desired location of new disk image
+    :param str file_format: Desired image format (if not specified, this will
+      be derived from the file extension of :attr:`file_path`)
+
+    :param capacity: TODO what's the expected format?
+    :param list contents: List of file paths to package into the created image.
+      If not specified, the image will be left blank and unformatted.
     """
 
     if not capacity and not contents:
@@ -368,7 +411,11 @@ def create_disk_image(file_path, file_format=None,
 
 
 def get_ovftool_version():
-    """Get the installed 'ovftool' version as a StrictVersion object."""
+    """Get installed ``ovftool`` version as a :class:`StrictVersion` object.
+
+    :return: :class:`StrictVersion` instance
+    :raise HelperNotFoundError: if ``ovftool`` is not found.
+    """
     global OVFTOOL_VERSION
     if OVFTOOL_VERSION is None:
         logger.debug("Checking ovftool version")
@@ -384,8 +431,12 @@ def get_ovftool_version():
 
 
 def validate_ovf_for_esxi(ovf_file):
-    """Use VMware's 'ovftool' program to validate an OVF or OVA against the
+    """Use VMware's ``ovftool`` program to validate an OVF or OVA against the
     OVF standard and any VMware-specific requirements.
-    """
 
+    :param str ovf_file: File to validate
+    :return: Output from ``ovftool``
+    :raise HelperNotFoundError: if ``ovftool`` is not found.
+    :raise HelperError: if ``ovftool`` regards the file as invalid
+    """
     check_output(['ovftool', '--schemaValidate', ovf_file])

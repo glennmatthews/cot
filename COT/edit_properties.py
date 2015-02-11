@@ -61,6 +61,10 @@ class COTEditProperties(COTSubmodule):
         self._properties = value
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTEditProperties, self).run()
 
         vm = self.vm
@@ -89,6 +93,8 @@ class COTEditProperties(COTSubmodule):
             self.edit_properties_interactive(vm)
 
     def edit_properties_interactive(self, vm):
+        """Present an interactive UI for the user to edit properties.
+        """
         wrapper = textwrap.TextWrapper(initial_indent='',
                                        subsequent_indent='                 ')
         format_str = '{0:15} "{1}"'
@@ -145,6 +151,14 @@ class COTEditProperties(COTSubmodule):
                 print("")
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('edit-properties', subparser)``
+        """
         p = parent.add_parser(
             'edit-properties', add_help=False,
             help="""Edit environment properties of an OVF""",

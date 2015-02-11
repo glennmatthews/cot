@@ -27,6 +27,12 @@ logger = logging.getLogger(__name__)
 
 
 class COTDeploy(COTReadOnlySubmodule):
+
+    """Semi-abstract class for submodules used to deploy a VM to a hypervisor.
+    Provides some baseline parameters and input validation that are expected
+    to be common across all concrete subclasses.
+    """
+
     def __init__(self, UI):
         super(COTDeploy, self).__init__(UI)
         # User inputs
@@ -38,8 +44,17 @@ class COTDeploy(COTReadOnlySubmodule):
         self.vm_name = None
         self.network_map = None
         # Internal attributes
+        #: Generic parser object providing args that most subclasses will use.
+        #: Subclasses can call
+        #: ``self.subparsers.add_parser(parents=[self.generic_parser])``
+        #: to automatically inherit this set of args
         self.generic_parser = None
+        #: Subparser providing ``cot deploy PACKAGE ...`` CLI.
         self.parser = None
+        #: Subparser grouping under :attr:`self.parser` for individual
+        #: hypervisor-specific sub-subparsers. Subclasses should generally
+        #: have their :func:`create_subparser` implementations create their
+        #: sub-subparsers under self.subparsers NOT under :attr:`parent`.
         self.subparsers = None
 
     @property
@@ -80,12 +95,29 @@ class COTDeploy(COTReadOnlySubmodule):
 
     def ready_to_run(self):
         """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         if self.hypervisor is None:
             return False, "HYPERVISOR is a mandatory argument"
         return super(COTDeploy, self).ready_to_run()
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        .. note::
+          Unlike most submodules, this one has subparsers of its own -
+          ``'cot deploy PACKAGE <hypervisor>'`` so subclasses of this module
+          should call ``super().create_subparser(parent)`` (to create the main
+          'deploy' subparser) then call ``self.subparsers.add_parser()`` to add
+          their own sub-subparser.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('deploy', subparser)``
+        """
         import argparse
 
         # Create a generic parser with arguments to be shared by all
@@ -140,6 +172,7 @@ class COTDeploy(COTReadOnlySubmodule):
 
 
 class COTDeployESXi(COTDeploy):
+    """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere."""
     def __init__(self, UI):
         super(COTDeployESXi, self).__init__(UI)
         self.locator = None
@@ -159,12 +192,18 @@ class COTDeployESXi(COTDeploy):
 
     def ready_to_run(self):
         """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         if self.locator is None:
             return False, "LOCATOR is a mandatory argument"
         return super(COTDeployESXi, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule - deploying to ESXi.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTDeployESXi, self).run()
 
         # ensure user provided proper credentials
@@ -304,6 +343,16 @@ class COTDeployESXi(COTDeploy):
                 .format(self.package, serial_count))
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+        This will create the shared :attr:`~COTDeploy.parser` under
+        :attr:`parent`, then create our own sub-subparser under
+        :attr:`~COTDeploy.subparsers`.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('deploy', subparser)``
+        """
         super(COTDeployESXi, self).create_subparser(parent)
 
         import argparse
