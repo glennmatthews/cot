@@ -21,6 +21,9 @@ import shutil
 import tempfile
 
 from verboselogs import VerboseLogger
+
+from .data_validation import ValueUnsupportedError
+
 logging.setLoggerClass(VerboseLogger)
 
 logger = logging.getLogger(__name__)
@@ -39,10 +42,11 @@ class VMDescription(object):
         """Checks the given filename (not file contents, as filename may not
         exist yet) to see whether it appears to describe a file type supported
         by this VM class.
-        Returns a string representing the type of this file,
-        or raises a ValueUnsupportedError otherwise.
+
+        :return: A string representing a recognized and supported type of file
+        :raise ValueUnsupportedError: if we don't know how to handle this file.
         """
-        raise NotImplementedError("detect_type_from_name not implemented")
+        raise ValueUnsupportedError("filename", filename, ("none implemented"))
 
     def __init__(self, input_file, output_file=None):
         """Read the given VM description file into memory and
@@ -67,45 +71,70 @@ class VMDescription(object):
         self.destroy()
 
     def set_output_file(self, output_file):
+        """Validate the given output filename and save it for later use.
+
+        :param str output_file: Output filename
+        """
         self.output_file = output_file
 
     def write(self):
-        """Write the VM description to the previously specified output file"""
+        """Write the VM description to :attr:`output_file`, if any."""
         raise NotImplementedError("write not implemented")
 
     def get_platform(self):
-        """Returns the Platform class object associated with this VM"""
+        """Returns the Platform class object associated with this VM
+
+        :return: Class object - :class:`~COT.platforms.GenericPlatform` or
+          a more-specific subclass if recognized as such.
+        """
         raise NotImplementedError("get_platform not implemented")
 
     # API methods needed for add-disk
     def convert_disk_if_needed(self, filename, kind):
         """Converts the disk to a new format (and returns the path to the new
-        disk), if appropriate"""
+        disk), if appropriate
+
+        :param str file_path: Image to inspect and possibly convert
+        :param str kind: Image type (harddisk/cdrom)
+        :return: See :func:`COT.helper_tools.convert_disk_image`
+        """
         # Some VMs may not need this, so default to do nothing, not error
         return filename
 
     def search_from_filename(self, filename):
-        """Use the provided filename to check for existing disks.
-        Returns the opaque objects (file, disk, controller_device, disk_device)
+        """From the given filename, try to find any existing disk.
+
+        :param str filename: Filename to search from
+        :return: ``(file, disk, controller_device, disk_device)``,
+          opaque objects of which any or all may be ``None``
         """
         raise NotImplementedError("search_from_filename not implemented")
 
     def search_from_file_id(self, file_id):
-        """Use the provided file ID to check for existing disks.
-        Returns the opaque objects (file, disk, controller_device, disk_device)
+        """From the given file identifier, try to find any existing disk.
+
+        :param str filename: Filename to search from
+        :return: ``(file, disk, controller_device, disk_device)``,
+          opaque objects of which any or all may be ``None``
         """
         raise NotImplementedError("search_from_file_id not implemented")
 
     def search_from_controller(self, controller, address):
-        """Use the provided controller and address (such as 'ide', '1:0')
-        to check for existing disks.
-        Returns the opaque objects (file, disk, controller_device, disk_device)
+        """From the controller type and device address, look for existing disk.
+
+        :param str controller: ``'ide'`` or ``'scsi'``
+        :param str address: Device address such as ``'1:0'``
+        :return: ``(file, disk, controller_device, disk_device)``,
+          opaque objects of which any or all may be ``None``
         """
         raise NotImplementedError("search_from_controller not implemented")
 
     def find_open_controller(self, type):
         """Find the first open slot on a controller of the given type.
-        Returns (controller_device, address)"""
+
+        :param str type: ``'ide'`` or ``'scsi'``
+        :return: ``(controller_device, address_string)`` or ``(None, None)``
+        """
         raise NotImplementedError("find_open_controller not implemented")
 
     def get_id_from_file(self, file):
@@ -167,12 +196,20 @@ class VMDescription(object):
                                   "not implemented!")
 
     def create_configuration_profile(self, id, label, description):
-        """Create/update a configuration profile with the given ID"""
+        """Create/update a configuration profile with the given ID.
+
+        :param id: Profile identifier
+        :param str label: Brief descriptive label for the profile
+        :param str description: Verbose description of the profile
+        """
         raise NotImplementedError("create_configuration_profile "
                                   "not implemented!")
 
     def set_system_type(self, type_list):
-        """Set the virtual system type(s) supported by this virtual machine."""
+        """Set the virtual system type(s) supported by this virtual machine.
+
+        :param list type_list: List of system type strings
+        """
         raise NotImplementedError("set_system_type not implemented!")
 
     # A note on getters/setters that take a profile_list parameter:
@@ -196,93 +233,171 @@ class VMDescription(object):
     # not the default.
 
     def set_cpu_count(self, cpus, profile_list):
+        """Set the number of CPUs.
+
+        :param int cpus: Number of CPUs
+        :param list profile_list: Change only the given profiles
+        """
         raise NotImplementedError("set_cpu_count not implemented!")
 
     def set_memory(self, megabytes, profile_list):
+        """Set the amount of RAM, in megabytes.
+
+        :param int megabytes: Memory value, in megabytes
+        :param list profile_list: Change only the given profiles
+        """
         raise NotImplementedError("set_memory not implemented!")
 
     def set_nic_type(self, type, profile_list):
+        """Set the hardware type for NICs.
+
+        :param str type: NIC hardware type
+        :param list profile_list: Change only the given profiles.
+        """
         raise NotImplementedError("set_nic_type not implemented!")
 
     def get_nic_count(self, profile_list):
         """Get the number of NICs under the given profile(s).
-        Returns a dictionary of profile_name:nic_count.
+
+        :param list profile_list: Profile(s) of interest.
+        :rtype: dict
+        :return: ``{ profile_name : nic_count }``
         """
         raise NotImplementedError("get_nic_count not implemented!")
 
     def set_nic_count(self, count, profile_list):
         """Set the given profile(s) to have the given number of NICs.
+
+        :param int count: number of NICs
+        :param list profile_list: Change only the given profiles
         """
         raise NotImplementedError("set_nic_count not implemented!")
 
     def get_network_list(self):
         """Gets the list of network names currently defined in this VM.
+
+        :rtype: list
         """
         raise NotImplementedError("get_network_list not implemented!")
 
     def create_network(self, label, description):
         """Define a new network with the given label and description.
+
+        :param str label: Brief label for the network
+        :param str description: Verbose description of the network
         """
         raise NotImplementedError("create_network not implemented!")
 
     def set_nic_networks(self, network_list, profile_list):
         """Set the NIC to network mapping for NICs under the given profile(s).
+
+        .. note::
+          If the length of :attr:`network_list` is less than the number of
+          NICs, will use the last entry in the list for all remaining NICs.
+
+        :param list network_list: List of networks to map NICs to
+        :param list profile_list: Change only the given profiles
         """
         raise NotImplementedError("set_nic_networks not implemented!")
 
     def set_nic_mac_addresses(self, mac_list, profile_list):
         """Set the MAC addresses for NICs under the given profile(s).
+
+        .. note::
+          If the length of :attr:`mac_list` is less than the number of NICs,
+          will use the last entry in the list for all remaining NICs.
+
+        :param list mac_list: List of MAC addresses to assign to NICs
+        :param list profile_list: Change only the given profiles
         """
         raise NotImplementedError("set_nic_mac_addresses not implemented!")
 
     def set_nic_names(self, name_list, profile_list):
         """Set the device names for NICs under the given profile(s).
+
+        TODO: document magic expansion syntax here
+
+        :param list name_list: List of names to assign.
+        :param list profile_list: Change only the given profiles
         """
         raise NotImplementedError("set_nic_names not implemented!")
 
     def get_serial_count(self, profile_list):
         """Get the number of serial ports under the given profile(s).
-        Returns a dictionary of profile_name:serial_count.
+
+        :rtype: dict
+        :return: ``{ profile_name : serial_count }``
         """
         raise NotImplementedError("get_serial_count not implemented!")
 
     def set_serial_count(self, count, profile_list):
         """Set the given profile(s) to have the given number of NICs.
+
+        :param int count: Number of serial ports
+        :param list profile_list: Change only the given profiles
         """
         raise NotImplementedError("set_serial_count not implemented!")
 
     def set_serial_connectivity(self, conn_list, profile_list):
         """Set the serial port connectivity under the given profile(s).
+
+        :param list conn_list: List of connectivity strings
+        :param list profile_list: Change only the given profiles
         """
         raise NotImplementedError("set_serial_connectivity not implemented!")
 
     def set_scsi_subtype(self, type, profile_list):
+        """Set the SCSI controller(s) subtype
+
+        :param str type: SCSI subtype string
+        :param list profile_list: Change only the given profiles
+        """
         raise NotImplementedError("set_scsi_subtype not implemented!")
 
     def set_ide_subtype(self, type, profile_list):
+        """Set the IDE controller(s) subtype
+
+        :param str type: IDE subtype string
+        :param list profile_list: Change only the given profiles
+        """
         raise NotImplementedError("set_ide_subtype not implemented!")
 
     # API methods needed for edit-product
     def set_short_version(self, version_string):
+        """Set a short string describing the product version.
+
+        :param str version_string: Short descriptive version string.
+        """
         raise NotImplementedError("set_version not implemented!")
 
     def set_long_version(self, version_string):
+        """Set a long string describing the product version.
+
+        :param str version_string: Long descriptive version string.
+        """
         raise NotImplementedError("set_version not implemented")
 
     # API methods needed for edit-properties
     def get_property_array(self):
         """Get an array of property hashes, each with the keys
-        {key, value, qualifiers, type, label, description}"""
+        {key, value, qualifiers, type, label, description}
+        """
         raise NotImplementedError("get_property_array not implemented")
 
     def get_property_value(self, key):
         """Get the value of the given property, or None
+
+        :param str key: Property identifier
+        :return: Value of this property, or ``None``
         """
         raise NotImplementedError("get_property_value not implemented")
 
     def set_property_value(self, key, value):
-        """Set the value of the given property (converting the value if needed).
-        Returns the value that was set.
+        """Set the value of the given property (converting value if needed).
+
+        :param str key: Property identifier
+        :param value: Value to set for this property
+        :return: the (converted) value that was set.
         """
         raise NotImplementedError("set_property_value not implemented")
 
@@ -299,14 +414,28 @@ class VMDescription(object):
         }
 
     def info_string(self, width=79, verbosity_option=None):
-        """Returns a descriptive string summarizing the contents of this VM
+        """Returns a descriptive string summarizing the contents of this VM.
+
+        :param int width: Line length to wrap to where possible.
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+
+        :return: Wrapped, appropriately verbose string.
         """
         raise NotImplementedError("info_string not implemented")
 
     def profile_info_string(self, width=79, verbosity_option=None,
                             enumerate=False):
         """Returns a descriptive string summarizing the different configuration
-           profiles of this VM."""
+        profiles of this VM.
+
+        :param int width: Line length to wrap to if possible
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+
+        :param boolean enumerate: If ``True``, number the profiles.
+        :return: Appropriately formatted and verbose string.
+        """
         raise NotImplementedError("profile_info_string not implemented")
 
     def get_default_profile_name(self):

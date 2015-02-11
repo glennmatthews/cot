@@ -41,8 +41,19 @@ logger = logging.getLogger(__name__)
 
 def byte_count(base_val, multiplier):
     """Convert an OVF-style value + multiplier into decimal byte count.
-    >>> byte_count("128", "byte * 2^20")
-    134217728
+    Inverse operation of :func:`factor_bytes`.
+
+    ::
+
+      >>> byte_count("128", "byte * 2^20")
+      134217728
+
+    :param str base_val: Base value string (value of ``ovf:capacity``, etc.)
+    :param str multiplier: Multiplier string (value of
+      ``ovf:capacityAllocationUnits``, etc.)
+
+    :return: Number of bytes
+    :rtype: int
     """
     match = re.search("2\^(\d+)", multiplier)
     if match:
@@ -52,10 +63,17 @@ def byte_count(base_val, multiplier):
 
 def factor_bytes(byte_count):
     """Convert a byte count into OVF-style bytes + multiplier.
-    >>> factor_bytes(134217728)
-    ('128', 'byte * 2^20')
-    >>> factor_bytes(134217729)
-    ('134217729', 'byte')
+    Inverse operation of :func:`byte_count`
+
+    ::
+
+      >>> factor_bytes(134217728)
+      ('128', 'byte * 2^20')
+      >>> factor_bytes(134217729)
+      ('134217729', 'byte')
+
+    :param int byte_count: Number of bytes
+    :return: ``(base_val, multiplier)``
     """
     shift = 0
     byte_count = int(byte_count)
@@ -69,7 +87,15 @@ def factor_bytes(byte_count):
 
 
 def byte_string(byte_count, base_shift=0):
-    """Pretty-print the given bytes value"""
+    """Pretty-print the given bytes value
+
+    :param float byte_count: Value
+    :param int base_shift: Base value of byte_count
+      (0 = bytes, 1 = kB, 2 = MB, etc.)
+
+    :return: Pretty-printed byte string such as "1.00 GB"
+    :rtype: str
+    """
     tags = ["B", "kB", "MB", "GB", "TB"]
     byte_count = float(byte_count)
     shift = base_shift
@@ -92,8 +118,9 @@ class OVF(VMDescription, XML):
         """Checks the given filename (not file contents, as filename may not
         exist yet) to see whether it appears to describe a file type supported
         by this VM class.
-        Returns a string representing the type of this file,
-        or raises a ValueUnsupportedError otherwise.
+
+        :return: '.ovf' or '.ova'
+        :raise ValueUnsupportedError: if filename doesn't match ovf/ova
         """
         # We don't care about any directory path
         filename = os.path.basename(filename)
@@ -285,6 +312,11 @@ class OVF(VMDescription, XML):
             raise
 
     def set_output_file(self, output_file):
+        """Validate the given output filename and save it for later use.
+
+        :param str output_file: Output filename
+        :raise ValueUnsupportedError: if :func:`detect_type_from_name` fails
+        """
         # Make sure we can write the requested output format, or abort:
         if output_file:
             self.output_extension = self.detect_type_from_name(output_file)
@@ -299,6 +331,8 @@ class OVF(VMDescription, XML):
         return getattr(self.name_helper, name)
 
     def write(self):
+        """Write to :attr:`output_file`, if any.
+        """
         if not self.output_file:
             return
 
@@ -384,7 +418,14 @@ class OVF(VMDescription, XML):
                                       .format(extension))
 
     def info_string(self, TEXT_WIDTH=79, verbosity_option=None):
-        """Returns a string summarizing the contents of this OVF."""
+        """Returns a string summarizing the contents of this OVF.
+
+        :param int TEXT_WIDTH: Line length to wrap to where possible.
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+
+        :return: Wrapped, appropriately verbose string.
+        """
         # Supposedly it's quicker to construct a list of strings then merge
         # them all together with 'join()' rather than it is to repeatedly
         # append to an existing string with '+'.
@@ -700,6 +741,15 @@ class OVF(VMDescription, XML):
 
     def profile_info_string(self, TEXT_WIDTH=79, verbosity_option=None,
                             enumerate=False):
+        """Returns a string summarizing available configuration profiles.
+
+        :param int TEXT_WIDTH: Line length to wrap to if possible
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+
+        :param boolean enumerate: If ``True``, number the profiles.
+        :return: Appropriately formatted and verbose string.
+        """
         str_list = []
 
         default_profile_id = self.get_default_profile_name()
@@ -783,6 +833,10 @@ class OVF(VMDescription, XML):
         return "\n".join(str_list)
 
     def get_default_profile_name(self):
+        """Get the name of the default configuration profile.
+
+        :return: Profile name or ``None`` if none are defined.
+        """
         default_profile = None
         profiles = self.get_configuration_profile_ids()
         if profiles:
@@ -791,7 +845,11 @@ class OVF(VMDescription, XML):
         return default_profile
 
     def get_platform(self):
-        """Identifies the platform type from the OVF descriptor"""
+        """Identifies the platform type from the OVF descriptor.
+
+        :return: Class object - :class:`~COT.platforms.GenericPlatform` or
+          a more-specific subclass if recognized as such.
+        """
         if self.platform is not None:
             return self.platform
 
@@ -827,6 +885,7 @@ class OVF(VMDescription, XML):
 
     def get_configuration_profile_ids(self):
         """Get the list of supported configuration profile identifiers.
+
         If this OVF has no defined profiles, returns an empty list.
         If there is a default profile, it will be first in the list.
         """
@@ -848,7 +907,12 @@ class OVF(VMDescription, XML):
         return self.configuration_profiles
 
     def create_configuration_profile(self, id, label, description):
-        """Create or update a configuration profile with the given ID"""
+        """Create or update a configuration profile with the given ID.
+
+        :param id: Profile identifier
+        :param str label: Brief descriptive label for the profile
+        :param str description: Verbose description of the profile
+        """
         self.deploy_opt_section = self.create_envelope_section_if_absent(
             self.DEPLOY_OPT_SECTION, "Configuration Profiles")
 
@@ -866,7 +930,9 @@ class OVF(VMDescription, XML):
 
     def set_system_type(self, type_list):
         """Set the virtual system type(s) supported by this virtual machine.
-        For an OVF, this corresponds to the VirtualSystemType element.
+        For an OVF, this corresponds to the ``VirtualSystemType`` element.
+
+        :param list type_list: List of system type strings
         """
         type_string = " ".join(type_list)
         logger.info("Setting VirtualSystemType to '{0}'".format(type_string))
@@ -882,8 +948,14 @@ class OVF(VMDescription, XML):
             XML.set_or_make_child(system, self.VSSD + "InstanceID", 0)
         XML.set_or_make_child(system, self.VIRTUAL_SYSTEM_TYPE, type_string)
 
+    # TODO - how to insert a doc about the profile_list (see vm_description.py)
+
     def set_cpu_count(self, cpus, profile_list):
-        """Set the number of CPUs"""
+        """Set the number of CPUs.
+
+        :param int cpus: Number of CPUs
+        :param list profile_list: Change only the given profiles
+        """
         logger.info("Updating CPU count in OVF under profile {0} to {1}"
                     .format(profile_list, cpus))
         self.platform.validate_cpu_count(cpus)
@@ -893,7 +965,11 @@ class OVF(VMDescription, XML):
                                               create_new=True)
 
     def set_memory(self, megabytes, profile_list):
-        """Set the amount of RAM, in megabytes"""
+        """Set the amount of RAM, in megabytes.
+
+        :param int megabytes: Memory value, in megabytes
+        :param list profile_list: Change only the given profiles
+        """
         logger.info("Updating RAM in OVF under profile {0} to {1}"
                     .format(profile_list, megabytes))
         self.platform.validate_memory_amount(megabytes)
@@ -903,7 +979,11 @@ class OVF(VMDescription, XML):
                                               create_new=True)
 
     def set_nic_type(self, type, profile_list):
-        """Set the hardware type for NICs"""
+        """Set the hardware type for NICs.
+
+        :param str type: NIC hardware type
+        :param list profile_list: Change only the given profiles.
+        """
         self.platform.validate_nic_type(type)
         self.hardware.set_value_for_all_items('ethernet',
                                               self.RESOURCE_SUB_TYPE,
@@ -912,13 +992,19 @@ class OVF(VMDescription, XML):
 
     def get_nic_count(self, profile_list):
         """Get the number of NICs under the given profile(s).
-        Returns a dictionary of profile_name:nic_count.
+
+        :param list profile_list: Profile(s) of interest.
+        :rtype: dict
+        :return: ``{ profile_name : nic_count }``
         """
         return self.hardware.get_item_count_per_profile('ethernet',
                                                         profile_list)
 
     def set_nic_count(self, count, profile_list):
         """Set the given profile(s) to have the given number of NICs.
+
+        :param int count: number of NICs
+        :param list profile_list: Change only the given profiles
         """
         logger.info("Updating NIC count in OVF under profile {0} to {1}"
                     .format(profile_list, count))
@@ -928,6 +1014,8 @@ class OVF(VMDescription, XML):
 
     def get_network_list(self):
         """Gets the list of network names currently defined in this VM.
+
+        :rtype: list
         """
         if self.network_section is None:
             return []
@@ -936,6 +1024,9 @@ class OVF(VMDescription, XML):
 
     def create_network(self, label, description):
         """Define a new network with the given label and description.
+
+        :param str label: Brief label for the network
+        :param str description: Verbose description of the network
         """
         self.network_section = self.create_envelope_section_if_absent(
             self.NETWORK_SECTION,
@@ -947,9 +1038,14 @@ class OVF(VMDescription, XML):
 
     def set_nic_networks(self, network_list, profile_list):
         """Set the NIC to network mapping for NICs under the given profile(s).
+
+        .. note::
+          If the length of :attr:`network_list` is less than the number of
+          NICs, will use the last entry in the list for all remaining NICs.
+
+        :param list network_list: List of networks to map NICs to
+        :param list profile_list: Change only the given profiles
         """
-        # If len(network_list) is less than the number of NICs,
-        # set all remaining NICs to the last item in network_list
         self.hardware.set_item_values_per_profile('ethernet',
                                                   self.CONNECTION,
                                                   network_list,
@@ -958,9 +1054,14 @@ class OVF(VMDescription, XML):
 
     def set_nic_mac_addresses(self, mac_list, profile_list):
         """Set the MAC addresses for NICs under the given profile(s).
+
+        .. note::
+          If the length of :attr:`mac_list` is less than the number of NICs,
+          will use the last entry in the list for all remaining NICs.
+
+        :param list mac_list: List of MAC addresses to assign to NICs
+        :param list profile_list: Change only the given profiles
         """
-        # If len(mac_list) is less than the number of NICs,
-        # set all remaining NICs to the last item in mac_list
         self.hardware.set_item_values_per_profile('ethernet',
                                                   self.ADDRESS,
                                                   mac_list,
@@ -969,6 +1070,11 @@ class OVF(VMDescription, XML):
 
     def set_nic_names(self, name_list, profile_list):
         """Set the device names for NICs under the given profile(s).
+
+        TODO: document magic expansion syntax here
+
+        :param list name_list: List of names to assign.
+        :param list profile_list: Change only the given profiles
         """
         # Expand the pattern (if any) out to a full list
         nic_dict = self.get_nic_count(profile_list)
@@ -997,12 +1103,17 @@ class OVF(VMDescription, XML):
 
     def get_serial_count(self, profile_list):
         """Get the number of serial ports under the given profile(s).
-        Returns a dictionary of profile_name:serial_count.
+
+        :rtype: dict
+        :return: ``{ profile_name : serial_count }``
         """
         return self.hardware.get_item_count_per_profile('serial', profile_list)
 
     def set_serial_count(self, count, profile_list):
         """Set the given profile(s) to have the given number of serial ports.
+
+        :param int count: Number of serial ports
+        :param list profile_list: Change only the given profiles
         """
         logger.info("Updating serial port count under profile {0} to {1}"
                     .format(profile_list, count))
@@ -1010,27 +1121,41 @@ class OVF(VMDescription, XML):
 
     def set_serial_connectivity(self, conn_list, profile_list):
         """Set the serial port connectivity under the given profile(s).
+
+        :param list conn_list: List of connectivity strings
+        :param list profile_list: Change only the given profiles
         """
         self.hardware.set_item_values_per_profile('serial',
                                                   self.ADDRESS, conn_list,
                                                   profile_list, default="")
 
     def set_scsi_subtype(self, type, profile_list):
-        """Set the SCSI controller(s) subtype"""
+        """Set the SCSI controller(s) subtype
+
+        :param str type: SCSI subtype string
+        :param list profile_list: Change only the given profiles
+        """
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('scsi',
                                               self.RESOURCE_SUB_TYPE, type,
                                               profile_list)
 
     def set_ide_subtype(self, type, profile_list):
-        """Set the IDE controller(s) subtype"""
+        """Set the IDE controller(s) subtype
+
+        :param str type: IDE subtype string
+        :param list profile_list: Change only the given profiles
+        """
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('ide',
                                               self.RESOURCE_SUB_TYPE, type,
                                               profile_list)
 
     def set_short_version(self, version_string):
-        """Set the Version element's value"""
+        """Set the ``Version`` element's value.
+
+        :param str version_string: Short descriptive version string.
+        """
         if self.product_section is None:
             self.product_section = self.set_or_make_child(
                 self.virtual_system, self.PRODUCT_SECTION)
@@ -1042,7 +1167,10 @@ class OVF(VMDescription, XML):
                                version_string)
 
     def set_long_version(self, version_string):
-        """Set the FullVersion element's value"""
+        """Set the FullVersion element's value.
+
+        :param str version_string: Long descriptive version string.
+        """
         if self.product_section is None:
             self.product_section = self.set_or_make_child(
                 self.virtual_system, self.PRODUCT_SECTION)
@@ -1055,7 +1183,8 @@ class OVF(VMDescription, XML):
 
     def get_property_array(self):
         """Get an array of property hashes, each with the keys
-        {key, value, qualifiers, type, label, description}"""
+        {key, value, qualifiers, type, label, description}
+        """
         result = []
         if self.product_section is None:
             return result
@@ -1075,7 +1204,10 @@ class OVF(VMDescription, XML):
         return result
 
     def get_property_value(self, key):
-        """Get the value of the given property, or None
+        """Get the value of the given property
+
+        :param str key: Property identifier
+        :return: Value of this property, or ``None``
         """
         if self.product_section is None:
             return None
@@ -1087,7 +1219,10 @@ class OVF(VMDescription, XML):
 
     def set_property_value(self, key, value):
         """Set the value of the given property (converting value if needed).
-        Returns the value that was set.
+
+        :param str key: Property identifier
+        :param value: Value to set for this property
+        :return: the (converted) value that was set.
         """
         if self.product_section is None:
             self.product_section = self.set_or_make_child(
@@ -1154,6 +1289,10 @@ class OVF(VMDescription, XML):
         """Convert all hard disk files to stream-optimized VMDK (the only
         format that ESXi supports in OVA packages); CD-ROM iso
         images are left alone.
+
+        :param str file_path: Image to inspect and possibly convert
+        :param str kind: Image type (harddisk/cdrom)
+        :return: See :func:`COT.helper_tools.convert_disk_image`
         """
         if kind != 'harddisk':
             logger.debug("No disk conversion needed")
@@ -1164,10 +1303,17 @@ class OVF(VMDescription, XML):
                                   'vmdk', 'streamOptimized')
 
     def search_from_filename(self, filename):
-        """Returns the tuple (file, disk, ctrl_item, disk_item),
-        any or all of which may be None, based on using the given filename
-        to find a matching File in the OVF, then using that to find a matching
-        Disk and Items"""
+        """From the given filename, try to find any existing entries in the OVF
+        and return any that are found.
+
+        This implementation uses the given :attr:`filename` to find a matching
+        ``File`` in the OVF, then using that to find a matching ``Disk`` and
+        ``Item`` entries.
+
+        :param str filename: Filename to search from
+        :return: ``(file, disk, ctrl_item, disk_item)``, any or all of which
+          may be ``None``
+        """
         file = None
         disk = None
         ctrl_item = None
@@ -1199,10 +1345,17 @@ class OVF(VMDescription, XML):
         return (file, disk, ctrl_item, disk_item)
 
     def search_from_file_id(self, file_id):
-        """Returns the tuple (file, disk, ctrl_item, disk_item),
-        any or all of which may be None, based on using the given file_id
-        to find a matching File in the OVF, then using that to find a matching
-        Disk and Items"""
+        """From the given file ID, try to find any existing entries in the OVF
+        and return any that are found.
+
+        This implementation uses the given :attr:`file_id` to find a matching
+        ``File`` in the OVF, then using that to find a matching ``Disk`` and
+        ``Item`` entries.
+
+        :param str file_id: Filename to search from
+        :return: ``(file, disk, ctrl_item, disk_item)``, any or all of which
+          may be ``None``
+        """
         if file_id is None:
             return (None, None, None, None)
 
@@ -1240,11 +1393,18 @@ class OVF(VMDescription, XML):
         return (file, disk, ctrl_item, disk_item)
 
     def search_from_controller(self, controller, address):
-        """Returns the tuple (file, disk, ctrl_item, disk_item),
-        any or all of which may be None, based on using the given controller
-        type and disk address to find controller and disk Items, then using
-        the disk Item to find File and/or Disk"""
+        """From the controller type and device address, look for existing disk
+        entries in the OVF and return any that are found.
 
+        This implementation uses the parameters to find matching
+        controller and disk ``Item`` elements, then using the disk ``Item``
+        to find matching ``File`` and/or ``Disk``.
+
+        :param str controller: ``'ide'`` or ``'scsi'``
+        :param str address: Device address such as ``'1:0'``
+        :return: ``(file, disk, ctrl_item, disk_item)``, any or all of which
+          may be ``None``
+        """
         if controller is None or address is None:
             return (None, None, None, None)
 
@@ -1320,7 +1480,10 @@ class OVF(VMDescription, XML):
 
     def find_open_controller(self, type):
         """Find the first controller Item of the requested type that has an
-        open slot, and return the Item, and the full address of the open slot
+        open slot, and return the Item and the full address of the open slot
+
+        :param str type: ``'ide'`` or ``'scsi'``
+        :return: ``(ctrl_item, address_string)`` or ``(None, None)``
         """
 
         for ctrl_item in self.hardware.find_all_items(type):
@@ -1858,10 +2021,12 @@ class OVF(VMDescription, XML):
 
 
 class OVFNameHelper(object):
-    """Helper class for OVF.
+    """Helper class for :class:`OVF`.
     Provides string constants for easier lookup of various OVF XML
     elements and attributes.
     """
+
+    # TODO - document the constants.
 
     def __init__(self, version):
         self.ovf_version = version
@@ -2169,17 +2334,19 @@ class OVFHardwareDataError(Exception):
 
 
 class OVFHardware:
-    """Helper class for OVF. Represents all hardware items defined by this OVF;
+    """Helper class for :class:`OVF`.
+    Represents all hardware items defined by this OVF;
     i.e., the contents of all Items in the VirtualHardwareSection.
 
-    Fundamentally it's just a dict of OVFItem objects with a bunch of helper
-    methods.
+    Fundamentally it's just a dict of :class:`OVFItem` objects with a bunch of
+    helper methods.
     """
 
     def __init__(self, ovf):
         """Construct an OVFHardware object describing the hardware Items
         contained in this OVF object.
-        May raise an OVFHardwareDataError if any data errors are seen.
+
+        :raise OVFHardwareDataError: if any data errors are seen
         """
         self.ovf = ovf
         self.item_dict = {}
@@ -2228,7 +2395,8 @@ class OVFHardware:
 
     def update_xml(self):
         """If any changes have been made to the hardware definitions,
-        regenerate any Items in the OVF VirtualHardwareSection to reflect this.
+        regenerate any Items in the :class:`OVF` ``VirtualHardwareSection``
+        to reflect this.
         """
         modified = False
         for ovfitem in self.item_dict.values():
@@ -2267,7 +2435,7 @@ class OVFHardware:
                            len(self.item_dict)))
 
     def find_unused_instance_id(self):
-        """Find the first unused InstanceID number and return it as a string.
+        """Find the first unused ``InstanceID`` number and return it as string.
         """
         i = 1
         while str(i) in self.item_dict.keys():
@@ -2276,9 +2444,12 @@ class OVFHardware:
         return str(i)
 
     def new_item(self, resource_type, profile_list=None):
-        """Create a new OVFItem of the given type with a new InstanceID
-        under the given profile(s).
-        Returns (instance, ovfitem).
+        """Create a new :class:`OVFItem` of the given type
+        with a new ``InstanceID`` under the given profile(s).
+
+        :param str resource_type:
+        :param list profile_list:
+        :return: ``(instance, ovfitem)``
         """
         instance = self.find_unused_instance_id()
         ovfitem = OVFItem(self.ovf)
@@ -2297,9 +2468,12 @@ class OVFHardware:
         return (instance, ovfitem)
 
     def clone_item(self, parent_item, profile_list):
-        """Clone the given OVFItem to create a new instance of this Item under
-        the given profile(s).
-        Returns (instance, ovfitem).
+        """Clone the given :class:`OVFItem` to create a new instance
+        of this ``Item`` under the given profile(s).
+
+        :param OVFItem parent_item: Instance to clone from
+        :param list profile_list:
+        :return: ``(instance, ovfitem)``
         """
         instance = self.find_unused_instance_id()
         ovfitem = OVFItem(self.ovf)
@@ -2314,8 +2488,14 @@ class OVFHardware:
 
     def find_all_items(self, resource_type=None, properties=None,
                        profile_list=None):
-        """Find all OVFItems of the given resource_type and other properties,
-        and return a list, sorted by InstanceID.
+        """Find all :class:`OVFItem` of the given :attr:`resource_type`
+        and other :attr:`properties`, and return a list, sorted by
+        ``InstanceID``.
+
+        :param resource_type:
+        :param properties:
+        :param list profile_list:
+        :return: list of :class:`OVFItem` instances
         """
         items = [self.item_dict[instance] for instance in
                  natural_sort(self.item_dict.keys())]
@@ -2345,8 +2525,13 @@ class OVFHardware:
         return filtered_items
 
     def find_item(self, resource_type=None, properties=None, profile=None):
-        """Find the only OVFItem of the given resource_type, or None.
-        Will raise a LookupError if more than one such item exists.
+        """Find the only :class:`OVFItem` of the given :attr:`resource_type`.
+
+        :param resource_type:
+        :param properties:
+        :param profile: Single profile ID to search within
+        :rtype: :class:`OVFItem` or ``None``
+        :raise LookupError: if more than one such Item exists.
         """
         matches = self.find_all_items(resource_type, properties, [profile])
         if len(matches) > 1:
@@ -2358,13 +2543,20 @@ class OVFHardware:
             return matches[0]
 
     def get_item_count(self, resource_type, profile):
+        """Wrapper for :meth:`get_item_count_per_profile`
+        """
         return (self.get_item_count_per_profile(resource_type, [profile])
                 [profile])
 
     def get_item_count_per_profile(self, resource_type, profile_list):
-        """Returns the number of Items of the given resource type per profile,
-        as a dict. Items present under "no profile" will be counted against
+        """Get the number of ``Item``s of the given :attr:`resource_type`
+        per profile. Items present under "no profile" will be counted against
         the total for each profile.
+
+        :param resource_type:
+        :param profile_list:
+        :rtype: dict
+        :return: ``{ profile : count }``
         """
         count_dict = {}
         if not profile_list:
@@ -2393,6 +2585,10 @@ class OVFHardware:
 
         If the new count is less than the current count under this profile,
         then the highest-numbered instances will be removed preferentially.
+
+        :param resource_type:
+        :param count:
+        :param profile_list:
         """
         if not profile_list:
             # Set the profile list for all profiles, including the default
@@ -2491,10 +2687,20 @@ class OVFHardware:
 
     def set_value_for_all_items(self, resource_type, property, new_value,
                                 profile_list, create_new=False):
-        """For all items of the given resource_type, update the given property
-        to the given new_value under the specified set of profiles.
-        If no items of the given type exist, will create a new Item if
-        create_new is set to True; otherwise will log a warning and do nothing.
+        """For all items of the given :attr:`resource_type`, update the given
+        :attr:`property` to the given :attr:`new_value` under the specified
+        set of profiles.
+
+        If no items of the given type exist, will create a new ``Item`` if
+        :attr:`create_new` is set to ``True``; otherwise will log a warning
+        and do nothing.
+
+        :param resource_type:
+        :param property: Property to update
+        :param new_value: New value to set the property to
+        :param profile_list:
+        :param boolean create_new: Whether to create a new entry if no items
+          of this :attr:`resource_type` presently exist.
         """
         ovfitem_list = self.find_all_items(resource_type)
         if not ovfitem_list:
@@ -2517,6 +2723,12 @@ class OVFHardware:
         """Set the given property for the list of items of the given
         resource type under the given profile(s) to the list of values
         provided.
+
+        :param resource_type:
+        :param str property: Property name to update
+        :param list value_list:
+        :param list profile_list:
+        :param default:
         """
         if profile_list is None:
             profile_list = self.ovf.get_configuration_profile_ids() + [None]
@@ -2544,11 +2756,15 @@ class OVFItemDataError(Exception):
 
 
 class OVFItem:
-    """Helper class for OVF. Represents all variations of a given hardware
-    Item amongst different hardware configuration profiles.
+    """Helper class for :class:`OVF`.
+
+    Represents all variations of a given hardware ``Item`` amongst different
+    hardware configuration profiles.
+
     In essence, it is:
-    a dict of Item properties (indexed by element name)
-    each of which is a dict of sets of profiles (indexed by element value)
+
+    * a dict of ``Item`` properties (indexed by element name)
+    * each of which is a dict of sets of profiles (indexed by element value)
     """
 
     # Magic strings
@@ -2589,9 +2805,11 @@ class OVFItem:
         return getattr(self.name_helper, name)
 
     def add_item(self, item):
-        """Add the given Item element to this OVFItem.
-        Will raise an OVFItemDataError if the new Item conflicts with
-        existing data in the OVFItem.
+        """Add the given ``Item`` element to this OVFItem.
+
+        :param item: XML ``Item`` element
+        :raise OVFItemDataError: if the new Item conflicts with existing data
+          already in the OVFItem.
         """
         logger.debug("Adding new {0}".format(item.tag))
         if item.tag == self.ITEM:
@@ -2646,11 +2864,14 @@ class OVFItem:
     def set_property(self, key, value, profiles=None, overwrite=True):
         """Store the profiles associated with the given value for
         the given key.
-        If profiles is None, replace the value for all profiles currently
-        known to this item.
-        If overwrite is set to False, trying to set a value that is already
-        set for the provided profile will raise a OVFItemDataError.
-        (Otherwise, by default, the existing data will be overwritten).
+
+        :param str key:
+        :param value:
+        :param profiles: If ``None``, set for all profiles currently known
+          to this item
+
+        :raise OVFItemDataError: if a value is already defined and would be
+          overwritten, unless :attr:`overwrite` is ``True``
         """
         # Just to be safe...
         value = str(value)
@@ -2747,6 +2968,10 @@ class OVFItem:
     def add_profile(self, new_profile, from_item=None):
         """Adds a new profile for this item based on the default values
         from this item or another item.
+
+        :param str new_profile: Profile name to add
+        :param from_item: Item to inherit properties from. If unset,
+          this defaults to ``self``.
         """
         if self.has_profile(new_profile):
             logger.error("Profile {0} already exists under {1}!"
@@ -2780,7 +3005,10 @@ class OVFItem:
         self.validate()
 
     def remove_profile(self, profile):
-        """Remove all trace of the given profile from this item"""
+        """Remove all trace of the given profile from this item.
+
+        :param profile: Profile name to remove
+        """
         if not self.has_profile(profile):
             logger.error("Requested deletion of profile '{0}' but it is "
                          "not present under {1}!"
@@ -2813,6 +3041,10 @@ class OVFItem:
 
     def get(self, tag):
         """Gets the dict associated with the given XML tag, if any.
+
+        :param tag: XML tag to look up
+        :rtype: dict
+        :return: Dictionary of values associated with this tag (TODO?)
         """
         return self.property_dict.get(tag, None)
 
@@ -2820,9 +3052,15 @@ class OVFItem:
         """Get the internal value string (wildcard tags and temporary
         substitutions included) associated with the given profiles
         for the given tag. If the tag does not exist under these profiles, or
-        the tag values differ across the profiles, returns None.
+        the tag values differ across the profiles, returns ``None``.
 
-        DO NOT USE OUTSIDE THE OVFHardware CLASS - USE get_value() INSTEAD!
+        .. warning::
+          DO NOT USE OUTSIDE :class:`OVFHardware`.
+          USE :meth:`get_value` INSTEAD!
+
+        :param str tag:
+        :param profiles:
+        :return: Value or default value, unsanitized.
         """
         if profiles is not None:
             profiles = set(profiles)
@@ -2851,7 +3089,11 @@ class OVFItem:
     def get_value(self, tag, profiles=None):
         """Gets the value string associated with the given profiles for
         the given tag. If the tag does not exist under these profiles, or the
-        tag values differ across the profiles, returns None.
+        tag values differ across the profiles, returns ``None``.
+
+        :param tag:
+        :param profiles:
+        :return: Value string
         """
         val = self.get_value_internal(tag, profiles)
 
@@ -2871,11 +3113,17 @@ class OVFItem:
 
     def get_all_values(self, tag):
         """Gets the set of all value strings for the given tag.
+
+        :param tag:
+        :rtype: set
         """
         return set(self.property_dict.get(tag, {}).keys())
 
     def validate(self):
-        """Verify that the OVFItem describes a valid set of items"""
+        """Verify that the OVFItem describes a valid set of items.
+
+        :raise RuntimeError: if validation fails and self-repair is impossible.
+        """
         # An OVFItem must describe only one InstanceID
         # All Items with a given InstanceID must have the same ResourceType
         for key in [self.INSTANCE_ID, self.RESOURCE_TYPE]:
@@ -2903,7 +3151,11 @@ class OVFItem:
                 set_so_far |= profile_set
 
     def has_profile(self, profile):
-        """Returns whether this Item exists under the given profile"""
+        """Does this Item exist under the given profile?
+
+        :param profile: Profile name
+        :rtype boolean:
+        """
         instance_dict = self.property_dict.get(self.INSTANCE_ID, None)
         if not instance_dict:
             return False
@@ -2916,7 +3168,10 @@ class OVFItem:
         return False
 
     def generate_items(self):
-        """A list of Item XML elements derived from this object's data"""
+        """A list of Item XML elements derived from this object's data
+
+        :rtype: list
+        """
 
         # First step - identify the minimal non-intersecting set of profiles
         set_list = []
