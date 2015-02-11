@@ -29,8 +29,10 @@ class UI(object):
     Can also be used in test code as a stub that autoconfirms everything."""
 
     def __init__(self, force=False):
+        #: Whether to automatically select the default value in all cases,
+        #: rather than interactively prompting the user.
         self.force = force
-        # Stub for API testing
+        # Knob for API testing, used to set the default response to confirm()
         self.default_confirm_response = True
 
     def terminal_width(self):
@@ -38,32 +40,67 @@ class UI(object):
         return 80
 
     def fill_usage(self, subcommand, usage_list):
-        """Pretty-print a list of usage strings."""
+        """Pretty-print a list of usage strings.
+
+        :param str subcommand: Subcommand name/keyword
+        :param list usage_list: List of usage strings for this subcommand.
+        :returns: String containing all usage strings, each appropriately
+            wrapped to the :func:`terminal_width` value.
+        """
         return "\n".join(["{0} {1}".format(subcommand, usage)
                           for usage in usage_list])
 
     def fill_examples(self, example_list):
         """Pretty-print a set of usage examples.
-        example_list == [(example1, desc1), (example2, desc2), ...]
+
+        :param list example_list: List of (example, description) tuples.
+        :raise NotImplementedError: Must be implemented by a subclass.
         """
         raise NotImplementedError("No implementation for fill_examples()")
 
     def confirm(self, prompt):
-        """Prompts user to confirm the requested operation, or auto-accepts
-        if 'force' is set to True."""
+        """Prompts user to confirm the requested operation.
+        Auto-accepts if :attr:`force` is set to ``True``.
+
+        .. warning::
+          This stub implementation does not actually interact with the user,
+          but instead returns :attr:`default_confirm_response`. Subclasses
+          should override this method.
+
+        :param str prompt: Message to prompt the user with
+        :return: ``True`` (user confirms acceptance) or ``False``
+            (user declines)
+        """
         if self.force:
             logger.warning("Automatically agreeing to '{0}'".format(prompt))
             return True
         return self.default_confirm_response
 
     def confirm_or_die(self, prompt):
-        """If the user doesn't agree, abort!"""
+        """If the user doesn't agree, abort!
+        A simple wrapper for :func:`confirm` that calls :func:`sys.exit` if
+        confirm() returns ``False``.
+        """
         if not self.confirm(prompt):
             sys.exit("Aborting.")
 
     def get_input(self, prompt, default_value):
-        """Prompt the user to enter a string, or auto-accepts the default
-        if 'force' is set to True."""
+        """Prompt the user to enter a string.
+        Auto-inputs the :attr:`default_value` if :attr:`force` is set to
+        ``True``.
+
+        .. warning::
+          This stub implementation does not actually interact with the user,
+          but instead always returns :attr:`default_value`. Subclasses should
+          override this method.
+
+        :param str prompt: Message to prompt the user with
+        :param str default_value: Default value to input if the user simply
+            hits Enter without entering a value, or if :attr:`force`.
+
+        :return: Input value
+        :rtype: str
+        """
         if self.force:
             logger.warning("Automatically entering {0} in response to '{1}'"
                            .format(default_value, prompt))
@@ -71,5 +108,14 @@ class UI(object):
         return default_value
 
     def get_password(self, username, host):
-        """Get password string from the user."""
+        """Get password string from the user.
+
+        .. warning::
+          This stub implementation does not actually interact with the user,
+          but instead always returns ``"passwd"``. Subclasses should override
+          this method.
+
+        :param str username: Username the password is associated with
+        :param str host: Host the password is associated with
+        """
         return "passwd"

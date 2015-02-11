@@ -32,10 +32,16 @@ class COTGenericSubmodule(object):
 
     def ready_to_run(self):
         """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         return True, "Ready to go!"
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         (ready, reason) = self.ready_to_run()
         if not ready:
             raise InvalidInputError(reason)
@@ -50,8 +56,15 @@ class COTGenericSubmodule(object):
             self.vm = None
 
     def create_subparser(self, parent):
-        """Add subparser under the given parent parser, representing the CLI.
-        Returns (label, subparser)"""
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``(label, subparser)`` or ``("", None)`` if this module has
+            no CLI
+        """
         return "", None
 
 

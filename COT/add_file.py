@@ -44,12 +44,18 @@ class COTAddFile(COTSubmodule):
 
     def ready_to_run(self):
         """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         if self.file is None:
             return False, "FILE is a mandatory argument!"
         return super(COTAddFile, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTAddFile, self).run()
 
         vm = self.vm
@@ -74,6 +80,14 @@ class COTAddFile(COTSubmodule):
         vm.add_file(self.file, self.file_id, file)
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule under the given parent
+        subparser grouping.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('add-file', subparser)``
+        """
         p = parent.add_parser(
             'add-file',
             usage=self.UI.fill_usage("add-file", [
