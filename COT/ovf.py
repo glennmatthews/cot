@@ -2549,8 +2549,9 @@ class OVFHardware:
                 [profile])
 
     def get_item_count_per_profile(self, resource_type, profile_list):
-        """Get the number of ``Item``s of the given :attr:`resource_type`
-        per profile. Items present under "no profile" will be counted against
+        """Get the number of Items of the given type per profile.
+
+        Items present under "no profile" will be counted against
         the total for each profile.
 
         :param resource_type:

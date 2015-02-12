@@ -22,10 +22,17 @@ logger = logging.getLogger(__name__)
 
 
 class VMContextManager:
-    """Context manager for virtual machine definitions. Use as follows:
+
+    """Context manager for virtual machine definitions.
+
+    When the context manager exits, unless an error occurred, the virtual
+    machine's :meth:`write` method is called. Regardless of whether an error
+    occurred, the virtual machine's :meth:`destroy` method is then called.
+
+    Use as follows:
     ::
 
-      with VM_Context_manager(input_file, output_file) as vm:
+      with VMContextManager(input_file, output_file) as vm:
           vm.foo()
           vm.bar()
     """
