@@ -1,16 +1,13 @@
-.. COT documentation master file, created by
-   sphinx-quickstart on Tue Feb 10 16:48:35 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. include:: ../../introduction.rst
 
-COT (the Common OVF Tool)
-=========================
-
-Contents:
+Contents
+========
 
 .. toctree::
    :maxdepth: 3
 
+   installation
+   usage
    COT
 
 
