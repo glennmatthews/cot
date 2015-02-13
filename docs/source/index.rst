@@ -9,6 +9,7 @@ Contents
    installation
    usage
    contributing
+   thanks
    COT
 
 
