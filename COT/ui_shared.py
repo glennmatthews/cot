@@ -25,8 +25,11 @@ logger = logging.getLogger(__name__)
 
 
 class UI(object):
+
     """Abstract user interface functionality.
-    Can also be used in test code as a stub that autoconfirms everything."""
+
+    Can also be used in test code as a stub that autoconfirms everything.
+    """
 
     def __init__(self, force=False):
         #: Whether to automatically select the default value in all cases,
@@ -36,7 +39,7 @@ class UI(object):
         self.default_confirm_response = True
 
     def terminal_width(self):
-        """Returns the width of the terminal in columns."""
+        """Get the width of the terminal in columns."""
         return 80
 
     def fill_usage(self, subcommand, usage_list):
@@ -59,7 +62,8 @@ class UI(object):
         raise NotImplementedError("No implementation for fill_examples()")
 
     def confirm(self, prompt):
-        """Prompts user to confirm the requested operation.
+        """Prompt user to confirm the requested operation.
+
         Auto-accepts if :attr:`force` is set to ``True``.
 
         .. warning::
@@ -78,14 +82,16 @@ class UI(object):
 
     def confirm_or_die(self, prompt):
         """If the user doesn't agree, abort!
-        A simple wrapper for :func:`confirm` that calls :func:`sys.exit` if
-        confirm() returns ``False``.
+
+        A simple wrapper for :meth:`confirm` that calls :func:`sys.exit` if
+        :meth:`confirm` returns ``False``.
         """
         if not self.confirm(prompt):
             sys.exit("Aborting.")
 
     def get_input(self, prompt, default_value):
         """Prompt the user to enter a string.
+
         Auto-inputs the :attr:`default_value` if :attr:`force` is set to
         ``True``.
 

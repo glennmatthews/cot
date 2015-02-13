@@ -1,5 +1,5 @@
-Thanks to...
-============
+Credits
+=======
 
 We would like to thank:
 
