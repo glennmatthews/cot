@@ -1,7 +1,4 @@
-COT.help
-========
+``COT.help`` module
+===================
 
 .. automodule:: COT.help
-    :members:
-    :undoc-members:
-    :show-inheritance:

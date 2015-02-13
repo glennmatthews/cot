@@ -63,7 +63,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'COT'
+project = u'Common OVF Tool (COT)'
 copyright = u'2013-2015, the COT project developers'
 
 # The version info for the project you're documenting, acts as replacement for

@@ -1,7 +1,4 @@
-COT.edit_hardware
-=================
+``COT.edit_hardware`` module
+============================
 
 .. automodule:: COT.edit_hardware
-    :members:
-    :undoc-members:
-    :show-inheritance:

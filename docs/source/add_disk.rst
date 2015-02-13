@@ -1,7 +1,4 @@
-COT.add_disk
-------------
+``COT.add_disk`` module
+=======================
 
 .. automodule:: COT.add_disk
-    :members:
-    :undoc-members:
-    :show-inheritance:

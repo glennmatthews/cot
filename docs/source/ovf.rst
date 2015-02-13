@@ -1,7 +1,4 @@
-COT.ovf
-=======
+``COT.ovf`` module
+==================
 
 .. automodule:: COT.ovf
-    :members:
-    :undoc-members:
-    :show-inheritance:

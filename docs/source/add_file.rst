@@ -1,7 +1,4 @@
-COT.add_file
-============
+``COT.add_file`` module
+=======================
 
 .. automodule:: COT.add_file
-    :members:
-    :undoc-members:
-    :show-inheritance:

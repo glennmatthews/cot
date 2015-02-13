@@ -1,5 +1,5 @@
-COT Package Reference
-=====================
+``COT`` package reference
+=========================
 
 The below documents describe in depth the code structure and APIs of COT.
 These are not generally of interest to the end users of the COT script, but

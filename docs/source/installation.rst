@@ -1,7 +1,7 @@
 Installing COT
 ==============
 
-System Requirements
+System requirements
 -------------------
 
 * COT requires either Python 2.7 or Python 3.2 or later.
@@ -23,7 +23,7 @@ System Requirements
     OVFs and OVAs created by COT align with VMware's expectations for these
     file types.
 
-Mac OS X Installation
+Mac OS X installation
 ---------------------
 
 The recommended installation method on Mac OS X is to use MacPorts_.
@@ -37,7 +37,7 @@ Optionally, download ovftool_ from VMware and install it.
 (VMware requires a site login to download ovftool,
 which is the only reason I haven't automated this too...)
 
-Linux Installation
+Linux installation
 ------------------
 
 The simplest installation path (assuming you have Python 2.6 or later and

@@ -1,7 +1,4 @@
-COT.edit_properties
-===================
+``COT.edit_properties`` module
+==============================
 
 .. automodule:: COT.edit_properties
-    :members:
-    :undoc-members:
-    :show-inheritance:

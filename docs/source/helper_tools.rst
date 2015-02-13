@@ -1,8 +1,5 @@
-COT.helper_tools
-================
+``COT.helper_tools`` module
+===========================
 
 .. automodule:: COT.helper_tools
-    :members:
-    :undoc-members:
-    :show-inheritance:
 

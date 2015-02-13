@@ -1,7 +1,4 @@
-COT.deploy
-==========
+``COT.deploy`` module
+=====================
 
 .. automodule:: COT.deploy
-    :members:
-    :undoc-members:
-    :show-inheritance:

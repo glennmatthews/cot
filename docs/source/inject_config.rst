@@ -1,7 +1,4 @@
-COT.inject_config
-=================
+``COT.inject_config`` module
+============================
 
 .. automodule:: COT.inject_config
-    :members:
-    :undoc-members:
-    :show-inheritance:

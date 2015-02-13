@@ -1,5 +1,5 @@
-Getting Help
-============
+Getting CLI help
+================
 
 You can always get detailed help for COT by running ``cot --help``,
 ``cot <command> --help``, or ``cot help <command>``.

@@ -1,7 +1,4 @@
-COT.info
-========
+``COT.info`` module
+===================
 
 .. automodule:: COT.info
-    :members:
-    :undoc-members:
-    :show-inheritance:

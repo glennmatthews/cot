@@ -1,7 +1,4 @@
-COT.edit_product
-================
+``COT.edit_product`` module
+===========================
 
 .. automodule:: COT.edit_product
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,7 +1,4 @@
-COT.data_validation
-===================
+``COT.data_validation`` module
+==============================
 
 .. automodule:: COT.data_validation
-    :members:
-    :undoc-members:
-    :show-inheritance:
