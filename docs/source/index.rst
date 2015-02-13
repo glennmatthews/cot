@@ -8,6 +8,7 @@ Contents
 
    installation
    usage
+   contributing
    COT
 
 
