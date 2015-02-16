@@ -30,18 +30,24 @@ logger = logging.getLogger(__name__)
 
 
 class VMInitError(EnvironmentError):
-    """Class representing errors encountered when trying to init/load a VM.
-    """
+
+    """Class representing errors encountered when trying to init/load a VM."""
 
 
 class VMDescription(object):
-    """Abstract class for reading, editing, and writing VMs"""
+
+    """Abstract class for reading, editing, and writing VM definitions.
+
+    :ivar input_file: The file this VM description was initialized from.
+    :ivar working_dir: A temporary directory for storage of files.
+    :ivar output_file: The file this VM description will be written to.
+    """
 
     @classmethod
     def detect_type_from_name(cls, filename):
-        """Checks the given filename (not file contents, as filename may not
-        exist yet) to see whether it appears to describe a file type supported
-        by this VM class.
+        """Check the given filename to see if it looks like a type we support.
+
+        Does not check file contents, as the given filename may not yet exist.
 
         :return: A string representing a recognized and supported type of file
         :raise ValueUnsupportedError: if we don't know how to handle this file.
@@ -49,10 +55,15 @@ class VMDescription(object):
         raise ValueUnsupportedError("filename", filename, ("none implemented"))
 
     def __init__(self, input_file, output_file=None):
-        """Read the given VM description file into memory and
-        make note of the requested working directory and eventual output file.
-        Note that if the output_file is unknown at present, a value of ""
-        should be passed, as None indicates there will not be an output_file.
+        """Read the given VM description file into memory.
+
+        Also creates a temporary directory as a working directory.
+
+        :param str input_file: Data file to read in.
+        :param str output_file: File name to write to. If this VM is read-only,
+          (there will never be an output file) this value should be ``None``;
+          if the output filename is not yet known, use ``""`` and subsequently
+          call :meth:`set_output_file` when it is determined.
         """
         self.input_file = input_file
         self.working_dir = tempfile.mkdtemp(prefix="cot")
@@ -62,6 +73,10 @@ class VMDescription(object):
         atexit.register(self.destroy)
 
     def destroy(self):
+        """Clean up after ourselves.
+
+        Deletes :attr:`self.working_dir` and its contents.
+        """
         if hasattr(self, 'working_dir') and os.path.exists(self.working_dir):
             logger.verbose("Removing temporary directory '{0}"
                            .format(self.working_dir))
@@ -82,7 +97,7 @@ class VMDescription(object):
         raise NotImplementedError("write not implemented")
 
     def get_platform(self):
-        """Returns the Platform class object associated with this VM
+        """Get the Platform class object associated with this VM.
 
         :return: Class object - :class:`~COT.platforms.GenericPlatform` or
           a more-specific subclass if recognized as such.
@@ -90,19 +105,20 @@ class VMDescription(object):
         raise NotImplementedError("get_platform not implemented")
 
     # API methods needed for add-disk
-    def convert_disk_if_needed(self, filename, kind):
-        """Converts the disk to a new format (and returns the path to the new
-        disk), if appropriate
+    def convert_disk_if_needed(self, file_path, kind):
+        """Convert the disk to a more appropriate format if needed.
 
         :param str file_path: Image to inspect and possibly convert
         :param str kind: Image type (harddisk/cdrom)
-        :return: See :func:`COT.helper_tools.convert_disk_image`
+        :return:
+          * :attr:`file_path`, if no conversion was required
+          * or a file path in :attr:`output_dir` containing the converted image
         """
         # Some VMs may not need this, so default to do nothing, not error
-        return filename
+        return file_path
 
     def search_from_filename(self, filename):
-        """From the given filename, try to find any existing disk.
+        """From the given filename, try to find any existing objects.
 
         :param str filename: Filename to search from
         :return: ``(file, disk, controller_device, disk_device)``,
@@ -111,7 +127,7 @@ class VMDescription(object):
         raise NotImplementedError("search_from_filename not implemented")
 
     def search_from_file_id(self, file_id):
-        """From the given file identifier, try to find any existing disk.
+        """From the given file ID, try to find any existing objects.
 
         :param str filename: Filename to search from
         :return: ``(file, disk, controller_device, disk_device)``,
@@ -138,57 +154,128 @@ class VMDescription(object):
         raise NotImplementedError("find_open_controller not implemented")
 
     def get_id_from_file(self, file):
-        """Get the file ID from the given opaque file object"""
+        """Get the file ID from the given opaque file object.
+
+        :param file: File object to query
+        :return: Identifier string associated with this object
+        """
         raise NotImplementedError("get_id_from_file not implemented")
 
     def get_path_from_file(self, file):
-        """Get the file path from the given opaque file object"""
+        """Get the file path from the given opaque file object.
+
+        :param file: File object to query
+        :return: Relative path to the file associated with this object
+        """
         raise NotImplementedError("get_path_from_file not implemented")
 
     def get_file_ref_from_disk(self, disk):
-        """Get the file reference from the given opaque disk object"""
+        """Get the file reference from the given opaque disk object.
+
+        :param disk: Disk object to query
+        :return: String that can be used to identify the file associated
+          with this disk
+        """
         raise NotImplementedError("get_file_ref_from_disk not implemented")
 
     def get_type_from_device(self, device):
-        """Get the major type of the given opaque device object"""
+        """Get the type of the given opaque device object.
+
+        :param device: Device object to query
+        :return: string such as 'ide' or 'memory'
+        """
         raise NotImplementedError("get_type_from_device not implemented")
 
     def get_subtype_from_device(self, device):
-        """Get the sub-type of the given opaque device object"""
+        """Get the sub-type of the given opaque device object.
+
+        :param device: Device object to query
+        :return: ``None``, or string such as 'virtio' or 'lsilogic'
+        """
         raise NotImplementedError("get_subtype_from_device not implemented")
 
     def get_common_subtype(self, type):
-        """Get the sub-type common to all devices of the given type. If
-        multiple such devices exist and they do not all have the same sub-type,
-        returns None."""
+        """Get the sub-type common to all devices of the given type.
+
+        :param str type: Device type such as ``'ide'`` or ``'memory'``.
+        :return: ``None``, if multiple such devices exist and they do not all
+          have the same sub-type.
+        :return: Subtype string common to all devices of the type.
+        """
         raise NotImplementedError("get_common_subtype not implemented")
 
     def check_sanity_of_disk_device(self, disk, file, disk_item, ctrl_item):
-        """Make sure the indicated disk device has appropriate linkage to any
-        disk, file, and controller provided. Die if it does not."""
+        """Check if the given disk is linked properly to the other objects.
+
+        :param disk: Disk object to validate
+        :param file: File object which this disk should be linked to (optional)
+        :param disk_item: Disk device object which should link to this disk
+          (optional)
+        :param ctrl_item: Controller device object which should link to the
+          :attr:`disk_item`
+        :raise ValueMismatchError: if the given items are not linked properly.
+        """
         raise NotImplementedError(
             "check_sanity_of_disk_device not implemented")
 
     def add_file(self, file_path, file_id, file=None, disk=None):
-        """Add a new file object to the VM or overwrite the provided one"""
+        """Add a new file object to the VM or overwrite the provided one.
+
+        :param str file_path: Path to file to add
+        :param str file_id: Identifier string for the file in the VM
+        :param file: Existing file object to overwrite
+        :param disk: Existing disk object referencing :attr:`file`.
+
+        :return: New or updated file object
+        """
         raise NotImplementedError("add_file not implemented")
 
     def add_disk(self, file_path, file_id, disk_type, disk=None):
-        """Add a new disk object to the VM or update the provided one"""
+        """Add a new disk object to the VM or overwrite the provided one.
+
+        :param str file_path: Path to disk image file
+        :param str file_id: Identifier string for the file/disk mapping
+        :param str disk_type: 'harddisk' or 'cdrom'
+        :param disk: Existing disk object to overwrite
+
+        :return: New or updated disk object
+        """
         raise NotImplementedError("add_disk not implemented")
 
     def add_controller_device(self, type, subtype, address, ctrl_item=None):
-        """Add a new controller device to the VM or update the provided one"""
+        """Create a new IDE or SCSI controller, or update existing one.
+
+        :param str type: ``'ide'`` or ``'scsi'``
+        :param str subtype: Subtype such as ``'virtio'`` (optional)
+        :param int address: Controller address such as 0 or 1 (optional)
+        :param ctrl_item: Existing controller device to update (optional)
+
+        :return: New or updated controller device object
+        """
         raise NotImplementedError("add_controller_device not implemented")
 
     def add_disk_device(self, type, address, name, description, disk, file,
                         ctrl_item, disk_item=None):
-        """Add a new disk device to the VM or update the provided one"""
+        """Add a new disk device to the VM or update the provided one.
+
+        :param str type: ``'harddisk'`` or ``'cdrom'``
+        :param str address: Address on controller, such as "1:0" (optional)
+        :param str name: Device name string (optional)
+        :param str description: Description string (optional)
+        :param disk: Disk object to map to this device
+        :param file: File object to map to this device
+        :param ctrl_item: Controller object to serve as parent
+        :param disk_item: Existing disk device to update instead of making
+          a new device.
+
+        :return: New or updated disk device object.
+        """
         raise NotImplementedError("add_disk_device not implemented")
 
     # API methods needed for edit-hardware
     def get_configuration_profile_ids(self):
-        """Return a list of named configuration profiles in the VM.
+        """Get the list of supported configuration profile identifiers.
+
         If there are no profiles defined, returns an empty list.
         If there is a default profile, it will be first in the list.
         """
@@ -274,9 +361,9 @@ class VMDescription(object):
         raise NotImplementedError("set_nic_count not implemented!")
 
     def get_network_list(self):
-        """Gets the list of network names currently defined in this VM.
+        """Get the list of network names currently defined in this VM.
 
-        :rtype: list
+        :rtype: list[str]
         """
         raise NotImplementedError("get_network_list not implemented!")
 
@@ -347,7 +434,7 @@ class VMDescription(object):
         raise NotImplementedError("set_serial_connectivity not implemented!")
 
     def set_scsi_subtype(self, type, profile_list):
-        """Set the SCSI controller(s) subtype
+        """Set the device subtype for the SCSI controller(s).
 
         :param str type: SCSI subtype string
         :param list profile_list: Change only the given profiles
@@ -355,7 +442,7 @@ class VMDescription(object):
         raise NotImplementedError("set_scsi_subtype not implemented!")
 
     def set_ide_subtype(self, type, profile_list):
-        """Set the IDE controller(s) subtype
+        """Set the device subtype for the IDE controller(s).
 
         :param str type: IDE subtype string
         :param list profile_list: Change only the given profiles
@@ -379,13 +466,16 @@ class VMDescription(object):
 
     # API methods needed for edit-properties
     def get_property_array(self):
-        """Get an array of property hashes, each with the keys
-        {key, value, qualifiers, type, label, description}
+        """Get an array of configuration properties.
+
+        :return: Array of dicts (one per property) with the keys
+          ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
+          ``"label"``, and ``"description"``.
         """
         raise NotImplementedError("get_property_array not implemented")
 
     def get_property_value(self, key):
-        """Get the value of the given property, or None
+        """Get the value of the given property.
 
         :param str key: Property identifier
         :return: Value of this property, or ``None``
@@ -402,7 +492,9 @@ class VMDescription(object):
         raise NotImplementedError("set_property_value not implemented")
 
     def config_file_to_properties(self, file):
-        """Import each line of the provided file into a configuration property
+        """Import each line of a text file into a configuration property.
+
+        :param str file: File name to import.
         """
         raise NotImplementedError("config_file_to_properties not implemented")
 
@@ -414,7 +506,7 @@ class VMDescription(object):
         }
 
     def info_string(self, width=79, verbosity_option=None):
-        """Returns a descriptive string summarizing the contents of this VM.
+        """Get a descriptive string summarizing the contents of this VM.
 
         :param int width: Line length to wrap to where possible.
         :param str verbosity_option: ``'brief'``, ``None`` (default),
@@ -426,10 +518,9 @@ class VMDescription(object):
 
     def profile_info_string(self, width=79, verbosity_option=None,
                             enumerate=False):
-        """Returns a descriptive string summarizing the different configuration
-        profiles of this VM.
+        """Get a string summarizing available configuration profiles.
 
-        :param int width: Line length to wrap to if possible
+        :param int TEXT_WIDTH: Line length to wrap to if possible
         :param str verbosity_option: ``'brief'``, ``None`` (default),
           or ``'verbose'``
 
@@ -439,19 +530,25 @@ class VMDescription(object):
         raise NotImplementedError("profile_info_string not implemented")
 
     def get_default_profile_name(self):
-        """Returns the name of the default configuration profile for the VM
+        """Get the name of the default configuration profile.
+
+        :return: Profile name or ``None`` if none are defined.
         """
         raise NotImplementedError("get_default_profile_name not implemented")
 
     # API methods needed for inject-config
     def find_empty_drive(self, type):
-        """Returns a disk device (if any) of the requested type
-        that exists but contains no data.
+        """Find a disk device that exists but contains no data.
+
+        :param str type: Disk type, such as 'cdrom' or 'harddisk'
+        :return: Hardware device object, or None.
         """
         raise NotImplementedError("find_empty_drive not implemented")
 
     def find_device_location(self, device):
-        """Returns the tuple (type, address), such as ("ide", "1:0")
-        associated with the given device.
+        """Find the controller type and address of a given device object.
+
+        :param device: Hardware device object.
+        :returns: ``(type, address)``, such as ``("ide", "1:0")``.
         """
         raise NotImplementedError("find_device_location not implemented")
