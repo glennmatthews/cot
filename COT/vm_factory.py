@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Factory for virtual machine objects."""
+
 import logging
 
 from .ovf import OVF

@@ -12,6 +12,17 @@
 # file, may be copied, modified, propagated, or distributed except
 # according to the terms contained in the LICENSE.txt file.
 
+"""Module for deploying VM descriptions to a hypervisor to instantiate VMs.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTDeploy
+  COTDeployESXi
+"""
+
 import logging
 import re
 import shlex

@@ -14,6 +14,16 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for editing product information in a VM description.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTEditProduct
+"""
+
 import logging
 
 from .submodule import COTSubmodule

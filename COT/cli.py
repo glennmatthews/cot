@@ -14,6 +14,16 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""CLI entry point for the Common OVF Tool (COT) suite.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  CLI
+"""
+
 import os
 import sys
 import argparse

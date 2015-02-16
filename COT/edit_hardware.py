@@ -14,6 +14,16 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for editing hardware details of a VM.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTEditHardware
+"""
+
 import argparse
 import logging
 import re

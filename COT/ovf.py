@@ -16,26 +16,26 @@
 
 """Module for handling OVF and OVA virtual machine description files.
 
-Classes:
+**Functions**
 
 .. autosummary::
-  OVF
-  OVFNameHelper
-  OVFHardware
-  OVFItem
+  :nosignatures:
 
-Exceptions:
-
-.. autosummary::
-  OVFHardwareDataError
-  OVFItemDataError
-
-Functions:
-
-.. autosummary::
   byte_count
   byte_string
   factor_bytes
+
+**Classes and Exceptions**
+
+.. autosummary::
+  :nosignatures:
+
+  OVF
+  OVFNameHelper
+  OVFHardware
+  OVFHardwareDataError
+  OVFItem
+  OVFItemDataError
 """
 
 import logging
@@ -2495,7 +2495,7 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
 
 class OVFHardwareDataError(Exception):
 
-    """The input data used to construct an OVFHardware object is not sane."""
+    """The input data used to construct an :class:`OVFHardware` is not sane."""
 
 
 class OVFHardware:
@@ -2921,7 +2921,7 @@ class OVFHardware:
 
 class OVFItemDataError(Exception):
 
-    """Data to be added to an OVFItem conflicts with existing data."""
+    """Data to be added to an :class:`OVFItem` conflicts with existing data."""
 
 
 class OVFItem:

@@ -15,6 +15,36 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Third-party helper tools.
+
+Abstracts away operations that require third-party helper programs,
+especially those that are not available through PyPI.
+
+**Exceptions**
+
+.. autosummary::
+  :nosignatures:
+
+  HelperNotFoundError
+  HelperError
+
+**Functions**
+
+.. autosummary::
+  :nosignatures:
+
+  check_call
+  check_output
+  convert_disk_image
+  create_disk_image
+  get_checksum
+  get_disk_capacity
+  get_disk_format
+  get_ovftool_version
+  get_qemu_img_version
+  validate_ovf_for_esxi
+"""
+
 import hashlib
 import logging
 import os
@@ -36,12 +66,12 @@ OVFTOOL_VERSION = None
 
 class HelperNotFoundError(OSError):
 
-    """Error thrown when a helper program cannot be located."""
+    """A helper program cannot be located."""
 
 
 class HelperError(EnvironmentError):
 
-    """Error thrown when a helper program exits with non-zero return code."""
+    """A helper program exited with non-zero return code."""
 
 
 def check_call(args, require_success=True):

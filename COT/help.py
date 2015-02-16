@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Provide 'help' keyword for COT CLI."""
+
 import logging
 
 from .submodule import COTGenericSubmodule

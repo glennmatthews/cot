@@ -14,6 +14,15 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Abstract superclass for reading, editing, and writing VMs.
+
+.. autosummary::
+  :nosignatures:
+
+  VMInitError
+  VMDescription
+"""
+
 import atexit
 import logging
 import os.path

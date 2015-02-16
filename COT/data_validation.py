@@ -14,6 +14,36 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Various helpers for data sanity checks.
+
+**Exceptions**
+
+.. autosummary::
+  :nosignatures:
+
+  InvalidInputError
+  ValueMismatchError
+  ValueUnsupportedError
+  ValueTooLowError
+  ValueTooHighError
+
+**Functions**
+
+.. autosummary::
+  :nosignatures:
+
+  check_for_conflict
+  device_address
+  mac_address
+  match_or_die
+  natural_sort
+  no_whitespace
+  non_negative_int
+  positive_int
+  to_string
+  validate_int
+"""
+
 import xml.etree.ElementTree as ET
 import re
 
@@ -191,14 +221,14 @@ class ValueMismatchError(ValueError):
 
 class InvalidInputError(ValueError):
 
-    """Error class indicating a failure during validation of user input."""
+    """Miscellaneous error during validation of user input."""
 
     pass
 
 
 class ValueUnsupportedError(InvalidInputError):
 
-    """Error class indicating an unsupported value was provided.
+    """An unsupported value was provided.
 
     :ivar value_type: descriptive string
     :ivar actual_value: invalid value that was provided
@@ -218,7 +248,7 @@ class ValueUnsupportedError(InvalidInputError):
 
 class ValueTooLowError(ValueUnsupportedError):
 
-    """Error class indicating a number lower than the lowest supported value.
+    """A numerical input was less than the lowest supported value.
 
     :ivar value_type: descriptive string
     :ivar actual_value: invalid value that was provided
@@ -233,7 +263,7 @@ class ValueTooLowError(ValueUnsupportedError):
 
 class ValueTooHighError(ValueUnsupportedError):
 
-    """Error class indicating a number higher than the highest supported value.
+    """A numerical input was higher than the highest supported value.
 
     :ivar value_type: descriptive string
     :ivar actual_value: invalid value that was provided

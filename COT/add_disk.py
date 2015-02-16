@@ -14,6 +14,13 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for adding disks to VMs.
+
+.. autosummary::
+  COTAddDisk
+  add_disk_worker
+"""
+
 import logging
 import os.path
 

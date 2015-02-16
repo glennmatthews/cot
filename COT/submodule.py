@@ -14,6 +14,18 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Parent classes for implementing COT subcommands.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTGenericSubmodule
+  COTReadOnlySubmodule
+  COTSubmodule
+"""
+
 import os.path
 import logging
 

@@ -14,6 +14,16 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for managing VM environment configuration properties.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTEditProperties
+"""
+
 import logging
 import os.path
 import textwrap

@@ -15,6 +15,22 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Handles behavior that varies between guest platforms.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  GenericPlatform
+  CSR1000V
+  IOSv
+  IOSXRv
+  IOSXRvRP
+  IOSXRvLC
+  NXOSv
+"""
+
 from .data_validation import ValueUnsupportedError
 from .data_validation import ValueTooLowError, ValueTooHighError
 import logging

@@ -14,6 +14,12 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for adding files to VM definitions.
+
+.. autosummary::
+  COTAddFile
+"""
+
 import os.path
 import logging
 

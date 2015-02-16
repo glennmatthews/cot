@@ -24,7 +24,7 @@ directly into their code.
    platforms
    submodule
    ui_shared
+   vm_context_manager
    vm_description
    vm_factory
-   vm_context_manager
    xml_file

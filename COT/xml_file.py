@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Reading, editing, and writing XML files."""
+
 import xml.etree.ElementTree as ET
 import logging
 import re
