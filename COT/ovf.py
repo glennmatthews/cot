@@ -14,6 +14,30 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for handling OVF and OVA virtual machine description files.
+
+Classes:
+
+.. autosummary::
+  OVF
+  OVFNameHelper
+  OVFHardware
+  OVFItem
+
+Exceptions:
+
+.. autosummary::
+  OVFHardwareDataError
+  OVFItemDataError
+
+Functions:
+
+.. autosummary::
+  byte_count
+  byte_string
+  factor_bytes
+"""
+
 import logging
 import os
 import os.path
