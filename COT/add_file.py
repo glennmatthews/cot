@@ -17,7 +17,7 @@
 import os.path
 import logging
 
-from .data_validation import check_for_conflict
+from .data_validation import check_for_conflict, InvalidInputError
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
@@ -27,46 +27,33 @@ class COTAddFile(COTSubmodule):
     """Add a file (such as a README) to the package."""
 
     def __init__(self, UI):
-        super(COTAddFile, self).__init__(
-            UI,
-            [
-                "FILE",
-                "PACKAGE",
-                "output",
-                "file_id"
-            ])
+        super(COTAddFile, self).__init__(UI)
+        self._file = None
+        self.file_id = None
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
-        valid, value_or_reason = super(COTAddFile, self).validate_arg(arg,
-                                                                      value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+    @property
+    def file(self):
+        return self._file
 
-        if arg == "FILE":
-            if not os.path.exists(value):
-                return False, ("Specified file '{0}' does not exist!"
-                               .format(value))
-
-        return valid, value_or_reason
-
-    def set_value(self, arg, value):
-        super(COTAddFile, self).set_value(arg, value)
+    @file.setter
+    def file(self, value):
+        if not os.path.exists(value):
+            raise InvalidInputError("Specified file '{0}' does not exist!"
+                                    .format(value))
+        self._file = value
 
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
-        if self.get_value("FILE") is None:
+        if self.file is None:
             return False, "FILE is a mandatory argument!"
         return super(COTAddFile, self).ready_to_run()
 
     def run(self):
         super(COTAddFile, self).run()
 
-        FILE = self.get_value("FILE")
-        file_id = self.get_value("file_id")
+        FILE = self.file
+        file_id = self.file_id
         vm = self.vm
 
         filename = os.path.basename(FILE)

@@ -28,12 +28,12 @@ class TestCOTEditProperties(COT_UT):
         """Test case setup function called automatically prior to each test"""
         super(TestCOTEditProperties, self).setUp()
         self.instance = COTEditProperties(UI())
-        self.instance.set_value("output", self.temp_file)
+        self.instance.output = self.temp_file
 
     def test_set_property_value(self):
         """Set the value of an existing property."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("properties", ["login-username=admin"])
+        self.instance.package = self.input_ovf
+        self.instance.properties = ["login-username=admin"]
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -47,10 +47,11 @@ ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
 
     def test_set_multiple_property_values(self):
         """Set the value of several existing properties."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("properties", ["login-username=admin",
-                                               "login-password=cisco123",
-                                               "enable-ssh-server=1"])
+        self.instance.package = self.input_ovf
+        self.instance.properties = [
+            "login-username=admin",
+            "login-password=cisco123",
+            "enable-ssh-server=1"]
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -80,8 +81,8 @@ ovf:userConfigurable="true" ovf:value="true">
 
     def test_create_property(self):
         """Create a new property but do not set its value yet."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("properties", ["new-property-2="])
+        self.instance.package = self.input_ovf
+        self.instance.properties = ["new-property-2="]
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -92,8 +93,8 @@ ovf:userConfigurable="true" ovf:value="true">
 
     def test_create_and_set_property(self):
         """Create a new property and set its value"""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("properties", ["new-property=hello"])
+        self.instance.package = self.input_ovf
+        self.instance.properties = ["new-property=hello"]
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -105,10 +106,9 @@ ovf:value="hello" />
 
     def test_load_config_file(self):
         """Inject a sequence of properties from a config file."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("config_file",
-                                os.path.join(os.path.dirname(__file__),
-                                             "sample_cfg.txt"))
+        self.instance.package = self.input_ovf
+        self.instance.config_file = os.path.join(os.path.dirname(__file__),
+                                                 "sample_cfg.txt")
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -125,13 +125,11 @@ ovf:value="interface Loopback0" />
 
     def test_combined(self):
         """Set individual properties AND add from a config file."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("config_file",
-                                os.path.join(os.path.dirname(__file__),
-                                             "sample_cfg.txt"))
-        self.instance.set_value("properties",
-                                ["login-password=cisco123",
-                                 "enable-ssh-server=1"])
+        self.instance.package = self.input_ovf
+        self.instance.config_file = os.path.join(os.path.dirname(__file__),
+                                                 "sample_cfg.txt")
+        self.instance.properties = ["login-password=cisco123",
+                                    "enable-ssh-server=1"]
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -165,7 +163,7 @@ ovf:value="interface Loopback0" />
     def test_qualifiers(self):
         """Ensure property values are limited by qualifiers."""
 
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         vm = self.instance.vm
 
         self.assertRaises(ValueUnsupportedError,
@@ -179,8 +177,8 @@ ovf:value="interface Loopback0" />
 
     def test_create_property_no_prexisting(self):
         """Set property values for an OVF that has none previously"""
-        self.instance.set_value("PACKAGE", self.minimal_ovf)
-        self.instance.set_value("properties", ["hello=world"])
+        self.instance.package = self.minimal_ovf
+        self.instance.properties = ["hello=world"]
         self.instance.run()
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf, expected="""
@@ -194,9 +192,8 @@ ovf:value="interface Loopback0" />
 
     def test_config_file_not_supported(self):
         """Platform doesn't support literal CLI configuration."""
-        self.instance.set_value("PACKAGE", self.iosv_ovf)
-        self.instance.set_value("config_file",
-                                os.path.join(os.path.dirname(__file__),
-                                             "sample_cfg.txt"))
+        self.instance.package = self.iosv_ovf
+        self.instance.config_file = os.path.join(os.path.dirname(__file__),
+                                                 "sample_cfg.txt")
         self.assertRaises(NotImplementedError,
                           self.instance.run)

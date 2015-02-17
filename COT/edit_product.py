@@ -25,14 +25,9 @@ class COTEditProduct(COTSubmodule):
     """Edit product information (short version, long version)"""
 
     def __init__(self, UI):
-        super(COTEditProduct, self).__init__(
-            UI,
-            [
-                "PACKAGE",
-                "output",
-                "version",
-                "full_version",
-            ])
+        super(COTEditProduct, self).__init__(UI)
+        self.version = None
+        self.full_version = None
 
     def ready_to_run(self):
         """Are we ready to go?
@@ -43,9 +38,9 @@ class COTEditProduct(COTSubmodule):
             return ready, reason
 
         work_to_do = False
-        if self.get_value("version") is not None:
+        if self.version is not None:
             work_to_do = True
-        elif self.get_value("full_version") is not None:
+        elif self.full_version is not None:
             work_to_do = True
 
         if not work_to_do:
@@ -56,12 +51,10 @@ class COTEditProduct(COTSubmodule):
     def run(self):
         super(COTEditProduct, self).run()
 
-        version = self.get_value("version")
-        if version is not None:
-            self.vm.set_short_version(version)
-        full_version = self.get_value("full_version")
-        if full_version is not None:
-            self.vm.set_long_version(full_version)
+        if self.version is not None:
+            self.vm.set_short_version(self.version)
+        if self.full_version is not None:
+            self.vm.set_long_version(self.full_version)
 
     def create_subparser(self, parent):
         p = parent.add_parser(

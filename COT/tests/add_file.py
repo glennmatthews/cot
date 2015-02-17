@@ -28,7 +28,7 @@ class TestCOTAddFile(COT_UT):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTAddFile, self).setUp()
         self.instance = COTAddFile(UI())
-        self.instance.set_value("output", self.temp_file)
+        self.instance.output = self.temp_file
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
@@ -37,20 +37,20 @@ class TestCOTAddFile(COT_UT):
         self.assertEqual("FILE is a mandatory argument!", reason)
         self.assertRaises(InvalidInputError, self.instance.run)
 
-        self.instance.set_value("FILE", self.iosv_ovf)
+        self.instance.file = self.iosv_ovf
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
         self.assertEqual("PACKAGE is a mandatory argument!", reason)
         self.assertRaises(InvalidInputError, self.instance.run)
 
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
     def test_add_file(self):
         """Basic file addition"""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("FILE", self.iosv_ovf)
+        self.instance.package = self.input_ovf
+        self.instance.file = self.iosv_ovf
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -62,9 +62,9 @@ class TestCOTAddFile(COT_UT):
 
     def test_add_file_with_id(self):
         """Add a file with explicit 'file_id' argument."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("FILE", self.iosv_ovf)
-        self.instance.set_value("file_id", "myfile")
+        self.instance.package = self.input_ovf
+        self.instance.file = self.iosv_ovf
+        self.instance.file_id = "myfile"
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -75,9 +75,9 @@ class TestCOTAddFile(COT_UT):
            ovf_size=os.path.getsize(self.iosv_ovf)))
 
     def test_overwrite_file(self):
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("FILE", os.path.join(
-            os.path.dirname(__file__), 'input.iso'))
+        self.instance.package = self.input_ovf
+        self.instance.file = os.path.join(
+            os.path.dirname(__file__), 'input.iso')
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_FILE)
         self.instance.finished()
@@ -85,12 +85,12 @@ class TestCOTAddFile(COT_UT):
 
     def test_add_file_then_change_to_disk(self):
         """Add a disk as a file, then make it a proper disk."""
-        self.instance.set_value("PACKAGE", self.minimal_ovf)
+        self.instance.package = self.minimal_ovf
         intermediate_ovf = os.path.join(self.temp_dir, "mid.ovf")
-        self.instance.set_value("output", intermediate_ovf)
+        self.instance.output = intermediate_ovf
         disk_file = os.path.join(os.path.dirname(__file__), "blank.vmdk")
-        self.instance.set_value("FILE", disk_file)
-        self.instance.set_value("file_id", "mydisk")
+        self.instance.file = disk_file
+        self.instance.file_id = "mydisk"
         self.instance.run()
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
@@ -106,10 +106,10 @@ class TestCOTAddFile(COT_UT):
 
         from COT.add_disk import COTAddDisk
         ad = COTAddDisk(UI())
-        ad.set_value("PACKAGE", intermediate_ovf)
-        ad.set_value("output", self.temp_file)
-        ad.set_value("DISK_IMAGE", disk_file)
-        ad.set_value("file_id", "mydisk")
+        ad.package = intermediate_ovf
+        ad.output = self.temp_file
+        ad.disk_image = disk_file
+        ad.file_id = "mydisk"
         ad.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)

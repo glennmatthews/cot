@@ -28,7 +28,7 @@ class TestCOTEditProduct(COT_UT):
         """Test case setup function called automatically prior to each test"""
         super(TestCOTEditProduct, self).setUp()
         self.instance = COTEditProduct(UI())
-        self.instance.set_value("output", self.temp_file)
+        self.instance.output = self.temp_file
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
@@ -37,22 +37,22 @@ class TestCOTEditProduct(COT_UT):
         self.assertEqual("PACKAGE is a mandatory argument!", reason)
         self.assertRaises(InvalidInputError, self.instance.run)
 
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
         self.assertTrue(re.search("nothing to do", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
-        self.instance.set_value("version", "X")
+        self.instance.version = "X"
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
-        self.instance.set_value("version", None)
-        self.instance.set_value("full_version", "Y")
+        self.instance.version = None
+        self.instance.full_version = "Y"
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
-        self.instance.set_value("full_version", None)
+        self.instance.full_version = None
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
         self.assertTrue(re.search("nothing to do", reason))
@@ -60,8 +60,8 @@ class TestCOTEditProduct(COT_UT):
 
     def test_edit_short_version(self):
         """Editing the short version alone."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("version", "5.3.1")
+        self.instance.package = self.input_ovf
+        self.instance.version = "5.3.1"
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -73,9 +73,8 @@ class TestCOTEditProduct(COT_UT):
 
     def test_edit_full_version(self):
         """Editing the full version alone."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("full_version",
-                                "Some arbitrary product, version 3.14159")
+        self.instance.package = self.input_ovf
+        self.instance.full_version = "Some arbitrary product, version 3.14159"
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -89,8 +88,8 @@ class TestCOTEditProduct(COT_UT):
 
     def test_edit_full_no_existing(self):
         """Edit full version in an OVF with no previous values."""
-        self.instance.set_value("PACKAGE", self.minimal_ovf)
-        self.instance.set_value("full_version", "Full Version")
+        self.instance.package = self.minimal_ovf
+        self.instance.full_version = "Full Version"
         self.instance.run()
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
@@ -105,9 +104,9 @@ class TestCOTEditProduct(COT_UT):
 
     def test_edit_both_versions(self):
         """Edit both version strings"""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("version", "5.2.0.01I")
-        self.instance.set_value("full_version", "Cisco IOS XRv, Version 5.2")
+        self.instance.package = self.input_ovf
+        self.instance.version = "5.2.0.01I"
+        self.instance.full_version = "Cisco IOS XRv, Version 5.2"
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -122,9 +121,9 @@ class TestCOTEditProduct(COT_UT):
 
     def test_edit_both_no_existing(self):
         """Edit both version strings in an OVF with no previous values."""
-        self.instance.set_value("PACKAGE", self.minimal_ovf)
-        self.instance.set_value("version", "Version")
-        self.instance.set_value("full_version", "Full Version")
+        self.instance.package = self.minimal_ovf
+        self.instance.version = "Version"
+        self.instance.full_version = "Full Version"
         self.instance.run()
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,

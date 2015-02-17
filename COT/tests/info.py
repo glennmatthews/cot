@@ -53,24 +53,17 @@ class TestCOTInfo(COT_UT):
         self.assertEqual("At least one package must be specified", reason)
         self.assertRaises(InvalidInputError, self.instance.run)
 
-        self.instance.set_value("PACKAGE_LIST", [self.input_ovf])
+        self.instance.package_list = [self.input_ovf]
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
     def test_invalid_args(self):
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value,
-                          "PACKAGE_LIST", ["/foo/bar/baz"])
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value,
-                          "verbosity", True)
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value,
-                          "verbosity", 0)
-        # info takes a PACKAGE_LIST not a PACKAGE at present
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value,
-                          "PACKAGE", self.input_ovf)
+        with self.assertRaises(InvalidInputError):
+            self.instance.package_list = ["/foo/bar/baz"]
+        with self.assertRaises(InvalidInputError):
+            self.instance.verbosity = True
+        with self.assertRaises(InvalidInputError):
+            self.instance.verbosity = 0
 
     def test_minimal_ovf(self):
         """Get info for minimal OVF with no real content."""
@@ -83,20 +76,19 @@ Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
   None (default)            0      0 MB    0       0  0 /       0 B
 """.format(self.minimal_ovf)
-        self.instance.set_value("PACKAGE_LIST", [self.minimal_ovf])
+        self.instance.package_list = [self.minimal_ovf]
 
         self.check_cot_output(expected_output)
 
-        self.instance.set_value('verbosity', 'brief')
+        self.instance.verbosity = 'brief'
         self.check_cot_output(expected_output)
 
-        self.instance.set_value('verbosity', 'verbose')
+        self.instance.verbosity = 'verbose'
         self.check_cot_output(expected_output)
 
     def test_multiple_minimal_ovf(self):
         """Test multiple OVFs at once"""
-        self.instance.set_value("PACKAGE_LIST",
-                                [self.minimal_ovf, self.minimal_ovf])
+        self.instance.package_list = [self.minimal_ovf, self.minimal_ovf]
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -115,7 +107,7 @@ Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
 
     def test_input_ovf(self):
         """Test the standard input ovf"""
-        self.instance.set_value('PACKAGE_LIST', [self.input_ovf])
+        self.instance.package_list = [self.input_ovf]
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -170,7 +162,7 @@ Properties:
   domain-name          Domain Name                      ""
 """.format(self.input_ovf))
 
-        self.instance.set_value('verbosity', 'brief')
+        self.instance.verbosity = 'brief'
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -211,7 +203,7 @@ Properties:
   domain-name          Domain Name                      ""
 """.format(self.input_ovf))
 
-        self.instance.set_value('verbosity', 'verbose')
+        self.instance.verbosity = 'verbose'
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -288,9 +280,9 @@ Properties:
 
     def test_iosv_ovf(self):
         """Test an IOSv OVF."""
-        self.instance.set_value('PACKAGE_LIST', [self.iosv_ovf])
+        self.instance.package_list = [self.iosv_ovf]
 
-        self.instance.set_value('verbosity', 'brief')
+        self.instance.verbosity = 'brief'
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -336,7 +328,7 @@ Networks:
   GigabitEthernet0_15  "Data network 16"
 """.format(self.iosv_ovf))
 
-        self.instance.set_value('verbosity', 'verbose')
+        self.instance.verbosity = 'verbose'
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -433,7 +425,7 @@ NICs and Associated Networks:
 
     def test_v09_ovf(self):
         """Test a legacy v0.9 OVF."""
-        self.instance.set_value('PACKAGE_LIST', [self.v09_ovf])
+        self.instance.package_list = [self.v09_ovf]
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -466,7 +458,7 @@ NICs and Associated Networks:
   ethernet0     : bridged
 """.format(self.v09_ovf))
 
-        self.instance.set_value('verbosity', 'verbose')
+        self.instance.verbosity = 'verbose'
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -507,7 +499,7 @@ NICs and Associated Networks:
 
     def test_vmware_ovf(self):
         """Test info string for an OVF with VMware custom extensions."""
-        self.instance.set_value('PACKAGE_LIST', [self.vmware_ovf])
+        self.instance.package_list = [self.vmware_ovf]
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -535,7 +527,7 @@ NICs and Associated Networks:
   Network adapter 4 : lanethernet0
 """.format(self.vmware_ovf))
 
-        self.instance.set_value('verbosity', 'verbose')
+        self.instance.verbosity = 'verbose'
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -569,8 +561,8 @@ NICs and Associated Networks:
 
     def test_v20_vbox_ovf(self):
         """Test info string for v2.0 OVF generated by VirtualBox"""
-        self.instance.set_value("PACKAGE_LIST", [self.v20_vbox_ovf])
-        self.instance.set_value("verbosity", "verbose")
+        self.instance.package_list = [self.v20_vbox_ovf]
+        self.instance.verbosity = "verbose"
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -598,8 +590,8 @@ NICs and Associated Networks:
 
     def test_invalid_ovf(self):
         """Test info string for OVF with various invalid/atypical contents"""
-        self.instance.set_value("PACKAGE_LIST", [self.invalid_ovf])
-        self.instance.set_value("verbosity", "verbose")
+        self.instance.package_list = [self.invalid_ovf]
+        self.instance.verbosity = "verbose"
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -654,7 +646,7 @@ Properties:
 
         self.instance.UI.terminal_width = narrow_width
 
-        self.instance.set_value("PACKAGE_LIST", [self.invalid_ovf])
+        self.instance.package_list = [self.invalid_ovf]
         self.check_cot_output("""
 -----------------------------------------------------------
 {0}
@@ -694,7 +686,7 @@ Properties:
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
 
-        self.instance.set_value("verbosity", "verbose")
+        self.instance.verbosity = "verbose"
         self.check_cot_output("""
 -----------------------------------------------------------
 {0}

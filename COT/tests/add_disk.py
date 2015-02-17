@@ -33,34 +33,34 @@ class TestCOTAddDisk(COT_UT):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTAddDisk, self).setUp()
         self.instance = COTAddDisk(UI())
-        self.instance.set_value("output", self.temp_file)
+        self.instance.output = self.temp_file
         self.new_vmdk = os.path.join(os.path.dirname(__file__), "blank.vmdk")
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
         self.assertTrue(re.search("DISK_IMAGE is a mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.disk_image = self.new_vmdk
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
-        self.instance.set_value("address", "1:0")
+        self.instance.address = "1:0"
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
         self.assertTrue(re.search("controller", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
-        self.instance.set_value("controller", "ide")
+        self.instance.controller = "ide"
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
         # address without controller is not allowed,
         # but controller without address is OK
-        self.instance.set_value("address", None)
+        self.instance.address = None
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
@@ -68,12 +68,12 @@ class TestCOTAddDisk(COT_UT):
         """Test conflicting arguments are detected and rejected"""
         # TODO - it would be nice to detect this in ready_to_run()
         # rather than run()
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = self.new_vmdk
         # file2 exists and is mapped to IDE 1:0 but we request IDE 1:1
-        self.instance.set_value("controller", "ide")
-        self.instance.set_value("address", "1:1")
-        self.instance.set_value("file_id", "file2")
+        self.instance.controller = "ide"
+        self.instance.address = "1:1"
+        self.instance.file_id = "file2"
         self.assertRaises(ValueMismatchError, self.instance.run)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
 
@@ -81,12 +81,11 @@ class TestCOTAddDisk(COT_UT):
         """Test conflicting arguments are detected and rejected"""
         # TODO - it would be nice to detect this in ready_to_run()
         # rather than run()
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE",
-                                os.path.join(os.path.dirname(__file__),
-                                             "input.iso"))
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = os.path.join(os.path.dirname(__file__),
+                                                "input.iso")
         # ovf contains input.iso but we're asking it to overwrite input.vmdk
-        self.instance.set_value("file_id", "vmdisk1")
+        self.instance.file_id = "vmdisk1"
         self.assertRaises(ValueMismatchError, self.instance.run)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_CDROM)
 
@@ -94,21 +93,20 @@ class TestCOTAddDisk(COT_UT):
         """Test conflicting arguments are detected and rejected"""
         # TODO - it would be nice to detect this in ready_to_run()
         # rather than run()
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE",
-                                os.path.join(os.path.dirname(__file__),
-                                             "input.vmdk"))
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = os.path.join(os.path.dirname(__file__),
+                                                "input.vmdk")
         # ovf contains input.vmdk but we're asking it to overwrite input.iso
-        self.instance.set_value("controller", "ide")
-        self.instance.set_value("address", "1:0")
+        self.instance.controller = "ide"
+        self.instance.address = "1:0"
         self.assertRaises(ValueMismatchError, self.instance.run)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
 
     def test_new_hard_disk(self):
         """Test adding a new hard disk to the OVF."""
 
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = self.new_vmdk
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
@@ -146,10 +144,10 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
 
     def test_new_hard_disk_and_explicit_controller(self):
         """Test adding a hard disk to an explicitly new SCSI controller."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
-        self.instance.set_value("controller", "scsi")
-        self.instance.set_value("address", "1:0")
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = self.new_vmdk
+        self.instance.controller = "scsi"
+        self.instance.address = "1:0"
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.instance.finished()
@@ -196,8 +194,8 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         """Add a new hard disk and create an IDE controller automatically."""
         # Since the primary IDE0 controller is already full in the IOSv OVF,
         # COT will need to automatically create IDE1 controller
-        self.instance.set_value("PACKAGE", self.iosv_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.package = self.iosv_ovf
+        self.instance.disk_image = self.new_vmdk
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
@@ -243,8 +241,8 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
 
     def test_new_hard_disk_v09(self):
         """Test adding a disk to a version 0.9 OVF."""
-        self.instance.set_value("PACKAGE", self.v09_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.package = self.v09_ovf
+        self.instance.disk_image = self.new_vmdk
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
@@ -279,8 +277,8 @@ specifications/vmdk.html#streamOptimized" />
 
     def test_new_hard_disk_v20_vbox(self):
         """Test adding a new hard disk to a v2.0 OVF from VirtualBox"""
-        self.instance.set_value("PACKAGE", self.v20_vbox_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.package = self.v20_vbox_ovf
+        self.instance.disk_image = self.new_vmdk
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
@@ -293,11 +291,11 @@ specifications/vmdk.html#streamOptimized" />
 
     def test_overwrite_hard_disk_fileid(self):
         """Overwrite an existing disk by specifying matching file-id."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
-        self.instance.set_value("file_id", 'file1')
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = self.new_vmdk
+        self.instance.file_id = 'file1'
         # For coverage's sake, let's change the controller subtype too
-        self.instance.set_value("subtype", "virtio")
+        self.instance.subtype = "virtio"
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.OVERWRITING_FILE)
@@ -337,10 +335,10 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
 
     def test_overwrite_hard_disk_address(self):
         """Overwrite an existing disk by setting matching controller address"""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
-        self.instance.set_value("controller", 'scsi')
-        self.instance.set_value("address", "0:0")
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = self.new_vmdk
+        self.instance.controller = 'scsi'
+        self.instance.address = "0:0"
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.OVERWRITING_FILE)
@@ -379,9 +377,9 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
         new_qcow2 = os.path.join(self.temp_dir, "new.qcow2")
         # Make it a small file to keep the test fast
         create_disk_image(new_qcow2, capacity="16M")
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE", new_qcow2)
-        self.instance.set_value("controller", 'scsi')
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = new_qcow2
+        self.instance.controller = 'scsi'
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.instance.finished()
@@ -423,8 +421,8 @@ ovf:diskId="new.vmdk" ovf:fileRef="new.vmdk" ovf:format=\
         new_qcow2 = os.path.join(self.temp_dir, "input.qcow2")
         # Keep it small!
         create_disk_image(new_qcow2, capacity="16M")
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE", new_qcow2)
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = new_qcow2
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.OVERWRITING_FILE)
@@ -455,8 +453,8 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
         """Add a disk to an OVF that doesn't currently have any.
         Verify correct creation of various OVF sub-sections.
         """
-        self.instance.set_value("PACKAGE", self.minimal_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.package = self.minimal_ovf
+        self.instance.disk_image = self.new_vmdk
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
@@ -502,11 +500,11 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
 """.format(blank_size=self.FILE_SIZE['blank.vmdk']))
 
     def test_add_cdrom_to_existing_controller(self):
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
-        self.instance.set_value("type", "cdrom")
-        self.instance.set_value("controller", "scsi")
-        self.instance.set_value("address", "0:1")
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = self.new_vmdk
+        self.instance.type = "cdrom"
+        self.instance.controller = "scsi"
+        self.instance.address = "0:1"
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -529,8 +527,8 @@ ovf:size="{blank_size}" />
 
     def test_add_disk_no_room(self):
         # iosv.ovf already has two disks. Add a third disk...
-        self.instance.set_value("PACKAGE", self.iosv_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
+        self.instance.package = self.iosv_ovf
+        self.instance.disk_image = self.new_vmdk
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
@@ -575,10 +573,9 @@ vmdk.html#streamOptimized" />
 """.format(blank_size=self.FILE_SIZE['blank.vmdk']))
 
         # Add a fourth disk...
-        self.instance.set_value("PACKAGE", self.temp_file)
-        self.instance.set_value("DISK_IMAGE",
-                                os.path.join(os.path.dirname(__file__),
-                                             'input.iso'))
+        self.instance.package = self.temp_file
+        self.instance.disk_image = os.path.join(os.path.dirname(__file__),
+                                                'input.iso')
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_CDROM)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
@@ -635,18 +632,17 @@ vmdk.html#streamOptimized" />
         # Keep it small!
         create_disk_image(new_qcow2, capacity="16M")
         # Try to add a fifth disk - IDE controllers are full!
-        self.instance.set_value("PACKAGE", self.temp_file)
-        self.instance.set_value("DISK_IMAGE", new_qcow2)
+        self.instance.package = self.temp_file
+        self.instance.disk_image = new_qcow2
         self.assertRaises(ValueTooHighError, self.instance.run)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
 
     def test_overwrite_implicit_file_id(self):
         """file_id defaults to filename if not set."""
-        self.instance.set_value("PACKAGE", self.invalid_ovf)
-        self.instance.set_value("DISK_IMAGE",
-                                os.path.join(os.path.dirname(__file__),
-                                             "input.vmdk"))
+        self.instance.package = self.invalid_ovf
+        self.instance.disk_image = os.path.join(os.path.dirname(__file__),
+                                                "input.vmdk")
         self.instance.run()
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
@@ -678,10 +674,10 @@ ovf:size="{input_size}" />
         self.validate_output_with_ovftool = False
 
     def test_overwrite_disk_with_bad_host_resource(self):
-        self.instance.set_value("PACKAGE", self.invalid_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
-        self.instance.set_value("controller", "ide")
-        self.instance.set_value("address", "0:0")
+        self.instance.package = self.invalid_ovf
+        self.instance.disk_image = self.new_vmdk
+        self.instance.controller = "ide"
+        self.instance.address = "0:0"
         with self.assertRaises(ValueUnsupportedError) as cm:
             self.instance.run()
         self.assertTrue(re.search("HostResource", str(cm.exception)))
@@ -692,28 +688,27 @@ ovf:size="{input_size}" />
                           msg="Unrecognized HostResource format")
 
     def test_overwrite_disk_with_bad_parent_by_file(self):
-        self.instance.set_value("PACKAGE", self.invalid_ovf)
-        self.instance.set_value("DISK_IMAGE",
-                                os.path.join(os.path.dirname(__file__),
-                                             'input.iso'))
+        self.instance.package = self.invalid_ovf
+        self.instance.disk_image = os.path.join(os.path.dirname(__file__),
+                                                'input.iso')
         self.assertRaises(LookupError, self.instance.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_CDROM)
 
     def test_overwrite_disk_with_bad_parent_by_fileid(self):
-        self.instance.set_value("PACKAGE", self.invalid_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
-        self.instance.set_value("file_id", "input.iso")
+        self.instance.package = self.invalid_ovf
+        self.instance.disk_image = self.new_vmdk
+        self.instance.file_id = "input.iso"
         self.assertRaises(LookupError, self.instance.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
 
     def test_overwrite_disk_with_bad_fileref(self):
-        self.instance.set_value("PACKAGE", self.invalid_ovf)
-        self.instance.set_value("DISK_IMAGE", self.new_vmdk)
-        self.instance.set_value("file_id", "flash2")
+        self.instance.package = self.invalid_ovf
+        self.instance.disk_image = self.new_vmdk
+        self.instance.file_id = "flash2"
         self.assertRaises(LookupError, self.instance.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
