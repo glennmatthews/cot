@@ -37,56 +37,53 @@ class TestCOTInjectConfig(COT_UT):
         """Test case setup function called automatically prior to each test"""
         super(TestCOTInjectConfig, self).setUp()
         self.instance = COTInjectConfig(UI())
-        self.instance.set_value("output", self.temp_file)
+        self.instance.output = self.temp_file
         self.config_file = os.path.join(os.path.dirname(__file__),
                                         "sample_cfg.txt")
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
         self.assertTrue(re.search("No configuration files", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
-        self.instance.set_value("config_file", self.config_file)
+        self.instance.config_file = self.config_file
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
     def test_invalid_always_args(self):
         """Test input values that are always invalid"""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "config_file", 0)
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "secondary_config_file", 0)
+        self.instance.package = self.input_ovf
+        with self.assertRaises(InvalidInputError):
+            self.instance.config_file = 0
+        with self.assertRaises(InvalidInputError):
+            self.instance.secondary_config_file = 0
 
     def test_valid_by_platform(self):
         """Test input values whose validity depends on the platform."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         # IOSXRvLC supports neither primary nor secondary config files
         self.instance.vm.platform = IOSXRvLC
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "config_file",
-                          self.config_file)
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "secondary_config_file",
-                          self.config_file)
+        with self.assertRaises(InvalidInputError):
+            self.instance.config_file = self.config_file
+        with self.assertRaises(InvalidInputError):
+            self.instance.secondary_config_file = self.config_file
         # IOSv supports primary but not secondary
         self.instance.vm.platform = IOSv
-        self.instance.set_value("config_file", self.config_file)
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "secondary_config_file",
-                          self.config_file)
+        self.instance.config_file = self.config_file
+        with self.assertRaises(InvalidInputError):
+            self.instance.secondary_config_file = self.config_file
         # IOSXRv supports both
         self.instance.vm.platform = IOSXRv
-        self.instance.set_value("config_file", self.config_file)
-        self.instance.set_value("secondary_config_file", self.config_file)
+        self.instance.config_file = self.config_file
+        self.instance.secondary_config_file = self.config_file
 
     def test_inject_config_iso(self):
         """Inject config file on an ISO."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("config_file", self.config_file)
+        self.instance.package = self.input_ovf
+        self.instance.config_file = self.config_file
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
@@ -107,9 +104,9 @@ ovf:size="{config_size}" />
 
     def test_inject_config_iso_secondary(self):
         """Inject secondary config file on an ISO."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         self.instance.vm.platform = IOSXRv
-        self.instance.set_value("secondary_config_file", self.config_file)
+        self.instance.secondary_config_file = self.config_file
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
@@ -130,8 +127,8 @@ ovf:size="{config_size}" />
 
     def test_inject_config_vmdk(self):
         """Inject config file on a VMDK"""
-        self.instance.set_value("PACKAGE", self.iosv_ovf)
-        self.instance.set_value("config_file", self.config_file)
+        self.instance.package = self.iosv_ovf
+        self.instance.config_file = self.config_file
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_DISK)
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
@@ -172,22 +169,22 @@ for bootstrap configuration.</rasd:Description>
     def test_inject_config_repeatedly(self):
         """inject-config repeatedly"""
         # Add initial config file
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("config_file", self.config_file)
+        self.instance.package = self.input_ovf
+        self.instance.config_file = self.config_file
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         # Overwrite it with a new one
-        self.instance.set_value("PACKAGE", self.temp_file)
-        self.instance.set_value("config_file", self.config_file)
+        self.instance.package = self.temp_file
+        self.instance.config_file = self.config_file
         self.instance.run()
         self.assertLogged(**self.OVERWRITE_CONFIG_DISK)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         # And again.
-        self.instance.set_value("PACKAGE", self.temp_file)
-        self.instance.set_value("config_file", self.config_file)
+        self.instance.package = self.temp_file
+        self.instance.config_file = self.config_file
         self.instance.run()
         self.assertLogged(**self.OVERWRITE_CONFIG_DISK)
         self.assertLogged(**self.OVERWRITING_FILE)
@@ -210,8 +207,8 @@ ovf:size="{config_size}" />
 
     def test_inject_config_fail_no_disk_available(self):
         """Error handling if the OVF doesn't have an appropriate drive."""
-        self.instance.set_value("PACKAGE", self.minimal_ovf)
-        self.instance.set_value("config_file", self.config_file)
+        self.instance.package = self.minimal_ovf
+        self.instance.config_file = self.config_file
         # CSR1000V wants a CD-ROM drive
         self.instance.vm.platform = CSR1000V
         self.assertRaises(LookupError, self.instance.run)
@@ -220,13 +217,13 @@ ovf:size="{config_size}" />
         self.assertRaises(LookupError, self.instance.run)
 
         # Also fail due to DiskSection but no placeholder:
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         self.instance.vm.platform = IOSv
         self.assertRaises(LookupError, self.instance.run)
 
     def test_find_parent_fail_no_parent(self):
         """Negative testing of some inject-config related APIs."""
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
         cpu_item = self.instance.vm.hardware.find_item(
             resource_type='cpu')
         self.assertRaises(LookupError,

@@ -21,60 +21,67 @@ from distutils.version import StrictVersion
 
 from .submodule import COTReadOnlySubmodule
 from COT.helper_tools import check_call, get_ovftool_version
+from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
 
 class COTDeploy(COTReadOnlySubmodule):
-    def __init__(self, UI, arg_names=None):
-        if arg_names is None:
-            arg_names = []
-        arg_names = [
-            "PACKAGE",
-            "HYPERVISOR",
-            "configuration",
-            "username",
-            "password",
-            "power_on",
-            "vm_name",
-            "network_map",
-        ] + arg_names
-        super(COTDeploy, self).__init__(UI, arg_names)
-        self.args["power_on"] = False
+    def __init__(self, UI):
+        super(COTDeploy, self).__init__(UI)
+        # User inputs
+        self._hypervisor = None
+        self._configuration = None
+        self.username = None
+        self.password = None
+        self._power_on = False
+        self.vm_name = None
+        self.network_map = None
+        # Internal attributes
         self.generic_parser = None
         self.parser = None
         self.subparsers = None
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
-        valid, value_or_reason = super(COTDeploy, self).validate_arg(arg,
-                                                                     value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+    @property
+    def hypervisor(self):
+        return self._hypervisor
 
-        if arg == "HYPERVISOR":
-            if value != "esxi":
-                return False, ("'{0}' is not a supported hypervisor"
-                               .format(value))
-        elif arg == 'configuration' and self.vm is not None:
+    @hypervisor.setter
+    def hypervisor(self, value):
+        if value != "esxi":
+            raise InvalidInputError("'{0}' is not a supported hypervisor"
+                                    .format(value))
+        self._hypervisor = value
+
+    @property
+    def configuration(self):
+        return self._configuration
+
+    @configuration.setter
+    def configuration(self, value):
+        if self.vm is not None:
             profiles = self.vm.get_configuration_profile_ids()
             if value is not None and not (value in profiles):
-                return False, ("'Configuration '{0}' is not a recognized "
-                               "profile for '{1}'.\nValid options are:\n{2}"
-                               .format(value, self.get_value("PACKAGE"),
-                                       "\n".join(profiles)))
-        elif arg == 'power_on':
-            if value is not True and value is not False:
-                return False, "power_on accepts boolean values only"
+                raise InvalidInputError(
+                    "'Configuration '{0}' is not a recognized "
+                    "profile for '{1}'.\nValid options are:\n{2}"
+                    .format(value, self.package, "\n".join(profiles)))
+        self._configuration = value
 
-        return valid, value
+    @property
+    def power_on(self):
+        return self._power_on
+
+    @power_on.setter
+    def power_on(self, value):
+        if value is not True and value is not False:
+            raise InvalidInputError("power_on accepts boolean values only")
+        self._power_on = value
 
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
-        if self.get_value("HYPERVISOR") is None:
+        if self.hypervisor is None:
             return False, "HYPERVISOR is a mandatory argument"
         return super(COTDeploy, self).ready_to_run()
 
@@ -134,19 +141,26 @@ class COTDeploy(COTReadOnlySubmodule):
 
 class COTDeployESXi(COTDeploy):
     def __init__(self, UI):
-        super(COTDeployESXi, self).__init__(
-            UI,
-            [
-                "LOCATOR",
-                "datastore",
-                "ovftool_args",
-            ])
-        self.args["ovftool_args"] = []
+        super(COTDeployESXi, self).__init__(UI)
+        self.locator = None
+        self.datastore = None
+        self._ovftool_args = []
+
+    @property
+    def ovftool_args(self):
+        return list(self._ovftool_args)
+
+    @ovftool_args.setter
+    def ovftool_args(self, value):
+        # Use shlex to split ovftool_args but respect quoted whitespace
+        self._ovftool_args = shlex.split(value)
+        logger.debug("ovftool_args split to: {0}"
+                     .format(self._ovftool_args))
 
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
-        if self.get_value("LOCATOR") is None:
+        if self.locator is None:
             return False, "LOCATOR is a mandatory argument"
         return super(COTDeployESXi, self).ready_to_run()
 
@@ -154,34 +168,25 @@ class COTDeployESXi(COTDeploy):
         super(COTDeployESXi, self).run()
 
         # ensure user provided proper credentials
-        username = self.get_value("username")
-        password = self.get_value("password")
-        LOCATOR = self.get_value("LOCATOR")
-        server = LOCATOR.split("/")[0]
-        if username is None:
-            username = getpass.getuser()
-        if password is None:
-            password = self.UI.get_password(username, server)
+        server = self.locator.split("/")[0]
+        if self.username is None:
+            self.username = getpass.getuser()
+        if self.password is None:
+            self.password = self.UI.get_password(self.username, server)
 
-        target = "vi://" + username + ":" + password + "@" + LOCATOR
+        target = ("vi://" + self.username + ":" + self.password +
+                  "@" + self.locator)
 
-        ovftool_args = self.get_value("ovftool_args")
-        # Use shlex to split ovftool_args but respect quoted whitespace
-        if ovftool_args:
-            ovftool_args = shlex.split(ovftool_args)
-            logger.debug("ovftool_args split to: {0}".format(ovftool_args))
-        else:
-            ovftool_args = []
+        ovftool_args = self.ovftool_args
 
-        PACKAGE = self.get_value("PACKAGE")
-        configuration = self.get_value("configuration")
+        configuration = self.configuration
 
         vm = self.vm
 
         # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
         # then environment properties will always be used.
         # Otherwise we may need to help and/or warn the user:
-        if vm.get_property_array() and not re.search("/host/", LOCATOR):
+        if vm.get_property_array() and not re.search("/host/", self.locator):
             if get_ovftool_version() < StrictVersion("4.0.0"):
                 self.UI.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target "
@@ -197,7 +202,7 @@ class COTDeployESXi(COTDeploy):
                                "version is too low to add injectOvfEnv "
                                "option. OVF environment properties will "
                                "be ignored.")
-            elif not self.get_value("power_on"):
+            elif not self.power_on:
                 self.UI.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target, "
                     "OVF environment properties can only be made available to "
@@ -256,29 +261,26 @@ class COTDeployESXi(COTDeploy):
         serial_count = serial_count[configuration]
 
         # pass network settings on to ovftool
-        network_map = self.get_value("network_map")
-        if network_map is not None:
-            for nm in network_map:
+        if self.network_map is not None:
+            for nm in self.network_map:
                 ovftool_args.append("--net:" + nm)
 
         # check if user entered a name for the VM
-        vm_name = self.get_value("vm_name")
-        if vm_name is not None:
-            ovftool_args.append("--name=" + vm_name)
+        if self.vm_name is not None:
+            ovftool_args.append("--name=" + self.vm_name)
 
         # tell ovftool to power on the VM
         # TODO - if serial port fixup (below) is implemented,
         # do not power on VM until after serial ports are added.
-        if self.get_value("power_on"):
+        if self.power_on:
             ovftool_args.append("--powerOn")
 
         # specify target datastore
-        datastore = self.get_value("datastore")
-        if datastore:
-            ovftool_args.append("--datastore=" + datastore)
+        if self.datastore is not None:
+            ovftool_args.append("--datastore=" + self.datastore)
 
         # add package and target to the list
-        ovftool_args.append(PACKAGE)
+        ovftool_args.append(self.package)
         ovftool_args.append(target)
 
         logger.debug("Final args to pass to OVFtool: {0}".format(ovftool_args))
@@ -299,7 +301,7 @@ class COTDeployESXi(COTDeploy):
                 "Package '{0}' contains {1} serial ports, but ovftool "
                 "ignores serial port declarations. If these ports are "
                 "needed, you must add them manually to the new VM."
-                .format(PACKAGE, serial_count))
+                .format(self.package, serial_count))
 
     def create_subparser(self, parent):
         super(COTDeployESXi, self).create_subparser(parent)

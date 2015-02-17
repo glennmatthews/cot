@@ -36,7 +36,7 @@ class TestCOTDeploy(COT_UT):
         "Test case setup function called automatically prior to each test"
         super(TestCOTDeploy, self).setUp()
         self.instance = COTDeploy(UI())
-        self.instance.set_value("PACKAGE", self.input_ovf)
+        self.instance.package = self.input_ovf
 
     def test_not_ready_with_no_args(self):
         ready, reason = self.instance.ready_to_run()
@@ -44,13 +44,20 @@ class TestCOTDeploy(COT_UT):
         self.assertTrue(re.search("HYPERVISOR.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
+        self.instance.hypervisor = "esxi"
+        self.instance.package = None
+        ready, reason = self.instance.ready_to_run()
+        self.assertEqual(ready, False)
+        self.assertTrue(re.search("PACKAGE.*mandatory", reason))
+        self.assertRaises(InvalidInputError, self.instance.run)
+
     def test_invalid_args(self):
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "HYPERVISOR", "frobozz")
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "configuration", "")
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "configuration", "X")
+        with self.assertRaises(InvalidInputError):
+            self.instance.hypervisor = "frobozz"
+        with self.assertRaises(InvalidInputError):
+            self.instance.configuration = ""
+        with self.assertRaises(InvalidInputError):
+            self.instance.configuration = "X"
 
 
 class TestCOTDeployESXi(COT_UT):
@@ -88,8 +95,8 @@ class TestCOTDeployESXi(COT_UT):
         "Test case setup function called automatically prior to each test"
         super(TestCOTDeployESXi, self).setUp()
         self.instance = COTDeployESXi(UI())
-        self.instance.set_value("PACKAGE", self.input_ovf)
-        self.instance.set_value("HYPERVISOR", 'esxi')
+        self.instance.package = self.input_ovf
+        self.instance.hypervisor = 'esxi'
         # Stub out check_call so that we don't actually need ovftool
         self._check_call = COT.deploy.check_call
         self.last_argv = []
@@ -115,17 +122,24 @@ class TestCOTDeployESXi(COT_UT):
         self.assertTrue(re.search("LOCATOR.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
+        self.instance.locator = "localhost"
+        self.instance.package = None
+        ready, reason = self.instance.ready_to_run()
+        self.assertEqual(ready, False)
+        self.assertTrue(re.search("PACKAGE.*mandatory", reason))
+        self.assertRaises(InvalidInputError, self.instance.run)
+
     def test_invalid_args(self):
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "configuration", "")
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "configuration", "X")
-        self.assertRaises(InvalidInputError,
-                          self.instance.set_value, "power_on", "frobozz")
+        with self.assertRaises(InvalidInputError):
+            self.instance.configuration = ""
+        with self.assertRaises(InvalidInputError):
+            self.instance.configuration = "X"
+        with self.assertRaises(InvalidInputError):
+            self.instance.power_on = "frobozz"
 
     def test_ovftool_args_basic(self):
         "Test that ovftool is called with the expected arguments"
-        self.instance.set_value("LOCATOR", "localhost")
+        self.instance.locator = "localhost"
         self.instance.run()
         self.assertEqual([
             'ovftool',
@@ -138,16 +152,15 @@ class TestCOTDeployESXi(COT_UT):
 
     def test_ovftool_args_advanced(self):
         "Test that ovftool is called with the expected arguments"
-        self.instance.set_value("LOCATOR", "localhost/host/foo")
-        self.instance.set_value("datastore", "datastore1")
-        self.instance.set_value("configuration", "2CPU-2GB-1NIC")
-        self.instance.set_value("vm_name", "myVM")
-        self.instance.set_value("power_on", True)
-        self.instance.set_value("ovftool_args",
-                                "--overwrite --vService:'A B=C D'")
-        self.instance.set_value("username", "u")
-        self.instance.set_value("password", "p")
-        self.instance.set_value("network_map", ["VM Network=VM Network"])
+        self.instance.locator = "localhost/host/foo"
+        self.instance.datastore = "datastore1"
+        self.instance.configuration = "2CPU-2GB-1NIC"
+        self.instance.vm_name = "myVM"
+        self.instance.power_on = True
+        self.instance.ovftool_args = "--overwrite --vService:'A B=C D'"
+        self.instance.username = "u"
+        self.instance.password = "p"
+        self.instance.network_map = ["VM Network=VM Network"]
 
         self.instance.run()
         self.assertEqual([
@@ -171,8 +184,8 @@ class TestCOTDeployESXi(COT_UT):
         # This is tested by test_ovftool_args_basic() above.
 
         # With 4.0.0 and power_on, we fixup when deploying to vSphere:
-        self.instance.set_value("LOCATOR", "vsphere")
-        self.instance.set_value("power_on", True)
+        self.instance.locator = "vsphere"
+        self.instance.power_on = True
         self.instance.run()
         self.assertEqual([
             'ovftool',

@@ -358,11 +358,13 @@ Note: some subcommands rely on external software tools, including:
         try:
             # Set mandatory (CAPITALIZED) args first, then optional args
             for (arg, value) in arg_hash.items():
-                if arg[0].isupper():
-                    args.instance.set_value(arg, value)
+                if arg[0].isupper() and value is not None:
+                    setattr(args.instance, arg.lower(), value)
             for (arg, value) in arg_hash.items():
-                if not arg[0].isupper() and arg != "instance":
-                    args.instance.set_value(arg, value)
+                if arg == "instance":
+                    continue
+                if not arg[0].isupper() and value is not None:
+                    setattr(args.instance, arg, value)
             args.instance.run()
             args.instance.finished()
         except InvalidInputError as e:

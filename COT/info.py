@@ -17,58 +17,61 @@
 import logging
 import os.path
 
-from .submodule import COTReadOnlySubmodule
+from .submodule import COTGenericSubmodule
 from .vm_context_manager import VMContextManager
+from .data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
 
-class COTInfo(COTReadOnlySubmodule):
+class COTInfo(COTGenericSubmodule):
     """Display VM information string"""
     def __init__(self, UI):
-        super(COTInfo, self).__init__(
-            UI,
-            [
-                "PACKAGE_LIST",
-                "verbosity",
-            ])
+        super(COTInfo, self).__init__(UI)
+        self._package_list = None
+        self._verbosity = None
 
-    def validate_arg(self, arg, value):
-        valid, value_or_reason = super(COTInfo, self).validate_arg(arg, value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+    @property
+    def package_list(self):
+        return self._package_list
 
-        if arg == "PACKAGE_LIST":
-            for package in value:
-                if not os.path.exists(package):
-                    return False, ("Specified package {0} does not exist!"
-                                   .format(package))
-        elif arg == "verbosity":
-            if value not in ['brief', 'verbose', None]:
-                return False, "Verbosity must be 'brief', 'verbose', or None"
+    @package_list.setter
+    def package_list(self, value):
+        for package in value:
+            if not os.path.exists(package):
+                raise InvalidInputError("Specified package {0} does not exist!"
+                                        .format(package))
+        self._package_list = value
 
-        return valid, value_or_reason
+    @property
+    def verbosity(self):
+        return self._verbosity
+
+    @verbosity.setter
+    def verbosity(self, value):
+        if value not in ['brief', 'verbose', None]:
+            raise InvalidInputError(
+                "Verbosity must be 'brief', 'verbose', or None")
+        self._verbosity = value
 
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)
         """
-        if not self.get_value("PACKAGE_LIST"):
+        if not self.package_list:
             return False, "At least one package must be specified"
         return super(COTInfo, self).ready_to_run()
 
     def run(self):
         super(COTInfo, self).run()
 
-        PACKAGE_LIST = self.get_value("PACKAGE_LIST")
-        verbosity = self.get_value("verbosity")
         first = True
-        for package in PACKAGE_LIST:
+        for package in self.package_list:
             if not first:
                 print("")
             with VMContextManager(package, None) as vm:
-                print(vm.info_string(self.UI.terminal_width() - 1, verbosity))
+                print(vm.info_string(self.UI.terminal_width() - 1,
+                                     self.verbosity))
             first = False
 
     def create_subparser(self, parent):

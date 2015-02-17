@@ -19,7 +19,7 @@ import os.path
 import textwrap
 
 from .submodule import COTSubmodule
-from .data_validation import ValueUnsupportedError
+from .data_validation import ValueUnsupportedError, InvalidInputError
 
 logger = logging.getLogger(__name__)
 
@@ -27,66 +27,49 @@ logger = logging.getLogger(__name__)
 class COTEditProperties(COTSubmodule):
 
     def __init__(self, UI):
-        super(COTEditProperties, self).__init__(
-            UI,
-            [
-                "PACKAGE",
-                "output",
-                "config_file",
-                "properties"
-            ])
+        super(COTEditProperties, self).__init__(UI)
+        self._config_file = None
+        self._properties = None
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
+    @property
+    def config_file(self):
+        return self._config_file
 
-        valid, value_or_reason = super(COTEditProperties, self).validate_arg(
-            arg, value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+    @config_file.setter
+    def config_file(self, value):
+        if not os.path.exists(value):
+            raise InvalidInputError("Specified config file {0} does not exist!"
+                                    .format(value))
+        self._config_file = value
 
-        if arg == "config_file":
-            if not os.path.exists(value):
-                return False, ("Specified config file {0} does not exist!"
-                               .format(value))
-        elif arg == "properties":
-            for key_value_pair in value:
-                try:
-                    (k, v) = key_value_pair.split('=', 1)
-                    logger.debug("key: {0} value: {1}".format(k, v))
-                    if k == '':
-                        raise ValueError()
-                except ValueError:
-                    return False, ("Invalid property '{0}' - properties "
-                                   "must be in 'key=value' form"
-                                   .format(key_value_pair))
+    @property
+    def properties(self):
+        return self._properties
 
-        return valid, value_or_reason
-
-    def set_value(self, arg, value):
-        super(COTEditProperties, self).set_value(arg, value)
-        if arg == "properties" and value is not None:
-            self.args[arg] = value
-
-    def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
-        return super(COTEditProperties, self).ready_to_run()
+    @properties.setter
+    def properties(self, value):
+        for key_value_pair in value:
+            try:
+                (k, v) = key_value_pair.split('=', 1)
+                logger.debug("key: {0} value: {1}".format(k, v))
+                if k == '':
+                    raise ValueError()
+            except ValueError:
+                raise InvalidInputError("Invalid property '{0}' - properties "
+                                        "must be in 'key=value' form"
+                                        .format(key_value_pair))
+        self._properties = value
 
     def run(self):
         super(COTEditProperties, self).run()
 
-        config_file = self.get_value("config_file")
-        properties = self.get_value("properties")
-
         vm = self.vm
 
-        if config_file is not None:
-            vm.config_file_to_properties(config_file)
+        if self.config_file is not None:
+            vm.config_file_to_properties(self.config_file)
 
-        if properties is not None:
-            for key_value_pair in properties:
+        if self.properties is not None:
+            for key_value_pair in self.properties:
                 (key, value) = key_value_pair.split('=', 1)
                 logger.debug("key: {0} value: {1}".format(key, value))
                 if value == '':
@@ -101,7 +84,7 @@ class COTEditProperties(COTSubmodule):
                     # TODO - for new property, prompt for label/descr/type?
                 vm.set_property_value(key, value)
 
-        if config_file is None and properties is None:
+        if self.config_file is None and self.properties is None:
             # Interactive mode!
             self.edit_properties_interactive(vm)
 

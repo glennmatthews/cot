@@ -28,70 +28,71 @@ class COTAddDisk(COTSubmodule):
     """Add or replace a disk in a virtual machine"""
 
     def __init__(self, UI):
-        super(COTAddDisk, self).__init__(
-            UI,
-            [
-                "DISK_IMAGE",
-                "PACKAGE",
-                "output",
-                "type",
-                "subtype",
-                "file_id",
-                "controller",
-                "address",
-                "diskname",
-                "description",
-            ])
+        super(COTAddDisk, self).__init__(UI)
+        self._disk_image = None
+        self.type = None
+        self.subtype = None
+        self.file_id = None
+        self._controller = None
+        self._address = None
+        self.diskname = None
+        self.description = None
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
-        valid, value_or_reason = super(COTAddDisk, self).validate_arg(arg,
-                                                                      value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+    @property
+    def disk_image(self):
+        return self._disk_image
 
-        if arg == "DISK_IMAGE":
-            if not os.path.exists(value):
-                return False, ("Specified disk '{0}' does not exist!"
-                               .format(value))
-        elif arg == "address":
-            return self.validate_controller_address(None, value)
-        elif arg == "controller":
-            return self.validate_controller_address(value, None)
+    @disk_image.setter
+    def disk_image(self, value):
+        if not os.path.exists(value):
+            raise InvalidInputError("Specified disk '{0}' does not exist!"
+                                    .format(value))
+        self._disk_image = value
 
-        return valid, value_or_reason
+    @property
+    def address(self):
+        return self._address
+
+    @address.setter
+    def address(self, value):
+        logger.info("Setting address to '{0}'".format(value))
+        self.validate_controller_address(self.controller, value)
+        self._address = value
+
+    @property
+    def controller(self):
+        return self._controller
+
+    @controller.setter
+    def controller(self, value):
+        logger.info("Setting controller to '{0}'".format(value))
+        self.validate_controller_address(value, self.address)
+        self._controller = value
 
     def validate_controller_address(self, controller, address):
-        if controller is not None:
-            input_value = controller
-            address = self.get_value("address")
-        elif address is not None:
-            input_value = address
-            controller = self.get_value("controller")
-
+        logger.info("validate_controller_address: {0}, {1}"
+                    .format(controller, address))
         if controller is not None and address is not None:
+            logger.info("Validating controller/address combo")
             ctrl_addr = address.split(":")[0]
             disk_addr = address.split(":")[1]
             if controller == "scsi" and (int(ctrl_addr) > 3 or
                                          int(disk_addr) > 15):
-                return False, "SCSI disk address must be between 0:0 and 3:15"
+                raise InvalidInputError(
+                    "SCSI disk address must be between 0:0 and 3:15")
             elif controller == "ide" and (int(ctrl_addr) > 1 or
                                           int(disk_addr) > 1):
-                return False, "IDE disk address must be between 0:0 and 1:1"
-
-        return True, input_value
+                raise InvalidInputError(
+                    "IDE disk address must be between 0:0 and 1:1")
 
     def ready_to_run(self):
         """Are we ready to go?
         Returns the tuple (ready, reason)"""
-        if self.get_value("DISK_IMAGE") is None:
+        if self.disk_image is None:
             return False, "DISK_IMAGE is a mandatory argument!"
-        elif self.get_value("address") is not None:
-            if self.get_value("controller") is None:
-                return False, ("When specifying an address you must also "
-                               "specify the controller type")
+        elif self.address is not None and self.controller is None:
+            return False, ("When specifying an address you must also "
+                           "specify the controller type")
         return super(COTAddDisk, self).ready_to_run()
 
     def run(self):
@@ -99,7 +100,14 @@ class COTAddDisk(COTSubmodule):
 
         add_disk_worker(self.vm,
                         UI=self.UI,
-                        **self.args)
+                        DISK_IMAGE=self.disk_image,
+                        type=self.type,
+                        subtype=self.subtype,
+                        file_id=self.file_id,
+                        controller=self.controller,
+                        address=self.address,
+                        diskname=self.diskname,
+                        description=self.description)
 
     def create_subparser(self, parent):
         p = parent.add_parser(

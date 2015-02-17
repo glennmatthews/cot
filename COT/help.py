@@ -17,6 +17,7 @@
 import logging
 
 from .submodule import COTGenericSubmodule
+from .data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
@@ -24,26 +25,26 @@ logger = logging.getLogger(__name__)
 class COTHelp(COTGenericSubmodule):
     """Provide 'help <subcommand>' syntax"""
     def __init__(self, UI):
-        super(COTHelp, self).__init__(UI, ["SUBCOMMAND"])
+        super(COTHelp, self).__init__(UI)
+        self._subcommand = None
 
-    def validate_arg(self, arg, value):
-        valid, value_or_reason = super(COTHelp, self).validate_arg(arg, value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        if arg == "SUBCOMMAND":
-            valid_cmds = sorted(self.UI.subparser_lookup.keys())
-            if value not in valid_cmds:
-                return False, ("Invalid command '{0}' (choose from '{1}')"
-                               .format(value, "', '".join(valid_cmds)))
+    @property
+    def subcommand(self):
+        return self._subcommand
 
-        return True, value_or_reason
+    @subcommand.setter
+    def subcommand(self, value):
+        valid_cmds = sorted(self.UI.subparser_lookup.keys())
+        if value is not None and value not in valid_cmds:
+            raise InvalidInputError("Invalid command '{0}' (choose from '{1}')"
+                                    .format(value, "', '".join(valid_cmds)))
+        self._subcommand = value
 
     def run(self):
         super(COTHelp, self).run()
 
-        command = self.get_value("SUBCOMMAND")
-        if command:
-            subp = self.UI.subparser_lookup[command]
+        if self.subcommand:
+            subp = self.UI.subparser_lookup[self.subcommand]
             subp.print_help()
         else:
             self.UI.parser.print_help()
