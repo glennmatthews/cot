@@ -152,13 +152,10 @@ class COTDeployESXi(COTDeploy):
 
     @ovftool_args.setter
     def ovftool_args(self, value):
-        if value:
-            # Use shlex to split ovftool_args but respect quoted whitespace
-            self._ovftool_args = shlex.split(value)
-            logger.debug("ovftool_args split to: {0}"
-                         .format(self._ovftool_args))
-        else:
-            self._ovftool_args = []
+        # Use shlex to split ovftool_args but respect quoted whitespace
+        self._ovftool_args = shlex.split(value)
+        logger.debug("ovftool_args split to: {0}"
+                     .format(self._ovftool_args))
 
     def ready_to_run(self):
         """Are we ready to go?

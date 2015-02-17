@@ -44,6 +44,13 @@ class TestCOTDeploy(COT_UT):
         self.assertTrue(re.search("HYPERVISOR.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
+        self.instance.hypervisor = "esxi"
+        self.instance.package = None
+        ready, reason = self.instance.ready_to_run()
+        self.assertEqual(ready, False)
+        self.assertTrue(re.search("PACKAGE.*mandatory", reason))
+        self.assertRaises(InvalidInputError, self.instance.run)
+
     def test_invalid_args(self):
         with self.assertRaises(InvalidInputError):
             self.instance.hypervisor = "frobozz"
@@ -113,6 +120,13 @@ class TestCOTDeployESXi(COT_UT):
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("LOCATOR.*mandatory", reason))
+        self.assertRaises(InvalidInputError, self.instance.run)
+
+        self.instance.locator = "localhost"
+        self.instance.package = None
+        ready, reason = self.instance.ready_to_run()
+        self.assertEqual(ready, False)
+        self.assertTrue(re.search("PACKAGE.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
     def test_invalid_args(self):
