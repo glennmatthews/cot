@@ -40,12 +40,18 @@ class VMContextManager:
     """
 
     def __init__(self, input_file, output_file):
+        """Create a VM instance."""
         self.obj = VMFactory.create(input_file, output_file)
 
     def __enter__(self):
+        """Use the VM instance as the context manager object."""
         return self.obj
 
     def __exit__(self, type, value, trace):
+        """If the block exited cleanly, write the VM out to disk.
+
+        In any case, destroy the VM.
+        """
         # Did we exit cleanly?
         if type is None:
             self.obj.write()

@@ -49,11 +49,12 @@ class COTGenericSubmodule(object):
     """
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         self.vm = None
         self.UI = UI
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
@@ -78,6 +79,7 @@ class COTGenericSubmodule(object):
         pass
 
     def destroy(self):
+        """Destroy any VM associated with this submodule."""
         if self.vm is not None:
             self.vm.destroy()
             self.vm = None
@@ -134,6 +136,7 @@ class COTSubmodule(COTGenericSubmodule):
     """Class for submodules that read and write the OVF."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTSubmodule, self).__init__(UI)
         self._package = None
         # Default to an unspecified output rather than no output

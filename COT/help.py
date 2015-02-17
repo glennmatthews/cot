@@ -29,6 +29,7 @@ class COTHelp(COTGenericSubmodule):
     """Provide 'help <subcommand>' syntax."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTHelp, self).__init__(UI)
         self._subcommand = None
 

@@ -92,6 +92,7 @@ class VMDescription(object):
             shutil.rmtree(self.working_dir)
 
     def __del__(self):
+        """Destructor. Call :meth:`destroy`."""
         self.destroy()
 
     def set_output_file(self, output_file):

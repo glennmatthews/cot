@@ -36,12 +36,13 @@ class COTEditProduct(COTSubmodule):
     """Edit product information (short version, long version)."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTEditProduct, self).__init__(UI)
         self.version = None
         self.full_version = None
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """

@@ -47,9 +47,28 @@ logger = logging.getLogger(__name__)
 
 class CLI(UI):
 
-    """Command-line user interface for COT."""
+    """Command-line user interface for COT.
+
+    .. autosummary::
+      :nosignatures:
+
+      confirm
+      create_parser
+      create_subparsers
+      fill_examples
+      fill_usage
+      formatter
+      get_input
+      get_password
+      main
+      parse_args
+      run
+      set_verbosity
+      terminal_width
+    """
 
     def __init__(self):
+        """Create CLI handler instance."""
         super(CLI, self).__init__(force=True)
         # In python 2.7, we want raw_input, but in python 3 we want input.
         try:

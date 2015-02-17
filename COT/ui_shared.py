@@ -34,6 +34,7 @@ class UI(object):
     """
 
     def __init__(self, force=False):
+        """Constructor."""
         #: Whether to automatically select the default value in all cases,
         #: rather than interactively prompting the user.
         self.force = force
@@ -83,7 +84,7 @@ class UI(object):
         return self.default_confirm_response
 
     def confirm_or_die(self, prompt):
-        """If the user doesn't agree, abort!
+        """If the user doesn't agree, abort the program.
 
         A simple wrapper for :meth:`confirm` that calls :func:`sys.exit` if
         :meth:`confirm` returns ``False``.

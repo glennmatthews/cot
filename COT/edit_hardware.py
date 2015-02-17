@@ -40,6 +40,7 @@ class COTEditHardware(COTSubmodule):
     """Edit hardware information (CPUs, RAM, NICs, etc.)."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTEditHardware, self).__init__(UI)
         self.profiles = None
         self._cpus = None
@@ -145,7 +146,7 @@ class COTEditHardware(COTSubmodule):
         self._serial_ports = value
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """

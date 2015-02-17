@@ -39,6 +39,7 @@ class COTEditProperties(COTSubmodule):
     """Edit OVF environment XML properties."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTEditProperties, self).__init__(UI)
         self._config_file = None
         self._properties = None

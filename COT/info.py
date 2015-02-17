@@ -31,6 +31,7 @@ class COTInfo(COTGenericSubmodule):
     """Display VM information string."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTInfo, self).__init__(UI)
         self._package_list = None
         self._verbosity = None
@@ -59,7 +60,7 @@ class COTInfo(COTGenericSubmodule):
         self._verbosity = value
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """

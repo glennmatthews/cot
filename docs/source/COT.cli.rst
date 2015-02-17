@@ -2,4 +2,3 @@
 ==================
 
 .. automodule:: COT.cli
-    :inherited-members:

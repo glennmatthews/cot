@@ -31,9 +31,26 @@ logger = logging.getLogger(__name__)
 
 class COTAddFile(COTSubmodule):
 
-    """Add a file (such as a README) to the package."""
+    """Add a file (such as a README) to the package.
+
+    :ivar UI: Instance of :class:`CLI` or other :class:`UI` subclass
+    :ivar str "PACKAGE": VM definition file to load
+    :ivar str "FILE": File to add to the package
+    :ivar str "file_id": File identifier to associate with :attr:`FILE`
+      in :attr:`PACKAGE`
+    :ivar str "output": File to write to instead of overwriting :attr:`PACKAGE`
+
+    .. autosummary::
+      :nosignatures:
+
+      create_subparser
+      validate_arg
+      ready_to_run
+      run
+    """
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTAddFile, self).__init__(UI)
         self._file = None
         self.file_id = None
@@ -50,7 +67,7 @@ class COTAddFile(COTSubmodule):
         self._file = value
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """

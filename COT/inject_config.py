@@ -33,6 +33,7 @@ class COTInjectConfig(COTSubmodule):
     """Wrap configuration file(s) into a disk image embedded into the VM."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTInjectConfig, self).__init__(UI)
         self._config_file = None
         self._secondary_config_file = None
@@ -72,7 +73,7 @@ class COTInjectConfig(COTSubmodule):
         self._secondary_config_file = value
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """

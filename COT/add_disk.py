@@ -33,9 +33,32 @@ logger = logging.getLogger(__name__)
 
 class COTAddDisk(COTSubmodule):
 
-    """Add or replace a disk in a virtual machine."""
+    """Add or replace a disk in a virtual machine.
+
+    :ivar UI: Instance of :class:`CLI` or other :class:`UI` subclass
+    :ivar str "PACKAGE": VM definition file to load
+    :ivar str "DISK_IMAGE": Disk image file to add to the VM
+    :ivar str "type": Disk type ('harddisk' or 'cdrom')
+    :ivar str "file_id": File identifier to map disk to file
+    :ivar str "controller": Controller type ('ide' or 'scsi')
+    :ivar str "subtype": Controller subtype such as "virtio"
+    :ivar str "address": Disk device controller address such as "1:0"
+    :ivar str "diskname": Name string for disk
+    :ivar str "description": Description of disk
+    :ivar str "output": File to write to instead of overwriting :attr:`PACKAGE`
+
+    .. autosummary::
+      :nosignatures:
+
+      create_subparser
+      validate_arg
+      validate_controller_address
+      ready_to_run
+      run
+    """
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTAddDisk, self).__init__(UI)
         self._disk_image = None
         self.type = None
@@ -78,12 +101,12 @@ class COTAddDisk(COTSubmodule):
         self._controller = value
 
     def validate_controller_address(self, controller, address):
-        """Is the given address string valid for the given controller type?
+        """Check validity of the given address string for the given controller.
         Helper method for controller/address setters
 
         :param str controller: ``'ide'`` or ``'scsi'``
         :param str address: A string like '0:0' or '2:10'
-        :returns: ``(True, address)`` or ``(False, reason)``
+        :raises InvalidInputError: if the address/controller combo is invalid.
         """
         logger.info("validate_controller_address: {0}, {1}"
                     .format(controller, address))
@@ -101,7 +124,7 @@ class COTAddDisk(COTSubmodule):
                     "IDE disk address must be between 0:0 and 1:1")
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """

@@ -79,7 +79,7 @@ def natural_sort(l):
 
 
 def match_or_die(first_label, first, second_label, second):
-    """If "first" and "second" do not match exactly, die!
+    """Make sure "first" and "second" are equal or raise an error.
 
     :param str first_label: Descriptive label for :attr:`first`
     :param first: First object to compare
@@ -236,11 +236,13 @@ class ValueUnsupportedError(InvalidInputError):
     """
 
     def __init__(self, value_type, actual, expected):
+        """Create an instance of this class."""
         self.value_type = value_type
         self.actual_value = actual
         self.expected_value = expected
 
     def __str__(self):
+        """Human-readable string representation."""
         return ("Unsupported value '{0}' for {1} - expected {2}"
                 .format(self.actual_value, self.value_type,
                         self.expected_value))
@@ -256,6 +258,7 @@ class ValueTooLowError(ValueUnsupportedError):
     """
 
     def __str__(self):
+        """Human-readable string representation."""
         return ("Value '{0}' for {1} is too low - must be at least {2}"
                 .format(self.actual_value, self.value_type,
                         self.expected_value))
@@ -271,6 +274,7 @@ class ValueTooHighError(ValueUnsupportedError):
     """
 
     def __str__(self):
+        """Human-readable string representation."""
         return ("Value '{0}' for {1} is too high - must be at most {2}"
                 .format(self.actual_value, self.value_type,
                         self.expected_value))

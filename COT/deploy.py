@@ -46,6 +46,7 @@ class COTDeploy(COTReadOnlySubmodule):
     """
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTDeploy, self).__init__(UI)
         # User inputs
         self._hypervisor = None
@@ -106,7 +107,7 @@ class COTDeploy(COTReadOnlySubmodule):
         self._power_on = value
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
@@ -187,6 +188,7 @@ class COTDeployESXi(COTDeploy):
     """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTDeployESXi, self).__init__(UI)
         self.locator = None
         self.datastore = None
@@ -204,7 +206,7 @@ class COTDeployESXi(COTDeploy):
                      .format(self._ovftool_args))
 
     def ready_to_run(self):
-        """Are we ready to go?
+        """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
