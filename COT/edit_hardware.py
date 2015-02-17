@@ -160,20 +160,18 @@ class COTEditHardware(COTSubmodule):
     def run(self):
         super(COTEditHardware, self).run()
 
-        profiles = self.profiles
-        virtual_system_type = self.virtual_system_type
-        if profiles is not None and virtual_system_type is not None:
+        if self.profiles is not None and self.virtual_system_type is not None:
             self.UI.confirm_or_die(
                 "VirtualSystemType is not filtered by configuration profile. "
                 "Requested system type(s) '{0}' will be set for ALL profiles, "
                 "not just profile(s) {1}. Continue?"
-                .format(" ".join(virtual_system_type), profiles))
+                .format(" ".join(self.virtual_system_type), self.profiles))
 
         vm = self.vm
 
-        if profiles is not None:
+        if self.profiles is not None:
             profile_list = vm.get_configuration_profile_ids()
-            for profile in profiles:
+            for profile in self.profiles:
                 if profile not in profile_list:
                     self.UI.confirm_or_die(
                         "Profile '{0}' does not exist. Create it?"
@@ -187,34 +185,33 @@ class COTEditHardware(COTSubmodule):
                     vm.create_configuration_profile(profile, label=label,
                                                     description=desc)
 
-        if virtual_system_type is not None:
-            vm.set_system_type(virtual_system_type)
+        if self.virtual_system_type is not None:
+            vm.set_system_type(self.virtual_system_type)
 
         if self.cpus is not None:
-            vm.set_cpu_count(self.cpus, profiles)
+            vm.set_cpu_count(self.cpus, self.profiles)
 
         if self.memory is not None:
-            vm.set_memory(self.memory, profiles)
+            vm.set_memory(self.memory, self.profiles)
 
         if self.nic_type is not None:
-            vm.set_nic_type(self.nic_type, profiles)
+            vm.set_nic_type(self.nic_type, self.profiles)
 
-        nics = self.nics
-        if nics is not None:
-            nics_dict = vm.get_nic_count(profiles)
+        if self.nics is not None:
+            nics_dict = vm.get_nic_count(self.profiles)
             for (profile, count) in nics_dict.items():
-                if nics < count:
+                if self.nics < count:
                     self.UI.confirm_or_die(
                         "Profile {0} currently has {1} NIC(s). "
                         "Delete {2} NIC(s) to reduce to {3} total?"
-                        .format(profile, count, (count - nics), nics))
-            vm.set_nic_count(nics, profiles)
+                        .format(profile, count,
+                                (count - self.nics), self.nics))
+            vm.set_nic_count(self.nics, self.profiles)
 
-        nic_networks = self.nic_networks
-        if nic_networks is not None:
+        if self.nic_networks is not None:
             existing_networks = vm.get_network_list()
             # Convert nic_networks to a set to merge duplicate entries
-            for network in natural_sort(set(nic_networks)):
+            for network in natural_sort(set(self.nic_networks)):
                 if network not in existing_networks:
                     self.UI.confirm_or_die(
                         "Network {0} is not currently defined. "
@@ -222,45 +219,43 @@ class COTEditHardware(COTSubmodule):
                     desc = self.UI.get_input(
                         "Please enter a description for this network", network)
                     vm.create_network(network, desc)
-            vm.set_nic_networks(nic_networks, profiles)
+            vm.set_nic_networks(self.nic_networks, self.profiles)
 
         if self.mac_addresses_list is not None:
-            vm.set_nic_mac_addresses(self.mac_addresses_list, profiles)
+            vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
 
         if self.nic_names is not None:
-            vm.set_nic_names(self.nic_names, profiles)
+            vm.set_nic_names(self.nic_names, self.profiles)
 
-        serial_ports = self.serial_ports
-        if serial_ports is not None:
-            serial_dict = vm.get_serial_count(profiles)
+        if self.serial_ports is not None:
+            serial_dict = vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
-                if serial_ports < count:
+                if self.serial_ports < count:
                     self.UI.confirm_or_die(
                         "Profile {0} currently has {1} serial port(s). "
                         "Delete {2} port(s) to reduce to {3} total?"
-                        .format(profile, count, (count - serial_ports),
-                                serial_ports))
-            vm.set_serial_count(serial_ports, profiles)
+                        .format(profile, count, (count - self.serial_ports),
+                                self.serial_ports))
+            vm.set_serial_count(self.serial_ports, self.profiles)
 
-        serial_connectivity = self.serial_connectivity
-        if serial_connectivity is not None:
-            serial_dict = vm.get_serial_count(profiles)
+        if self.serial_connectivity is not None:
+            serial_dict = vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
-                if len(serial_connectivity) < count:
+                if len(self.serial_connectivity) < count:
                     self.UI.confirm_or_die(
                         "There are {0} serial port(s) under profile {1}, but "
                         "you have specified connectivity information for only "
                         "{2}. "
                         "\nThe remaining ports will be unreachable. Continue?"
                         .format(count, profile,
-                                len(serial_connectivity)))
-            vm.set_serial_connectivity(serial_connectivity, profiles)
+                                len(self.serial_connectivity)))
+            vm.set_serial_connectivity(self.serial_connectivity, self.profiles)
 
         if self.scsi_subtype is not None:
-            vm.set_scsi_subtype(self.scsi_subtype, profiles)
+            vm.set_scsi_subtype(self.scsi_subtype, self.profiles)
 
         if self.ide_subtype is not None:
-            vm.set_ide_subtype(self.ide_subtype, profiles)
+            vm.set_ide_subtype(self.ide_subtype, self.profiles)
 
     def create_subparser(self, parent):
         p = parent.add_parser(

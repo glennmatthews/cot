@@ -52,28 +52,26 @@ class COTAddFile(COTSubmodule):
     def run(self):
         super(COTAddFile, self).run()
 
-        FILE = self.file
-        file_id = self.file_id
         vm = self.vm
 
-        filename = os.path.basename(FILE)
+        filename = os.path.basename(self.file)
         (file, _, _, _) = vm.search_from_filename(filename)
-        if file_id is not None:
-            (f2, _, _, _) = vm.search_from_file_id(file_id)
+        if self.file_id is not None:
+            (f2, _, _, _) = vm.search_from_file_id(self.file_id)
             file = check_for_conflict("File to overwrite", [file, f2])
-        if file_id is None:
+        if self.file_id is None:
             if file is not None:
-                file_id = vm.get_id_from_file(file)
+                self.file_id = vm.get_id_from_file(file)
             else:
-                file_id = filename
+                self.file_id = filename
 
         if file is not None:
             self.UI.confirm_or_die("Replace existing file {0} with {1}?"
                                    .format(vm.get_path_from_file(file),
-                                           FILE))
+                                           self.file))
             logger.warning("Overwriting existing File in OVF")
 
-        vm.add_file(FILE, file_id, file)
+        vm.add_file(self.file, self.file_id, file)
 
     def create_subparser(self, parent):
         p = parent.add_parser(

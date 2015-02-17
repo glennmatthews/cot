@@ -144,7 +144,21 @@ class COTDeployESXi(COTDeploy):
         super(COTDeployESXi, self).__init__(UI)
         self.locator = None
         self.datastore = None
-        self.ovftool_args = []
+        self._ovftool_args = []
+
+    @property
+    def ovftool_args(self):
+        return list(self._ovftool_args)
+
+    @ovftool_args.setter
+    def ovftool_args(self, value):
+        if value:
+            # Use shlex to split ovftool_args but respect quoted whitespace
+            self._ovftool_args = shlex.split(value)
+            logger.debug("ovftool_args split to: {0}"
+                         .format(self._ovftool_args))
+        else:
+            self._ovftool_args = []
 
     def ready_to_run(self):
         """Are we ready to go?
@@ -157,26 +171,17 @@ class COTDeployESXi(COTDeploy):
         super(COTDeployESXi, self).run()
 
         # ensure user provided proper credentials
-        username = self.username
-        password = self.password
-        LOCATOR = self.locator
-        server = LOCATOR.split("/")[0]
-        if username is None:
-            username = getpass.getuser()
-        if password is None:
-            password = self.UI.get_password(username, server)
+        server = self.locator.split("/")[0]
+        if self.username is None:
+            self.username = getpass.getuser()
+        if self.password is None:
+            self.password = self.UI.get_password(self.username, server)
 
-        target = "vi://" + username + ":" + password + "@" + LOCATOR
+        target = ("vi://" + self.username + ":" + self.password +
+                  "@" + self.locator)
 
         ovftool_args = self.ovftool_args
-        # Use shlex to split ovftool_args but respect quoted whitespace
-        if ovftool_args:
-            ovftool_args = shlex.split(ovftool_args)
-            logger.debug("ovftool_args split to: {0}".format(ovftool_args))
-        else:
-            ovftool_args = []
 
-        PACKAGE = self.package
         configuration = self.configuration
 
         vm = self.vm
@@ -184,7 +189,7 @@ class COTDeployESXi(COTDeploy):
         # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
         # then environment properties will always be used.
         # Otherwise we may need to help and/or warn the user:
-        if vm.get_property_array() and not re.search("/host/", LOCATOR):
+        if vm.get_property_array() and not re.search("/host/", self.locator):
             if get_ovftool_version() < StrictVersion("4.0.0"):
                 self.UI.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target "
@@ -278,7 +283,7 @@ class COTDeployESXi(COTDeploy):
             ovftool_args.append("--datastore=" + self.datastore)
 
         # add package and target to the list
-        ovftool_args.append(PACKAGE)
+        ovftool_args.append(self.package)
         ovftool_args.append(target)
 
         logger.debug("Final args to pass to OVFtool: {0}".format(ovftool_args))
@@ -299,7 +304,7 @@ class COTDeployESXi(COTDeploy):
                 "Package '{0}' contains {1} serial ports, but ovftool "
                 "ignores serial port declarations. If these ports are "
                 "needed, you must add them manually to the new VM."
-                .format(PACKAGE, serial_count))
+                .format(self.package, serial_count))
 
     def create_subparser(self, parent):
         super(COTDeployESXi, self).create_subparser(parent)
