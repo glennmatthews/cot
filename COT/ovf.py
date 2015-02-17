@@ -1400,14 +1400,14 @@ class OVF(VMDescription, XML):
         host_resource = disk_item.get_value(self.HOST_RESOURCE)
         if host_resource is not None:
             if ((host_resource.startswith(self.HOST_RSRC_DISK_REF) or
-                 host_resource.startswith(self.OLD_HOST_RSRC_DISK_REF))
-                    and disk is not None):
+                 host_resource.startswith(self.OLD_HOST_RSRC_DISK_REF)) and
+                    disk is not None):
                 match_or_die("disk Item HostResource",
                              os.path.basename(host_resource),
                              "Disk diskId", disk.get(self.DISK_ID))
             elif ((host_resource.startswith(self.HOST_RSRC_FILE_REF) or
-                   host_resource.startswith(self.OLD_HOST_RSRC_FILE_REF))
-                  and file is not None):
+                   host_resource.startswith(self.OLD_HOST_RSRC_FILE_REF)) and
+                  file is not None):
                 match_or_die("disk Item HostResource",
                              os.path.basename(host_resource),
                              "File id", file.get(self.FILE_ID))

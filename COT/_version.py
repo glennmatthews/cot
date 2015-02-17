@@ -203,7 +203,7 @@ def get_versions(default={"version": "unknown", "full": ""}, verbose=False):
     except NameError:
         return default
 
-    return rep_by_pep440(git_versions_from_vcs(tag_prefix, root, verbose)
-                         or versions_from_parentdir(parentdir_prefix,
-                                                    root, verbose)
-                         or default)
+    return rep_by_pep440(git_versions_from_vcs(tag_prefix, root, verbose) or
+                         versions_from_parentdir(parentdir_prefix,
+                                                 root, verbose) or
+                         default)
