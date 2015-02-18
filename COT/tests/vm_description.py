@@ -16,6 +16,7 @@ import os.path
 import unittest
 
 from COT.vm_description import VMDescription
+from COT.data_validation import ValueUnsupportedError
 
 
 class TestVMDescription(unittest.TestCase):
@@ -23,9 +24,9 @@ class TestVMDescription(unittest.TestCase):
 
     TEXT_FILE = os.path.join(os.path.dirname(__file__), 'sample_cfg.txt')
 
-    def test_abstract_class_apis(self):
-        """APIs that have no generic form should raise NotImplementedError."""
-        self.assertRaises(NotImplementedError,
+    def test_generic_class_apis(self):
+        """Verify class APIs with generic implementations."""
+        self.assertRaises(ValueUnsupportedError,
                           VMDescription.detect_type_from_name,
                           self.TEXT_FILE)
 

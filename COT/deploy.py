@@ -12,6 +12,17 @@
 # file, may be copied, modified, propagated, or distributed except
 # according to the terms contained in the LICENSE.txt file.
 
+"""Module for deploying VM descriptions to a hypervisor to instantiate VMs.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTDeploy
+  COTDeployESXi
+"""
+
 import logging
 import re
 import shlex
@@ -27,23 +38,68 @@ logger = logging.getLogger(__name__)
 
 
 class COTDeploy(COTReadOnlySubmodule):
+
+    """Semi-abstract class for submodules used to deploy a VM to a hypervisor.
+
+    Provides some baseline parameters and input validation that are expected
+    to be common across all concrete subclasses.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTReadOnlySubmodule.package`,
+
+    Attributes:
+    :attr:`generic_parser`,
+    :attr:`parser`,
+    :attr:`subparsers`,
+    :attr:`hypervisor`,
+    :attr:`configuration`,
+    :attr:`username`,
+    :attr:`password`,
+    :attr:`power_on`,
+    :attr:`vm_name`,
+    :attr:`network_map`
+    """
+
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTDeploy, self).__init__(UI)
         # User inputs
         self._hypervisor = None
         self._configuration = None
         self.username = None
+        """Server login username."""
         self.password = None
+        """Server login password."""
         self._power_on = False
         self.vm_name = None
+        """Name of the created virtual machine"""
         self.network_map = None
+        """Mapping of network names to networks"""
         # Internal attributes
         self.generic_parser = None
+        """Generic parser object providing args that most subclasses will use.
+
+        Subclasses can call
+        ``self.subparsers.add_parser(parents=[self.generic_parser])``
+        to automatically inherit this set of args
+        """
         self.parser = None
+        """Subparser providing ``cot deploy PACKAGE ...`` CLI."""
         self.subparsers = None
+        """Subparser grouping for hypervisor-specific sub-subparsers.
+
+        Subclasses should generally have their :func:`create_subparser`
+        implementations create their sub-subparsers under :attr:`subparsers`
+        and NOT under :attr:`parent`.
+        """
 
     @property
     def hypervisor(self):
+        """Hypervisor to deploy to.
+
+        :raise: :exc:`InvalidInputError` if not a recognized value.
+        """
         return self._hypervisor
 
     @hypervisor.setter
@@ -55,6 +111,10 @@ class COTDeploy(COTReadOnlySubmodule):
 
     @property
     def configuration(self):
+        """VM configuration profile to use for deployment.
+
+        :raise: :exc:`InvalidInputError` if not a profile defined in the VM.
+        """
         return self._configuration
 
     @configuration.setter
@@ -70,6 +130,7 @@ class COTDeploy(COTReadOnlySubmodule):
 
     @property
     def power_on(self):
+        """Whether to automatically power on the VM after deployment."""
         return self._power_on
 
     @power_on.setter
@@ -79,13 +140,29 @@ class COTDeploy(COTReadOnlySubmodule):
         self._power_on = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         if self.hypervisor is None:
             return False, "HYPERVISOR is a mandatory argument"
         return super(COTDeploy, self).ready_to_run()
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        .. note::
+          Unlike most submodules, this one has subparsers of its own -
+          ``'cot deploy PACKAGE <hypervisor>'`` so subclasses of this module
+          should call ``super().create_subparser(parent)`` (to create the main
+          'deploy' subparser) then call ``self.subparsers.add_parser()`` to add
+          their own sub-subparser.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('deploy', subparser)``
+        """
         import argparse
 
         # Create a generic parser with arguments to be shared by all
@@ -140,14 +217,41 @@ class COTDeploy(COTReadOnlySubmodule):
 
 
 class COTDeployESXi(COTDeploy):
+
+    """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTReadOnlySubmodule.package`,
+    :attr:`generic_parser`,
+    :attr:`parser`,
+    :attr:`subparsers`,
+    :attr:`hypervisor`,
+    :attr:`configuration`,
+    :attr:`username`,
+    :attr:`password`,
+    :attr:`power_on`,
+    :attr:`vm_name`,
+    :attr:`network_map`
+
+    Attributes:
+    :attr:`locator`,
+    :attr:`datastore`,
+    :attr:`ovftool_args`
+    """
+
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTDeployESXi, self).__init__(UI)
         self.locator = None
+        """vSphere target locator."""
         self.datastore = None
+        """ESXi datastore to deploy to."""
         self._ovftool_args = []
 
     @property
     def ovftool_args(self):
+        """List of CLI arguments to pass through to ``ovftool``."""
         return list(self._ovftool_args)
 
     @ovftool_args.setter
@@ -158,13 +262,19 @@ class COTDeployESXi(COTDeploy):
                      .format(self._ovftool_args))
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         if self.locator is None:
             return False, "LOCATOR is a mandatory argument"
         return super(COTDeployESXi, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule - deploying to ESXi.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTDeployESXi, self).run()
 
         # ensure user provided proper credentials
@@ -304,6 +414,17 @@ class COTDeployESXi(COTDeploy):
                 .format(self.package, serial_count))
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        This will create the shared :attr:`~COTDeploy.parser` under
+        :attr:`parent`, then create our own sub-subparser under
+        :attr:`~COTDeploy.subparsers`.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('deploy', subparser)``
+        """
         super(COTDeployESXi, self).create_subparser(parent)
 
         import argparse

@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Implements "info" subcommand."""
+
 import logging
 import os.path
 
@@ -25,14 +27,26 @@ logger = logging.getLogger(__name__)
 
 
 class COTInfo(COTGenericSubmodule):
-    """Display VM information string"""
+
+    """Display VM information string.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`
+
+    Attributes:
+    :attr:`package_list`,
+    :attr:`verbosity`
+    """
+
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTInfo, self).__init__(UI)
         self._package_list = None
         self._verbosity = None
 
     @property
     def package_list(self):
+        """List of VM definitions to get information for."""
         return self._package_list
 
     @package_list.setter
@@ -45,6 +59,7 @@ class COTInfo(COTGenericSubmodule):
 
     @property
     def verbosity(self):
+        """Verbosity of information displayed."""
         return self._verbosity
 
     @verbosity.setter
@@ -55,14 +70,19 @@ class COTInfo(COTGenericSubmodule):
         self._verbosity = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if not self.package_list:
             return False, "At least one package must be specified"
         return super(COTInfo, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTInfo, self).run()
 
         first = True
@@ -75,6 +95,13 @@ class COTInfo(COTGenericSubmodule):
             first = False
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('info', subparser)``
+        """
         p = parent.add_parser(
             'info',
             help="""Generate a description of an OVF package""",

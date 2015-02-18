@@ -14,6 +14,12 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for adding files to VM definitions.
+
+.. autosummary::
+  COTAddFile
+"""
+
 import os.path
 import logging
 
@@ -24,15 +30,32 @@ logger = logging.getLogger(__name__)
 
 
 class COTAddFile(COTSubmodule):
-    """Add a file (such as a README) to the package."""
+
+    """Add a file (such as a README) to the package.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`file`,
+    :attr:`file_id`
+    """
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTAddFile, self).__init__(UI)
         self._file = None
         self.file_id = None
+        """File identifier string."""
 
     @property
     def file(self):
+        """File to be added to the package.
+
+        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        """
         return self._file
 
     @file.setter
@@ -43,13 +66,19 @@ class COTAddFile(COTSubmodule):
         self._file = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         if self.file is None:
             return False, "FILE is a mandatory argument!"
         return super(COTAddFile, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTAddFile, self).run()
 
         vm = self.vm
@@ -74,6 +103,13 @@ class COTAddFile(COTSubmodule):
         vm.add_file(self.file, self.file_id, file)
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('add-file', subparser)``
+        """
         p = parent.add_parser(
             'add-file',
             usage=self.UI.fill_usage("add-file", [

@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Provide 'help' keyword for COT CLI."""
+
 import logging
 
 from .submodule import COTGenericSubmodule
@@ -23,13 +25,27 @@ logger = logging.getLogger(__name__)
 
 
 class COTHelp(COTGenericSubmodule):
-    """Provide 'help <subcommand>' syntax"""
+
+    """Provide 'help <subcommand>' syntax.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`
+
+    Attributes:
+    :attr:`subcommand`
+    """
+
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTHelp, self).__init__(UI)
         self._subcommand = None
 
     @property
     def subcommand(self):
+        """CLI subcommand to give help for.
+
+        If ``None``, then help will be displayed for the COT global parser.
+        """
         return self._subcommand
 
     @subcommand.setter
@@ -41,6 +57,7 @@ class COTHelp(COTGenericSubmodule):
         self._subcommand = value
 
     def run(self):
+        """Display the help menu for the specified subcommand."""
         super(COTHelp, self).run()
 
         if self.subcommand:
@@ -50,6 +67,13 @@ class COTHelp(COTGenericSubmodule):
             self.UI.parser.print_help()
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('help', subparser)``
+        """
         p = parent.add_parser(
             'help',
             add_help=False,

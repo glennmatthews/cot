@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Reading, editing, and writing XML files."""
+
 import xml.etree.ElementTree as ET
 import logging
 import re
@@ -23,10 +25,11 @@ logger = logging.getLogger(__name__)
 
 class XML(object):
 
+    """Class capable of reading, editing, and writing XML files."""
+
     @classmethod
     def get_ns(cls, text):
-        """Get the namespace prefix from an XML element or attribute name.
-        """
+        """Get the namespace prefix from an XML element or attribute name."""
         match = re.match(r"\{(.*)\}", str(text))
         if not match:
             logger.error("No namespace prefix on {0}??".format(text))
@@ -35,8 +38,7 @@ class XML(object):
 
     @classmethod
     def strip_ns(cls, text):
-        """Remove the namespace prefix from an XML element or attribute name
-        for easier readability"""
+        """Remove a namespace prefix from an XML element or attribute name."""
         match = re.match(r"\{.*\}(.*)", str(text))
         if match is None:
             logger.error("No namespace prefix on {0}??".format(text))
@@ -45,14 +47,27 @@ class XML(object):
             return match.group(1)
 
     def read_xml(self, xml_file):
-        """Read the given XML file and store it as self.tree / self.root.
-        May raise an ET.ParseError.
+        """Read the given XML file and store it in memory.
+
+        The memory representation is available as :attr:`self.tree` and
+        :attr:`self.root`.
+
+        :raise xml.etree.ElementTree.ParseError: if parsing fails under Python
+          2.7 or later
+        :raise xml.parsers.expat.ExpatError: if parsing fails under Python 2.6
+        :param str xml_file: File path to read.
         """
         # Parse the XML into memory
         self.tree = ET.parse(xml_file)
         self.root = self.tree.getroot()
 
     def register_namespace(self, prefix, URI):
+        """Record a particular mapping between a namespace prefix and URI.
+
+        :param str prefix: Namespace prefix such as "ovf"
+        :param str URI: Namespace URI such as
+          "http://schemas.dmtf.org/ovf/envelope/1"
+        """
         try:
             ET.register_namespace(prefix, URI)
         except AttributeError:
@@ -60,7 +75,10 @@ class XML(object):
             ET._namespace_map[URI] = prefix
 
     def write_xml(self, file):
-        """Output the given XML tree to the given file"""
+        """Write pretty XML out to the given file.
+
+        :param str file: Filename to write to
+        """
         logger.debug("Writing XML to {0}".format(file))
 
         # Pretty-print the XML for readability
@@ -83,7 +101,12 @@ class XML(object):
             self.tree.write(file, encoding='utf-8')
 
     def xml_reindent(self, parent, depth):
-        """Recursively add indentation to XML to make it look nice"""
+        """Recursively add indentation to XML to make it look nice.
+
+        :param xml.etree.ElementTree.Element parent: Current parent element
+        :param int depth: How far down the rabbit hole we have recursed.
+           Increments by 2 for each successive level of nesting.
+        """
         depth += 2
         last = None
         for elem in list(parent):
@@ -104,9 +127,16 @@ class XML(object):
 
     @classmethod
     def find_child(cls, parent, tag, attrib={}, required=False):
-        """Find the child element with the given tag (and attributes)
-        under the specified parent element. Will abort if
-        more than one child element matches the given information.
+        """Find the unique child element under the specified parent element.
+
+        :raises LookupError: if more than one matching child is found
+        :raises KeyError: if no matching child is found and :attr:`required`
+          is True
+        :param xml.etree.ElementTree.Element parent: Parent element
+        :param str tag: Child tag to match on
+        :param dict attrib: Child attributes to match on
+        :param boolean required: Whether to raise an error if no child exists
+        :rtype: xml.etree.ElementTree.Element
         """
         matches = cls.find_all_children(parent, tag, attrib)
         if len(matches) > 1:
@@ -128,8 +158,12 @@ class XML(object):
 
     @classmethod
     def find_all_children(cls, parent, tag, attrib={}):
-        """Find all child elements with the given tag (and attributes)
-        under the specified parent element
+        """Find all matching child elements under the specified parent element.
+
+        :param xml.etree.ElementTree.Element parent: Parent element
+        :param str tag: Child tag to match on
+        :param dict attrib: Child attributes to match on
+        :rtype: list of xml.etree.ElementTree.Element instances
         """
         assert parent is not None
         elements = parent.findall(tag)
@@ -159,9 +193,17 @@ class XML(object):
     def add_child(cls, parent, new_child, ordering=None,
                   known_namespaces=None):
         """Add the given child element under the given parent element.
-        If ordering is unspecified, the child will be appended after
-        all existing children; otherwise, the placement of the child
-        relative to other children will respect this ordering.
+
+        :param xml.etree.ElementTree.Element parent: Parent element
+        :param xml.etree.ElementTree.Element new_child: Child element to attach
+        :param list ordering: (Optional) List describing the expected ordering
+           of child tags under the parent; if a new child element is created,
+           its placement under the parent will respect this sequence.
+        :param list known_namespaces: (Optional) List of well-understood XML
+           namespaces. If a new child is created, and ``ordering`` is given,
+           any tag (new or existing) that is encountered but not accounted for
+           in ``ordering`` will result in COT logging a warning **iff** the
+           unaccounted-for tag is in a known namespace.
         """
         if ordering and not (new_child.tag in ordering):
             if (known_namespaces and
@@ -208,11 +250,17 @@ class XML(object):
     @classmethod
     def set_or_make_child(cls, parent, tag, text=None, attrib=None,
                           ordering=None, known_namespaces=None):
-        """Update or create a child element with the desired text
-        and/or attributes under the specified parent element.
-        The optional 'ordering' parameter is used to provide a list of
-        tags for children under the given parent; if a new child element
-        is created, its placement will respect this ordering.
+        """Update or create a child element under the specified parent element.
+
+        :param xml.etree.ElementTree.Element parent: Parent element
+        :param str tag: Child element text tag to find or create
+        :param str text: Value to set the child's text attribute to
+        :param dict attrib: Dict of child attributes to match on
+           while searching and set in the final child element
+        :param list ordering: See :meth:`add_child`
+        :param list known_namespaces: See :meth:`add_child`
+        :return: New or updated child Element.
+        :rtype: xml.etree.ElementTree.Element
         """
         assert parent is not None
         if attrib is None:

@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Implements "inject-config" command."""
+
 import logging
 import os.path
 import shutil
@@ -27,17 +29,33 @@ logger = logging.getLogger(__name__)
 
 
 class COTInjectConfig(COTSubmodule):
-    """Wrap the given configuration file(s) into an appropriate disk image file
-    and embed it into the given VM package.
+
+    """Wrap configuration file(s) into a disk image embedded into the VM.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`config_file`,
+    :attr:`secondary_config_file`
     """
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTInjectConfig, self).__init__(UI)
         self._config_file = None
         self._secondary_config_file = None
 
     @property
     def config_file(self):
+        """Primary configuration file.
+
+        :raise InvalidInputError: if the file does not exist
+        :raise InvalidInputError: if the `platform described by
+          :attr:`package` doesn't support configuration files.
+        """
         return self._config_file
 
     @config_file.setter
@@ -55,6 +73,12 @@ class COTInjectConfig(COTSubmodule):
 
     @property
     def secondary_config_file(self):
+        """Secondary configuration file.
+
+        :raise InvalidInputError: if the file does not exist
+        :raise InvalidInputError: if the platform described by
+          :attr:`package` doesn't support secondary configuration files.
+        """
         return self._secondary_config_file
 
     @secondary_config_file.setter
@@ -71,9 +95,10 @@ class COTInjectConfig(COTSubmodule):
         self._secondary_config_file = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+        """Check whether the module is ready to :meth:`run`.
 
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         # Need some work to do!
         work_to_do = False
         if self.config_file is not None:
@@ -86,6 +111,10 @@ class COTInjectConfig(COTSubmodule):
         return super(COTInjectConfig, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTInjectConfig, self).run()
 
         vm = self.vm
@@ -160,6 +189,13 @@ class COTInjectConfig(COTSubmodule):
         )
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('inject-config', subparser)``
+        """
         p = parent.add_parser(
             'inject-config',
             help="Inject a configuration file into an OVF package",

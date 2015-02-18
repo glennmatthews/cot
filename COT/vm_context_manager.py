@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Context manager for virtual machine definitions."""
+
 import logging
 
 from .vm_factory import VMFactory
@@ -22,19 +24,34 @@ logger = logging.getLogger(__name__)
 
 
 class VMContextManager:
-    """Context manager for virtual machine definitions. Use as follows:
-    with VM_Context_manager(input_file, output_file) as vm:
-        vm.foo()
-        vm.bar()
+
+    """Context manager for virtual machine definitions.
+
+    When the context manager exits, unless an error occurred, the virtual
+    machine's :meth:`write` method is called. Regardless of whether an error
+    occurred, the virtual machine's :meth:`destroy` method is then called.
+
+    Use as follows:
+    ::
+
+      with VMContextManager(input_file, output_file) as vm:
+          vm.foo()
+          vm.bar()
     """
 
     def __init__(self, input_file, output_file):
+        """Create a VM instance."""
         self.obj = VMFactory.create(input_file, output_file)
 
     def __enter__(self):
+        """Use the VM instance as the context manager object."""
         return self.obj
 
     def __exit__(self, type, value, trace):
+        """If the block exited cleanly, write the VM out to disk.
+
+        In any case, destroy the VM.
+        """
         # Did we exit cleanly?
         if type is None:
             self.obj.write()

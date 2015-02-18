@@ -14,6 +14,16 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for editing hardware details of a VM.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTEditHardware
+"""
+
 import argparse
 import logging
 import re
@@ -26,26 +36,58 @@ logger = logging.getLogger(__name__)
 
 
 class COTEditHardware(COTSubmodule):
-    """Edit hardware information (CPUs, RAM, NICs, etc.)"""
+
+    """Edit hardware information (CPUs, RAM, NICs, etc.).
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`profiles`,
+    :attr:`cpus`,
+    :attr:`memory`,
+    :attr:`nics`,
+    :attr:`nic_type`,
+    :attr:`mac_addresses_list`,
+    :attr:`nic_networks`,
+    :attr:`nic_names`,
+    :attr:`serial_ports`,
+    :attr:`serial_connectivity`,
+    :attr:`scsi_subtype`,
+    :attr:`ide_subtype`,
+    :attr:`virtual_system_type`
+    """
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTEditHardware, self).__init__(UI)
         self.profiles = None
+        """Configuration profile(s) to edit."""
         self._cpus = None
         self._memory = None
         self._nics = None
         self._nic_type = None
         self.mac_addresses_list = None
+        """List of MAC addresses to set."""
         self.nic_networks = None
+        """List of NIC-to-network mappings."""
         self.nic_names = None
+        """List of NIC name strings"""
         self._serial_ports = None
         self.serial_connectivity = None
+        """List of serial connection strings."""
         self.scsi_subtype = None
+        """Subtype string for SCSI controllers"""
         self.ide_subtype = None
+        """Subtype string for IDE controllers"""
         self.virtual_system_type = None
+        """Virtual system type"""
 
     @property
     def cpus(self):
+        """Number of CPUs to set."""
         return self._cpus
 
     @cpus.setter
@@ -61,6 +103,7 @@ class COTEditHardware(COTSubmodule):
 
     @property
     def memory(self):
+        """Amount of RAM (in megabytes) to set."""
         return self._memory
 
     @memory.setter
@@ -100,6 +143,7 @@ class COTEditHardware(COTSubmodule):
 
     @property
     def nics(self):
+        """Number of NICs to set."""
         return self._nics
 
     @nics.setter
@@ -113,6 +157,7 @@ class COTEditHardware(COTSubmodule):
 
     @property
     def nic_type(self):
+        """NIC type string to set."""
         return self._nic_type
 
     @nic_type.setter
@@ -122,6 +167,7 @@ class COTEditHardware(COTSubmodule):
 
     @property
     def serial_ports(self):
+        """Serial port count to set."""
         return self._serial_ports
 
     @serial_ports.setter
@@ -134,9 +180,10 @@ class COTEditHardware(COTSubmodule):
         self._serial_ports = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+        """Check whether the module is ready to :meth:`run`.
 
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         # Need some work to do!
         if (
                 self.profiles is None and
@@ -158,6 +205,10 @@ class COTEditHardware(COTSubmodule):
         return super(COTEditHardware, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTEditHardware, self).run()
 
         if self.profiles is not None and self.virtual_system_type is not None:
@@ -258,6 +309,13 @@ class COTEditHardware(COTSubmodule):
             vm.set_ide_subtype(self.ide_subtype, self.profiles)
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('edit-hardware', subparser)``
+        """
         p = parent.add_parser(
             'edit-hardware', add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,
