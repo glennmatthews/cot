@@ -33,20 +33,14 @@ class COTAddFile(COTSubmodule):
 
     """Add a file (such as a README) to the package.
 
-    :ivar UI: Instance of :class:`CLI` or other :class:`UI` subclass
-    :ivar str "PACKAGE": VM definition file to load
-    :ivar str "FILE": File to add to the package
-    :ivar str "file_id": File identifier to associate with :attr:`FILE`
-      in :attr:`PACKAGE`
-    :ivar str "output": File to write to instead of overwriting :attr:`PACKAGE`
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
 
-    .. autosummary::
-      :nosignatures:
-
-      create_subparser
-      validate_arg
-      ready_to_run
-      run
+    Attributes:
+    :attr:`file`,
+    :attr:`file_id`
     """
 
     def __init__(self, UI):
@@ -54,9 +48,14 @@ class COTAddFile(COTSubmodule):
         super(COTAddFile, self).__init__(UI)
         self._file = None
         self.file_id = None
+        """File identifier string."""
 
     @property
     def file(self):
+        """File to be added to the package.
+
+        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        """
         return self._file
 
     @file.setter

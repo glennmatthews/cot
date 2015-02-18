@@ -11,6 +11,8 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 """
+Package implementing the Common OVF Tool.
+
 Virtual machine definition modules
 ----------------------------------
 .. autosummary::

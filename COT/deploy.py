@@ -43,6 +43,22 @@ class COTDeploy(COTReadOnlySubmodule):
 
     Provides some baseline parameters and input validation that are expected
     to be common across all concrete subclasses.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTReadOnlySubmodule.package`,
+
+    Attributes:
+    :attr:`generic_parser`,
+    :attr:`parser`,
+    :attr:`subparsers`,
+    :attr:`hypervisor`,
+    :attr:`configuration`,
+    :attr:`username`,
+    :attr:`password`,
+    :attr:`power_on`,
+    :attr:`vm_name`,
+    :attr:`network_map`
     """
 
     def __init__(self, UI):
@@ -52,26 +68,38 @@ class COTDeploy(COTReadOnlySubmodule):
         self._hypervisor = None
         self._configuration = None
         self.username = None
+        """Server login username."""
         self.password = None
+        """Server login password."""
         self._power_on = False
         self.vm_name = None
+        """Name of the created virtual machine"""
         self.network_map = None
+        """Mapping of network names to networks"""
         # Internal attributes
-        #: Generic parser object providing args that most subclasses will use.
-        #: Subclasses can call
-        #: ``self.subparsers.add_parser(parents=[self.generic_parser])``
-        #: to automatically inherit this set of args
         self.generic_parser = None
-        #: Subparser providing ``cot deploy PACKAGE ...`` CLI.
+        """Generic parser object providing args that most subclasses will use.
+
+        Subclasses can call
+        ``self.subparsers.add_parser(parents=[self.generic_parser])``
+        to automatically inherit this set of args
+        """
         self.parser = None
-        #: Subparser grouping under :attr:`self.parser` for individual
-        #: hypervisor-specific sub-subparsers. Subclasses should generally
-        #: have their :func:`create_subparser` implementations create their
-        #: sub-subparsers under self.subparsers NOT under :attr:`parent`.
+        """Subparser providing ``cot deploy PACKAGE ...`` CLI."""
         self.subparsers = None
+        """Subparser grouping for hypervisor-specific sub-subparsers.
+
+        Subclasses should generally have their :func:`create_subparser`
+        implementations create their sub-subparsers under :attr:`subparsers`
+        and NOT under :attr:`parent`.
+        """
 
     @property
     def hypervisor(self):
+        """Hypervisor to deploy to.
+
+        :raise: :exc:`InvalidInputError` if not a recognized value.
+        """
         return self._hypervisor
 
     @hypervisor.setter
@@ -83,6 +111,10 @@ class COTDeploy(COTReadOnlySubmodule):
 
     @property
     def configuration(self):
+        """VM configuration profile to use for deployment.
+
+        :raise: :exc:`InvalidInputError` if not a profile defined in the VM.
+        """
         return self._configuration
 
     @configuration.setter
@@ -98,6 +130,7 @@ class COTDeploy(COTReadOnlySubmodule):
 
     @property
     def power_on(self):
+        """Whether to automatically power on the VM after deployment."""
         return self._power_on
 
     @power_on.setter
@@ -185,17 +218,40 @@ class COTDeploy(COTReadOnlySubmodule):
 
 class COTDeployESXi(COTDeploy):
 
-    """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere."""
+    """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTReadOnlySubmodule.package`,
+    :attr:`generic_parser`,
+    :attr:`parser`,
+    :attr:`subparsers`,
+    :attr:`hypervisor`,
+    :attr:`configuration`,
+    :attr:`username`,
+    :attr:`password`,
+    :attr:`power_on`,
+    :attr:`vm_name`,
+    :attr:`network_map`
+
+    Attributes:
+    :attr:`locator`,
+    :attr:`datastore`,
+    :attr:`ovftool_args`
+    """
 
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         super(COTDeployESXi, self).__init__(UI)
         self.locator = None
+        """vSphere target locator."""
         self.datastore = None
+        """ESXi datastore to deploy to."""
         self._ovftool_args = []
 
     @property
     def ovftool_args(self):
+        """List of CLI arguments to pass through to ``ovftool``."""
         return list(self._ovftool_args)
 
     @ovftool_args.setter

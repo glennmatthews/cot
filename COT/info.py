@@ -28,7 +28,15 @@ logger = logging.getLogger(__name__)
 
 class COTInfo(COTGenericSubmodule):
 
-    """Display VM information string."""
+    """Display VM information string.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`
+
+    Attributes:
+    :attr:`package_list`,
+    :attr:`verbosity`
+    """
 
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
@@ -38,6 +46,7 @@ class COTInfo(COTGenericSubmodule):
 
     @property
     def package_list(self):
+        """List of VM definitions to get information for."""
         return self._package_list
 
     @package_list.setter
@@ -50,6 +59,7 @@ class COTInfo(COTGenericSubmodule):
 
     @property
     def verbosity(self):
+        """Verbosity of information displayed."""
         return self._verbosity
 
     @verbosity.setter

@@ -30,7 +30,17 @@ logger = logging.getLogger(__name__)
 
 class COTInjectConfig(COTSubmodule):
 
-    """Wrap configuration file(s) into a disk image embedded into the VM."""
+    """Wrap configuration file(s) into a disk image embedded into the VM.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`config_file`,
+    :attr:`secondary_config_file`
+    """
 
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
@@ -40,6 +50,12 @@ class COTInjectConfig(COTSubmodule):
 
     @property
     def config_file(self):
+        """Primary configuration file.
+
+        :raise InvalidInputError: if the file does not exist
+        :raise InvalidInputError: if the `platform described by
+          :attr:`package` doesn't support configuration files.
+        """
         return self._config_file
 
     @config_file.setter
@@ -57,6 +73,12 @@ class COTInjectConfig(COTSubmodule):
 
     @property
     def secondary_config_file(self):
+        """Secondary configuration file.
+
+        :raise InvalidInputError: if the file does not exist
+        :raise InvalidInputError: if the platform described by
+          :attr:`package` doesn't support secondary configuration files.
+        """
         return self._secondary_config_file
 
     @secondary_config_file.setter

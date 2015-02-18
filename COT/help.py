@@ -26,7 +26,14 @@ logger = logging.getLogger(__name__)
 
 class COTHelp(COTGenericSubmodule):
 
-    """Provide 'help <subcommand>' syntax."""
+    """Provide 'help <subcommand>' syntax.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`
+
+    Attributes:
+    :attr:`subcommand`
+    """
 
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
@@ -35,6 +42,10 @@ class COTHelp(COTGenericSubmodule):
 
     @property
     def subcommand(self):
+        """CLI subcommand to give help for.
+
+        If ``None``, then help will be displayed for the COT global parser.
+        """
         return self._subcommand
 
     @subcommand.setter

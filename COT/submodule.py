@@ -51,7 +51,9 @@ class COTGenericSubmodule(object):
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         self.vm = None
+        """Virtual machine description (:class:`VMDescription`)."""
         self.UI = UI
+        """User interface instance (:class:`UI` or subclass) to use."""
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -98,14 +100,16 @@ class COTGenericSubmodule(object):
 
 class COTReadOnlySubmodule(COTGenericSubmodule):
 
-    """Class for submodules that do not modify the OVF, such as 'deploy'"""
+    """Class for submodules that do not modify the OVF, such as 'deploy'."""
 
     def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         super(COTReadOnlySubmodule, self).__init__(UI)
         self._package = None
 
     @property
     def package(self):
+        """VM description file to read from."""
         return self._package
 
     @package.setter
@@ -126,6 +130,10 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
         self._package = value
 
     def ready_to_run(self):
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         if self.package is None:
             return False, "PACKAGE is a mandatory argument!"
         return super(COTReadOnlySubmodule, self).ready_to_run()
@@ -144,6 +152,7 @@ class COTSubmodule(COTGenericSubmodule):
 
     @property
     def package(self):
+        """VM description file to read (and possibly write)."""
         return self._package
 
     @package.setter
@@ -165,6 +174,7 @@ class COTSubmodule(COTGenericSubmodule):
 
     @property
     def output(self):
+        """Output file for this submodule."""
         return self._output
 
     @output.setter
@@ -183,6 +193,10 @@ class COTSubmodule(COTGenericSubmodule):
             self.vm.set_output_file(value)
 
     def ready_to_run(self):
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         if self.package is None:
             return False, "PACKAGE is a mandatory argument!"
         return super(COTSubmodule, self).ready_to_run()

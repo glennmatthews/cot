@@ -35,11 +35,13 @@ class UI(object):
 
     def __init__(self, force=False):
         """Constructor."""
-        #: Whether to automatically select the default value in all cases,
-        #: rather than interactively prompting the user.
         self.force = force
-        # Knob for API testing, used to set the default response to confirm()
+        """Whether to automatically select the default value in all cases.
+
+        (As opposed to interactively prompting the user.)
+        """
         self.default_confirm_response = True
+        """Knob for API testing, sets the default response to confirm()."""
 
     def terminal_width(self):
         """Get the width of the terminal in columns."""

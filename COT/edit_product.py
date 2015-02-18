@@ -33,13 +33,25 @@ logger = logging.getLogger(__name__)
 
 class COTEditProduct(COTSubmodule):
 
-    """Edit product information (short version, long version)."""
+    """Edit product information (short version, long version).
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`version`,
+    :attr:`full_version`
+    """
 
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         super(COTEditProduct, self).__init__(UI)
         self.version = None
+        """Short version string."""
         self.full_version = None
+        """Long version string."""
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.

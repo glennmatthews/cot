@@ -35,26 +35,20 @@ class COTAddDisk(COTSubmodule):
 
     """Add or replace a disk in a virtual machine.
 
-    :ivar UI: Instance of :class:`CLI` or other :class:`UI` subclass
-    :ivar str "PACKAGE": VM definition file to load
-    :ivar str "DISK_IMAGE": Disk image file to add to the VM
-    :ivar str "type": Disk type ('harddisk' or 'cdrom')
-    :ivar str "file_id": File identifier to map disk to file
-    :ivar str "controller": Controller type ('ide' or 'scsi')
-    :ivar str "subtype": Controller subtype such as "virtio"
-    :ivar str "address": Disk device controller address such as "1:0"
-    :ivar str "diskname": Name string for disk
-    :ivar str "description": Description of disk
-    :ivar str "output": File to write to instead of overwriting :attr:`PACKAGE`
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
 
-    .. autosummary::
-      :nosignatures:
-
-      create_subparser
-      validate_arg
-      validate_controller_address
-      ready_to_run
-      run
+    Attributes:
+    :attr:`disk_image`,
+    :attr:`type`,
+    :attr:`file_id`,
+    :attr:`controller`,
+    :attr:`subtype`,
+    :attr:`address`,
+    :attr:`diskname`,
+    :attr:`description`
     """
 
     def __init__(self, UI):
@@ -62,15 +56,24 @@ class COTAddDisk(COTSubmodule):
         super(COTAddDisk, self).__init__(UI)
         self._disk_image = None
         self.type = None
+        """Disk type ('harddisk' or 'cdrom')."""
         self.subtype = None
+        """Controller subtype, such as "virtio"."""
         self.file_id = None
+        """File identifier to map disk to file."""
         self._controller = None
         self._address = None
         self.diskname = None
+        """Name string for the disk."""
         self.description = None
+        """Description of the disk."""
 
     @property
     def disk_image(self):
+        """Path to disk image file to add to the VM.
+
+        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        """
         return self._disk_image
 
     @disk_image.setter
@@ -82,6 +85,11 @@ class COTAddDisk(COTSubmodule):
 
     @property
     def address(self):
+        """Disk device address on controller (``1:0``, etc.).
+
+        :raises: :exc:`.InvalidInputError`,
+          see :meth:`validate_controller_address`
+        """
         return self._address
 
     @address.setter
@@ -92,6 +100,11 @@ class COTAddDisk(COTSubmodule):
 
     @property
     def controller(self):
+        """Disk controller type (``ide``, ``scsi``).
+
+        :raises: :exc:`.InvalidInputError`,
+          see :meth:`validate_controller_address`
+        """
         return self._controller
 
     @controller.setter
@@ -102,11 +115,13 @@ class COTAddDisk(COTSubmodule):
 
     def validate_controller_address(self, controller, address):
         """Check validity of the given address string for the given controller.
-        Helper method for controller/address setters
+
+        Helper method for the :attr:`controller`/:attr:`address` setters.
 
         :param str controller: ``'ide'`` or ``'scsi'``
         :param str address: A string like '0:0' or '2:10'
-        :raises InvalidInputError: if the address/controller combo is invalid.
+        :raises: :exc:`.InvalidInputError` if the address/controller combo
+          is invalid.
         """
         logger.info("validate_controller_address: {0}, {1}"
                     .format(controller, address))
@@ -237,8 +252,7 @@ def add_disk_worker(vm,
                     subtype=None,
                     address=None,
                     diskname=None,
-                    description=None,
-                    **kwargs):
+                    description=None):
     """Worker function for actually adding the disk.
 
     All parameters except `vm`, `UI`, and `DISK_IMAGE` are optional
@@ -271,7 +285,6 @@ def add_disk_worker(vm,
 
     :param str diskname: Name for disk device
     :param str description: Description of disk device
-    :param \**kwargs: TODO
     """
     if type is None:
         disk_extension = os.path.splitext(DISK_IMAGE)[1]

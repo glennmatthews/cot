@@ -157,7 +157,7 @@ class CLI(UI):
         return "\n".join(output_lines)
 
     def fill_examples(self, example_list):
-        """Pretty-print a set of usage examples.
+        r"""Pretty-print a set of usage examples.
 
         ::
 
@@ -172,13 +172,13 @@ class CLI(UI):
           ...     " creating a VM based on profile '1CPU-2.5GB' in foo.ova.")
           ... ])
           Examples:
-            cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \\
+            cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
                   -n test_vm
               Deploy to vSphere/ESXi server 192.0.2.100 with
               credentials admin/admin, creating a VM named 'test_vm'
               from foo.ova.
 
-            cot deploy foo.ova esxi 192.0.2.100 -u admin \\
+            cot deploy foo.ova esxi 192.0.2.100 -u admin \
                   -c 1CPU-2.5GB
               Deploy to vSphere/ESXi server 192.0.2.100, with
               username admin (prompting the user to input a password
