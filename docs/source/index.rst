@@ -3,6 +3,7 @@ Common OVF Tool (COT)
 
 .. toctree::
    :maxdepth: 3
+   :includehidden:
 
    introduction
    installation

@@ -62,12 +62,16 @@ instead:
   sudo python setup.py install
 
 The specifics may vary depending on your Linux distribution, of course.
-For more details you can refer to the `INSTALL_LINUX.md`_ file.
+For more details, see :doc:`installation_linux`.
+
+.. toctree::
+  :hidden:
+
+  installation_linux
 
 Optionally, download ovftool_ from VMware and install it.
 (VMware requires a site login to download ovftool,
 which is the only reason I haven't automated this too...)
-
 
 .. _qemu-img: http://www.qemu.org
 .. _vmdktool: http://www.freshports.org/sysutils/vmdktool/
@@ -75,4 +79,3 @@ which is the only reason I haven't automated this too...)
 .. _fatdisk: http://github.com/goblinhack/fatdisk
 .. _ovftool: https://www.vmware.com/support/developer/ovf/
 .. _MacPorts: http://www.macports.org/
-.. _`INSTALL_LINUX.md`: https://github.com/glennmatthews/cot/blob/master/INSTALL_LINUX.md

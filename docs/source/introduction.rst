@@ -1,6 +1,11 @@
 Introduction
 ============
 
+.. image:: https://travis-ci.org/glennmatthews/cot.svg?branch=master
+    :target: https://travis-ci.org/glennmatthews/cot
+.. image:: https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master
+    :target: https://coveralls.io/r/glennmatthews/cot?branch=master
+
 COT (the Common OVF Tool) is a tool for editing `Open Virtualization Format`_
 (``.ovf``, ``.ova``) virtual appliances, with a focus on virtualized network
 appliances such as the `Cisco CSR 1000V`_ and `Cisco IOS XRv`_ platforms.
