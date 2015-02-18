@@ -248,9 +248,9 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
         new_file_path = os.path.join(output_dir, file_string + '.vmdk')
         if get_qemu_img_version() >= StrictVersion("2.1.0"):
             # qemu-img finally supports streamOptimized - yay!
-            logger.debug("Invoking qemu-img to convert {0} to "
-                         "streamOptimized VMDK {1}"
-                         .format(file_path, new_file_path))
+            logger.info("Invoking qemu-img to convert {0} to "
+                        "streamOptimized VMDK {1}"
+                        .format(file_path, new_file_path))
             check_output(['qemu-img', 'convert', '-O', 'vmdk',
                           '-o', 'subformat=streamOptimized',
                           file_path, new_file_path])
@@ -263,16 +263,16 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
             if curr_format != 'raw':
                 # Use qemu-img to convert to raw format
                 temp_path = os.path.join(output_dir, file_string + '.img')
-                logger.debug("Invoking qemu-img to convert {0} to RAW {1}"
-                             .format(file_path, temp_path))
+                logger.info("Invoking qemu-img to convert {0} to RAW {1}"
+                            .format(file_path, temp_path))
                 check_output(['qemu-img', 'convert', '-O', 'raw',
                               file_path, temp_path])
                 file_path = temp_path
 
             # Use vmdktool to convert raw image to stream-optimized VMDK
-            logger.debug("Invoking vmdktool to convert {0} to "
-                         "stream-optimized VMDK {1}"
-                         .format(file_path, new_file_path))
+            logger.info("Invoking vmdktool to convert {0} to "
+                        "stream-optimized VMDK {1}"
+                        .format(file_path, new_file_path))
             # Note that vmdktool takes its arguments in unusual order -
             # output file comes before input file
             check_output(['vmdktool', '-z9', '-v', new_file_path, file_path])
