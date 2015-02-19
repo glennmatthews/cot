@@ -13,8 +13,8 @@ Introduction
     src="https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master"
     alt="Coverage Status">
    </a>
-   <a href="https://readthedocs.org/projects/cot/?badge=stable">
-   <img src="https://readthedocs.org/projects/cot/badge/?version=stable"
+   <a href="https://readthedocs.org/projects/cot/?badge=latest">
+   <img src="https://readthedocs.org/projects/cot/badge/?version=latest"
         alt="Documentation Status">
    </a>
    </p>
