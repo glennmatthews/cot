@@ -12,76 +12,157 @@
 # file, may be copied, modified, propagated, or distributed except
 # according to the terms contained in the LICENSE.txt file.
 
+"""Module for deploying VM descriptions to a hypervisor to instantiate VMs.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTDeploy
+  COTDeployESXi
+"""
+
 import logging
-import os.path
 import re
 import shlex
-import sys
 import getpass
-import textwrap
 
 from distutils.version import StrictVersion
 
 from .submodule import COTReadOnlySubmodule
 from COT.helper_tools import check_call, get_ovftool_version
+from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
 
 class COTDeploy(COTReadOnlySubmodule):
-    def __init__(self, UI, arg_names=None):
-        if arg_names is None:
-            arg_names = []
-        arg_names = [
-            "PACKAGE",
-            "HYPERVISOR",
-            "configuration",
-            "username",
-            "password",
-            "power_on",
-            "vm_name",
-            "network_map",
-        ] + arg_names
-        super(COTDeploy, self).__init__(UI, arg_names)
-        self.args["power_on"] = False
+
+    """Semi-abstract class for submodules used to deploy a VM to a hypervisor.
+
+    Provides some baseline parameters and input validation that are expected
+    to be common across all concrete subclasses.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTReadOnlySubmodule.package`,
+
+    Attributes:
+    :attr:`generic_parser`,
+    :attr:`parser`,
+    :attr:`subparsers`,
+    :attr:`hypervisor`,
+    :attr:`configuration`,
+    :attr:`username`,
+    :attr:`password`,
+    :attr:`power_on`,
+    :attr:`vm_name`,
+    :attr:`network_map`
+    """
+
+    def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
+        super(COTDeploy, self).__init__(UI)
+        # User inputs
+        self._hypervisor = None
+        self._configuration = None
+        self.username = None
+        """Server login username."""
+        self.password = None
+        """Server login password."""
+        self._power_on = False
+        self.vm_name = None
+        """Name of the created virtual machine"""
+        self.network_map = None
+        """Mapping of network names to networks"""
+        # Internal attributes
         self.generic_parser = None
+        """Generic parser object providing args that most subclasses will use.
+
+        Subclasses can call
+        ``self.subparsers.add_parser(parents=[self.generic_parser])``
+        to automatically inherit this set of args
+        """
         self.parser = None
+        """Subparser providing ``cot deploy PACKAGE ...`` CLI."""
         self.subparsers = None
+        """Subparser grouping for hypervisor-specific sub-subparsers.
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
-        valid, value_or_reason = super(COTDeploy, self).validate_arg(arg,
-                                                                     value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+        Subclasses should generally have their :func:`create_subparser`
+        implementations create their sub-subparsers under :attr:`subparsers`
+        and NOT under :attr:`parent`.
+        """
 
-        if arg == "HYPERVISOR":
-            if value != "esxi":
-                return False, ("'{0}' is not a supported hypervisor"
-                               .format(value))
-        elif arg == 'configuration' and self.vm is not None:
+    @property
+    def hypervisor(self):
+        """Hypervisor to deploy to.
+
+        :raise: :exc:`InvalidInputError` if not a recognized value.
+        """
+        return self._hypervisor
+
+    @hypervisor.setter
+    def hypervisor(self, value):
+        if value != "esxi":
+            raise InvalidInputError("'{0}' is not a supported hypervisor"
+                                    .format(value))
+        self._hypervisor = value
+
+    @property
+    def configuration(self):
+        """VM configuration profile to use for deployment.
+
+        :raise: :exc:`InvalidInputError` if not a profile defined in the VM.
+        """
+        return self._configuration
+
+    @configuration.setter
+    def configuration(self, value):
+        if self.vm is not None:
             profiles = self.vm.get_configuration_profile_ids()
             if value is not None and not (value in profiles):
-                return False, ("'Configuration '{0}' is not a recognized "
-                               "profile for '{1}'.\nValid options are:\n{2}"
-                               .format(value, self.get_value("PACKAGE"),
-                                       "\n".join(profiles)))
-        elif arg == 'power_on':
-            if value is not True and value is not False:
-                return False, "power_on accepts boolean values only"
+                raise InvalidInputError(
+                    "'Configuration '{0}' is not a recognized "
+                    "profile for '{1}'.\nValid options are:\n{2}"
+                    .format(value, self.package, "\n".join(profiles)))
+        self._configuration = value
 
-        return valid, value
+    @property
+    def power_on(self):
+        """Whether to automatically power on the VM after deployment."""
+        return self._power_on
+
+    @power_on.setter
+    def power_on(self, value):
+        if value is not True and value is not False:
+            raise InvalidInputError("power_on accepts boolean values only")
+        self._power_on = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
-        if self.get_value("HYPERVISOR") is None:
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
+        if self.hypervisor is None:
             return False, "HYPERVISOR is a mandatory argument"
         return super(COTDeploy, self).ready_to_run()
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        .. note::
+          Unlike most submodules, this one has subparsers of its own -
+          ``'cot deploy PACKAGE <hypervisor>'`` so subclasses of this module
+          should call ``super().create_subparser(parent)`` (to create the main
+          'deploy' subparser) then call ``self.subparsers.add_parser()`` to add
+          their own sub-subparser.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('deploy', subparser)``
+        """
         import argparse
 
         # Create a generic parser with arguments to be shared by all
@@ -118,72 +199,104 @@ class COTDeploy(COTReadOnlySubmodule):
         # Create 'cot deploy' parser
         self.parser = parent.add_parser(
             'deploy',
+            usage=self.UI.fill_usage("deploy", [
+                "PACKAGE esxi ...",
+            ]),
             help="Create a new VM on the target hypervisor from the given OVF",
             description="""Deploy a virtual machine to a specified server.""")
 
         self.parser.add_argument('PACKAGE', help="OVF descriptor or OVA file")
 
         self.subparsers = self.parser.add_subparsers(
-            dest='HYPERVISOR', metavar='hypervisors supported:')
-
-        self.parser.usage = """
-  {0} deploy --help
-  {0} <opts> deploy PACKAGE esxi ...""".format(os.path.basename(sys.argv[0]))
+            prog="cot deploy",
+            dest='HYPERVISOR',
+            metavar='hypervisors supported:')
 
         self.parser.set_defaults(instance=self)
         return 'deploy', self.parser
 
 
 class COTDeployESXi(COTDeploy):
+
+    """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTReadOnlySubmodule.package`,
+    :attr:`generic_parser`,
+    :attr:`parser`,
+    :attr:`subparsers`,
+    :attr:`hypervisor`,
+    :attr:`configuration`,
+    :attr:`username`,
+    :attr:`password`,
+    :attr:`power_on`,
+    :attr:`vm_name`,
+    :attr:`network_map`
+
+    Attributes:
+    :attr:`locator`,
+    :attr:`datastore`,
+    :attr:`ovftool_args`
+    """
+
     def __init__(self, UI):
-        super(COTDeployESXi, self).__init__(
-            UI,
-            [
-                "LOCATOR",
-                "datastore",
-                "ovftool_args",
-            ])
-        self.args["ovftool_args"] = []
+        """Instantiate this submodule with the given UI."""
+        super(COTDeployESXi, self).__init__(UI)
+        self.locator = None
+        """vSphere target locator."""
+        self.datastore = None
+        """ESXi datastore to deploy to."""
+        self._ovftool_args = []
+
+    @property
+    def ovftool_args(self):
+        """List of CLI arguments to pass through to ``ovftool``."""
+        return list(self._ovftool_args)
+
+    @ovftool_args.setter
+    def ovftool_args(self, value):
+        # Use shlex to split ovftool_args but respect quoted whitespace
+        self._ovftool_args = shlex.split(value)
+        logger.debug("ovftool_args split to: {0}"
+                     .format(self._ovftool_args))
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
-        if self.get_value("LOCATOR") is None:
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
+        if self.locator is None:
             return False, "LOCATOR is a mandatory argument"
         return super(COTDeployESXi, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule - deploying to ESXi.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTDeployESXi, self).run()
 
         # ensure user provided proper credentials
-        username = self.get_value("username")
-        password = self.get_value("password")
-        LOCATOR = self.get_value("LOCATOR")
-        server = LOCATOR.split("/")[0]
-        if username is None:
-            username = getpass.getuser()
-        if password is None:
-            password = self.UI.get_password(username, server)
+        server = self.locator.split("/")[0]
+        if self.username is None:
+            self.username = getpass.getuser()
+        if self.password is None:
+            self.password = self.UI.get_password(self.username, server)
 
-        target = "vi://" + username + ":" + password + "@" + LOCATOR
+        target = ("vi://" + self.username + ":" + self.password +
+                  "@" + self.locator)
 
-        ovftool_args = self.get_value("ovftool_args")
-        # Use shlex to split ovftool_args but respect quoted whitespace
-        if ovftool_args:
-            ovftool_args = shlex.split(ovftool_args)
-            logger.debug("ovftool_args split to: {0}".format(ovftool_args))
-        else:
-            ovftool_args = []
+        ovftool_args = self.ovftool_args
 
-        PACKAGE = self.get_value("PACKAGE")
-        configuration = self.get_value("configuration")
+        configuration = self.configuration
 
         vm = self.vm
 
         # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
         # then environment properties will always be used.
         # Otherwise we may need to help and/or warn the user:
-        if vm.get_property_array() and not re.search("/host/", LOCATOR):
+        if vm.get_property_array() and not re.search("/host/", self.locator):
             if get_ovftool_version() < StrictVersion("4.0.0"):
                 self.UI.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target "
@@ -199,7 +312,7 @@ class COTDeployESXi(COTDeploy):
                                "version is too low to add injectOvfEnv "
                                "option. OVF environment properties will "
                                "be ignored.")
-            elif not self.get_value("power_on"):
+            elif not self.power_on:
                 self.UI.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target, "
                     "OVF environment properties can only be made available to "
@@ -235,7 +348,7 @@ class COTDeployESXi(COTDeploy):
             while configuration is None:
                 if not profile_info_string:
                     profile_info_string = vm.profile_info_string(
-                        enumerate=True)
+                        self.UI.terminal_width() - 1, enumerate=True)
                 user_input = self.UI.get_input(
                     profile_info_string + "\nChoose a Configuration:", "0")
                 if user_input in profile_list:
@@ -258,29 +371,26 @@ class COTDeployESXi(COTDeploy):
         serial_count = serial_count[configuration]
 
         # pass network settings on to ovftool
-        network_map = self.get_value("network_map")
-        if network_map is not None:
-            for nm in network_map:
+        if self.network_map is not None:
+            for nm in self.network_map:
                 ovftool_args.append("--net:" + nm)
 
         # check if user entered a name for the VM
-        vm_name = self.get_value("vm_name")
-        if vm_name is not None:
-            ovftool_args.append("--name=" + vm_name)
+        if self.vm_name is not None:
+            ovftool_args.append("--name=" + self.vm_name)
 
         # tell ovftool to power on the VM
         # TODO - if serial port fixup (below) is implemented,
         # do not power on VM until after serial ports are added.
-        if self.get_value("power_on"):
+        if self.power_on:
             ovftool_args.append("--powerOn")
 
         # specify target datastore
-        datastore = self.get_value("datastore")
-        if datastore:
-            ovftool_args.append("--datastore=" + datastore)
+        if self.datastore is not None:
+            ovftool_args.append("--datastore=" + self.datastore)
 
         # add package and target to the list
-        ovftool_args.append(PACKAGE)
+        ovftool_args.append(self.package)
         ovftool_args.append(target)
 
         logger.debug("Final args to pass to OVFtool: {0}".format(ovftool_args))
@@ -301,46 +411,54 @@ class COTDeployESXi(COTDeploy):
                 "Package '{0}' contains {1} serial ports, but ovftool "
                 "ignores serial port declarations. If these ports are "
                 "needed, you must add them manually to the new VM."
-                .format(PACKAGE, serial_count))
+                .format(self.package, serial_count))
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        This will create the shared :attr:`~COTDeploy.parser` under
+        :attr:`parent`, then create our own sub-subparser under
+        :attr:`~COTDeploy.subparsers`.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('deploy', subparser)``
+        """
         super(COTDeployESXi, self).create_subparser(parent)
 
         import argparse
         # Create 'cot deploy ... esxi' parser
         p = self.subparsers.add_parser(
             'esxi', parents=[self.generic_parser],
-            usage=("""
-  {0} deploy PACKAGE esxi --help
-  {0} <opts> deploy PACKAGE esxi LOCATOR
-                                 [-u USERNAME] [-p PASSWORD]
-                                 [-c CONFIGURATION] [-n VM_NAME] [-P]
-                                 [-N OVF1=HOST1] [[-N OVF2=HOST2] ...]
-                                 [-d DATASTORE] [-o=OVFTOOL_ARGS]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage=self.UI.fill_usage("deploy PACKAGE esxi", [
+                "LOCATOR [-u USERNAME] [-p PASSWORD] [-c CONFIGURATION] "
+                "[-n VM_NAME] [-P] [-N OVF1=HOST1 [-N OVF2=HOST2 ...]] "
+                "[-d DATASTORE] [-o=OVFTOOL_ARGS]",
+            ]),
             formatter_class=argparse.RawDescriptionHelpFormatter,
             help="Deploy to ESXi, vSphere, or vCenter",
             description="Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor",
-            epilog=textwrap.dedent("""Examples:
-  {0} deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test_vm
-    Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
-    creating a VM named 'test_vm' from foo.ova.
-
-  {0} deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
-    Deploy to vSphere/ESXi server 192.0.2.100 with username admin (prompting
-    the user to input the password at runtime) creating a VM based on the
-    '1CPU-2.5GB' profile in foo.ova.
-
-  {0} deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1" -u administrator \\
-        -N 'GigabitEthernet1=VM Network' -N 'GigabitEthernet2=myvswitch'
-    Deploy to vSphere server 192.0.2.1 which belongs to datacenter 'mydc' on
-    vCenter server 192.0.2.100, and map the two NIC networks to vSwitches.
-    Note that in this case -u specifies the vCenter login username.
-
-  {0} deploy foo.ova esxi 192.0.2.100 -u admin -p password \\
-        --ovftool-args="--overwrite --acceptAllEulas"
-    Deploy with passthrough arguments to ovftool."""
-                                   .format(os.path.basename(sys.argv[0]))))
+            epilog=self.UI.fill_examples([
+                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
+                 ' -n test_vm',
+                 "Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+                 " admin/admin, creating a VM named 'test_vm' from foo.ova."),
+                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB',
+                 "Deploy to vSphere/ESXi server 192.0.2.100, with username"
+                 " admin (prompting the user to input a password at runtime),"
+                 " creating a VM based on profile '1CPU-2.5GB' in foo.ova."),
+                ('cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1"'
+                 ' -u administrator -N "GigabitEthernet1=VM Network"'
+                 ' -N "GigabitEthernet2=myvswitch"',
+                 "Deploy to vSphere server 192.0.2.1 which belongs to"
+                 " datacenter 'mydc' on vCenter server 192.0.2.100, and map"
+                 " the two NIC networks to vSwitches. Note that in this case"
+                 " -u specifies the vCenter login username."),
+                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p password'
+                 ' --ovftool-args="--overwrite --acceptAllEulas"',
+                 "Deploy with passthrough arguments to ovftool.")
+            ]))
 
         # ovftool uses '-ds' as shorthand for '--datastore', so let's allow it.
         p.add_argument("-d", "-ds", "--datastore",

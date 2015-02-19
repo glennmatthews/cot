@@ -14,11 +14,29 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""CLI entry point for the Common OVF Tool (COT) suite.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  CLI
+"""
+
+import os
 import sys
 import argparse
+import re
 import logging
 import getpass
 import textwrap
+
+# get_terminal_size() is part of the standard library in python 3.3 and later
+try:
+    from shutil import get_terminal_size
+except ImportError:
+    from backports.shutil_get_terminal_size import get_terminal_size
 
 from COT import __version_long__
 from COT.data_validation import InvalidInputError
@@ -26,14 +44,31 @@ from COT.ui_shared import UI
 
 logger = logging.getLogger(__name__)
 
-# Where do we want to wrap lines when pretty-printing?
-TEXT_WIDTH = 79
-
 
 class CLI(UI):
-    """Command-line user interface for COT"""
+
+    """Command-line user interface for COT.
+
+    .. autosummary::
+      :nosignatures:
+
+      confirm
+      create_parser
+      create_subparsers
+      fill_examples
+      fill_usage
+      formatter
+      get_input
+      get_password
+      main
+      parse_args
+      run
+      set_verbosity
+      terminal_width
+    """
 
     def __init__(self):
+        """Create CLI handler instance."""
         super(CLI, self).__init__(force=True)
         # In python 2.7, we want raw_input, but in python 3 we want input.
         try:
@@ -43,14 +78,157 @@ class CLI(UI):
         self.getpass = getpass.getpass
         self.handler = None
         self.master_logger = None
+        self.wrapper = textwrap.TextWrapper(width=self.terminal_width() - 1)
 
         self.create_parser()
         self.create_subparsers()
 
+    def terminal_width(self):
+        """Get the width of the terminal in columns."""
+        return get_terminal_size().columns
+
+    def fill_usage(self, subcommand, usage_list):
+        """Pretty-print a list of usage strings for a COT subcommand.
+
+        Automatically prepends a ``cot subcommand --help`` usage string
+        to the provided list.
+
+        ::
+
+          >>> fill_usage('add-file', ["FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"])
+            cot add-file --help
+            cot add-file FILE PACKAGE [-o OUTPUT]
+                         [-f FILE_ID]
+
+        :param str subcommand: Subcommand name/keyword
+        :param list usage_list: List of usage strings for this subcommand.
+        :returns: String containing all usage strings, each appropriately
+            wrapped to the :func:`terminal_width` value.
+        """
+        # Automatically add a line for --help to the usage
+        output_lines = ["\n  cot "+subcommand+" --help"]
+        # Prefix for all other usage lines:
+        prefix = "  cot <opts> {0}".format(subcommand)
+        # We don't want to use standard 'textwrap' because we'd like to keep
+        # usage groups together, while textwrap only pays attention to
+        # whitespace, so textwrap might wrap a line as follows:
+        # cot subcommand PACKAGE [-o
+        #                OUTPUT]
+        # ...but we instead want to wrap the whole command group, as:
+        # cot subcommand PACKAGE
+        #                [-o OUTPUT]
+        splitter = re.compile(r"""
+          \(.*?\)+   |  # Params inside (possibly nested) parens
+          \[.*?\]+   |  # Params inside (possibly nested) brackets
+          -\S+\s+\S+ |  # Dashed arg followed by metavar
+          \S+           # Positional arg
+        """, re.VERBOSE)
+        width = self.terminal_width()
+        for line in usage_list:
+            usage_groups = re.findall(splitter, line)
+
+            # Our preferred wrapping is like this:
+            #   cot <opts> subcommand1 FOO BAR [-b BAZ]
+            #                          [-t BAT] [-q | -v]
+            #   cot <opts> subcommand2 BAR [-b BAZ]
+            #                          [-t BAT] [-q | -v]
+            # (aligning wrapped params at the end of 'subcommand')
+            # but if the terminal is relatively narrow or the
+            # subcommand or params are very long, we can
+            # wrap with shorter indentation to the end of 'cot':
+            #   cot <opts> really-long-subcommand FOO
+            #       BAR [-b BAZ] [-t BAT] [-q | -v]
+            #   cot <opts> subcommand BAR [-b BAZ]
+            #       [-v VERBOSE_PARAM_NAME] [-t BAT]
+            max_group_len = max([len(s) for s in usage_groups])
+            if len(prefix) + max_group_len >= width:
+                indent_line = "     "
+            else:
+                indent_line = " "*len(prefix)
+
+            wrapped_line = prefix
+            for group in usage_groups:
+                if len(wrapped_line) + len(group) >= width:
+                    # time to save this line and start a new one
+                    output_lines.append(wrapped_line)
+                    wrapped_line = indent_line
+                wrapped_line += " " + group
+            output_lines.append(wrapped_line)
+        return "\n".join(output_lines)
+
+    def fill_examples(self, example_list):
+        r"""Pretty-print a set of usage examples.
+
+        ::
+
+          >>> fill_examples([
+          ...    ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
+          ...     ' -n test_vm',
+          ...     "Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+          ...     " admin/admin, creating a VM named 'test_vm' from foo.ova."),
+          ...    ('cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB',
+          ...     "Deploy to vSphere/ESXi server 192.0.2.100, with username"
+          ...     " admin (prompting the user to input a password at runtime),"
+          ...     " creating a VM based on profile '1CPU-2.5GB' in foo.ova.")
+          ... ])
+          Examples:
+            cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
+                  -n test_vm
+              Deploy to vSphere/ESXi server 192.0.2.100 with
+              credentials admin/admin, creating a VM named 'test_vm'
+              from foo.ova.
+
+            cot deploy foo.ova esxi 192.0.2.100 -u admin \
+                  -c 1CPU-2.5GB
+              Deploy to vSphere/ESXi server 192.0.2.100, with
+              username admin (prompting the user to input a password
+              at runtime), creating a VM based on profile
+              '1CPU-2.5GB' in foo.ova.
+
+        :param list example_list: List of (cli_example, example_description)
+            tuples.
+
+        :return: Examples wrapped appropriately to the :func:`terminal_width`
+            value. CLI examples will be wrapped with backslashes and
+            a hanging indent.
+        """
+        output_lines = ["Examples:"]
+        # Just as in fill_usage, the default textwrap behavior
+        # results in less-than-ideal formatting for CLI examples.
+        # So we'll do it ourselves:
+        splitter = re.compile(r"""
+          -\S+[ =]\S+   |  # Dashed arg followed by simple value
+          -\S+[ =]".*?" |  # Dashed arg followed by quoted value
+          \S+              # Positional arg
+        """, re.VERBOSE)
+        width = self.terminal_width()
+        self.wrapper.width = width - 1
+        self.wrapper.initial_indent = '    '
+        self.wrapper.subsequent_indent = '    '
+        self.wrapper.break_on_hyphens = False
+        for (example, desc) in example_list:
+            if len(output_lines) > 1:
+                output_lines.append("")
+            wrapped_line = " "
+            for param in re.findall(splitter, example):
+                if len(wrapped_line) + len(param) >= (width - 2):
+                    wrapped_line += " \\"
+                    output_lines.append(wrapped_line)
+                    wrapped_line = "       "
+                wrapped_line += " " + param
+            output_lines.append(wrapped_line)
+            output_lines.extend(self.wrapper.wrap(desc))
+        return "\n".join(output_lines)
+
     def formatter(self, verbosity=logging.INFO):
         """Create formatter for log output.
+
         We offer different (more verbose) formatting when debugging is enabled,
         hence this need.
+
+        :param verbosity: Logging level as defined by :mod:`logging`.
+        :return: Formatter object for use with :mod:`logging`.
+        :rtype: instance of :class:`colorlog.ColoredFormatter`
         """
         from colorlog import ColoredFormatter
         log_colors = {
@@ -75,6 +253,13 @@ class CLI(UI):
                                 log_colors=log_colors)
 
     def set_verbosity(self, level):
+        """Enable logging and/or change the logging verbosity level.
+
+        Will call :func:`formatter` and associate the resulting formatter
+        with logging.
+
+        :param level: Logging level as defined by :mod:`logging`
+        """
         if not self.handler:
             self.handler = logging.StreamHandler()
         self.handler.setLevel(level)
@@ -85,21 +270,37 @@ class CLI(UI):
         self.master_logger.setLevel(level)
 
     def run(self, argv):
+        """Parse the given CLI args then run.
+
+        Calls :func:`parse_args` followed by :func:`main`.
+
+        :param list argv: The CLI argv value (not including argv[0])
+        :return: Return code from :func:`main`
+        """
         args = self.parse_args(argv)
         return self.main(args)
 
     def confirm(self, prompt):
-        """Prompts user to confirm the requested operation, or auto-accepts if
-        force is set to True."""
+        """Prompt user to confirm the requested operation.
+
+        Auto-accepts if :attr:`force` is set to ``True``.
+
+        :param str prompt: Message to prompt the user with
+        :return: ``True`` (user confirms acceptance) or ``False``
+            (user declines)
+        """
         if self.force:
             logger.warning("Automatically agreeing to '{0}'".format(prompt))
             return True
 
         # Wrap prompt to screen
         prompt_w = []
+        self.wrapper.width = self.terminal_width() - 1
+        self.wrapper.initial_indent = ''
+        self.wrapper.subsequent_indent = ''
+        self.wrapper.break_on_hyphens = False
         for line in prompt.splitlines():
-            prompt_w.append(textwrap.fill(line, TEXT_WIDTH,
-                                          break_on_hyphens=False))
+            prompt_w.extend(self.wrapper.wrap(line))
         prompt = "\n".join(prompt_w)
 
         while True:
@@ -112,8 +313,18 @@ class CLI(UI):
                 print("Please enter 'y' or 'n'")
 
     def get_input(self, prompt, default_value):
-        """Prompt the user to enter a string, or auto-accepts the default if
-        force is set to True."""
+        """Prompt the user to enter a string.
+
+        Auto-inputs the :attr:`default_value` if :attr:`force` is set to
+        ``True``.
+
+        :param str prompt: Message to prompt the user with
+        :param str default_value: Default value to input if the user simply
+            hits Enter without entering a value, or if :attr:`force`.
+
+        :return: Input value
+        :rtype: str
+        """
         if self.force:
             logger.warning("Automatically entering '{0}' in response to '{1}'"
                            .format(default_value, prompt))
@@ -125,7 +336,13 @@ class CLI(UI):
         return default_value
 
     def get_password(self, username, host):
-        """Get password string from the user."""
+        """Get password string from the user.
+
+        :param str username: Username the password is associated with
+        :param str host: Host the password is associated with
+        :raise InvalidInputError: if :attr:`force` is ``True``
+          (as there is no "default" password value)
+        """
         if self.force:
             raise InvalidInputError("No password specified for {0}@{1}"
                                     .format(username, host))
@@ -133,17 +350,29 @@ class CLI(UI):
                             .format(username, host))
 
     def create_parser(self):
-        # Top-level command definition and any global options
+        """Create :attr:`parser` object for global ``cot`` command.
+
+        Includes a number of globally applicable CLI options.
+        """
+        # Argparse checks the environment variable COLUMNS to control
+        # its line-wrapping
+        os.environ['COLUMNS'] = str(self.terminal_width())
+        self.wrapper.width = self.terminal_width() - 1
+        self.wrapper.initial_indent = ''
+        self.wrapper.subsequent_indent = ''
         parser = argparse.ArgumentParser(
-            # If we set "usage" here, it apparently overrides the value of
-            # "prog" as well, which results in subparser help being ugly in
-            # a number of ways. Hence we leave usage to the default here then
-            # manually set it in parse_args() once all of the subparsers
-            # have been initialized with the correct prog.
-            description=(__version_long__ + """
-A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
-with a focus on virtualized network appliances such as the Cisco CSR 1000V and
-Cisco IOS XRv platforms."""),
+            prog="cot",
+            usage="""
+  cot --help
+  cot --version
+  cot help <command>
+  cot <command> --help
+  cot <options> <command> <command-options>""",
+            description=(__version_long__ + "\n" + self.wrapper.fill(
+                "A tool for editing Open Virtualization Format (.ovf, .ova) "
+                "virtual appliances, with a focus on virtualized network "
+                "appliances such as the Cisco CSR 1000V and Cisco IOS XRv "
+                "platforms.")),
             epilog=("""
 Note: some subcommands rely on external software tools, including:
 * qemu-img (http://www.qemu.org/)
@@ -179,19 +408,27 @@ Note: some subcommands rely on external software tools, including:
         self.parser = parser
 
         # Subcommand definitions
-        self.subparsers = parser.add_subparsers(dest='_subcommand',
+        self.subparsers = parser.add_subparsers(prog="cot",
+                                                dest='_subcommand',
                                                 metavar="<command>",
                                                 title="commands")
 
         self.subparser_lookup = {}
 
     def create_subparsers(self):
+        """Populate the CLI sub-parsers for all known submodules.
+
+        Creates an instance of each :class:`~COT.submodule.COTGenericSubmodule`
+        subclass, then calls
+        :func:`~COT.submodule.COTGenericSubmodule.create_subparser` for each.
+        """
         from COT.add_disk import COTAddDisk
         from COT.add_file import COTAddFile
         from COT.deploy import COTDeployESXi
         from COT.edit_hardware import COTEditHardware
         from COT.edit_product import COTEditProduct
         from COT.edit_properties import COTEditProperties
+        from COT.help import COTHelp
         from COT.info import COTInfo
         from COT.inject_config import COTInjectConfig
         for klass in [
@@ -203,18 +440,17 @@ Note: some subcommands rely on external software tools, including:
                 COTEditProperties,
                 COTInfo,
                 COTInjectConfig,
+                COTHelp,   # last so it can be aware of all of the above
         ]:
             name, subparser = klass(self).create_subparser(self.subparsers)
             self.subparser_lookup[name] = subparser
 
     def parse_args(self, argv):
-        # By now all subparsers have been created so we can safely set usage.
-        # See comment above.
-        self.parser.usage = ("""
-  cot --help
-  cot --version
-  cot <command> --help
-  cot <options> <command> <command-options>""")
+        """Parse the given CLI arguments into a namespace object.
+
+        :param list argv: List of CLI arguments, not including argv0
+        :return: Parser namespace object
+        """
         # Parse the user input
         args = self.parser.parse_args(argv)
 
@@ -226,9 +462,32 @@ Note: some subcommands rely on external software tools, including:
         return args
 
     def main(self, args):
+        """Main worker function for COT when invoked from the CLI.
+
+        * Calls :func:`set_verbosity` with the appropriate verbosity level
+          derived from the args.
+        * Looks up the appropriate :class:`~COT.submodule.COTGenericSubmodule`
+          instance corresponding to the subcommand that was invoked.
+        * Converts :attr:`args` to a dict and calls
+          :func:`~COT.submodule.COTGenericSubmodule.set_value` for each
+          arg/value in the dict.
+        * Calls :func:`~COT.submodule.COTGenericSubmodule.run` followed by
+          :func:`~COT.submodule.COTGenericSubmodule.finished`.
+        * Catches various exceptions and handles them appropriately.
+
+        :param args: Parser namespace object returned from :func:`parse_args`.
+        :rtype: int
+        :return: Exit code for the COT executable.
+
+          * 0 on successful completion
+          * 1 on runtime error
+          * 2 on input error (parser error,
+            :class:`~COT.data_validation.InvalidInputError`, etc.)
+        """
         self.force = args._force
         self.set_verbosity(args._verbosity)
 
+        # In python3.3+ we can get here even without a subcommand:
         if not args._subcommand:
             self.parser.error("too few arguments")
 
@@ -251,11 +510,13 @@ Note: some subcommands rely on external software tools, including:
         try:
             # Set mandatory (CAPITALIZED) args first, then optional args
             for (arg, value) in arg_hash.items():
-                if arg[0].isupper():
-                    args.instance.set_value(arg, value)
+                if arg[0].isupper() and value is not None:
+                    setattr(args.instance, arg.lower(), value)
             for (arg, value) in arg_hash.items():
-                if not arg[0].isupper() and arg != "instance":
-                    args.instance.set_value(arg, value)
+                if arg == "instance":
+                    continue
+                if not arg[0].isupper() and value is not None:
+                    setattr(args.instance, arg, value)
             args.instance.run()
             args.instance.finished()
         except InvalidInputError as e:
@@ -283,4 +544,8 @@ Note: some subcommands rely on external software tools, including:
 
 
 def main():
+    """Launch COT from the CLI."""
     CLI().run(sys.argv[1:])
+
+if __name__ == "__main__":
+    main()

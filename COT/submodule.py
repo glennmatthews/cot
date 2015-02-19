@@ -14,6 +14,18 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Parent classes for implementing COT subcommands.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTGenericSubmodule
+  COTReadOnlySubmodule
+  COTSubmodule
+"""
+
 import os.path
 import logging
 
@@ -24,129 +36,209 @@ logger = logging.getLogger(__name__)
 
 
 class COTGenericSubmodule(object):
-    """Abstract interface for COT command submodules."""
 
-    def __init__(self, UI, arg_names):
-        self.args = {}
-        for name in arg_names:
-            self.args[name] = None
+    """Abstract interface for COT command submodules.
+
+    Attributes:
+    :attr:`vm`,
+    :attr:`UI`
+
+    .. note :: Generally a command should not inherit directly from this class,
+      but should instead subclass :class:`COTReadOnlySubmodule` or
+      :class:`COTSubmodule` as appropriate.
+    """
+
+    def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
         self.vm = None
+        """Virtual machine description (:class:`VMDescription`)."""
         self.UI = UI
-
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
-        if arg not in self.args.keys():
-            return False, "unrecognized argument '{0}'".format(arg)
-        # Generic input validation common across all submodules
-        if arg == "PACKAGE":
-            if not os.path.exists(value):
-                return False, ("Specified package {0} does not exist!"
-                               .format(value))
-
-        return True, value
-
-    def set_value(self, arg, value):
-        """Set the given argument to the given value"""
-        valid, value_or_reason = self.validate_arg(arg, value)
-        if not valid:
-            raise InvalidInputError(value_or_reason)
-        else:
-            value = value_or_reason
-
-        if arg == "PACKAGE" and self.vm is not None:
-            # Delete existing VM before child class (below) creates a new one
-            self.vm.destroy()
-
-        self.args[arg] = value
-
-    def get_value(self, arg):
-        """Get the current value of the given arg"""
-        value = self.args.get(arg, None)
-
-        return value
+        """User interface instance (:class:`~ui_shared.UI` or subclass)
+        to use.
+        """
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
-        # do any subclass-specific work here, then call super()
+        """Check whether the module is ready to :meth:`run`.
 
-        if "PACKAGE" in self.args.keys() and not self.get_value("PACKAGE"):
-            return False, "PACKAGE is a mandatory argument!"
-
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         return True, "Ready to go!"
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises: :exc:`.InvalidInputError` if :meth:`ready_to_run`
+          reports ``False``
+        """
         (ready, reason) = self.ready_to_run()
         if not ready:
             raise InvalidInputError(reason)
         # Do the work now...
 
     def finished(self):
+        """Do any final actions before being destroyed.
+
+        This class does nothing; subclasses may choose to do things like
+        write their VM state out to a file.
+        """
         pass
 
     def destroy(self):
+        """Destroy any VM associated with this submodule."""
         if self.vm is not None:
             self.vm.destroy()
             self.vm = None
 
     def create_subparser(self, parent):
-        """Add subparser under the given parent parser, representing the CLI.
-        Returns (label, subparser)"""
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :meth:`ArgumentParser.add_subparsers`
+
+        :returns: ``(label, subparser)`` or ``("", None)`` if this module has
+            no CLI
+        """
         return "", None
 
 
 class COTReadOnlySubmodule(COTGenericSubmodule):
-    "Class for submodules that do not modify the OVF, such as 'info'"
 
-    def set_value(self, arg, value):
-        super(COTReadOnlySubmodule, self).set_value(arg, value)
+    """Class for submodules that do not modify the OVF, such as 'deploy'.
 
-        if arg == "PACKAGE":
+    Inherited attributes:
+    :attr:`vm`,
+    :attr:`UI`
+
+    Attributes:
+    :attr:`package`
+    """
+
+    def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
+        super(COTReadOnlySubmodule, self).__init__(UI)
+        self._package = None
+
+    @property
+    def package(self):
+        """VM description file to read from.
+
+        Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
+        :attr:`self.vm` from the provided file.
+
+        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        """
+        return self._package
+
+    @package.setter
+    def package(self, value):
+        if value is not None and not os.path.exists(value):
+            raise InvalidInputError("Specified package {0} does not exist!"
+                                    .format(value))
+        if self.vm is not None:
+            self.vm.destroy()
+            self.vm = None
+        if value is not None:
             self.vm = VMFactory.create(value, None)
+        self._package = value
+
+    def ready_to_run(self):
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
+        if self.package is None:
+            return False, "PACKAGE is a mandatory argument!"
+        return super(COTReadOnlySubmodule, self).ready_to_run()
 
 
 class COTSubmodule(COTGenericSubmodule):
-    "Class for submodules that read and write the OVF"
 
-    def __init__(self, UI, arg_names):
-        super(COTSubmodule, self).__init__(
-            UI, ["PACKAGE", "output"] + arg_names)
+    """Class for submodules that read and write the OVF.
+
+    Inherited attributes:
+    :attr:`vm`,
+    :attr:`UI`
+
+    Attributes:
+    :attr:`package`,
+    :attr:`output`
+    """
+
+    def __init__(self, UI):
+        """Instantiate this submodule with the given UI."""
+        super(COTSubmodule, self).__init__(UI)
+        self._package = None
         # Default to an unspecified output rather than no output
-        self.args["output"] = ""
+        self._output = ""
 
-    def validate_arg(self, arg, value):
-        valid, value = super(COTSubmodule, self).validate_arg(arg, value)
-        if not valid:
-            return valid, value
+    @property
+    def package(self):
+        """VM description file to read (and possibly write).
 
-        if arg == "output":
-            if (value is not None and value != self.get_value(arg) and
-                    os.path.exists(value)):
-                self.UI.confirm_or_die("Overwrite existing file {0}?"
-                                       .format(value))
+        Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
+        :attr:`self.vm` from the provided file.
 
-        return True, value
+        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        """
+        return self._package
 
-    def set_value(self, arg, value):
-        super(COTSubmodule, self).set_value(arg, value)
+    @package.setter
+    def package(self, value):
+        if value is not None and not os.path.exists(value):
+            raise InvalidInputError("Specified package {0} does not exist!"
+                                    .format(value))
+        if self.vm is not None:
+            self.vm.destroy()
+            self.vm = None
+        if value is not None:
+            self.vm = VMFactory.create(value, self.output)
+        self._package = value
 
-        if arg == "PACKAGE":
-            self.vm = VMFactory.create(value, self.get_value("output"))
-        elif arg == "output":
-            if self.vm is not None:
-                self.vm.set_output_file(value)
+    @property
+    def output(self):
+        """Output file for this submodule.
+
+        If the specified file already exists,  will prompt the user
+        (:meth:`~COT.ui_shared.UI.confirm_or_die`) to
+        confirm overwriting the existing file.
+        """
+        return self._output
+
+    @output.setter
+    def output(self, value):
+        if value and value != self._output and os.path.exists(value):
+            self.UI.confirm_or_die("Overwrite existing file {0}?"
+                                   .format(value))
+        self._output = value
+        if self.vm is not None:
+            self.vm.set_output_file(value)
+
+    def ready_to_run(self):
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
+        if self.package is None:
+            return False, "PACKAGE is a mandatory argument!"
+        return super(COTSubmodule, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        If :attr:`output` was not previously set, automatically
+        sets it to the value of :attr:`PACKAGE`.
+
+        :raises: :exc:`.InvalidInputError` if :meth:`ready_to_run`
+          reports ``False``
+        """
         super(COTSubmodule, self).run()
 
-        if "output" in self.args.keys() and "PACKAGE" in self.args.keys():
-            output = self.get_value("output")
-            if not output:
-                self.set_value("output", self.get_value("PACKAGE"))
+        if not self.output:
+            self.output = self.package
         # Do the work now...
 
     def finished(self):
+        """Write the current VM state out to disk if requested."""
         # do any submodule-specific work here, then:
         if self.vm is not None:
             self.vm.write()

@@ -14,13 +14,14 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Implements "inject-config" command."""
+
 import logging
 import os.path
 import shutil
-import sys
 
 from .add_disk import add_disk_worker
-from .data_validation import ValueUnsupportedError
+from .data_validation import ValueUnsupportedError, InvalidInputError
 from .helper_tools import create_disk_image
 from .submodule import COTSubmodule
 
@@ -28,63 +29,81 @@ logger = logging.getLogger(__name__)
 
 
 class COTInjectConfig(COTSubmodule):
-    """Wrap the given configuration file(s) into an appropriate disk image file
-    and embed it into the given VM package.
+
+    """Wrap configuration file(s) into a disk image embedded into the VM.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`config_file`,
+    :attr:`secondary_config_file`
     """
 
     def __init__(self, UI):
-        super(COTInjectConfig, self).__init__(
-            UI,
-            [
-                "PACKAGE",
-                "output",
-                "config_file",
-                "secondary_config_file",
-            ])
+        """Instantiate this submodule with the given UI."""
+        super(COTInjectConfig, self).__init__(UI)
+        self._config_file = None
+        self._secondary_config_file = None
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
-        valid, value_or_reason = super(COTInjectConfig, self).validate_arg(
-            arg, value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+    @property
+    def config_file(self):
+        """Primary configuration file.
 
-        if self.vm:
-            platform = self.vm.get_platform()
-        else:
-            platform = None
+        :raise InvalidInputError: if the file does not exist
+        :raise InvalidInputError: if the `platform described by
+          :attr:`package` doesn't support configuration files.
+        """
+        return self._config_file
 
-        if arg == "config_file":
-            value = str(value)
-            if not os.path.exists(value):
-                return False, ("Primary config file {0} does not exist!"
-                               .format(value))
-            if platform and not platform.CONFIG_TEXT_FILE:
-                return (False,
-                        "Configuration file not supported for platform {0}"
-                        .format(platform.__name__))
-        elif arg == "secondary_config_file":
-            value = str(value)
-            if not os.path.exists(value):
-                return False, ("Secondary config file {0} does not exist!"
-                               .format(value))
-            if platform and not platform.SECONDARY_CONFIG_TEXT_FILE:
-                return (False, "Secondary configuration file not supported "
-                        "for platform {0}".format(platform.__name__))
+    @config_file.setter
+    def config_file(self, value):
+        value = str(value)
+        if not os.path.exists(value):
+            raise InvalidInputError("Primary config file {0} does not exist!"
+                                    .format(value))
+        platform = self.vm.get_platform()
+        if not platform.CONFIG_TEXT_FILE:
+            raise InvalidInputError(
+                "Configuration file not supported for platform {0}"
+                .format(platform.__name__))
+        self._config_file = value
 
-        return valid, value
+    @property
+    def secondary_config_file(self):
+        """Secondary configuration file.
+
+        :raise InvalidInputError: if the file does not exist
+        :raise InvalidInputError: if the platform described by
+          :attr:`package` doesn't support secondary configuration files.
+        """
+        return self._secondary_config_file
+
+    @secondary_config_file.setter
+    def secondary_config_file(self, value):
+        value = str(value)
+        if not os.path.exists(value):
+            raise InvalidInputError("Secondary config file {0} does not exist!"
+                                    .format(value))
+        platform = self.vm.get_platform()
+        if not platform.SECONDARY_CONFIG_TEXT_FILE:
+            raise InvalidInputError(
+                "Secondary configuration file not supported for platform {0}"
+                .format(platform.__name__))
+        self._secondary_config_file = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+        """Check whether the module is ready to :meth:`run`.
 
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         # Need some work to do!
         work_to_do = False
-        if self.get_value("config_file") is not None:
+        if self.config_file is not None:
             work_to_do = True
-        elif self.get_value("secondary_config_file") is not None:
+        elif self.secondary_config_file is not None:
             work_to_do = True
 
         if not work_to_do:
@@ -92,14 +111,15 @@ class COTInjectConfig(COTSubmodule):
         return super(COTInjectConfig, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTInjectConfig, self).run()
 
         vm = self.vm
 
         platform = vm.get_platform()
-
-        config_file = self.get_value("config_file")
-        secondary_config_file = self.get_value("secondary_config_file")
 
         # Find the disk drive where the config should be injected
         # First, look for any previously-injected config disk to overwrite:
@@ -131,14 +151,14 @@ class COTInjectConfig(COTSubmodule):
 
         # Copy config file(s) to per-platform name in working directory
         config_files = []
-        if config_file:
+        if self.config_file:
             dest = os.path.join(vm.working_dir, platform.CONFIG_TEXT_FILE)
-            shutil.copy(config_file, dest)
+            shutil.copy(self.config_file, dest)
             config_files.append(dest)
-        if secondary_config_file:
+        if self.secondary_config_file:
             dest = os.path.join(vm.working_dir,
                                 platform.SECONDARY_CONFIG_TEXT_FILE)
-            shutil.copy(secondary_config_file, dest)
+            shutil.copy(self.secondary_config_file, dest)
             config_files.append(dest)
 
         # Package the config files into a disk image
@@ -169,16 +189,21 @@ class COTInjectConfig(COTSubmodule):
         )
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('inject-config', subparser)``
+        """
         p = parent.add_parser(
             'inject-config',
             help="Inject a configuration file into an OVF package",
-            usage=("""
-  {0} inject-config --help
-  {0} <opts> inject-config PACKAGE -c CONFIG_FILE [-o OUTPUT]
-  {0} <opts> inject-config PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]
-  {0} <opts> inject-config PACKAGE -c CONFIG_FILE
-                           -s SECONDARY_CONFIG_FILE [-o OUTPUT]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage=self.UI.fill_usage("inject-config", [
+                "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
+                "PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]",
+                "PACKAGE -c CONFIG_FILE -s SECONDARY_CONFIG_FILE [-o OUTPUT]",
+            ]),
             description="""Add one or more "bootstrap" configuration """
             """file(s) to the given OVF or OVA.""")
 

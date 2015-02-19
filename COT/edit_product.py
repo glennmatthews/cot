@@ -14,9 +14,17 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for editing product information in a VM description.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTEditProduct
+"""
+
 import logging
-import os.path
-import sys
 
 from .submodule import COTSubmodule
 
@@ -24,30 +32,40 @@ logger = logging.getLogger(__name__)
 
 
 class COTEditProduct(COTSubmodule):
-    """Edit product information (short version, long version)"""
+
+    """Edit product information (short version, long version).
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`version`,
+    :attr:`full_version`
+    """
 
     def __init__(self, UI):
-        super(COTEditProduct, self).__init__(
-            UI,
-            [
-                "PACKAGE",
-                "output",
-                "version",
-                "full_version",
-            ])
+        """Instantiate this submodule with the given UI."""
+        super(COTEditProduct, self).__init__(UI)
+        self.version = None
+        """Short version string."""
+        self.full_version = None
+        """Long version string."""
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+        """Check whether the module is ready to :meth:`run`.
 
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         ready, reason = super(COTEditProduct, self).ready_to_run()
         if not ready:
             return ready, reason
 
         work_to_do = False
-        if self.get_value("version") is not None:
+        if self.version is not None:
             work_to_do = True
-        elif self.get_value("full_version") is not None:
+        elif self.full_version is not None:
             work_to_do = True
 
         if not work_to_do:
@@ -56,24 +74,31 @@ class COTEditProduct(COTSubmodule):
         return ready, reason
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTEditProduct, self).run()
 
-        version = self.get_value("version")
-        if version is not None:
-            self.vm.set_short_version(version)
-        full_version = self.get_value("full_version")
-        if full_version is not None:
-            self.vm.set_long_version(full_version)
+        if self.version is not None:
+            self.vm.set_short_version(self.version)
+        if self.full_version is not None:
+            self.vm.set_long_version(self.full_version)
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('edit-product', subparser)``
+        """
         p = parent.add_parser(
             'edit-product',
             help="""Edit product info in an OVF""",
-            usage=("""
-  {0} edit-product --help
-  {0} <opts> edit-product PACKAGE [-o OUTPUT]
-                          [-v SHORT_VERSION] [-V FULL_VERSION]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage=self.UI.fill_usage("edit-product", [
+                "PACKAGE [-o OUTPUT] [-v SHORT_VERSION] [-V FULL_VERSION]",
+            ]),
             description="""
 Edit product information attributes of the given OVF or OVA""")
 

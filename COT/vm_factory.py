@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Factory for virtual machine objects."""
+
 import logging
 
 from .ovf import OVF
@@ -24,11 +26,20 @@ logger = logging.getLogger(__name__)
 
 
 class VMFactory:
-    """Class for creating a VMDescription instance (of indeterminate subclass)
-    from a specified input file."""
+
+    """Creates a VMDescription instance from a specified input file."""
 
     @classmethod
     def create(cls, input_file, output_file):
+        """Create an appropriate VMDescription subclass instance from a file.
+
+        :raise VMInitError: if no appropriate class is identified
+        :raise VMInitError: if the selected subclass raises a
+           ValueUnsupportedError while loading the file.
+        :param str input_file: File to read VM description from
+        :param str output_file: File to write to when finished (optional)
+        :rtype: instance of :class:`VMDescription` or appropriate subclass
+        """
         vm_class = None
 
         supported_types = []

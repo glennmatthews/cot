@@ -14,82 +14,96 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for managing VM environment configuration properties.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTEditProperties
+"""
+
 import logging
 import os.path
-import sys
 import textwrap
 
 from .submodule import COTSubmodule
-from .data_validation import ValueUnsupportedError
+from .data_validation import ValueUnsupportedError, InvalidInputError
 
 logger = logging.getLogger(__name__)
 
 
 class COTEditProperties(COTSubmodule):
 
+    """Edit OVF environment XML properties.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`config_file`,
+    :attr:`properties`
+    """
+
     def __init__(self, UI):
-        super(COTEditProperties, self).__init__(
-            UI,
-            [
-                "PACKAGE",
-                "output",
-                "config_file",
-                "properties"
-            ])
+        """Instantiate this submodule with the given UI."""
+        super(COTEditProperties, self).__init__(UI)
+        self._config_file = None
+        self._properties = {}
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
+    @property
+    def config_file(self):
+        """Path to plaintext file to read configuration lines from.
 
-        valid, value_or_reason = super(COTEditProperties, self).validate_arg(
-            arg, value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+        :raise: :exc:`InvalidInputError` if the file does not exist.
+        """
+        return self._config_file
 
-        if arg == "config_file":
-            if not os.path.exists(value):
-                return False, ("Specified config file {0} does not exist!"
-                               .format(value))
-        elif arg == "properties":
-            for key_value_pair in value:
-                try:
-                    (k, v) = key_value_pair.split('=', 1)
-                    logger.debug("key: {0} value: {1}".format(k, v))
-                    if k == '':
-                        raise ValueError()
-                except ValueError:
-                    return False, ("Invalid property '{0}' - properties "
-                                   "must be in 'key=value' form"
-                                   .format(key_value_pair))
+    @config_file.setter
+    def config_file(self, value):
+        if not os.path.exists(value):
+            raise InvalidInputError("Specified config file {0} does not exist!"
+                                    .format(value))
+        self._config_file = value
 
-        return valid, value_or_reason
+    @property
+    def properties(self):
+        """List of property (key, value) tuples to update."""
+        return self._properties
 
-    def set_value(self, arg, value):
-        super(COTEditProperties, self).set_value(arg, value)
-        if arg == "properties" and value is not None:
-            self.args[arg] = value
-
-    def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
-        return super(COTEditProperties, self).ready_to_run()
+    @properties.setter
+    def properties(self, value):
+        new_value = []
+        for key_value_pair in value:
+            try:
+                (k, v) = key_value_pair.split('=', 1)
+                logger.debug("key: {0} value: {1}".format(k, v))
+                if k == '':
+                    raise ValueError()
+                new_value.append((k, v))
+            except ValueError:
+                raise InvalidInputError("Invalid property '{0}' - properties "
+                                        "must be in 'key=value' form"
+                                        .format(key_value_pair))
+        self._properties = new_value
 
     def run(self):
-        super(COTEditProperties, self).run()
+        """Do the actual work of this submodule.
 
-        config_file = self.get_value("config_file")
-        properties = self.get_value("properties")
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
+        super(COTEditProperties, self).run()
 
         vm = self.vm
 
-        if config_file is not None:
-            vm.config_file_to_properties(config_file)
+        if self.config_file is not None:
+            vm.config_file_to_properties(self.config_file)
 
-        if properties is not None:
-            for key_value_pair in properties:
-                (key, value) = key_value_pair.split('=', 1)
-                logger.debug("key: {0} value: {1}".format(key, value))
+        if self.properties:
+            for key, value in self.properties:
                 if value == '':
                     value = self.UI.get_input(
                         "Enter value for property '{0}'",
@@ -102,11 +116,15 @@ class COTEditProperties(COTSubmodule):
                     # TODO - for new property, prompt for label/descr/type?
                 vm.set_property_value(key, value)
 
-        if config_file is None and properties is None:
+        if self.config_file is None and self.properties is None:
             # Interactive mode!
             self.edit_properties_interactive(vm)
 
     def edit_properties_interactive(self, vm):
+        """Present an interactive UI for the user to edit properties.
+
+        :param vm: TODO shouldn't be necessary - use self.vm?
+        """
         wrapper = textwrap.TextWrapper(initial_indent='',
                                        subsequent_indent='                 ')
         format_str = '{0:15} "{1}"'
@@ -163,16 +181,21 @@ class COTEditProperties(COTSubmodule):
                 print("")
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('edit-properties', subparser)``
+        """
         p = parent.add_parser(
             'edit-properties', add_help=False,
             help="""Edit environment properties of an OVF""",
-            usage=("""
-  {0} edit-properties --help
-  {0} <opts> edit-properties PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...]
-                             [-o OUTPUT]
-  {0} <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
-  {0} <opts> edit-properties PACKAGE [-o OUTPUT]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage=self.UI.fill_usage("edit-properties", [
+                "PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...] [-o OUTPUT]",
+                "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
+                "PACKAGE [-o OUTPUT]",
+            ]),
             description="""
 Configure environment properties of the given OVF or OVA. The user may specify
 key-value pairs as command-line arguments or may provide a config-file to

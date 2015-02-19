@@ -14,139 +14,215 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for editing hardware details of a VM.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTEditHardware
+"""
+
 import argparse
 import logging
-import os.path
 import re
-import sys
 
 from .data_validation import natural_sort, no_whitespace, mac_address
-from .data_validation import non_negative_int, positive_int
+from .data_validation import non_negative_int, positive_int, InvalidInputError
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
 
 
 class COTEditHardware(COTSubmodule):
-    """Edit hardware information (CPUs, RAM, NICs, etc.)"""
+
+    """Edit hardware information (CPUs, RAM, NICs, etc.).
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`profiles`,
+    :attr:`cpus`,
+    :attr:`memory`,
+    :attr:`nics`,
+    :attr:`nic_type`,
+    :attr:`mac_addresses_list`,
+    :attr:`nic_networks`,
+    :attr:`nic_names`,
+    :attr:`serial_ports`,
+    :attr:`serial_connectivity`,
+    :attr:`scsi_subtype`,
+    :attr:`ide_subtype`,
+    :attr:`virtual_system_type`
+    """
 
     def __init__(self, UI):
-        super(COTEditHardware, self).__init__(
-            UI,
-            [
-                "PACKAGE",
-                "output",
-                "profiles",
-                "cpus",
-                "memory",
-                "nics",
-                "nic_type",
-                "mac_addresses_list",
-                "nic_networks",
-                "nic_names",
-                "serial_ports",
-                "serial_connectivity",
-                "scsi_subtype",
-                "ide_subtype",
-                "virtual_system_type",
-            ])
+        """Instantiate this submodule with the given UI."""
+        super(COTEditHardware, self).__init__(UI)
+        self.profiles = None
+        """Configuration profile(s) to edit."""
+        self._cpus = None
+        self._memory = None
+        self._nics = None
+        self._nic_type = None
+        self.mac_addresses_list = None
+        """List of MAC addresses to set."""
+        self.nic_networks = None
+        """List of NIC-to-network mappings."""
+        self.nic_names = None
+        """List of NIC name strings"""
+        self._serial_ports = None
+        self.serial_connectivity = None
+        """List of serial connection strings."""
+        self.scsi_subtype = None
+        """Subtype string for SCSI controllers"""
+        self.ide_subtype = None
+        """Subtype string for IDE controllers"""
+        self.virtual_system_type = None
+        """Virtual system type"""
 
-    # We like to see memory input in the form "4096M" or "4 GB"
-    MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?[bB]?\s*$"
+    @property
+    def cpus(self):
+        """Number of CPUs to set."""
+        return self._cpus
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
-        valid, value_or_reason = super(COTEditHardware, self).validate_arg(
-            arg, value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
-
+    @cpus.setter
+    def cpus(self, value):
         try:
-            if arg == "cpus":
-                value = int(value)
-                if value < 1:
-                    return False, "CPU count must be at least 1"
-                self.vm.get_platform().validate_cpu_count(value)
-            elif arg == "memory":
-                value = str(value)
-                match = re.match(self.MEMORY_REGEXP, value)
-                if not match:
-                    return (False, "Could not parse memory string '{0}'"
-                            .format(value))
-                mem_value = int(match.group(1))
-                if mem_value <= 0:
-                    return False, "Memory must be greater than zero"
-                if match.group(2) == 'M' or match.group(2) == 'm':
-                    # default
-                    logger.debug("Memory specified in megabytes")
-                    pass
-                elif match.group(2) == 'G' or match.group(2) == 'g':
-                    logger.debug("Memory specified in gigabytes - "
-                                 "converting to megabytes")
-                    mem_value *= 1024
-                else:
-                    # Try to be clever and guess the units
-                    if mem_value <= 64:
-                        logger.warning("Memory units not specified, "
-                                       "guessing '{0}' means '{0}GB'"
-                                       .format(mem_value))
-                        mem_value *= 1024
-                    else:
-                        logger.warning("Memory units not specified, "
-                                       "guessing '{0}' means '{0}MB'"
-                                       .format(mem_value))
-                        pass
-                self.vm.get_platform().validate_memory_amount(mem_value)
-                return True, mem_value
-            elif arg == "nics":
-                value = int(value)
-                self.vm.get_platform().validate_nic_count(value)
-            elif arg == "nic_type":
-                self.vm.get_platform().validate_nic_type(value)
-            elif arg == "serial_ports":
-                value = int(value)
-                self.vm.get_platform().validate_serial_count(value)
-        except ValueError as e:
-            return False, str(e)
+            value = int(value)
+        except ValueError:
+            raise InvalidInputError("cpus value must be an integer")
+        if value < 1:
+            raise InvalidInputError("CPU count must be at least 1")
+        self.vm.get_platform().validate_cpu_count(value)
+        self._cpus = value
 
-        return valid, value
+    @property
+    def memory(self):
+        """Amount of RAM (in megabytes) to set."""
+        return self._memory
+
+    @memory.setter
+    def memory(self, value):
+        value = str(value)
+        # We like to see memory input in the form "4096M" or "4 GB"
+        MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?[bB]?\s*$"
+        match = re.match(MEMORY_REGEXP, value)
+        if not match:
+            raise InvalidInputError("Could not parse memory string '{0}'"
+                                    .format(value))
+        mem_value = int(match.group(1))
+        if mem_value <= 0:
+            raise InvalidInputError("Memory must be greater than zero")
+        if match.group(2) == 'M' or match.group(2) == 'm':
+            # default
+            logger.debug("Memory specified in megabytes")
+            pass
+        elif match.group(2) == 'G' or match.group(2) == 'g':
+            logger.debug("Memory specified in gigabytes - "
+                         "converting to megabytes")
+            mem_value *= 1024
+        else:
+            # Try to be clever and guess the units
+            if mem_value <= 64:
+                logger.warning("Memory units not specified, "
+                               "guessing '{0}' means '{0}GB'"
+                               .format(mem_value))
+                mem_value *= 1024
+            else:
+                logger.warning("Memory units not specified, "
+                               "guessing '{0}' means '{0}MB'"
+                               .format(mem_value))
+                pass
+        self.vm.get_platform().validate_memory_amount(mem_value)
+        self._memory = mem_value
+
+    @property
+    def nics(self):
+        """Number of NICs to set."""
+        return self._nics
+
+    @nics.setter
+    def nics(self, value):
+        try:
+            value = int(value)
+        except ValueError:
+            raise InvalidInputError("nics value must be an integer")
+        self.vm.get_platform().validate_nic_count(value)
+        self._nics = value
+
+    @property
+    def nic_type(self):
+        """NIC type string to set."""
+        return self._nic_type
+
+    @nic_type.setter
+    def nic_type(self, value):
+        self.vm.get_platform().validate_nic_type(value)
+        self._nic_type = value
+
+    @property
+    def serial_ports(self):
+        """Serial port count to set."""
+        return self._serial_ports
+
+    @serial_ports.setter
+    def serial_ports(self, value):
+        try:
+            value = int(value)
+        except ValueError:
+            raise InvalidInputError("serial_ports value must be an integer")
+        self.vm.get_platform().validate_serial_count(value)
+        self._serial_ports = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
+        """Check whether the module is ready to :meth:`run`.
 
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
         # Need some work to do!
-        work_to_do = False
-        for (key, value) in self.args.items():
-            if key == "PACKAGE" or key == "output":
-                continue
-            elif value is not None:
-                work_to_do = True
-                break
-        if not work_to_do:
+        if (
+                self.profiles is None and
+                self.cpus is None and
+                self.memory is None and
+                self.nics is None and
+                self.nic_type is None and
+                self.mac_addresses_list is None and
+                self.nic_networks is None and
+                self.nic_names is None and
+                self.serial_ports is None and
+                self.serial_connectivity is None and
+                self.scsi_subtype is None and
+                self.ide_subtype is None and
+                self.virtual_system_type is None
+        ):
             return (False, "No work requested! Please specify at least "
                     "one hardware change")
         return super(COTEditHardware, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTEditHardware, self).run()
 
-        profiles = self.get_value("profiles")
-        virtual_system_type = self.get_value("virtual_system_type")
-        if profiles is not None and virtual_system_type is not None:
+        if self.profiles is not None and self.virtual_system_type is not None:
             self.UI.confirm_or_die(
                 "VirtualSystemType is not filtered by configuration profile. "
                 "Requested system type(s) '{0}' will be set for ALL profiles, "
                 "not just profile(s) {1}. Continue?"
-                .format(" ".join(virtual_system_type), profiles))
+                .format(" ".join(self.virtual_system_type), self.profiles))
 
         vm = self.vm
 
-        if profiles is not None:
+        if self.profiles is not None:
             profile_list = vm.get_configuration_profile_ids()
-            for profile in profiles:
+            for profile in self.profiles:
                 if profile not in profile_list:
                     self.UI.confirm_or_die(
                         "Profile '{0}' does not exist. Create it?"
@@ -160,37 +236,33 @@ class COTEditHardware(COTSubmodule):
                     vm.create_configuration_profile(profile, label=label,
                                                     description=desc)
 
-        if virtual_system_type is not None:
-            vm.set_system_type(virtual_system_type)
+        if self.virtual_system_type is not None:
+            vm.set_system_type(self.virtual_system_type)
 
-        cpus = self.get_value("cpus")
-        if cpus is not None:
-            vm.set_cpu_count(cpus, profiles)
+        if self.cpus is not None:
+            vm.set_cpu_count(self.cpus, self.profiles)
 
-        memory = self.get_value("memory")
-        if memory is not None:
-            vm.set_memory(memory, profiles)
+        if self.memory is not None:
+            vm.set_memory(self.memory, self.profiles)
 
-        nic_type = self.get_value("nic_type")
-        if nic_type is not None:
-            vm.set_nic_type(nic_type, profiles)
+        if self.nic_type is not None:
+            vm.set_nic_type(self.nic_type, self.profiles)
 
-        nics = self.get_value("nics")
-        if nics is not None:
-            nics_dict = vm.get_nic_count(profiles)
+        if self.nics is not None:
+            nics_dict = vm.get_nic_count(self.profiles)
             for (profile, count) in nics_dict.items():
-                if nics < count:
+                if self.nics < count:
                     self.UI.confirm_or_die(
                         "Profile {0} currently has {1} NIC(s). "
                         "Delete {2} NIC(s) to reduce to {3} total?"
-                        .format(profile, count, (count - nics), nics))
-            vm.set_nic_count(nics, profiles)
+                        .format(profile, count,
+                                (count - self.nics), self.nics))
+            vm.set_nic_count(self.nics, self.profiles)
 
-        nic_networks = self.get_value("nic_networks")
-        if nic_networks is not None:
+        if self.nic_networks is not None:
             existing_networks = vm.get_network_list()
             # Convert nic_networks to a set to merge duplicate entries
-            for network in natural_sort(set(nic_networks)):
+            for network in natural_sort(set(self.nic_networks)):
                 if network not in existing_networks:
                     self.UI.confirm_or_die(
                         "Network {0} is not currently defined. "
@@ -198,83 +270,79 @@ class COTEditHardware(COTSubmodule):
                     desc = self.UI.get_input(
                         "Please enter a description for this network", network)
                     vm.create_network(network, desc)
-            vm.set_nic_networks(nic_networks, profiles)
+            vm.set_nic_networks(self.nic_networks, self.profiles)
 
-        mac_addresses_list = self.get_value("mac_addresses_list")
-        if mac_addresses_list is not None:
-            vm.set_nic_mac_addresses(mac_addresses_list, profiles)
+        if self.mac_addresses_list is not None:
+            vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
 
-        nic_names = self.get_value("nic_names")
-        if nic_names is not None:
-            vm.set_nic_names(nic_names, profiles)
+        if self.nic_names is not None:
+            vm.set_nic_names(self.nic_names, self.profiles)
 
-        serial_ports = self.get_value("serial_ports")
-        if serial_ports is not None:
-            serial_dict = vm.get_serial_count(profiles)
+        if self.serial_ports is not None:
+            serial_dict = vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
-                if serial_ports < count:
+                if self.serial_ports < count:
                     self.UI.confirm_or_die(
                         "Profile {0} currently has {1} serial port(s). "
                         "Delete {2} port(s) to reduce to {3} total?"
-                        .format(profile, count, (count - serial_ports),
-                                serial_ports))
-            vm.set_serial_count(serial_ports, profiles)
+                        .format(profile, count, (count - self.serial_ports),
+                                self.serial_ports))
+            vm.set_serial_count(self.serial_ports, self.profiles)
 
-        serial_connectivity = self.get_value("serial_connectivity")
-        if serial_connectivity is not None:
-            serial_dict = vm.get_serial_count(profiles)
+        if self.serial_connectivity is not None:
+            serial_dict = vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
-                if len(serial_connectivity) < count:
+                if len(self.serial_connectivity) < count:
                     self.UI.confirm_or_die(
                         "There are {0} serial port(s) under profile {1}, but "
                         "you have specified connectivity information for only "
                         "{2}. "
                         "\nThe remaining ports will be unreachable. Continue?"
                         .format(count, profile,
-                                len(serial_connectivity)))
-            vm.set_serial_connectivity(serial_connectivity, profiles)
+                                len(self.serial_connectivity)))
+            vm.set_serial_connectivity(self.serial_connectivity, self.profiles)
 
-        scsi_subtype = self.get_value("scsi_subtype")
-        if scsi_subtype is not None:
-            vm.set_scsi_subtype(scsi_subtype, profiles)
+        if self.scsi_subtype is not None:
+            vm.set_scsi_subtype(self.scsi_subtype, self.profiles)
 
-        ide_subtype = self.get_value("ide_subtype")
-        if ide_subtype is not None:
-            vm.set_ide_subtype(ide_subtype, profiles)
+        if self.ide_subtype is not None:
+            vm.set_ide_subtype(self.ide_subtype, self.profiles)
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('edit-hardware', subparser)``
+        """
         p = parent.add_parser(
             'edit-hardware', add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            usage=("""
-  {0} edit-hardware --help
-  {0} <opts> edit-hardware PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]
-  {0} <opts> edit-hardware PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]]
-                           [-c CPUS] [-m MEMORY]
-                           [-n NICS] [--nic-type {{e1000,virtio,vmxnet3}}]
-                           [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]]
-                           [--nic-names NAME1 [NAME2 ...]]
-                           [-s SERIAL_PORTS] [-S URI1 [URI2 ...]]
-                           [--scsi-subtype SCSI_SUBTYPE]
-                           [--ide-subtype IDE_SUBTYPE]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage=self.UI.fill_usage("edit-hardware", [
+                "PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]",
+                "PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]] [-c CPUS] \
+[-m MEMORY] [-n NICS] [--nic-type {e1000,virtio,vmxnet3}] \
+[-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]] \
+[--nic-names NAME1 [NAME2 ...]] [-s SERIAL_PORTS] [-S URI1 [URI2 ...]] \
+[--scsi-subtype SCSI_SUBTYPE] [--ide-subtype IDE_SUBTYPE]",
+            ]),
             help="Edit virtual machine hardware properties of an OVF",
             description="Edit hardware properties of the specified OVF or OVA",
-            epilog="""
-Examples:
-
-  {0} edit-hardware csr1000v.ova --output csr1000v_custom.ova \\
-        --profile 1CPU-4GB --cpus 1 --memory 4GB
-    Create a new profile named "1CPU-4GB" with 1 CPU and 4 GB of RAM
-
-  {0} edit-hardware input.ova -o output.ova --nic-names 'mgmt' 'eth{{0}}'
-    Rename the NICs in the output OVA as 'mgmt', 'eth0', 'eth1', 'eth2'...
-
-  {0} edit-hardware input.ova -o output.ova --nic-names 'Ethernet0/{{10}}'
-    Rename the NICs in the output OVA as 'Ethernet0/10', 'Ethernet0/11',
-    'Ethernet0/12', etc.
-
-    """.format(os.path.basename(sys.argv[0])))
+            epilog=self.UI.fill_examples([
+                ('cot edit-hardware csr1000v.ova --output csr1000v_custom.ova'
+                 ' --profile 1CPU-4GB --cpus 1 --memory 8GB',
+                 'Create a new profile named "1CPU-8GB" with 1 CPU and 8'
+                 ' gigabytes of RAM'),
+                ('cot edit-hardware input.ova -o output.ova'
+                 ' --nic-names "mgmt" "eth{0}"',
+                 "Rename the NICs in the output OVA as 'mgmt', 'eth0',"
+                 " 'eth1', 'eth2'..."),
+                ('cot edit-hardware input.ova -o output.ova'
+                 ' --nic-names "Ethernet0/{10}"',
+                 "Rename the NICs in the output OVA as 'Ethernet0/10',"
+                 " 'Ethernet0/11', 'Ethernet0/12', etc.")
+            ]))
 
         g = p.add_argument_group("general options")
 

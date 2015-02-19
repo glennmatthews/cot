@@ -12,17 +12,10 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import logging
 import os.path
 import unittest
 
-from verboselogs import VerboseLogger
-
-logging.setLoggerClass(VerboseLogger)
-
 from COT.xml_file import XML
-
-logger = logging.getLogger(__name__)
 
 
 class TestXMLClass(unittest.TestCase):

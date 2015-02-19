@@ -14,88 +14,107 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Module for adding files to VM definitions.
+
+.. autosummary::
+  COTAddFile
+"""
+
 import os.path
 import logging
-import sys
 
-from .data_validation import check_for_conflict
+from .data_validation import check_for_conflict, InvalidInputError
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
 
 
 class COTAddFile(COTSubmodule):
-    """Add a file (such as a README) to the package."""
+
+    """Add a file (such as a README) to the package.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+
+    Attributes:
+    :attr:`file`,
+    :attr:`file_id`
+    """
 
     def __init__(self, UI):
-        super(COTAddFile, self).__init__(
-            UI,
-            [
-                "FILE",
-                "PACKAGE",
-                "output",
-                "file_id"
-            ])
+        """Instantiate this submodule with the given UI."""
+        super(COTAddFile, self).__init__(UI)
+        self._file = None
+        self.file_id = None
+        """File identifier string."""
 
-    def validate_arg(self, arg, value):
-        """Check whether it's OK to set the given argument to the given value.
-        Returns either (True, massaged_value) or (False, reason)"""
-        valid, value_or_reason = super(COTAddFile, self).validate_arg(arg,
-                                                                      value)
-        if not valid or value_or_reason is None:
-            return valid, value_or_reason
-        value = value_or_reason
+    @property
+    def file(self):
+        """File to be added to the package.
 
-        if arg == "FILE":
-            if not os.path.exists(value):
-                return False, ("Specified file '{0}' does not exist!"
-                               .format(value))
+        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        """
+        return self._file
 
-        return valid, value_or_reason
-
-    def set_value(self, arg, value):
-        super(COTAddFile, self).set_value(arg, value)
+    @file.setter
+    def file(self, value):
+        if not os.path.exists(value):
+            raise InvalidInputError("Specified file '{0}' does not exist!"
+                                    .format(value))
+        self._file = value
 
     def ready_to_run(self):
-        """Are we ready to go?
-        Returns the tuple (ready, reason)"""
-        if self.get_value("FILE") is None:
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
+        if self.file is None:
             return False, "FILE is a mandatory argument!"
         return super(COTAddFile, self).ready_to_run()
 
     def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
         super(COTAddFile, self).run()
 
-        FILE = self.get_value("FILE")
-        file_id = self.get_value("file_id")
         vm = self.vm
 
-        filename = os.path.basename(FILE)
+        filename = os.path.basename(self.file)
         (file, _, _, _) = vm.search_from_filename(filename)
-        if file_id is not None:
-            (f2, _, _, _) = vm.search_from_file_id(file_id)
+        if self.file_id is not None:
+            (f2, _, _, _) = vm.search_from_file_id(self.file_id)
             file = check_for_conflict("File to overwrite", [file, f2])
-        if file_id is None:
+        if self.file_id is None:
             if file is not None:
-                file_id = vm.get_id_from_file(file)
+                self.file_id = vm.get_id_from_file(file)
             else:
-                file_id = filename
+                self.file_id = filename
 
         if file is not None:
             self.UI.confirm_or_die("Replace existing file {0} with {1}?"
                                    .format(vm.get_path_from_file(file),
-                                           FILE))
+                                           self.file))
             logger.warning("Overwriting existing File in OVF")
 
-        vm.add_file(FILE, file_id, file)
+        vm.add_file(self.file, self.file_id, file)
 
     def create_subparser(self, parent):
+        """Add subparser for the CLI of this submodule.
+
+        :param object parent: Subparser grouping object returned by
+            :func:`ArgumentParser.add_subparsers`
+
+        :returns: ``('add-file', subparser)``
+        """
         p = parent.add_parser(
             'add-file',
-            usage=("""
-  {0} add-file --help
-  {0} <opts> add-file FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"""
-                   .format(os.path.basename(sys.argv[0]))),
+            usage=self.UI.fill_usage("add-file", [
+                "FILE PACKAGE [-o OUTPUT] [-f FILE_ID]",
+            ]),
             help="Add a file to an OVF package",
             description="""
 Add or replace a file in the given OVF. If the specified file

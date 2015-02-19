@@ -10,6 +10,55 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""
+Package implementing the Common OVF Tool.
+
+Virtual machine definition modules
+----------------------------------
+.. autosummary::
+  :toctree:
+
+  COT.vm_description
+  COT.vm_factory
+  COT.vm_context_manager
+  COT.xml_file
+  COT.ovf
+
+Command modules
+---------------
+.. autosummary::
+  :toctree:
+
+  COT.submodule
+  COT.add_disk
+  COT.add_file
+  COT.deploy
+  COT.edit_hardware
+  COT.edit_product
+  COT.edit_properties
+  COT.help
+  COT.info
+  COT.inject_config
+
+Helper library modules
+----------------------
+.. autosummary::
+  :toctree:
+
+  COT.data_validation
+  COT.helper_tools
+  COT.platforms
+
+User interface modules
+----------------------
+.. autosummary::
+  :toctree:
+
+  COT.ui_shared
+  COT.cli
+
+"""
+
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions

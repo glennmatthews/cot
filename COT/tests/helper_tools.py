@@ -18,10 +18,6 @@ import os
 import logging
 
 from distutils.version import StrictVersion
-from verboselogs import VerboseLogger
-
-logging.setLoggerClass(VerboseLogger)
-logger = logging.getLogger(__name__)
 
 from COT.data_validation import ValueUnsupportedError
 import COT.helper_tools
@@ -30,6 +26,8 @@ from COT.helper_tools import create_disk_image, convert_disk_image
 from COT.helper_tools import get_disk_format, get_disk_capacity
 from COT.helper_tools import HelperError, HelperNotFoundError
 from COT.tests.ut import COT_UT
+
+logger = logging.getLogger(__name__)
 
 
 class HelperToolsUT(COT_UT):

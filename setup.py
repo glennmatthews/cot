@@ -22,7 +22,15 @@ except ImportError:
     ez_setup.use_setuptools()
     from setuptools import setup
 
+import os.path
+import subprocess
+import sys
+from setuptools.command.bdist_egg import bdist_egg
+from setuptools import Command
+
 import versioneer
+# Extend the "build" command a bit further:
+from versioneer import cmd_build
 
 versioneer.VCS = 'git'
 versioneer.versionfile_source = 'COT/_version.py'
@@ -30,20 +38,12 @@ versioneer.versionfile_build = versioneer.versionfile_source    # TODO
 versioneer.tag_prefix = 'v'
 versioneer.parentdir_prefix = 'cot-'
 
-import os.path
-import subprocess
-from setuptools.command.bdist_egg import bdist_egg
-from setuptools import Command
-
 README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            'README.md')
 HELPER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                              "check_and_install_helpers.py")
 
 cmd_class = versioneer.get_cmdclass()
-
-# Extend the "build" command a bit further:
-from versioneer import cmd_build
 
 
 class custom_build(cmd_build):
@@ -89,6 +89,12 @@ cmd_class['build'] = custom_build
 cmd_class['install_helpers'] = custom_install_helpers
 cmd_class['bdist_egg'] = custom_bdist_egg
 
+install_requires = ['argparse', 'colorlog>=2.5.0', 'verboselogs>=1.0']
+# shutil.get_terminal_size is standard in 3.3 and later only.
+if sys.version_info < (3, 3):
+    install_requires.append('backports.shutil_get_terminal_size')
+
+
 setup(
     name='common-ovf-tool',
     version=versioneer.get_version(),
@@ -106,5 +112,5 @@ setup(
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
     test_suite='COT.tests',
-    install_requires=['argparse', 'colorlog>=2.5.0', 'verboselogs>=1.0'],
+    install_requires=install_requires
 )

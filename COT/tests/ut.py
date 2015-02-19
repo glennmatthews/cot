@@ -30,11 +30,11 @@ import time
 import logging
 from logging.handlers import BufferingHandler
 
-from verboselogs import VerboseLogger
-logging.setLoggerClass(VerboseLogger)
-
 from COT.helper_tools import validate_ovf_for_esxi
 from COT.helper_tools import HelperError, HelperNotFoundError
+
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
 
 logger = logging.getLogger(__name__)
 
@@ -266,8 +266,8 @@ class COT_UT(unittest.TestCase):
             self.instance.destroy()
             self.instance = None
 
-        if (COT_UT.OVFTOOL_PRESENT and self.validate_output_with_ovftool
-                and os.path.exists(self.temp_file)):
+        if (COT_UT.OVFTOOL_PRESENT and self.validate_output_with_ovftool and
+                os.path.exists(self.temp_file)):
             # Ask OVFtool to validate that the output file is sane
             try:
                 validate_ovf_for_esxi(self.temp_file)

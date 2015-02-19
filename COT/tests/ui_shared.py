@@ -12,12 +12,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import logging
 import unittest
-
-from verboselogs import VerboseLogger
-
-logging.setLoggerClass(VerboseLogger)
 
 from COT.ui_shared import UI
 
