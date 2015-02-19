@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import re
 import sys
 import os
 
@@ -71,11 +72,16 @@ copyright = u'2013-2015, the COT project developers'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-from COT._version import get_versions   # noqa
+from COT._version import get_versions, run_command   # noqa
 # The full version, including alpha/beta/rc tags.
 release = get_versions()["version"]
 # The short X.Y version.
 version = release.split("+")[0]
+
+if re.search("dirty", release):
+    print(run_command(["git"], ["describe", "--tags", "--dirty",
+                                "--always", "--long"]))
+    print(run_command(["git"], ["diff"]))
 
 print("\n".join([project, version, release]))
 
