@@ -39,13 +39,13 @@ class COTGenericSubmodule(object):
 
     """Abstract interface for COT command submodules.
 
+    Attributes:
+    :attr:`vm`,
+    :attr:`UI`
+
     .. note :: Generally a command should not inherit directly from this class,
       but should instead subclass :class:`COTReadOnlySubmodule` or
       :class:`COTSubmodule` as appropriate.
-
-    :ivar VMDescription vm: Virtual machine instance possibly created
-      by this submodule
-    :ivar UI UI: User interface associated with this submodule
     """
 
     def __init__(self, UI):
@@ -53,7 +53,9 @@ class COTGenericSubmodule(object):
         self.vm = None
         """Virtual machine description (:class:`VMDescription`)."""
         self.UI = UI
-        """User interface instance (:class:`UI` or subclass) to use."""
+        """User interface instance (:class:`~ui_shared.UI` or subclass)
+        to use.
+        """
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -65,7 +67,8 @@ class COTGenericSubmodule(object):
     def run(self):
         """Do the actual work of this submodule.
 
-        :raises InvalidInputError: if :meth:`ready_to_run` reports ``False``
+        :raises: :exc:`.InvalidInputError` if :meth:`ready_to_run`
+          reports ``False``
         """
         (ready, reason) = self.ready_to_run()
         if not ready:
@@ -100,7 +103,15 @@ class COTGenericSubmodule(object):
 
 class COTReadOnlySubmodule(COTGenericSubmodule):
 
-    """Class for submodules that do not modify the OVF, such as 'deploy'."""
+    """Class for submodules that do not modify the OVF, such as 'deploy'.
+
+    Inherited attributes:
+    :attr:`vm`,
+    :attr:`UI`
+
+    Attributes:
+    :attr:`package`
+    """
 
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
@@ -109,16 +120,17 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
 
     @property
     def package(self):
-        """VM description file to read from."""
+        """VM description file to read from.
+
+        Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
+        :attr:`self.vm` from the provided file.
+
+        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        """
         return self._package
 
     @package.setter
     def package(self, value):
-        """Set the input file for this submodule.
-
-        Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
-        :attr:`self.vm` from the provided file.
-        """
         if value is not None and not os.path.exists(value):
             raise InvalidInputError("Specified package {0} does not exist!"
                                     .format(value))
@@ -141,8 +153,16 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
 
 class COTSubmodule(COTGenericSubmodule):
 
-    """Class for submodules that read and write the OVF."""
+    """Class for submodules that read and write the OVF.
 
+    Inherited attributes:
+    :attr:`vm`,
+    :attr:`UI`
+
+    Attributes:
+    :attr:`package`,
+    :attr:`output`
+    """
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         super(COTSubmodule, self).__init__(UI)
@@ -152,16 +172,17 @@ class COTSubmodule(COTGenericSubmodule):
 
     @property
     def package(self):
-        """VM description file to read (and possibly write)."""
+        """VM description file to read (and possibly write).
+
+        Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
+        :attr:`self.vm` from the provided file.
+
+        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        """
         return self._package
 
     @package.setter
     def package(self, value):
-        """Set the input file for this submodule.
-
-        Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
-        :attr:`self.vm` from the provided file.
-        """
         if value is not None and not os.path.exists(value):
             raise InvalidInputError("Specified package {0} does not exist!"
                                     .format(value))
@@ -174,17 +195,16 @@ class COTSubmodule(COTGenericSubmodule):
 
     @property
     def output(self):
-        """Output file for this submodule."""
-        return self._output
-
-    @output.setter
-    def output(self, value):
-        """Set the output file for this submodule.
+        """Output file for this submodule.
 
         If the specified file already exists,  will prompt the user
         (:meth:`~COT.ui_shared.UI.confirm_or_die`) to
         confirm overwriting the existing file.
         """
+        return self._output
+
+    @output.setter
+    def output(self, value):
         if value and value != self._output and os.path.exists(value):
             self.UI.confirm_or_die("Overwrite existing file {0}?"
                                    .format(value))
@@ -207,7 +227,8 @@ class COTSubmodule(COTGenericSubmodule):
         If :attr:`output` was not previously set, automatically
         sets it to the value of :attr:`PACKAGE`.
 
-        :raises InvalidInputError: if :meth:`ready_to_run` reports ``False``
+        :raises: :exc:`.InvalidInputError` if :meth:`ready_to_run`
+          reports ``False``
         """
         super(COTSubmodule, self).run()
 

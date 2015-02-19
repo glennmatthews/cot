@@ -255,7 +255,7 @@ def add_disk_worker(vm,
                     description=None):
     """Worker function for actually adding the disk.
 
-    All parameters except `vm`, `UI`, and `DISK_IMAGE` are optional
+    All parameters except ``vm``, ``UI``, and ``DISK_IMAGE`` are optional
     and will be automatically determined by COT if unspecified.
 
     :param vm: The virtual machine being edited.
@@ -263,7 +263,7 @@ def add_disk_worker(vm,
         :class:`~COT.vm_description.VMDescription` subclass
 
     :param UI: User interface in effect.
-    :type UI: :class:`~COT.ui_shared.UI`
+    :type UI: instance of :class:`~COT.ui_shared.UI` or subclass.
     :param str DISK_IMAGE: path to disk image to add to the VM.
     :param str type: Disk type: ``'cdrom'`` or ``'harddisk'``.
         If not specified, will be derived automatically from the

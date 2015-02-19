@@ -1,10 +1,23 @@
 Introduction
 ============
 
-.. image:: https://travis-ci.org/glennmatthews/cot.svg?branch=master
-    :target: https://travis-ci.org/glennmatthews/cot
-.. image:: https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master
-    :target: https://coveralls.io/r/glennmatthews/cot?branch=master
+.. raw:: html
+
+   <p style="height:22px">
+   <a href="https://travis-ci.org/glennmatthews/cot">
+   <img src="https://travis-ci.org/glennmatthews/cot.svg?branch=master"
+        alt="Build Status">
+   </a>
+   <a href="https://coveralls.io/r/glennmatthews/cot?branch=master">
+   <img
+    src="https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master"
+    alt="Coverage Status">
+   </a>
+   <a href="https://readthedocs.org/projects/cot/?badge=latest">
+   <img src="https://readthedocs.org/projects/cot/badge/?version=latest"
+        alt="Documentation Status">
+   </a>
+   </p>
 
 COT (the Common OVF Tool) is a tool for editing `Open Virtualization Format`_
 (``.ovf``, ``.ova``) virtual appliances, with a focus on virtualized network
