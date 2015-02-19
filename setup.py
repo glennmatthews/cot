@@ -45,6 +45,10 @@ HELPER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 cmd_class = versioneer.get_cmdclass()
 
+# on_rtd is whether we are on readthedocs.org, this line of code grabbed from
+# docs.readthedocs.org
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
 
 class custom_build(cmd_build):
     def run(self):
@@ -82,7 +86,9 @@ class custom_install_helpers(Command):
 # 'bdist_egg' (called automatically by 'install') to include 'install_helpers'
 class custom_bdist_egg(bdist_egg):
     def run(self):
-        self.run_command('install_helpers')
+        # Don't bother installing helper tools on readthedocs.org
+        if not on_rtd:
+            self.run_command('install_helpers')
         bdist_egg.run(self)
 
 cmd_class['build'] = custom_build

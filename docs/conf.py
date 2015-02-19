@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import re
 import sys
 import os
 
@@ -71,11 +72,24 @@ copyright = u'2013-2015, the COT project developers'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-from COT._version import get_versions   # noqa
-# The full version, including alpha/beta/rc tags.
-release = get_versions()["version"]
-# The short X.Y version.
-version = release.split("+")[0]
+from COT._version import get_versions, run_command   # noqa
+
+versioneer_string = get_versions()["version"]
+# readthedocs patches conf.py, causing git to report the version as 'dirty',
+# and hence causing versioneer to do likewise. Let's clean that up.
+if re.search(".dirty$", versioneer_string):
+    versioneer_string = versioneer_string[:-6]
+# Get the tagged version number:
+release = versioneer_string.split("+")[0]
+# If the commit count is 0 we are on a tagged version and the above
+# suffices. If it's greater than zero, let's append that
+post0 = re.search("\+([1-9][0-9]*)", versioneer_string)
+if post0:
+    # We are past a tagged version by +N commits
+    commit_count = post0.group(1)
+    release += " (plus {0} commits)".format(commit_count)
+
+version = release
 
 print("\n".join([project, version, release]))
 

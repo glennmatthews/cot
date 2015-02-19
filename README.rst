@@ -7,8 +7,8 @@ COT: the Common OVF Tool
 .. image:: https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master
     :target: https://coveralls.io/r/glennmatthews/cot?branch=master
     :alt: Coverage Status
-.. image:: https://readthedocs.org/projects/cot/badge/?version=stable
-    :target: https://readthedocs.org/projects/cot/?badge=stable
+.. image:: https://readthedocs.org/projects/cot/badge/?version=latest
+    :target: https://readthedocs.org/projects/cot/?badge=latest
     :alt: Documentation Status
 
 COT (the Common OVF Tool) is a tool for editing `Open Virtualization Format`_
