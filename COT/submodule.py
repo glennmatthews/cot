@@ -163,6 +163,7 @@ class COTSubmodule(COTGenericSubmodule):
     :attr:`package`,
     :attr:`output`
     """
+
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         super(COTSubmodule, self).__init__(UI)
