@@ -39,7 +39,7 @@ versioneer.tag_prefix = 'v'
 versioneer.parentdir_prefix = 'cot-'
 
 README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           'README.md')
+                           'README.rst')
 HELPER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                              "check_and_install_helpers.py")
 
@@ -102,7 +102,7 @@ if sys.version_info < (3, 3):
 
 
 setup(
-    name='common-ovf-tool',
+    name='cot',
     version=versioneer.get_version(),
     cmdclass=cmd_class,
     author='Glenn Matthews',
@@ -114,9 +114,37 @@ setup(
         ],
     },
     url='https://github.com/glennmatthews/cot',
-    license=open('LICENSE.txt').read(),
+    license='MIT',
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
     test_suite='COT.tests',
-    install_requires=install_requires
+    install_requires=install_requires,
+    classifiers=[
+        # Project status
+        'Development Status :: 5 - Production/Stable',
+        # Target audience
+        'Intended Audience :: Developers',
+        'Intended Audience :: Information Technology',
+        'Intended Audience :: System Administrators',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: System :: Emulators',
+        'Topic :: System :: Installation/Setup',
+        'Topic :: System :: Software Distribution',
+        'Topic :: System :: Systems Administration',
+        # Licensing
+        'License :: OSI Approved :: MIT License',
+        # Environment
+        'Environment :: Console',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: POSIX :: Linux',
+        # Supported versions
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+    ],
+    keywords='virtualization ovf ova esxi vmware vcenter',
 )
