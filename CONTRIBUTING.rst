@@ -1,7 +1,5 @@
-Contributing to COT
-===================
-
-Please do! We only have a few simple requirements for diffs and pull requests.
+Please do contribute! We only have a few simple requirements for diffs and
+pull requests.
 
 * `Follow coding guidelines`_
 * `Add automated unit tests`_
