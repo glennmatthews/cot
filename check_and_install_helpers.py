@@ -233,7 +233,7 @@ def install_fatdisk(force):
             print("Not sure how to install 'fatdisk', sorry!\n"
                   "See https://github.com/goblinhack/fatdisk")
             return False
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, IOError):
         print("Error while installing 'fatdisk'.\nContinuing...")
         return False
 
