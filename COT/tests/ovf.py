@@ -32,7 +32,7 @@ from COT.ovf import OVF, OVFNameHelper, OVFItem
 from COT.ovf import byte_count, byte_string, factor_bytes
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
-from COT.helper_tools import HelperError, validate_ovf_for_esxi
+from COT.helpers.helper import HelperError
 from COT.vm_context_manager import VMContextManager
 
 
@@ -354,9 +354,10 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             subprocess.check_call(['sed', 's/InstanceID>11</InstanceID>10</',
                                    self.input_ovf],
                                   stdout=f)
-        if COT_UT.OVFTOOL_PRESENT:
+        if self.OVFTOOL.helper_path:
             # Make sure ovftool also sees this as invalid
-            self.assertRaises(HelperError, validate_ovf_for_esxi, fake_file)
+            self.assertRaises(HelperError,
+                              self.OVFTOOL.validate_ovf, fake_file)
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # Item referencing a nonexistent Configuration
@@ -364,9 +365,10 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             subprocess.check_call(['sed', 's/on="2CPU-2GB-1NIC"/on="foo"/',
                                    self.input_ovf],
                                   stdout=f)
-        if COT_UT.OVFTOOL_PRESENT:
+        if self.OVFTOOL.helper_path:
             # Make sure ovftool also sees this as invalid
-            self.assertRaises(HelperError, validate_ovf_for_esxi, fake_file)
+            self.assertRaises(HelperError,
+                              self.OVFTOOL.validate_ovf, fake_file)
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # TODO - inconsistent order of File versus Disk?

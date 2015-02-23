@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+#
+# ovftool.py - Helper for 'ovftool'
+#
+# February 2015, Glenn F. Matthews
+# Copyright (c) 2013-2015 the COT project developers.
+# See the COPYRIGHT.txt file at the top-level directory of this distribution
+# and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
+#
+# This file is part of the Common OVF Tool (COT) project.
+# It is subject to the license terms in the LICENSE.txt file found in the
+# top-level directory of this distribution and at
+# https://github.com/glennmatthews/cot/blob/master/LICENSE.txt. No part
+# of COT, including this file, may be copied, modified, propagated, or
+# distributed except according to the terms contained in the LICENSE.txt file.
+
+import logging
+import re
+from distutils.version import StrictVersion
+
+from .helper import Helper
+
+logger = logging.getLogger(__name__)
+
+
+class OVFTool(Helper):
+
+    def __init__(self):
+        super(OVFTool, self).__init__("ovftool")
+
+    def _get_version(self):
+        output = self.call_helper(['--version'])
+        match = re.search("ovftool ([0-9.]+)", output)
+        return StrictVersion(match.group(1))
+
+    def install_helper(self):
+        raise NotImplementedError(
+            "No support for automated installation of ovftool, "
+            "as VMware requires a site login to download it.\n"
+            "See https://www.vmware.com/support/developer/ovf/")
+
+    def validate_ovf(self, ovf_file):
+        """Use VMware's ``ovftool`` program to validate an OVF or OVA.
+
+        This checks the file against the OVF standard and any VMware-specific
+        requirements.
+
+        :param str ovf_file: File to validate
+        :return: Output from ``ovftool``
+        :raise HelperNotFoundError: if ``ovftool`` is not found.
+        :raise HelperError: if ``ovftool`` regards the file as invalid
+        """
+        return self.call_helper(['--schemaValidate', ovf_file])

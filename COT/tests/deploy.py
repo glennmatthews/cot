@@ -22,8 +22,6 @@ from distutils.version import StrictVersion
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
-import COT.helper_tools
-import COT.deploy
 from COT.deploy import COTDeploy, COTDeployESXi
 from COT.data_validation import InvalidInputError
 
@@ -98,22 +96,22 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.package = self.input_ovf
         self.instance.hypervisor = 'esxi'
         # Stub out check_call so that we don't actually need ovftool
-        self._check_call = COT.deploy.check_call
+        self._check_call = self.instance.ovftool._check_call
         self.last_argv = []
-        COT.deploy.check_call = self.stub_check_call
+        self.instance.ovftool._check_call = self.stub_check_call
         # Ditto
-        self._ovftool_version = COT.helper_tools.OVFTOOL_VERSION
-        COT.helper_tools.OVFTOOL_VERSION = None
+        self._ovftool_version = self.instance.ovftool._version
+        self.instance.ovftool._version = None
         self.ovftool_version = StrictVersion("4.0.0")
-        self._check_output = COT.helper_tools.check_output
-        COT.helper_tools.check_output = self.stub_check_output
+        self._check_output = self.instance.ovftool._check_output
+        self.instance.ovftool._check_output = self.stub_check_output
 
     def tearDown(self):
         "Test case cleanup function called automatically"
         # Remove our stub
-        COT.deploy.check_call = self._check_call
-        COT.helper_tools.check_output = self._check_output
-        COT.helper_tools.OVFTOOL_VERSION = self._ovftool_version
+        self.instance.ovftool._check_call = self._check_call
+        self.instance.ovftool._check_output = self._check_output
+        self.instance.ovftool._version = self._ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
     def test_not_ready_with_no_args(self):
@@ -204,7 +202,7 @@ class TestCOTDeployESXi(COT_UT):
 
         # With <4.0.0, we don't (can't) fixup, regardless.
         # Discard cached information and update the info that will be returned
-        COT.helper_tools.OVFTOOL_VERSION = None
+        self.instance.ovftool._version = None
         self.ovftool_version = StrictVersion("3.5.0")
         self.instance.run()
         self.assertEqual([

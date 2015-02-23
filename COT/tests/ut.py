@@ -30,8 +30,8 @@ import time
 import logging
 from logging.handlers import BufferingHandler
 
-from COT.helper_tools import validate_ovf_for_esxi
-from COT.helper_tools import HelperError, HelperNotFoundError
+from COT.helpers.ovftool import OVFTool
+from COT.helpers.helper import HelperError
 
 from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
@@ -113,7 +113,8 @@ class COT_UT(unittest.TestCase):
     """Subclass of unittest.TestCase adding some additional behaviors we want
     for all of our test cases"""
 
-    OVFTOOL_PRESENT = True
+    OVFTOOL = OVFTool()
+    OVFTOOL.find_helper()
 
     FILE_SIZE = {}
     for filename in ['input.iso', 'input.vmdk', 'blank.vmdk']:
@@ -266,16 +267,11 @@ class COT_UT(unittest.TestCase):
             self.instance.destroy()
             self.instance = None
 
-        if (COT_UT.OVFTOOL_PRESENT and self.validate_output_with_ovftool and
+        if (self.OVFTOOL.helper_path and self.validate_output_with_ovftool and
                 os.path.exists(self.temp_file)):
             # Ask OVFtool to validate that the output file is sane
             try:
-                validate_ovf_for_esxi(self.temp_file)
-            except HelperNotFoundError:
-                print("\nWARNING: Unable to locate ovftool. "
-                      "Some tests will be less thorough.")
-                # Don't bother trying in future test cases
-                COT_UT.OVFTOOL_PRESENT = False
+                self.OVFTOOL.validate_ovf(self.temp_file)
             except HelperError as e:
                 self.fail("OVF not valid according to ovftool:\n{0}"
                           .format(e.strerror))

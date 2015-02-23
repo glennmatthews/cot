@@ -25,6 +25,9 @@ from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
+CURRENT_UI = None
+"""User interface instance in use by the currently running program, if any."""
+
 
 class UI(object):
 
