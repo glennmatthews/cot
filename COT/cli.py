@@ -85,7 +85,10 @@ class CLI(UI):
 
     def terminal_width(self):
         """Get the width of the terminal in columns."""
-        return get_terminal_size().columns
+        width = get_terminal_size().columns
+        if width <= 0:
+            width = 80
+        return width
 
     def fill_usage(self, subcommand, usage_list):
         """Pretty-print a list of usage strings for a COT subcommand.
@@ -456,7 +459,7 @@ Note: some subcommands rely on external software tools, including:
 
         # If being run non-interactively, treat as if --force is set, in order
         # to avoid hanging while trying to read input that will never come.
-        if not sys.stdin.isatty():
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
             args._force = True
 
         return args
