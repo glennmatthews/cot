@@ -71,11 +71,9 @@ class VmdkTool(Helper):
                                   '--directory', 'vmdktool-1.4'])
                 # TODO - this requires root
                 if not os.path.exists('/usr/local/man/man8'):
-                    try:
-                        os.makedirs('/usr/local/man/man8', 493)  # 493 == 0o755
-                    except OSError:
-                        pass
-                self._check_call(['make', '--directory',
+                    self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
+                                      '/usr/local/man/man8'])
+                self._check_call(['sudo', 'make', '--directory',
                                   'vmdktool-1.4', 'install'])
             finally:
                 if os.path.exists('vmdktool-1.4.tar.gz'):

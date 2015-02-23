@@ -51,12 +51,28 @@ class FatDisk(Helper):
                     self._check_call(['sudo', 'apt-get', 'install', 'make'])
                 else:
                     raise NotImplementedError("Not sure how to install 'make'")
+            # Fatdisk requires clang or gcc or g++
+            if not (self.find_executable('clang') or
+                    self.find_executable('gcc') or
+                    self.find_executable('g++')):
+                if self.PACKAGE_MANAGERS['apt-get']:
+                    self._check_call(['sudo', 'apt-get', 'install', 'gcc'])
+                else:
+                    raise NotImplementedError(
+                        "Not sure how to install a C compiler")
             self._check_call(
                 ['wget', '-O', 'fatdisk.tgz', 'https://github.com/goblinhack/'
-                 'fatdisk/archive/master.tar.gz'])
-            self._check_call(['tar', 'zxf', 'fatdisk.tgz'])
-            self._check_call(['./RUNME'], cwd='fatdisk-master')
-            shutil.copy2('fatdisk-master/fatdisk', '/usr/local/bin/fatdisk')
+                 'fatdisk/archive/v1.0.0-beta.tar.gz'])
+            try:
+                self._check_call(['tar', 'zxf', 'fatdisk.tgz'])
+                self._check_call(['./RUNME'], cwd='fatdisk-1.0.0-beta')
+                self._check_call(['sudo', 'cp', 'fatdisk-1.0.0-beta/fatdisk',
+                                  '/usr/local/bin/fatdisk'])
+            finally:
+                if os.path.exists('fatdisk.tgz'):
+                    os.remove('fatdisk.tgz')
+                if os.path.exists('fatdisk-1.0.0-beta'):
+                    shutil.rmtree('fatdisk-1.0.0-beta')
         else:
             raise NotImplementedError(
                 "Not sure how to install 'fatdisk'.\n"

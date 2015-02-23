@@ -174,16 +174,16 @@ class TestFatDisk(HelpersUT):
         self.helper.PACKAGE_MANAGERS['port'] = False
         self.helper.PACKAGE_MANAGERS['apt-get'] = True
         sys.platform = 'linux2'
-        # this will raise an IOError when attempting to copy the
-        # (unbuilt) binary to a system path
-        with self.assertRaises(IOError):
-            self.helper.install_helper()
+        self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'apt-get', 'install', 'make'],
-            ['wget', '-O', 'fatdisk.tgz',
-             'https://github.com/goblinhack/fatdisk/archive/master.tar.gz'],
+            ['sudo', 'apt-get', 'install', 'gcc'],
+            ['wget', '-O', 'fatdisk.tgz', 'https://github.com/goblinhack/'
+             'fatdisk/archive/v1.0.0-beta.tar.gz'],
             ['tar', 'zxf', 'fatdisk.tgz'],
-            ['./RUNME']
+            ['./RUNME'],
+            ['sudo', 'cp', 'fatdisk-1.0.0-beta/fatdisk',
+             '/usr/local/bin/fatdisk'],
         ], self.last_argv)
 
     def test_install_helper_port(self):
@@ -334,7 +334,7 @@ Command syntax:
         self.helper.PACKAGE_MANAGERS['port'] = False
         self.helper.PACKAGE_MANAGERS['yum'] = False
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'apt-get', 'install', 'qemu']],
+        self.assertEqual([['sudo', 'apt-get', 'install', 'qemu-utils']],
                          self.last_argv)
 
     def test_install_helper_port(self):
@@ -461,7 +461,8 @@ class TestVmdkTool(HelpersUT):
             ['tar', 'zxf', 'vmdktool-1.4.tar.gz'],
             ['make', 'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
              '--directory', 'vmdktool-1.4'],
-            ['make', '--directory', 'vmdktool-1.4', 'install']
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
+            ['sudo', 'make', '--directory', 'vmdktool-1.4', 'install'],
         ], self.last_argv)
 
     def test_install_helper_port(self):
@@ -486,7 +487,8 @@ class TestVmdkTool(HelpersUT):
             ['tar', 'zxf', 'vmdktool-1.4.tar.gz'],
             ['make', 'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
              '--directory', 'vmdktool-1.4'],
-            ['make', '--directory', 'vmdktool-1.4', 'install']
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
+            ['sudo', 'make', '--directory', 'vmdktool-1.4', 'install'],
         ], self.last_argv)
 
     def test_install_helper_unsupported(self):

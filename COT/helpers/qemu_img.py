@@ -31,7 +31,9 @@ class QEMUImg(Helper):
         self.vmdktool = None
 
     def _get_version(self):
-        output = self.call_helper(['--version'])
+        # don't require success as older versions of qemu-img will
+        # actually report this command as a failure...
+        output = self.call_helper(['--version'], require_success=False)
         match = re.search("qemu-img version ([0-9.]+)", output)
         return StrictVersion(match.group(1))
 
@@ -42,7 +44,7 @@ class QEMUImg(Helper):
                            .format(self.helper, self.helper_path))
             return
         if self.PACKAGE_MANAGERS['apt-get']:
-            self._check_call(['sudo', 'apt-get', 'install', 'qemu'])
+            self._check_call(['sudo', 'apt-get', 'install', 'qemu-utils'])
         elif self.PACKAGE_MANAGERS['port']:
             self._check_call(['sudo', 'port', 'install', 'qemu'])
         elif self.PACKAGE_MANAGERS['yum']:
