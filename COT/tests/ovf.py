@@ -32,7 +32,7 @@ from COT.ovf import OVF, OVFNameHelper, OVFItem
 from COT.ovf import byte_count, byte_string, factor_bytes
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
-from COT.helpers.helper import HelperError
+from COT.helpers import HelperError
 from COT.vm_context_manager import VMContextManager
 
 

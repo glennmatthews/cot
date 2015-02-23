@@ -24,7 +24,7 @@ import COT.helper_tools
 from COT.helper_tools import get_checksum
 from COT.helper_tools import create_disk_image, convert_disk_image
 from COT.helper_tools import get_disk_format, get_disk_capacity
-from COT.helpers.helper import HelperError, HelperNotFoundError
+from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
 

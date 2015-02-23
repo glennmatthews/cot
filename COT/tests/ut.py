@@ -30,8 +30,7 @@ import time
 import logging
 from logging.handlers import BufferingHandler
 
-from COT.helpers.ovftool import OVFTool
-from COT.helpers.helper import HelperError
+from COT.helpers import OVFTool, HelperError
 import COT.ui_shared
 from COT.ui_shared import UI
 

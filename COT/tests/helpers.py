@@ -21,12 +21,8 @@ import sys
 from distutils.version import StrictVersion
 
 from COT.tests.ut import COT_UT
-from COT.helpers.helper import Helper, HelperError, HelperNotFoundError
-from COT.helpers.fatdisk import FatDisk
-from COT.helpers.mkisofs import MkIsoFS
-from COT.helpers.ovftool import OVFTool
-from COT.helpers.qemu_img import QEMUImg
-from COT.helpers.vmdktool import VmdkTool
+from COT.helpers import Helper, HelperError, HelperNotFoundError
+from COT.helpers import FatDisk, MkIsoFS, OVFTool, QEMUImg, VmdkTool
 import COT.ui_shared
 
 logger = logging.getLogger(__name__)
