@@ -107,7 +107,7 @@ setup(
     cmdclass=cmd_class,
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
-    packages=['COT'],
+    packages=['COT', 'COT.helpers'],
     entry_points={
         'console_scripts': [
             'cot = COT.cli:main',
