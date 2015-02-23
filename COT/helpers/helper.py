@@ -53,6 +53,7 @@ class Helper(object):
     def __init__(self, helper_name):
         self.helper = helper_name
         self.helper_path = None
+        self.find_executable = find_executable
         self._version = None
 
     @property
@@ -65,7 +66,7 @@ class Helper(object):
         if not self.helper_path:
             logger.verbose("Checking for helper executable {0}"
                            .format(self.helper))
-            self.helper_path = find_executable(self.helper)
+            self.helper_path = self.find_executable(self.helper)
         if self.helper_path:
             logger.verbose("{0} is at {1}".format(self.helper,
                                                   self.helper_path))
@@ -74,7 +75,7 @@ class Helper(object):
             logger.verbose("No path to {0} found".format(self.helper))
             return False
 
-    def _check_call(self, args, require_success=True):
+    def _check_call(self, args, require_success=True, **kwargs):
         """Wrapper for :func:`subprocess.check_call`.
 
         Unlike :meth:`check_output` below, this does not redirect stdout
@@ -94,7 +95,7 @@ class Helper(object):
         cmd = args[0]
         logger.verbose("Calling '{0}'".format(" ".join(args)))
         try:
-            subprocess.check_call(args)
+            subprocess.check_call(args, **kwargs)
         except OSError as e:
             raise HelperNotFoundError(e.errno,
                                       "Unable to locate helper program '{0}'. "
@@ -106,7 +107,7 @@ class Helper(object):
                                   .format(cmd, e.returncode))
         logger.debug("{0} exited successfully".format(cmd))
 
-    def _check_output(self, args, require_success=True):
+    def _check_output(self, args, require_success=True, **kwargs):
         """Wrapper for :func:`subprocess.check_output`.
 
         Automatically redirects stderr to stdout, captures both to a buffer,
@@ -131,7 +132,8 @@ class Helper(object):
             if "check_output" not in dir(subprocess):
                 process = subprocess.Popen(args,
                                            stdout=subprocess.PIPE,
-                                           stderr=subprocess.STDOUT)
+                                           stderr=subprocess.STDOUT,
+                                           **kwargs)
                 stdout, _ = process.communicate()
                 retcode = process.poll()
                 if retcode and require_success:
@@ -139,7 +141,8 @@ class Helper(object):
                                                         " ".join(args))
             else:
                 stdout = (subprocess.check_output(args,
-                                                  stderr=subprocess.STDOUT)
+                                                  stderr=subprocess.STDOUT,
+                                                  **kwargs)
                           .decode())
         except OSError as e:
             raise HelperNotFoundError(e.errno,

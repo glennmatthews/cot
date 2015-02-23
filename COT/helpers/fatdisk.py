@@ -19,7 +19,6 @@ import os.path
 import re
 import shutil
 import sys
-from distutils.spawn import find_executable
 from distutils.version import StrictVersion
 
 from .helper import Helper
@@ -47,7 +46,7 @@ class FatDisk(Helper):
             self._check_call(['sudo', 'port', 'install', 'fatdisk'])
         elif sys.platform == 'linux2':
             # Fatdisk installation requires make
-            if not find_executable('make'):
+            if not self.find_executable('make'):
                 if self.PACKAGE_MANAGERS['apt-get']:
                     self._check_call(['sudo', 'apt-get', 'install', 'make'])
                 else:

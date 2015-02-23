@@ -34,6 +34,11 @@ class OVFTool(Helper):
         return StrictVersion(match.group(1))
 
     def install_helper(self):
+        if self.find_helper():
+            logger.warning("Tried to install {0} -- "
+                           "but it's already available at {1}!"
+                           .format(self.helper, self.helper_path))
+            return
         raise NotImplementedError(
             "No support for automated installation of ovftool, "
             "as VMware requires a site login to download it.\n"

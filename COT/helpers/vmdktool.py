@@ -18,7 +18,6 @@ import logging
 import os.path
 import re
 import shutil
-from distutils.spawn import find_executable
 from distutils.version import StrictVersion
 
 from .helper import Helper
@@ -49,11 +48,11 @@ class VmdkTool(Helper):
             # but we can build it manually:
             # vmdktool requires make and zlib
             if self.PACKAGE_MANAGERS['apt-get']:
-                if not find_executable('make'):
+                if not self.find_executable('make'):
                     self._check_call(['sudo', 'apt-get', 'install', 'make'])
                 self._check_call(['sudo', 'apt-get', 'install', 'zlib1g-dev'])
             else:
-                if not find_executable('make'):
+                if not self.find_executable('make'):
                     self._check_call(['sudo', 'yum', 'install', 'make'])
                 self._check_call(['sudo', 'yum', 'install', 'zlib-devel'])
             try:
@@ -70,8 +69,12 @@ class VmdkTool(Helper):
                 self._check_call(['make',
                                   'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
                                   '--directory', 'vmdktool-1.4'])
+                # TODO - this requires root
                 if not os.path.exists('/usr/local/man/man8'):
-                    os.makedirs('/usr/local/man/man8', 493)  # 493 == 0o755
+                    try:
+                        os.makedirs('/usr/local/man/man8', 493)  # 493 == 0o755
+                    except OSError:
+                        pass
                 self._check_call(['make', '--directory',
                                   'vmdktool-1.4', 'install'])
             finally:
