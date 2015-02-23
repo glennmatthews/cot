@@ -14,6 +14,11 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Give COT access to ``fatdisk`` for creating and updating FAT32 file systems.
+
+http://github.com/goblinhack/fatdisk
+"""
+
 import logging
 import os.path
 import re
@@ -28,7 +33,19 @@ logger = logging.getLogger(__name__)
 
 class FatDisk(Helper):
 
+    """Helper provider for ``fatdisk`` (http://github.com/goblinhack/fatdisk).
+
+    **Methods**
+
+    .. autosummary::
+      :nosignatures:
+
+      install_helper
+      create_raw_image
+    """
+
     def __init__(self):
+        """Initializer."""
         super(FatDisk, self).__init__("fatdisk")
 
     def _get_version(self):
@@ -37,6 +54,7 @@ class FatDisk(Helper):
         return StrictVersion(match.group(1))
 
     def install_helper(self):
+        """Install ``fatdisk``."""
         if self.find_helper():
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"

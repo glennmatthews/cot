@@ -51,6 +51,7 @@ class Helper(object):
     }
 
     def __init__(self, helper_name):
+        """Initializer."""
         self.helper = helper_name
         self.helper_path = None
         self.find_executable = find_executable
@@ -58,11 +59,20 @@ class Helper(object):
 
     @property
     def version(self):
+        """Release version of the associated helper program.
+
+        :raise: :exc:`NotImplementedError` as this must be implemented
+          by a concrete subclass.
+        """
         if self.find_helper() and not self._version:
             self._version = self._get_version()
         return self._version
 
     def find_helper(self):
+        """Locate the helper program and cache its path.
+
+        :return: ``True`` if helper has been found, else ``False``.
+        """
         if not self.helper_path:
             logger.verbose("Checking for helper executable {0}"
                            .format(self.helper))
@@ -164,6 +174,17 @@ class Helper(object):
         return stdout
 
     def call_helper(self, args, capture_output=True, require_success=True):
+        """Call the helper program with the given arguments.
+
+        :param list args: List of arguments to the helper program.
+        :param boolean capture_output: If ``True``, stdout/stderr will be
+          redirected to a buffer and returned, instead of being displayed
+          to the user.
+        :param boolean require_success: if ``True``, an exception will be
+          raised if the helper exits with a non-zero status code.
+        :return: Captured stdout/stderr (if :attr:`capture_output`),
+          else ``None``.
+        """
         if not self.find_helper():
             if not COT.ui_shared.CURRENT_UI.confirm(
                     "{0} does not appear to be installed.\n"
@@ -189,6 +210,11 @@ class Helper(object):
                                   .format(self.helper))
 
     def install_helper(self):
+        """Install the helper program.
+
+        :raise: :exc:`NotImplementedError` as this method must be implemented
+          by a concrete subclass.
+        """
         if self.find_helper():
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"

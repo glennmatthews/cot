@@ -56,7 +56,6 @@ User interface modules
 
   COT.ui_shared
   COT.cli
-
 """
 
 from ._version import get_versions

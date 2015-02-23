@@ -14,6 +14,11 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Give COT access to ``vmdktool`` for manipulating compressed VMDK files.
+
+http://www.freshports.org/sysutils/vmdktool/
+"""
+
 import logging
 import os.path
 import re
@@ -27,7 +32,21 @@ logger = logging.getLogger(__name__)
 
 class VmdkTool(Helper):
 
+    """Helper provider for ``vmdktool``.
+
+    http://www.freshports.org/sysutils/vmdktool/
+
+    **Methods**
+
+    .. autosummary::
+      :nosignatures:
+
+      install_helper
+      convert_disk_image
+    """
+
     def __init__(self):
+        """Initializer."""
         super(VmdkTool, self).__init__("vmdktool")
 
     def _get_version(self):
@@ -36,6 +55,7 @@ class VmdkTool(Helper):
         return StrictVersion(match.group(1))
 
     def install_helper(self):
+        """Install ``vmdktool``."""
         if self.find_helper():
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"

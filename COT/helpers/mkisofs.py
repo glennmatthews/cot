@@ -14,6 +14,11 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Give COT access to ``mkisofs`` or ``genisoimage`` for creating ISO images.
+
+http://cdrecord.org/
+"""
+
 import logging
 import re
 from distutils.version import StrictVersion
@@ -25,7 +30,22 @@ logger = logging.getLogger(__name__)
 
 class MkIsoFS(Helper):
 
+    """Helper provider for ``mkisofs`` and/or ``genisoimage``.
+
+    http://cdrecord.org/
+
+    **Methods**
+
+    .. autosummary::
+      :nosignatures:
+
+      find_helper
+      install_helper
+      create_iso
+    """
+
     def __init__(self):
+        """Initializer."""
         super(MkIsoFS, self).__init__("mkisofs")
 
     def _get_version(self):
@@ -34,15 +54,21 @@ class MkIsoFS(Helper):
         return StrictVersion(match.group(1))
 
     def find_helper(self):
+        """Find either ``mkisofs`` or ``genisoimage`` if available."""
         if super(MkIsoFS, self).find_helper():
             return True
         elif self.helper == "mkisofs":
             # Try 'genisoimage' as an alternative
             self.helper = "genisoimage"
             return super(MkIsoFS, self).find_helper()
+        elif self.helper == "genisoimage":
+            # Try 'mkisofs' as an alternative
+            self.helper = "mkisofs"
+            return super(MkIsoFS, self).find_helper()
         return False
 
     def install_helper(self):
+        """Install ``mkisofs`` and/or ``genisoimage``."""
         if self.find_helper():
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"

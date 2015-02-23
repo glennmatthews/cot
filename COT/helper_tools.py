@@ -20,6 +20,8 @@
 Abstracts away operations that require third-party helper programs,
 especially those that are not available through PyPI.
 
+The actual helper programs are provided by the :mod:`COT.helpers` package.
+
 **Functions**
 
 .. autosummary::

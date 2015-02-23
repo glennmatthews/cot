@@ -14,6 +14,11 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Give COT access to ``ovftool`` for validating and deploying OVF to ESXi.
+
+https://www.vmware.com/support/developer/ovf/
+"""
+
 import logging
 import re
 from distutils.version import StrictVersion
@@ -25,7 +30,21 @@ logger = logging.getLogger(__name__)
 
 class OVFTool(Helper):
 
+    """Helper provider for ``ovftool`` from VMware.
+
+    https://www.vmware.com/support/developer/ovf/
+
+    **Methods**
+
+    .. autosummary::
+      :nosignatures:
+
+      install_helper
+      validate_ovf
+    """
+
     def __init__(self):
+        """Initializer."""
         super(OVFTool, self).__init__("ovftool")
 
     def _get_version(self):
@@ -34,6 +53,11 @@ class OVFTool(Helper):
         return StrictVersion(match.group(1))
 
     def install_helper(self):
+        """Install ``ovftool``.
+
+        :raise: :exc:`NotImplementedError` as VMware does not currently provide
+          any mechanism for automatic download of ovftool.
+        """
         if self.find_helper():
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"

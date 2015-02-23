@@ -14,6 +14,11 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Give COT access to ``qemu-img`` for manipulating disk image formats.
+
+http://www.qemu.org
+"""
+
 import logging
 import os.path
 import re
@@ -26,7 +31,22 @@ logger = logging.getLogger(__name__)
 
 class QEMUImg(Helper):
 
+    """Helper provider for ``qemu-img`` (http://www.qemu.org).
+
+    **Methods**
+
+    .. autosummary::
+      :nosignatures:
+
+      install_helper
+      get_disk_format
+      get_disk_capacity
+      convert_disk_image
+      create_blank_disk
+    """
+
     def __init__(self):
+        """Initializer."""
         super(QEMUImg, self).__init__("qemu-img")
         self.vmdktool = None
 
@@ -38,6 +58,7 @@ class QEMUImg(Helper):
         return StrictVersion(match.group(1))
 
     def install_helper(self):
+        """Install ``qemu-img``."""
         if self.find_helper():
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"
@@ -58,8 +79,8 @@ class QEMUImg(Helper):
         """Get the major disk image format of the given file.
 
         .. warning::
-        If :attr:`file_path` refers to a file which is not a disk image at all,
-        this function will return ``'raw'``.
+          If :attr:`file_path` refers to a file which is not a disk image at
+          all, this function will return ``'raw'``.
 
         :param str file_path: Path to disk image file to inspect.
         :return: Disk image format (``'vmdk'``, ``'raw'``, ``'qcow2'``, etc.)

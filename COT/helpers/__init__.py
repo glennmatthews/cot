@@ -36,5 +36,5 @@ from .ovftool import OVFTool
 from .qemu_img import QEMUImg
 from .vmdktool import VmdkTool
 
-__all__ = ['Helper', 'HelperError', 'HelperNotFoundError',
-           'FatDisk', 'MkIsoFS', 'OVFTool', 'QEMUImg', 'VmdkTool']
+__all__ = ('Helper', 'HelperError', 'HelperNotFoundError',
+           'FatDisk', 'MkIsoFS', 'OVFTool', 'QEMUImg', 'VmdkTool')
