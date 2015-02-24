@@ -20,9 +20,38 @@ Provides the ability to install the program if not already present,
 and the ability to run the program as well.
 """
 
+import contextlib
 import logging
+import os.path
+import re
 import subprocess
+import tarfile
 from distutils.spawn import find_executable
+from distutils.version import StrictVersion
+
+try:
+    # Python 3.x
+    from tempfile import TemporaryDirectory
+except ImportError:
+    # Python 2.x
+    import shutil
+    import tempfile
+
+    @contextlib.contextmanager
+    def TemporaryDirectory(suffix='', prefix='tmp', dir=None):
+        """Create a temporary directory and make sure it's deleted later."""
+        tempdir = tempfile.mkdtemp(suffix, prefix, dir)
+        try:
+            yield tempdir
+        finally:
+            shutil.rmtree(tempdir)
+
+try:
+    # Python 3.x
+    from urllib.request import urlretrieve
+except ImportError:
+    # Python 2.x
+    from urllib import urlretrieve
 
 import COT.ui_shared
 
@@ -41,21 +70,58 @@ class HelperError(EnvironmentError):
 
 class Helper(object):
 
-    """A provider of a non-Python helper program."""
+    """A provider of a non-Python helper program.
 
-    # Package managers:
+    **Properties**
+
+    .. autosummary::
+      :nosignatures:
+
+      PACKAGE_MANAGERS
+      version
+
+    **Methods**
+
+    .. autosummary::
+      :nosignatures:
+
+      find_executable
+      find_helper
+      call_helper
+      download_and_expand
+      apt_install
+      port_install
+      yum_install
+      install_helper
+    """
+
     PACKAGE_MANAGERS = {
         "port":    find_executable('port'),
         "apt-get": find_executable('apt-get'),
         "yum":     find_executable('yum'),
     }
+    """Class-level lookup for package manager executables."""
 
-    def __init__(self, helper_name):
-        """Initializer."""
+    def __init__(self, helper_name, version_args=None,
+                 version_regexp="([0-9.]+"):
+        """Initializer.
+
+        :param helper_name: Name of helper executable
+        :param list version_args: Args to pass to the helper to
+          get its version. Defaults to ``['--version']`` if unset.
+        :param version_regexp: Regexp to get the version number from
+          the output of the command.
+        """
         self.helper = helper_name
+        """Name of this helper executable"""
         self.helper_path = None
+        """Discovered path to the helper on this system"""
         self.find_executable = find_executable
         self._version = None
+        if not version_args:
+            version_args = ['--version']
+        self._version_args = version_args
+        self._version_regexp = version_regexp
 
     @property
     def version(self):
@@ -65,7 +131,12 @@ class Helper(object):
           by a concrete subclass.
         """
         if self.find_helper() and not self._version:
-            self._version = self._get_version()
+            output = self.call_helper(self._version_args,
+                                      require_success=False)
+            match = re.search(self._version_regexp, output)
+            if not match:
+                raise RuntimeError("Unable to find version number in output!")
+            self._version = StrictVersion(match.group(1))
         return self._version
 
     def find_helper(self):
@@ -103,7 +174,7 @@ class Helper(object):
           :attr:`require_success` is not ``False``
         """
         cmd = args[0]
-        logger.verbose("Calling '{0}'".format(" ".join(args)))
+        logger.info("Calling '{0}'...".format(" ".join(args)))
         try:
             subprocess.check_call(args, **kwargs)
         except OSError as e:
@@ -115,6 +186,7 @@ class Helper(object):
                 raise HelperError(e.returncode,
                                   "Helper program '{0}' exited with error {1}"
                                   .format(cmd, e.returncode))
+        logger.info("...done")
         logger.debug("{0} exited successfully".format(cmd))
 
     def _check_output(self, args, require_success=True, **kwargs):
@@ -135,7 +207,8 @@ class Helper(object):
           :attr:`require_success` is not ``False``
         """
         cmd = args[0]
-        logger.verbose("Calling '{0}'".format(" ".join(args)))
+        logger.info("Calling '{0}' and capturing its output..."
+                    .format(" ".join(args)))
         # In 2.7+ we can use subprocess.check_output(), but in 2.6,
         # we have to work around its absence.
         try:
@@ -170,6 +243,7 @@ class Helper(object):
                                   "\n> {2}\n{3}".format(cmd, e.returncode,
                                                         " ".join(args),
                                                         stdout))
+        logger.info("...done")
         logger.verbose("{0} output:\n{1}".format(cmd, stdout))
         return stdout
 
@@ -203,11 +277,58 @@ class Helper(object):
             self._check_call(args, require_success)
             return None
 
-    # Abstract interfaces to be implemented by subclasses
+    @contextlib.contextmanager
+    def download_and_expand(self, url):
+        """Context manager for downloading and expanding a .tar.gz file.
 
-    def _get_version(self):
-        raise NotImplementedError("not sure how to check version of {0}"
-                                  .format(self.helper))
+        Creates a temporary directory, downloads the specified URL into
+        the directory, unzips and untars the file into this directory,
+        then yields to the given block. When the block exits, the temporary
+        directory and its contents are deleted.
+
+        ::
+
+          with self.download_and_expand("http://example.com/foo.tgz") as d:
+            # archive contents have been extracted to 'd'
+            ...
+          # d is automatically cleaned up.
+
+        :param str url: URL of a .tgz or .tar.gz file to download.
+        """
+        with TemporaryDirectory(prefix=("cot_" + self.helper)) as d:
+            logger.debug("Temporary directory is {0}".format(d))
+            logger.verbose("Downloading and extracting {0}".format(url))
+            (tgz, _) = urlretrieve(url, os.path.join(d, self.helper + ".tgz"))
+            logger.debug("Extracting {0}".format(tgz))
+            with tarfile.open(tgz, "r:gz") as tarf:
+                tarf.extractall(path=d)
+            try:
+                yield d
+            finally:
+                logger.debug("Cleaning up temporary directory {0}".format(d))
+
+    def apt_install(self, package):
+        """Try to use ``apt-get`` to install a package."""
+        if not self.PACKAGE_MANAGERS['apt-get']:
+            return False
+        self._check_call(['sudo', 'apt-get', '-q', 'install', package])
+        return True
+
+    def port_install(self, package):
+        """Try to use ``port`` to install a package."""
+        if not self.PACKAGE_MANAGERS['port']:
+            return False
+        self._check_call(['sudo', 'port', 'install', package])
+        return True
+
+    def yum_install(self, package):
+        """Try to use ``yum`` to install a package."""
+        if not self.PACKAGE_MANAGERS['yum']:
+            return False
+        self._check_call(['sudo', 'yum', '--quiet', 'install', package])
+        return True
+
+    # Abstract interfaces to be implemented by subclasses
 
     def install_helper(self):
         """Install the helper program.

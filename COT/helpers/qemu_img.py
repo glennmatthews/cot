@@ -47,15 +47,10 @@ class QEMUImg(Helper):
 
     def __init__(self):
         """Initializer."""
-        super(QEMUImg, self).__init__("qemu-img")
+        super(QEMUImg, self).__init__(
+            "qemu-img",
+            version_regexp="qemu-img version ([0-9.]+)")
         self.vmdktool = None
-
-    def _get_version(self):
-        # don't require success as older versions of qemu-img will
-        # actually report this command as a failure...
-        output = self.call_helper(['--version'], require_success=False)
-        match = re.search("qemu-img version ([0-9.]+)", output)
-        return StrictVersion(match.group(1))
 
     def install_helper(self):
         """Install ``qemu-img``."""
@@ -64,16 +59,14 @@ class QEMUImg(Helper):
                            "but it's already available at {1}!"
                            .format(self.helper, self.helper_path))
             return
-        if self.PACKAGE_MANAGERS['apt-get']:
-            self._check_call(['sudo', 'apt-get', 'install', 'qemu-utils'])
-        elif self.PACKAGE_MANAGERS['port']:
-            self._check_call(['sudo', 'port', 'install', 'qemu'])
-        elif self.PACKAGE_MANAGERS['yum']:
-            self._check_call(['sudo', 'yum', 'install', 'qemu-img'])
-        else:
+        logger.info("Installing 'qemu-img'...")
+        if not (self.apt_install('qemu-utils') or
+                self.port_install('qemu') or
+                self.yum_install('qemu-img')):
             raise NotImplementedError(
                 "Unsure how to install qemu-img.\n"
                 "See http://en.wikibooks.org/wiki/QEMU/Installing_QEMU")
+        logger.info("Successfully installed 'qemu-img'.")
 
     def get_disk_format(self, file_path):
         """Get the major disk image format of the given file.

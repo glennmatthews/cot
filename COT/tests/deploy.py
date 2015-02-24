@@ -82,13 +82,6 @@ class TestCOTDeployESXi(COT_UT):
             return
         return self._check_call(argv, require_success)
 
-    def stub_check_output(self, argv, require_success=True):
-        logger.info("stub_check_output({0}, {1}".format(argv, require_success))
-        if argv[0] == 'ovftool' and argv[1] == '--version':
-            logger.info("Caught 'ovftool --version' invocation")
-            return "VMware ovftool {0}".format(self.ovftool_version)
-        return self._check_output(argv, require_success)
-
     def setUp(self):
         "Test case setup function called automatically prior to each test"
         super(TestCOTDeployESXi, self).setUp()
@@ -101,16 +94,12 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.ovftool._check_call = self.stub_check_call
         # Ditto
         self._ovftool_version = self.instance.ovftool._version
-        self.instance.ovftool._version = None
-        self.ovftool_version = StrictVersion("4.0.0")
-        self._check_output = self.instance.ovftool._check_output
-        self.instance.ovftool._check_output = self.stub_check_output
+        self.instance.ovftool._version = StrictVersion("4.0.0")
 
     def tearDown(self):
         "Test case cleanup function called automatically"
         # Remove our stub
         self.instance.ovftool._check_call = self._check_call
-        self.instance.ovftool._check_output = self._check_output
         self.instance.ovftool._version = self._ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
@@ -202,8 +191,7 @@ class TestCOTDeployESXi(COT_UT):
 
         # With <4.0.0, we don't (can't) fixup, regardless.
         # Discard cached information and update the info that will be returned
-        self.instance.ovftool._version = None
-        self.ovftool_version = StrictVersion("3.5.0")
+        self.instance.ovftool._version = StrictVersion("3.5.0")
         self.instance.run()
         self.assertEqual([
             'ovftool',

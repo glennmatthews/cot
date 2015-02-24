@@ -21,10 +21,7 @@ http://github.com/goblinhack/fatdisk
 
 import logging
 import os.path
-import re
-import shutil
 import sys
-from distutils.version import StrictVersion
 
 from .helper import Helper
 
@@ -46,12 +43,8 @@ class FatDisk(Helper):
 
     def __init__(self):
         """Initializer."""
-        super(FatDisk, self).__init__("fatdisk")
-
-    def _get_version(self):
-        output = self.call_helper(['--version'])
-        match = re.search("version ([0-9.]+)", output)
-        return StrictVersion(match.group(1))
+        super(FatDisk, self).__init__("fatdisk",
+                                      version_regexp="version ([0-9.]+)")
 
     def install_helper(self):
         """Install ``fatdisk``."""
@@ -60,41 +53,41 @@ class FatDisk(Helper):
                            "but it's already available at {1}!"
                            .format(self.helper, self.helper_path))
             return
-        if self.PACKAGE_MANAGERS['port']:
-            self._check_call(['sudo', 'port', 'install', 'fatdisk'])
+        logger.info("Installing 'fatdisk'...")
+        if self.port_install('fatdisk'):
+            pass
         elif sys.platform == 'linux2':
             # Fatdisk installation requires make
             if not self.find_executable('make'):
-                if self.PACKAGE_MANAGERS['apt-get']:
-                    self._check_call(['sudo', 'apt-get', 'install', 'make'])
-                else:
+                logger.info("fatdisk requires 'make'... installing 'make'")
+                if not (self.apt_install('make') or
+                        self.yum_install('make')):
                     raise NotImplementedError("Not sure how to install 'make'")
             # Fatdisk requires clang or gcc or g++
             if not (self.find_executable('clang') or
                     self.find_executable('gcc') or
                     self.find_executable('g++')):
-                if self.PACKAGE_MANAGERS['apt-get']:
-                    self._check_call(['sudo', 'apt-get', 'install', 'gcc'])
-                else:
+                logger.info(
+                    "fatdisk requires a C compiler... installing 'gcc'")
+                if not (self.apt_install('gcc') or
+                        self.yum_install('gcc')):
                     raise NotImplementedError(
                         "Not sure how to install a C compiler")
-            self._check_call(
-                ['wget', '-O', 'fatdisk.tgz', 'https://github.com/goblinhack/'
-                 'fatdisk/archive/v1.0.0-beta.tar.gz'])
-            try:
-                self._check_call(['tar', 'zxf', 'fatdisk.tgz'])
-                self._check_call(['./RUNME'], cwd='fatdisk-1.0.0-beta')
-                self._check_call(['sudo', 'cp', 'fatdisk-1.0.0-beta/fatdisk',
-                                  '/usr/local/bin/fatdisk'])
-            finally:
-                if os.path.exists('fatdisk.tgz'):
-                    os.remove('fatdisk.tgz')
-                if os.path.exists('fatdisk-1.0.0-beta'):
-                    shutil.rmtree('fatdisk-1.0.0-beta')
+            with self.download_and_expand(
+                    'https://github.com/goblinhack/'
+                    'fatdisk/archive/v1.0.0-beta.tar.gz') as d:
+                new_d = os.path.join(d, 'fatdisk-1.0.0-beta')
+                logger.info("Compiling 'fatdisk'")
+                self._check_call(['./RUNME'], cwd=new_d)
+                logger.info("Compilation complete, installing now")
+                self._check_call(['sudo', 'cp', 'fatdisk',
+                                  '/usr/local/bin/fatdisk'],
+                                 cwd=new_d)
         else:
             raise NotImplementedError(
                 "Not sure how to install 'fatdisk'.\n"
                 "See https://github.com/goblinhack/fatdisk")
+        logger.info("Successfully installed 'fatdisk'")
 
     def create_raw_image(self, file_path, contents, capacity=None):
         """Create a new FAT32-formatted raw image at the requested location.

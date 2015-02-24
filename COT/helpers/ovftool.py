@@ -20,8 +20,6 @@ https://www.vmware.com/support/developer/ovf/
 """
 
 import logging
-import re
-from distutils.version import StrictVersion
 
 from .helper import Helper
 
@@ -45,12 +43,8 @@ class OVFTool(Helper):
 
     def __init__(self):
         """Initializer."""
-        super(OVFTool, self).__init__("ovftool")
-
-    def _get_version(self):
-        output = self.call_helper(['--version'])
-        match = re.search("ovftool ([0-9.]+)", output)
-        return StrictVersion(match.group(1))
+        super(OVFTool, self).__init__("ovftool",
+                                      version_regexp="ovftool ([0-9.]+)")
 
     def install_helper(self):
         """Install ``ovftool``.

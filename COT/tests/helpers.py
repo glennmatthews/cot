@@ -14,6 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import contextlib
 import os
 import logging
 import sys
@@ -58,6 +59,12 @@ class HelpersUT(COT_UT):
         logger.info("stub_find_executable({0})".format(name))
         return None
 
+    @contextlib.contextmanager
+    def stub_download_and_expand(self, url):
+        from COT.helpers.helper import TemporaryDirectory
+        with TemporaryDirectory(prefix=("cot_ut_" + self.helper.helper)) as d:
+            yield d
+
     def setUp(self):
         # subclass needs to set self.helper
         super(HelpersUT, self).setUp()
@@ -67,6 +74,7 @@ class HelpersUT(COT_UT):
         self.helper._check_call = self.stub_check_call
         self._check_output = self.helper._check_output
         self.helper._check_output = self.stub_check_output
+        self.helper.download_and_expand = self.stub_download_and_expand
         # save some environment properties for sanity
         self._port = self.helper.PACKAGE_MANAGERS['port']
         self._apt_get = self.helper.PACKAGE_MANAGERS['apt-get']
@@ -129,11 +137,6 @@ class HelperGenericTest(HelpersUT):
         self.helper.find_executable = self.stub_find_executable
         self.assertFalse(self.helper.find_helper())
 
-    def test_version_abstract(self):
-        self.helper.helper_path = True
-        with self.assertRaises(NotImplementedError):
-            self.helper.version
-
     def test_install_helper_already_present(self):
         self.helper.helper_path = True
         self.helper.install_helper()
@@ -168,7 +171,7 @@ class TestFatDisk(HelpersUT):
         self.assertEqual([], self.last_argv)
         self.assertLogged(**self.ALREADY_INSTALLED)
 
-    def test_install_helper_apt_get_no_make(self):
+    def test_install_helper_apt_get(self):
         self.helper.find_executable = self.stub_find_executable
         self.helper.find_helper = self.stub_find_helper
         self.helper.PACKAGE_MANAGERS['port'] = False
@@ -176,14 +179,10 @@ class TestFatDisk(HelpersUT):
         sys.platform = 'linux2'
         self.helper.install_helper()
         self.assertEqual([
-            ['sudo', 'apt-get', 'install', 'make'],
-            ['sudo', 'apt-get', 'install', 'gcc'],
-            ['wget', '-O', 'fatdisk.tgz', 'https://github.com/goblinhack/'
-             'fatdisk/archive/v1.0.0-beta.tar.gz'],
-            ['tar', 'zxf', 'fatdisk.tgz'],
+            ['sudo', 'apt-get', '-q', 'install', 'make'],
+            ['sudo', 'apt-get', '-q', 'install', 'gcc'],
             ['./RUNME'],
-            ['sudo', 'cp', 'fatdisk-1.0.0-beta/fatdisk',
-             '/usr/local/bin/fatdisk'],
+            ['sudo', 'cp', 'fatdisk', '/usr/local/bin/fatdisk'],
         ], self.last_argv)
 
     def test_install_helper_port(self):
@@ -193,16 +192,20 @@ class TestFatDisk(HelpersUT):
         self.assertEqual(self.last_argv[0],
                          ['sudo', 'port', 'install', 'fatdisk'])
 
-    def test_install_helper_yum_no_make(self):
+    def test_install_helper_yum(self):
         self.helper.find_executable = self.stub_find_executable
         self.helper.find_helper = self.stub_find_helper
         self.helper.PACKAGE_MANAGERS['port'] = False
         self.helper.PACKAGE_MANAGERS['apt-get'] = False
         self.helper.PACKAGE_MANAGERS['yum'] = True
         sys.platform = 'linux2'
-        # we don't support installing 'make' from yum yet
-        with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+        self.helper.install_helper()
+        self.assertEqual([
+            ['sudo', 'yum', '--quiet', 'install', 'make'],
+            ['sudo', 'yum', '--quiet', 'install', 'gcc'],
+            ['./RUNME'],
+            ['sudo', 'cp', 'fatdisk', '/usr/local/bin/fatdisk'],
+        ], self.last_argv)
 
     def test_install_helper_unsupported(self):
         self.helper.find_helper = self.stub_find_helper
@@ -251,7 +254,7 @@ class TestMkIsoFS(HelpersUT):
         self.helper.PACKAGE_MANAGERS['port'] = False
         self.helper.PACKAGE_MANAGERS['apt-get'] = True
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'apt-get', 'install', 'genisoimage']],
+        self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'genisoimage']],
                          self.last_argv)
         self.assertEqual('genisoimage', self.helper.helper)
 
@@ -272,7 +275,7 @@ class TestOVFTool(HelpersUT):
 
     def test_invalid_version(self):
         self.fake_output = "Error: Unknown option: 'version'"
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(RuntimeError):
             self.helper.version
 
     def test_install_helper_already_present(self):
@@ -320,7 +323,7 @@ Command syntax:
 
     def test_invalid_version(self):
         self.fake_output = "qemu-img: error: unknown argument --version"
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(RuntimeError):
             self.helper.version
 
     def test_install_helper_already_present(self):
@@ -334,7 +337,7 @@ Command syntax:
         self.helper.PACKAGE_MANAGERS['port'] = False
         self.helper.PACKAGE_MANAGERS['yum'] = False
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'apt-get', 'install', 'qemu-utils']],
+        self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'qemu-utils']],
                          self.last_argv)
 
     def test_install_helper_port(self):
@@ -352,7 +355,7 @@ Command syntax:
         self.helper.PACKAGE_MANAGERS['port'] = False
         self.helper.PACKAGE_MANAGERS['yum'] = True
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'yum', 'install', 'qemu-img']],
+        self.assertEqual([['sudo', 'yum', '--quiet', 'install', 'qemu-img']],
                          self.last_argv)
 
     def test_install_helper_unsupported(self):
@@ -447,22 +450,20 @@ class TestVmdkTool(HelpersUT):
         self.assertEqual([], self.last_argv)
         self.assertLogged(**self.ALREADY_INSTALLED)
 
-    def test_install_helper_apt_get_no_make(self):
+    def test_install_helper_apt_get(self):
         self.helper.find_executable = self.stub_find_executable
         self.helper.find_helper = self.stub_find_helper
         self.helper.PACKAGE_MANAGERS['apt-get'] = True
         self.helper.PACKAGE_MANAGERS['port'] = False
+        self.helper.PACKAGE_MANAGERS['yum'] = False
+        sys.platform = 'linux2'
         self.helper.install_helper()
         self.assertEqual([
-            ['sudo', 'apt-get', 'install', 'make'],
-            ['sudo', 'apt-get', 'install', 'zlib1g-dev'],
-            ['wget', 'http://people.freebsd.org/~brian/'
-             'vmdktool/vmdktool-1.4.tar.gz'],
-            ['tar', 'zxf', 'vmdktool-1.4.tar.gz'],
-            ['make', 'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
-             '--directory', 'vmdktool-1.4'],
+            ['sudo', 'apt-get', '-q', 'install', 'make'],
+            ['sudo', 'apt-get', '-q', 'install', 'zlib1g-dev'],
+            ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
             ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-            ['sudo', 'make', '--directory', 'vmdktool-1.4', 'install'],
+            ['sudo', 'make', 'install'],
         ], self.last_argv)
 
     def test_install_helper_port(self):
@@ -472,23 +473,20 @@ class TestVmdkTool(HelpersUT):
         self.assertEqual(self.last_argv[0],
                          ['sudo', 'port', 'install', 'vmdktool'])
 
-    def test_install_helper_yum_no_make(self):
+    def test_install_helper_yum(self):
         self.helper.find_executable = self.stub_find_executable
         self.helper.find_helper = self.stub_find_helper
         self.helper.PACKAGE_MANAGERS['apt-get'] = False
         self.helper.PACKAGE_MANAGERS['port'] = False
         self.helper.PACKAGE_MANAGERS['yum'] = True
+        sys.platform = 'linux2'
         self.helper.install_helper()
         self.assertEqual([
-            ['sudo', 'yum', 'install', 'make'],
-            ['sudo', 'yum', 'install', 'zlib-devel'],
-            ['wget', 'http://people.freebsd.org/~brian/'
-             'vmdktool/vmdktool-1.4.tar.gz'],
-            ['tar', 'zxf', 'vmdktool-1.4.tar.gz'],
-            ['make', 'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
-             '--directory', 'vmdktool-1.4'],
+            ['sudo', 'yum', '--quiet', 'install', 'make'],
+            ['sudo', 'yum', '--quiet', 'install', 'zlib-devel'],
+            ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
             ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-            ['sudo', 'make', '--directory', 'vmdktool-1.4', 'install'],
+            ['sudo', 'make', 'install'],
         ], self.last_argv)
 
     def test_install_helper_unsupported(self):

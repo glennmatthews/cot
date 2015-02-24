@@ -21,9 +21,7 @@ http://www.freshports.org/sysutils/vmdktool/
 
 import logging
 import os.path
-import re
-import shutil
-from distutils.version import StrictVersion
+import sys
 
 from .helper import Helper
 
@@ -47,12 +45,10 @@ class VmdkTool(Helper):
 
     def __init__(self):
         """Initializer."""
-        super(VmdkTool, self).__init__("vmdktool")
-
-    def _get_version(self):
-        output = self.call_helper(['-V'])
-        match = re.search("vmdktool version ([0-9.]+)", output)
-        return StrictVersion(match.group(1))
+        super(VmdkTool, self).__init__(
+            "vmdktool",
+            version_args=['-V'],
+            version_regexp="vmdktool version ([0-9.]+)")
 
     def install_helper(self):
         """Install ``vmdktool``."""
@@ -61,49 +57,45 @@ class VmdkTool(Helper):
                            "but it's already available at {1}!"
                            .format(self.helper, self.helper_path))
             return
-        if self.PACKAGE_MANAGERS['port']:
-            self._check_call(['sudo', 'port', 'install', 'vmdktool'])
-        elif self.PACKAGE_MANAGERS['apt-get'] or self.PACKAGE_MANAGERS['yum']:
+        logger.info("Installing 'vmdktool'...")
+        if self.port_install('vmdktool'):
+            pass
+        elif sys.platform == 'linux2':
             # We don't have vmdktool in apt or yum yet,
             # but we can build it manually:
             # vmdktool requires make and zlib
-            if self.PACKAGE_MANAGERS['apt-get']:
-                if not self.find_executable('make'):
-                    self._check_call(['sudo', 'apt-get', 'install', 'make'])
-                self._check_call(['sudo', 'apt-get', 'install', 'zlib1g-dev'])
-            else:
-                if not self.find_executable('make'):
-                    self._check_call(['sudo', 'yum', 'install', 'make'])
-                self._check_call(['sudo', 'yum', 'install', 'zlib-devel'])
-            try:
-                # Get the source
-                self._check_call(['wget',
-                                  'http://people.freebsd.org/~brian/'
-                                  'vmdktool/vmdktool-1.4.tar.gz'])
-                self._check_call(['tar', 'zxf', 'vmdktool-1.4.tar.gz'])
+            if not self.find_executable('make'):
+                logger.info("vmdktool requires 'make'... installing 'make'")
+                if not (self.apt_install('make') or
+                        self.yum_install('make')):
+                    raise NotImplementedError("Not sure how to install 'make'")
+            logger.info("vmdktool requires 'zlib'... installing 'zlib'")
+            if not (self.apt_install('zlib1g-dev') or
+                    self.yum_install('zlib-devel')):
+                raise NotImplementedError("Not sure how to install 'zlib'")
+            with self.download_and_expand('http://people.freebsd.org/~brian/'
+                                          'vmdktool/vmdktool-1.4.tar.gz') as d:
+                new_d = os.path.join(d, "vmdktool-1.4")
+                logger.info("Compiling 'vmdktool'")
                 # vmdktool is originally a BSD tool so it has some build
                 # assumptions that aren't necessarily correct under Linux.
                 # The easiest workaround is to override the CFLAGS to:
                 # 1) add -D_GNU_SOURCE
                 # 2) not treat all warnings as errors
                 self._check_call(['make',
-                                  'CFLAGS=-D_GNU_SOURCE -g -O -pipe',
-                                  '--directory', 'vmdktool-1.4'])
-                # TODO - this requires root
+                                  'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
+                                 cwd=new_d)
+                logger.info("Compilation complete, installing now.")
                 if not os.path.exists('/usr/local/man/man8'):
                     self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
                                       '/usr/local/man/man8'])
-                self._check_call(['sudo', 'make', '--directory',
-                                  'vmdktool-1.4', 'install'])
-            finally:
-                if os.path.exists('vmdktool-1.4.tar.gz'):
-                    os.remove('vmdktool-1.4.tar.gz')
-                if os.path.exists('vmdktool-1.4'):
-                    shutil.rmtree('vmdktool-1.4')
+                self._check_call(['sudo', 'make', 'install'],
+                                 cwd=new_d)
         else:
             raise NotImplementedError(
                 "Unsure how to install vmdktool.\n"
                 "See http://www.freshports.org/sysutils/vmdktool/")
+        logger.info("Successfully installed 'vmdktool'")
 
     def convert_disk_image(self, file_path, output_dir,
                            new_format, new_subformat=None):

@@ -20,8 +20,6 @@ http://cdrecord.org/
 """
 
 import logging
-import re
-from distutils.version import StrictVersion
 
 from .helper import Helper
 
@@ -46,12 +44,8 @@ class MkIsoFS(Helper):
 
     def __init__(self):
         """Initializer."""
-        super(MkIsoFS, self).__init__("mkisofs")
-
-    def _get_version(self):
-        output = self.call_helper(['--version'])
-        match = re.search("mkisofs ([0-9.]+)", output)
-        return StrictVersion(match.group(1))
+        super(MkIsoFS, self).__init__("mkisofs",
+                                      version_regexp="mkisofs ([0-9.]+)")
 
     def find_helper(self):
         """Find either ``mkisofs`` or ``genisoimage`` if available."""
@@ -74,15 +68,17 @@ class MkIsoFS(Helper):
                            "but it's already available at {1}!"
                            .format(self.helper, self.helper_path))
             return
-        if self.PACKAGE_MANAGERS['apt-get']:
-            self._check_call(['sudo', 'apt-get', 'install', 'genisoimage'])
+        logger.info("Installing 'mkisofs' and/or 'genisoimage'...")
+        if self.port_install('cdrtools'):
+            self.helper = 'mkisofs'
+        elif (self.apt_install('genisoimage') or
+              self.yum_install('genisoimage')):
             self.helper = "genisoimage"
-        elif self.PACKAGE_MANAGERS['port']:
-            self._check_call(['sudo', 'port', 'install', 'cdrtools'])
         else:
             raise NotImplementedError(
                 "Unsure how to install mkisofs.\n"
                 "See http://cdrecord.org/")
+        logger.info("Successfully installed '{0}'".format(self.helper))
 
     def create_iso(self, file_path, contents):
         """Create a new ISO image at the requested location.
