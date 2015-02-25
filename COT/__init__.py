@@ -39,6 +39,7 @@ Command modules
   COT.help
   COT.info
   COT.inject_config
+  COT.install_helpers
 
 Helper library modules
 ----------------------
@@ -48,6 +49,7 @@ Helper library modules
   COT.data_validation
   COT.helper_tools
   COT.platforms
+  COT.helpers
 
 User interface modules
 ----------------------

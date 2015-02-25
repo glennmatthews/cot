@@ -3,6 +3,5 @@ include *.md
 include *.rst
 include ez_setup.py
 include versioneer.py
-include check_and_install_helpers.py
 include COT/_version.py
 include bin/cot

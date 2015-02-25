@@ -23,14 +23,9 @@ except ImportError:
     from setuptools import setup
 
 import os.path
-import subprocess
 import sys
-from setuptools.command.bdist_egg import bdist_egg
-from setuptools import Command
 
 import versioneer
-# Extend the "build" command a bit further:
-from versioneer import cmd_build
 
 versioneer.VCS = 'git'
 versioneer.versionfile_source = 'COT/_version.py'
@@ -40,60 +35,6 @@ versioneer.parentdir_prefix = 'cot-'
 
 README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            'README.rst')
-HELPER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "check_and_install_helpers.py")
-
-cmd_class = versioneer.get_cmdclass()
-
-# on_rtd is whether we are on readthedocs.org, this line of code grabbed from
-# docs.readthedocs.org
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
-
-class custom_build(cmd_build):
-    def run(self):
-        try:
-            subprocess.check_call([HELPER_SCRIPT, "check"])
-        except subprocess.CalledProcessError:
-            exit()
-        cmd_build.run(self)
-
-
-# Add a custom 'install_helpers' command:
-class custom_install_helpers(Command):
-    description = "Install executable helper programs needed by COT"
-    user_options = [
-        ('force', 'f', 'No prompting for confirmation of installation'),
-    ]
-    boolean_options = ['force']
-
-    def initialize_options(self):
-        self.force = False
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        try:
-            if self.force:
-                subprocess.check_call([HELPER_SCRIPT, "install", '-f'])
-            else:
-                subprocess.check_call([HELPER_SCRIPT, "install"])
-        except subprocess.CalledProcessError:
-            exit('Aborting')
-
-
-# 'bdist_egg' (called automatically by 'install') to include 'install_helpers'
-class custom_bdist_egg(bdist_egg):
-    def run(self):
-        # Don't bother installing helper tools on readthedocs.org
-        if not on_rtd:
-            self.run_command('install_helpers')
-        bdist_egg.run(self)
-
-cmd_class['build'] = custom_build
-cmd_class['install_helpers'] = custom_install_helpers
-cmd_class['bdist_egg'] = custom_bdist_egg
 
 install_requires = ['argparse', 'colorlog>=2.5.0', 'verboselogs>=1.0']
 # shutil.get_terminal_size is standard in 3.3 and later only.
@@ -104,7 +45,7 @@ if sys.version_info < (3, 3):
 setup(
     name='cot',
     version=versioneer.get_version(),
-    cmdclass=cmd_class,
+    cmdclass=versioneer.get_cmdclass(),
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
     packages=['COT', 'COT.helpers'],

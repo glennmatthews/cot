@@ -613,7 +613,6 @@ class TestCLIHelp(TestCOTCLI):
         self.call_cot(['help', 'inject-config'])
 
     def test_help_negative(self):
-        self.call_cot(['help', '-h'], result=2)
         self.call_cot(['help', 'frobozz'], result=2)
         self.call_cot(['help', 'add-disk', 'add-file'], result=2)
 

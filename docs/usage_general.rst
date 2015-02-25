@@ -40,9 +40,11 @@ You can always get detailed help for COT by running ``cot --help``,
         edit-product    Edit product info in an OVF
         edit-properties
                         Edit environment properties of an OVF
+        help            Print help for a command
         info            Generate a description of an OVF package
         inject-config   Inject a configuration file into an OVF package
-        help            Print help for a command
+        install-helpers
+                        Install third-party helper programs that COT may require
 
     Note: some subcommands rely on external software tools, including:
     * qemu-img (http://www.qemu.org/)

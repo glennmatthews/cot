@@ -25,9 +25,6 @@ from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
-CURRENT_UI = None
-"""User interface instance in use by the currently running program, if any."""
-
 
 class UI(object):
 
@@ -45,6 +42,8 @@ class UI(object):
         """
         self.default_confirm_response = True
         """Knob for API testing, sets the default response to confirm()."""
+        import COT.helpers.helper
+        COT.helpers.helper.confirm = self.confirm
 
     def terminal_width(self):
         """Get the width of the terminal in columns."""

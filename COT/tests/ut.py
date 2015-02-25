@@ -30,11 +30,8 @@ import time
 import logging
 from logging.handlers import BufferingHandler
 
-from COT.helpers import OVFTool, HelperError
-import COT.ui_shared
-from COT.ui_shared import UI
-
-COT.ui_shared.CURRENT_UI = UI()
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +109,8 @@ class UTLoggingHandler(BufferingHandler):
 class COT_UT(unittest.TestCase):
     """Subclass of unittest.TestCase adding some additional behaviors we want
     for all of our test cases"""
+
+    from COT.helpers import OVFTool
 
     OVFTOOL = OVFTool()
     OVFTOOL.find_helper()
@@ -270,6 +269,7 @@ class COT_UT(unittest.TestCase):
         if (self.OVFTOOL.helper_path and self.validate_output_with_ovftool and
                 os.path.exists(self.temp_file)):
             # Ask OVFtool to validate that the output file is sane
+            from COT.helpers import HelperError
             try:
                 self.OVFTOOL.validate_ovf(self.temp_file)
             except HelperError as e:

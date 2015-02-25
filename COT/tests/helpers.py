@@ -24,7 +24,7 @@ from distutils.version import StrictVersion
 from COT.tests.ut import COT_UT
 from COT.helpers import Helper, HelperError, HelperNotFoundError
 from COT.helpers import FatDisk, MkIsoFS, OVFTool, QEMUImg, VmdkTool
-import COT.ui_shared
+import COT.helpers.helper
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,9 @@ class HelpersUT(COT_UT):
         with TemporaryDirectory(prefix=("cot_ut_" + self.helper.helper)) as d:
             yield d
 
+    def stub_confirm(self, prompt, force=False):
+        return self.default_confirm_response
+
     def setUp(self):
         # subclass needs to set self.helper
         super(HelpersUT, self).setUp()
@@ -75,6 +78,9 @@ class HelpersUT(COT_UT):
         self._check_output = self.helper._check_output
         self.helper._check_output = self.stub_check_output
         self.helper.download_and_expand = self.stub_download_and_expand
+        self.default_confirm_response = True
+        self._confirm = COT.helpers.helper.confirm
+        COT.helpers.helper.confirm = self.stub_confirm
         # save some environment properties for sanity
         self._port = self.helper.PACKAGE_MANAGERS['port']
         self._apt_get = self.helper.PACKAGE_MANAGERS['apt-get']
@@ -82,6 +88,7 @@ class HelpersUT(COT_UT):
         self._platform = sys.platform
 
     def tearDown(self):
+        COT.helpers.helper.confirm = self._confirm
         self.helper._check_call = self._check_call
         self.helper._check_output = self._check_output
         self.helper.PACKAGE_MANAGERS['port'] = self._port
@@ -147,12 +154,9 @@ class HelperGenericTest(HelpersUT):
                           self.helper.call_helper, ["Hello!"])
 
     def test_call_helper_no_install(self):
-        COT.ui_shared.CURRENT_UI.default_confirm_response = False
-        try:
-            self.assertRaises(HelperNotFoundError,
-                              self.helper.call_helper, ["Hello!"])
-        finally:
-            COT.ui_shared.CURRENT_UI.default_confirm_response = True
+        self.default_confirm_response = False
+        self.assertRaises(HelperNotFoundError,
+                          self.helper.call_helper, ["Hello!"])
 
 
 class TestFatDisk(HelpersUT):

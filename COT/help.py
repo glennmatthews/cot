@@ -76,14 +76,13 @@ class COTHelp(COTGenericSubmodule):
         """
         p = parent.add_parser(
             'help',
-            add_help=False,
             help="""Print help for a command""",
             usage="""
   cot help <command>""",
             description="Display help message for the given command")
 
         p.add_argument("SUBCOMMAND", metavar="<command>", nargs='?',
-                       help=", ".join(sorted(self.UI.subparser_lookup.keys())))
+                       help="COT subcommand to display")
 
         p.set_defaults(instance=self)
 

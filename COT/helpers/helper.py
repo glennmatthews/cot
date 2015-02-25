@@ -53,9 +53,24 @@ except ImportError:
     # Python 2.x
     from urllib import urlretrieve
 
-import COT.ui_shared
-
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
+
+
+# Default method to be used when COT.helpers is run by itself without
+# the broader COT package.
+# The COT package will override this with e.g. the CLI.confirm method.
+def confirm(prompt, force=False):
+    """Prompt user to confirm the requested operation.
+
+    Auto-accepts if :attr:`force` is set to ``True``.
+
+    :param str prompt: Message to prompt the user with
+    :return: ``True`` (user confirms acceptance) or ``False``
+      (user declines)
+    """
+    return True
 
 
 class HelperNotFoundError(OSError):
@@ -260,10 +275,9 @@ class Helper(object):
           else ``None``.
         """
         if not self.find_helper():
-            if not COT.ui_shared.CURRENT_UI.confirm(
-                    "{0} does not appear to be installed.\n"
-                    "Try to install it?"
-                    .format(self.helper)):
+            if not confirm("{0} does not appear to be installed.\n"
+                           "Try to install it?"
+                           .format(self.helper)):
                 raise HelperNotFoundError(
                     1,
                     "Unable to proceed without helper program '{0}'. "

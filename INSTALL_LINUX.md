@@ -1,6 +1,5 @@
-Detailed installation instructions for Linux have moved to
-[installation_linux.rst](docs/installation_linux.rst)
+COT installation documentation has moved to
+[installation.rst](docs/installation.rst).
 
-Referring to the [latest Linux installation
-guide](http://cot.readthedocs.org/en/latest/installation_linux.html)
-is recommended.
+Referring to the [latest installation
+guide](http://cot.readthedocs.org/en/latest/installation.html) is recommended.
