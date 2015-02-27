@@ -36,7 +36,12 @@ versioneer.parentdir_prefix = 'cot-'
 README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            'README.rst')
 
-install_requires = ['argparse', 'colorlog>=2.5.0', 'verboselogs>=1.0']
+install_requires = [
+    'argparse',
+    'colorlog>=2.5.0',
+    'requests',
+    'verboselogs>=1.0',
+]
 # shutil.get_terminal_size is standard in 3.3 and later only.
 if sys.version_info < (3, 3):
     install_requires.append('backports.shutil_get_terminal_size')

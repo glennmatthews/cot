@@ -24,6 +24,8 @@ import contextlib
 import logging
 import os.path
 import re
+import requests
+import shutil
 import subprocess
 import tarfile
 from distutils.spawn import find_executable
@@ -34,7 +36,6 @@ try:
     from tempfile import TemporaryDirectory
 except ImportError:
     # Python 2.x
-    import shutil
     import tempfile
 
     @contextlib.contextmanager
@@ -48,13 +49,6 @@ except ImportError:
             yield tempdir
         finally:
             shutil.rmtree(tempdir)
-
-try:
-    # Python 3.x
-    from urllib.request import urlretrieve
-except ImportError:
-    # Python 2.x
-    from urllib import urlretrieve
 
 from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
@@ -158,7 +152,11 @@ class Helper(object):
         with TemporaryDirectory(prefix="cot_helper") as d:
             logger.debug("Temporary directory is {0}".format(d))
             logger.verbose("Downloading and extracting {0}".format(url))
-            (tgz, _) = urlretrieve(url, os.path.join(d, "helper.tgz"))
+            response = requests.get(url, stream=True)
+            tgz = os.path.join(d, 'helper.tgz')
+            with open(tgz, 'wb') as f:
+                shutil.copyfileobj(response.raw, f)
+            del response
             logger.debug("Extracting {0}".format(tgz))
             # the "with tarfile.open()..." construct isn't supported in 2.6
             tarf = tarfile.open(tgz, "r:gz")
