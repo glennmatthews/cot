@@ -39,7 +39,7 @@ README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 install_requires = [
     'argparse',
     'colorlog>=2.5.0',
-    'requests',
+    'requests>=2.5.1',
     'verboselogs>=1.0',
 ]
 # shutil.get_terminal_size is standard in 3.3 and later only.
