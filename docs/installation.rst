@@ -84,6 +84,8 @@ run:
 
   cot install-helpers
 
+See :doc:`here <usage_install_helpers>` for more details.
+
 If you skip this step, then when you are running COT, and it encounters the
 need for a helper that has not been installed, COT will prompt you to allow it
 to install the helper in question.

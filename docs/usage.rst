@@ -4,6 +4,7 @@ Using COT
 .. toctree::
 
   usage_general.rst
+  usage_install_helpers.rst
   usage_info.rst
   usage_edit_product.rst
   usage_add_disk.rst
