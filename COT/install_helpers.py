@@ -42,17 +42,18 @@ class COTInstallHelpers(COTGenericSubmodule):
         for cls in [FatDisk, MkIsoFS, OVFTool, QEMUImg, VmdkTool]:
             helper = cls()
             if helper.path:
-                results[helper.name] = "already installed"
+                results[helper.name] = "present at " + str(helper.path)
             elif self.verify_only:
-                results[helper.name] = "NOT installed"
+                results[helper.name] = "NOT FOUND"
             else:
                 try:
                     helper.install_helper()
-                    results[helper.name] = "installation SUCCEEDED"
+                    results[helper.name] = ("successfully installed to " +
+                                            str(helper.path))
                 except (NotImplementedError,
                         HelperError,
                         HelperNotFoundError) as e:
-                    results[helper.name] = "installation FAILED: " + str(e)
+                    results[helper.name] = "INSTALLATION FAILED: " + str(e)
                     result = False
 
         print("Results:")
@@ -62,6 +63,7 @@ class COTInstallHelpers(COTGenericSubmodule):
                                        subsequent_indent=(" " * 14))
         for k in sorted(results.keys()):
             print(wrapper.fill("{0:13} {1}".format(k + ":", results[k])))
+        print("")
         if not result:
             raise EnvironmentError(1, "Unable to install some helpers")
 
