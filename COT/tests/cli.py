@@ -689,3 +689,12 @@ class TestCLIDeployESXi(TestCOTCLI):
         self.call_cot(['deploy', self.input_ovf, 'esxi', 'localhost',
                        '-p', 'password', '-c', 'nonexistent'],
                       result=2)
+
+
+class TestCLIInstallHelpers(TestCOTCLI):
+
+    """CLI test cases for 'COT install-helpers' subcommand."""
+
+    def test_help(self):
+        "Verifying help menu"
+        self.call_cot(['install-helpers', '-h'])

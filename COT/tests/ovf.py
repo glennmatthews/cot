@@ -354,7 +354,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             subprocess.check_call(['sed', 's/InstanceID>11</InstanceID>10</',
                                    self.input_ovf],
                                   stdout=f)
-        if self.OVFTOOL.helper_path:
+        if self.OVFTOOL.path:
             # Make sure ovftool also sees this as invalid
             self.assertRaises(HelperError,
                               self.OVFTOOL.validate_ovf, fake_file)
@@ -365,7 +365,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             subprocess.check_call(['sed', 's/on="2CPU-2GB-1NIC"/on="foo"/',
                                    self.input_ovf],
                                   stdout=f)
-        if self.OVFTOOL.helper_path:
+        if self.OVFTOOL.path:
             # Make sure ovftool also sees this as invalid
             self.assertRaises(HelperError,
                               self.OVFTOOL.validate_ovf, fake_file)

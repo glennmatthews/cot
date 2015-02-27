@@ -51,10 +51,6 @@ class HelpersUT(COT_UT):
             return self.fake_output
         return self._check_output(argv, require_success)
 
-    def stub_find_helper(self):
-        logger.info("stub_find_helper()")
-        return False
-
     def stub_find_executable(self, name):
         logger.info("stub_find_executable({0})".format(name))
         return None
@@ -62,7 +58,7 @@ class HelpersUT(COT_UT):
     @contextlib.contextmanager
     def stub_download_and_expand(self, url):
         from COT.helpers.helper import TemporaryDirectory
-        with TemporaryDirectory(prefix=("cot_ut_" + self.helper.helper)) as d:
+        with TemporaryDirectory(prefix=("cot_ut_" + self.helper.name)) as d:
             yield d
 
     def stub_confirm(self, prompt, force=False):
@@ -73,28 +69,32 @@ class HelpersUT(COT_UT):
         super(HelpersUT, self).setUp()
         self.fake_output = None
         self.last_argv = []
-        self._check_call = self.helper._check_call
-        self.helper._check_call = self.stub_check_call
-        self._check_output = self.helper._check_output
-        self.helper._check_output = self.stub_check_output
-        self.helper.download_and_expand = self.stub_download_and_expand
+        self._check_call = Helper._check_call
+        Helper._check_call = self.stub_check_call
+        self._check_output = Helper._check_output
+        Helper._check_output = self.stub_check_output
+        self._download_and_expand = Helper.download_and_expand
+        Helper.download_and_expand = self.stub_download_and_expand
         self.default_confirm_response = True
         self._confirm = COT.helpers.helper.confirm
         COT.helpers.helper.confirm = self.stub_confirm
         # save some environment properties for sanity
-        self._port = self.helper.PACKAGE_MANAGERS['port']
-        self._apt_get = self.helper.PACKAGE_MANAGERS['apt-get']
-        self._yum = self.helper.PACKAGE_MANAGERS['yum']
+        self._port = Helper.PACKAGE_MANAGERS['port']
+        self._apt_get = Helper.PACKAGE_MANAGERS['apt-get']
+        self._yum = Helper.PACKAGE_MANAGERS['yum']
         self._platform = sys.platform
+        self._find_executable = Helper.find_executable
 
     def tearDown(self):
         COT.helpers.helper.confirm = self._confirm
-        self.helper._check_call = self._check_call
-        self.helper._check_output = self._check_output
-        self.helper.PACKAGE_MANAGERS['port'] = self._port
-        self.helper.PACKAGE_MANAGERS['apt-get'] = self._apt_get
-        self.helper.PACKAGE_MANAGERS['yum'] = self._yum
+        Helper._check_call = self._check_call
+        Helper._check_output = self._check_output
+        Helper.download_and_expand = self._download_and_expand
+        Helper.PACKAGE_MANAGERS['port'] = self._port
+        Helper.PACKAGE_MANAGERS['apt-get'] = self._apt_get
+        Helper.PACKAGE_MANAGERS['yum'] = self._yum
         sys.platform = self._platform
+        Helper.find_executable = self._find_executable
         super(HelpersUT, self).tearDown()
 
 
@@ -107,45 +107,45 @@ class HelperGenericTest(HelpersUT):
 
     def test_check_call_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist"""
-        self.helper._check_call = self._check_call
+        Helper._check_call = self._check_call
         self.assertRaises(HelperNotFoundError,
-                          self.helper._check_call, ["not_a_command"])
+                          Helper._check_call, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
-                          self.helper._check_call,
+                          Helper._check_call,
                           ["not_a_command"], require_success=True)
 
     def test_check_call_helpererror(self):
         """HelperError if executable fails and require_success is set"""
-        self.helper._check_call = self._check_call
+        Helper._check_call = self._check_call
         with self.assertRaises(HelperError) as cm:
-            self.helper._check_call(["false"])
+            Helper._check_call(["false"])
         self.assertEqual(cm.exception.errno, 1)
 
-        self.helper._check_call(["false"], require_success=False)
+        Helper._check_call(["false"], require_success=False)
 
     def test_check_output_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist"""
         self.assertRaises(HelperNotFoundError,
-                          self.helper._check_output, ["not_a_command"])
+                          Helper._check_output, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
-                          self.helper._check_output, ["not_a_command"],
+                          Helper._check_output, ["not_a_command"],
                           require_success=True)
 
     def test_check_output_helpererror(self):
         """HelperError if executable fails and require_success is set"""
 
         with self.assertRaises(HelperError) as cm:
-            self.helper._check_output(["false"])
+            Helper._check_output(["false"])
         self.assertEqual(cm.exception.errno, 1)
 
-        self.helper._check_output(["false"], require_success=False)
+        Helper._check_output(["false"], require_success=False)
 
-    def test_find_helper_not_found(self):
-        self.helper.find_executable = self.stub_find_executable
-        self.assertFalse(self.helper.find_helper())
+    def test_helper_not_found(self):
+        Helper.find_executable = self.stub_find_executable
+        self.assertEqual(self.helper.path, None)
 
     def test_install_helper_already_present(self):
-        self.helper.helper_path = True
+        self.helper._path = True
         self.helper.install_helper()
         self.assertLogged(**self.ALREADY_INSTALLED)
 
@@ -157,6 +157,26 @@ class HelperGenericTest(HelpersUT):
         self.default_confirm_response = False
         self.assertRaises(HelperNotFoundError,
                           self.helper.call_helper, ["Hello!"])
+
+    def test_download_and_expand(self):
+        """Validate the download_and_expand() context_manager."""
+        # Remove our stub for this test only
+        Helper.download_and_expand = self._download_and_expand
+        with Helper.download_and_expand(
+            "http://github.com/glennmatthews/cot/archive/master.tar.gz"
+        ) as directory:
+            self.assertTrue(os.path.exists(directory))
+            self.assertTrue(os.path.exists(
+                os.path.join(directory, "cot-master")))
+            self.assertTrue(os.path.exists(
+                os.path.join(directory, "cot-master", "COT")))
+            self.assertTrue(os.path.exists(
+                os.path.join(directory, "cot-master", "COT", "tests")))
+            self.assertTrue(os.path.exists(
+                os.path.join(directory, "cot-master", "COT", "tests", "ut.py")
+            ))
+        # Temporary directory should be cleaned up when done
+        self.assertFalse(os.path.exists(directory))
 
 
 class TestFatDisk(HelpersUT):
@@ -176,10 +196,9 @@ class TestFatDisk(HelpersUT):
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_apt_get(self):
-        self.helper.find_executable = self.stub_find_executable
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['apt-get'] = True
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['apt-get'] = True
         sys.platform = 'linux2'
         self.helper.install_helper()
         self.assertEqual([
@@ -190,18 +209,17 @@ class TestFatDisk(HelpersUT):
         ], self.last_argv)
 
     def test_install_helper_port(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['port'] = True
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['port'] = True
         self.helper.install_helper()
         self.assertEqual(self.last_argv[0],
                          ['sudo', 'port', 'install', 'fatdisk'])
 
     def test_install_helper_yum(self):
-        self.helper.find_executable = self.stub_find_executable
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['apt-get'] = False
-        self.helper.PACKAGE_MANAGERS['yum'] = True
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = True
         sys.platform = 'linux2'
         self.helper.install_helper()
         self.assertEqual([
@@ -212,8 +230,8 @@ class TestFatDisk(HelpersUT):
         ], self.last_argv)
 
     def test_install_helper_unsupported(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['port'] = False
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['port'] = False
         sys.platform = 'windows'
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
@@ -226,18 +244,33 @@ class TestMkIsoFS(HelpersUT):
         self.helper = MkIsoFS()
         super(TestMkIsoFS, self).setUp()
 
-    def test_get_version(self):
+    def test_get_version_mkisofs(self):
         # TODO - this output should have an umlaut...
         self.fake_output = ("mkisofs 3.00 (--) Copyright (C) 1993-1997 "
                             "Eric Youngdale (C) 1997-2010 J?rg Schilling")
         self.assertEqual(StrictVersion("3.0"), self.helper.version)
 
-    def test_find_helper_failover(self):
-        self.helper.find_executable = self.stub_find_executable
-        self.assertEqual("mkisofs", self.helper.helper)
-        self.assertFalse(self.helper.find_helper())
-        self.assertEqual("genisoimage", self.helper.helper)
-        self.assertFalse(self.helper.find_helper())
+    def test_get_version_genisoimage(self):
+        self.fake_output = "genisoimage 1.1.11 (Linux)"
+        self.assertEqual(StrictVersion("1.1.11"), self.helper.version)
+
+    def test_find_mkisofs(self):
+        def find_one(self, name):
+            if name == "mkisofs":
+                return "/mkisofs"
+            return None
+        Helper.find_executable = find_one
+        self.assertEqual("mkisofs", self.helper.name)
+        self.assertEqual(self.helper.path, "/mkisofs")
+
+    def test_find_genisoimage(self):
+        def find_one(self, name):
+            if name == "genisoimage":
+                return "/genisoimage"
+            return None
+        Helper.find_executable = find_one
+        self.assertEqual("genisoimage", self.helper.name)
+        self.assertEqual(self.helper.path, "/genisoimage")
 
     def test_install_helper_already_present(self):
         self.helper.install_helper()
@@ -245,26 +278,28 @@ class TestMkIsoFS(HelpersUT):
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_port(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['apt-get'] = False
-        self.helper.PACKAGE_MANAGERS['port'] = True
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['port'] = True
         self.helper.install_helper()
         self.assertEqual([['sudo', 'port', 'install', 'cdrtools']],
                          self.last_argv)
 
     def test_install_helper_apt_get(self):
-        self.helper.find_executable = self.stub_find_executable
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['apt-get'] = True
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = True
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = False
         self.helper.install_helper()
         self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'genisoimage']],
                          self.last_argv)
-        self.assertEqual('genisoimage', self.helper.helper)
+        self.assertEqual('genisoimage', self.helper.name)
 
     def test_install_helper_unsupported(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['port'] = False
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = False
         sys.platform = 'windows'
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
@@ -288,7 +323,7 @@ class TestOVFTool(HelpersUT):
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_unsupported(self):
-        self.helper.find_helper = self.stub_find_helper
+        Helper.find_executable = self.stub_find_executable
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
@@ -336,37 +371,37 @@ Command syntax:
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_apt_get(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['apt-get'] = True
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['yum'] = False
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = True
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = False
         self.helper.install_helper()
         self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'qemu-utils']],
                          self.last_argv)
 
     def test_install_helper_port(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['apt-get'] = False
-        self.helper.PACKAGE_MANAGERS['port'] = True
-        self.helper.PACKAGE_MANAGERS['yum'] = False
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['port'] = True
+        Helper.PACKAGE_MANAGERS['yum'] = False
         self.helper.install_helper()
         self.assertEqual([['sudo', 'port', 'install', 'qemu']],
                          self.last_argv)
 
     def test_install_helper_yum(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['apt-get'] = False
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['yum'] = True
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = True
         self.helper.install_helper()
         self.assertEqual([['sudo', 'yum', '--quiet', 'install', 'qemu-img']],
                          self.last_argv)
 
     def test_install_helper_unsupported(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['apt-get'] = False
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['yum'] = False
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = False
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
@@ -455,11 +490,10 @@ class TestVmdkTool(HelpersUT):
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_apt_get(self):
-        self.helper.find_executable = self.stub_find_executable
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['apt-get'] = True
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['yum'] = False
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = True
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = False
         sys.platform = 'linux2'
         self.helper.install_helper()
         self.assertEqual([
@@ -471,18 +505,17 @@ class TestVmdkTool(HelpersUT):
         ], self.last_argv)
 
     def test_install_helper_port(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['port'] = True
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['port'] = True
         self.helper.install_helper()
         self.assertEqual(self.last_argv[0],
                          ['sudo', 'port', 'install', 'vmdktool'])
 
     def test_install_helper_yum(self):
-        self.helper.find_executable = self.stub_find_executable
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['apt-get'] = False
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['yum'] = True
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = True
         sys.platform = 'linux2'
         self.helper.install_helper()
         self.assertEqual([
@@ -494,10 +527,10 @@ class TestVmdkTool(HelpersUT):
         ], self.last_argv)
 
     def test_install_helper_unsupported(self):
-        self.helper.find_helper = self.stub_find_helper
-        self.helper.PACKAGE_MANAGERS['apt-get'] = False
-        self.helper.PACKAGE_MANAGERS['port'] = False
-        self.helper.PACKAGE_MANAGERS['yum'] = False
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = False
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 

@@ -14,12 +14,6 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-import sys
-try:
-    import StringIO
-except ImportError:
-    import io as StringIO
-
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.info import COTInfo
@@ -32,19 +26,6 @@ class TestCOTInfo(COT_UT):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTInfo, self).setUp()
         self.instance = COTInfo(UI())
-
-    def check_cot_output(self, expected):
-        """Grab the output from COTInfo and check it against expected output"""
-        sys.stdout = StringIO.StringIO()
-        output = None
-        try:
-            self.instance.run()
-            output = sys.stdout.getvalue()
-        finally:
-            sys.stdout = sys.__stdout__
-
-        self.maxDiff = None
-        self.assertMultiLineEqual(expected.strip(), output.strip())
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""

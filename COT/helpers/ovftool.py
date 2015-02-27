@@ -52,10 +52,10 @@ class OVFTool(Helper):
         :raise: :exc:`NotImplementedError` as VMware does not currently provide
           any mechanism for automatic download of ovftool.
         """
-        if self.find_helper():
+        if self.path:
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"
-                           .format(self.helper, self.helper_path))
+                           .format(self.name, self.path))
             return
         raise NotImplementedError(
             "No support for automated installation of ovftool, "

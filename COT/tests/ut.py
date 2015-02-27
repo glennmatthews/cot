@@ -29,6 +29,10 @@ import platform
 import time
 import logging
 from logging.handlers import BufferingHandler
+try:
+    import StringIO
+except ImportError:
+    import io as StringIO
 
 from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
@@ -113,7 +117,6 @@ class COT_UT(unittest.TestCase):
     from COT.helpers import OVFTool
 
     OVFTOOL = OVFTool()
-    OVFTOOL.find_helper()
 
     FILE_SIZE = {}
     for filename in ['input.iso', 'input.vmdk', 'blank.vmdk']:
@@ -171,6 +174,19 @@ class COT_UT(unittest.TestCase):
     def __init__(self, method_name='runTest'):
         super(COT_UT, self).__init__(method_name)
         self.logging_handler = UTLoggingHandler(self)
+
+    def check_cot_output(self, expected):
+        """Grab the output from COT and check it against expected output"""
+        sys.stdout = StringIO.StringIO()
+        output = None
+        try:
+            self.instance.run()
+            output = sys.stdout.getvalue()
+        finally:
+            sys.stdout = sys.__stdout__
+
+        self.maxDiff = None
+        self.assertMultiLineEqual(expected.strip(), output.strip())
 
     def check_diff(self, expected, file1=None, file2=None):
         """Calls diff on the two files and compares it to the expected output.
@@ -266,7 +282,7 @@ class COT_UT(unittest.TestCase):
             self.instance.destroy()
             self.instance = None
 
-        if (self.OVFTOOL.helper_path and self.validate_output_with_ovftool and
+        if (self.OVFTOOL.path and self.validate_output_with_ovftool and
                 os.path.exists(self.temp_file)):
             # Ask OVFtool to validate that the output file is sane
             from COT.helpers import HelperError

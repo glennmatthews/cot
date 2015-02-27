@@ -37,48 +37,53 @@ class MkIsoFS(Helper):
     .. autosummary::
       :nosignatures:
 
-      find_helper
       install_helper
       create_iso
     """
 
     def __init__(self):
         """Initializer."""
-        super(MkIsoFS, self).__init__("mkisofs",
-                                      version_regexp="mkisofs ([0-9.]+)")
+        super(MkIsoFS, self).__init__(
+            "mkisofs",
+            version_regexp="(?:mkisofs|genisoimage) ([0-9.]+)")
 
-    def find_helper(self):
+    @property
+    def name(self):
+        """Either ``mkisofs`` or ``genisoimage`` depending on environment."""
+        if not self._path:
+            self._path = self.find_executable("mkisofs")
+            if self._path:
+                self._name = "mkisofs"
+            else:
+                self._path = self.find_executable("genisoimage")
+                if self._path:
+                    self._name = "genisoimage"
+        return self._name
+
+    @property
+    def path(self):
         """Find either ``mkisofs`` or ``genisoimage`` if available."""
-        if super(MkIsoFS, self).find_helper():
-            return True
-        elif self.helper == "mkisofs":
-            # Try 'genisoimage' as an alternative
-            self.helper = "genisoimage"
-            return super(MkIsoFS, self).find_helper()
-        elif self.helper == "genisoimage":
-            # Try 'mkisofs' as an alternative
-            self.helper = "mkisofs"
-            return super(MkIsoFS, self).find_helper()
-        return False
+        self.name
+        return self._path
 
     def install_helper(self):
         """Install ``mkisofs`` and/or ``genisoimage``."""
-        if self.find_helper():
+        if self.path:
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"
-                           .format(self.helper, self.helper_path))
+                           .format(self.name, self.path))
             return
         logger.info("Installing 'mkisofs' and/or 'genisoimage'...")
         if self.port_install('cdrtools'):
-            self.helper = 'mkisofs'
+            self._name = 'mkisofs'
         elif (self.apt_install('genisoimage') or
               self.yum_install('genisoimage')):
-            self.helper = "genisoimage"
+            self._name = "genisoimage"
         else:
             raise NotImplementedError(
                 "Unsure how to install mkisofs.\n"
                 "See http://cdrecord.org/")
-        logger.info("Successfully installed '{0}'".format(self.helper))
+        logger.info("Successfully installed '{0}'".format(self.name))
 
     def create_iso(self, file_path, contents):
         """Create a new ISO image at the requested location.
@@ -88,7 +93,7 @@ class MkIsoFS(Helper):
           image.
         """
         logger.info("Calling {0} to create an ISO image"
-                    .format(self.helper))
+                    .format(self.name))
         # mkisofs and genisoimage take the same parameters, conveniently
         self.call_helper(['-output', file_path,
                           '-full-iso9660-filenames',

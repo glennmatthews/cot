@@ -54,10 +54,10 @@ class QEMUImg(Helper):
 
     def install_helper(self):
         """Install ``qemu-img``."""
-        if self.find_helper():
+        if self.path:
             logger.warning("Tried to install {0} -- "
                            "but it's already available at {1}!"
-                           .format(self.helper, self.helper_path))
+                           .format(self.name, self.path))
             return
         logger.info("Installing 'qemu-img'...")
         if not (self.apt_install('qemu-utils') or
