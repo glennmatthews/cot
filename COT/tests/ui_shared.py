@@ -46,3 +46,12 @@ class TestUI(unittest.TestCase):
 
         self.assertEqual("hello", ins.get_input("Prompt:", "hello"))
         self.assertEqual("passwd", ins.get_password("user", "host"))
+
+    def test_stub_apis(self):
+        ins = UI()
+        self.assertEqual("subcommand --foo\nsubcommand --bar",
+                         ins.fill_usage("subcommand", ["--foo", "--bar"]))
+
+        self.assertRaises(NotImplementedError,
+                          ins.fill_examples,
+                          [("foo", "bar"), ("baz", "bat")])
