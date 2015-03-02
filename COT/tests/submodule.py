@@ -38,3 +38,10 @@ class TestCOTSubmodule(COT_UT):
         label, subparser = self.instance.create_subparser(None)
         self.assertEqual(label, "")
         self.assertEqual(subparser, None)
+
+    def test_set_output_implicitly(self):
+        self.instance = COTSubmodule(UI())
+        self.instance.package = self.input_ovf
+        self.assertEqual(self.instance.output, "")
+        self.instance.run()
+        self.assertEqual(self.instance.output, self.input_ovf)
