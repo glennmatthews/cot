@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for COT.data_validation module."""
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -28,9 +30,11 @@ from COT.data_validation import ValueTooLowError, ValueTooHighError
 
 
 class TestValidationFunctions(unittest.TestCase):
+
     """Test cases for input validation APIs."""
 
     def test_match_or_die(self):
+        """Test the match_or_die() function."""
         with self.assertRaises(ValueMismatchError) as cm:
             match_or_die("input", "a", "output", "b")
         self.assertEqual(str(cm.exception),
@@ -39,6 +43,7 @@ class TestValidationFunctions(unittest.TestCase):
         match_or_die("input", "a", "output", "a")
 
     def test_mac_address(self):
+        """Test the mac_address() validator."""
         for valid_string in ["01:08:ab:cd:e0:f9", "00-00-00-00-00-00",
                              "081a.1357.ffff", " 01:02:03:04:05:06 "]:
             self.assertEqual(mac_address(valid_string), valid_string.strip())
@@ -50,6 +55,7 @@ class TestValidationFunctions(unittest.TestCase):
             self.assertRaises(InvalidInputError, mac_address, invalid_string)
 
     def test_device_address(self):
+        """Test the device_address() validator."""
         for valid_string in ["0:0", "1:1", "3:7", "1:10", " 2:3 "]:
             self.assertEqual(device_address(valid_string),
                              valid_string.strip())
@@ -59,6 +65,7 @@ class TestValidationFunctions(unittest.TestCase):
                               device_address, invalid_string)
 
     def test_no_whitespace(self):
+        """Test the no_whitespace() validator."""
         for valid_string in ["", "a", " a ",
                              "abcdefghijklmnopqrstuvwxyz1234567890"]:
             self.assertEqual(no_whitespace(valid_string), valid_string.strip())
@@ -67,6 +74,7 @@ class TestValidationFunctions(unittest.TestCase):
             self.assertRaises(InvalidInputError, no_whitespace, invalid_string)
 
     def test_validate_int(self):
+        """Test the validate_int() validator."""
         for valid_string in ["1", "08", "123", " 256 ", "-10"]:
             self.assertEqual(validate_int(valid_string), int(valid_string))
 
@@ -80,15 +88,18 @@ class TestValidationFunctions(unittest.TestCase):
         self.assertRaises(ValueTooHighError, validate_int, "1", max=0)
 
     def test_non_negative_int(self):
+        """Test the non_negative_int() validator."""
         self.assertEqual(non_negative_int("10"), 10)
         self.assertEqual(non_negative_int("0"), 0)
         self.assertRaises(ValueTooLowError, non_negative_int, "-1")
 
     def test_positive_int(self):
+        """Test the positive_int() validator."""
         self.assertEqual(positive_int("10"), 10)
         self.assertRaises(ValueTooLowError, positive_int, "0")
 
     def test_custom_error_attributes(self):
+        """Test the properties of ValueUnsupportedError and its children."""
         with self.assertRaises(ValueUnsupportedError) as cm:
             validate_int("a")
         self.assertEqual(cm.exception.value_type, "input")

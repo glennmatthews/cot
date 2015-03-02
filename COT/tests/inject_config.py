@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.inject_config.COTInjectConfig class."""
+
 import os.path
 import re
 
@@ -25,7 +27,8 @@ from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
 
 
 class TestCOTInjectConfig(COT_UT):
-    """Test cases for COTInjectConfig class"""
+
+    """Test cases for COTInjectConfig class."""
 
     # Expected WARNING message
     OVERWRITE_CONFIG_DISK = {
@@ -34,7 +37,7 @@ class TestCOTInjectConfig(COT_UT):
     }
 
     def setUp(self):
-        """Test case setup function called automatically prior to each test"""
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTInjectConfig, self).setUp()
         self.instance = COTInjectConfig(UI())
         self.instance.output = self.temp_file
@@ -54,7 +57,7 @@ class TestCOTInjectConfig(COT_UT):
         self.assertTrue(ready)
 
     def test_invalid_always_args(self):
-        """Test input values that are always invalid"""
+        """Test input values that are always invalid."""
         self.instance.package = self.input_ovf
         with self.assertRaises(InvalidInputError):
             self.instance.config_file = 0
@@ -126,7 +129,7 @@ ovf:size="{config_size}" />
                                     self.temp_dir, 'config.iso'))))
 
     def test_inject_config_vmdk(self):
-        """Inject config file on a VMDK"""
+        """Inject config file on a VMDK."""
         self.instance.package = self.iosv_ovf
         self.instance.config_file = self.config_file
         self.instance.run()
@@ -167,7 +170,7 @@ for bootstrap configuration.</rasd:Description>
                                     self.temp_dir, 'config.vmdk'))))
 
     def test_inject_config_repeatedly(self):
-        """inject-config repeatedly"""
+        """inject-config repeatedly."""
         # Add initial config file
         self.instance.package = self.input_ovf
         self.instance.config_file = self.config_file

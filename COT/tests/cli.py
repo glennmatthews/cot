@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.cli.CLI class and related functionality."""
+
 import logging
 import os
 import os.path
@@ -25,14 +27,16 @@ from COT.data_validation import InvalidInputError
 
 
 class TestCOTCLI(COT_UT):
-    """Parent class for CLI test cases"""
+
+    """Parent class for CLI test cases."""
 
     def setUp(self):
-        """Test case setup function called automatically prior to each test"""
+        """Test case setup function called automatically prior to each test."""
         self.cli = CLI()
         super(TestCOTCLI, self).setUp()
 
     def tearDown(self):
+        """Test case cleanup function called automatically after each test."""
         # If we set the verbosity of the CLI directly, the CLI logger is on.
         # The CLI normally turns the logger back off at the end of cli.main()
         # but in some of our CLI test cases we don't call cli.main(), so
@@ -45,8 +49,7 @@ class TestCOTCLI(COT_UT):
         super(TestCOTCLI, self).tearDown()
 
     def call_cot(self, argv, result=0, fixup_args=True):
-        """Invoke COT CLI with the specified arguments, suppressing stdout and
-        stderr, and return its return code"""
+        """Invoke COT CLI, suppressing stdout and stderr, and return the rc."""
         rc = -1
         if fixup_args:
             argv = ['--quiet'] + argv
@@ -74,10 +77,11 @@ class TestCOTCLI(COT_UT):
 
 
 class TestCLIModule(TestCOTCLI):
-    """Test cases for the CLI module itself"""
+
+    """Test cases for the CLI module itself."""
 
     def setUp(self):
-        """Test case setup function called automatically prior to each test"""
+        """Test case setup function called automatically prior to each test."""
         super(TestCLIModule, self).setUp()
         self.TERMINAL_WIDTH = 80
 
@@ -87,6 +91,7 @@ class TestCLIModule(TestCOTCLI):
         self.cli.terminal_width = magic_width
 
     def test_apis_without_force(self):
+        """Test confirm, confirm_or_die, etc. without --force option."""
         self.cli.force = False
 
         self.cli.input = lambda _: 'y'
@@ -126,6 +131,7 @@ class TestCLIModule(TestCOTCLI):
         self.assertEqual("password", self.cli.get_password("user", "host"))
 
     def test_apis_with_force(self):
+        """Test confirm, confirm_or_die, etc with --force option."""
         # When --force is set, CLI uses defaults and does not read user input
         self.cli.force = True
         self.cli.set_verbosity(logging.ERROR)
@@ -147,7 +153,7 @@ class TestCLIModule(TestCOTCLI):
                           self.cli.get_password, "user", "host")
 
     def test_fill_usage(self):
-        """Test fill_usage() API"""
+        """Test fill_usage() API."""
         self.maxDiff = None     # show full diffs in case of failure
         usage = ["PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...] [-o OUTPUT]",
                  "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
@@ -194,7 +200,7 @@ class TestCLIModule(TestCOTCLI):
                              [-o OUTPUT]""")
 
     def test_fill_examples(self):
-        """Test fill_examples() API"""
+        """Test fill_examples() API."""
         self.maxDiff = None
         examples = [
             ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test',
@@ -269,27 +275,28 @@ Examples:
 
 
 class TestCLIGeneral(TestCOTCLI):
-    """CLI Test cases for top-level "cot" command"""
+
+    """CLI Test cases for top-level "cot" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot."""
         self.call_cot(['-h'])
         self.call_cot(['--help'])
 
     def test_version(self):
-        """Verifying --version command"""
+        """Verify --version command."""
         self.call_cot(['-V'])
         self.call_cot(['--version'])
 
     def test_incomplete_cli(self):
-        """Verifying command with no subcommand is not valid"""
+        """Verify command with no subcommand is not valid."""
         # No args at all
         self.call_cot([], result=2)
         # Optional args but no subcommand
         self.call_cot(['-f', '-v'], fixup_args=False, result=2)
 
     def test_verbosity(self):
-        """Verifying various verbosity options"""
+        """Verify various verbosity options and their effect on logging."""
         self.logging_handler.flush()
 
         # Default verbosity is INFO
@@ -353,14 +360,15 @@ class TestCLIGeneral(TestCOTCLI):
 
 
 class TestCLIAddDisk(TestCOTCLI):
-    """CLI test cases for "cot add-disk" command"""
+
+    """CLI test cases for "cot add-disk" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot add-disk."""
         self.call_cot(['add-disk', "-h"])
 
     def test_invalid_args(self):
-        """Testing various missing or incorrect parameters"""
+        """Testing various missing or incorrect parameters."""
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         # No disk or VM specified
         self.call_cot(['add-disk'], result=2)
@@ -408,7 +416,7 @@ class TestCLIAddDisk(TestCOTCLI):
         self.call_cot(['add-disk', disk_path, fake_file], result=2)
 
     def test_nonexistent_file(self):
-        """Pass in a file or VM that doesn't exist"""
+        """Pass in a file or VM that doesn't exist."""
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         # Disk exists but VM does not
         self.call_cot(['add-disk', disk_path, '/foo/bar.ovf'], result=2)
@@ -417,7 +425,7 @@ class TestCLIAddDisk(TestCOTCLI):
                       result=2)
 
     def test_unknown_filetype(self):
-        """Pass in a file that is not obviously a CDROM or hard disk"""
+        """Pass in a file that is not obviously a CDROM or hard disk."""
         # Unknown extension
         mystery_file = os.path.join(self.temp_dir, "foo.bar")
         open(mystery_file, 'a').close()
@@ -433,14 +441,15 @@ class TestCLIAddDisk(TestCOTCLI):
 
 
 class TestCLIAddFile(TestCOTCLI):
-    """CLI test cases for "cot add-file" command"""
+
+    """CLI test cases for "cot add-file" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot add-file."""
         self.call_cot(['add-file', "-h"])
 
     def test_invalid_args(self):
-        """Testing various missing or incorrect parameters"""
+        """Test various missing or incorrect parameters."""
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         # No file or VM specified
         self.call_cot(['add-file'], result=2)
@@ -454,7 +463,7 @@ class TestCLIAddFile(TestCOTCLI):
                           result=2)
 
     def test_nonexistent_file(self):
-        """Pass in a file or VM that doesn't exist"""
+        """Pass in a file or VM that doesn't exist."""
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         # Disk exists but VM does not
         self.call_cot(['add-file', disk_path, '/foo/bar.ovf'], result=2)
@@ -464,14 +473,15 @@ class TestCLIAddFile(TestCOTCLI):
 
 
 class TestCLIEditHardware(TestCOTCLI):
-    """CLI test cases for "cot edit-hardware" command"""
+
+    """CLI test cases for "cot edit-hardware" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot edit-hardware."""
         self.call_cot(['edit-hardware', "-h"])
 
     def test_invalid_args(self):
-        """Testing various missing or incorrect parameters"""
+        """Test various missing or incorrect parameters."""
         # No VM specified
         self.call_cot(['edit-hardware'], result=2)
         # Nonexistent VM specified
@@ -505,14 +515,15 @@ class TestCLIEditHardware(TestCOTCLI):
 
 
 class TestCLIEditProduct(TestCOTCLI):
-    """CLI test cases for "cot edit-product" command"""
+
+    """CLI test cases for "cot edit-product" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot edit-product."""
         self.call_cot(['edit-product', "-h"])
 
     def test_invalid_args(self):
-        """Testing various missing or incorrect parameters"""
+        """Test various missing or incorrect parameters."""
         # No VM specified
         self.call_cot(['edit-product'], result=2)
         # Nonexistent VM specified
@@ -524,14 +535,15 @@ class TestCLIEditProduct(TestCOTCLI):
 
 
 class TestCLIEditProperties(TestCOTCLI):
-    """CLI test cases for "cot edit-properties" command"""
+
+    """CLI test cases for "cot edit-properties" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot edit-properties."""
         self.call_cot(['edit-properties', '-h'])
 
     def test_invalid_args(self):
-        """Testing various missing or incorrect parameters"""
+        """Test various missing or incorrect parameters."""
         # No VM specified
         self.call_cot(['edit-properties'], result=2)
         # Nonexistent VM specified
@@ -555,8 +567,7 @@ class TestCLIEditProperties(TestCOTCLI):
                        '=foo'], result=2)
 
     def test_set_property_valid(self):
-        """Various methods of property setting, exercising CLI nargs/append"""
-
+        """Variant property setting syntax, exercising CLI nargs/append."""
         for args in (['-p', 'login-username=admin',   # Individual
                       '-p', 'login-password=cisco123',
                       '-p', 'enable-ssh-server=1'],
@@ -598,9 +609,11 @@ ovf:userConfigurable="true" ovf:value="true">
 
 
 class TestCLIHelp(TestCOTCLI):
-    """CLI test cases for "cot help" command"""
+
+    """CLI test cases for "cot help" command."""
 
     def test_help_positive(self):
+        """Positive tests for cot help."""
         self.call_cot(['help'])
         self.call_cot(['help', 'add-disk'])
         self.call_cot(['help', 'add-file'])
@@ -613,27 +626,30 @@ class TestCLIHelp(TestCOTCLI):
         self.call_cot(['help', 'inject-config'])
 
     def test_help_negative(self):
+        """Negative tests for cot help."""
         self.call_cot(['help', 'frobozz'], result=2)
         self.call_cot(['help', 'add-disk', 'add-file'], result=2)
 
 
 class TestCLIInfo(TestCOTCLI):
-    """CLI test cases for "cot info" command"""
+
+    """CLI test cases for "cot info" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot info."""
         self.call_cot(['info', "-h"])
 
 
 class TestCLIInjectConfig(TestCOTCLI):
-    """CLI test cases for "cot inject-config" command"""
+
+    """CLI test cases for "cot inject-config" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot inject-config."""
         self.call_cot(['inject-config', '-h'])
 
     def test_invalid_args(self):
-        """Testing various missing or incorrect parameters"""
+        """Test various missing or incorrect parameters."""
         # No VM specified
         self.call_cot(['inject-config'], result=2)
         # Nonexistent VM specified
@@ -649,13 +665,15 @@ class TestCLIInjectConfig(TestCOTCLI):
 
 
 class TestCLIDeploy(TestCOTCLI):
-    """CLI test cases for "cot deploy" command"""
+
+    """CLI test cases for "cot deploy" command."""
 
     def test_help(self):
-        """Verifying help menu"""
+        """Verify help menu for cot deploy."""
         self.call_cot(['deploy', '-h'])
 
     def test_invalid_args(self):
+        """Negative testing for cot deploy CLI."""
         # No VM specified
         self.call_cot(['deploy'], result=2)
         # VM does not exist
@@ -667,13 +685,15 @@ class TestCLIDeploy(TestCOTCLI):
 
 
 class TestCLIDeployESXi(TestCOTCLI):
-    """CLI test cases for 'cot deploy PACKAGE esxi' command"""
+
+    """CLI test cases for 'cot deploy PACKAGE esxi' command."""
 
     def test_help(self):
-        "Verifying help menu"
+        """Verify help menu for cot deploy ... esxi."""
         self.call_cot(['deploy', self.input_ovf, '-h'])
 
     def test_invalid_args(self):
+        """Negative testing for cot deploy ... esxi CLI."""
         # No locator specified
         self.call_cot(['deploy', self.input_ovf, 'esxi'],
                       result=2)
@@ -696,5 +716,5 @@ class TestCLIInstallHelpers(TestCOTCLI):
     """CLI test cases for 'COT install-helpers' subcommand."""
 
     def test_help(self):
-        "Verifying help menu"
+        """Verify help menu for cot install-helpers."""
         self.call_cot(['install-helpers', '-h'])

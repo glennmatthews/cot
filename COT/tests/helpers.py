@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.helpers package."""
+
 import contextlib
 import os
 import logging
@@ -30,7 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 class HelpersUT(COT_UT):
-    """Generic class for testing Helpers and subclasses thereof."""
+
+    """Generic class for testing Helper and subclasses thereof."""
 
     # commonly seen logger message for helpers
     ALREADY_INSTALLED = {
@@ -39,11 +42,13 @@ class HelpersUT(COT_UT):
     }
 
     def stub_check_call(self, argv, require_success=True, **kwargs):
+        """Stub for Helper._check_call - store the argv and do nothing."""
         logger.info("stub_check_call({0}, {1})"
                     .format(argv, require_success))
         self.last_argv.append(argv)
 
     def stub_check_output(self, argv, require_success=True, **kwargs):
+        """Stub for Helper._check_output - return canned output."""
         logger.info("stub_check_output({0}, {1})"
                     .format(argv, require_success))
         self.last_argv.append(argv)
@@ -52,19 +57,23 @@ class HelpersUT(COT_UT):
         return self._check_output(argv, require_success)
 
     def stub_find_executable(self, name):
+        """Stub for Helper.find_executable - always fails."""
         logger.info("stub_find_executable({0})".format(name))
         return None
 
     @contextlib.contextmanager
     def stub_download_and_expand(self, url):
+        """Stub for Helper.download_and_expand - create a fake directory."""
         from COT.helpers.helper import TemporaryDirectory
         with TemporaryDirectory(prefix=("cot_ut_" + self.helper.name)) as d:
             yield d
 
     def stub_confirm(self, prompt, force=False):
+        """Stub for confirm() - return fixed response."""
         return self.default_confirm_response
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         # subclass needs to set self.helper
         super(HelpersUT, self).setUp()
         self.fake_output = None
@@ -86,6 +95,7 @@ class HelpersUT(COT_UT):
         self._find_executable = Helper.find_executable
 
     def tearDown(self):
+        """Test case cleanup function called automatically after each test."""
         COT.helpers.helper.confirm = self._confirm
         Helper._check_call = self._check_call
         Helper._check_output = self._check_output
@@ -99,14 +109,16 @@ class HelpersUT(COT_UT):
 
 
 class HelperGenericTest(HelpersUT):
-    """Test cases for generic Helpers class."""
+
+    """Test cases for generic Helper class."""
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         self.helper = Helper("generic")
         super(HelperGenericTest, self).setUp()
 
     def test_check_call_helpernotfounderror(self):
-        """HelperNotFoundError if executable doesn't exist"""
+        """HelperNotFoundError if executable doesn't exist."""
         Helper._check_call = self._check_call
         self.assertRaises(HelperNotFoundError,
                           Helper._check_call, ["not_a_command"])
@@ -115,7 +127,7 @@ class HelperGenericTest(HelpersUT):
                           ["not_a_command"], require_success=True)
 
     def test_check_call_helpererror(self):
-        """HelperError if executable fails and require_success is set"""
+        """HelperError if executable fails and require_success is set."""
         Helper._check_call = self._check_call
         with self.assertRaises(HelperError) as cm:
             Helper._check_call(["false"])
@@ -124,7 +136,7 @@ class HelperGenericTest(HelpersUT):
         Helper._check_call(["false"], require_success=False)
 
     def test_check_output_helpernotfounderror(self):
-        """HelperNotFoundError if executable doesn't exist"""
+        """HelperNotFoundError if executable doesn't exist."""
         self.assertRaises(HelperNotFoundError,
                           Helper._check_output, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
@@ -132,8 +144,7 @@ class HelperGenericTest(HelpersUT):
                           require_success=True)
 
     def test_check_output_helpererror(self):
-        """HelperError if executable fails and require_success is set"""
-
+        """HelperError if executable fails and require_success is set."""
         with self.assertRaises(HelperError) as cm:
             Helper._check_output(["false"])
         self.assertEqual(cm.exception.errno, 1)
@@ -141,19 +152,23 @@ class HelperGenericTest(HelpersUT):
         Helper._check_output(["false"], require_success=False)
 
     def test_helper_not_found(self):
+        """Make sure helper.path is None if find_executable fails."""
         Helper.find_executable = self.stub_find_executable
         self.assertEqual(self.helper.path, None)
 
     def test_install_helper_already_present(self):
+        """Make sure a warning is logged when attempting to re-install."""
         self.helper._path = True
         self.helper.install_helper()
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_call_helper_install(self):
+        """call_helper will call install_helper, which raises an error."""
         self.assertRaises(NotImplementedError,
                           self.helper.call_helper, ["Hello!"])
 
     def test_call_helper_no_install(self):
+        """If not installed, and user declines, raise HelperNotFoundError."""
         self.default_confirm_response = False
         self.assertRaises(HelperNotFoundError,
                           self.helper.call_helper, ["Hello!"])
@@ -180,22 +195,27 @@ class HelperGenericTest(HelpersUT):
 
 
 class TestFatDisk(HelpersUT):
+
     """Test cases for FatDisk helper class."""
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         self.helper = FatDisk()
         super(TestFatDisk, self).setUp()
 
     def test_get_version(self):
+        """Validate .version getter."""
         self.fake_output = "fatdisk, version 1.0.0-beta"
         self.assertEqual(StrictVersion("1.0.0"), self.helper.version)
 
     def test_install_helper_already_present(self):
+        """Trying to re-install is a no-op."""
         self.helper.install_helper()
         self.assertEqual([], self.last_argv)
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_apt_get(self):
+        """Test installation via 'apt-get'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['apt-get'] = True
@@ -209,6 +229,7 @@ class TestFatDisk(HelpersUT):
         ], self.last_argv)
 
     def test_install_helper_port(self):
+        """Test installation via 'port'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = True
         self.helper.install_helper()
@@ -216,6 +237,7 @@ class TestFatDisk(HelpersUT):
                          ['sudo', 'port', 'install', 'fatdisk'])
 
     def test_install_helper_yum(self):
+        """Test installation via 'yum'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['apt-get'] = False
@@ -230,6 +252,7 @@ class TestFatDisk(HelpersUT):
         ], self.last_argv)
 
     def test_install_helper_unsupported(self):
+        """No support for installation under Windows."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = False
         sys.platform = 'windows'
@@ -238,23 +261,28 @@ class TestFatDisk(HelpersUT):
 
 
 class TestMkIsoFS(HelpersUT):
+
     """Test cases for MkIsoFS helper class."""
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         self.helper = MkIsoFS()
         super(TestMkIsoFS, self).setUp()
 
     def test_get_version_mkisofs(self):
+        """Test .version getter logic for mkisofs."""
         # TODO - this output should have an umlaut...
         self.fake_output = ("mkisofs 3.00 (--) Copyright (C) 1993-1997 "
                             "Eric Youngdale (C) 1997-2010 J?rg Schilling")
         self.assertEqual(StrictVersion("3.0"), self.helper.version)
 
     def test_get_version_genisoimage(self):
+        """Test .version getter logic for genisoimage."""
         self.fake_output = "genisoimage 1.1.11 (Linux)"
         self.assertEqual(StrictVersion("1.1.11"), self.helper.version)
 
     def test_find_mkisofs(self):
+        """If mkisofs is found, use it."""
         def find_one(self, name):
             if name == "mkisofs":
                 return "/mkisofs"
@@ -264,6 +292,7 @@ class TestMkIsoFS(HelpersUT):
         self.assertEqual(self.helper.path, "/mkisofs")
 
     def test_find_genisoimage(self):
+        """If mkisofs is not found, but genisoimage is, use that."""
         def find_one(self, name):
             if name == "genisoimage":
                 return "/genisoimage"
@@ -273,11 +302,13 @@ class TestMkIsoFS(HelpersUT):
         self.assertEqual(self.helper.path, "/genisoimage")
 
     def test_install_helper_already_present(self):
+        """Don't re-install if already installed."""
         self.helper.install_helper()
         self.assertEqual([], self.last_argv)
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_port(self):
+        """Test installation via 'port'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = True
@@ -286,6 +317,7 @@ class TestMkIsoFS(HelpersUT):
                          self.last_argv)
 
     def test_install_helper_apt_get(self):
+        """Test installation via 'apt-get'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = True
         Helper.PACKAGE_MANAGERS['port'] = False
@@ -296,6 +328,7 @@ class TestMkIsoFS(HelpersUT):
         self.assertEqual('genisoimage', self.helper.name)
 
     def test_install_helper_unsupported(self):
+        """Installation fails with neither apt-get nor port nor yum."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = False
@@ -306,36 +339,44 @@ class TestMkIsoFS(HelpersUT):
 
 
 class TestOVFTool(HelpersUT):
+
     """Test cases for OVFTool helper class."""
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         self.helper = OVFTool()
         super(TestOVFTool, self).setUp()
 
     def test_invalid_version(self):
+        """Negative test for .version getter logic."""
         self.fake_output = "Error: Unknown option: 'version'"
         with self.assertRaises(RuntimeError):
             self.helper.version
 
     def test_install_helper_already_present(self):
+        """Do nothing when trying to re-install."""
         self.helper.install_helper()
         self.assertEqual([], self.last_argv)
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_unsupported(self):
+        """No support for automated installation of ovftool."""
         Helper.find_executable = self.stub_find_executable
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
 
 class TestQEMUImg(HelpersUT):
+
     """Test cases for QEMUImg helper class."""
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         self.helper = QEMUImg()
         super(TestQEMUImg, self).setUp()
 
     def test_older_version(self):
+        """Test .version getter logic for older versions."""
         self.fake_output = """
 qemu-img version 1.4.2, Copyright (c) 2004-2008 Fabrice Bellard
 usage: qemu-img command [command options]
@@ -355,22 +396,26 @@ Command syntax:
         self.assertEqual(version, StrictVersion("1.4.2"))
 
     def test_newer_version(self):
+        """Test .version getter logic for newer versions."""
         self.fake_output = \
             "qemu-img version 2.1.2, Copyright (c) 2004-2008 Fabrice Bellard"
         self.assertEqual(self.helper.version,
                          StrictVersion("2.1.2"))
 
     def test_invalid_version(self):
+        """Negative test for .version getter logic."""
         self.fake_output = "qemu-img: error: unknown argument --version"
         with self.assertRaises(RuntimeError):
             self.helper.version
 
     def test_install_helper_already_present(self):
+        """Do nothing when trying to re-install."""
         self.helper.install_helper()
         self.assertEqual([], self.last_argv)
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_apt_get(self):
+        """Test installation via 'apt-get'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = True
         Helper.PACKAGE_MANAGERS['port'] = False
@@ -380,6 +425,7 @@ Command syntax:
                          self.last_argv)
 
     def test_install_helper_port(self):
+        """Test installation via 'port'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = True
@@ -389,6 +435,7 @@ Command syntax:
                          self.last_argv)
 
     def test_install_helper_yum(self):
+        """Test installation via 'yum'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = False
@@ -398,6 +445,7 @@ Command syntax:
                          self.last_argv)
 
     def test_install_helper_unsupported(self):
+        """Installation fails without a package manager."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = False
@@ -419,11 +467,13 @@ Command syntax:
         self.assertEqual('qcow2', self.helper.get_disk_format(temp_disk))
 
     def test_get_disk_format_no_file(self):
+        """Negative test for get_disk_format() - no such file."""
         self.assertRaises(HelperError, self.helper.get_disk_format, "")
         self.assertRaises(HelperError, self.helper.get_disk_format,
                           "/foo/bar/baz")
 
     def test_get_disk_format_not_available(self):
+        """Negative test for get_disk_format() - bad command output."""
         # Haven't found a way yet to make qemu-img actually fail here
         # without returning a non-zero RC and triggering a HelperError,
         # so we'll have to fake it
@@ -432,6 +482,7 @@ Command syntax:
                           "/foo/bar")
 
     def test_get_disk_capacity(self):
+        """Test the get_disk_capacity() method."""
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         self.assertEqual("536870912",
                          self.helper.get_disk_capacity(disk_path))
@@ -441,11 +492,13 @@ Command syntax:
                          self.helper.get_disk_capacity(disk_path))
 
     def test_get_disk_capacity_no_file(self):
+        """Negative test for get_disk_capacity() - no such file."""
         self.assertRaises(HelperError, self.helper.get_disk_capacity, "")
         self.assertRaises(HelperError, self.helper.get_disk_capacity,
                           "/foo/bar/baz")
 
     def test_get_disk_capacity_not_available(self):
+        """Negative test for get_disk_capacity() - bad command output."""
         # Haven't found a way yet to make qemu-img actually fail here
         # without returning a non-zero RC and triggering a HelperError,
         # so we'll have to fake it
@@ -462,6 +515,7 @@ Command syntax:
                           capacity="1M")
 
     def test_convert_unsupported(self):
+        """Negative test for convert_disk_image() - unsupported formats."""
         with self.assertRaises(NotImplementedError):
             self.helper.convert_disk_image(
                 os.path.join(os.path.dirname(__file__), "blank.vmdk"),
@@ -474,22 +528,27 @@ Command syntax:
 
 
 class TestVmdkTool(HelpersUT):
+
     """Test cases for VmdkTool helper class."""
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         self.helper = VmdkTool()
         super(TestVmdkTool, self).setUp()
 
     def test_get_version(self):
+        """Test .version getter logic."""
         self.fake_output = "vmdktool version 1.4"
         self.assertEqual(StrictVersion("1.4"), self.helper.version)
 
     def test_install_helper_already_present(self):
+        """Do nothing instead of re-installing."""
         self.helper.install_helper()
         self.assertEqual([], self.last_argv)
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_apt_get(self):
+        """Test installation via 'apt-get'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = True
         Helper.PACKAGE_MANAGERS['port'] = False
@@ -505,6 +564,7 @@ class TestVmdkTool(HelpersUT):
         ], self.last_argv)
 
     def test_install_helper_port(self):
+        """Test installation via 'port'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = True
         self.helper.install_helper()
@@ -512,6 +572,7 @@ class TestVmdkTool(HelpersUT):
                          ['sudo', 'port', 'install', 'vmdktool'])
 
     def test_install_helper_yum(self):
+        """Test installation via 'yum'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = False
@@ -527,6 +588,7 @@ class TestVmdkTool(HelpersUT):
         ], self.last_argv)
 
     def test_install_helper_unsupported(self):
+        """Unable to install without a package manager."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = False
@@ -535,6 +597,7 @@ class TestVmdkTool(HelpersUT):
             self.helper.install_helper()
 
     def test_convert_unsupported(self):
+        """Negative test - conversion to unsupported format/subformat."""
         with self.assertRaises(NotImplementedError):
             self.helper.convert_disk_image(
                 os.path.join(os.path.dirname(__file__), "blank.vmdk"),

@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.edit_product.COTEditProduct class."""
+
 import re
 
 from COT.tests.ut import COT_UT
@@ -23,9 +25,11 @@ from COT.data_validation import InvalidInputError
 
 
 class TestCOTEditProduct(COT_UT):
-    """Unit tests for COTEditProduct submodule"""
+
+    """Unit tests for COTEditProduct submodule."""
+
     def setUp(self):
-        """Test case setup function called automatically prior to each test"""
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTEditProduct, self).setUp()
         self.instance = COTEditProduct(UI())
         self.instance.output = self.temp_file
@@ -103,7 +107,7 @@ class TestCOTEditProduct(COT_UT):
 """)
 
     def test_edit_both_versions(self):
-        """Edit both version strings"""
+        """Edit both version strings."""
         self.instance.package = self.input_ovf
         self.instance.version = "5.2.0.01I"
         self.instance.full_version = "Cisco IOS XRv, Version 5.2"

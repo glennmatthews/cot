@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.deploy.COTDeploy(ESXi) classes."""
+
 import getpass
 import logging
 import re
@@ -30,13 +32,16 @@ logger = logging.getLogger(__name__)
 
 class TestCOTDeploy(COT_UT):
 
+    """Test cases for COTDeploy."""
+
     def setUp(self):
-        "Test case setup function called automatically prior to each test"
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTDeploy, self).setUp()
         self.instance = COTDeploy(UI())
         self.instance.package = self.input_ovf
 
     def test_not_ready_with_no_args(self):
+        """Verify that ready_to_run() is False without all mandatory args."""
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("HYPERVISOR.*mandatory", reason))
@@ -50,6 +55,7 @@ class TestCOTDeploy(COT_UT):
         self.assertRaises(InvalidInputError, self.instance.run)
 
     def test_invalid_args(self):
+        """Negative testing for various arguments."""
         with self.assertRaises(InvalidInputError):
             self.instance.hypervisor = "frobozz"
         with self.assertRaises(InvalidInputError):
@@ -59,6 +65,8 @@ class TestCOTDeploy(COT_UT):
 
 
 class TestCOTDeployESXi(COT_UT):
+
+    """Test cases for COTDeployESXi class."""
 
     # Some WARNING logger messages we may expect at various points:
     SERIAL_PORT_FIXUP = {
@@ -75,6 +83,7 @@ class TestCOTDeployESXi(COT_UT):
     }
 
     def stub_check_call(self, argv, require_success=True):
+        """Stub for check_call - capture calls to ovftool."""
         logger.info("stub_check_call({0}, {1})".format(argv, require_success))
         if argv[0] == 'ovftool':
             self.last_argv = argv
@@ -83,7 +92,7 @@ class TestCOTDeployESXi(COT_UT):
         return self._check_call(argv, require_success)
 
     def setUp(self):
-        "Test case setup function called automatically prior to each test"
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTDeployESXi, self).setUp()
         self.instance = COTDeployESXi(UI())
         self.instance.package = self.input_ovf
@@ -97,13 +106,14 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.ovftool._version = StrictVersion("4.0.0")
 
     def tearDown(self):
-        "Test case cleanup function called automatically"
+        """Test case cleanup function called automatically."""
         # Remove our stub
         self.instance.ovftool._check_call = self._check_call
         self.instance.ovftool._version = self._ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
     def test_not_ready_with_no_args(self):
+        """Verify ready_to_run() is False without all mandatory args."""
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("LOCATOR.*mandatory", reason))
@@ -117,6 +127,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertRaises(InvalidInputError, self.instance.run)
 
     def test_invalid_args(self):
+        """Negative tests for various arguments."""
         with self.assertRaises(InvalidInputError):
             self.instance.configuration = ""
         with self.assertRaises(InvalidInputError):
@@ -125,7 +136,7 @@ class TestCOTDeployESXi(COT_UT):
             self.instance.power_on = "frobozz"
 
     def test_ovftool_args_basic(self):
-        "Test that ovftool is called with the expected arguments"
+        """Test that ovftool is called with the basic arguments."""
         self.instance.locator = "localhost"
         self.instance.run()
         self.assertEqual([
@@ -138,7 +149,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.SERIAL_PORT_FIXUP)
 
     def test_ovftool_args_advanced(self):
-        "Test that ovftool is called with the expected arguments"
+        """Test that ovftool is called with more involved arguments."""
         self.instance.locator = "localhost/host/foo"
         self.instance.datastore = "datastore1"
         self.instance.configuration = "2CPU-2GB-1NIC"
@@ -165,8 +176,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.SERIAL_PORT_FIXUP)
 
     def test_ovftool_vsphere_env_fixup(self):
-        "Test fixup of environment when deploying directly to vSphere"
-
+        """Test fixup of environment when deploying directly to vSphere."""
         # With 4.0.0 (our default) and no power_on, there's no fixup.
         # This is tested by test_ovftool_args_basic() above.
 

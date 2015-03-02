@@ -12,6 +12,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the platforms provided by COT.platforms."""
+
 import unittest
 from COT.platforms import GenericPlatform
 from COT.platforms import IOSXRv, CSR1000V, IOSv, NXOSv, IOSXRvRP, IOSXRvLC
@@ -20,44 +22,52 @@ from COT.data_validation import ValueTooLowError, ValueTooHighError
 
 
 class TestGenericPlatform(unittest.TestCase):
-    """Test cases for generic platform handling"""
-    def setUp(self):
-        self.cls = GenericPlatform
+
+    """Test cases for generic platform handling."""
+
+    cls = GenericPlatform
 
     def test_controller_type_for_device(self):
+        """Test platform-specific logic for device controllers."""
         self.assertEqual(self.cls.controller_type_for_device('harddisk'),
                          'ide')
         self.assertEqual(self.cls.controller_type_for_device('cdrom'),
                          'ide')
 
     def test_nic_name(self):
+        """Test NIC name construction."""
         self.assertEqual(self.cls.guess_nic_name(1), "Ethernet1")
         self.assertEqual(self.cls.guess_nic_name(100), "Ethernet100")
 
     def test_cpu_count(self):
+        """Test CPU count limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
         self.cls.validate_cpu_count(1)
 
     def test_memory_amount(self):
+        """Test RAM allocation limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_memory_amount, 0)
         self.cls.validate_memory_amount(1)
 
     def test_nic_count(self):
+        """Test NIC range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, -1)
         self.cls.validate_nic_count(0)
 
     def test_serial_count(self):
+        """Test serial port range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_serial_count, -1)
         self.cls.validate_serial_count(0)
 
 
 class TestIOSXRv(unittest.TestCase):
-    """Test cases for IOS XRv platform handling"""
-    def setUp(self):
-        self.cls = IOSXRv
+
+    """Test cases for Cisco IOS XRv platform handling."""
+
+    cls = IOSXRv
 
     def test_nic_name(self):
-        """Test NIC name construction"""
+        """Test NIC name construction."""
         self.assertEqual(self.cls.guess_nic_name(1),
                          "MgmtEth0/0/CPU0/0")
         self.assertEqual(self.cls.guess_nic_name(2),
@@ -68,14 +78,14 @@ class TestIOSXRv(unittest.TestCase):
                          "GigabitEthernet0/0/0/2")
 
     def test_cpu_count(self):
-        """Test CPU count limits"""
+        """Test CPU count limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
         self.cls.validate_cpu_count(1)
         self.cls.validate_cpu_count(8)
         self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 9)
 
     def test_memory_amount(self):
-        """Test RAM allocation limits"""
+        """Test RAM allocation limits."""
         self.assertRaises(ValueTooLowError,
                           self.cls.validate_memory_amount, 3071)
         self.cls.validate_memory_amount(3072)
@@ -84,14 +94,14 @@ class TestIOSXRv(unittest.TestCase):
                           self.cls.validate_memory_amount, 8193)
 
     def test_nic_count(self):
-        """Test NIC range limits"""
+        """Test NIC range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, 0)
         self.cls.validate_nic_count(1)
         self.cls.validate_nic_count(32)
         # No upper bound known at present
 
     def test_nic_type(self):
-        """Test NIC valid and invalid types"""
+        """Test NIC valid and invalid types."""
         self.assertRaises(ValueUnsupportedError,
                           self.cls.validate_nic_type, "vmxnet3")
         self.cls.validate_nic_type("e1000")
@@ -100,7 +110,7 @@ class TestIOSXRv(unittest.TestCase):
         self.cls.validate_nic_type("VirtIO")
 
     def test_serial_count(self):
-        """Test serial port range limits"""
+        """Test serial port range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_serial_count, 0)
         self.cls.validate_serial_count(1)
         self.cls.validate_serial_count(4)
@@ -108,15 +118,16 @@ class TestIOSXRv(unittest.TestCase):
 
 
 class TestIOSXRvRP(TestIOSXRv):
-    """Test cases for IOS XRv HA-capable RP platform handling.
-    """
-    def setUp(self):
-        self.cls = IOSXRvRP
+
+    """Test cases for Cisco IOS XRv HA-capable RP platform handling."""
+
+    cls = IOSXRvRP
 
     # Inherit all test cases from IOSXRv class, except where overridden below:
 
     def test_nic_name(self):
         """Test NIC name construction.
+
         An HA-capable RP has a fabric interface in addition to the usual
         MgmtEth NIC, but does not have GigabitEthernet NICs.
         """
@@ -134,15 +145,17 @@ class TestIOSXRvRP(TestIOSXRv):
 
 
 class TestIOSXRvLC(TestIOSXRv):
-    """Test cases for IOS XRv line card platform handling.
-    """
-    def setUp(self):
-        self.cls = IOSXRvLC
+
+    """Test cases for Cisco IOS XRv line card platform handling."""
+
+    cls = IOSXRvLC
 
     # Inherit all test cases from IOSXRv class, except where overridden below:
 
     def test_nic_name(self):
-        """Test NIC name construction. An LC has a fabric but no MgmtEth.
+        """Test NIC name construction.
+
+        An LC has a fabric but no MgmtEth.
         """
         self.assertEqual(self.cls.guess_nic_name(1),
                          "fabric")
@@ -154,7 +167,9 @@ class TestIOSXRvLC(TestIOSXRv):
                          "GigabitEthernet0/{SLOT}/0/2")
 
     def test_serial_count(self):
-        """Test serial port range limits. An LC with zero serial ports is valid.
+        """Test serial port range limits.
+
+        An LC with zero serial ports is valid.
         """
         self.cls.validate_serial_count(0)
         self.cls.validate_serial_count(4)
@@ -162,9 +177,10 @@ class TestIOSXRvLC(TestIOSXRv):
 
 
 class TestCSR1000V(unittest.TestCase):
-    """Test cases for CSR 1000V platform handling"""
-    def setUp(self):
-        self.cls = CSR1000V
+
+    """Test cases for Cisco CSR 1000V platform handling."""
+
+    cls = CSR1000V
 
     def test_controller_type_for_device(self):
         """Test platform-specific logic for device controllers."""
@@ -177,7 +193,7 @@ class TestCSR1000V(unittest.TestCase):
                          'ide')
 
     def test_nic_name(self):
-        """Test NIC name construction"""
+        """Test NIC name construction."""
         self.assertEqual(self.cls.guess_nic_name(1),
                          "GigabitEthernet1")
         self.assertEqual(self.cls.guess_nic_name(2),
@@ -188,7 +204,7 @@ class TestCSR1000V(unittest.TestCase):
                          "GigabitEthernet4")
 
     def test_cpu_count(self):
-        """Test CPU count limits"""
+        """Test CPU count limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
         self.cls.validate_cpu_count(1)
         self.cls.validate_cpu_count(2)
@@ -198,7 +214,7 @@ class TestCSR1000V(unittest.TestCase):
         self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 5)
 
     def test_memory_amount(self):
-        """Test RAM allocation limits"""
+        """Test RAM allocation limits."""
         self.assertRaises(ValueTooLowError,
                           self.cls.validate_memory_amount, 2559)
         self.cls.validate_memory_amount(2560)
@@ -207,14 +223,14 @@ class TestCSR1000V(unittest.TestCase):
                           self.cls.validate_memory_amount, 8193)
 
     def test_nic_count(self):
-        """Test NIC range limits"""
+        """Test NIC range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, 2)
         self.cls.validate_nic_count(3)
         self.cls.validate_nic_count(26)
         self.assertRaises(ValueTooHighError, self.cls.validate_nic_count, 27)
 
     def test_nic_type(self):
-        """Test NIC valid and invalid types"""
+        """Test NIC valid and invalid types."""
         self.cls.validate_nic_type("vmxnet3")
         self.cls.validate_nic_type("VMXNET3")
         self.cls.validate_nic_type("e1000")
@@ -223,7 +239,7 @@ class TestCSR1000V(unittest.TestCase):
         self.cls.validate_nic_type("VirtIO")
 
     def test_serial_count(self):
-        """Test serial port range limits"""
+        """Test serial port range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_serial_count, -1)
         self.cls.validate_serial_count(0)
         self.cls.validate_serial_count(2)
@@ -231,13 +247,13 @@ class TestCSR1000V(unittest.TestCase):
 
 
 class TestIOSv(unittest.TestCase):
-    """Test cases for IOSv platform handling"""
-    def setUp(self):
-        self.cls = IOSv
+
+    """Test cases for Cisco IOSv platform handling."""
+
+    cls = IOSv
 
     def test_nic_name(self):
-        """Test NIC name construction"""
-
+        """Test NIC name construction."""
         self.assertEqual(self.cls.guess_nic_name(1),
                          "GigabitEthernet0/0")
         self.assertEqual(self.cls.guess_nic_name(2),
@@ -248,13 +264,13 @@ class TestIOSv(unittest.TestCase):
                          "GigabitEthernet0/3")
 
     def test_cpu_count(self):
-        """Test CPU count limits"""
+        """Test CPU count limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
         self.cls.validate_cpu_count(1)
         self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 2)
 
     def test_memory_amount(self):
-        """Test RAM allocation limits"""
+        """Test RAM allocation limits."""
         self.assertRaises(ValueTooLowError,
                           self.cls.validate_memory_amount, 191)
         self.cls.validate_memory_amount(192)
@@ -263,14 +279,14 @@ class TestIOSv(unittest.TestCase):
                           self.cls.validate_memory_amount, 3073)
 
     def test_nic_count(self):
-        """Test NIC range limits"""
+        """Test NIC range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, -1)
         self.cls.validate_nic_count(0)
         self.cls.validate_nic_count(16)
         self.assertRaises(ValueTooHighError, self.cls.validate_nic_count, 17)
 
     def test_nic_type(self):
-        """Test NIC valid and invalid types"""
+        """Test NIC valid and invalid types."""
         self.assertRaises(ValueUnsupportedError,
                           self.cls.validate_nic_type, "vmxnet3")
         self.assertRaises(ValueUnsupportedError,
@@ -279,7 +295,7 @@ class TestIOSv(unittest.TestCase):
         self.cls.validate_nic_type("E1000")
 
     def test_serial_count(self):
-        """Test serial port range limits"""
+        """Test serial port range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_serial_count, 0)
         self.cls.validate_serial_count(1)
         self.cls.validate_serial_count(2)
@@ -287,13 +303,13 @@ class TestIOSv(unittest.TestCase):
 
 
 class TestNXOSv(unittest.TestCase):
-    """Test cases for NX-OSv platform handling"""
-    def setUp(self):
-        self.cls = NXOSv
+
+    """Test cases for Cisco NX-OSv platform handling."""
+
+    cls = NXOSv
 
     def test_nic_name(self):
-        """Test NIC name construction"""
-
+        """Test NIC name construction."""
         self.assertEqual(self.cls.guess_nic_name(1),
                          "mgmt0")
         self.assertEqual(self.cls.guess_nic_name(2),
@@ -309,14 +325,14 @@ class TestNXOSv(unittest.TestCase):
                          "Ethernet3/1")
 
     def test_cpu_count(self):
-        """Test CPU count limits"""
+        """Test CPU count limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
         self.cls.validate_cpu_count(1)
         self.cls.validate_cpu_count(8)
         self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 9)
 
     def test_memory_amount(self):
-        """Test RAM allocation limits"""
+        """Test RAM allocation limits."""
         self.assertRaises(ValueTooLowError,
                           self.cls.validate_memory_amount, 2047)
         self.cls.validate_memory_amount(2048)
@@ -325,14 +341,14 @@ class TestNXOSv(unittest.TestCase):
                           self.cls.validate_memory_amount, 8193)
 
     def test_nic_count(self):
-        """Test NIC range limits"""
+        """Test NIC range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, -1)
         self.cls.validate_nic_count(0)
         self.cls.validate_nic_count(32)
         # No upper bound known at present
 
     def test_nic_type(self):
-        """Test NIC valid and invalid types"""
+        """Test NIC valid and invalid types."""
         self.assertRaises(ValueUnsupportedError,
                           self.cls.validate_nic_type, "vmxnet3")
         self.cls.validate_nic_type("e1000")
@@ -341,7 +357,7 @@ class TestNXOSv(unittest.TestCase):
         self.cls.validate_nic_type("VirtIO")
 
     def test_serial_count(self):
-        """Test serial port range limits"""
+        """Test serial port range limits."""
         self.assertRaises(ValueTooLowError, self.cls.validate_serial_count, 0)
         self.cls.validate_serial_count(1)
         self.cls.validate_serial_count(2)

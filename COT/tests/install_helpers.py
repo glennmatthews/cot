@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for COT.install_helpers.COTInstallHelpers class."""
+
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.install_helpers import COTInstallHelpers
@@ -31,7 +33,6 @@ class TestCOTInstallHelpers(COT_UT):
 
     def test_verify_only(self):
         """Make sure expected results are seen with --verify-only option."""
-
         def stub_find_executable(self, name):
             if name == 'ovftool':
                 return None
@@ -57,7 +58,6 @@ vmdktool:     present at /usr/local/bin/vmdktool
 
     def test_install(self):
         """Show results when pretending to install helpers."""
-
         paths = {
             "fatdisk": "/opt/local/bin/fatdisk",
             "mkisofs": None,

@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for COT.add_file.COTAddFile class."""
+
 import os.path
 
 from COT.tests.ut import COT_UT
@@ -23,7 +25,9 @@ from COT.data_validation import InvalidInputError
 
 
 class TestCOTAddFile(COT_UT):
-    """Test cases for the COTAddFile module"""
+
+    """Test cases for the COTAddFile module."""
+
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTAddFile, self).setUp()
@@ -48,7 +52,7 @@ class TestCOTAddFile(COT_UT):
         self.assertTrue(ready)
 
     def test_add_file(self):
-        """Basic file addition"""
+        """Basic file addition."""
         self.instance.package = self.input_ovf
         self.instance.file = self.iosv_ovf
         self.instance.run()
@@ -75,6 +79,7 @@ class TestCOTAddFile(COT_UT):
            ovf_size=os.path.getsize(self.iosv_ovf)))
 
     def test_overwrite_file(self):
+        """Overwrite a file implicitly."""
         self.instance.package = self.input_ovf
         self.instance.file = os.path.join(
             os.path.dirname(__file__), 'input.iso')

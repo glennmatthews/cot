@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Generic unit test case implementation for COT."""
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -44,28 +46,36 @@ try:
     from logging import NullHandler
 except ImportError:
     class NullHandler(logging.Handler):
+
+        """No-op logging handler."""
+
         def emit(self, record):
+            """Do nothing."""
             pass
 
 logging.getLogger('COT').addHandler(NullHandler())
 
 
 class UTLoggingHandler(BufferingHandler):
-    """Captures log messages to a buffer so we can inspect them for testing"""
+
+    """Captures log messages to a buffer so we can inspect them for testing."""
 
     def __init__(self, testcase):
+        """Create a logging handler for the given test case."""
         BufferingHandler.__init__(self, capacity=0)
         self.setLevel(logging.DEBUG)
         self.testcase = testcase
 
     def emit(self, record):
+        """Add the given log record to our internal buffer."""
         self.buffer.append(record.__dict__)
 
     def shouldFlush(self, record):
+        """Return False - we only flush manually."""
         return False
 
     def logs(self, **kwargs):
-        """Look for log entries matching the given dict"""
+        """Look for log entries matching the given dict."""
         matches = []
         for record in self.buffer:
             found_match = True
@@ -83,6 +93,7 @@ class UTLoggingHandler(BufferingHandler):
         return matches
 
     def assertLogged(self, **kwargs):
+        """Fail unless the given log messages were each seen exactly once."""
         matches = self.logs(**kwargs)
         if not matches:
             self.testcase.fail(
@@ -96,7 +107,7 @@ class UTLoggingHandler(BufferingHandler):
             self.buffer.remove(r)
 
     def assertNoLogsOver(self, max_level):
-        """Fails if any logs are logged higher than the given level"""
+        """Fail if any logs are logged higher than the given level."""
         for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
                       logging.INFO, logging.VERBOSE, logging.DEBUG):
             if level <= max_level:
@@ -111,8 +122,8 @@ class UTLoggingHandler(BufferingHandler):
 
 
 class COT_UT(unittest.TestCase):
-    """Subclass of unittest.TestCase adding some additional behaviors we want
-    for all of our test cases"""
+
+    """Subclass of unittest.TestCase adding some additional behaviors."""
 
     from COT.helpers import OVFTool
 
@@ -172,11 +183,12 @@ class COT_UT(unittest.TestCase):
     }
 
     def __init__(self, method_name='runTest'):
+        """Add logging handler to generic UT initialization."""
         super(COT_UT, self).__init__(method_name)
         self.logging_handler = UTLoggingHandler(self)
 
     def check_cot_output(self, expected):
-        """Grab the output from COT and check it against expected output"""
+        """Grab the output from COT and check it against expected output."""
         sys.stdout = StringIO.StringIO()
         output = None
         try:
@@ -188,9 +200,11 @@ class COT_UT(unittest.TestCase):
             self.assertMultiLineEqual(expected.strip(), output.strip())
 
     def check_diff(self, expected, file1=None, file2=None):
-        """Calls diff on the two files and compares it to the expected output.
+        """Get diff of two files and compare it to the expected output.
+
         If the files are unspecified, defaults to comparing the input OVF file
         and the temporary output OVF file.
+
         Note that comparison of OVF files is currently skipped when
         running under Python 2.6, as it produces different XML output than
         later Python versions.
@@ -231,7 +245,7 @@ class COT_UT(unittest.TestCase):
                       .format(file1, file2, expected, clean_diff))
 
     def setUp(self):
-        """Test case setup function called automatically prior to each test"""
+        """Test case setup function called automatically prior to each test."""
         # keep log messages from interfering with our tests
         logging.getLogger('COT').setLevel(logging.DEBUG)
         self.logging_handler.setLevel(logging.NOTSET)
@@ -270,8 +284,7 @@ class COT_UT(unittest.TestCase):
         self.validate_output_with_ovftool = True
 
     def tearDown(self):
-        """Test case cleanup function called automatically after each test"""
-
+        """Test case cleanup function called automatically after each test."""
         # Fail if any WARNING/ERROR/CRITICAL logs were generated
         self.logging_handler.assertNoLogsOver(logging.INFO)
 
@@ -312,4 +325,8 @@ class COT_UT(unittest.TestCase):
                   .format(self.id(), delta_t))
 
     def assertLogged(self, **kwargs):
+        """Fail unless the given logs were generated.
+
+        See :meth:`UTLoggingHandler.assertLogged`.
+        """
         self.logging_handler.assertLogged(**kwargs)

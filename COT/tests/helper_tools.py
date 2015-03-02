@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for COT.helper_tools module."""
+
 import os
 import logging
 
@@ -30,7 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 class TestGetChecksum(COT_UT):
-    """Test cases for get_checksum() function"""
+
+    """Test cases for get_checksum() function."""
 
     def test_get_checksum_md5(self):
         """Test case for get_checksum() with md5 sum."""
@@ -52,7 +55,6 @@ class TestGetChecksum(COT_UT):
 
     def test_get_checksum_unsupported(self):
         """Test invalid options to get_checksum()."""
-
         self.assertRaises(NotImplementedError,
                           get_checksum,
                           self.input_ovf,
@@ -64,7 +66,8 @@ class TestGetChecksum(COT_UT):
 
 
 class TestGetDiskFormat(COT_UT):
-    """Test cases for get_disk_format() function"""
+
+    """Test cases for get_disk_format() function."""
 
     def test_get_disk_format(self):
         """Get format and subformat of various disk images."""
@@ -94,11 +97,13 @@ class TestGetDiskFormat(COT_UT):
             self.fail(e.strerror)
 
     def test_get_disk_format_no_file(self):
+        """Negative test - get_disk_format() for nonexistent file."""
         self.assertRaises(HelperError, get_disk_format, "")
         self.assertRaises(HelperError, get_disk_format, "/foo/bar/baz")
 
 
 class TestConvertDiskImage(COT_UT):
+
     """Test cases for convert_disk_image()."""
 
     def test_convert_no_work_needed(self):
@@ -113,8 +118,7 @@ class TestConvertDiskImage(COT_UT):
             self.fail(e.strerror)
 
     def test_convert_to_vmdk_streamoptimized(self):
-        """Convert a disk to vmdk streamOptimized sub-format"""
-
+        """Convert a disk to vmdk streamOptimized sub-format."""
         # Raw to stream-optimized vmdk
         temp_disk = os.path.join(self.temp_dir, "foo.img")
         try:
@@ -141,7 +145,7 @@ class TestConvertDiskImage(COT_UT):
         self.assertEqual(sf, 'streamOptimized')
 
     def test_convert_to_vmdk_streamoptimized_old_qemu(self):
-        """Code flow for old QEMU version"""
+        """Code flow for old QEMU version."""
         COT.helper_tools.QEMUIMG._version = StrictVersion("1.0.0")
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
@@ -159,7 +163,7 @@ class TestConvertDiskImage(COT_UT):
             COT.helper_tools.QEMUIMG._version = None
 
     def test_convert_to_vmdk_streamoptimized_new_qemu(self):
-        """Code flow for new QEMU version"""
+        """Code flow for new QEMU version."""
         COT.helper_tools.QEMUIMG._version = StrictVersion("2.1.0")
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
@@ -177,6 +181,7 @@ class TestConvertDiskImage(COT_UT):
             COT.helper_tools.QEMUIMG._version = None
 
     def test_convert_to_raw(self):
+        """No support for converting VMDK to RAW at present."""
         disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         self.assertRaises(NotImplementedError,
                           convert_disk_image,
@@ -184,6 +189,7 @@ class TestConvertDiskImage(COT_UT):
 
 
 class TestCreateDiskImage(COT_UT):
+
     """Test cases for create_disk_image()."""
 
     def test_create_invalid(self):
