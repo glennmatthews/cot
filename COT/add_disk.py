@@ -406,12 +406,11 @@ def add_disk_worker(vm,
         # then we need to guess which type of controller we need,
         # based on the platform and the disk type.
         if controller is None:
-            platform = vm.get_platform()
-            controller = platform.controller_type_for_device(type)
+            controller = vm.platform.controller_type_for_device(type)
             logger.warning("Guessing controller type should be {0} "
                            "based on disk type {1} and platform {2}"
                            .format(controller, type,
-                                   platform.__name__))
+                                   vm.platform.__name__))
 
         if address is None:
             # We didn't find a specific controller from the user info,

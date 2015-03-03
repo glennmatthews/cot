@@ -120,7 +120,7 @@ class COTDeploy(COTReadOnlySubmodule):
     @configuration.setter
     def configuration(self, value):
         if self.vm is not None:
-            profiles = self.vm.get_configuration_profile_ids()
+            profiles = self.vm.config_profiles
             if value is not None and not (value in profiles):
                 raise InvalidInputError(
                     "'Configuration '{0}' is not a recognized "
@@ -296,7 +296,7 @@ class COTDeployESXi(COTDeploy):
         # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
         # then environment properties will always be used.
         # Otherwise we may need to help and/or warn the user:
-        if vm.get_property_array() and not re.search("/host/", self.locator):
+        if vm.environment_properties and not re.search("/host/", self.locator):
             if get_ovftool_version() < StrictVersion("4.0.0"):
                 self.UI.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target "
@@ -336,7 +336,7 @@ class COTDeployESXi(COTDeploy):
         # ensure configuration was specified
         # will use ovf tool --deploymentOption
         # if not specified and force not specified prompt for selection
-        profile_list = vm.get_configuration_profile_ids()
+        profile_list = vm.config_profiles
 
         if profile_list and configuration is None:
             if len(profile_list) == 1:

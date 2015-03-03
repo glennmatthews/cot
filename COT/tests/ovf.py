@@ -377,17 +377,17 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
 
         # No profiles defined
         with VMContextManager(self.vmware_ovf, None) as ovf:
-            self.assertEqual(ovf.get_configuration_profile_ids(), [])
-            self.assertEqual(ovf.get_default_profile_name(), None)
+            self.assertEqual(ovf.config_profiles, [])
+            self.assertEqual(ovf.default_config_profile, None)
 
         # Profile list exists
         with VMContextManager(self.input_ovf, None) as ovf:
             # default profile is first in the list
-            self.assertEqual(ovf.get_configuration_profile_ids(),
+            self.assertEqual(ovf.config_profiles,
                              ["4CPU-4GB-3NIC",
                               "1CPU-1GB-1NIC",
                               "2CPU-2GB-1NIC"])
-            self.assertEqual(ovf.get_default_profile_name(), "4CPU-4GB-3NIC")
+            self.assertEqual(ovf.default_config_profile, "4CPU-4GB-3NIC")
 
 
 class TestOVFItem(COT_UT):

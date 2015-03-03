@@ -95,13 +95,13 @@ class TestCOTEditHardware(COT_UT):
         """Verify that some input values' validity depends on platform."""
         self.instance.package = self.input_ovf
         # IOSv only supports 1 vCPU and up to 3 GB of RAM
-        self.instance.vm.platform = IOSv
+        self.instance.vm._platform = IOSv
         with self.assertRaises(InvalidInputError):
             self.instance.cpus = 2
         with self.assertRaises(InvalidInputError):
             self.instance.memory = "4GB"
         # ...but IOSXRv supports up to 8 CPUs and 3-8 GB of RAM
-        self.instance.vm.platform = IOSXRv
+        self.instance.vm._platform = IOSXRv
         self.instance.cpus = 2
         self.instance.cpus = 8
         with self.assertRaises(InvalidInputError):

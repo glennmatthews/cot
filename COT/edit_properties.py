@@ -128,7 +128,7 @@ class COTEditProperties(COTSubmodule):
         wrapper = textwrap.TextWrapper(initial_indent='',
                                        subsequent_indent='                 ')
         format_str = '{0:15} "{1}"'
-        pa = vm.get_property_array()
+        pa = vm.environment_properties
         while True:
             print("")
             print("Please choose a property to edit:")

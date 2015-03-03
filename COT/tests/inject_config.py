@@ -65,18 +65,18 @@ class TestCOTInjectConfig(COT_UT):
         """Test input values whose validity depends on the platform."""
         self.instance.package = self.input_ovf
         # IOSXRvLC supports neither primary nor secondary config files
-        self.instance.vm.platform = IOSXRvLC
+        self.instance.vm._platform = IOSXRvLC
         with self.assertRaises(InvalidInputError):
             self.instance.config_file = self.config_file
         with self.assertRaises(InvalidInputError):
             self.instance.secondary_config_file = self.config_file
         # IOSv supports primary but not secondary
-        self.instance.vm.platform = IOSv
+        self.instance.vm._platform = IOSv
         self.instance.config_file = self.config_file
         with self.assertRaises(InvalidInputError):
             self.instance.secondary_config_file = self.config_file
         # IOSXRv supports both
-        self.instance.vm.platform = IOSXRv
+        self.instance.vm._platform = IOSXRv
         self.instance.config_file = self.config_file
         self.instance.secondary_config_file = self.config_file
 
@@ -105,7 +105,7 @@ ovf:size="{config_size}" />
     def test_inject_config_iso_secondary(self):
         """Inject secondary config file on an ISO."""
         self.instance.package = self.input_ovf
-        self.instance.vm.platform = IOSXRv
+        self.instance.vm._platform = IOSXRv
         self.instance.secondary_config_file = self.config_file
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
@@ -210,15 +210,15 @@ ovf:size="{config_size}" />
         self.instance.package = self.minimal_ovf
         self.instance.config_file = self.config_file
         # CSR1000V wants a CD-ROM drive
-        self.instance.vm.platform = CSR1000V
+        self.instance.vm._platform = CSR1000V
         self.assertRaises(LookupError, self.instance.run)
         # IOSv wants a hard disk - will fail due to no DiskSection
-        self.instance.vm.platform = IOSv
+        self.instance.vm._platform = IOSv
         self.assertRaises(LookupError, self.instance.run)
 
         # Also fail due to DiskSection but no placeholder:
         self.instance.package = self.input_ovf
-        self.instance.vm.platform = IOSv
+        self.instance.vm._platform = IOSv
         self.assertRaises(LookupError, self.instance.run)
 
     def test_find_parent_fail_no_parent(self):

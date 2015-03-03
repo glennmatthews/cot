@@ -211,7 +211,7 @@ class COTSubmodule(COTGenericSubmodule):
                                    .format(value))
         self._output = value
         if self.vm is not None:
-            self.vm.set_output_file(value)
+            self.vm.output_file = value
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
