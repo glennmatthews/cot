@@ -19,7 +19,7 @@
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.install_helpers import COTInstallHelpers
-from COT.helpers import Helper
+from COT.helpers import Helper, HelperError
 
 
 class TestCOTInstallHelpers(COT_UT):
@@ -68,13 +68,15 @@ vmdktool:     present at /usr/local/bin/vmdktool
         }
 
         def stub_find_executable(self, name):
-            return paths[name]
+            return paths.get(name, None)
 
         def stub_install(self, package):
             if package == "genisoimage":
                 paths["genisoimage"] = "/usr/bin/genisoimage"
                 return True
-            return False
+            elif package == "cdrtools":
+                return False
+            raise HelperError(1, "not really installing!")
 
         _find_executable = Helper.find_executable
         _apt_install = Helper.apt_install
@@ -92,10 +94,8 @@ genisoimage:  successfully installed to /usr/bin/genisoimage
 ovftool:      INSTALLATION FAILED: No support for automated installation of
               ovftool, as VMware requires a site login to download it. See
               https://www.vmware.com/support/developer/ovf/
-qemu-img:     INSTALLATION FAILED: Unsure how to install qemu-img. See
-              http://en.wikibooks.org/wiki/QEMU/Installing_QEMU
-vmdktool:     INSTALLATION FAILED: Unsure how to install vmdktool. See
-              http://www.freshports.org/sysutils/vmdktool/
+qemu-img:     INSTALLATION FAILED: [Errno 1] not really installing!
+vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
 """
         try:
             # Normally we raise an error due to the failed installations
