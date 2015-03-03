@@ -59,7 +59,7 @@ class HelpersUT(COT_UT):
     def stub_find_executable(self, name):
         """Stub for Helper.find_executable - always fails."""
         logger.info("stub_find_executable({0})".format(name))
-        return None
+        return self.fake_path
 
     @contextlib.contextmanager
     def stub_download_and_expand(self, url):
@@ -77,6 +77,7 @@ class HelpersUT(COT_UT):
         # subclass needs to set self.helper
         super(HelpersUT, self).setUp()
         self.fake_output = None
+        self.fake_path = None
         self.last_argv = []
         self._check_call = Helper._check_call
         Helper._check_call = self.stub_check_call
@@ -346,22 +347,24 @@ class TestOVFTool(HelpersUT):
         """Test case setup function called automatically prior to each test."""
         self.helper = OVFTool()
         super(TestOVFTool, self).setUp()
+        Helper.find_executable = self.stub_find_executable
 
     def test_invalid_version(self):
         """Negative test for .version getter logic."""
+        self.fake_path = "/fake/ovftool"
         self.fake_output = "Error: Unknown option: 'version'"
         with self.assertRaises(RuntimeError):
             self.helper.version
 
     def test_install_helper_already_present(self):
         """Do nothing when trying to re-install."""
+        self.fake_path = "/fake/ovftool"
         self.helper.install_helper()
         self.assertEqual([], self.last_argv)
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_unsupported(self):
         """No support for automated installation of ovftool."""
-        Helper.find_executable = self.stub_find_executable
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 

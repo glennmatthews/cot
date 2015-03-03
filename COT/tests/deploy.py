@@ -97,17 +97,20 @@ class TestCOTDeployESXi(COT_UT):
         self.instance = COTDeployESXi(UI())
         self.instance.package = self.input_ovf
         self.instance.hypervisor = 'esxi'
-        # Stub out check_call so that we don't actually need ovftool
+        # Stub out all ovftool dependencies
+        self._ovftool_path = self.instance.ovftool._path
         self._check_call = self.instance.ovftool._check_call
-        self.last_argv = []
-        self.instance.ovftool._check_call = self.stub_check_call
-        # Ditto
         self._ovftool_version = self.instance.ovftool._version
+        self.instance.ovftool._path = "/fake/ovftool"
+        self.instance.ovftool._check_call = self.stub_check_call
         self.instance.ovftool._version = StrictVersion("4.0.0")
+
+        self.last_argv = []
 
     def tearDown(self):
         """Test case cleanup function called automatically."""
         # Remove our stub
+        self.instance.ovftool._path = self._ovftool_path
         self.instance.ovftool._check_call = self._check_call
         self.instance.ovftool._version = self._ovftool_version
         super(TestCOTDeployESXi, self).tearDown()

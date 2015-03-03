@@ -99,8 +99,8 @@ class VMDescription(object):
         Deletes :attr:`self.working_dir` and its contents.
         """
         if hasattr(self, 'working_dir') and os.path.exists(self.working_dir):
-            logger.verbose("Removing temporary directory '{0}"
-                           .format(self.working_dir))
+            logger.debug("Removing temporary directory '{0}"
+                         .format(self.working_dir))
             shutil.rmtree(self.working_dir)
 
     def __del__(self):

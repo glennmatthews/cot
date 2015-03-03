@@ -86,9 +86,9 @@ class VmdkTool(Helper):
                                   'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
                                  cwd=new_d)
                 logger.info("Compilation complete, installing now.")
-                if not os.path.exists('/usr/local/man/man8'):
-                    self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                      '/usr/local/man/man8'])
+                # Make sure the relevant man directory exists
+                self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
+                                  '/usr/local/man/man8'])
                 self._check_call(['sudo', 'make', 'install'],
                                  cwd=new_d)
         else:
