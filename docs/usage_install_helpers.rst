@@ -6,14 +6,16 @@ Verifying and installing helper programs with ``cot install-helpers``
   > cot install-helpers -h
   usage:
     cot install-helpers --help
-    cot <opts> install-helpers [--verify-only]
+    cot <opts> install-helpers --verify-only
+    cot <opts> install-helpers [--ignore-errors]
 
   Install third-party helper programs for COT
 
   optional arguments:
-    -h, --help     show this help message and exit
-    --verify-only  Only verify helpers, do not attempt to install any
-                   missing helpers.
+    -h, --help           show this help message and exit
+    --verify-only        Only verify helpers -- do not attempt to install any
+                         missing helpers.
+    -i, --ignore-errors  Do not fail even if helper installation fails.
 
 
 Verifying helpers
@@ -40,6 +42,9 @@ If one or more of the helpers are not installed on your system, you can
 let COT attempt to install them for you by running ``cot install-helpers``.
 Note that most of the helpers will require administrator / ``sudo`` privileges,
 which COT will prompt you for if necessary.
+
+If any installation fails, COT will exit with an error, unless you use the
+``--ignore-errors`` option to prevent this.
 
 Example:
 

@@ -718,3 +718,9 @@ class TestCLIInstallHelpers(TestCOTCLI):
     def test_help(self):
         """Verify help menu for cot install-helpers."""
         self.call_cot(['install-helpers', '-h'])
+
+    def test_invalid_args(self):
+        """Invalid combinations of arguments."""
+        # Mutually exclusive
+        self.call_cot(['install-helpers', '--ignore-errors', '--verify-only'],
+                      result=2)

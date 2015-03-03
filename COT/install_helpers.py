@@ -31,6 +31,7 @@ class COTInstallHelpers(COTGenericSubmodule):
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         super(COTInstallHelpers, self).__init__(UI)
+        self.ignore_errors = False
         self.verify_only = False
 
     def run(self):
@@ -64,7 +65,7 @@ class COTInstallHelpers(COTGenericSubmodule):
         for k in sorted(results.keys()):
             print(wrapper.fill("{0:13} {1}".format(k + ":", results[k])))
         print("")
-        if not result:
+        if not result and not self.ignore_errors:
             raise EnvironmentError(1, "Unable to install some helpers")
 
     def create_subparser(self, parent):
@@ -79,17 +80,24 @@ class COTInstallHelpers(COTGenericSubmodule):
             'install-helpers',
             help="Install third-party helper programs that COT may require",
             usage=self.UI.fill_usage('install-helpers',
-                                     ["[--verify-only]"]),
+                                     ["--verify-only",
+                                      "[--ignore-errors]"]),
             description="Install third-party helper programs for COT")
+
+        group = p.add_mutually_exclusive_group()
 
         # TODO - nice to have!
         # p.add_argument('--dry-run', action='store_true',
         #              help="Report the commands that would be run to install "
         #             "any helper programs, but do not actually run them.")
 
-        p.add_argument('--verify-only', action='store_true',
-                       help="Only verify helpers, do not attempt to install "
-                       "any missing helpers.")
+        group.add_argument('--verify-only', action='store_true',
+                           help="Only verify helpers -- do not attempt to "
+                           "install any missing helpers.")
+
+        group.add_argument('-i', '--ignore-errors', action='store_true',
+                           help="Do not fail even if helper installation "
+                           "fails.")
 
         p.set_defaults(instance=self)
 

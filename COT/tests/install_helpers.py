@@ -98,8 +98,14 @@ vmdktool:     INSTALLATION FAILED: Unsure how to install vmdktool. See
               http://www.freshports.org/sysutils/vmdktool/
 """
         try:
+            # Normally we raise an error due to the failed installations
             with self.assertRaises(EnvironmentError):
                 self.check_cot_output(expected_output)
+            # ...but we can set ignore_errors to suppress this behavior
+            self.instance.ignore_errors = True
+            # revert to initial state
+            paths["genisoimage"] = None
+            self.check_cot_output(expected_output)
         finally:
             Helper.find_executable = _find_executable
             Helper.apt_install = _apt_install
