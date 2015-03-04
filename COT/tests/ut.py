@@ -31,6 +31,7 @@ import platform
 import time
 import logging
 from logging.handlers import BufferingHandler
+import traceback
 try:
     import StringIO
 except ImportError:
@@ -193,11 +194,13 @@ class COT_UT(unittest.TestCase):
         output = None
         try:
             self.instance.run()
+        except (TypeError, ValueError, SyntaxError, LookupError):
+            self.fail(traceback.format_exc())
         finally:
             output = sys.stdout.getvalue()
             sys.stdout = sys.__stdout__
-            self.maxDiff = None
-            self.assertMultiLineEqual(expected.strip(), output.strip())
+        self.maxDiff = None
+        self.assertMultiLineEqual(expected.strip(), output.strip())
 
     def check_diff(self, expected, file1=None, file2=None):
         """Get diff of two files and compare it to the expected output.
