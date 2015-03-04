@@ -398,6 +398,7 @@ class TestOVFTool(HelpersUT):
     def test_validate_ovf(self):
         """Try the validate_ovf() API."""
         self.fake_path = "/fake/ovftool"
+        self.fake_output = ""
         self.helper.validate_ovf(self.input_ovf)
         self.assertEqual(['ovftool', '--schemaValidate', self.input_ovf],
                          self.last_argv[0])
