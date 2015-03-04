@@ -242,7 +242,8 @@ class Helper(object):
                                       require_success=False)
             match = re.search(self._version_regexp, output)
             if not match:
-                raise RuntimeError("Unable to find version number in output!")
+                raise RuntimeError("Unable to find version number in output:"
+                                   "\n{0}".format(output))
             self._version = StrictVersion(match.group(1))
         return self._version
 
@@ -365,7 +366,7 @@ class Helper(object):
                 stdout = (subprocess.check_output(args,
                                                   stderr=subprocess.STDOUT,
                                                   **kwargs)
-                          .decode())
+                          .decode('ascii', 'ignore'))
         except OSError as e:
             raise HelperNotFoundError(e.errno,
                                       "Unable to locate helper program '{0}'. "
