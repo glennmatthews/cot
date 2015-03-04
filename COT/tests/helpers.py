@@ -57,7 +57,7 @@ class HelpersUT(COT_UT):
         return self._check_output(argv, require_success)
 
     def stub_find_executable(self, name):
-        """Stub for Helper.find_executable - always fails."""
+        """Stub for Helper.find_executable - returns a fixed response."""
         logger.info("stub_find_executable({0})".format(name))
         return self.fake_path
 
@@ -252,6 +252,33 @@ class TestFatDisk(HelpersUT):
             ['sudo', 'cp', 'fatdisk', '/usr/local/bin/fatdisk'],
         ], self.last_argv)
 
+    def test_install_helper_linux_need_make_no_package_manager(self):
+        """Linux installation requires yum or apt-get if 'make' missing."""
+        Helper.find_executable = self.stub_find_executable
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = False
+        sys.platform = 'linux2'
+        with self.assertRaises(NotImplementedError):
+            self.helper.install_helper()
+
+    def test_install_helper_linux_need_compiler_no_package_manager(self):
+        """Linux installation requires yum or apt-get if 'gcc' missing."""
+        def new_stub_find_executable(self, name):
+            """Stub for Helper.find_executable - returns a fixed response."""
+            logger.info("stub_find_executable({0})".format(name))
+            if name == 'make':
+                return "/bin/make"
+            else:
+                return None
+        Helper.find_executable = new_stub_find_executable
+        Helper.PACKAGE_MANAGERS['port'] = False
+        Helper.PACKAGE_MANAGERS['apt-get'] = False
+        Helper.PACKAGE_MANAGERS['yum'] = False
+        sys.platform = 'linux2'
+        with self.assertRaises(NotImplementedError):
+            self.helper.install_helper()
+
     def test_install_helper_unsupported(self):
         """No support for installation under Windows."""
         Helper.find_executable = self.stub_find_executable
@@ -367,6 +394,13 @@ class TestOVFTool(HelpersUT):
         """No support for automated installation of ovftool."""
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
+
+    def test_validate_ovf(self):
+        """Try the validate_ovf() API."""
+        self.fake_path = "/fake/ovftool"
+        self.helper.validate_ovf(self.input_ovf)
+        self.assertEqual(['ovftool', '--schemaValidate', self.input_ovf],
+                         self.last_argv[0])
 
 
 class TestQEMUImg(HelpersUT):
