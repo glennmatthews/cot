@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 #
 # helpers.py - Unit test cases for COT.helpers submodule.
 #
@@ -299,9 +300,8 @@ class TestMkIsoFS(HelpersUT):
 
     def test_get_version_mkisofs(self):
         """Test .version getter logic for mkisofs."""
-        # TODO - this output should have an umlaut...
         self.fake_output = ("mkisofs 3.00 (--) Copyright (C) 1993-1997 "
-                            "Eric Youngdale (C) 1997-2010 J?rg Schilling")
+                            "Eric Youngdale (C) 1997-2010 Jörg Schilling")
         self.assertEqual(StrictVersion("3.0"), self.helper.version)
 
     def test_get_version_genisoimage(self):
