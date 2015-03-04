@@ -360,15 +360,6 @@ class OVF(VMDescription, XML):
             raise
 
     @property
-    def input_file(self):
-        """Data file to read in."""
-        return self._input_file
-
-    @input_file.setter
-    def input_file(self, value):
-        self._input_file = value
-
-    @property
     def output_file(self):
         """OVF or OVA file that will be created or updated by :meth:`write`.
 
