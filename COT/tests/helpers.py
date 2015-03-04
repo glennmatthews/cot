@@ -53,7 +53,7 @@ class HelpersUT(COT_UT):
         logger.info("stub_check_output({0}, {1})"
                     .format(argv, require_success))
         self.last_argv.append(argv)
-        if self.fake_output:
+        if self.fake_output is not None:
             return self.fake_output
         return self._check_output(argv, require_success)
 
