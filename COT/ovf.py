@@ -975,16 +975,12 @@ class OVF(VMDescription, XML):
             ctrl_addr,
             device_item.get_value(self.ADDRESS_ON_PARENT))
 
-    def profile_info_string(self, TEXT_WIDTH=79, verbosity_option=None,
-                            enumerate=False):
-        """Get a string summarizing available configuration profiles.
+    def profile_info_list(self, TEXT_WIDTH=79, verbose=False):
+        """Get a list describing available configuration profiles.
 
         :param int TEXT_WIDTH: Line length to wrap to if possible
-        :param str verbosity_option: ``'brief'``, ``None`` (default),
-          or ``'verbose'``
-
-        :param boolean enumerate: If ``True``, number the profiles.
-        :return: Appropriately formatted and verbose string.
+        :param str verbose: if True, generate multiple lines per profile
+        :return: (header, list)
         """
         str_list = []
 
@@ -993,10 +989,9 @@ class OVF(VMDescription, XML):
         if not profile_ids:
             profile_ids = [None]
 
-        indent = 2 if not enumerate else 6
         PROF_W = max(len("Configuration Profiles: "),
-                     indent + max([(len(str(id))) for id in profile_ids]),
-                     indent + len(str(default_profile_id) + " (default)"))
+                     2 + max([(len(str(id))) for id in profile_ids]),
+                     2 + len(str(default_profile_id) + " (default)"))
 
         # Profile information
         CPU_W = 4   # "CPUs"
@@ -1007,14 +1002,12 @@ class OVF(VMDescription, XML):
         template = (
             "{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:>{3}}} {{4:>{4}}} {{5:>{5}}}"
             .format(PROF_W, CPU_W, MEM_W, NIC_W, SER_W, HD_W))
-        str_list.append(template
-                        .format("Configuration Profiles:", "CPUs", "Memory",
-                                "NICs", "Serials", "Disks/Capacity"))
-        str_list.append(template.format("", "-" * CPU_W, "-" * MEM_W,
-                                        "-" * NIC_W, "-" * SER_W,
-                                        "-" * HD_W))
-        # Print a table of profiles vs. their hardware
-        if verbosity_option != 'brief':
+        header = template.format("Configuration Profiles:", "CPUs", "Memory",
+                                 "NICs", "Serials", "Disks/Capacity")
+        header += "\n" + template.format("", "-" * CPU_W, "-" * MEM_W,
+                                         "-" * NIC_W, "-" * SER_W,
+                                         "-" * HD_W)
+        if verbose:
             wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
                                            initial_indent='    ',
                                            subsequent_indent=' ' * 21)
@@ -1039,11 +1032,7 @@ class OVF(VMDescription, XML):
                 for disk in self.disk_section.findall(self.DISK):
                     disks_size += self.get_capacity_from_disk(disk)
 
-            if enumerate:
-                profile_str = "{0:2}) ".format(index)
-            else:
-                profile_str = "  "
-            profile_str += str(profile_id)
+            profile_str = "  " + str(profile_id)
             if profile_id == default_profile_id:
                 profile_str += " (default)"
             str_list.append(template.format(
@@ -1054,7 +1043,7 @@ class OVF(VMDescription, XML):
                 serials,
                 "{0:2} / {1:>9}".format(disk_count,
                                         byte_string(disks_size))))
-            if profile_id is not None and verbosity_option != 'brief':
+            if profile_id is not None and verbose:
                 profile = self.find_child(self.deploy_opt_section,
                                           self.CONFIG,
                                           attrib={self.CONFIG_ID: profile_id})
@@ -1065,8 +1054,20 @@ class OVF(VMDescription, XML):
                     '{0:15} "{1}"'.format("Description:",
                                           profile.findtext(self.CFG_DESC))))
             index += 1
+        return (header, str_list)
 
-        return "\n".join(str_list)
+    def profile_info_string(self, TEXT_WIDTH=79, verbosity_option=None):
+        """Get a string summarizing available configuration profiles.
+
+        :param int TEXT_WIDTH: Line length to wrap to if possible
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+
+        :return: Appropriately formatted and verbose string.
+        """
+        header, str_list = self.profile_info_list(
+            TEXT_WIDTH, (verbosity_option != 'brief'))
+        return "\n".join([header] + str_list)
 
     def create_configuration_profile(self, id, label, description):
         """Create or update a configuration profile with the given ID.

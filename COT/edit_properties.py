@@ -97,10 +97,8 @@ class COTEditProperties(COTSubmodule):
         """
         super(COTEditProperties, self).run()
 
-        vm = self.vm
-
         if self.config_file is not None:
-            vm.config_file_to_properties(self.config_file)
+            self.vm.config_file_to_properties(self.config_file)
 
         if self.properties:
             for key, value in self.properties:
@@ -108,69 +106,67 @@ class COTEditProperties(COTSubmodule):
                     value = self.UI.get_input(
                         "Enter value for property '{0}'",
                         value)
-                curr_value = vm.get_property_value(key)
+                curr_value = self.vm.get_property_value(key)
                 if curr_value is None:
                     self.UI.confirm_or_die(
                         "Property '{0}' does not yet exist.\n"
                         "Create it?".format(key))
                     # TODO - for new property, prompt for label/descr/type?
-                vm.set_property_value(key, value)
+                self.vm.set_property_value(key, value)
 
-        if self.config_file is None and self.properties is None:
+        if not self.config_file and not self.properties:
+            logger.info("No changes specified in CLI; "
+                        "entering interactive mode.")
             # Interactive mode!
-            self.edit_properties_interactive(vm)
+            self.edit_properties_interactive()
 
-    def edit_properties_interactive(self, vm):
-        """Present an interactive UI for the user to edit properties.
-
-        :param vm: TODO shouldn't be necessary - use self.vm?
-        """
+    def edit_properties_interactive(self):
+        """Present an interactive UI for the user to edit properties."""
         wrapper = textwrap.TextWrapper(initial_indent='',
                                        subsequent_indent='                 ')
         format_str = '{0:15} "{1}"'
-        pa = vm.environment_properties
+        pa = self.vm.environment_properties
         while True:
-            print("")
-            print("Please choose a property to edit:")
-            i = 1
-            for p in pa:
-                print("""{i:4d}) {label:40} ({key})"""
-                      .format(i=i, label='"'+p['label']+'"', key=p['key']))
-                i += 1
+            key_list = [p['key'] for p in pa]
+            string_list = ["""{0:25} "{1}" """.format(p['key'], p['label'])
+                           for p in pa]
+            input = self.UI.choose_from_list(
+                header="Please choose a property to edit:",
+                option_list=key_list,
+                info_list=string_list,
+                footer=("Enter property key or number to edit, or "
+                        "'q' to write changes and quit"),
+                default_value='q')
 
-            input = self.UI.get_input("""Enter property number to edit, """
-                                      """or "q" to quit and write changes""",
-                                      default_value="q")
-
-            if input is None or input == 'q' or input == 'Q':
+            if input == 'q' or input == 'Q':
                 break
-            input = int(input)
-            if input <= 0 or input > len(pa):
-                continue
 
-            print("")
-            p = pa[input-1]
+            p = next(p for p in pa if p['key'] == input)
+
             key = p['key']
             old_value = p['value']
-            print(wrapper.fill(format_str.format("Key:", p['key'])))
-            print(wrapper.fill(format_str.format("Label:", p['label'])))
-            print(wrapper.fill(format_str.format("Description:",
-                                                 p['description'])))
-            print(wrapper.fill(format_str.format("Type:", p['type'])))
-            print(wrapper.fill(format_str.format("Qualifiers:",
-                                                 p['qualifiers'])))
-            print(wrapper.fill(format_str.format("Current Value:", old_value)))
-            print("")
+            prompt = "\n".join([
+                wrapper.fill(format_str.format("Key:", p['key'])),
+                wrapper.fill(format_str.format("Label:", p['label'])),
+                wrapper.fill(format_str.format("Description:",
+                                               p['description'])),
+                wrapper.fill(format_str.format("Type:", p['type'])),
+                wrapper.fill(format_str.format("Qualifiers:",
+                                               p['qualifiers'])),
+                wrapper.fill(format_str.format("Current Value:", old_value)),
+                "",
+                "New value for this property",
+            ])
 
             while True:
-                new_value = self.UI.get_input("New value for this property",
+                new_value = self.UI.get_input(prompt,
                                               default_value=old_value)
                 if new_value == old_value:
                     print("(no change)")
                     break
                 else:
                     try:
-                        new_value = vm.set_property_value(key, new_value)
+                        new_value = self.vm.set_property_value(key, new_value)
 
                         print("""Successfully set the value of """
                               """property "{0}" to "{1}" """

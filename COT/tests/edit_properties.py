@@ -197,3 +197,71 @@ ovf:value="interface Loopback0" />
                                                  "sample_cfg.txt")
         self.assertRaises(NotImplementedError,
                           self.instance.run)
+
+    def test_edit_interactive(self):
+        """Exercise the interactive CLI for COT edit-properties."""
+        menu_string = """
+Please choose a property to edit:
+ 1) login-username            "Login Username"
+ 2) login-password            "Login Password"
+ 3) mgmt-ipv4-addr            "Management IPv4 Address/Mask"
+ 4) mgmt-ipv4-gateway         "Management IPv4 Default Gateway"
+ 5) hostname                  "Router Name"
+ 6) enable-ssh-server         "Enable SSH Login"
+ 7) enable-http-server        "Enable HTTP Server"
+ 8) enable-https-server       "Enable HTTPS Server"
+ 9) privilege-password        "Enable Password"
+10) domain-name               "Domain Name"
+Enter property key or number to edit, or 'q' to write changes and quit
+        """.strip()
+        expected_prompts = [
+            menu_string,
+            """
+Key:            "login-username"
+Label:          "Login Username"
+Description:    "Username for remote login"
+Type:           "string"
+Qualifiers:     "MaxLen(64)"
+Current Value:  ""
+
+New value for this property
+            """.strip(),
+            menu_string,
+        ]
+        custom_inputs = [
+            "1",
+            "hello",
+            "q",
+        ]
+        self.counter = 0
+
+        def custom_input(prompt, default_value):
+            """Mock for get_input."""
+            # Get output and flush it
+            # Make sure it matches expectations
+            self.maxDiff = None
+            self.assertMultiLineEqual(expected_prompts[self.counter],
+                                      prompt)
+            # Return our canned input
+            input = custom_inputs[self.counter]
+            self.counter += 1
+            return input
+
+        _input = self.instance.UI.get_input
+        try:
+            self.instance.UI.get_input = custom_input
+            self.instance.package = self.input_ovf
+            self.instance.run()
+            self.instance.finished()
+            self.check_diff("""
+       <ovf:Category>1. Bootstrap Properties</ovf:Category>
+-      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="hello">
+         <ovf:Label>Login Username</ovf:Label>
+            """)
+        except Exception as e:
+            self.fail(e)
+        finally:
+            self.instance.UI.get_input = _input
