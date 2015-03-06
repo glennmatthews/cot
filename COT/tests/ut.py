@@ -303,3 +303,7 @@ class COT_UT(unittest.TestCase):
 
     def assertLogged(self, **kwargs):
         self.logging_handler.assertLogged(**kwargs)
+
+    def assertNoLogsOver(self, max_level):
+        """Fails if any logs are logged higher than the given level."""
+        self.logging_handler.assertNoLogsOver(max_level)

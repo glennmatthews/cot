@@ -14,6 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+import logging
 import os.path
 import re
 
@@ -225,7 +226,20 @@ Qualifiers:     "MaxLen(64)"
 Current Value:  ""
 
 Enter new value for this property
-            """.strip()
+        """.strip()
+
+        ssh_edit_string = """
+Key:            "enable-ssh-server"
+Label:          "Enable SSH Login"
+Description:    "Enable remote login via SSH and disable remote login
+                 via telnet. Requires login-username and login-
+                 password to be set!"
+Type:           "boolean"
+Qualifiers:     ""
+Current Value:  "false"
+
+Enter new value for this property
+        """.strip()
 
         expected_prompts = [
             menu_string,
@@ -238,17 +252,25 @@ Enter new value for this property
             re.sub('Value:  ""', 'Value:  "hello"',
                    username_edit_string),
             menu_string,
+            menu_string,
+            ssh_edit_string,
+            ssh_edit_string,
+            menu_string
         ]
         custom_inputs = [
-            "login-u",   # select by name prefix
-            "",          # no change, return to menu
-            "1",         # select by number
+            "login-u",     # select by name prefix
+            "",            # no change, return to menu
+            "1",           # select by number
             ("thisiswaytoolongofastringtouseforausername"
              "whatamipossiblythinking!"),  # invalid value
-            "hello",     # valid value, return to menu
-            "27",        # out of range
-            "1",         # select by number
-            "goodbye",   # valid value, return to menu
+            "hello",       # valid value, return to menu
+            "27",          # out of range
+            "1",           # select by number
+            "goodbye",     # valid value, return to menu
+            "enable-",     # ambiguous selection
+            "enable-ssh",  # unambiguous selection
+            "nope",        # not a valid boolean
+            "true",        # valid boolean
             "q",
         ]
         expected_logs = [
@@ -275,6 +297,19 @@ Enter new value for this property
                 'levelname': 'INFO',
                 'msg': 'Successfully updated property',
             },
+            {
+                'levelname': 'ERROR',
+                'msg': 'Invalid input',
+            },
+            None,
+            {
+                'levelname': 'ERROR',
+                'msg': 'Unsupported value.*enable-ssh-server.*boolean',
+            },
+            {
+                'levelname': 'INFO',
+                'msg': 'Successfully updated property',
+            },
             None,
         ]
         self.counter = 0
@@ -293,6 +328,8 @@ Enter new value for this property
                 log = expected_logs[self.counter-1]
                 if log is not None:
                     self.assertLogged(**log)
+                else:
+                    self.assertNoLogsOver(logging.INFO)
             # Get output and flush it
             # Make sure it matches expectations
             self.maxDiff = None
@@ -322,4 +359,11 @@ ovf:type="string" ovf:userConfigurable="true" ovf:value="">
 +      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
 ovf:type="string" ovf:userConfigurable="true" ovf:value="goodbye">
          <ovf:Label>Login Username</ovf:Label>
+...
+       <ovf:Category>2. Features</ovf:Category>
+-      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="false">
++      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="true">
+         <ovf:Label>Enable SSH Login</ovf:Label>
             """)

@@ -1323,8 +1323,14 @@ class OVF(VMDescription, XML):
         # Else, make sure the requested value is valid
         prop_type = property.get(self.PROP_TYPE, "")
         if prop_type == "boolean":
-            # OVF contains a string representation of a boolean
-            value = str(bool(value)).lower()
+            # XML prefers to represent booleans as 'true' or 'false'
+            value = str(value).lower()
+            if str(value).lower() in ['true', '1', 't', 'y', 'yes']:
+                value = 'true'
+            elif str(value).lower() in ['false', '0', 'f', 'n', 'no']:
+                value = 'false'
+            else:
+                raise ValueUnsupportedError(key, value, "a boolean value")
         elif prop_type == "string":
             value = str(value)
 
