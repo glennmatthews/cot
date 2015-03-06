@@ -344,22 +344,17 @@ class COTDeployESXi(COTDeploy):
                 configuration = profile_list[0]
                 logger.debug("Auto-selected only profile '{0}'"
                              .format(configuration))
-            profile_info_string = None
-            while configuration is None:
-                if not profile_info_string:
-                    profile_info_string = vm.profile_info_string(
-                        self.UI.terminal_width() - 1, enumerate=True)
-                user_input = self.UI.get_input(
-                    profile_info_string + "\nChoose a Configuration:", "0")
-                if user_input in profile_list:
-                    configuration = user_input
-                else:
-                    try:
-                        i = int(user_input)
-                        configuration = profile_list[i]
-                    except (ValueError, IndexError):
-                        # TODO this should be handled by the UI
-                        print("\nInvalid input. Please try again.")
+            else:
+                header, profile_info_list = vm.profile_info_list(
+                    self.UI.terminal_width() - 1)
+                # Correct for the indentation of the list:
+                header = "\n".join(["  " + h for h in header.split("\n")])
+                configuration = self.UI.choose_from_list(
+                    header=header,
+                    option_list=profile_list,
+                    info_list=profile_info_list,
+                    footer="Enter configuration name or number",
+                    default_value=self.vm.default_config_profile)
 
         if configuration is not None:
             ovftool_args.append("--deploymentOption=" + configuration)
