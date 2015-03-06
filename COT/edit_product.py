@@ -81,9 +81,9 @@ class COTEditProduct(COTSubmodule):
         super(COTEditProduct, self).run()
 
         if self.version is not None:
-            self.vm.set_short_version(self.version)
+            self.vm.version_short = self.version
         if self.full_version is not None:
-            self.vm.set_long_version(self.full_version)
+            self.vm.version_long = self.full_version
 
     def create_subparser(self, parent):
         """Add subparser for the CLI of this submodule.

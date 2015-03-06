@@ -13,7 +13,10 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import os.path
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from COT.vm_description import VMDescription
 from COT.data_validation import ValueUnsupportedError
@@ -36,8 +39,8 @@ class TestVMDescription(unittest.TestCase):
 
         self.assertRaises(NotImplementedError,
                           ins.write)
-        self.assertRaises(NotImplementedError,
-                          ins.get_platform)
+        with self.assertRaises(NotImplementedError):
+            ins.platform
 
         self.assertRaises(NotImplementedError,
                           ins.search_from_filename, self.TEXT_FILE)
@@ -72,13 +75,17 @@ class TestVMDescription(unittest.TestCase):
                           ins.add_disk_device,
                           None, None, None, None, None, None, None)
 
-        self.assertRaises(NotImplementedError,
-                          ins.get_configuration_profile_ids)
+        with self.assertRaises(NotImplementedError):
+            ins.config_profiles
+        with self.assertRaises(NotImplementedError):
+            ins.default_config_profile
         self.assertRaises(NotImplementedError,
                           ins.create_configuration_profile,
                           None, None, None)
-        self.assertRaises(NotImplementedError,
-                          ins.set_system_type, None)
+        with self.assertRaises(NotImplementedError):
+            ins.system_types
+        with self.assertRaises(NotImplementedError):
+            ins.system_types = ["hello", "world"]
         self.assertRaises(NotImplementedError,
                           ins.set_cpu_count, 0, None)
         self.assertRaises(NotImplementedError,
@@ -89,8 +96,8 @@ class TestVMDescription(unittest.TestCase):
                           ins.get_nic_count, None)
         self.assertRaises(NotImplementedError,
                           ins.set_nic_count, 0, None)
-        self.assertRaises(NotImplementedError,
-                          ins.get_network_list)
+        with self.assertRaises(NotImplementedError):
+            ins.networks
         self.assertRaises(NotImplementedError,
                           ins.create_network, None, None)
         self.assertRaises(NotImplementedError,
@@ -110,13 +117,17 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.set_ide_subtype, None, None)
 
-        self.assertRaises(NotImplementedError,
-                          ins.set_short_version, None)
-        self.assertRaises(NotImplementedError,
-                          ins.set_long_version, None)
+        with self.assertRaises(NotImplementedError):
+            ins.version_short
+        with self.assertRaises(NotImplementedError):
+            ins.version_short = "hello"
+        with self.assertRaises(NotImplementedError):
+            ins.version_long
+        with self.assertRaises(NotImplementedError):
+            ins.version_long = "hello world!"
 
-        self.assertRaises(NotImplementedError,
-                          ins.get_property_array)
+        with self.assertRaises(NotImplementedError):
+            ins.environment_properties
         self.assertRaises(NotImplementedError,
                           ins.get_property_value, None)
         self.assertRaises(NotImplementedError,
@@ -127,8 +138,6 @@ class TestVMDescription(unittest.TestCase):
                           ins.info_string)
         self.assertRaises(NotImplementedError,
                           ins.profile_info_string)
-        self.assertRaises(NotImplementedError,
-                          ins.get_default_profile_name)
 
         self.assertRaises(NotImplementedError,
                           ins.find_empty_drive, None)
@@ -145,7 +154,7 @@ class TestVMDescription(unittest.TestCase):
         self.assertEqual(ins.output_file, None)
         self.assertTrue(os.path.exists(ins.working_dir))
 
-        ins.set_output_file(self.TEXT_FILE)
+        ins.output_file = self.TEXT_FILE
         self.assertEqual(ins.output_file, self.TEXT_FILE)
 
         out = ins.convert_disk_if_needed(self.TEXT_FILE, None)

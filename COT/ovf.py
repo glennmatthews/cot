@@ -136,11 +136,24 @@ class OVF(VMDescription, XML):
 
     """Representation of the contents of an OVF or OVA.
 
-    :ivar platform: Class object (:class:`~COT.platforms.GenericPlatform` or
-      a subclass thereof) that most accurately describes the virtual machine
-      type described by this OVF.
     :ivar ovf_version: Float representing the OVF specification version in use.
       Supported values at present are 0.9, 1.0, and 2.0.
+
+    **Properties**
+
+    .. autosummary::
+      :nosignatures:
+
+      input_file
+      output_file
+      platform
+      config_profiles
+      default_config_profile
+      environment_properties
+      networks
+      system_types
+      version_short
+      version_long
     """
 
     # API methods to be called by clients
@@ -187,14 +200,10 @@ class OVF(VMDescription, XML):
         :param str output_file: File name to write to. If this VM is read-only,
           (there will never be an output file) this value should be ``None``;
           if the output filename is not yet known, use ``""`` and subsequently
-          call :meth:`set_output_file` when it is determined.
+          set :attr:`output_file` when it is determined.
         """
-        super(OVF, self).__init__(input_file, output_file)
-
         try:
-            # Make sure we can write the requested output format, or abort:
-            if output_file:
-                self.output_extension = self.detect_type_from_name(output_file)
+            super(OVF, self).__init__(input_file, output_file)
 
             # Make sure we know how to read the input
             extension = self.detect_type_from_name(input_file)
@@ -291,7 +300,7 @@ class OVF(VMDescription, XML):
                 required=True)
 
             # Initialize various caches
-            self.configuration_profiles = []
+            self._configuration_profiles = []
 
             try:
                 self.hardware = OVFHardware(self)
@@ -299,7 +308,7 @@ class OVF(VMDescription, XML):
                 raise VMInitError(1,
                                   "OVF descriptor is invalid: {0}".format(e))
 
-            self.get_platform()
+            self.platform
 
             # Let's go ahead and walk the file references in the OVF descriptor
             # and make sure they look sane.
@@ -350,16 +359,200 @@ class OVF(VMDescription, XML):
             self.destroy()
             raise
 
-    def set_output_file(self, output_file):
-        """Validate the given output filename and save it for later use.
+    @property
+    def input_file(self):
+        """Data file to read in."""
+        return self._input_file
 
-        :param str output_file: Output filename
+    @input_file.setter
+    def input_file(self, value):
+        self._input_file = value
+
+    @property
+    def output_file(self):
+        """OVF or OVA file that will be created or updated by :meth:`write`.
+
         :raise ValueUnsupportedError: if :func:`detect_type_from_name` fails
         """
+        return super(OVF, self).output_file
+
+    @output_file.setter
+    def output_file(self, output_file):
         # Make sure we can write the requested output format, or abort:
         if output_file:
             self.output_extension = self.detect_type_from_name(output_file)
-        self.output_file = output_file
+        VMDescription.output_file.fset(self, output_file)
+
+    @property
+    def platform(self):
+        """The platform type, as determined from the OVF descriptor.
+
+        :type: Class object - :class:`~COT.platforms.GenericPlatform` or
+          a more-specific subclass if recognized as such.
+        """
+        if self._platform is None:
+            platform = None
+            product_class = None
+            class_to_platform_map = {
+                'com.cisco.csr1000v':   Platform.CSR1000V,
+                'com.cisco.iosv':       Platform.IOSv,
+                'com.cisco.nx-osv':     Platform.NXOSv,
+                'com.cisco.ios-xrv':    Platform.IOSXRv,
+                'com.cisco.ios-xrv.rp': Platform.IOSXRvRP,
+                'com.cisco.ios-xrv.lc': Platform.IOSXRvLC,
+                None:                   Platform.GenericPlatform,
+            }
+
+            if self.product_section is None:
+                platform = Platform.GenericPlatform
+            else:
+                product_class = self.product_section.get(self.PRODUCT_CLASS)
+                try:
+                    platform = class_to_platform_map[product_class]
+                except KeyError:
+                    logger.warning(
+                        "Unrecognized product class '{0}' - known classes "
+                        "are {1}. Treating as a generic product..."
+                        .format(product_class,
+                                class_to_platform_map.keys()))
+                    platform = Platform.GenericPlatform
+            logger.info("OVF product class {0} --> platform {1}"
+                        .format(product_class, platform.__name__))
+            self._platform = platform
+        return self._platform
+
+    @property
+    def config_profiles(self):
+        """The list of supported configuration profiles.
+
+        If this OVF has no defined profiles, returns an empty list.
+        If there is a default profile, it will be first in the list.
+        """
+        if ((not self._configuration_profiles) and
+                (self.deploy_opt_section is not None)):
+            profile_ids = []
+            profiles = self.find_all_children(self.deploy_opt_section,
+                                              self.CONFIG)
+            for profile in profiles:
+                # Force the "default" profile to the head of the list
+                if (profile.get(self.CONFIG_DEFAULT) == 'true' or
+                        profile.get(self.CONFIG_DEFAULT) == '1'):
+                    profile_ids.insert(0, profile.get(self.CONFIG_ID))
+                else:
+                    profile_ids.append(profile.get(self.CONFIG_ID))
+            logger.verbose("Configuration profiles are: {0}"
+                           .format(profile_ids))
+            self._configuration_profiles = profile_ids
+        return self._configuration_profiles
+
+    @property
+    def environment_properties(self):
+        """The array of environment properties.
+
+        :return: Array of dicts (one per property) with the keys
+          ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
+          ``"label"``, and ``"description"``.
+        """
+        result = []
+        if self.product_section is None:
+            return result
+        elems = self.find_all_children(self.product_section, self.PROPERTY)
+        for elem in elems:
+            label = elem.findtext(self.PROPERTY_LABEL, "")
+            descr = elem.findtext(self.PROPERTY_DESC, "")
+            result.append({
+                'key': elem.get(self.PROP_KEY),
+                'value': elem.get(self.PROP_VALUE),
+                'qualifiers': elem.get(self.PROP_QUAL, ""),
+                'type': elem.get(self.PROP_TYPE, ""),
+                'label': label,
+                'description': descr,
+            })
+
+        return result
+
+    @property
+    def networks(self):
+        """The list of network names currently defined in this VM.
+
+        :rtype: list[str]
+        """
+        if self.network_section is None:
+            return []
+        return [network.get(self.NETWORK_NAME) for
+                network in self.network_section.findall(self.NETWORK)]
+
+    @property
+    def system_types(self):
+        """List of virtual system type(s) supported by this virtual machine.
+
+        For an OVF, this corresponds to the ``VirtualSystemType`` element.
+        """
+        if self.virtual_hw_section is not None:
+            system = self.virtual_hw_section.find(self.SYSTEM)
+            if system is not None:
+                value = system.findtext(self.VIRTUAL_SYSTEM_TYPE, None)
+                if value:
+                    return value.split(" ")
+        return None
+
+    @system_types.setter
+    def system_types(self, type_list):
+        type_string = " ".join(type_list)
+        logger.info("Setting VirtualSystemType to '{0}'".format(type_string))
+        system = self.virtual_hw_section.find(self.SYSTEM)
+        if system is None:
+            system = XML.set_or_make_child(self.virtual_hw_section,
+                                           self.SYSTEM,
+                                           ordering=(self.INFO, self.SYSTEM,
+                                                     self.ITEM))
+            # A System must have some additional children to be valid:
+            XML.set_or_make_child(system, self.VSSD + "ElementName",
+                                  "Virtual System Type")
+            XML.set_or_make_child(system, self.VSSD + "InstanceID", 0)
+        XML.set_or_make_child(system, self.VIRTUAL_SYSTEM_TYPE, type_string)
+
+    @property
+    def version_short(self):
+        """Short descriptive version string (XML ``Version`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(self.VERSION, None)
+        return None
+
+    @version_short.setter
+    def version_short(self, version_string):
+        if self.product_section is None:
+            self.product_section = self.set_or_make_child(
+                self.virtual_system, self.PRODUCT_SECTION)
+            # Any Section must have an Info as child
+            self.set_or_make_child(self.product_section, self.INFO,
+                                   "Product Information")
+        logger.info("Updating Version element in OVF")
+        self.set_or_make_child(self.product_section, self.VERSION,
+                               version_string)
+
+    @property
+    def version_long(self):
+        """Long descriptive version string (XML ``FullVersion`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(self.FULL_VERSION, None)
+        return None
+
+    @version_long.setter
+    def version_long(self, version_string):
+        """Set the FullVersion element's value.
+
+        :param str version_string: Long descriptive version string.
+        """
+        if self.product_section is None:
+            self.product_section = self.set_or_make_child(
+                self.virtual_system, self.PRODUCT_SECTION)
+            # Any Section must have an Info as child
+            self.set_or_make_child(self.product_section, self.INFO,
+                                   "Product Information")
+        logger.info("Updating FullVersion element in OVF")
+        self.set_or_make_child(self.product_section, self.FULL_VERSION,
+                               version_string)
 
     def __getattr__(self, name):
         """Transparently pass attribute lookups off to OVFNameHelper."""
@@ -504,11 +697,14 @@ class OVF(VMDescription, XML):
                 vendor_url = p.findtext(self.VENDOR_URL, "(No vendor URL)")
                 str_list.extend(wrapper.wrap(
                     "          {0}".format(vendor_url)))
-            version = p.findtext(self.VERSION, "(No version string)")
+            version = self.version_short
+            if version is None:
+                version = "(No version string)"
             str_list.extend(wrapper.wrap("Version:  {0}".format(version)))
             if verbosity_option != 'brief':
-                full_version = p.findtext(self.FULL_VERSION,
-                                          "(No detailed version string)")
+                full_version = self.version_long
+                if full_version is None:
+                    full_version = "(No detailed version string)"
                 str_list.extend(wrapper.wrap(
                     "          {0}".format(full_version)))
             section_list.append("\n".join(str_list))
@@ -628,10 +824,7 @@ class OVF(VMDescription, XML):
             section_list.append("\n".join(str_list))
 
         # Supported hardware information
-        virtual_system_type = None
-        system = self.virtual_hw_section.find(self.SYSTEM)
-        if system is not None:
-            virtual_system_type = system.findtext(self.VIRTUAL_SYSTEM_TYPE)
+        virtual_system_types = self.system_types
         scsi_subtypes = set()
         for scsi_ctrl in self.hardware.find_all_items('scsi'):
             scsi_subtypes |= scsi_ctrl.get_all_values(self.RESOURCE_SUB_TYPE)
@@ -642,13 +835,13 @@ class OVF(VMDescription, XML):
         for eth in self.hardware.find_all_items('ethernet'):
             eth_subtypes |= eth.get_all_values(self.RESOURCE_SUB_TYPE)
 
-        if ((virtual_system_type is not None) or
+        if ((virtual_system_types is not None) or
                 (scsi_subtypes or ide_subtypes or eth_subtypes)):
             str_list = ["Hardware Variants:"]
             wrapper.subsequent_indent = ' ' * 28
-            if virtual_system_type is not None:
+            if virtual_system_types is not None:
                 wrapper.initial_indent = "  System types:             "
-                str_list.extend(wrapper.wrap(virtual_system_type))
+                str_list.extend(wrapper.wrap(" ".join(virtual_system_types)))
             if scsi_subtypes:
                 wrapper.initial_indent = "  SCSI device types:        "
                 str_list.extend(wrapper.wrap(" ".join(sorted(scsi_subtypes))))
@@ -721,7 +914,7 @@ class OVF(VMDescription, XML):
             section_list.append("\n".join(str_list))
 
         # Property information
-        properties = self.get_property_array()
+        properties = self.environment_properties
         if properties:
             str_list = ["Properties:"]
             max_key = max([len(str(ph['key'])) for ph in properties])
@@ -782,28 +975,23 @@ class OVF(VMDescription, XML):
             ctrl_addr,
             device_item.get_value(self.ADDRESS_ON_PARENT))
 
-    def profile_info_string(self, TEXT_WIDTH=79, verbosity_option=None,
-                            enumerate=False):
-        """Get a string summarizing available configuration profiles.
+    def profile_info_list(self, TEXT_WIDTH=79, verbose=False):
+        """Get a list describing available configuration profiles.
 
         :param int TEXT_WIDTH: Line length to wrap to if possible
-        :param str verbosity_option: ``'brief'``, ``None`` (default),
-          or ``'verbose'``
-
-        :param boolean enumerate: If ``True``, number the profiles.
-        :return: Appropriately formatted and verbose string.
+        :param str verbose: if True, generate multiple lines per profile
+        :return: (header, list)
         """
         str_list = []
 
-        default_profile_id = self.get_default_profile_name()
-        profile_ids = self.get_configuration_profile_ids()
+        default_profile_id = self.default_config_profile
+        profile_ids = self.config_profiles
         if not profile_ids:
             profile_ids = [None]
 
-        indent = 2 if not enumerate else 6
         PROF_W = max(len("Configuration Profiles: "),
-                     indent + max([(len(str(id))) for id in profile_ids]),
-                     indent + len(str(default_profile_id) + " (default)"))
+                     2 + max([(len(str(id))) for id in profile_ids]),
+                     2 + len(str(default_profile_id) + " (default)"))
 
         # Profile information
         CPU_W = 4   # "CPUs"
@@ -814,14 +1002,12 @@ class OVF(VMDescription, XML):
         template = (
             "{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:>{3}}} {{4:>{4}}} {{5:>{5}}}"
             .format(PROF_W, CPU_W, MEM_W, NIC_W, SER_W, HD_W))
-        str_list.append(template
-                        .format("Configuration Profiles:", "CPUs", "Memory",
-                                "NICs", "Serials", "Disks/Capacity"))
-        str_list.append(template.format("", "-" * CPU_W, "-" * MEM_W,
-                                        "-" * NIC_W, "-" * SER_W,
-                                        "-" * HD_W))
-        # Print a table of profiles vs. their hardware
-        if verbosity_option != 'brief':
+        header = template.format("Configuration Profiles:", "CPUs", "Memory",
+                                 "NICs", "Serials", "Disks/Capacity")
+        header += "\n" + template.format("", "-" * CPU_W, "-" * MEM_W,
+                                         "-" * NIC_W, "-" * SER_W,
+                                         "-" * HD_W)
+        if verbose:
             wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
                                            initial_indent='    ',
                                            subsequent_indent=' ' * 21)
@@ -846,11 +1032,7 @@ class OVF(VMDescription, XML):
                 for disk in self.disk_section.findall(self.DISK):
                     disks_size += self.get_capacity_from_disk(disk)
 
-            if enumerate:
-                profile_str = "{0:2}) ".format(index)
-            else:
-                profile_str = "  "
-            profile_str += str(profile_id)
+            profile_str = "  " + str(profile_id)
             if profile_id == default_profile_id:
                 profile_str += " (default)"
             str_list.append(template.format(
@@ -861,7 +1043,7 @@ class OVF(VMDescription, XML):
                 serials,
                 "{0:2} / {1:>9}".format(disk_count,
                                         byte_string(disks_size))))
-            if profile_id is not None and verbosity_option != 'brief':
+            if profile_id is not None and verbose:
                 profile = self.find_child(self.deploy_opt_section,
                                           self.CONFIG,
                                           attrib={self.CONFIG_ID: profile_id})
@@ -872,82 +1054,20 @@ class OVF(VMDescription, XML):
                     '{0:15} "{1}"'.format("Description:",
                                           profile.findtext(self.CFG_DESC))))
             index += 1
+        return (header, str_list)
 
-        return "\n".join(str_list)
+    def profile_info_string(self, TEXT_WIDTH=79, verbosity_option=None):
+        """Get a string summarizing available configuration profiles.
 
-    def get_default_profile_name(self):
-        """Get the name of the default configuration profile.
+        :param int TEXT_WIDTH: Line length to wrap to if possible
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
 
-        :return: Profile name or ``None`` if none are defined.
+        :return: Appropriately formatted and verbose string.
         """
-        default_profile = None
-        profiles = self.get_configuration_profile_ids()
-        if profiles:
-            default_profile = profiles[0]
-
-        return default_profile
-
-    def get_platform(self):
-        """Determine the platform type from the OVF descriptor.
-
-        :return: Class object - :class:`~COT.platforms.GenericPlatform` or
-          a more-specific subclass if recognized as such.
-        """
-        if self.platform is not None:
-            return self.platform
-
-        platform = None
-        product_class = None
-        class_to_platform_map = {
-            'com.cisco.csr1000v':   Platform.CSR1000V,
-            'com.cisco.iosv':       Platform.IOSv,
-            'com.cisco.nx-osv':     Platform.NXOSv,
-            'com.cisco.ios-xrv':    Platform.IOSXRv,
-            'com.cisco.ios-xrv.rp': Platform.IOSXRvRP,
-            'com.cisco.ios-xrv.lc': Platform.IOSXRvLC,
-            None:                   Platform.GenericPlatform,
-            }
-
-        if self.product_section is None:
-            platform = Platform.GenericPlatform
-        else:
-            product_class = self.product_section.get(self.PRODUCT_CLASS)
-            try:
-                platform = class_to_platform_map[product_class]
-            except KeyError:
-                logger.warning(
-                    "Unrecognized product class '{0}' - known classes "
-                    "are {1}. Treating as a generic product..."
-                    .format(product_class,
-                            class_to_platform_map.keys()))
-                platform = Platform.GenericPlatform
-        logger.info("OVF product class {0} --> platform {1}"
-                    .format(product_class, platform.__name__))
-        self.platform = platform
-        return self.platform
-
-    def get_configuration_profile_ids(self):
-        """Get the list of supported configuration profile identifiers.
-
-        If this OVF has no defined profiles, returns an empty list.
-        If there is a default profile, it will be first in the list.
-        """
-        if ((not self.configuration_profiles) and
-                (self.deploy_opt_section is not None)):
-            profile_ids = []
-            profiles = self.find_all_children(self.deploy_opt_section,
-                                              self.CONFIG)
-            for profile in profiles:
-                # Force the "default" profile to the head of the list
-                if (profile.get(self.CONFIG_DEFAULT) == 'true' or
-                        profile.get(self.CONFIG_DEFAULT) == '1'):
-                    profile_ids.insert(0, profile.get(self.CONFIG_ID))
-                else:
-                    profile_ids.append(profile.get(self.CONFIG_ID))
-            logger.verbose("Configuration profiles are: {0}"
-                           .format(profile_ids))
-            self.configuration_profiles = profile_ids
-        return self.configuration_profiles
+        header, str_list = self.profile_info_list(
+            TEXT_WIDTH, (verbosity_option != 'brief'))
+        return "\n".join([header] + str_list)
 
     def create_configuration_profile(self, id, label, description):
         """Create or update a configuration profile with the given ID.
@@ -969,28 +1089,7 @@ class OVF(VMDescription, XML):
         self.set_or_make_child(cfg, self.CFG_LABEL, label)
         self.set_or_make_child(cfg, self.CFG_DESC, description)
         # Clear cache
-        self.configuration_profiles = []
-
-    def set_system_type(self, type_list):
-        """Set the virtual system type(s) supported by this virtual machine.
-
-        For an OVF, this corresponds to the ``VirtualSystemType`` element.
-
-        :param list type_list: List of system type strings
-        """
-        type_string = " ".join(type_list)
-        logger.info("Setting VirtualSystemType to '{0}'".format(type_string))
-        system = self.virtual_hw_section.find(self.SYSTEM)
-        if system is None:
-            system = XML.set_or_make_child(self.virtual_hw_section,
-                                           self.SYSTEM,
-                                           ordering=(self.INFO, self.SYSTEM,
-                                                     self.ITEM))
-            # A System must have some additional children to be valid:
-            XML.set_or_make_child(system, self.VSSD + "ElementName",
-                                  "Virtual System Type")
-            XML.set_or_make_child(system, self.VSSD + "InstanceID", 0)
-        XML.set_or_make_child(system, self.VIRTUAL_SYSTEM_TYPE, type_string)
+        self._configuration_profiles = []
 
     # TODO - how to insert a doc about the profile_list (see vm_description.py)
 
@@ -1055,16 +1154,6 @@ class OVF(VMDescription, XML):
         self.platform.validate_nic_count(count)
         self.hardware.set_item_count_per_profile('ethernet', count,
                                                  profile_list)
-
-    def get_network_list(self):
-        """Get the list of network names currently defined in this VM.
-
-        :rtype: list[str]
-        """
-        if self.network_section is None:
-            return []
-        return [network.get(self.NETWORK_NAME) for
-                network in self.network_section.findall(self.NETWORK)]
 
     def create_network(self, label, description):
         """Define a new network with the given label and description.
@@ -1195,61 +1284,6 @@ class OVF(VMDescription, XML):
                                               self.RESOURCE_SUB_TYPE, type,
                                               profile_list)
 
-    def set_short_version(self, version_string):
-        """Set the ``Version`` element's value.
-
-        :param str version_string: Short descriptive version string.
-        """
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
-        logger.info("Updating Version element in OVF")
-        self.set_or_make_child(self.product_section, self.VERSION,
-                               version_string)
-
-    def set_long_version(self, version_string):
-        """Set the FullVersion element's value.
-
-        :param str version_string: Long descriptive version string.
-        """
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
-        logger.info("Updating FullVersion element in OVF")
-        self.set_or_make_child(self.product_section, self.FULL_VERSION,
-                               version_string)
-
-    def get_property_array(self):
-        """Get an array of configuration properties.
-
-        :return: Array of dicts (one per property) with the keys
-          ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
-          ``"label"``, and ``"description"``.
-        """
-        result = []
-        if self.product_section is None:
-            return result
-        elems = self.find_all_children(self.product_section, self.PROPERTY)
-        for elem in elems:
-            label = elem.findtext(self.PROPERTY_LABEL, "")
-            descr = elem.findtext(self.PROPERTY_DESC, "")
-            result.append({
-                'key': elem.get(self.PROP_KEY),
-                'value': elem.get(self.PROP_VALUE),
-                'qualifiers': elem.get(self.PROP_QUAL, ""),
-                'type': elem.get(self.PROP_TYPE, ""),
-                'label': label,
-                'description': descr,
-            })
-
-        return result
-
     def get_property_value(self, key):
         """Get the value of the given property.
 
@@ -1289,8 +1323,14 @@ class OVF(VMDescription, XML):
         # Else, make sure the requested value is valid
         prop_type = property.get(self.PROP_TYPE, "")
         if prop_type == "boolean":
-            # OVF contains a string representation of a boolean
-            value = str(bool(value)).lower()
+            # XML prefers to represent booleans as 'true' or 'false'
+            value = str(value).lower()
+            if str(value).lower() in ['true', '1', 't', 'y', 'yes']:
+                value = 'true'
+            elif str(value).lower() in ['false', '0', 'f', 'n', 'no']:
+                value = 'false'
+            else:
+                raise ValueUnsupportedError(key, value, "a boolean value")
         elif prop_type == "string":
             value = str(value)
 
@@ -2195,7 +2235,7 @@ class OVFNameHelper(object):
     def __init__(self, version):
         """Set up string constants appropriate to the given OVF version."""
         self.ovf_version = version
-        self.platform = None
+        self._platform = None
         # For the standard namespace URIs in an OVF descriptor, let's define
         # shorthand identifiers to be used when writing back out to XML:
         cim_uri = "http://schemas.dmtf.org/wbem/wscim/1"
@@ -2516,7 +2556,7 @@ class OVFHardware:
         """
         self.ovf = ovf
         self.item_dict = {}
-        valid_profiles = set(ovf.get_configuration_profile_ids())
+        valid_profiles = set(ovf.config_profiles)
         item_count = 0
         for item in ovf.virtual_hw_section:
             if item.tag == self.ovf.ITEM:
@@ -2730,7 +2770,7 @@ class OVFHardware:
         count_dict = {}
         if not profile_list:
             # Get the count under all profiles
-            profile_list = self.ovf.get_configuration_profile_ids() + [None]
+            profile_list = self.ovf.config_profiles + [None]
         for profile in profile_list:
             count_dict[profile] = 0
         for ovfitem in self.find_all_items(resource_type):
@@ -2761,7 +2801,7 @@ class OVFHardware:
         """
         if not profile_list:
             # Set the profile list for all profiles, including the default
-            profile_list = self.ovf.get_configuration_profile_ids() + [None]
+            profile_list = self.ovf.config_profiles + [None]
         count_dict = self.get_item_count_per_profile(resource_type,
                                                      profile_list)
         items_seen = dict.fromkeys(profile_list, 0)
@@ -2900,7 +2940,7 @@ class OVFHardware:
           :attr:`value_list`, set extra items to this value
         """
         if profile_list is None:
-            profile_list = self.ovf.get_configuration_profile_ids() + [None]
+            profile_list = self.ovf.config_profiles + [None]
         for ovfitem in self.find_all_items(resource_type):
             if len(value_list):
                 new_value = value_list.pop(0)
@@ -3199,7 +3239,7 @@ class OVFItem:
                 if None in profiles:
                     logger.debug("Profile contains 'any profile'; "
                                  "fixing it up")
-                    profiles.update(self.ovf.get_configuration_profile_ids())
+                    profiles.update(self.ovf.config_profiles)
                     profiles.discard(None)
                     profiles.discard(profile)
                     # Discard all profiles set elsewhere
@@ -3336,8 +3376,7 @@ class OVFItem:
         profile_set = set.union(*instance_dict.values())
         if profile in profile_set:
             return True
-        elif (None in profile_set and
-              profile in self.ovf.get_configuration_profile_ids()):
+        elif None in profile_set and profile in self.ovf.config_profiles:
             return True
         return False
 

@@ -94,6 +94,40 @@ class UI(object):
         if not self.confirm(prompt):
             sys.exit("Aborting.")
 
+    def choose_from_list(self, footer, option_list, default_value,
+                         header="", info_list=[]):
+        """Prompt the user to choose from a list.
+
+        :param footer: Prompt string to display following the list
+        :param option_list: List of strings to choose amongst
+        :param default_value: Default value to select if user declines
+        :param header: String to display prior to the list
+        :param info_list: Verbose strings to display instead of option_list
+        """
+        if not info_list:
+            info_list = option_list
+        prompt_list = [header] + ["""{0:2}) {1}""".format(i, inf.strip())
+                                  for i, inf in enumerate(info_list, start=1)]
+        prompt_list.append(footer)
+        prompt = "\n".join(prompt_list)
+        while True:
+            result = self.get_input(prompt, default_value)
+
+            # Exact match or user declined to choose
+            if result == default_value or result in option_list:
+                return result
+            # Unique prefix match
+            match = [opt for opt in option_list if opt.startswith(result)]
+            if len(match) == 1:
+                return match[0]
+            # Did user enter a list index?
+            try:
+                i = int(result)
+                return option_list[i-1]
+            except (ValueError, IndexError):
+                pass
+            logger.error("Invalid input. Please try again.")
+
     def get_input(self, prompt, default_value):
         """Prompt the user to enter a string.
 

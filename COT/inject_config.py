@@ -64,11 +64,10 @@ class COTInjectConfig(COTSubmodule):
         if not os.path.exists(value):
             raise InvalidInputError("Primary config file {0} does not exist!"
                                     .format(value))
-        platform = self.vm.get_platform()
-        if not platform.CONFIG_TEXT_FILE:
+        if not self.vm.platform.CONFIG_TEXT_FILE:
             raise InvalidInputError(
                 "Configuration file not supported for platform {0}"
-                .format(platform.__name__))
+                .format(self.vm.platform.__name__))
         self._config_file = value
 
     @property
@@ -87,11 +86,10 @@ class COTInjectConfig(COTSubmodule):
         if not os.path.exists(value):
             raise InvalidInputError("Secondary config file {0} does not exist!"
                                     .format(value))
-        platform = self.vm.get_platform()
-        if not platform.SECONDARY_CONFIG_TEXT_FILE:
+        if not self.vm.platform.SECONDARY_CONFIG_TEXT_FILE:
             raise InvalidInputError(
                 "Secondary configuration file not supported for platform {0}"
-                .format(platform.__name__))
+                .format(self.vm.platform.__name__))
         self._secondary_config_file = value
 
     def ready_to_run(self):
@@ -119,7 +117,7 @@ class COTInjectConfig(COTSubmodule):
 
         vm = self.vm
 
-        platform = vm.get_platform()
+        platform = vm.platform
 
         # Find the disk drive where the config should be injected
         # First, look for any previously-injected config disk to overwrite:

@@ -98,7 +98,7 @@ class COTEditHardware(COTSubmodule):
             raise InvalidInputError("cpus value must be an integer")
         if value < 1:
             raise InvalidInputError("CPU count must be at least 1")
-        self.vm.get_platform().validate_cpu_count(value)
+        self.vm.platform.validate_cpu_count(value)
         self._cpus = value
 
     @property
@@ -138,7 +138,7 @@ class COTEditHardware(COTSubmodule):
                                "guessing '{0}' means '{0}MB'"
                                .format(mem_value))
                 pass
-        self.vm.get_platform().validate_memory_amount(mem_value)
+        self.vm.platform.validate_memory_amount(mem_value)
         self._memory = mem_value
 
     @property
@@ -152,7 +152,7 @@ class COTEditHardware(COTSubmodule):
             value = int(value)
         except ValueError:
             raise InvalidInputError("nics value must be an integer")
-        self.vm.get_platform().validate_nic_count(value)
+        self.vm.platform.validate_nic_count(value)
         self._nics = value
 
     @property
@@ -162,7 +162,7 @@ class COTEditHardware(COTSubmodule):
 
     @nic_type.setter
     def nic_type(self, value):
-        self.vm.get_platform().validate_nic_type(value)
+        self.vm.platform.validate_nic_type(value)
         self._nic_type = value
 
     @property
@@ -176,7 +176,7 @@ class COTEditHardware(COTSubmodule):
             value = int(value)
         except ValueError:
             raise InvalidInputError("serial_ports value must be an integer")
-        self.vm.get_platform().validate_serial_count(value)
+        self.vm.platform.validate_serial_count(value)
         self._serial_ports = value
 
     def ready_to_run(self):
@@ -221,7 +221,7 @@ class COTEditHardware(COTSubmodule):
         vm = self.vm
 
         if self.profiles is not None:
-            profile_list = vm.get_configuration_profile_ids()
+            profile_list = vm.config_profiles
             for profile in self.profiles:
                 if profile not in profile_list:
                     self.UI.confirm_or_die(
@@ -237,7 +237,7 @@ class COTEditHardware(COTSubmodule):
                                                     description=desc)
 
         if self.virtual_system_type is not None:
-            vm.set_system_type(self.virtual_system_type)
+            vm.system_types = self.virtual_system_type
 
         if self.cpus is not None:
             vm.set_cpu_count(self.cpus, self.profiles)
@@ -260,7 +260,7 @@ class COTEditHardware(COTSubmodule):
             vm.set_nic_count(self.nics, self.profiles)
 
         if self.nic_networks is not None:
-            existing_networks = vm.get_network_list()
+            existing_networks = vm.networks
             # Convert nic_networks to a set to merge duplicate entries
             for network in natural_sort(set(self.nic_networks)):
                 if network not in existing_networks:

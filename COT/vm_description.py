@@ -47,9 +47,21 @@ class VMDescription(object):
 
     """Abstract class for reading, editing, and writing VM definitions.
 
-    :ivar input_file: The file this VM description was initialized from.
-    :ivar working_dir: A temporary directory for storage of files.
-    :ivar output_file: The file this VM description will be written to.
+    **Properties**
+
+    .. autosummary::
+      :nosignatures:
+
+      input_file
+      output_file
+      platform
+      config_profiles
+      default_config_profile
+      environment_properties
+      networks
+      system_types
+      version_short
+      version_long
     """
 
     @classmethod
@@ -72,9 +84,9 @@ class VMDescription(object):
         :param str output_file: File name to write to. If this VM is read-only,
           (there will never be an output file) this value should be ``None``;
           if the output filename is not yet known, use ``""`` and subsequently
-          call :meth:`set_output_file` when it is determined.
+          set :attr:`output` when it is determined.
         """
-        self.input_file = input_file
+        self._input_file = input_file
         self.working_dir = tempfile.mkdtemp(prefix="cot")
         logger.verbose("Temporary directory for VM created from {0}: {1}"
                        .format(input_file, self.working_dir))
@@ -95,24 +107,96 @@ class VMDescription(object):
         """Destructor. Call :meth:`destroy`."""
         self.destroy()
 
-    def set_output_file(self, output_file):
-        """Validate the given output filename and save it for later use.
+    @property
+    def input_file(self):
+        """Data file to read in."""
+        return self._input_file
 
-        :param str output_file: Output filename
-        """
-        self.output_file = output_file
+    @property
+    def output_file(self):
+        """Filename that :meth:`write` will output to."""
+        return self._output_file
+
+    @output_file.setter
+    def output_file(self, value):
+        self._output_file = value
 
     def write(self):
         """Write the VM description to :attr:`output_file`, if any."""
         raise NotImplementedError("write not implemented")
 
-    def get_platform(self):
-        """Get the Platform class object associated with this VM.
+    @property
+    def platform(self):
+        """The Platform class object associated with this VM.
 
-        :return: Class object - :class:`~COT.platforms.GenericPlatform` or
-          a more-specific subclass if recognized as such.
+        :class:`~COT.platforms.GenericPlatform` or a more specific subclass
+        if recognized as such.
         """
-        raise NotImplementedError("get_platform not implemented")
+        raise NotImplementedError("no platform value available.")
+
+    @property
+    def config_profiles(self):
+        """The list of supported configuration profiles.
+
+        If there are no profiles defined, returns an empty list.
+        If there is a default profile, it will be first in the list.
+        """
+        raise NotImplementedError("config_profiles not implemented!")
+
+    @property
+    def default_config_profile(self):
+        """The name of the default configuration profile.
+
+        :return: Profile name or ``None`` if none are defined.
+        """
+        if self.config_profiles:
+            return self.config_profiles[0]
+        return None
+
+    @property
+    def environment_properties(self):
+        """The array of environment properties.
+
+        :return: Array of dicts (one per property) with the keys
+          ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
+          ``"label"``, and ``"description"``.
+        """
+        raise NotImplementedError("environment_properties not implemented")
+
+    @property
+    def networks(self):
+        """The list of network names currently defined in this VM.
+
+        :rtype: list[str]
+        """
+        raise NotImplementedError("networks property not implemented!")
+
+    @property
+    def system_types(self):
+        """List of virtual system type(s) supported by this virtual machine."""
+        raise NotImplementedError("system_types not implemented!")
+
+    @system_types.setter
+    def system_types(self, type_list):
+        raise NotImplementedError("system_types setter not implemented!")
+
+    @property
+    def version_short(self):
+        """A short string describing the product version."""
+        raise NotImplementedError("version_short not implemented!")
+
+    @version_short.setter
+    def version_short(self, value):
+        raise NotImplementedError("version_short setter not implemented!")
+
+    @property
+    def version_long(self):
+        """A long string describing the product version."""
+        raise NotImplementedError("version_long not implemented!")
+
+    @version_long.setter
+    def version_long(self, value):
+        raise NotImplementedError("version_long setter not implemented")
 
     # API methods needed for add-disk
     def convert_disk_if_needed(self, file_path, kind):
@@ -283,15 +367,6 @@ class VMDescription(object):
         raise NotImplementedError("add_disk_device not implemented")
 
     # API methods needed for edit-hardware
-    def get_configuration_profile_ids(self):
-        """Get the list of supported configuration profile identifiers.
-
-        If there are no profiles defined, returns an empty list.
-        If there is a default profile, it will be first in the list.
-        """
-        raise NotImplementedError("get_configuration_profile_ids "
-                                  "not implemented!")
-
     def create_configuration_profile(self, id, label, description):
         """Create/update a configuration profile with the given ID.
 
@@ -301,13 +376,6 @@ class VMDescription(object):
         """
         raise NotImplementedError("create_configuration_profile "
                                   "not implemented!")
-
-    def set_system_type(self, type_list):
-        """Set the virtual system type(s) supported by this virtual machine.
-
-        :param list type_list: List of system type strings
-        """
-        raise NotImplementedError("set_system_type not implemented!")
 
     # A note on getters/setters that take a profile_list parameter:
     #
@@ -369,13 +437,6 @@ class VMDescription(object):
         :param list profile_list: Change only the given profiles
         """
         raise NotImplementedError("set_nic_count not implemented!")
-
-    def get_network_list(self):
-        """Get the list of network names currently defined in this VM.
-
-        :rtype: list[str]
-        """
-        raise NotImplementedError("get_network_list not implemented!")
 
     def create_network(self, label, description):
         """Define a new network with the given label and description.
@@ -460,30 +521,7 @@ class VMDescription(object):
         raise NotImplementedError("set_ide_subtype not implemented!")
 
     # API methods needed for edit-product
-    def set_short_version(self, version_string):
-        """Set a short string describing the product version.
-
-        :param str version_string: Short descriptive version string.
-        """
-        raise NotImplementedError("set_version not implemented!")
-
-    def set_long_version(self, version_string):
-        """Set a long string describing the product version.
-
-        :param str version_string: Long descriptive version string.
-        """
-        raise NotImplementedError("set_version not implemented")
-
     # API methods needed for edit-properties
-    def get_property_array(self):
-        """Get an array of configuration properties.
-
-        :return: Array of dicts (one per property) with the keys
-          ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
-          ``"label"``, and ``"description"``.
-        """
-        raise NotImplementedError("get_property_array not implemented")
-
     def get_property_value(self, key):
         """Get the value of the given property.
 
@@ -538,13 +576,6 @@ class VMDescription(object):
         :return: Appropriately formatted and verbose string.
         """
         raise NotImplementedError("profile_info_string not implemented")
-
-    def get_default_profile_name(self):
-        """Get the name of the default configuration profile.
-
-        :return: Profile name or ``None`` if none are defined.
-        """
-        raise NotImplementedError("get_default_profile_name not implemented")
 
     # API methods needed for inject-config
     def find_empty_drive(self, type):

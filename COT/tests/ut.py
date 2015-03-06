@@ -71,7 +71,7 @@ class UTLoggingHandler(BufferingHandler):
             for (key, value) in kwargs.items():
                 if key == 'msg':
                     # Regexp match
-                    if not re.search(value, record.get(key)):
+                    if not re.search(value, str(record.get(key))):
                         found_match = False
                         break
                 elif not value == record.get(key):
@@ -106,7 +106,8 @@ class UTLoggingHandler(BufferingHandler):
                     "Found {length} unexpected {level} message(s):\n{messages}"
                     .format(length=len(matches),
                             level=logging.getLevelName(level),
-                            messages="\n".join([r['msg'] for r in matches])))
+                            messages="\n".join([str(r['msg']) for
+                                                r in matches])))
 
 
 class COT_UT(unittest.TestCase):
@@ -302,3 +303,7 @@ class COT_UT(unittest.TestCase):
 
     def assertLogged(self, **kwargs):
         self.logging_handler.assertLogged(**kwargs)
+
+    def assertNoLogsOver(self, max_level):
+        """Fails if any logs are logged higher than the given level."""
+        self.logging_handler.assertNoLogsOver(max_level)
