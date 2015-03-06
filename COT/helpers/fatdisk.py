@@ -95,7 +95,7 @@ class FatDisk(Helper):
         :param str file_path: Desired location of new disk image
         :param list contents: List of file paths to package into the created
           image.
-        :param capacity: TODO what's the expected format?
+        :param capacity: (optional) Disk capacity. A string like '16M' or '1G'.
         """
         if not capacity:
             # What size disk do we need to contain the requested file(s)?
