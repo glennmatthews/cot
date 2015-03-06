@@ -155,26 +155,28 @@ class COTEditProperties(COTSubmodule):
                                                p['qualifiers'])),
                 wrapper.fill(format_str.format("Current Value:", old_value)),
                 "",
-                "New value for this property",
+                "Enter new value for this property",
             ])
 
             while True:
                 new_value = self.UI.get_input(prompt,
                                               default_value=old_value)
                 if new_value == old_value:
-                    print("(no change)")
+                    logger.info("Value for property '{0}' is unchanged"
+                                .format(key))
                     break
                 else:
                     try:
                         new_value = self.vm.set_property_value(key, new_value)
-
-                        print("""Successfully set the value of """
-                              """property "{0}" to "{1}" """
-                              .format(key, new_value))
+                        logger.info("Successfully updated property '{0}' "
+                                    "value to '{1}'".format(key, new_value))
+                        # Refresh!
+                        pa = self.vm.environment_properties
                         break
                     except ValueUnsupportedError as e:
-                        print(e)
-                print("")
+                        logger.error(e)
+                        continue
+            continue
 
     def create_subparser(self, parent):
         """Add subparser for the CLI of this submodule.

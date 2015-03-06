@@ -15,6 +15,7 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 import os.path
+import re
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -214,9 +215,8 @@ Please choose a property to edit:
 10) domain-name               "Domain Name"
 Enter property key or number to edit, or 'q' to write changes and quit
         """.strip()
-        expected_prompts = [
-            menu_string,
-            """
+
+        username_edit_string = """
 Key:            "login-username"
 Label:          "Login Username"
 Description:    "Username for remote login"
@@ -224,24 +224,82 @@ Type:           "string"
 Qualifiers:     "MaxLen(64)"
 Current Value:  ""
 
-New value for this property
-            """.strip(),
+Enter new value for this property
+            """.strip()
+
+        expected_prompts = [
+            menu_string,
+            username_edit_string,
+            menu_string,
+            username_edit_string,
+            username_edit_string,
+            menu_string,
+            menu_string,
+            re.sub('Value:  ""', 'Value:  "hello"',
+                   username_edit_string),
             menu_string,
         ]
         custom_inputs = [
-            "1",
-            "hello",
+            "login-u",   # select by name prefix
+            "",          # no change, return to menu
+            "1",         # select by number
+            ("thisiswaytoolongofastringtouseforausername"
+             "whatamipossiblythinking!"),  # invalid value
+            "hello",     # valid value, return to menu
+            "27",        # out of range
+            "1",         # select by number
+            "goodbye",   # valid value, return to menu
             "q",
+        ]
+        expected_logs = [
+            None,
+            {
+                'levelname': 'INFO',
+                'msg': 'Value.*unchanged',
+            },
+            None,
+            {
+                'levelname': 'ERROR',
+                'msg': 'Unsupported value.*login-username.*64 characters',
+            },
+            {
+                'levelname': 'INFO',
+                'msg': 'Successfully updated property',
+            },
+            {
+                'levelname': 'ERROR',
+                'msg': 'Invalid input',
+            },
+            None,
+            {
+                'levelname': 'INFO',
+                'msg': 'Successfully updated property',
+            },
+            None,
         ]
         self.counter = 0
 
+        # sanity check
+        self.assertEqual(len(expected_prompts), len(custom_inputs),
+                         "expected_prompts {0} != custom_inputs {1}"
+                         .format(len(expected_prompts), len(custom_inputs)))
+        self.assertEqual(len(expected_prompts), len(expected_logs),
+                         "expected_prompts {0} != expected_logs {1}"
+                         .format(len(expected_prompts), len(expected_logs)))
+
         def custom_input(prompt, default_value):
             """Mock for get_input."""
+            if self.counter > 0:
+                log = expected_logs[self.counter-1]
+                if log is not None:
+                    self.assertLogged(**log)
             # Get output and flush it
             # Make sure it matches expectations
             self.maxDiff = None
-            self.assertMultiLineEqual(expected_prompts[self.counter],
-                                      prompt)
+            self.assertMultiLineEqual(
+                expected_prompts[self.counter], prompt,
+                "failed at index {0}! Expected:\n{1}\nActual:\n{2}".format(
+                    self.counter, expected_prompts[self.counter], prompt))
             # Return our canned input
             input = custom_inputs[self.counter]
             self.counter += 1
@@ -252,16 +310,16 @@ New value for this property
             self.instance.UI.get_input = custom_input
             self.instance.package = self.input_ovf
             self.instance.run()
-            self.instance.finished()
-            self.check_diff("""
+            if expected_logs[self.counter - 1] is not None:
+                self.assertLogged(**expected_logs[self.counter - 1])
+        finally:
+            self.instance.UI.get_input = _input
+        self.instance.finished()
+        self.check_diff("""
        <ovf:Category>1. Bootstrap Properties</ovf:Category>
 -      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
 ovf:type="string" ovf:userConfigurable="true" ovf:value="">
 +      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
-ovf:type="string" ovf:userConfigurable="true" ovf:value="hello">
+ovf:type="string" ovf:userConfigurable="true" ovf:value="goodbye">
          <ovf:Label>Login Username</ovf:Label>
             """)
-        except Exception as e:
-            self.fail(e)
-        finally:
-            self.instance.UI.get_input = _input

@@ -126,7 +126,7 @@ class UI(object):
                 return option_list[i-1]
             except (ValueError, IndexError):
                 pass
-            print("\nInvalid input. Please try again.")
+            logger.error("Invalid input. Please try again.")
 
     def get_input(self, prompt, default_value):
         """Prompt the user to enter a string.
