@@ -16,7 +16,9 @@
 
 """Unit test cases for COT.edit_properties.COTEditProperties class."""
 
+import logging
 import os.path
+import re
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -200,3 +202,171 @@ ovf:value="interface Loopback0" />
                                                  "sample_cfg.txt")
         self.assertRaises(NotImplementedError,
                           self.instance.run)
+
+    def test_edit_interactive(self):
+        """Exercise the interactive CLI for COT edit-properties."""
+        menu_string = """
+Please choose a property to edit:
+ 1) login-username            "Login Username"
+ 2) login-password            "Login Password"
+ 3) mgmt-ipv4-addr            "Management IPv4 Address/Mask"
+ 4) mgmt-ipv4-gateway         "Management IPv4 Default Gateway"
+ 5) hostname                  "Router Name"
+ 6) enable-ssh-server         "Enable SSH Login"
+ 7) enable-http-server        "Enable HTTP Server"
+ 8) enable-https-server       "Enable HTTPS Server"
+ 9) privilege-password        "Enable Password"
+10) domain-name               "Domain Name"
+Enter property key or number to edit, or 'q' to write changes and quit
+        """.strip()
+
+        username_edit_string = """
+Key:            "login-username"
+Label:          "Login Username"
+Description:    "Username for remote login"
+Type:           "string"
+Qualifiers:     "MaxLen(64)"
+Current Value:  ""
+
+Enter new value for this property
+        """.strip()
+
+        ssh_edit_string = """
+Key:            "enable-ssh-server"
+Label:          "Enable SSH Login"
+Description:    "Enable remote login via SSH and disable remote login
+                 via telnet. Requires login-username and login-
+                 password to be set!"
+Type:           "boolean"
+Qualifiers:     ""
+Current Value:  "false"
+
+Enter new value for this property
+        """.strip()
+
+        expected_prompts = [
+            menu_string,
+            username_edit_string,
+            menu_string,
+            username_edit_string,
+            username_edit_string,
+            menu_string,
+            menu_string,
+            re.sub('Value:  ""', 'Value:  "hello"',
+                   username_edit_string),
+            menu_string,
+            menu_string,
+            ssh_edit_string,
+            ssh_edit_string,
+            menu_string
+        ]
+        custom_inputs = [
+            "login-u",     # select by name prefix
+            "",            # no change, return to menu
+            "1",           # select by number
+            ("thisiswaytoolongofastringtouseforausername"
+             "whatamipossiblythinking!"),  # invalid value
+            "hello",       # valid value, return to menu
+            "27",          # out of range
+            "1",           # select by number
+            "goodbye",     # valid value, return to menu
+            "enable-",     # ambiguous selection
+            "enable-ssh",  # unambiguous selection
+            "nope",        # not a valid boolean
+            "true",        # valid boolean
+            "q",
+        ]
+        expected_logs = [
+            None,
+            {
+                'levelname': 'INFO',
+                'msg': 'Value.*unchanged',
+            },
+            None,
+            {
+                'levelname': 'ERROR',
+                'msg': 'Unsupported value.*login-username.*64 characters',
+            },
+            {
+                'levelname': 'INFO',
+                'msg': 'Successfully updated property',
+            },
+            {
+                'levelname': 'ERROR',
+                'msg': 'Invalid input',
+            },
+            None,
+            {
+                'levelname': 'INFO',
+                'msg': 'Successfully updated property',
+            },
+            {
+                'levelname': 'ERROR',
+                'msg': 'Invalid input',
+            },
+            None,
+            {
+                'levelname': 'ERROR',
+                'msg': 'Unsupported value.*enable-ssh-server.*boolean',
+            },
+            {
+                'levelname': 'INFO',
+                'msg': 'Successfully updated property',
+            },
+            None,
+        ]
+        self.counter = 0
+
+        # sanity check
+        self.assertEqual(len(expected_prompts), len(custom_inputs),
+                         "expected_prompts {0} != custom_inputs {1}"
+                         .format(len(expected_prompts), len(custom_inputs)))
+        self.assertEqual(len(expected_prompts), len(expected_logs),
+                         "expected_prompts {0} != expected_logs {1}"
+                         .format(len(expected_prompts), len(expected_logs)))
+
+        def custom_input(prompt, default_value):
+            """Mock for get_input."""
+            if self.counter > 0:
+                log = expected_logs[self.counter-1]
+                if log is not None:
+                    self.assertLogged(**log)
+                else:
+                    self.assertNoLogsOver(logging.INFO)
+            # Get output and flush it
+            # Make sure it matches expectations
+            self.maxDiff = None
+            self.assertMultiLineEqual(
+                expected_prompts[self.counter], prompt,
+                "failed at index {0}! Expected:\n{1}\nActual:\n{2}".format(
+                    self.counter, expected_prompts[self.counter], prompt))
+            # Return our canned input
+            input = custom_inputs[self.counter]
+            self.counter += 1
+            return input
+
+        _input = self.instance.UI.get_input
+        try:
+            self.instance.UI.get_input = custom_input
+            self.instance.package = self.input_ovf
+            self.instance.run()
+            if expected_logs[self.counter - 1] is not None:
+                self.assertLogged(**expected_logs[self.counter - 1])
+        finally:
+            self.instance.UI.get_input = _input
+        self.instance.finished()
+        self.check_diff("""
+       <ovf:Category>1. Bootstrap Properties</ovf:Category>
+-      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="goodbye">
+         <ovf:Label>Login Username</ovf:Label>
+...
+       <ovf:Category>2. Features</ovf:Category>
+-      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="false">
++      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="true">
+         <ovf:Label>Enable SSH Login</ovf:Label>
+            """)
