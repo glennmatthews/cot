@@ -19,6 +19,29 @@ This gives us the flexibility to change the specific set of helper programs
 that are used to provide any given functionality with minimal impact to COT
 as a whole.
 
+API
+---
+
+.. autosummary::
+  :nosignatures:
+
+  ~COT.helpers.api.convert_disk_image
+  ~COT.helpers.api.create_disk_image
+  ~COT.helpers.api.get_checksum
+  ~COT.helpers.api.get_disk_capacity
+  ~COT.helpers.api.get_disk_format
+
+Exceptions
+----------
+
+.. autosummary::
+
+  ~COT.helpers.helper.HelperError
+  ~COT.helpers.helper.HelperNotFoundError
+
+Helper modules
+--------------
+
 .. autosummary::
   :toctree:
 
