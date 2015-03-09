@@ -36,7 +36,11 @@ class COTInstallHelpers(COTGenericSubmodule):
 
     def run(self):
         """Verify all helper tools and install any that are missing."""
-        from COT.helpers import FatDisk, MkIsoFS, OVFTool, QEMUImg, VmdkTool
+        from COT.helpers.fatdisk import FatDisk
+        from COT.helpers.mkisofs import MkIsoFS
+        from COT.helpers.ovftool import OVFTool
+        from COT.helpers.qemu_img import QEMUImg
+        from COT.helpers.vmdktool import VmdkTool
         from COT.helpers import HelperError, HelperNotFoundError
         result = True
         results = {}

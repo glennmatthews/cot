@@ -93,8 +93,7 @@ class TestCOTAddFile(COT_UT):
         self.instance.package = self.minimal_ovf
         intermediate_ovf = os.path.join(self.temp_dir, "mid.ovf")
         self.instance.output = intermediate_ovf
-        disk_file = os.path.join(os.path.dirname(__file__), "blank.vmdk")
-        self.instance.file = disk_file
+        self.instance.file = self.blank_vmdk
         self.instance.file_id = "mydisk"
         self.instance.run()
         self.instance.finished()
@@ -113,7 +112,7 @@ class TestCOTAddFile(COT_UT):
         ad = COTAddDisk(UI())
         ad.package = intermediate_ovf
         ad.output = self.temp_file
-        ad.disk_image = disk_file
+        ad.disk_image = self.blank_vmdk
         ad.file_id = "mydisk"
         ad.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)

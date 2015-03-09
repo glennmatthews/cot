@@ -31,7 +31,7 @@ import getpass
 from distutils.version import StrictVersion
 
 from .submodule import COTReadOnlySubmodule
-from .helpers import OVFTool
+from .helpers.ovftool import OVFTool
 from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)

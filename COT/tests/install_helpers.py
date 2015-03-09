@@ -20,7 +20,8 @@
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.install_helpers import COTInstallHelpers
-from COT.helpers import Helper, HelperError
+from COT.helpers import HelperError
+from COT.helpers.helper import Helper
 
 
 class TestCOTInstallHelpers(COT_UT):

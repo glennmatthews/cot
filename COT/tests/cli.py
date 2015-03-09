@@ -369,7 +369,7 @@ class TestCLIAddDisk(TestCOTCLI):
 
     def test_invalid_args(self):
         """Testing various missing or incorrect parameters."""
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
+        disk_path = self.blank_vmdk
         # No disk or VM specified
         self.call_cot(['add-disk'], result=2)
         # Disk but no VM
@@ -417,9 +417,8 @@ class TestCLIAddDisk(TestCOTCLI):
 
     def test_nonexistent_file(self):
         """Pass in a file or VM that doesn't exist."""
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         # Disk exists but VM does not
-        self.call_cot(['add-disk', disk_path, '/foo/bar.ovf'], result=2)
+        self.call_cot(['add-disk', self.blank_vmdk, '/foo/bar.ovf'], result=2)
         # VM exists but disk does not
         self.call_cot(['add-disk', '/foo/bar.vmdk', self.input_ovf],
                       result=2)
@@ -450,23 +449,21 @@ class TestCLIAddFile(TestCOTCLI):
 
     def test_invalid_args(self):
         """Test various missing or incorrect parameters."""
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         # No file or VM specified
         self.call_cot(['add-file'], result=2)
         # File but no VM
-        self.call_cot(['add-file', disk_path], result=2)
+        self.call_cot(['add-file', self.blank_vmdk], result=2)
         # Nonexistent VM specified
-        self.call_cot(['add-file', disk_path, '/foo'], result=2)
+        self.call_cot(['add-file', self.blank_vmdk, '/foo'], result=2)
         # Missing strings
         for param in ['-f']:
-            self.call_cot(['add-file', disk_path, self.input_ovf, param],
+            self.call_cot(['add-file', self.blank_vmdk, self.input_ovf, param],
                           result=2)
 
     def test_nonexistent_file(self):
         """Pass in a file or VM that doesn't exist."""
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         # Disk exists but VM does not
-        self.call_cot(['add-file', disk_path, '/foo/bar.ovf'], result=2)
+        self.call_cot(['add-file', self.blank_vmdk, '/foo/bar.ovf'], result=2)
         # VM exists but disk does not
         self.call_cot(['add-file', '/foo/bar.vmdk', self.input_ovf],
                       result=2)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
-# helper_tools.py - Module to abstract away operations that require third-party
-#                   helper software not part of a standard Python distro.
+# api.py - API to abstract away operations that require third-party
+#          helper software not part of a standard Python distro.
 #
 # April 2014, Glenn F. Matthews
 # Copyright (c) 2013-2015 the COT project developers.
@@ -15,12 +15,12 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Third-party helper tools.
+"""API for abstract access to third-party helper tools.
 
 Abstracts away operations that require third-party helper programs,
 especially those that are not available through PyPI.
 
-The actual helper programs are provided by the :mod:`COT.helpers` package.
+The actual helper programs are provided by individual classes in this package.
 
 **Functions**
 
@@ -40,7 +40,11 @@ import os
 import re
 from distutils.version import StrictVersion
 
-from COT.helpers import FatDisk, MkIsoFS, OVFTool, QEMUImg, VmdkTool
+from .fatdisk import FatDisk
+from .mkisofs import MkIsoFS
+from .ovftool import OVFTool
+from .qemu_img import QEMUImg
+from .vmdktool import VmdkTool
 
 logger = logging.getLogger(__name__)
 

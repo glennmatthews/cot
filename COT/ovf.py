@@ -57,7 +57,7 @@ from .xml_file import XML
 from .vm_description import VMDescription, VMInitError
 from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
-from .helper_tools import get_checksum, get_disk_capacity, convert_disk_image
+from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
 import COT.platforms as Platform
 
 logger = logging.getLogger(__name__)

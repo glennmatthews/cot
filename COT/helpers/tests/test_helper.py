@@ -25,14 +25,19 @@ import sys
 from distutils.version import StrictVersion
 
 from COT.tests.ut import COT_UT
-from COT.helpers import Helper, HelperError, HelperNotFoundError
-from COT.helpers import FatDisk, MkIsoFS, OVFTool, QEMUImg, VmdkTool
 import COT.helpers.helper
+from COT.helpers.helper import Helper
+from COT.helpers import HelperError, HelperNotFoundError
+from COT.helpers.fatdisk import FatDisk
+from COT.helpers.mkisofs import MkIsoFS
+from COT.helpers.ovftool import OVFTool
+from COT.helpers.qemu_img import QEMUImg
+from COT.helpers.vmdktool import VmdkTool
 
 logger = logging.getLogger(__name__)
 
 
-class HelpersUT(COT_UT):
+class HelperUT(COT_UT):
 
     """Generic class for testing Helper and subclasses thereof."""
 
@@ -76,7 +81,7 @@ class HelpersUT(COT_UT):
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         # subclass needs to set self.helper
-        super(HelpersUT, self).setUp()
+        super(HelperUT, self).setUp()
         self.fake_output = None
         self.fake_path = None
         self.last_argv = []
@@ -107,10 +112,10 @@ class HelpersUT(COT_UT):
         Helper.PACKAGE_MANAGERS['yum'] = self._yum
         sys.platform = self._platform
         Helper.find_executable = self._find_executable
-        super(HelpersUT, self).tearDown()
+        super(HelperUT, self).tearDown()
 
 
-class HelperGenericTest(HelpersUT):
+class HelperGenericTest(HelperUT):
 
     """Test cases for generic Helper class."""
 
@@ -196,7 +201,7 @@ class HelperGenericTest(HelpersUT):
         self.assertFalse(os.path.exists(directory))
 
 
-class TestFatDisk(HelpersUT):
+class TestFatDisk(HelperUT):
 
     """Test cases for FatDisk helper class."""
 
@@ -289,7 +294,7 @@ class TestFatDisk(HelpersUT):
             self.helper.install_helper()
 
 
-class TestMkIsoFS(HelpersUT):
+class TestMkIsoFS(HelperUT):
 
     """Test cases for MkIsoFS helper class."""
 
@@ -366,7 +371,7 @@ class TestMkIsoFS(HelpersUT):
             self.helper.install_helper()
 
 
-class TestOVFTool(HelpersUT):
+class TestOVFTool(HelperUT):
 
     """Test cases for OVFTool helper class."""
 
@@ -404,7 +409,7 @@ class TestOVFTool(HelpersUT):
                          self.last_argv[0])
 
 
-class TestQEMUImg(HelpersUT):
+class TestQEMUImg(HelperUT):
 
     """Test cases for QEMUImg helper class."""
 
@@ -493,8 +498,7 @@ Command syntax:
 
     def test_get_disk_format(self):
         """Get format of various disk images."""
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
-        self.assertEqual('vmdk', self.helper.get_disk_format(disk_path))
+        self.assertEqual('vmdk', self.helper.get_disk_format(self.blank_vmdk))
 
         temp_disk = os.path.join(self.temp_dir, 'foo.img')
         self.helper.create_blank_disk(temp_disk, capacity="16M")
@@ -521,13 +525,11 @@ Command syntax:
 
     def test_get_disk_capacity(self):
         """Test the get_disk_capacity() method."""
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         self.assertEqual("536870912",
-                         self.helper.get_disk_capacity(disk_path))
+                         self.helper.get_disk_capacity(self.blank_vmdk))
 
-        disk_path = os.path.join(os.path.dirname(__file__), "input.vmdk")
         self.assertEqual("1073741824",
-                         self.helper.get_disk_capacity(disk_path))
+                         self.helper.get_disk_capacity(self.input_vmdk))
 
     def test_get_disk_capacity_no_file(self):
         """Negative test for get_disk_capacity() - no such file."""
@@ -555,17 +557,15 @@ Command syntax:
     def test_convert_unsupported(self):
         """Negative test for convert_disk_image() - unsupported formats."""
         with self.assertRaises(NotImplementedError):
-            self.helper.convert_disk_image(
-                os.path.join(os.path.dirname(__file__), "blank.vmdk"),
-                self.temp_dir, 'vhd')
+            self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
+                                           'vhd')
         with self.assertRaises(NotImplementedError):
             self.helper._version = StrictVersion("2.0.99")
-            self.helper.convert_disk_image(
-                os.path.join(os.path.dirname(__file__), "blank.vmdk"),
-                self.temp_dir, 'vmdk', 'streamOptimized')
+            self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
+                                           'vmdk', 'streamOptimized')
 
 
-class TestVmdkTool(HelpersUT):
+class TestVmdkTool(HelperUT):
 
     """Test cases for VmdkTool helper class."""
 
@@ -637,10 +637,8 @@ class TestVmdkTool(HelpersUT):
     def test_convert_unsupported(self):
         """Negative test - conversion to unsupported format/subformat."""
         with self.assertRaises(NotImplementedError):
-            self.helper.convert_disk_image(
-                os.path.join(os.path.dirname(__file__), "blank.vmdk"),
-                self.temp_dir, 'qcow2')
+            self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
+                                           'qcow2')
         with self.assertRaises(NotImplementedError):
-            self.helper.convert_disk_image(
-                os.path.join(os.path.dirname(__file__), "blank.vmdk"),
-                self.temp_dir, 'vmdk', 'monolithicSparse')
+            self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
+                                           'vmdk', 'monolithicSparse')

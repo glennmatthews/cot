@@ -160,9 +160,8 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         """Test reading/writing of an OVF with missing file references."""
         # Read OVF, write OVF - make sure invalid file reference is removed
         self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
-        input_dir = os.path.dirname(self.input_ovf)
-        shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
-        shutil.copy(os.path.join(input_dir, 'input.vmdk'), self.staging_dir)
+        shutil.copy(self.input_ovf, self.staging_dir)
+        shutil.copy(self.input_vmdk, self.staging_dir)
         # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               self.temp_file) as ovf:
@@ -223,7 +222,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
         shutil.copy(os.path.join(input_dir, 'input.iso'), self.staging_dir)
         # Copy blank.vmdk to input.vmdk so as to have the wrong size/checksum
-        shutil.copy(os.path.join(input_dir, 'blank.vmdk'),
+        shutil.copy(self.blank_vmdk,
                     os.path.join(self.staging_dir, 'input.vmdk'))
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               os.path.join(self.temp_dir, "temp.ova")):
@@ -239,7 +238,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
                               os.path.join(self.temp_dir, "temp.ovf")) as ova:
             # Replace the extracted fake .vmdk with the real .vmdk
-            shutil.copy(os.path.join(input_dir, 'input.vmdk'), ova.working_dir)
+            shutil.copy(self.input_vmdk, ova.working_dir)
         self.assertLogged(msg="Size of file.*seems to have changed.*"
                           "The updated OVF will reflect this change.")
         self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
@@ -316,8 +315,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # .ova that is a TAR file but does not contain an OVF descriptor
         tarf = tarfile.open(fake_file, 'w')
         try:
-            disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
-            tarf.add(disk_path, os.path.basename(disk_path))
+            tarf.add(self.blank_vmdk, os.path.basename(self.blank_vmdk))
         finally:
             tarf.close()
         self.assertRaises(VMInitError, OVF, fake_file, None)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# helper_tools.py - Unit test cases for helper tools module.
+# tests_api.py - Unit test cases for COT.helpers.api module.
 #
 # April 2014, Glenn F. Matthews
 # Copyright (c) 2014-2015 the COT project developers.
@@ -14,7 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Unit test cases for COT.helper_tools module."""
+"""Unit test cases for COT.helpers.api module."""
 
 import os
 import logging
@@ -22,10 +22,10 @@ import logging
 from distutils.version import StrictVersion
 
 from COT.tests.ut import COT_UT
-import COT.helper_tools
-from COT.helper_tools import get_checksum
-from COT.helper_tools import create_disk_image, convert_disk_image
-from COT.helper_tools import get_disk_format, get_disk_capacity
+import COT.helpers.api
+from COT.helpers import get_checksum
+from COT.helpers import create_disk_image, convert_disk_image
+from COT.helpers import get_disk_format, get_disk_capacity
 from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -88,9 +88,8 @@ class TestGetDiskFormat(COT_UT):
             self.fail(e.strerror)
 
         # Now a test that uses both qemu-img and file inspection
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         try:
-            (f, sf) = get_disk_format(disk_path)
+            (f, sf) = get_disk_format(self.blank_vmdk)
             self.assertEqual(f, 'vmdk')
             self.assertEqual(sf, 'streamOptimized')
         except HelperNotFoundError as e:
@@ -108,12 +107,11 @@ class TestConvertDiskImage(COT_UT):
 
     def test_convert_no_work_needed(self):
         """Convert a disk to its own format."""
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         try:
-            new_disk_path = convert_disk_image(disk_path, self.temp_dir,
+            new_disk_path = convert_disk_image(self.blank_vmdk, self.temp_dir,
                                                'vmdk', 'streamOptimized')
             # No change -> don't create a new disk but just return existing.
-            self.assertEqual(new_disk_path, disk_path)
+            self.assertEqual(new_disk_path, self.blank_vmdk)
         except HelperNotFoundError as e:
             self.fail(e.strerror)
 
@@ -146,7 +144,7 @@ class TestConvertDiskImage(COT_UT):
 
     def test_convert_to_vmdk_streamoptimized_old_qemu(self):
         """Code flow for old QEMU version."""
-        COT.helper_tools.QEMUIMG._version = StrictVersion("1.0.0")
+        COT.helpers.api.QEMUIMG._version = StrictVersion("1.0.0")
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
             create_disk_image(temp_disk, capacity="16M")
@@ -160,11 +158,11 @@ class TestConvertDiskImage(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
         finally:
-            COT.helper_tools.QEMUIMG._version = None
+            COT.helpers.api.QEMUIMG._version = None
 
     def test_convert_to_vmdk_streamoptimized_new_qemu(self):
         """Code flow for new QEMU version."""
-        COT.helper_tools.QEMUIMG._version = StrictVersion("2.1.0")
+        COT.helpers.api.QEMUIMG._version = StrictVersion("2.1.0")
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
             create_disk_image(temp_disk, capacity="16M")
@@ -178,14 +176,13 @@ class TestConvertDiskImage(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
         finally:
-            COT.helper_tools.QEMUIMG._version = None
+            COT.helpers.api.QEMUIMG._version = None
 
     def test_convert_to_raw(self):
         """No support for converting VMDK to RAW at present."""
-        disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
         self.assertRaises(NotImplementedError,
                           convert_disk_image,
-                          disk_path, self.temp_dir, 'raw', None)
+                          self.blank_vmdk, self.temp_dir, 'raw', None)
 
 
 class TestCreateDiskImage(COT_UT):

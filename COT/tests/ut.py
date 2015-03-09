@@ -127,7 +127,7 @@ class COT_UT(unittest.TestCase):
 
     """Subclass of unittest.TestCase adding some additional behaviors."""
 
-    from COT.helpers import OVFTool
+    from COT.helpers.ovftool import OVFTool
 
     OVFTOOL = OVFTool()
 
@@ -278,6 +278,11 @@ class COT_UT(unittest.TestCase):
         # OVF with various odd/invalid contents
         self.invalid_ovf = os.path.join(os.path.dirname(__file__),
                                         "invalid.ovf")
+
+        # Some canned disk images too
+        self.input_vmdk = os.path.join(os.path.dirname(__file__), "input.vmdk")
+        self.blank_vmdk = os.path.join(os.path.dirname(__file__), "blank.vmdk")
+
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
