@@ -12,15 +12,19 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for COT.ui_shared.UI class."""
+
 import unittest
 
 from COT.ui_shared import UI
 
 
 class TestUI(unittest.TestCase):
-    """Test cases for abstract UI class"""
+
+    """Test cases for the COT.ui_shared.UI class."""
 
     def test_apis_without_force(self):
+        """Test confirm(), confirm_or_die(), etc. without --force."""
         ins = UI()
 
         self.assertTrue(ins.confirm("prompt"))
@@ -34,6 +38,7 @@ class TestUI(unittest.TestCase):
         self.assertEqual("passwd", ins.get_password("user", "host"))
 
     def test_apis_with_force(self):
+        """Test confirm(), confirm_or_die(), etc. with --force."""
         ins = UI(force=True)
 
         self.assertTrue(ins.confirm("prompt"))
@@ -46,3 +51,13 @@ class TestUI(unittest.TestCase):
 
         self.assertEqual("hello", ins.get_input("Prompt:", "hello"))
         self.assertEqual("passwd", ins.get_password("user", "host"))
+
+    def test_stub_apis(self):
+        """Test stub APIs that subclasses should override."""
+        ins = UI()
+        self.assertEqual("subcommand --foo\nsubcommand --bar",
+                         ins.fill_usage("subcommand", ["--foo", "--bar"]))
+
+        self.assertRaises(NotImplementedError,
+                          ins.fill_examples,
+                          [("foo", "bar"), ("baz", "bat")])

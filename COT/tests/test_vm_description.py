@@ -12,6 +12,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.vm_description.VMDescription class."""
+
 import os.path
 try:
     import unittest2 as unittest
@@ -23,7 +25,8 @@ from COT.data_validation import ValueUnsupportedError
 
 
 class TestVMDescription(unittest.TestCase):
-    """Test cases for abstract VMDescription class"""
+
+    """Test cases for abstract VMDescription class."""
 
     TEXT_FILE = os.path.join(os.path.dirname(__file__), 'sample_cfg.txt')
 
@@ -34,7 +37,7 @@ class TestVMDescription(unittest.TestCase):
                           self.TEXT_FILE)
 
     def test_abstract_instance_apis(self):
-        """APIs that have no generic form should raise NotImplementedError."""
+        """Verify NotImplementedError from APIs that have no generic form."""
         ins = VMDescription(self.TEXT_FILE, None)
 
         self.assertRaises(NotImplementedError,
@@ -148,7 +151,7 @@ class TestVMDescription(unittest.TestCase):
         self.assertFalse(os.path.exists(ins.working_dir))
 
     def test_generic_instance_apis(self):
-        """Verify APIs with generic implementations"""
+        """Verify APIs with generic implementations."""
         ins = VMDescription(self.TEXT_FILE, None)
         self.assertEqual(ins.input_file, self.TEXT_FILE)
         self.assertEqual(ins.output_file, None)

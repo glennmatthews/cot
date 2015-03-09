@@ -57,7 +57,7 @@ from .xml_file import XML
 from .vm_description import VMDescription, VMInitError
 from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
-from .helper_tools import get_checksum, get_disk_capacity, convert_disk_image
+from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
 import COT.platforms as Platform
 
 logger = logging.getLogger(__name__)
@@ -358,15 +358,6 @@ class OVF(VMDescription, XML):
         except Exception as e:
             self.destroy()
             raise
-
-    @property
-    def input_file(self):
-        """Data file to read in."""
-        return self._input_file
-
-    @input_file.setter
-    def input_file(self, value):
-        self._input_file = value
 
     @property
     def output_file(self):

@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Generic unit test case implementation for COT."""
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -29,9 +31,11 @@ import platform
 import time
 import logging
 from logging.handlers import BufferingHandler
-
-from COT.helper_tools import validate_ovf_for_esxi
-from COT.helper_tools import HelperError, HelperNotFoundError
+import traceback
+try:
+    import StringIO
+except ImportError:
+    import io as StringIO
 
 from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
@@ -43,28 +47,36 @@ try:
     from logging import NullHandler
 except ImportError:
     class NullHandler(logging.Handler):
+
+        """No-op logging handler."""
+
         def emit(self, record):
+            """Do nothing."""
             pass
 
 logging.getLogger('COT').addHandler(NullHandler())
 
 
 class UTLoggingHandler(BufferingHandler):
-    """Captures log messages to a buffer so we can inspect them for testing"""
+
+    """Captures log messages to a buffer so we can inspect them for testing."""
 
     def __init__(self, testcase):
+        """Create a logging handler for the given test case."""
         BufferingHandler.__init__(self, capacity=0)
         self.setLevel(logging.DEBUG)
         self.testcase = testcase
 
     def emit(self, record):
+        """Add the given log record to our internal buffer."""
         self.buffer.append(record.__dict__)
 
     def shouldFlush(self, record):
+        """Return False - we only flush manually."""
         return False
 
     def logs(self, **kwargs):
-        """Look for log entries matching the given dict"""
+        """Look for log entries matching the given dict."""
         matches = []
         for record in self.buffer:
             found_match = True
@@ -82,6 +94,7 @@ class UTLoggingHandler(BufferingHandler):
         return matches
 
     def assertLogged(self, **kwargs):
+        """Fail unless the given log messages were each seen exactly once."""
         matches = self.logs(**kwargs)
         if not matches:
             self.testcase.fail(
@@ -95,7 +108,7 @@ class UTLoggingHandler(BufferingHandler):
             self.buffer.remove(r)
 
     def assertNoLogsOver(self, max_level):
-        """Fails if any logs are logged higher than the given level"""
+        """Fail if any logs are logged higher than the given level."""
         for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
                       logging.INFO, logging.VERBOSE, logging.DEBUG):
             if level <= max_level:
@@ -111,10 +124,12 @@ class UTLoggingHandler(BufferingHandler):
 
 
 class COT_UT(unittest.TestCase):
-    """Subclass of unittest.TestCase adding some additional behaviors we want
-    for all of our test cases"""
 
-    OVFTOOL_PRESENT = True
+    """Subclass of unittest.TestCase adding some additional behaviors."""
+
+    from COT.helpers.ovftool import OVFTool
+
+    OVFTOOL = OVFTool()
 
     FILE_SIZE = {}
     for filename in ['input.iso', 'input.vmdk', 'blank.vmdk']:
@@ -170,13 +185,30 @@ class COT_UT(unittest.TestCase):
     }
 
     def __init__(self, method_name='runTest'):
+        """Add logging handler to generic UT initialization."""
         super(COT_UT, self).__init__(method_name)
         self.logging_handler = UTLoggingHandler(self)
 
+    def check_cot_output(self, expected):
+        """Grab the output from COT and check it against expected output."""
+        sys.stdout = StringIO.StringIO()
+        output = None
+        try:
+            self.instance.run()
+        except (TypeError, ValueError, SyntaxError, LookupError):
+            self.fail(traceback.format_exc())
+        finally:
+            output = sys.stdout.getvalue()
+            sys.stdout = sys.__stdout__
+        self.maxDiff = None
+        self.assertMultiLineEqual(expected.strip(), output.strip())
+
     def check_diff(self, expected, file1=None, file2=None):
-        """Calls diff on the two files and compares it to the expected output.
+        """Get diff of two files and compare it to the expected output.
+
         If the files are unspecified, defaults to comparing the input OVF file
         and the temporary output OVF file.
+
         Note that comparison of OVF files is currently skipped when
         running under Python 2.6, as it produces different XML output than
         later Python versions.
@@ -217,7 +249,7 @@ class COT_UT(unittest.TestCase):
                       .format(file1, file2, expected, clean_diff))
 
     def setUp(self):
-        """Test case setup function called automatically prior to each test"""
+        """Test case setup function called automatically prior to each test."""
         # keep log messages from interfering with our tests
         logging.getLogger('COT').setLevel(logging.DEBUG)
         self.logging_handler.setLevel(logging.NOTSET)
@@ -246,6 +278,11 @@ class COT_UT(unittest.TestCase):
         # OVF with various odd/invalid contents
         self.invalid_ovf = os.path.join(os.path.dirname(__file__),
                                         "invalid.ovf")
+
+        # Some canned disk images too
+        self.input_vmdk = os.path.join(os.path.dirname(__file__), "input.vmdk")
+        self.blank_vmdk = os.path.join(os.path.dirname(__file__), "blank.vmdk")
+
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
@@ -256,8 +293,7 @@ class COT_UT(unittest.TestCase):
         self.validate_output_with_ovftool = True
 
     def tearDown(self):
-        """Test case cleanup function called automatically after each test"""
-
+        """Test case cleanup function called automatically after each test."""
         # Fail if any WARNING/ERROR/CRITICAL logs were generated
         self.logging_handler.assertNoLogsOver(logging.INFO)
 
@@ -267,16 +303,12 @@ class COT_UT(unittest.TestCase):
             self.instance.destroy()
             self.instance = None
 
-        if (COT_UT.OVFTOOL_PRESENT and self.validate_output_with_ovftool and
+        if (self.OVFTOOL.path and self.validate_output_with_ovftool and
                 os.path.exists(self.temp_file)):
             # Ask OVFtool to validate that the output file is sane
+            from COT.helpers import HelperError
             try:
-                validate_ovf_for_esxi(self.temp_file)
-            except HelperNotFoundError:
-                print("\nWARNING: Unable to locate ovftool. "
-                      "Some tests will be less thorough.")
-                # Don't bother trying in future test cases
-                COT_UT.OVFTOOL_PRESENT = False
+                self.OVFTOOL.validate_ovf(self.temp_file)
             except HelperError as e:
                 self.fail("OVF not valid according to ovftool:\n{0}"
                           .format(e.strerror))
@@ -302,8 +334,12 @@ class COT_UT(unittest.TestCase):
                   .format(self.id(), delta_t))
 
     def assertLogged(self, **kwargs):
+        """Fail unless the given logs were generated.
+
+        See :meth:`UTLoggingHandler.assertLogged`.
+        """
         self.logging_handler.assertLogged(**kwargs)
 
     def assertNoLogsOver(self, max_level):
-        """Fails if any logs are logged higher than the given level."""
+        """Fail if any logs were logged higher than the given level."""
         self.logging_handler.assertNoLogsOver(max_level)

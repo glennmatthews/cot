@@ -31,7 +31,7 @@ import getpass
 from distutils.version import StrictVersion
 
 from .submodule import COTReadOnlySubmodule
-from COT.helper_tools import check_call, get_ovftool_version
+from .helpers.ovftool import OVFTool
 from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
@@ -249,6 +249,8 @@ class COTDeployESXi(COTDeploy):
         """ESXi datastore to deploy to."""
         self._ovftool_args = []
 
+        self.ovftool = OVFTool()
+
     @property
     def ovftool_args(self):
         """List of CLI arguments to pass through to ``ovftool``."""
@@ -297,7 +299,7 @@ class COTDeployESXi(COTDeploy):
         # then environment properties will always be used.
         # Otherwise we may need to help and/or warn the user:
         if vm.environment_properties and not re.search("/host/", self.locator):
-            if get_ovftool_version() < StrictVersion("4.0.0"):
+            if self.ovftool.version < StrictVersion("4.0.0"):
                 self.UI.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target "
                     "using ovftool prior to version 4.0.0, any OVF "
@@ -390,12 +392,8 @@ class COTDeployESXi(COTDeploy):
 
         logger.debug("Final args to pass to OVFtool: {0}".format(ovftool_args))
 
-        # Create new list with 'ovftool' at front
-        cmd = ['ovftool'] + ovftool_args
-
-        # use the new list to call ovftool
         logger.info("Deploying VM...")
-        check_call(cmd)
+        self.ovftool.call_helper(ovftool_args, capture_output=False)
 
         # Post-fix of serial ports (ovftool will not implement)
         if serial_count > 0:

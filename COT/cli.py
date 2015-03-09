@@ -83,9 +83,15 @@ class CLI(UI):
         self.create_parser()
         self.create_subparsers()
 
+        import COT.helpers.helper
+        COT.helpers.helper.confirm = self.confirm
+
     def terminal_width(self):
         """Get the width of the terminal in columns."""
-        return get_terminal_size().columns
+        width = get_terminal_size().columns
+        if width <= 0:
+            width = 80
+        return width
 
     def fill_usage(self, subcommand, usage_list):
         """Pretty-print a list of usage strings for a COT subcommand.
@@ -431,6 +437,7 @@ Note: some subcommands rely on external software tools, including:
         from COT.help import COTHelp
         from COT.info import COTInfo
         from COT.inject_config import COTInjectConfig
+        from COT.install_helpers import COTInstallHelpers
         for klass in [
                 COTAddDisk,
                 COTAddFile,
@@ -438,9 +445,10 @@ Note: some subcommands rely on external software tools, including:
                 COTEditHardware,
                 COTEditProduct,
                 COTEditProperties,
+                COTHelp,
                 COTInfo,
                 COTInjectConfig,
-                COTHelp,   # last so it can be aware of all of the above
+                COTInstallHelpers,
         ]:
             name, subparser = klass(self).create_subparser(self.subparsers)
             self.subparser_lookup[name] = subparser
@@ -456,7 +464,7 @@ Note: some subcommands rely on external software tools, including:
 
         # If being run non-interactively, treat as if --force is set, in order
         # to avoid hanging while trying to read input that will never come.
-        if not sys.stdin.isatty():
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
             args._force = True
 
         return args

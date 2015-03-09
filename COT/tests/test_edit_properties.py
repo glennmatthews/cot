@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for COT.edit_properties.COTEditProperties class."""
+
 import logging
 import os.path
 import re
@@ -25,9 +27,11 @@ from COT.data_validation import ValueUnsupportedError
 
 
 class TestCOTEditProperties(COT_UT):
-    """Unit tests for COTEditProperties submodule"""
+
+    """Unit tests for COTEditProperties submodule."""
+
     def setUp(self):
-        """Test case setup function called automatically prior to each test"""
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTEditProperties, self).setUp()
         self.instance = COTEditProperties(UI())
         self.instance.output = self.temp_file
@@ -94,7 +98,7 @@ ovf:userConfigurable="true" ovf:value="true">
 """)
 
     def test_create_and_set_property(self):
-        """Create a new property and set its value"""
+        """Create a new property and set its value."""
         self.instance.package = self.input_ovf
         self.instance.properties = ["new-property=hello"]
         self.instance.run()
@@ -164,7 +168,6 @@ ovf:value="interface Loopback0" />
 
     def test_qualifiers(self):
         """Ensure property values are limited by qualifiers."""
-
         self.instance.package = self.input_ovf
         vm = self.instance.vm
 
@@ -177,8 +180,8 @@ ovf:value="interface Loopback0" />
         # TODO - we don't currently have any qualifiers other than MaxLen
         # in our example OVF files. Need to get some good samples to use here.
 
-    def test_create_property_no_prexisting(self):
-        """Set property values for an OVF that has none previously"""
+    def test_create_property_no_preexisting(self):
+        """Set property values for an OVF that has none previously."""
         self.instance.package = self.minimal_ovf
         self.instance.properties = ["hello=world"]
         self.instance.run()

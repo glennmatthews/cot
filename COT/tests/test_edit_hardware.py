@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.edit_hardware.COTEditHardware class."""
+
 import re
 
 from COT.tests.ut import COT_UT
@@ -24,6 +26,8 @@ from COT.platforms import IOSv, IOSXRv
 
 
 class TestCOTEditHardware(COT_UT):
+
+    """Test the COTEditHardware class."""
 
     NEW_HW_FROM_SCRATCH = {
         'levelname': 'WARNING',
@@ -39,7 +43,7 @@ class TestCOTEditHardware(COT_UT):
     }
 
     def setUp(self):
-        """Test case setup function called automatically prior to each test"""
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTEditHardware, self).setUp()
         self.instance = COTEditHardware(UI())
         self.instance.output = self.temp_file
@@ -113,7 +117,7 @@ class TestCOTEditHardware(COT_UT):
             self.instance.memory = "9GB"
 
     def test_set_system_type_single(self):
-        """Set the VirtualSystemType to a single value"""
+        """Set the VirtualSystemType to a single value."""
         self.instance.package = self.input_ovf
         self.instance.virtual_system_type = ['vmx-09']
         self.instance.run()
@@ -170,7 +174,7 @@ CIM_VirtualSystemSettingData">
 """)
 
     def test_set_cpus_one_profile(self):
-        """Change the number of CPUs under a specific profile"""
+        """Change the number of CPUs under a specific profile."""
         self.instance.package = self.input_ovf
         self.instance.cpus = 8
         self.instance.profiles = ['2CPU-2GB-1NIC']
@@ -318,7 +322,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_memory_no_existing(self):
-        """Create a RAM definition in an OVF that doesn't have one"""
+        """Create a RAM definition in an OVF that doesn't have one."""
         self.instance.package = self.minimal_ovf
         self.instance.memory = "4GB"
         self.instance.run()
@@ -391,7 +395,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_nic_type_all_profiles(self):
-        """Change NIC hardware type under all profiles"""
+        """Change NIC hardware type under all profiles."""
         self.instance.package = self.input_ovf
         self.instance.nic_type = "virtio"
         self.instance.run()
@@ -432,7 +436,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_nic_type_no_existing(self):
-        """Set NIC hardware type for an OVF with no NICs (no-op)"""
+        """Set NIC hardware type for an OVF with no NICs (no-op)."""
         self.instance.package = self.minimal_ovf
         self.instance.nic_type = "virtio"
         self.instance.run()
@@ -561,6 +565,7 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_network_list_expansion(self):
         """Specify fewer networks than NICs to test implicit NIC assignment.
+
         Remaining NICs get the last network in the list.
         """
         self.instance.package = self.input_ovf
@@ -638,7 +643,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_nic_name_list_exact(self):
-        """Set a list of NIC names identical in length to the number of NICs"""
+        """Set a list of names identical in length to the number of NICs."""
         self.instance.package = self.input_ovf
         self.instance.nic_names = ['foo', 'bar', 'baz']
         self.instance.run()
@@ -718,7 +723,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_nic_name_pattern(self):
-        """Set NIC names based on a pattern"""
+        """Set NIC names based on a pattern."""
         self.instance.package = self.input_ovf
         self.instance.nic_names = ['eth{0}']
         self.instance.run()
@@ -744,7 +749,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_nic_name_list_pattern(self):
-        """Set NIC names based on a constant plus a pattern"""
+        """Set NIC names based on a constant plus a pattern."""
         self.instance.package = self.input_ovf
         self.instance.nic_names = ['foo', 'eth{10}']
         self.instance.run()
@@ -1039,7 +1044,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_serial_create_kitchen_sink(self):
-        """Create a serial port and set connectivity in one pass"""
+        """Create a serial port and set connectivity in one pass."""
         self.instance.package = self.input_ovf
         self.instance.serial_ports = '3'
         self.instance.serial_connectivity = \
@@ -1069,7 +1074,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_serial_delete_kitchen_sink(self):
-        """Delete a serial port and set connectivity in one pass"""
+        """Delete a serial port and set connectivity in one pass."""
         self.instance.package = self.input_ovf
         self.instance.serial_ports = 1
         self.instance.serial_connectivity = ['telnet://bar:22']
@@ -1140,7 +1145,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_scsi_subtype_no_existing(self):
-        """Set SCSI controller subtype for an OVF with none (no-op)"""
+        """Set SCSI controller subtype for an OVF with none (no-op)."""
         self.instance.package = self.minimal_ovf
         self.instance.scsi_subtype = "virtio"
         self.instance.run()
@@ -1200,7 +1205,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_ide_subtype_no_existing(self):
-        """Set IDE controller subtype for an OVF with none (no-op)"""
+        """Set IDE controller subtype for an OVF with none (no-op)."""
         self.instance.package = self.minimal_ovf
         self.instance.ide_subtype = "virtio"
         self.instance.run()

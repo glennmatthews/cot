@@ -11,6 +11,7 @@ Common OVF Tool (COT)
    contributing
    thanks
    COT
+   COT.helpers
 
 
 Indices and tables

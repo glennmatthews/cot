@@ -53,9 +53,7 @@ class COTGenericSubmodule(object):
         self.vm = None
         """Virtual machine description (:class:`VMDescription`)."""
         self.UI = UI
-        """User interface instance (:class:`~ui_shared.UI` or subclass)
-        to use.
-        """
+        """User interface instance (:class:`~ui_shared.UI` or subclass)."""
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.

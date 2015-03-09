@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.deploy.COTDeploy(ESXi) classes."""
+
 import getpass
 import logging
 import re
@@ -22,8 +24,6 @@ from distutils.version import StrictVersion
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
-import COT.helper_tools
-import COT.deploy
 from COT.deploy import COTDeploy, COTDeployESXi
 from COT.data_validation import InvalidInputError
 
@@ -32,13 +32,16 @@ logger = logging.getLogger(__name__)
 
 class TestCOTDeploy(COT_UT):
 
+    """Test cases for COTDeploy."""
+
     def setUp(self):
-        "Test case setup function called automatically prior to each test"
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTDeploy, self).setUp()
         self.instance = COTDeploy(UI())
         self.instance.package = self.input_ovf
 
     def test_not_ready_with_no_args(self):
+        """Verify that ready_to_run() is False without all mandatory args."""
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("HYPERVISOR.*mandatory", reason))
@@ -52,6 +55,7 @@ class TestCOTDeploy(COT_UT):
         self.assertRaises(InvalidInputError, self.instance.run)
 
     def test_invalid_args(self):
+        """Negative testing for various arguments."""
         with self.assertRaises(InvalidInputError):
             self.instance.hypervisor = "frobozz"
         with self.assertRaises(InvalidInputError):
@@ -61,6 +65,8 @@ class TestCOTDeploy(COT_UT):
 
 
 class TestCOTDeployESXi(COT_UT):
+
+    """Test cases for COTDeployESXi class."""
 
     # Some WARNING logger messages we may expect at various points:
     SERIAL_PORT_FIXUP = {
@@ -77,6 +83,7 @@ class TestCOTDeployESXi(COT_UT):
     }
 
     def stub_check_call(self, argv, require_success=True):
+        """Stub for check_call - capture calls to ovftool."""
         logger.info("stub_check_call({0}, {1})".format(argv, require_success))
         if argv[0] == 'ovftool':
             self.last_argv = argv
@@ -84,39 +91,32 @@ class TestCOTDeployESXi(COT_UT):
             return
         return self._check_call(argv, require_success)
 
-    def stub_check_output(self, argv, require_success=True):
-        logger.info("stub_check_output({0}, {1}".format(argv, require_success))
-        if argv[0] == 'ovftool' and argv[1] == '--version':
-            logger.info("Caught 'ovftool --version' invocation")
-            return "VMware ovftool {0}".format(self.ovftool_version)
-        return self._check_output(argv, require_success)
-
     def setUp(self):
-        "Test case setup function called automatically prior to each test"
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTDeployESXi, self).setUp()
         self.instance = COTDeployESXi(UI())
         self.instance.package = self.input_ovf
         self.instance.hypervisor = 'esxi'
-        # Stub out check_call so that we don't actually need ovftool
-        self._check_call = COT.deploy.check_call
+        # Stub out all ovftool dependencies
+        self._ovftool_path = self.instance.ovftool._path
+        self._check_call = self.instance.ovftool._check_call
+        self._ovftool_version = self.instance.ovftool._version
+        self.instance.ovftool._path = "/fake/ovftool"
+        self.instance.ovftool._check_call = self.stub_check_call
+        self.instance.ovftool._version = StrictVersion("4.0.0")
+
         self.last_argv = []
-        COT.deploy.check_call = self.stub_check_call
-        # Ditto
-        self._ovftool_version = COT.helper_tools.OVFTOOL_VERSION
-        COT.helper_tools.OVFTOOL_VERSION = None
-        self.ovftool_version = StrictVersion("4.0.0")
-        self._check_output = COT.helper_tools.check_output
-        COT.helper_tools.check_output = self.stub_check_output
 
     def tearDown(self):
-        "Test case cleanup function called automatically"
+        """Test case cleanup function called automatically."""
         # Remove our stub
-        COT.deploy.check_call = self._check_call
-        COT.helper_tools.check_output = self._check_output
-        COT.helper_tools.OVFTOOL_VERSION = self._ovftool_version
+        self.instance.ovftool._path = self._ovftool_path
+        self.instance.ovftool._check_call = self._check_call
+        self.instance.ovftool._version = self._ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
     def test_not_ready_with_no_args(self):
+        """Verify ready_to_run() is False without all mandatory args."""
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("LOCATOR.*mandatory", reason))
@@ -130,6 +130,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertRaises(InvalidInputError, self.instance.run)
 
     def test_invalid_args(self):
+        """Negative tests for various arguments."""
         with self.assertRaises(InvalidInputError):
             self.instance.configuration = ""
         with self.assertRaises(InvalidInputError):
@@ -138,7 +139,7 @@ class TestCOTDeployESXi(COT_UT):
             self.instance.power_on = "frobozz"
 
     def test_ovftool_args_basic(self):
-        "Test that ovftool is called with the expected arguments"
+        """Test that ovftool is called with the basic arguments."""
         self.instance.locator = "localhost"
         self.instance.run()
         self.assertEqual([
@@ -151,7 +152,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.SERIAL_PORT_FIXUP)
 
     def test_ovftool_args_advanced(self):
-        "Test that ovftool is called with the expected arguments"
+        """Test that ovftool is called with more involved arguments."""
         self.instance.locator = "localhost/host/foo"
         self.instance.datastore = "datastore1"
         self.instance.configuration = "2CPU-2GB-1NIC"
@@ -178,8 +179,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.SERIAL_PORT_FIXUP)
 
     def test_ovftool_vsphere_env_fixup(self):
-        "Test fixup of environment when deploying directly to vSphere"
-
+        """Test fixup of environment when deploying directly to vSphere."""
         # With 4.0.0 (our default) and no power_on, there's no fixup.
         # This is tested by test_ovftool_args_basic() above.
 
@@ -204,8 +204,7 @@ class TestCOTDeployESXi(COT_UT):
 
         # With <4.0.0, we don't (can't) fixup, regardless.
         # Discard cached information and update the info that will be returned
-        COT.helper_tools.OVFTOOL_VERSION = None
-        self.ovftool_version = StrictVersion("3.5.0")
+        self.instance.ovftool._version = StrictVersion("3.5.0")
         self.instance.run()
         self.assertEqual([
             'ovftool',

@@ -12,6 +12,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for the COT.xml_file.XML class."""
+
 import os.path
 import unittest
 
@@ -19,9 +21,11 @@ from COT.xml_file import XML
 
 
 class TestXMLClass(unittest.TestCase):
-    """Test cases for XML class methods"""
+
+    """Test cases for XML class methods."""
 
     def test_get_ns(self):
+        """Test the get_ns() function."""
         self.assertEqual(
             "http://schemas.dmtf.org/ovf/envelope/1",
             XML.get_ns("{http://schemas.dmtf.org/ovf/envelope/1}required"))
@@ -30,6 +34,7 @@ class TestXMLClass(unittest.TestCase):
             XML.get_ns("required"))
 
     def test_strip_ns(self):
+        """Test the strip_ns() function."""
         self.assertEqual(
             "required",
             XML.strip_ns("{http://schemas.dmtf.org/ovf/envelope/1}required"))
@@ -39,17 +44,20 @@ class TestXMLClass(unittest.TestCase):
 
 
 class TestXMLInstance(unittest.TestCase):
-    """Test cases for XML instance methods"""
+
+    """Test cases for XML instance methods."""
 
     OVF = "{http://schemas.dmtf.org/ovf/envelope/1}"
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         self.xml = XML()
         self.xml.read_xml(os.path.join(os.path.dirname(__file__),
                                        "input.ovf"))
         super(TestXMLInstance, self).setUp()
 
     def test_find_child(self):
+        """Test corner cases of the find_child() method."""
         match = self.xml.find_child(self.xml.root,
                                     self.OVF + "References")
         self.assertEqual(match.tag, self.OVF + "References")
@@ -73,6 +81,7 @@ class TestXMLInstance(unittest.TestCase):
                           required=True)
 
     def test_set_or_make_child(self):
+        """Call set_or_make_child() in some slightly incorrect ways."""
         # Trigger the warning in add_child() logged when
         # creating a new child that's in a known namespace
         # but the child isn't in the expected ordering

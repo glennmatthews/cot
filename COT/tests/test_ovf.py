@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""Unit test cases for COT.ovf.OVF and COT.ovf.OVFItem classes."""
+
 import filecmp
 import os.path
 import tempfile
@@ -32,22 +34,26 @@ from COT.ovf import OVF, OVFNameHelper, OVFItem
 from COT.ovf import byte_count, byte_string, factor_bytes
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
-from COT.helper_tools import HelperError, validate_ovf_for_esxi
+from COT.helpers import HelperError
 from COT.vm_context_manager import VMContextManager
 
 
 class TestByteString(unittest.TestCase):
-    """Test cases for byte-count to string conversion functions"""
+
+    """Test cases for byte-count to string conversion functions."""
 
     def test_byte_count(self):
+        """Test byte_count() function."""
         self.assertEqual(byte_count("128", "byte"), 128)
         self.assertEqual(byte_count("1", "byte * 2^10"), 1024)
 
     def test_factor_bytes(self):
+        """Test factor_bytes() function."""
         self.assertEqual(factor_bytes("2147483648"), ("2", "byte * 2^30"))
         self.assertEqual(factor_bytes(2147483649), ("2147483649", "byte"))
 
     def test_byte_string(self):
+        """Test byte_string() function."""
         self.assertEqual(byte_string(1024), "1.00 kB")
         self.assertEqual(byte_string(250691584), "239.08 MB")
         self.assertEqual(byte_string(2560, base_shift=2), "2.50 GB")
@@ -55,21 +61,23 @@ class TestByteString(unittest.TestCase):
 
 
 class TestOVFInputOutput(COT_UT):
-    """Test cases for OVF file input/output"""
+
+    """Test cases for OVF file input/output."""
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         super(TestOVFInputOutput, self).setUp()
         # Additional temp directory used by some test cases
         self.staging_dir = None
 
     def tearDown(self):
+        """Test case cleanup function called automatically after each test."""
         if self.staging_dir:
             shutil.rmtree(self.staging_dir)
         super(TestOVFInputOutput, self).tearDown()
 
     def test_filename_validation(self):
-        """Test class method(s) for filename validation.
-        """
+        """Test class method(s) for filename validation."""
         self.assertEqual('.ovf', OVF.detect_type_from_name("/foo/bar/foo.ovf"))
         self.assertEqual('.ova', OVF.detect_type_from_name("/foo/bar/foo.ova"))
         # Lazy filenames should be OK too
@@ -88,7 +96,7 @@ class TestOVFInputOutput(COT_UT):
                           "/foo/bar.zip")
 
     def test_input_output(self):
-        """Read an OVF then write it again, verify no changes"""
+        """Read an OVF then write it again, verify no changes."""
         with VMContextManager(self.input_ovf, self.temp_file):
             pass
         self.check_diff('')
@@ -149,13 +157,11 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
 +</ovf:Envelope>""", file1=self.vmware_ovf)  # noqa - trailing whitespace above
 
     def test_input_output_missing_file(self):
-        """Test reading/writing of an OVF with missing file references"""
-
+        """Test reading/writing of an OVF with missing file references."""
         # Read OVF, write OVF - make sure invalid file reference is removed
         self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
-        input_dir = os.path.dirname(self.input_ovf)
-        shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
-        shutil.copy(os.path.join(input_dir, 'input.vmdk'), self.staging_dir)
+        shutil.copy(self.input_ovf, self.staging_dir)
+        shutil.copy(self.input_vmdk, self.staging_dir)
         # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               self.temp_file) as ovf:
@@ -210,14 +216,13 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             self.assertLogged(**self.NONEXISTENT_FILE)
 
     def test_input_output_bad_file(self):
-        """Test reading/writing of an OVF with incorrect file references.
-        """
+        """Test reading/writing of an OVF with incorrect file references."""
         self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
         input_dir = os.path.dirname(self.input_ovf)
         shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
         shutil.copy(os.path.join(input_dir, 'input.iso'), self.staging_dir)
         # Copy blank.vmdk to input.vmdk so as to have the wrong size/checksum
-        shutil.copy(os.path.join(input_dir, 'blank.vmdk'),
+        shutil.copy(self.blank_vmdk,
                     os.path.join(self.staging_dir, 'input.vmdk'))
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               os.path.join(self.temp_dir, "temp.ova")):
@@ -233,14 +238,14 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
                               os.path.join(self.temp_dir, "temp.ovf")) as ova:
             # Replace the extracted fake .vmdk with the real .vmdk
-            shutil.copy(os.path.join(input_dir, 'input.vmdk'), ova.working_dir)
+            shutil.copy(self.input_vmdk, ova.working_dir)
         self.assertLogged(msg="Size of file.*seems to have changed.*"
                           "The updated OVF will reflect this change.")
         self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
                           "The updated OVF will reflect this change.")
 
     def test_tar_untar(self):
-        """Output OVF to OVA and vice versa"""
+        """Output OVF to OVA and vice versa."""
         # Read OVF and write to OVA
         ovf = OVF(self.input_ovf,
                   os.path.join(self.temp_dir, "temp.ova"))
@@ -268,9 +273,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
                 .format(ext))
 
     def test_invalid_ovf_file(self):
-        """Check that various invalid input OVF files result in VMInitError
-        rather than other miscellaneous exceptions.
-        """
+        """Check that various invalid input OVF files result in VMInitError."""
         fake_file = os.path.join(self.temp_dir, "foo.ovf")
         # .ovf that is an empty file
         with open(fake_file, 'w') as f:
@@ -292,9 +295,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
     def test_invalid_ova_file(self):
-        """Check that various invalid input OVA files result in VMInitError
-        rather than other miscellaneous exceptions.
-        """
+        """Check that various invalid input OVA files result in VMInitError."""
         fake_file = os.path.join(self.temp_dir, "foo.ova")
         # .ova that is an empty file
         with open(fake_file, 'w') as f:
@@ -314,8 +315,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # .ova that is a TAR file but does not contain an OVF descriptor
         tarf = tarfile.open(fake_file, 'w')
         try:
-            disk_path = os.path.join(os.path.dirname(__file__), "blank.vmdk")
-            tarf.add(disk_path, os.path.basename(disk_path))
+            tarf.add(self.blank_vmdk, os.path.basename(self.blank_vmdk))
         finally:
             tarf.close()
         self.assertRaises(VMInitError, OVF, fake_file, None)
@@ -346,17 +346,17 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
     def test_invalid_ovf_contents(self):
-        """Check for rejection of OVF files with valid XML but invalid data"""
-
+        """Check for rejection of OVF files with valid XML but invalid data."""
         # Multiple Items under same profile with same InstanceID
         fake_file = os.path.join(self.temp_dir, "foo.ovf")
         with open(fake_file, "w") as f:
             subprocess.check_call(['sed', 's/InstanceID>11</InstanceID>10</',
                                    self.input_ovf],
                                   stdout=f)
-        if COT_UT.OVFTOOL_PRESENT:
+        if self.OVFTOOL.path:
             # Make sure ovftool also sees this as invalid
-            self.assertRaises(HelperError, validate_ovf_for_esxi, fake_file)
+            self.assertRaises(HelperError,
+                              self.OVFTOOL.validate_ovf, fake_file)
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # Item referencing a nonexistent Configuration
@@ -364,17 +364,17 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             subprocess.check_call(['sed', 's/on="2CPU-2GB-1NIC"/on="foo"/',
                                    self.input_ovf],
                                   stdout=f)
-        if COT_UT.OVFTOOL_PRESENT:
+        if self.OVFTOOL.path:
             # Make sure ovftool also sees this as invalid
-            self.assertRaises(HelperError, validate_ovf_for_esxi, fake_file)
+            self.assertRaises(HelperError,
+                              self.OVFTOOL.validate_ovf, fake_file)
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # TODO - inconsistent order of File versus Disk?
         # TODO - Sections in wrong order?
 
     def test_configuration_profiles(self):
-        """Check profile id list APIs"""
-
+        """Check profile id list APIs."""
         # No profiles defined
         with VMContextManager(self.vmware_ovf, None) as ovf:
             self.assertEqual(ovf.config_profiles, [])
@@ -391,18 +391,21 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
 
 
 class TestOVFItem(COT_UT):
-    """Unit test cases for the OVFItem class"""
+
+    """Unit test cases for the OVFItem class."""
 
     def setUp(self):
+        """Test case setup function called automatically prior to each test."""
         super(TestOVFItem, self).setUp()
         self.working_dir = tempfile.mkdtemp(prefix="cot_ut_ovfiitem")
 
     def tearDown(self):
+        """Test case cleanup function called automatically after each test."""
         shutil.rmtree(self.working_dir)
         super(TestOVFItem, self).tearDown()
 
     def test_1_to_1(self):
-        """Convert one Item to an OVFItem and back"""
+        """Convert one Item to an OVFItem and back."""
         root = ET.fromstring("""<?xml version='1.0' encoding='utf-8'?>
 <ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" \
 xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
@@ -459,7 +462,7 @@ OVFItem:
                              output_item.find(child.tag).text)
 
     def test_remove_profile(self):
-        """Test case for remove_profile() method"""
+        """Test case for remove_profile() method."""
         with VMContextManager(self.input_ovf, self.temp_file) as ovf:
             hw = ovf.hardware
             # InstanceID 11, NIC 0 (default, under all profiles)
