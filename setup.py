@@ -63,7 +63,8 @@ setup(
     license='MIT',
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
-    test_suite='COT.tests',
+    test_suite='unittest2.collector',
+    tests_require=install_requires + ['unittest2'],
     install_requires=install_requires,
     classifiers=[
         # Project status

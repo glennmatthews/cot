@@ -31,19 +31,24 @@ ARCHIVE="cot-$VERSION.tgz"
 
 tar czvf $ARCHIVE \
     $COT/*.md \
+    $COT/*.rst \
     $COT/*.txt \
     $COT/*.in \
     $COT/*.py \
     $COT/bin/cot \
-    $COT/bin/cot_unittest \
     $COT/bin/*.sh \
+    $COT/docs/*.rst \
+    $COT/docs/*.py \
+    $COT/docs/Makefile \
     $COT/COT/*.py \
     $COT/COT/tests/*.py \
     $COT/COT/tests/*.ovf \
     $COT/COT/tests/*.mf \
     $COT/COT/tests/*.vmdk \
     $COT/COT/tests/*.iso \
-    $COT/COT/tests/*.txt
+    $COT/COT/tests/*.txt \
+    $COT/COT/helpers/*.py \
+    $COT/COT/helpers/tests/*.py
 
 echo "Successfully created $ARCHIVE"
 exit 0
