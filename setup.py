@@ -23,7 +23,9 @@ except ImportError:
     from setuptools import setup
 
 import os.path
+import shutil
 import sys
+from setuptools import Command
 
 import versioneer
 
@@ -46,11 +48,62 @@ install_requires = [
 if sys.version_info < (3, 3):
     install_requires.append('backports.shutil_get_terminal_size')
 
+cmd_class = versioneer.get_cmdclass()
+
+
+class custom_build_man(Command):
+
+    description = "Build man pages for COT"
+    user_options = []
+
+    def __init__(self, dist):
+        self.dist = dist
+        Command.__init__(self, dist)
+
+    def initialize_options(self):
+        from sphinx.setup_command import BuildDoc
+        self.build_doc = BuildDoc(self.dist)
+        self.build_doc.initialize_options()
+        self.build_doc.builder = 'man'
+
+    def finalize_options(self):
+        self.build_doc.finalize_options()
+
+    def run(self):
+        self.build_doc.run()
+
+
+class custom_install_man(Command):
+    description = "Install man pages for COT"
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        src = os.path.join(os.path.dirname(__file__), 'build', 'sphinx', 'man')
+        if not os.path.exists(src):
+            raise RuntimeError("need to run 'setup.py build_sphinx -b man'")
+        dest = "/usr/share/man/man8"
+        for f in os.listdir(src):
+            # Which man section does this belong in?
+            section = os.path.splitext(f)[1][1:]
+            dest = "/usr/share/man/man{0}/".format(section)
+            if not os.path.exists(dest):
+                os.makedirs(dest)
+            print("Copying {0} to {1}".format(f, dest))
+            shutil.copy(os.path.join(src, f), dest)
+
+cmd_class['build_man'] = custom_build_man
+cmd_class['install_man'] = custom_install_man
 
 setup(
     name='cot',
     version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass=cmd_class,
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
     packages=['COT', 'COT.helpers'],
@@ -63,6 +116,7 @@ setup(
     license='MIT',
     description='Common OVF Tool',
     long_description=open(README_FILE).read(),
+    setup_requires=['sphinx>1.2.3'],
     test_suite='unittest2.collector',
     tests_require=install_requires + ['unittest2'],
     install_requires=install_requires,

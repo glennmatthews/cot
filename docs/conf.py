@@ -276,8 +276,26 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'common-ovf-tool', u'common-ovf-tool Documentation',
-     [u'the COT project developers'], 1)
+    ('usage_general', 'cot',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+    ('usage_add_disk', 'cot-add-disk',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+    ('usage_add_file', 'cot-add-file',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+    ('usage_deploy', 'cot-deploy',
+     u'COT Documentation', ['Kevin A. Keim', 'Glenn F. Matthews'], 8),
+    ('usage_edit_hardware', 'cot-edit-hardware',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+    ('usage_edit_product', 'cot-edit-product',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+    ('usage_edit_properties', 'cot-edit-properties',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+    ('usage_install_helpers', 'cot-install-helpers',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+    ('usage_info', 'cot-info',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+    ('usage_inject_config', 'cot-inject-config',
+     u'COT Documentation', [u'Glenn F. Matthews'], 8),
 ]
 
 # If true, show URL addresses after external links.
