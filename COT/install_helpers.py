@@ -16,6 +16,7 @@
 
 """Implements "install-helpers" command."""
 
+import argparse
 import logging
 import textwrap
 
@@ -89,7 +90,71 @@ class COTInstallHelpers(COTGenericSubmodule):
             usage=self.UI.fill_usage('install-helpers',
                                      ["--verify-only",
                                       "[--ignore-errors]"]),
-            description="Install third-party helper programs for COT")
+            description="""
+Install third-party helper programs for COT.
+
+* qemu-img (http://www.qemu.org/)
+* mkisofs  (http://cdrecord.org/)
+* ovftool  (https://www.vmware.com/support/developer/ovf/)
+* fatdisk  (http://github.com/goblinhack/fatdisk)
+* vmdktool (http://www.freshports.org/sysutils/vmdktool/)""",
+            epilog=self.UI.fill_examples([
+                ("Verify whether COT can find all expected helper programs",
+                 """
+> cot install-helpers --verify-only
+Results:
+-------------
+fatdisk:      present at /opt/local/bin/fatdisk
+mkisofs:      present at /opt/local/bin/mkisofs
+ovftool:      present at /usr/local/bin/ovftool
+qemu-img:     present at /opt/local/bin/qemu-img
+vmdktool:     NOT FOUND""".strip()),
+                ("Have COT attempt to install missing helpers for you. "
+                 "Note that most helpers require administrator / ``sudo`` "
+                 "privileges to install. If any installation fails, "
+                 "COT will exit with an error, unless you pass "
+                 "``--ignore-errors``.",
+                 """
+> cot install-helpers
+    INFO: Installing 'fatdisk'...
+    INFO: Compiling 'fatdisk'
+    INFO: Calling './RUNME'...
+(...)
+    INFO: ...done
+    INFO: Compilation complete, installing now
+    INFO: Calling 'sudo cp fatdisk /usr/local/bin/fatdisk'...
+    INFO: ...done
+    INFO: Successfully installed 'fatdisk'
+    INFO: Installing 'vmdktool'...
+    INFO: vmdktool requires 'zlib'... installing 'zlib'
+    INFO: Calling 'sudo apt-get -q install zlib1g-dev'...
+(...)
+    INFO: ...done
+    INFO: Compiling 'vmdktool'
+    INFO: Calling 'make CFLAGS="-D_GNU_SOURCE -g -O -pipe"'...
+(...)
+    INFO: ...done
+    INFO: Compilation complete, installing now.
+    INFO: Calling 'sudo mkdir -p --mode=755 /usr/local/man/man8'...
+    INFO: ...done
+    INFO: Calling 'sudo make install'...
+install -s vmdktool /usr/local/bin/
+install vmdktool.8 /usr/local/man/man8/
+    INFO: ...done
+    INFO: Successfully installed 'vmdktool'
+Results:
+-------------
+fatdisk:      successfully installed to /usr/local/bin/fatdisk
+mkisofs:      present at /usr/bin/mkisofs
+ovftool:      INSTALLATION FAILED: No support for automated
+              installation of ovftool, as VMware requires a site
+              login to download it. See
+              https://www.vmware.com/support/developer/ovf/
+qemu-img:     present at /usr/bin/qemu-img
+vmdktool:     successfully installed to /usr/local/bin/vmdktool
+
+Unable to install some helpers""".strip())]),
+            formatter_class=argparse.RawDescriptionHelpFormatter)
 
         group = p.add_mutually_exclusive_group()
 
