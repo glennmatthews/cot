@@ -1,0 +1,9 @@
+/* allow option descriptions to wrap but not options themselves */
+.wy-table-responsive table td {
+    white-space: normal;
+}
+
+.wy-table-responsive table td.option-group {
+    white-space: nowrap;
+}
+

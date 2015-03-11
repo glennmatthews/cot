@@ -150,6 +150,9 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 
 # otherwise, readthedocs.org uses their theme by default, so no need to specify
 
+html_context = {
+    'css_files': ['_static/theme_overrides.css']
+}
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -160,10 +163,10 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-# html_title = None
+html_title = "COT documentation"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-# html_short_title = None
+html_short_title = "Common OVF Tool (COT)"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -177,7 +180,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -277,25 +280,25 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('usage_general', 'cot',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'Common OVF Tool', [u'Glenn F. Matthews'], 1),
     ('usage_add_disk', 'cot-add-disk',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'COT Documentation', [u'Glenn F. Matthews'], 1),
     ('usage_add_file', 'cot-add-file',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'COT Documentation', [u'Glenn F. Matthews'], 1),
     ('usage_deploy', 'cot-deploy',
-     u'COT Documentation', ['Kevin A. Keim', 'Glenn F. Matthews'], 8),
+     u'COT Documentation', ['Kevin A. Keim', 'Glenn F. Matthews'], 1),
     ('usage_edit_hardware', 'cot-edit-hardware',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'COT Documentation', [u'Glenn F. Matthews'], 1),
     ('usage_edit_product', 'cot-edit-product',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'COT Documentation', [u'Glenn F. Matthews'], 1),
     ('usage_edit_properties', 'cot-edit-properties',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'COT Documentation', [u'Glenn F. Matthews'], 1),
     ('usage_install_helpers', 'cot-install-helpers',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'COT Documentation', [u'Glenn F. Matthews'], 1),
     ('usage_info', 'cot-info',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'COT Documentation', [u'Glenn F. Matthews'], 1),
     ('usage_inject_config', 'cot-inject-config',
-     u'COT Documentation', [u'Glenn F. Matthews'], 8),
+     u'COT Documentation', [u'Glenn F. Matthews'], 1),
 ]
 
 # If true, show URL addresses after external links.
