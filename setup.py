@@ -49,10 +49,8 @@ install_requires = [
 if sys.version_info < (3, 3):
     install_requires.append('backports.shutil_get_terminal_size')
 
-setup_requires = []
-# sphinx is not supported in 3.2
-if sys.version_info < (3, 0) or sys.version_info >= (3, 3):
-    setup_requires.append('sphinx>1.2.3')
+setup_requires = ['sphinx>1.2.3']
+tests_require = install_requires + ['unittest2']
 
 cmd_class = versioneer.get_cmdclass()
 
@@ -280,7 +278,7 @@ setup(
     long_description=open(README_FILE).read(),
     setup_requires=setup_requires,
     test_suite='unittest2.collector',
-    tests_require=install_requires + ['unittest2'],
+    tests_require=tests_require,
     install_requires=install_requires,
     classifiers=[
         # Project status
@@ -305,7 +303,6 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],

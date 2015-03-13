@@ -7,7 +7,7 @@ Installing COT
 System requirements
 -------------------
 
-* COT requires either Python 2.7 or Python 3.2 or later.
+* COT requires either Python 2.7 or Python 3.3 or later.
 * COT is tested to work under Mac OS X and Ubuntu Linux and similar distros.
 * COT now has limited support for CentOS and Python 2.6 as well.
 
