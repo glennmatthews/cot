@@ -88,7 +88,13 @@ class CLI(UI):
 
     def terminal_width(self):
         """Get the width of the terminal in columns."""
-        width = get_terminal_size().columns
+        try:
+            width = get_terminal_size().columns
+        except ValueError:
+            # sometimes seen in unit tests:
+            # ValueError: underlying buffer has been detached
+            # Easy enough to work around...
+            width = 80
         if width <= 0:
             width = 80
         return width
@@ -168,30 +174,29 @@ class CLI(UI):
         ::
 
           >>> fill_examples([
-          ...    ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
-          ...     ' -n test_vm',
-          ...     "Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
-          ...     " admin/admin, creating a VM named 'test_vm' from foo.ova."),
-          ...    ('cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB',
-          ...     "Deploy to vSphere/ESXi server 192.0.2.100, with username"
+          ...    ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+          ...     " admin/admin, creating a VM named 'test_vm' from foo.ova.",
+          ...     'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
+          ...     ' -n test_vm'),
+          ...    ("Deploy to vSphere/ESXi server 192.0.2.100, with username"
           ...     " admin (prompting the user to input a password at runtime),"
-          ...     " creating a VM based on profile '1CPU-2.5GB' in foo.ova.")
+          ...     " creating a VM based on profile '1CPU-2.5GB' in foo.ova.",
+          ...     'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB')
           ... ])
           Examples:
-            cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
+            Deploy to vSphere/ESXi server 192.0.2.100 with credentials
+            admin/admin, creating a VM named 'test_vm' from foo.ova.
+
+              cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
                   -n test_vm
-              Deploy to vSphere/ESXi server 192.0.2.100 with
-              credentials admin/admin, creating a VM named 'test_vm'
-              from foo.ova.
 
-            cot deploy foo.ova esxi 192.0.2.100 -u admin \
-                  -c 1CPU-2.5GB
-              Deploy to vSphere/ESXi server 192.0.2.100, with
-              username admin (prompting the user to input a password
-              at runtime), creating a VM based on profile
-              '1CPU-2.5GB' in foo.ova.
+            Deploy to vSphere/ESXi server 192.0.2.100, with username admin
+            (prompting the user to input a password at runtime), creating a VM
+            based on profile '1CPU-2.5GB' in foo.ova.
 
-        :param list example_list: List of (cli_example, example_description)
+              cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
+
+        :param list example_list: List of (description, CLI example)
             tuples.
 
         :return: Examples wrapped appropriately to the :func:`terminal_width`
@@ -209,21 +214,28 @@ class CLI(UI):
         """, re.VERBOSE)
         width = self.terminal_width()
         self.wrapper.width = width - 1
-        self.wrapper.initial_indent = '    '
-        self.wrapper.subsequent_indent = '    '
+        self.wrapper.initial_indent = '  '
+        self.wrapper.subsequent_indent = '  '
         self.wrapper.break_on_hyphens = False
-        for (example, desc) in example_list:
+        for (desc, example) in example_list:
             if len(output_lines) > 1:
                 output_lines.append("")
-            wrapped_line = " "
-            for param in re.findall(splitter, example):
-                if len(wrapped_line) + len(param) >= (width - 2):
-                    wrapped_line += " \\"
-                    output_lines.append(wrapped_line)
-                    wrapped_line = "       "
-                wrapped_line += " " + param
-            output_lines.append(wrapped_line)
             output_lines.extend(self.wrapper.wrap(desc))
+            output_lines.append("")
+            example_lines = example.splitlines()
+            if len(example_lines) > 1:
+                # Don't wrap multiline examples, just indent
+                for line in example_lines:
+                    output_lines.append("    "+line)
+            else:
+                wrapped_line = "   "
+                for param in re.findall(splitter, example):
+                    if len(wrapped_line) + len(param) >= (width - 4):
+                        wrapped_line += " \\"
+                        output_lines.append(wrapped_line)
+                        wrapped_line = "       "
+                    wrapped_line += " " + param
+                output_lines.append(wrapped_line)
         return "\n".join(output_lines)
 
     def formatter(self, verbosity=logging.INFO):
@@ -379,14 +391,6 @@ class CLI(UI):
                 "virtual appliances, with a focus on virtualized network "
                 "appliances such as the Cisco CSR 1000V and Cisco IOS XRv "
                 "platforms.")),
-            epilog=("""
-Note: some subcommands rely on external software tools, including:
-* qemu-img (http://www.qemu.org/)
-* mkisofs  (http://cdrecord.org/)
-* ovftool  (https://www.vmware.com/support/developer/ovf/)
-* fatdisk  (http://github.com/goblinhack/fatdisk)
-* vmdktool (http://www.freshports.org/sysutils/vmdktool/)
-"""),
             formatter_class=argparse.RawDescriptionHelpFormatter)
 
         parser.add_argument('-V', '--version', action='version',
@@ -407,7 +411,7 @@ Note: some subcommands rely on external software tools, including:
             action='store_const', const=logging.VERBOSE,
             help="Verbose output and logging")
         debug_group.add_argument(
-            '-vv', '-d', '--debug', dest='_verbosity',
+            '-d', '-vv', '--debug', dest='_verbosity',
             action='store_const', const=logging.DEBUG,
             help="Debug (most verbose) output and logging")
 

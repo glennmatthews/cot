@@ -46,26 +46,39 @@ install_requires = [
 if sys.version_info < (3, 3):
     install_requires.append('backports.shutil_get_terminal_size')
 
+setup_requires = ['sphinx>1.2.3']
+tests_require = install_requires + ['unittest2']
+
+cmdclass = versioneer.get_cmdclass()
 
 setup(
+    # Package description
     name='cot',
     version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
+    url='https://github.com/glennmatthews/cot',
+    description='Common OVF Tool',
+    long_description=open(README_FILE).read(),
+    license='MIT',
+
+    # Requirements
+    setup_requires=setup_requires,
+    test_suite='unittest2.collector',
+    tests_require=tests_require,
+    install_requires=install_requires,
+
+    # Package contents
+    cmdclass=cmdclass,
     packages=['COT', 'COT.helpers'],
     entry_points={
         'console_scripts': [
             'cot = COT.cli:main',
         ],
     },
-    url='https://github.com/glennmatthews/cot',
-    license='MIT',
-    description='Common OVF Tool',
-    long_description=open(README_FILE).read(),
-    test_suite='unittest2.collector',
-    tests_require=install_requires + ['unittest2'],
-    install_requires=install_requires,
+    include_package_data=True,
+
+    # PyPI search categories
     classifiers=[
         # Project status
         'Development Status :: 5 - Production/Stable',
@@ -89,7 +102,6 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],

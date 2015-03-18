@@ -2,6 +2,7 @@
 [run]
 omit =
     COT/tests/*
+    COT/helpers/tests/*
     COT/_version.py
     setup.py
     versioneer.py

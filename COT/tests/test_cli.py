@@ -203,75 +203,89 @@ class TestCLIModule(TestCOTCLI):
         """Test fill_examples() API."""
         self.maxDiff = None
         examples = [
-            ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test',
-             "Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
-             " admin/admin, creating a VM named 'test' from foo.ova."),
-            ('cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB',
-             "Deploy to vSphere/ESXi server 192.0.2.100, with username"
+            ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+             " admin/admin, creating a VM named 'test' from foo.ova.",
+             'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test'),
+            ("Deploy to vSphere/ESXi server 192.0.2.100, with username"
              " admin (prompting the user to input a password at runtime),"
-             " creating a VM based on profile '1CPU-2.5GB' in foo.ova."),
+             " creating a VM based on profile '1CPU-2.5GB' in foo.ova.",
+             'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB'),
         ]
 
         self.TERMINAL_WIDTH = 100
-        self.assertMultiLineEqual(self.cli.fill_examples(examples), """\
+        self.assertMultiLineEqual("""\
 Examples:
-  cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test
-    Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin, \
+  Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin, \
 creating a VM named
-    'test' from foo.ova.
+  'test' from foo.ova.
 
-  cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
-    Deploy to vSphere/ESXi server 192.0.2.100, with username admin (prompting \
+    cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test
+
+  Deploy to vSphere/ESXi server 192.0.2.100, with username admin (prompting \
 the user to input a
-    password at runtime), creating a VM based on profile '1CPU-2.5GB' in \
-foo.ova.""")
+  password at runtime), creating a VM based on profile '1CPU-2.5GB' in \
+foo.ova.
+
+    cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB""",
+                                  self.cli.fill_examples(examples))
 
         self.TERMINAL_WIDTH = 80
-        self.assertMultiLineEqual(self.cli.fill_examples(examples), """\
+        self.assertMultiLineEqual("""\
 Examples:
-  cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test
-    Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
-    creating a VM named 'test' from foo.ova.
+  Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
+  creating a VM named 'test' from foo.ova.
 
-  cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
-    Deploy to vSphere/ESXi server 192.0.2.100, with username admin (prompting
-    the user to input a password at runtime), creating a VM based on profile
-    '1CPU-2.5GB' in foo.ova.""")
+    cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin -n test
+
+  Deploy to vSphere/ESXi server 192.0.2.100, with username admin (prompting \
+the
+  user to input a password at runtime), creating a VM based on profile
+  '1CPU-2.5GB' in foo.ova.
+
+    cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB""",
+                                  self.cli.fill_examples(examples))
 
         self.TERMINAL_WIDTH = 60
-        self.assertMultiLineEqual(self.cli.fill_examples(examples), """\
+        self.assertMultiLineEqual("""\
 Examples:
-  cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \\
-        -n test
-    Deploy to vSphere/ESXi server 192.0.2.100 with
-    credentials admin/admin, creating a VM named 'test'
-    from foo.ova.
+  Deploy to vSphere/ESXi server 192.0.2.100 with
+  credentials admin/admin, creating a VM named 'test' from
+  foo.ova.
 
-  cot deploy foo.ova esxi 192.0.2.100 -u admin \\
-        -c 1CPU-2.5GB
-    Deploy to vSphere/ESXi server 192.0.2.100, with
-    username admin (prompting the user to input a password
-    at runtime), creating a VM based on profile
-    '1CPU-2.5GB' in foo.ova.""")
+    cot deploy foo.ova esxi 192.0.2.100 -u admin \\
+        -p admin -n test
+
+  Deploy to vSphere/ESXi server 192.0.2.100, with username
+  admin (prompting the user to input a password at
+  runtime), creating a VM based on profile '1CPU-2.5GB' in
+  foo.ova.
+
+    cot deploy foo.ova esxi 192.0.2.100 -u admin \\
+        -c 1CPU-2.5GB""", self.cli.fill_examples(examples),)
 
         self.TERMINAL_WIDTH = 40
-        self.assertMultiLineEqual(self.cli.fill_examples(examples), """\
+        self.assertMultiLineEqual("""\
 Examples:
-  cot deploy foo.ova esxi 192.0.2.100 \\
-        -u admin -p admin -n test
-    Deploy to vSphere/ESXi server
-    192.0.2.100 with credentials
-    admin/admin, creating a VM named
-    'test' from foo.ova.
+  Deploy to vSphere/ESXi server
+  192.0.2.100 with credentials
+  admin/admin, creating a VM named
+  'test' from foo.ova.
 
-  cot deploy foo.ova esxi 192.0.2.100 \\
-        -u admin -c 1CPU-2.5GB
-    Deploy to vSphere/ESXi server
-    192.0.2.100, with username admin
-    (prompting the user to input a
-    password at runtime), creating a VM
-    based on profile '1CPU-2.5GB' in
-    foo.ova.""")
+    cot deploy foo.ova esxi \\
+        192.0.2.100 -u admin \\
+        -p admin -n test
+
+  Deploy to vSphere/ESXi server
+  192.0.2.100, with username admin
+  (prompting the user to input a
+  password at runtime), creating a VM
+  based on profile '1CPU-2.5GB' in
+  foo.ova.
+
+    cot deploy foo.ova esxi \\
+        192.0.2.100 -u admin \\
+        -c 1CPU-2.5GB""",
+                                  self.cli.fill_examples(examples))
 
 
 class TestCLIGeneral(TestCOTCLI):

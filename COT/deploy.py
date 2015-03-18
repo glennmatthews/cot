@@ -433,24 +433,24 @@ class COTDeployESXi(COTDeploy):
             help="Deploy to ESXi, vSphere, or vCenter",
             description="Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor",
             epilog=self.UI.fill_examples([
-                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
-                 ' -n test_vm',
-                 "Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
-                 " admin/admin, creating a VM named 'test_vm' from foo.ova."),
-                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB',
-                 "Deploy to vSphere/ESXi server 192.0.2.100, with username"
+                ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+                 " admin/admin, creating a VM named 'test_vm' from foo.ova.",
+                 'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
+                 ' -n test_vm'),
+                ("Deploy to vSphere/ESXi server 192.0.2.100, with username"
                  " admin (prompting the user to input a password at runtime),"
-                 " creating a VM based on profile '1CPU-2.5GB' in foo.ova."),
-                ('cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1"'
-                 ' -u administrator -N "GigabitEthernet1=VM Network"'
-                 ' -N "GigabitEthernet2=myvswitch"',
-                 "Deploy to vSphere server 192.0.2.1 which belongs to"
+                 " creating a VM based on profile '1CPU-2.5GB' in foo.ova.",
+                 'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB'),
+                ("Deploy to vSphere server 192.0.2.1 which belongs to"
                  " datacenter 'mydc' on vCenter server 192.0.2.100, and map"
                  " the two NIC networks to vSwitches. Note that in this case"
-                 " -u specifies the vCenter login username."),
-                ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p password'
-                 ' --ovftool-args="--overwrite --acceptAllEulas"',
-                 "Deploy with passthrough arguments to ovftool.")
+                 " -u specifies the vCenter login username.",
+                 'cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1"'
+                 ' -u administrator -N "GigabitEthernet1=VM Network"'
+                 ' -N "GigabitEthernet2=myvswitch"'),
+                ("Deploy with passthrough arguments to ovftool.",
+                 'cot deploy foo.ova esxi 192.0.2.100 -u admin -p password'
+                 ' --ovftool-args="--overwrite --acceptAllEulas"')
             ]))
 
         # ovftool uses '-ds' as shorthand for '--datastore', so let's allow it.
