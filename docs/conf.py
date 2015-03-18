@@ -250,7 +250,7 @@ copyright = u'2013-2015, the COT project developers'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-from COT._version import get_versions, run_command   # noqa
+from COT._version import get_versions   # noqa
 
 versioneer_string = get_versions()["version"]
 # readthedocs patches conf.py, causing git to report the version as 'dirty',
