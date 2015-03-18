@@ -5,3 +5,4 @@ include ez_setup.py
 include versioneer.py
 include COT/_version.py
 include bin/cot
+include COT/docs/man/*

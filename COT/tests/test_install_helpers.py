@@ -17,6 +17,10 @@
 
 """Unit test cases for COT.install_helpers.COTInstallHelpers class."""
 
+import filecmp
+import os
+import shutil
+
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.install_helpers import COTInstallHelpers
@@ -32,6 +36,27 @@ class TestCOTInstallHelpers(COT_UT):
         """Do the appropriate setup before each test case."""
         super(TestCOTInstallHelpers, self).setUp()
         self.instance = COTInstallHelpers(UI())
+        # Hash of directories to override os.path.exists for.
+        # If an explicit match is found for a file, returns that value.
+        # Otherwise, walk back up the directory tree and see if there's a
+        # match for a parent directory. If that doesn't match either, call
+        # the real os.path.exists
+        self.exists = {
+            '/usr/share/man/man1': True,
+        }
+        # As above but for filecmp.cmp
+        self.cmp = {
+            '/usr/share/man/man1': True,
+        }
+        self._os_path_exists = os.path.exists
+        os.path.exists = self.stub_exists
+        self._cmp = filecmp.cmp
+        filecmp.cmp = self.stub_cmp
+
+    def cleanUp(self):
+        """Cleanup after each test case."""
+        os.path.exists = self._os_path_exists
+        filecmp.cmp = self._cmp
 
     def stub_check_output(self, args, require_success=True, **kwargs):
         """Stub to ensure fixed version number strings."""
@@ -46,6 +71,24 @@ class TestCOTInstallHelpers(COT_UT):
             "vmdktool": "vmdktool version 1.4",
         }
         return versions.get(args[0], "")
+
+    def stub_exists(self, path):
+        """Stub for os.path.exists."""
+        dir_path = path
+        while dir_path and dir_path != "/":
+            if dir_path in self.exists.keys():
+                return self.exists[dir_path]
+            dir_path = os.path.dirname(dir_path)
+        return self._os_path_exists(path)
+
+    def stub_cmp(self, f1, f2):
+        """Stub for filecmp.cmp."""
+        for path in [f1, f2]:
+            while path and path != "/":
+                if path in self.cmp.keys():
+                    return self.cmp[path]
+                path = os.path.dirname(path)
+        return self._cmp(f1, f2)
 
     def test_verify_only(self):
         """Make sure expected results are seen with --verify-only option."""
@@ -63,6 +106,7 @@ class TestCOTInstallHelpers(COT_UT):
         expected_output = """
 Results:
 -------------
+COT manpages: already installed, no updates needed
 fatdisk:      version 1.0, present at /usr/local/bin/fatdisk
 mkisofs:      version 3.0, present at /usr/local/bin/mkisofs
 ovftool:      NOT FOUND
@@ -110,6 +154,7 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
         expected_output = """
 Results:
 -------------
+COT manpages: already installed, no updates needed
 fatdisk:      version 1.0, present at /opt/local/bin/fatdisk
 genisoimage:  successfully installed to /usr/bin/genisoimage, version 1.1.11
 ovftool:      INSTALLATION FAILED: No support for automated installation of
@@ -133,3 +178,103 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
             Helper.port_install = _port_install
             Helper.yum_install = _yum_install
             Helper._check_output = _check_output
+
+    def test_install_manpages_verify_dir_not_found(self):
+        """Call install_manpages with verify-only, directory not found."""
+        self.exists["/usr/share/man/man1"] = False
+        self.instance.verify_only = True
+        result, message = self.instance.install_manpages()
+        self.assertTrue(result)  # verify-only returns True regardless
+        self.assertEqual("DIRECTORY NOT FOUND: /usr/share/man/man1/", message)
+
+    def test_install_manpages_verify_file_not_found(self):
+        """Call install_manpages with verify-only, file not found."""
+        self.exists["/usr/share/man/man1/cot.1"] = False
+        self.instance.verify_only = True
+        result, message = self.instance.install_manpages()
+        self.assertTrue(result)  # verify-only returns True regardless
+        self.assertEqual("NOT FOUND", message)
+
+    def test_install_manpages_verify_file_outdated(self):
+        """Call install_manpages with verify-only, file not found."""
+        self.cmp["/usr/share/man/man1/cot.1"] = False
+        self.instance.verify_only = True
+        result, message = self.instance.install_manpages()
+        self.assertTrue(result)  # verify-only returns True regardless
+        self.assertEqual("NEEDS UPDATE", message)
+
+    def test_install_manpages_create_dir_fail(self):
+        """Call install_manpages with a simulated makedirs() failure."""
+        self.exists["/usr/share/man/man1"] = False
+
+        def makedirs(*args, **kwargs):
+            raise OSError(13, "Permission denied", "/usr/share/man/man1")
+        _makedirs = os.makedirs
+        os.makedirs = makedirs
+        try:
+            result, message = self.instance.install_manpages()
+            self.assertFalse(result)
+            self.assertEqual("INSTALLATION FAILED: [Errno 13] "
+                             "Permission denied: '/usr/share/man/man1'",
+                             message)
+        finally:
+            os.makedirs = _makedirs
+
+    def test_install_manpages_create_file_fail(self):
+        """Call install_manpages with a simulated copy() failure."""
+        self.cmp["/usr/share/man/man1/cot.1"] = False
+
+        def copy(*args, **kwargs):
+            raise IOError(13, "Permission denied", "/usr/share/man/man1/cot.1")
+        _shutil_copy = shutil.copy
+        shutil.copy = copy
+
+        try:
+            result, message = self.instance.install_manpages()
+            self.assertFalse(result)
+            self.assertEqual("INSTALLATION FAILED: [Errno 13] "
+                             "Permission denied: '/usr/share/man/man1/cot.1'",
+                             message)
+        finally:
+            shutil.copy = _shutil_copy
+
+    def test_install_manpages_all_new(self):
+        """Call install_manpages to simulate installing new manpages."""
+        self.exists["/usr/share/man/man1"] = False
+        self.cmp["/usr/share/man/man1"] = False
+
+        def makedirs(*args, **kwargs):
+            pass
+        _makedirs = os.makedirs
+        os.makedirs = makedirs
+
+        def copy(*args, **kwargs):
+            pass
+        _shutil_copy = shutil.copy
+        shutil.copy = copy
+
+        try:
+            result, message = self.instance.install_manpages()
+            self.assertTrue(result)
+            self.assertEqual("installed successfully",
+                             message)
+        finally:
+            os.makedirs = _makedirs
+            shutil.copy = _shutil_copy
+
+    def test_install_manpages_update(self):
+        """Call install_manpages to simulate updating existing manpages."""
+        self.cmp["/usr/share/man/man1/cot.1"] = False
+
+        def copy(*args, **kwargs):
+            pass
+        _shutil_copy = shutil.copy
+        shutil.copy = copy
+
+        try:
+            result, message = self.instance.install_manpages()
+            self.assertTrue(result)
+            self.assertEqual("updated successfully",
+                             message)
+        finally:
+            shutil.copy = _shutil_copy
