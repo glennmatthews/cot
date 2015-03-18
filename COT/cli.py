@@ -88,7 +88,13 @@ class CLI(UI):
 
     def terminal_width(self):
         """Get the width of the terminal in columns."""
-        width = get_terminal_size().columns
+        try:
+            width = get_terminal_size().columns
+        except ValueError:
+            # sometimes seen in unit tests:
+            # ValueError: underlying buffer has been detached
+            # Easy enough to work around...
+            width = 80
         if width <= 0:
             width = 80
         return width
