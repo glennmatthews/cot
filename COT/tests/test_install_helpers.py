@@ -256,7 +256,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         try:
             result, message = self.instance.install_manpages()
             self.assertTrue(result)
-            self.assertEqual("installed successfully",
+            self.assertEqual("successfully installed to /usr/share/man",
                              message)
         finally:
             os.makedirs = _makedirs
@@ -274,7 +274,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         try:
             result, message = self.instance.install_manpages()
             self.assertTrue(result)
-            self.assertEqual("updated successfully",
+            self.assertEqual("successfully updated in /usr/share/man",
                              message)
         finally:
             shutil.copy = _shutil_copy

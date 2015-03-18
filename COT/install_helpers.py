@@ -103,8 +103,8 @@ class COTInstallHelpers(COTGenericSubmodule):
         if some_preinstalled:
             if not installed_any:
                 return True, "already installed, no updates needed"
-            return True, "updated successfully"
-        return True, "installed successfully"
+            return True, "successfully updated in /usr/share/man"
+        return True, "successfully installed to /usr/share/man"
 
     def run(self):
         """Verify all helper tools and install any that are missing."""
@@ -146,12 +146,14 @@ class COTInstallHelpers(COTGenericSubmodule):
         """
         p = parent.add_parser(
             'install-helpers',
-            help="Install third-party helper programs that COT may require",
+            help=("Install/verify COT manual pages and any third-party helper "
+                  "programs that COT may require"),
             usage=self.UI.fill_usage('install-helpers',
                                      ["--verify-only",
                                       "[--ignore-errors]"]),
             description="""
-Install third-party helper programs for COT.
+Install or verify the installation of COT manual pages and various required
+third-party helper programs for COT.
 
 * qemu-img (http://www.qemu.org/)
 * mkisofs  (http://cdrecord.org/)
@@ -203,8 +205,12 @@ install -s vmdktool /usr/local/bin/
 install vmdktool.8 /usr/local/man/man8/
     INFO: ...done
     INFO: Successfully installed 'vmdktool'
+    INFO: Copying cot-add-disk.1 to /usr/share/man/man1/cot-add-disk.1
+(...)
+    INFO: Copying cot.1 to /usr/share/man/man1/cot.1
 Results:
 -------------
+COT manpages: successfully installed to /usr/share/man
 fatdisk:      successfully installed to /usr/local/bin/fatdisk
 mkisofs:      present at /usr/bin/mkisofs
 ovftool:      INSTALLATION FAILED: No support for automated
