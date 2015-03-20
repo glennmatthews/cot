@@ -25,6 +25,7 @@ except ImportError:
 import os.path
 import sys
 from setuptools.command.bdist_egg import bdist_egg
+from setuptools.command.test import test
 
 import versioneer
 
@@ -72,7 +73,19 @@ class custom_bdist_egg(bdist_egg):
 
 cmdclass['bdist_egg'] = custom_bdist_egg
 
+
+class custom_test(test):
+    """Custom subclass for the 'test' command."""
+
+    def with_project_on_sys_path(self, func):
+        """Call build_sphinx then proceed as normal."""
+        self.run_command('build_sphinx')
+        test.with_project_on_sys_path(self, func)
+
+cmdclass['test'] = custom_test
+
 # Summary of use cases and how they lead to getting the man pages generated:
+# setup.py test --> run_command(build_sphinx)
 # setup.py sdist --sub_commands--> build_sphinx
 # setup.py bdist_egg --> run_command(build_sphinx)
 # setup.py bdist_wheel --> run_command(build) --sub_commands--> build_sphinx
