@@ -14,8 +14,8 @@
 
 """Unit test cases for the COT.xml_file.XML class."""
 
-import os.path
 import unittest
+from pkg_resources import resource_filename
 
 from COT.xml_file import XML
 
@@ -52,8 +52,7 @@ class TestXMLInstance(unittest.TestCase):
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         self.xml = XML()
-        self.xml.read_xml(os.path.join(os.path.dirname(__file__),
-                                       "input.ovf"))
+        self.xml.read_xml(resource_filename(__name__, "input.ovf"))
         super(TestXMLInstance, self).setUp()
 
     def test_find_child(self):

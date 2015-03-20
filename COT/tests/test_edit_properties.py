@@ -17,8 +17,8 @@
 """Unit test cases for COT.edit_properties.COTEditProperties class."""
 
 import logging
-import os.path
 import re
+from pkg_resources import resource_filename
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -113,8 +113,8 @@ ovf:value="hello" />
     def test_load_config_file(self):
         """Inject a sequence of properties from a config file."""
         self.instance.package = self.input_ovf
-        self.instance.config_file = os.path.join(os.path.dirname(__file__),
-                                                 "sample_cfg.txt")
+        self.instance.config_file = resource_filename(__name__,
+                                                      "sample_cfg.txt")
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -132,8 +132,8 @@ ovf:value="interface Loopback0" />
     def test_combined(self):
         """Set individual properties AND add from a config file."""
         self.instance.package = self.input_ovf
-        self.instance.config_file = os.path.join(os.path.dirname(__file__),
-                                                 "sample_cfg.txt")
+        self.instance.config_file = resource_filename(__name__,
+                                                      "sample_cfg.txt")
         self.instance.properties = ["login-password=cisco123",
                                     "enable-ssh-server=1"]
         self.instance.run()
@@ -198,8 +198,8 @@ ovf:value="interface Loopback0" />
     def test_config_file_not_supported(self):
         """Platform doesn't support literal CLI configuration."""
         self.instance.package = self.iosv_ovf
-        self.instance.config_file = os.path.join(os.path.dirname(__file__),
-                                                 "sample_cfg.txt")
+        self.instance.config_file = resource_filename(__name__,
+                                                      "sample_cfg.txt")
         self.assertRaises(NotImplementedError,
                           self.instance.run)
 

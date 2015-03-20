@@ -17,6 +17,7 @@
 """Unit test cases for COT.add_file.COTAddFile class."""
 
 import os.path
+from pkg_resources import resource_filename
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -81,8 +82,7 @@ class TestCOTAddFile(COT_UT):
     def test_overwrite_file(self):
         """Overwrite a file implicitly."""
         self.instance.package = self.input_ovf
-        self.instance.file = os.path.join(
-            os.path.dirname(__file__), 'input.iso')
+        self.instance.file = resource_filename(__name__, 'input.iso')
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_FILE)
         self.instance.finished()

@@ -31,6 +31,7 @@ import platform
 import time
 import logging
 from logging.handlers import BufferingHandler
+from pkg_resources import resource_filename
 import traceback
 try:
     import StringIO
@@ -133,8 +134,8 @@ class COT_UT(unittest.TestCase):
 
     FILE_SIZE = {}
     for filename in ['input.iso', 'input.vmdk', 'blank.vmdk']:
-        FILE_SIZE[filename] = os.path.getsize(os.path.join(
-            os.path.dirname(__file__), filename))
+        FILE_SIZE[filename] = os.path.getsize(resource_filename(__name__,
+                                                                filename))
 
     # Standard ERROR logger messages we may expect at various points:
     NONEXISTENT_FILE = {
@@ -258,30 +259,27 @@ class COT_UT(unittest.TestCase):
 
         self.start_time = time.time()
         # Set default OVF file. Individual test cases can use others
-        self.input_ovf = os.path.join(os.path.dirname(__file__), "input.ovf")
+        self.input_ovf = resource_filename(__name__, "input.ovf")
         # Alternative OVF files:
         #
         # Absolute minimal OVF descriptor needed to satisfy ovftool.
         # Please verify any changes made to this file by running
         # "ovftool --schemaValidate minimal.ovf"
-        self.minimal_ovf = os.path.join(os.path.dirname(__file__),
-                                        "minimal.ovf")
+        self.minimal_ovf = resource_filename(__name__, "minimal.ovf")
         # IOSv OVF
-        self.iosv_ovf = os.path.join(os.path.dirname(__file__), "iosv.ovf")
+        self.iosv_ovf = resource_filename(__name__, "iosv.ovf")
         # v0.9 OVF
-        self.v09_ovf = os.path.join(os.path.dirname(__file__), "v0.9.ovf")
+        self.v09_ovf = resource_filename(__name__, "v0.9.ovf")
         # v2.0 OVF from VirtualBox
-        self.v20_vbox_ovf = os.path.join(os.path.dirname(__file__),
-                                         "ubuntu.2.0.ovf")
+        self.v20_vbox_ovf = resource_filename(__name__, "ubuntu.2.0.ovf")
         # OVF with lots of custom VMware extensions
-        self.vmware_ovf = os.path.join(os.path.dirname(__file__), "vmware.ovf")
+        self.vmware_ovf = resource_filename(__name__, "vmware.ovf")
         # OVF with various odd/invalid contents
-        self.invalid_ovf = os.path.join(os.path.dirname(__file__),
-                                        "invalid.ovf")
+        self.invalid_ovf = resource_filename(__name__, "invalid.ovf")
 
         # Some canned disk images too
-        self.input_vmdk = os.path.join(os.path.dirname(__file__), "input.vmdk")
-        self.blank_vmdk = os.path.join(os.path.dirname(__file__), "blank.vmdk")
+        self.input_vmdk = resource_filename(__name__, "input.vmdk")
+        self.blank_vmdk = resource_filename(__name__, "blank.vmdk")
 
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")

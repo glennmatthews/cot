@@ -15,6 +15,7 @@
 """Unit test cases for the COT.vm_description.VMDescription class."""
 
 import os.path
+from pkg_resources import resource_filename
 try:
     import unittest2 as unittest
 except ImportError:
@@ -28,7 +29,7 @@ class TestVMDescription(unittest.TestCase):
 
     """Test cases for abstract VMDescription class."""
 
-    TEXT_FILE = os.path.join(os.path.dirname(__file__), 'sample_cfg.txt')
+    TEXT_FILE = resource_filename(__name__, 'sample_cfg.txt')
 
     def test_generic_class_apis(self):
         """Verify class APIs with generic implementations."""
