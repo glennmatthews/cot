@@ -69,6 +69,10 @@ class COTInstallHelpers(COTGenericSubmodule):
         """
         installed_any = False
         some_preinstalled = False
+        try:
+            resource_listdir("COT", "docs/man")
+        except OSError as e:
+            return False, "UNABLE TO FIND PAGES: " + str(e)
         for f in resource_listdir("COT", "docs/man"):
             # Which man section does this belong in?
             section = os.path.splitext(f)[1][1:]
