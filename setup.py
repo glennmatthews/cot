@@ -24,6 +24,7 @@ except ImportError:
 
 import os.path
 import sys
+from setuptools.command.bdist_egg import bdist_egg
 
 import versioneer
 
@@ -50,6 +51,31 @@ setup_requires = install_requires + ['sphinx>1.2.3']
 tests_require = install_requires + ['unittest2']
 
 cmdclass = versioneer.get_cmdclass()
+
+
+# Ensure that docs are generated whenever build/sdist are run
+cmdclass['build'].sub_commands.insert(0, ('build_sphinx', None))
+cmdclass['sdist'].sub_commands.insert(0, ('build_sphinx', None))
+
+
+class custom_bdist_egg(bdist_egg):
+    """Custom subclass for the 'bdist_egg' command.
+
+    This command is called automatically by 'install', but it doesn't do
+    sub_commands, so we have to subclass it instead.
+    """
+
+    def run(self):
+        """Call build_sphinx then proceed as normal."""
+        self.run_command('build_sphinx')
+        bdist_egg.run(self)
+
+cmdclass['bdist_egg'] = custom_bdist_egg
+
+# Summary of use cases and how they lead to getting the man pages generated:
+# setup.py sdist --sub_commands--> build_sphinx
+# setup.py bdist_egg --> run_command(build_sphinx)
+# setup.py bdist_wheel --> run_command(build) --sub_commands--> build_sphinx
 
 setup(
     # Package description
