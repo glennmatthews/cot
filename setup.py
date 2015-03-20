@@ -78,8 +78,10 @@ class custom_test(test):
     """Custom subclass for the 'test' command."""
 
     def with_project_on_sys_path(self, func):
-        """Call build_sphinx then proceed as normal."""
-        self.run_command('build_sphinx')
+        """Make sure docs were built, then proceed as normal."""
+        if not os.path.exists(os.path.join(os.path.dirname(__file__),
+                                           "COT/docs/man")):
+            self.run_command('build_sphinx')
         test.with_project_on_sys_path(self, func)
 
 cmdclass['test'] = custom_test
