@@ -2,6 +2,7 @@ Using COT
 =========
 
 .. toctree::
+  :maxdepth: 1
 
   usage_general.rst
   usage_install_helpers.rst
