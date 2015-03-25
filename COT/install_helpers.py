@@ -21,6 +21,7 @@ import filecmp
 import logging
 import os
 import shutil
+import sys
 import textwrap
 from pkg_resources import resource_listdir, resource_filename
 
@@ -73,10 +74,26 @@ class COTInstallHelpers(COTGenericSubmodule):
             resource_listdir("COT", "docs/man")
         except OSError as e:
             return False, "UNABLE TO FIND PAGES: " + str(e)
+
+        # If COT is installed in /foo/bar/bin/cot, man pages go in /foo/bar/man
+        bin_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        logger.debug("invoked from directory: {0}".format(sys.argv[0]))
+        if os.path.basename(bin_dir) == 'bin':
+            man_dir = os.path.join(os.path.dirname(bin_dir), "man")
+            logger.verbose("program install directory {0} matches 'bin', "
+                           "so assume relative man path {1}"
+                           .format(bin_dir, man_dir))
+        else:
+            man_dir = "/usr/local/man"
+            logger.verbose("program install directory {0} does not appear "
+                           "to be 'bin', assuming system install path {0}"
+                           .format(man_dir))
+
         for f in resource_listdir("COT", "docs/man"):
+            src_path = resource_filename("COT", os.path.join("docs/man", f))
             # Which man section does this belong in?
             section = os.path.splitext(f)[1][1:]
-            dest = "/usr/share/man/man{0}/".format(section)
+            dest = os.path.join(man_dir, "man{0}".format(section))
             if not os.path.exists(dest):
                 if self.verify_only:
                     return True, "DIRECTORY NOT FOUND: {0}".format(dest)
@@ -85,7 +102,7 @@ class COTInstallHelpers(COTGenericSubmodule):
                     os.makedirs(dest)
                 except OSError as e:
                     return False, "INSTALLATION FAILED: " + str(e)
-            src_path = resource_filename("COT", os.path.join("docs/man", f))
+
             dest_path = os.path.join(dest, f)
             if os.path.exists(dest_path):
                 some_preinstalled = True
@@ -107,8 +124,8 @@ class COTInstallHelpers(COTGenericSubmodule):
         if some_preinstalled:
             if not installed_any:
                 return True, "already installed, no updates needed"
-            return True, "successfully updated in /usr/share/man"
-        return True, "successfully installed to /usr/share/man"
+            return True, "successfully updated in {0}".format(man_dir)
+        return True, "successfully installed to {0}".format(man_dir)
 
     def run(self):
         """Verify all helper tools and install any that are missing."""
