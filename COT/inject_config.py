@@ -186,13 +186,14 @@ class COTInjectConfig(COTSubmodule):
             diskname=None,
         )
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('inject-config', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'inject-config',
@@ -219,4 +220,4 @@ class COTInjectConfig(COTSubmodule):
                        help="""Package, OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
 
-        return 'inject-config', p
+        storage['inject-config'] = p

@@ -16,11 +16,19 @@
 
 """Unit test cases for the COT.cli.CLI class and related functionality."""
 
+from __future__ import print_function
+
 import logging
 import os
 import os.path
 import sys
 
+try:
+    import StringIO
+except ImportError:
+    import io as StringIO
+
+from COT import __version_long__
 from COT.tests.ut import COT_UT
 from COT.cli import CLI
 from COT.data_validation import InvalidInputError
@@ -32,7 +40,8 @@ class TestCOTCLI(COT_UT):
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
-        self.cli = CLI()
+        self.cli = CLI(terminal_width=80)
+        self.maxDiff = None
         super(TestCOTCLI, self).setUp()
 
     def tearDown(self):
@@ -49,7 +58,11 @@ class TestCOTCLI(COT_UT):
         super(TestCOTCLI, self).tearDown()
 
     def call_cot(self, argv, result=0, fixup_args=True):
-        """Invoke COT CLI, suppressing stdout and stderr, and return the rc."""
+        """Invoke COT CLI, capturing stdout and stderr, and check the rc.
+
+        In the case of an incorrect rc, the test will fail.
+        Otherwise, will return the combined stdout/stderr.
+        """
         rc = -1
         if fixup_args:
             argv = ['--quiet'] + argv
@@ -59,21 +72,26 @@ class TestCOTCLI(COT_UT):
         try:
             with open(os.devnull, 'w') as devnull:
                 sys.stdin = devnull
-                sys.stdout = devnull
-                sys.stderr = devnull
+                sys.stdout = StringIO.StringIO()
+                sys.stderr = sys.stdout
                 rc = self.cli.run(argv)
         except SystemExit as se:
             rc = se.code
             try:
                 rc = int(rc)
-            except TypeError:
+            except (TypeError, ValueError):
+                print(rc, file=sys.stderr)
                 rc = 1
         finally:
             sys.stdin = _si
+            stdout = sys.stdout.getvalue()
             sys.stdout = _so
             sys.stderr = _se
 
-        self.assertEqual(rc, result)
+        self.assertEqual(rc, result,
+                         "\nargv: {0}\nstdout:\n{1}"
+                         .format(" ".join(argv), stdout))
+        return stdout
 
 
 class TestCLIModule(TestCOTCLI):
@@ -83,12 +101,6 @@ class TestCLIModule(TestCOTCLI):
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         super(TestCLIModule, self).setUp()
-        self.TERMINAL_WIDTH = 80
-
-        def magic_width():
-            return self.TERMINAL_WIDTH
-
-        self.cli.terminal_width = magic_width
 
     def test_apis_without_force(self):
         """Test confirm, confirm_or_die, etc. without --force option."""
@@ -159,7 +171,7 @@ class TestCLIModule(TestCOTCLI):
                  "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
                  "PACKAGE [-o OUTPUT]"]
 
-        self.TERMINAL_WIDTH = 100
+        self.cli._terminal_width = 100
         self.assertMultiLineEqual(
             self.cli.fill_usage("edit-properties", usage), """
   cot edit-properties --help
@@ -168,7 +180,7 @@ class TestCLIModule(TestCOTCLI):
   cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
   cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
 
-        self.TERMINAL_WIDTH = 80
+        self.cli._terminal_width = 80
         self.assertMultiLineEqual(
             self.cli.fill_usage("edit-properties", usage), """
   cot edit-properties --help
@@ -177,7 +189,7 @@ class TestCLIModule(TestCOTCLI):
   cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
   cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
 
-        self.TERMINAL_WIDTH = 60
+        self.cli._terminal_width = 60
         self.assertMultiLineEqual(
             self.cli.fill_usage("edit-properties", usage), """
   cot edit-properties --help
@@ -187,7 +199,7 @@ class TestCLIModule(TestCOTCLI):
                              [-o OUTPUT]
   cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
 
-        self.TERMINAL_WIDTH = 40
+        self.cli._terminal_width = 40
         self.assertMultiLineEqual(
             self.cli.fill_usage("edit-properties", usage), """
   cot edit-properties --help
@@ -212,7 +224,7 @@ class TestCLIModule(TestCOTCLI):
              'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB'),
         ]
 
-        self.TERMINAL_WIDTH = 100
+        self.cli._terminal_width = 100
         self.assertMultiLineEqual("""\
 Examples:
   Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin, \
@@ -229,7 +241,7 @@ foo.ova.
     cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB""",
                                   self.cli.fill_examples(examples))
 
-        self.TERMINAL_WIDTH = 80
+        self.cli._terminal_width = 80
         self.assertMultiLineEqual("""\
 Examples:
   Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
@@ -245,7 +257,7 @@ the
     cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB""",
                                   self.cli.fill_examples(examples))
 
-        self.TERMINAL_WIDTH = 60
+        self.cli._terminal_width = 60
         self.assertMultiLineEqual("""\
 Examples:
   Deploy to vSphere/ESXi server 192.0.2.100 with
@@ -263,7 +275,7 @@ Examples:
     cot deploy foo.ova esxi 192.0.2.100 -u admin \\
         -c 1CPU-2.5GB""", self.cli.fill_examples(examples),)
 
-        self.TERMINAL_WIDTH = 40
+        self.cli._terminal_width = 40
         self.assertMultiLineEqual("""\
 Examples:
   Deploy to vSphere/ESXi server
@@ -294,8 +306,50 @@ class TestCLIGeneral(TestCOTCLI):
 
     def test_help(self):
         """Verify help menu for cot."""
-        self.call_cot(['-h'])
-        self.call_cot(['--help'])
+        o1 = self.call_cot(['-h'])
+        o2 = self.call_cot(['--help'])
+        self.assertMultiLineEqual(o1, o2)
+        self.assertMultiLineEqual("""
+usage: 
+  cot --help
+  cot --version
+  cot help <command>
+  cot <command> --help
+  cot <options> <command> <command-options>
+
+{0}
+A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
+with a focus on virtualized network appliances such as the Cisco CSR 1000V and
+Cisco IOS XRv platforms.
+
+optional arguments:
+  -h, --help        show this help message and exit
+  -V, --version     show program's version number and exit
+  -f, --force       Perform requested actions without prompting for
+                    confirmation
+  -q, --quiet       Quiet output and logging (warnings and errors only)
+  -v, --verbose     Verbose output and logging
+  -d, -vv, --debug  Debug (most verbose) output and logging
+
+commands:
+  <command>
+    add-disk        Add a disk image to an OVF package and map it as a disk in
+                    the guest environment
+    add-file        Add a file to an OVF package
+    deploy          Create a new VM on the target hypervisor from the given
+                    OVF or OVA
+    edit-hardware   Edit virtual machine hardware properties of an OVF
+    edit-product    Edit product info in an OVF
+    edit-properties
+                    Edit environment properties of an OVF
+    help            Print help for a command
+    info            Generate a description of an OVF package
+    inject-config   Inject a configuration file into an OVF package
+    install-helpers
+                    Install/verify COT manual pages and any third-party helper
+                    programs that COT may require
+        """.format(__version_long__)  # noqa - trailing whitespace above is OK
+                                  .strip(), o1.strip())
 
     def test_version(self):
         """Verify --version command."""

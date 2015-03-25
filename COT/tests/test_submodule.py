@@ -40,9 +40,9 @@ class TestCOTSubmodule(COT_UT):
 
     def test_create_subparser_noop(self):
         """The generic class doesn't create a subparser."""
-        label, subparser = self.instance.create_subparser(None)
-        self.assertEqual(label, "")
-        self.assertEqual(subparser, None)
+        subparser_lookup = {}
+        self.instance.create_subparser(None, subparser_lookup)
+        self.assertEqual({}, subparser_lookup)
 
     def test_set_output_implicitly(self):
         """If 'output' is not specifically set, run() sets it to 'package'."""

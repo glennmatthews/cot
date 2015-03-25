@@ -67,7 +67,7 @@ class CLI(UI):
       terminal_width
     """
 
-    def __init__(self):
+    def __init__(self, terminal_width=None):
         """Create CLI handler instance."""
         super(CLI, self).__init__(force=True)
         # In python 2.7, we want raw_input, but in python 3 we want input.
@@ -78,7 +78,8 @@ class CLI(UI):
         self.getpass = getpass.getpass
         self.handler = None
         self.master_logger = None
-        self.wrapper = textwrap.TextWrapper(width=self.terminal_width() - 1)
+        self._terminal_width = terminal_width
+        self.wrapper = textwrap.TextWrapper(width=self.terminal_width - 1)
 
         self.create_parser()
         self.create_subparsers()
@@ -86,18 +87,20 @@ class CLI(UI):
         import COT.helpers.helper
         COT.helpers.helper.confirm = self.confirm
 
+    @property
     def terminal_width(self):
-        """Get the width of the terminal in columns."""
-        try:
-            width = get_terminal_size().columns
-        except ValueError:
-            # sometimes seen in unit tests:
-            # ValueError: underlying buffer has been detached
-            # Easy enough to work around...
-            width = 80
-        if width <= 0:
-            width = 80
-        return width
+        """The width of the terminal in columns."""
+        if self._terminal_width is None:
+            try:
+                self._terminal_width = get_terminal_size().columns
+            except ValueError:
+                # sometimes seen in unit tests:
+                # ValueError: underlying buffer has been detached
+                # Easy enough to work around...
+                self._terminal_width = 80
+            if self._terminal_width <= 0:
+                self._terminal_width = 80
+        return self._terminal_width
 
     def fill_usage(self, subcommand, usage_list):
         """Pretty-print a list of usage strings for a COT subcommand.
@@ -135,7 +138,7 @@ class CLI(UI):
           -\S+\s+\S+ |  # Dashed arg followed by metavar
           \S+           # Positional arg
         """, re.VERBOSE)
-        width = self.terminal_width()
+        width = self.terminal_width
         for line in usage_list:
             usage_groups = re.findall(splitter, line)
 
@@ -212,7 +215,7 @@ class CLI(UI):
           -\S+[ =]".*?" |  # Dashed arg followed by quoted value
           \S+              # Positional arg
         """, re.VERBOSE)
-        width = self.terminal_width()
+        width = self.terminal_width
         self.wrapper.width = width - 1
         self.wrapper.initial_indent = '  '
         self.wrapper.subsequent_indent = '  '
@@ -313,7 +316,7 @@ class CLI(UI):
 
         # Wrap prompt to screen
         prompt_w = []
-        self.wrapper.width = self.terminal_width() - 1
+        self.wrapper.width = self.terminal_width - 1
         self.wrapper.initial_indent = ''
         self.wrapper.subsequent_indent = ''
         self.wrapper.break_on_hyphens = False
@@ -374,8 +377,8 @@ class CLI(UI):
         """
         # Argparse checks the environment variable COLUMNS to control
         # its line-wrapping
-        os.environ['COLUMNS'] = str(self.terminal_width())
-        self.wrapper.width = self.terminal_width() - 1
+        os.environ['COLUMNS'] = str(self.terminal_width)
+        self.wrapper.width = self.terminal_width - 1
         self.wrapper.initial_indent = ''
         self.wrapper.subsequent_indent = ''
         parser = argparse.ArgumentParser(
@@ -454,8 +457,10 @@ class CLI(UI):
                 COTInjectConfig,
                 COTInstallHelpers,
         ]:
-            name, subparser = klass(self).create_subparser(self.subparsers)
-            self.subparser_lookup[name] = subparser
+            instance = klass(self)
+            # the subparser stores a reference to the instance (args.instance)
+            # so we don't need to persist it here...
+            instance.create_subparser(self.subparsers, self.subparser_lookup)
 
     def parse_args(self, argv):
         """Parse the given CLI arguments into a namespace object.

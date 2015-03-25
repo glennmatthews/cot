@@ -66,13 +66,14 @@ class COTHelp(COTGenericSubmodule):
         else:
             self.UI.parser.print_help()
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :func:`ArgumentParser.add_subparsers`
 
-        :returns: ``('help', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'help',
@@ -86,4 +87,4 @@ class COTHelp(COTGenericSubmodule):
 
         p.set_defaults(instance=self)
 
-        return 'help', p
+        storage['help'] = p

@@ -62,6 +62,14 @@ class TestCOTDeploy(COT_UT):
             self.instance.configuration = ""
         with self.assertRaises(InvalidInputError):
             self.instance.configuration = "X"
+        with self.assertRaises(InvalidInputError):
+            self.instance.network_map = [""]
+        with self.assertRaises(InvalidInputError):
+            self.instance.network_map = ["foo"]
+        with self.assertRaises(InvalidInputError):
+            self.instance.network_map = ["=bar"]
+        with self.assertRaises(InvalidInputError):
+            self.instance.network_map = ["foo="]
 
 
 class TestCOTDeployESXi(COT_UT):

@@ -14,3 +14,4 @@ Using COT
   usage_edit_properties.rst
   usage_inject_config.rst
   usage_deploy.rst
+  usage_deploy_esxi.rst

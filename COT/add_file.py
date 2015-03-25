@@ -102,13 +102,14 @@ class COTAddFile(COTSubmodule):
 
         vm.add_file(self.file, self.file_id, file)
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('add-file', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'add-file',
@@ -133,4 +134,4 @@ create a new file entry.""")
                        help="""Package, OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
 
-        return 'add-file', p
+        storage['add-file'] = p

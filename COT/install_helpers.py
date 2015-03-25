@@ -131,7 +131,7 @@ class COTInstallHelpers(COTGenericSubmodule):
 
         print("Results:")
         print("-------------")
-        wrapper = textwrap.TextWrapper(width=self.UI.terminal_width(),
+        wrapper = textwrap.TextWrapper(width=self.UI.terminal_width,
                                        initial_indent="",
                                        subsequent_indent=(" " * 14))
         for k in sorted(results.keys()):
@@ -140,13 +140,14 @@ class COTInstallHelpers(COTGenericSubmodule):
         if not result and not self.ignore_errors:
             raise EnvironmentError(1, "Unable to install some helpers")
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('install-helpers', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'install-helpers',
@@ -244,4 +245,4 @@ Unable to install some helpers""".strip())]),
 
         p.set_defaults(instance=self)
 
-        return 'install-helpers', p
+        storage['install-helpers'] = p

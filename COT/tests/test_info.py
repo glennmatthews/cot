@@ -627,10 +627,8 @@ Properties:
 
     def test_wrapping(self):
         """Test info string on a narrower-than-usual terminal."""
-        def narrow_width():
-            return 60
 
-        self.instance.UI.terminal_width = narrow_width
+        self.instance.UI._terminal_width = 60
 
         self.instance.package_list = [self.invalid_ovf]
         self.check_cot_output("""

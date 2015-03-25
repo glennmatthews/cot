@@ -308,13 +308,14 @@ class COTEditHardware(COTSubmodule):
         if self.ide_subtype is not None:
             vm.set_ide_subtype(self.ide_subtype, self.profiles)
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('edit-hardware', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'edit-hardware', add_help=False,
@@ -428,4 +429,4 @@ class COTEditHardware(COTSubmodule):
                        help="OVF descriptor or OVA file to edit")
         p.set_defaults(instance=self)
 
-        return 'edit-hardware', p
+        storage['edit-hardware'] = p
