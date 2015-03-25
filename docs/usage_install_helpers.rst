@@ -15,3 +15,10 @@ Verifying and installing helper programs with ``cot install-helpers``
   for you at present.
 
 .. _ovftool: https://www.vmware.com/support/developer/ovf/
+
+.. only:: man
+
+   See also
+   --------
+
+   **cot**\(1), **qemu-img**\(1), **mkisofs**\(8), **vmdktool**\(8)
