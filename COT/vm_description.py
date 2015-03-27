@@ -473,7 +473,17 @@ class VMDescription(object):
     def set_nic_names(self, name_list, profile_list):
         """Set the device names for NICs under the given profile(s).
 
-        TODO: document magic expansion syntax here
+        Since NICs are often named sequentially, this API supports a wildcard
+        option for the final element in :attr:`name_list` which can be
+        expanded to automatically assign sequential NIC names.
+        The syntax for the wildcard option is ``{`` followed by a number
+        (indicating the starting index for the name) followed by ``}``.
+        Examples:
+
+        ``["eth{0}"]``
+          Expands to ``["eth0", "eth1", "eth2", ...]``
+        ``["mgmt0" "eth{10}"]``
+          Expands to ``["mgmt0", "eth10", "eth11", "eth12", ...]``
 
         :param list name_list: List of names to assign.
         :param list profile_list: Change only the given profiles
