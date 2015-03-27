@@ -20,6 +20,7 @@ import contextlib
 import os
 import logging
 import sys
+from requests.exceptions import ConnectionError
 
 from COT.tests.ut import COT_UT
 import COT.helpers.helper
@@ -176,18 +177,23 @@ class HelperGenericTest(HelperUT):
         """Validate the download_and_expand() context_manager."""
         # Remove our stub for this test only
         Helper.download_and_expand = self._download_and_expand
-        with Helper.download_and_expand(
-            "http://github.com/glennmatthews/cot/archive/master.tar.gz"
-        ) as directory:
-            self.assertTrue(os.path.exists(directory))
-            self.assertTrue(os.path.exists(
-                os.path.join(directory, "cot-master")))
-            self.assertTrue(os.path.exists(
-                os.path.join(directory, "cot-master", "COT")))
-            self.assertTrue(os.path.exists(
-                os.path.join(directory, "cot-master", "COT", "tests")))
-            self.assertTrue(os.path.exists(
-                os.path.join(directory, "cot-master", "COT", "tests", "ut.py")
-            ))
-        # Temporary directory should be cleaned up when done
-        self.assertFalse(os.path.exists(directory))
+        try:
+            with Helper.download_and_expand(
+                "https://github.com/glennmatthews/cot/archive/master.tar.gz"
+            ) as directory:
+                self.assertTrue(os.path.exists(directory))
+                self.assertTrue(os.path.exists(
+                    os.path.join(directory, "cot-master")))
+                self.assertTrue(os.path.exists(
+                    os.path.join(directory, "cot-master", "COT")))
+                self.assertTrue(os.path.exists(
+                    os.path.join(directory, "cot-master", "COT", "tests")))
+                self.assertTrue(os.path.exists(
+                    os.path.join(directory, "cot-master", "COT", "tests",
+                                 "ut.py")))
+        except ConnectionError:
+            # unable to connect to github - might be an isolated environment
+            self.fail("ConnectionError when trying to download from GitHub")
+        finally:
+            # Temporary directory should be cleaned up when done
+            self.assertFalse(os.path.exists(directory))
