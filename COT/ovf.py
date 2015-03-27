@@ -57,7 +57,7 @@ from .xml_file import XML
 from .vm_description import VMDescription, VMInitError
 from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
-from .helper_tools import get_checksum, get_disk_capacity, convert_disk_image
+from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
 import COT.platforms as Platform
 
 logger = logging.getLogger(__name__)
@@ -358,15 +358,6 @@ class OVF(VMDescription, XML):
         except Exception as e:
             self.destroy()
             raise
-
-    @property
-    def input_file(self):
-        """Data file to read in."""
-        return self._input_file
-
-    @input_file.setter
-    def input_file(self, value):
-        self._input_file = value
 
     @property
     def output_file(self):
@@ -1204,7 +1195,17 @@ class OVF(VMDescription, XML):
     def set_nic_names(self, name_list, profile_list):
         """Set the device names for NICs under the given profile(s).
 
-        TODO: document magic expansion syntax here
+        Since NICs are often named sequentially, this API supports a wildcard
+        option for the final element in :attr:`name_list` which can be
+        expanded to automatically assign sequential NIC names.
+        The syntax for the wildcard option is ``{`` followed by a number
+        (indicating the starting index for the name) followed by ``}``.
+        Examples:
+
+        ``["eth{0}"]``
+          ``Expands to ["eth0", "eth1", "eth2", ...]``
+        ``["mgmt0" "eth{10}"]``
+          ``Expands to ["mgmt0", "eth10", "eth11", "eth12", ...]``
 
         :param list name_list: List of names to assign.
         :param list profile_list: Change only the given profiles

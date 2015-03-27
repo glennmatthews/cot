@@ -90,17 +90,18 @@ class COTInfo(COTGenericSubmodule):
             if not first:
                 print("")
             with VMContextManager(package, None) as vm:
-                print(vm.info_string(self.UI.terminal_width() - 1,
+                print(vm.info_string(self.UI.terminal_width - 1,
                                      self.verbosity))
             first = False
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('info', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'info',
@@ -128,4 +129,4 @@ Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
                        help="OVF descriptor(s) and/or OVA file(s) to describe")
         p.set_defaults(instance=self)
 
-        return 'info', p
+        storage['info'] = p

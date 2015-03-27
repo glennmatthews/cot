@@ -39,6 +39,7 @@ Command modules
   COT.help
   COT.info
   COT.inject_config
+  COT.install_helpers
 
 Helper library modules
 ----------------------
@@ -46,7 +47,6 @@ Helper library modules
   :toctree:
 
   COT.data_validation
-  COT.helper_tools
   COT.platforms
 
 User interface modules
@@ -56,7 +56,6 @@ User interface modules
 
   COT.ui_shared
   COT.cli
-
 """
 
 from ._version import get_versions

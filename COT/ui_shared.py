@@ -42,10 +42,14 @@ class UI(object):
         """
         self.default_confirm_response = True
         """Knob for API testing, sets the default response to confirm()."""
+        self._terminal_width = 80
+        import COT.helpers.helper
+        COT.helpers.helper.confirm = self.confirm
 
+    @property
     def terminal_width(self):
         """Get the width of the terminal in columns."""
-        return 80
+        return self._terminal_width
 
     def fill_usage(self, subcommand, usage_list):
         """Pretty-print a list of usage strings.
@@ -53,7 +57,7 @@ class UI(object):
         :param str subcommand: Subcommand name/keyword
         :param list usage_list: List of usage strings for this subcommand.
         :returns: String containing all usage strings, each appropriately
-            wrapped to the :func:`terminal_width` value.
+            wrapped to the :attr:`terminal_width` value.
         """
         return "\n".join(["{0} {1}".format(subcommand, usage)
                           for usage in usage_list])

@@ -1,77 +1,94 @@
 Installing COT
 ==============
 
+.. contents::
+  :local:
+
 System requirements
 -------------------
 
-* COT requires either Python 2.7 or Python 3.2 or later.
+* COT requires either Python 2.7 or Python 3.3 or later.
 * COT is tested to work under Mac OS X and Ubuntu Linux and similar distros.
 * COT now has limited support for CentOS and Python 2.6 as well.
-* Certain COT features require helper programs - these will typically be
-  installed automatically when installing COT:
 
-  * COT uses `qemu-img`_ as a helper program for various operations involving
-    the creation, inspection, and modification of hard disk image files
-    packaged in an OVF.
-  * The ``cot add-disk`` command requires either `qemu-img`_ (version 2.1 or
-    later) or vmdktool_ as a helper program when adding hard disks to an OVF.
-  * The ``cot inject-config`` command requires mkisofs_ to create ISO
-    (CD-ROM) images and/or `fatdisk`_ to create hard disk images.
-  * The ``cot deploy ... esxi`` command requires ovftool_ to communicate
-    with an ESXi server. If ovftool is installed, COT's automated unit tests
-    will also make use of ovftool to perform additional verification that
-    OVFs and OVAs created by COT align with VMware's expectations for these
-    file types.
+On Mac OS X you can install COT from MacPorts_, or you can install it manually
+by following the same steps as Linux, described below.
 
-Mac OS X installation
----------------------
+Download COT
+------------
 
-The recommended installation method on Mac OS X is to use MacPorts_.
-Once you have MacPorts set up on your system, all you have to do is:
-
-::
-
-  sudo port install cot
-
-Optionally, download ovftool_ from VMware and install it.
-(VMware requires a site login to download ovftool,
-which is the only reason I haven't automated this too...)
-
-Linux installation
-------------------
-
-The simplest installation path (assuming you have Python 2.6 or later and
-Git installed already) is as follows:
+You can download COT via Git or using HTTP.
 
 ::
 
   git clone git://github.com/glennmatthews/cot
   cd cot
-  python ./setup.py build
-  sudo python ./setup.py install
 
-If you can't install or use Git for whatever reason, you can download via HTTP
-instead:
+or
 
 ::
 
   wget -O cot.tgz https://github.com/glennmatthews/cot/archive/master.tar.gz
   tar zxf cot.tgz
   cd cot-master
-  python setup.py build
+
+or
+
+::
+
+  curl -o cot.tgz https://github.com/glennmatthews/cot/archive/master.tar.gz
+  tar zxf cot.tgz
+  cd cot-master
+
+Install the COT libraries and script
+------------------------------------
+
+::
+
   sudo python setup.py install
 
-The specifics may vary depending on your Linux distribution, of course.
-For more details, see :doc:`installation_linux`.
+Install helper programs
+-----------------------
 
-.. toctree::
-  :hidden:
+Certain COT features require helper programs - you can install these as part
+of the COT installation process, or they can be installed as-needed by COT:
 
-  installation_linux
+* COT uses `qemu-img`_ as a helper program for various operations involving
+  the creation, inspection, and modification of hard disk image files
+  packaged in an OVF.
+* The ``cot add-disk`` command requires either `qemu-img`_ (version 2.1 or
+  later) or vmdktool_ as a helper program when adding hard disks to an OVF.
+* The ``cot inject-config`` command requires mkisofs_ (or its fork
+  ``genisoimage``) to create ISO (CD-ROM) images for platforms that use ISOs.
+* Similarly, for platforms using hard disks for bootstrap configuration,
+  ``cot inject-config`` requires `fatdisk`_ to format hard disk images.
+* The ``cot deploy ... esxi`` command requires ovftool_ to communicate
+  with an ESXi server. If ovftool is installed, COT's automated unit tests
+  will also make use of ovftool to perform additional verification that
+  OVFs and OVAs created by COT align with VMware's expectations for these
+  file types.
 
-Optionally, download ovftool_ from VMware and install it.
-(VMware requires a site login to download ovftool,
-which is the only reason I haven't automated this too...)
+COT can attempt to install these tools using the appropriate package manager
+for your platform (i.e., MacPorts_ for Mac OS X, and either ``apt-get`` or
+``yum`` for Linux).
+
+.. warning::
+  Unfortunately, VMware requires a site login to download ovftool_, so if you
+  need this tool, you will have to install it yourself. COT cannot install it
+  for you at present.
+
+To let COT attempt to pre-install all of the above helpers, you can optionally
+run:
+
+::
+
+  cot install-helpers
+
+See :doc:`here <usage_install_helpers>` for more details.
+
+If you skip this step, then when you are running COT, and it encounters the
+need for a helper that has not been installed, COT will prompt you to allow it
+to install the helper in question.
 
 .. _qemu-img: http://www.qemu.org
 .. _vmdktool: http://www.freshports.org/sysutils/vmdktool/

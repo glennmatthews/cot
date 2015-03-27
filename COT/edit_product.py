@@ -85,13 +85,14 @@ class COTEditProduct(COTSubmodule):
         if self.full_version is not None:
             self.vm.version_long = self.full_version
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('edit-product', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'edit-product',
@@ -115,4 +116,4 @@ Edit product information attributes of the given OVF or OVA""")
                        help="""OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
 
-        return 'edit-product', p
+        storage['edit-product'] = p

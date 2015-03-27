@@ -67,7 +67,7 @@ class CLI(UI):
       terminal_width
     """
 
-    def __init__(self):
+    def __init__(self, terminal_width=None):
         """Create CLI handler instance."""
         super(CLI, self).__init__(force=True)
         # In python 2.7, we want raw_input, but in python 3 we want input.
@@ -78,14 +78,29 @@ class CLI(UI):
         self.getpass = getpass.getpass
         self.handler = None
         self.master_logger = None
-        self.wrapper = textwrap.TextWrapper(width=self.terminal_width() - 1)
+        self._terminal_width = terminal_width
+        self.wrapper = textwrap.TextWrapper(width=self.terminal_width - 1)
 
         self.create_parser()
         self.create_subparsers()
 
+        import COT.helpers.helper
+        COT.helpers.helper.confirm = self.confirm
+
+    @property
     def terminal_width(self):
-        """Get the width of the terminal in columns."""
-        return get_terminal_size().columns
+        """The width of the terminal in columns."""
+        if self._terminal_width is None:
+            try:
+                self._terminal_width = get_terminal_size().columns
+            except ValueError:
+                # sometimes seen in unit tests:
+                # ValueError: underlying buffer has been detached
+                # Easy enough to work around...
+                self._terminal_width = 80
+            if self._terminal_width <= 0:
+                self._terminal_width = 80
+        return self._terminal_width
 
     def fill_usage(self, subcommand, usage_list):
         """Pretty-print a list of usage strings for a COT subcommand.
@@ -123,7 +138,7 @@ class CLI(UI):
           -\S+\s+\S+ |  # Dashed arg followed by metavar
           \S+           # Positional arg
         """, re.VERBOSE)
-        width = self.terminal_width()
+        width = self.terminal_width
         for line in usage_list:
             usage_groups = re.findall(splitter, line)
 
@@ -162,30 +177,29 @@ class CLI(UI):
         ::
 
           >>> fill_examples([
-          ...    ('cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
-          ...     ' -n test_vm',
-          ...     "Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
-          ...     " admin/admin, creating a VM named 'test_vm' from foo.ova."),
-          ...    ('cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB',
-          ...     "Deploy to vSphere/ESXi server 192.0.2.100, with username"
+          ...    ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+          ...     " admin/admin, creating a VM named 'test_vm' from foo.ova.",
+          ...     'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
+          ...     ' -n test_vm'),
+          ...    ("Deploy to vSphere/ESXi server 192.0.2.100, with username"
           ...     " admin (prompting the user to input a password at runtime),"
-          ...     " creating a VM based on profile '1CPU-2.5GB' in foo.ova.")
+          ...     " creating a VM based on profile '1CPU-2.5GB' in foo.ova.",
+          ...     'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB')
           ... ])
           Examples:
-            cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
+            Deploy to vSphere/ESXi server 192.0.2.100 with credentials
+            admin/admin, creating a VM named 'test_vm' from foo.ova.
+
+              cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
                   -n test_vm
-              Deploy to vSphere/ESXi server 192.0.2.100 with
-              credentials admin/admin, creating a VM named 'test_vm'
-              from foo.ova.
 
-            cot deploy foo.ova esxi 192.0.2.100 -u admin \
-                  -c 1CPU-2.5GB
-              Deploy to vSphere/ESXi server 192.0.2.100, with
-              username admin (prompting the user to input a password
-              at runtime), creating a VM based on profile
-              '1CPU-2.5GB' in foo.ova.
+            Deploy to vSphere/ESXi server 192.0.2.100, with username admin
+            (prompting the user to input a password at runtime), creating a VM
+            based on profile '1CPU-2.5GB' in foo.ova.
 
-        :param list example_list: List of (cli_example, example_description)
+              cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
+
+        :param list example_list: List of (description, CLI example)
             tuples.
 
         :return: Examples wrapped appropriately to the :func:`terminal_width`
@@ -201,23 +215,30 @@ class CLI(UI):
           -\S+[ =]".*?" |  # Dashed arg followed by quoted value
           \S+              # Positional arg
         """, re.VERBOSE)
-        width = self.terminal_width()
+        width = self.terminal_width
         self.wrapper.width = width - 1
-        self.wrapper.initial_indent = '    '
-        self.wrapper.subsequent_indent = '    '
+        self.wrapper.initial_indent = '  '
+        self.wrapper.subsequent_indent = '  '
         self.wrapper.break_on_hyphens = False
-        for (example, desc) in example_list:
+        for (desc, example) in example_list:
             if len(output_lines) > 1:
                 output_lines.append("")
-            wrapped_line = " "
-            for param in re.findall(splitter, example):
-                if len(wrapped_line) + len(param) >= (width - 2):
-                    wrapped_line += " \\"
-                    output_lines.append(wrapped_line)
-                    wrapped_line = "       "
-                wrapped_line += " " + param
-            output_lines.append(wrapped_line)
             output_lines.extend(self.wrapper.wrap(desc))
+            output_lines.append("")
+            example_lines = example.splitlines()
+            if len(example_lines) > 1:
+                # Don't wrap multiline examples, just indent
+                for line in example_lines:
+                    output_lines.append("    "+line)
+            else:
+                wrapped_line = "   "
+                for param in re.findall(splitter, example):
+                    if len(wrapped_line) + len(param) >= (width - 4):
+                        wrapped_line += " \\"
+                        output_lines.append(wrapped_line)
+                        wrapped_line = "       "
+                    wrapped_line += " " + param
+                output_lines.append(wrapped_line)
         return "\n".join(output_lines)
 
     def formatter(self, verbosity=logging.INFO):
@@ -295,7 +316,7 @@ class CLI(UI):
 
         # Wrap prompt to screen
         prompt_w = []
-        self.wrapper.width = self.terminal_width() - 1
+        self.wrapper.width = self.terminal_width - 1
         self.wrapper.initial_indent = ''
         self.wrapper.subsequent_indent = ''
         self.wrapper.break_on_hyphens = False
@@ -356,8 +377,8 @@ class CLI(UI):
         """
         # Argparse checks the environment variable COLUMNS to control
         # its line-wrapping
-        os.environ['COLUMNS'] = str(self.terminal_width())
-        self.wrapper.width = self.terminal_width() - 1
+        os.environ['COLUMNS'] = str(self.terminal_width)
+        self.wrapper.width = self.terminal_width - 1
         self.wrapper.initial_indent = ''
         self.wrapper.subsequent_indent = ''
         parser = argparse.ArgumentParser(
@@ -373,14 +394,6 @@ class CLI(UI):
                 "virtual appliances, with a focus on virtualized network "
                 "appliances such as the Cisco CSR 1000V and Cisco IOS XRv "
                 "platforms.")),
-            epilog=("""
-Note: some subcommands rely on external software tools, including:
-* qemu-img (http://www.qemu.org/)
-* mkisofs  (http://cdrecord.org/)
-* ovftool  (https://www.vmware.com/support/developer/ovf/)
-* fatdisk  (http://github.com/goblinhack/fatdisk)
-* vmdktool (http://www.freshports.org/sysutils/vmdktool/)
-"""),
             formatter_class=argparse.RawDescriptionHelpFormatter)
 
         parser.add_argument('-V', '--version', action='version',
@@ -401,7 +414,7 @@ Note: some subcommands rely on external software tools, including:
             action='store_const', const=logging.VERBOSE,
             help="Verbose output and logging")
         debug_group.add_argument(
-            '-vv', '-d', '--debug', dest='_verbosity',
+            '-d', '-vv', '--debug', dest='_verbosity',
             action='store_const', const=logging.DEBUG,
             help="Debug (most verbose) output and logging")
 
@@ -431,6 +444,7 @@ Note: some subcommands rely on external software tools, including:
         from COT.help import COTHelp
         from COT.info import COTInfo
         from COT.inject_config import COTInjectConfig
+        from COT.install_helpers import COTInstallHelpers
         for klass in [
                 COTAddDisk,
                 COTAddFile,
@@ -438,12 +452,15 @@ Note: some subcommands rely on external software tools, including:
                 COTEditHardware,
                 COTEditProduct,
                 COTEditProperties,
+                COTHelp,
                 COTInfo,
                 COTInjectConfig,
-                COTHelp,   # last so it can be aware of all of the above
+                COTInstallHelpers,
         ]:
-            name, subparser = klass(self).create_subparser(self.subparsers)
-            self.subparser_lookup[name] = subparser
+            instance = klass(self)
+            # the subparser stores a reference to the instance (args.instance)
+            # so we don't need to persist it here...
+            instance.create_subparser(self.subparsers, self.subparser_lookup)
 
     def parse_args(self, argv):
         """Parse the given CLI arguments into a namespace object.
@@ -456,7 +473,7 @@ Note: some subcommands rely on external software tools, including:
 
         # If being run non-interactively, treat as if --force is set, in order
         # to avoid hanging while trying to read input that will never come.
-        if not sys.stdin.isatty():
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
             args._force = True
 
         return args

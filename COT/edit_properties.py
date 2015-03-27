@@ -178,13 +178,14 @@ class COTEditProperties(COTSubmodule):
                         continue
             continue
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('edit-properties', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'edit-properties', add_help=False,
@@ -223,4 +224,4 @@ read from. If neither are specified, the program will run interactively.""")
 
         p.set_defaults(instance=self)
 
-        return 'edit-properties', p
+        storage['edit-properties'] = p

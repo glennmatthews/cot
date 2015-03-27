@@ -168,13 +168,14 @@ class COTAddDisk(COTSubmodule):
                         diskname=self.diskname,
                         description=self.description)
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('add-disk', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'add-disk', add_help=False,
@@ -240,7 +241,7 @@ otherwise, will create a new disk entry.""")
                        help="""OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
 
-        return 'add-disk', p
+        storage['add-disk'] = p
 
 
 def add_disk_worker(vm,

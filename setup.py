@@ -23,14 +23,11 @@ except ImportError:
     from setuptools import setup
 
 import os.path
-import subprocess
 import sys
 from setuptools.command.bdist_egg import bdist_egg
-from setuptools import Command
+from setuptools.command.test import test
 
 import versioneer
-# Extend the "build" command a bit further:
-from versioneer import cmd_build
 
 versioneer.VCS = 'git'
 versioneer.versionfile_source = 'COT/_version.py'
@@ -40,85 +37,89 @@ versioneer.parentdir_prefix = 'cot-'
 
 README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            'README.rst')
-HELPER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "check_and_install_helpers.py")
 
-cmd_class = versioneer.get_cmdclass()
-
-# on_rtd is whether we are on readthedocs.org, this line of code grabbed from
-# docs.readthedocs.org
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
-
-class custom_build(cmd_build):
-    def run(self):
-        try:
-            subprocess.check_call([HELPER_SCRIPT, "check"])
-        except subprocess.CalledProcessError:
-            exit()
-        cmd_build.run(self)
-
-
-# Add a custom 'install_helpers' command:
-class custom_install_helpers(Command):
-    description = "Install executable helper programs needed by COT"
-    user_options = [
-        ('force', 'f', 'No prompting for confirmation of installation'),
-    ]
-    boolean_options = ['force']
-
-    def initialize_options(self):
-        self.force = False
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        try:
-            if self.force:
-                subprocess.check_call([HELPER_SCRIPT, "install", '-f'])
-            else:
-                subprocess.check_call([HELPER_SCRIPT, "install"])
-        except subprocess.CalledProcessError:
-            exit('Aborting')
-
-
-# 'bdist_egg' (called automatically by 'install') to include 'install_helpers'
-class custom_bdist_egg(bdist_egg):
-    def run(self):
-        # Don't bother installing helper tools on readthedocs.org
-        if not on_rtd:
-            self.run_command('install_helpers')
-        bdist_egg.run(self)
-
-cmd_class['build'] = custom_build
-cmd_class['install_helpers'] = custom_install_helpers
-cmd_class['bdist_egg'] = custom_bdist_egg
-
-install_requires = ['argparse', 'colorlog>=2.5.0', 'verboselogs>=1.0']
+install_requires = [
+    'argparse',
+    'colorlog>=2.5.0',
+    'requests>=2.5.1',
+    'verboselogs>=1.0',
+]
 # shutil.get_terminal_size is standard in 3.3 and later only.
 if sys.version_info < (3, 3):
     install_requires.append('backports.shutil_get_terminal_size')
 
+setup_requires = install_requires + ['sphinx>1.2.3']
+tests_require = install_requires + ['unittest2']
+
+cmdclass = versioneer.get_cmdclass()
+
+
+# Ensure that docs are generated whenever build/sdist are run
+cmdclass['build'].sub_commands.insert(0, ('build_sphinx', None))
+cmdclass['sdist'].sub_commands.insert(0, ('build_sphinx', None))
+
+
+class custom_bdist_egg(bdist_egg):
+    """Custom subclass for the 'bdist_egg' command.
+
+    This command is called automatically by 'install', but it doesn't do
+    sub_commands, so we have to subclass it instead.
+    """
+
+    def run(self):
+        """Call build_sphinx then proceed as normal."""
+        self.run_command('build_sphinx')
+        bdist_egg.run(self)
+
+cmdclass['bdist_egg'] = custom_bdist_egg
+
+
+class custom_test(test):
+    """Custom subclass for the 'test' command."""
+
+    def with_project_on_sys_path(self, func):
+        """Make sure docs were built, then proceed as normal."""
+        if not os.path.exists(os.path.join(os.path.dirname(__file__),
+                                           "COT/docs/man")):
+            self.run_command('build_sphinx')
+        test.with_project_on_sys_path(self, func)
+
+cmdclass['test'] = custom_test
+
+# Summary of use cases and how they lead to getting the man pages generated:
+# setup.py test --> run_command(build_sphinx)
+# setup.py sdist --sub_commands--> build_sphinx
+# setup.py bdist_egg --> run_command(build_sphinx)
+# setup.py bdist_wheel --> run_command(build) --sub_commands--> build_sphinx
 
 setup(
+    # Package description
     name='cot',
     version=versioneer.get_version(),
-    cmdclass=cmd_class,
     author='Glenn Matthews',
     author_email='glenn@e-dad.net',
-    packages=['COT'],
+    url='https://github.com/glennmatthews/cot',
+    description='Common OVF Tool',
+    long_description=open(README_FILE).read(),
+    license='MIT',
+
+    # Requirements
+    setup_requires=setup_requires,
+    test_suite='unittest2.collector',
+    tests_require=tests_require,
+    install_requires=install_requires,
+
+    # Package contents
+    cmdclass=cmdclass,
+    packages=['COT', 'COT.helpers'],
     entry_points={
         'console_scripts': [
             'cot = COT.cli:main',
         ],
     },
-    url='https://github.com/glennmatthews/cot',
-    license='MIT',
-    description='Common OVF Tool',
-    long_description=open(README_FILE).read(),
-    test_suite='COT.tests',
-    install_requires=install_requires,
+    include_package_data=True,
+
+    # PyPI search categories
     classifiers=[
         # Project status
         'Development Status :: 5 - Production/Stable',
@@ -142,7 +143,6 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],

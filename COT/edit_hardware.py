@@ -308,13 +308,14 @@ class COTEditHardware(COTSubmodule):
         if self.ide_subtype is not None:
             vm.set_ide_subtype(self.ide_subtype, self.profiles)
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
+            :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``('edit-hardware', subparser)``
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
         p = parent.add_parser(
             'edit-hardware', add_help=False,
@@ -330,18 +331,18 @@ class COTEditHardware(COTSubmodule):
             help="Edit virtual machine hardware properties of an OVF",
             description="Edit hardware properties of the specified OVF or OVA",
             epilog=self.UI.fill_examples([
-                ('cot edit-hardware csr1000v.ova --output csr1000v_custom.ova'
-                 ' --profile 1CPU-4GB --cpus 1 --memory 8GB',
-                 'Create a new profile named "1CPU-8GB" with 1 CPU and 8'
-                 ' gigabytes of RAM'),
-                ('cot edit-hardware input.ova -o output.ova'
-                 ' --nic-names "mgmt" "eth{0}"',
-                 "Rename the NICs in the output OVA as 'mgmt', 'eth0',"
-                 " 'eth1', 'eth2'..."),
-                ('cot edit-hardware input.ova -o output.ova'
-                 ' --nic-names "Ethernet0/{10}"',
-                 "Rename the NICs in the output OVA as 'Ethernet0/10',"
-                 " 'Ethernet0/11', 'Ethernet0/12', etc.")
+                ('Create a new profile named "1CPU-8GB" with 1 CPU and 8'
+                 ' gigabytes of RAM',
+                 'cot edit-hardware csr1000v.ova --output csr1000v_custom.ova'
+                 ' --profile 1CPU-4GB --cpus 1 --memory 8GB'),
+                ("Rename the NICs in the output OVA as 'mgmt', 'eth0',"
+                 " 'eth1', 'eth2'...",
+                 'cot edit-hardware input.ova -o output.ova'
+                 ' --nic-names "mgmt" "eth{0}"'),
+                ("Rename the NICs in the output OVA as 'Ethernet0/10',"
+                 " 'Ethernet0/11', 'Ethernet0/12', etc.",
+                 'cot edit-hardware input.ova -o output.ova'
+                 ' --nic-names "Ethernet0/{10}"')
             ]))
 
         g = p.add_argument_group("general options")
@@ -428,4 +429,4 @@ class COTEditHardware(COTSubmodule):
                        help="OVF descriptor or OVA file to edit")
         p.set_defaults(instance=self)
 
-        return 'edit-hardware', p
+        storage['edit-hardware'] = p

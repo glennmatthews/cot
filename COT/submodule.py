@@ -53,9 +53,7 @@ class COTGenericSubmodule(object):
         self.vm = None
         """Virtual machine description (:class:`VMDescription`)."""
         self.UI = UI
-        """User interface instance (:class:`~ui_shared.UI` or subclass)
-        to use.
-        """
+        """User interface instance (:class:`~ui_shared.UI` or subclass)."""
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -89,16 +87,16 @@ class COTGenericSubmodule(object):
             self.vm.destroy()
             self.vm = None
 
-    def create_subparser(self, parent):
+    def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
 
         :param object parent: Subparser grouping object returned by
             :meth:`ArgumentParser.add_subparsers`
 
-        :returns: ``(label, subparser)`` or ``("", None)`` if this module has
-            no CLI
+        :param dict storage: Dict of { 'label': subparser } to be updated with
+            subparser(s) created, if any.
         """
-        return "", None
+        pass
 
 
 class COTReadOnlySubmodule(COTGenericSubmodule):

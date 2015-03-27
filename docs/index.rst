@@ -2,7 +2,7 @@ Common OVF Tool (COT)
 =====================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :includehidden:
 
    introduction
@@ -11,6 +11,7 @@ Common OVF Tool (COT)
    contributing
    thanks
    COT
+   COT.helpers
 
 
 Indices and tables
