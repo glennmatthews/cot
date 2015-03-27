@@ -21,7 +21,7 @@ http://github.com/goblinhack/fatdisk
 
 import logging
 import os.path
-import sys
+import platform
 
 from .helper import Helper
 
@@ -56,7 +56,7 @@ class FatDisk(Helper):
         logger.info("Installing 'fatdisk'...")
         if self.port_install('fatdisk'):
             pass
-        elif sys.platform == 'linux2':
+        elif platform.system() == 'Linux':
             # Fatdisk installation requires make
             if not self.find_executable('make'):
                 logger.info("fatdisk requires 'make'... installing 'make'")

@@ -19,7 +19,7 @@
 import contextlib
 import os
 import logging
-import sys
+import platform
 from requests.exceptions import ConnectionError
 
 from COT.tests.ut import COT_UT
@@ -71,6 +71,10 @@ class HelperUT(COT_UT):
         """Stub for confirm() - return fixed response."""
         return self.default_confirm_response
 
+    def stub_system(self):
+        """Stub for platform.system() - return fixed platform string."""
+        return self.system
+
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         # subclass needs to set self.helper
@@ -87,11 +91,13 @@ class HelperUT(COT_UT):
         self.default_confirm_response = True
         self._confirm = COT.helpers.helper.confirm
         COT.helpers.helper.confirm = self.stub_confirm
+        self._system = platform.system
+        self.system = None
+        platform.system = self.stub_system
         # save some environment properties for sanity
         self._port = Helper.PACKAGE_MANAGERS['port']
         self._apt_get = Helper.PACKAGE_MANAGERS['apt-get']
         self._yum = Helper.PACKAGE_MANAGERS['yum']
-        self._platform = sys.platform
         self._find_executable = Helper.find_executable
 
     def tearDown(self):
@@ -103,7 +109,7 @@ class HelperUT(COT_UT):
         Helper.PACKAGE_MANAGERS['port'] = self._port
         Helper.PACKAGE_MANAGERS['apt-get'] = self._apt_get
         Helper.PACKAGE_MANAGERS['yum'] = self._yum
-        sys.platform = self._platform
+        platform.system = self._system
         Helper.find_executable = self._find_executable
         super(HelperUT, self).tearDown()
 
@@ -194,6 +200,5 @@ class HelperGenericTest(HelperUT):
         except ConnectionError:
             # unable to connect to github - might be an isolated environment
             self.fail("ConnectionError when trying to download from GitHub")
-        finally:
-            # Temporary directory should be cleaned up when done
-            self.assertFalse(os.path.exists(directory))
+        # Temporary directory should be cleaned up when done
+        self.assertFalse(os.path.exists(directory))
