@@ -48,7 +48,7 @@ install_requires = [
 if sys.version_info < (3, 3):
     install_requires.append('backports.shutil_get_terminal_size')
 
-setup_requires = install_requires + ['sphinx>1.2.3']
+setup_requires = install_requires + ['sphinx>=1.3']
 tests_require = install_requires + ['unittest2']
 
 cmdclass = versioneer.get_cmdclass()

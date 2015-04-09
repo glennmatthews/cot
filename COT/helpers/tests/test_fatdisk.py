@@ -17,7 +17,6 @@
 """Unit test cases for the COT.helpers.fatdisk module."""
 
 import logging
-import sys
 
 from distutils.version import StrictVersion
 
@@ -53,7 +52,7 @@ class TestFatDisk(HelperUT):
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['apt-get'] = True
-        sys.platform = 'linux2'
+        self.system = 'Linux'
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'apt-get', '-q', 'install', 'make'],
@@ -76,7 +75,7 @@ class TestFatDisk(HelperUT):
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['yum'] = True
-        sys.platform = 'linux2'
+        self.system = 'Linux'
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'yum', '--quiet', 'install', 'make'],
@@ -91,7 +90,7 @@ class TestFatDisk(HelperUT):
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
-        sys.platform = 'linux2'
+        self.system = 'Linux'
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
@@ -108,7 +107,7 @@ class TestFatDisk(HelperUT):
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
-        sys.platform = 'linux2'
+        self.system = 'Linux'
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
@@ -116,6 +115,6 @@ class TestFatDisk(HelperUT):
         """No support for installation under Windows."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = False
-        sys.platform = 'windows'
+        self.system = 'Windows'
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()

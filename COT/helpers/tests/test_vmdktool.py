@@ -16,8 +16,6 @@
 
 """Unit test cases for the COT.helpers.vmdktool submodule."""
 
-import sys
-
 from distutils.version import StrictVersion
 
 from .test_helper import HelperUT
@@ -51,7 +49,7 @@ class TestVmdkTool(HelperUT):
         Helper.PACKAGE_MANAGERS['apt-get'] = True
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
-        sys.platform = 'linux2'
+        self.system = 'Linux'
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'apt-get', '-q', 'install', 'make'],
@@ -75,7 +73,7 @@ class TestVmdkTool(HelperUT):
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = True
-        sys.platform = 'linux2'
+        self.system = 'Linux'
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'yum', '--quiet', 'install', 'make'],

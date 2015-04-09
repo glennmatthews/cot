@@ -21,7 +21,7 @@ http://www.freshports.org/sysutils/vmdktool/
 
 import logging
 import os.path
-import sys
+import platform
 
 from .helper import Helper
 
@@ -60,7 +60,7 @@ class VmdkTool(Helper):
         logger.info("Installing 'vmdktool'...")
         if self.port_install('vmdktool'):
             pass
-        elif sys.platform == 'linux2':
+        elif platform.system() == 'Linux':
             # We don't have vmdktool in apt or yum yet,
             # but we can build it manually:
             # vmdktool requires make and zlib

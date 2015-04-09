@@ -17,8 +17,6 @@
 
 """Unit test cases for the COT.helpers.mkisofs submodule."""
 
-import sys
-
 from distutils.version import StrictVersion
 
 from .test_helper import HelperUT
@@ -98,8 +96,6 @@ class TestMkIsoFS(HelperUT):
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
-        _platform = sys.platform
-        sys.platform = 'windows'
+        self.system = "Windows"
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
-        sys.platform = _platform
