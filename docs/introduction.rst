@@ -4,6 +4,14 @@ Introduction
 .. raw:: html
 
    <p style="height:22px">
+   <a href="https://pypi.python.org/pypi/cot/">
+   <img src="https://pypip.in/version/cot/badge.svg"
+        alt="Latest Version">
+   </a>
+   <a href="https://pypi.python.org/pypi/cot/">
+   <img src="https://pypip.in/license/cot/badge.svg"
+        alt="License">
+   </a>
    <a href="https://travis-ci.org/glennmatthews/cot">
    <img src="https://travis-ci.org/glennmatthews/cot.svg?branch=master"
         alt="Build Status">

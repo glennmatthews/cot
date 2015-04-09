@@ -1,6 +1,12 @@
 COT: the Common OVF Tool
 ************************
 
+.. image:: https://pypip.in/version/cot/badge.svg
+    :target: https://pypi.python.org/pypi/cot/
+    :alt: Latest Version
+.. image:: https://pypip.in/license/cot/badge.svg
+    :target: https://pypi.python.org/pypi/cot/
+    :alt: License
 .. image:: https://travis-ci.org/glennmatthews/cot.svg?branch=master
     :target: https://travis-ci.org/glennmatthews/cot
     :alt: Build Status
