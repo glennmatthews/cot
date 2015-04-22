@@ -301,15 +301,7 @@ class COT_UT(unittest.TestCase):
             self.instance.destroy()
             self.instance = None
 
-        if (self.OVFTOOL.path and self.validate_output_with_ovftool and
-                os.path.exists(self.temp_file)):
-            # Ask OVFtool to validate that the output file is sane
-            from COT.helpers import HelperError
-            try:
-                self.OVFTOOL.validate_ovf(self.temp_file)
-            except HelperError as e:
-                self.fail("OVF not valid according to ovftool:\n{0}"
-                          .format(e.strerror))
+        self.validate_with_ovftool(self.temp_file)
 
         # Delete the temporary directory
         if os.path.exists(self.temp_dir):
@@ -330,6 +322,19 @@ class COT_UT(unittest.TestCase):
             print("\nWARNING: Test {0} took {1:.3f} seconds to execute. "
                   "Consider refactoring it to be more efficient."
                   .format(self.id(), delta_t))
+
+    def validate_with_ovftool(self, filename=None):
+        if filename is None:
+            filename = self.temp_file
+        if (self.OVFTOOL.path and self.validate_output_with_ovftool and
+                os.path.exists(filename)):
+            # Ask OVFtool to validate that the output file is sane
+            from COT.helpers import HelperError
+            try:
+                self.OVFTOOL.validate_ovf(filename)
+            except HelperError as e:
+                self.fail("OVF not valid according to ovftool:\n{0}"
+                          .format(e.strerror))
 
     def assertLogged(self, **kwargs):
         """Fail unless the given logs were generated.

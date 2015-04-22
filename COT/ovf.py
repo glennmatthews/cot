@@ -313,7 +313,7 @@ class OVF(VMDescription, XML):
             # Let's go ahead and walk the file references in the OVF descriptor
             # and make sure they look sane.
             file_list = [f.get(self.FILE_HREF) for f in
-                         self.find_all_children(self.references, self.FILE)]
+                         self.references.findall(self.FILE)]
             self.invalid_files = []
             if (self.output_file is not None or
                     self.input_file == self.ovf_descriptor):
@@ -422,8 +422,7 @@ class OVF(VMDescription, XML):
         if ((not self._configuration_profiles) and
                 (self.deploy_opt_section is not None)):
             profile_ids = []
-            profiles = self.find_all_children(self.deploy_opt_section,
-                                              self.CONFIG)
+            profiles = self.deploy_opt_section.findall(self.CONFIG)
             for profile in profiles:
                 # Force the "default" profile to the head of the list
                 if (profile.get(self.CONFIG_DEFAULT) == 'true' or
@@ -447,7 +446,7 @@ class OVF(VMDescription, XML):
         result = []
         if self.product_section is None:
             return result
-        elems = self.find_all_children(self.product_section, self.PROPERTY)
+        elems = self.product_section.findall(self.PROPERTY)
         for elem in elems:
             label = elem.findtext(self.PROPERTY_LABEL, "")
             descr = elem.findtext(self.PROPERTY_DESC, "")
@@ -565,7 +564,7 @@ class OVF(VMDescription, XML):
         self.hardware.update_xml()
 
         # Make sure file references are correct:
-        for file in XML.find_all_children(self.references, self.FILE):
+        for file in self.references.findall(self.FILE):
             file_path = os.path.join(self.working_dir,
                                      file.get(self.FILE_HREF))
             if not os.path.exists(file_path):
@@ -609,6 +608,27 @@ class OVF(VMDescription, XML):
                                 capacity, actual_capacity))
                     self.set_capacity_of_disk(disk, actual_capacity)
 
+        # Make sure all defined networks are actually used by NICs,
+        # and delete any networks that are unused.
+        if self.network_section is not None:
+            networks = self.network_section.findall(self.NETWORK)
+            items = self.virtual_hw_section.findall(self.ETHERNET_PORT_ITEM)
+            connected_networks = set()
+            for item in items:
+                conn = item.find(self.EPASD + self.CONNECTION)
+                if conn is not None:
+                    connected_networks.add(conn.text)
+            for net in networks:
+                name = net.get(self.NETWORK_NAME)
+                if name not in connected_networks:
+                    logger.warning("Removing unused network {0}".format(name))
+                    self.network_section.remove(net)
+            # If all networks were removed, remove the NetworkSection too
+            if not self.network_section.findall(self.NETWORK):
+                logger.warning("No networks left - removing NetworkSection")
+                self.envelope.remove(self.network_section)
+                self.network_section = None
+
         logger.info("Writing out to file {0}".format(self.output_file))
 
         if extension == '.ova':
@@ -623,7 +643,7 @@ class OVF(VMDescription, XML):
             dest_dir = os.path.dirname(os.path.abspath(self.output_file))
             if not dest_dir:
                 dest_dir = os.getcwd()
-            for file in self.find_all_children(self.references, self.FILE):
+            for file in self.references.findall(self.FILE):
                 file_path = os.path.join(self.working_dir,
                                          file.get(self.FILE_HREF))
                 logger.info("Copying {0} to {1}"
@@ -2001,7 +2021,7 @@ class OVF(VMDescription, XML):
                     .format(file=os.path.basename(ovf_file), sum=sha1sum)
                     .encode('utf-8'))
             # Checksum all referenced files as well
-            for file in self.find_all_children(self.references, self.FILE):
+            for file in self.references.findall(self.FILE):
                 file_name = file.get(self.FILE_HREF)
                 file_path = os.path.join(os.path.dirname(ovf_file), file_name)
                 sha1sum = get_checksum(file_path, 'sha1')
@@ -2039,7 +2059,7 @@ class OVF(VMDescription, XML):
                                "so the existing certificate will be omitted "
                                "from {0}.".format(tar_file))
             # Add all other files mentioned in the OVF
-            for file in self.find_all_children(self.references, self.FILE):
+            for file in self.references.findall(self.FILE):
                 file_path = os.path.join(dir, file.get(self.FILE_HREF))
                 tarf.add(file_path, os.path.basename(file_path))
                 logger.verbose("Added {0} to {1}".format(file_path, tar_file))

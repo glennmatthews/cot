@@ -652,6 +652,7 @@ vmdk.html#streamOptimized" />
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.OVERWRITING_DISK)
         self.instance.finished()
+        self.assertLogged(msg="Removing unused network")
         self.check_diff(file1=self.invalid_ovf, expected="""
    <ovf:References>
 -    <ovf:File ovf:href="this_is_a_really_long_filename_for_a_disk.vmdk" \
@@ -659,6 +660,10 @@ ovf:id="input.vmdk" ovf:size="{input_size}" />
 +    <ovf:File ovf:href="input.vmdk" ovf:id="input.vmdk" \
 ovf:size="{input_size}" />
      <ovf:File ovf:href="input.iso" ovf:id="input.iso" ovf:size="360448" />
+...
+     </ovf:Network>
+-    <ovf:Network ovf:name="name-but-no-description" />
+   </ovf:NetworkSection>
 ...
        </ovf:Item>
 +      <ovf:Item>
