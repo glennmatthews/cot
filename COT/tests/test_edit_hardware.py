@@ -609,6 +609,46 @@ CIM_ResourceAllocationSettingData">
 </rasd:Description>
 """)
 
+    def test_set_nic_network_list_pattern(self):
+        """Use wildcard expansion to create multiple networks as needed."""
+        self.instance.package = self.input_ovf
+        self.instance.nic_networks = ["UT_{20}_network"]
+        self.instance.run()
+        self.instance.finished()
+        self.assertLogged(**self.REMOVING_NETWORK)
+        self.check_diff("""
+     <ovf:Info>The list of logical networks</ovf:Info>
+-    <ovf:Network ovf:name="VM Network">
+-      <ovf:Description>VM Network</ovf:Description>
++    <ovf:Network ovf:name="UT_20_network">
++      <ovf:Description>UT_20_network</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="UT_21_network">
++      <ovf:Description>UT_21_network</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="UT_22_network">
++      <ovf:Description>UT_22_network</ovf:Description>
+     </ovf:Network>
+...
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>VM Network</rasd:Connection>
++        <rasd:Connection>UT_20_network</rasd:Connection>
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
+...
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>VM Network</rasd:Connection>
++        <rasd:Connection>UT_21_network</rasd:Connection>
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
+...
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>VM Network</rasd:Connection>
++        <rasd:Connection>UT_22_network</rasd:Connection>
+         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
+""")
+
     def test_set_nic_mac_address_single_all_profiles(self):
         """Set a single MAC address on all NICs on all profiles."""
         self.instance.package = self.input_ovf

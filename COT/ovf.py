@@ -1215,41 +1215,9 @@ class OVF(VMDescription, XML):
     def set_nic_names(self, name_list, profile_list):
         """Set the device names for NICs under the given profile(s).
 
-        Since NICs are often named sequentially, this API supports a wildcard
-        option for the final element in :attr:`name_list` which can be
-        expanded to automatically assign sequential NIC names.
-        The syntax for the wildcard option is ``{`` followed by a number
-        (indicating the starting index for the name) followed by ``}``.
-        Examples:
-
-        ``["eth{0}"]``
-          ``Expands to ["eth0", "eth1", "eth2", ...]``
-        ``["mgmt0" "eth{10}"]``
-          ``Expands to ["mgmt0", "eth10", "eth11", "eth12", ...]``
-
         :param list name_list: List of names to assign.
         :param list profile_list: Change only the given profiles
         """
-        # Expand the pattern (if any) out to a full list
-        nic_dict = self.get_nic_count(profile_list)
-        max_nics = max(nic_dict.values())
-        if len(name_list) < max_nics:
-            logger.info("Expanding name_list {0} to {1} entries"
-                        .format(name_list, max_nics))
-            # Extract the pattern and remove it from the list
-            pattern = name_list[-1]
-            name_list = name_list[:-1]
-            # Look for the magic string {0}, {1}, etc in the pattern
-            match = re.search("{(\d+)}", pattern)
-            if match:
-                i = int(match.group(1))
-            else:
-                i = 0
-            while len(name_list) < max_nics:
-                name_list.append(re.sub("{\d+}", str(i), pattern))
-                i += 1
-            logger.info("New name_list is {0}".format(name_list))
-
         self.hardware.set_item_values_per_profile('ethernet',
                                                   self.ELEMENT_NAME,
                                                   name_list,

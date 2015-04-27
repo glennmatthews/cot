@@ -80,10 +80,12 @@ def help_text_to_rst(help, dirpath):
     synopsis_lines = []
     description_lines = []
     options_lines = []
+    notes_lines = []
     examples_lines = []
     in_synopsis = False
     in_description = False
     in_options = False
+    in_notes = False
     in_examples = False
 
     for line in help.splitlines():
@@ -115,12 +117,21 @@ def help_text_to_rst(help, dirpath):
             in_description = False
             in_options = True
             continue
-        elif in_options and re.match("^Example", line):
+        elif in_options and re.match("^Notes", line):
+            # Entering the (optional) notes epilog
+            notes_lines.append("Notes")
+            notes_lines.append("-----")
+            notes_lines.append("")
+            in_options = False
+            in_notes = True
+            continue
+        elif (in_options or in_notes) and re.match("^Example", line):
             # Entering the (optional) examples epilog
             examples_lines.append("Examples")
             examples_lines.append("--------")
             examples_lines.append("")
             in_options = False
+            in_notes = False
             in_examples = True
             continue
         elif in_options and re.match("^\S", line):
@@ -164,6 +175,8 @@ def help_text_to_rst(help, dirpath):
         elif in_options and re.match("^        ", line):
             # Description of an option - keep it under the option_list
             line = "  " + line.strip()
+        elif in_notes:
+            line = line.strip()
         elif in_examples and re.match("^    ", line):
             # Beginning of an example - mark as a literal
             if not re.match("^    ", examples_lines[-1]):
@@ -185,6 +198,8 @@ def help_text_to_rst(help, dirpath):
             description_lines.append(line)
         elif in_options:
             options_lines.append(line)
+        elif in_notes:
+            notes_lines.append(line)
         elif in_examples:
             examples_lines.append(line)
         else:
@@ -195,6 +210,7 @@ def help_text_to_rst(help, dirpath):
         'synopsis': "\n".join(synopsis_lines),
         'description': "\n".join(description_lines),
         'options': "\n".join(options_lines),
+        'notes': "\n".join(notes_lines),
         'examples': "\n".join(examples_lines)
     }
 
