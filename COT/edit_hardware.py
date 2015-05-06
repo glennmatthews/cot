@@ -47,6 +47,7 @@ class COTEditHardware(COTSubmodule):
 
     Attributes:
     :attr:`profiles`,
+    :attr:`delete_all_other_profiles`,
     :attr:`cpus`,
     :attr:`memory`,
     :attr:`nics`,
@@ -66,6 +67,8 @@ class COTEditHardware(COTSubmodule):
         super(COTEditHardware, self).__init__(UI)
         self.profiles = None
         """Configuration profile(s) to edit."""
+        self.delete_all_other_profiles = False
+        """Delete all profiles other than those set in :attr:`profiles`."""
         self._cpus = None
         self._memory = None
         self._nics = None
@@ -194,6 +197,7 @@ class COTEditHardware(COTSubmodule):
         # Need some work to do!
         if (
                 self.profiles is None and
+                self.delete_all_other_profiles is False and
                 self.cpus is None and
                 self.memory is None and
                 self.nics is None and
@@ -242,6 +246,26 @@ class COTEditHardware(COTSubmodule):
                         "configuration profile", label)
                     vm.create_configuration_profile(profile, label=label,
                                                     description=desc)
+
+        if self.delete_all_other_profiles:
+            if self.profiles is None:
+                self.UI.confirm_or_die(
+                    "--delete-all-other-profiles was specified but no "
+                    "--profiles was specified. Really proceed to delete ALL "
+                    "configuration profiles?")
+                profiles_to_delete = vm.config_profiles
+            else:
+                profiles_to_delete = list(set(vm.config_profiles) -
+                                          set(self.profiles))
+            for profile in profiles_to_delete:
+                if self.profiles is not None:
+                    if not self.UI.confirm("Delete profile {0}?"
+                                           .format(profile)):
+                        logger.verbose("Skipping deletion of profile {0}"
+                                       .format(profile))
+                        continue
+                # else (profiles == None) we already confirmed earlier
+                vm.delete_configuration_profile(profile)
 
         if self.virtual_system_type is not None:
             vm.system_types = self.virtual_system_type
@@ -387,6 +411,9 @@ class COTEditHardware(COTSubmodule):
                        help="Make hardware changes only under the given "
                        "configuration profile(s). (default: changes apply "
                        "to all profiles)")
+        g.add_argument('--delete-all-other-profiles', action='store_true',
+                       help="Delete all configuration profiles other than"
+                       " those specified with the --profiles option")
 
         g = p.add_argument_group("computational hardware options")
 

@@ -1358,7 +1358,142 @@ CIM_ResourceAllocationSettingData">
    <ovf:VirtualSystem ovf:id="x">
 """)
 
+    def test_delete_one_profile(self):
+        """Delete one configuration profile."""
+        self.instance.package = self.input_ovf
+        self.instance.profiles = ['1CPU-1GB-1NIC', '4CPU-4GB-3NIC']
+        self.instance.delete_all_other_profiles = True
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+     </ovf:Configuration>
+-    <ovf:Configuration ovf:id="2CPU-2GB-1NIC">
+-      <ovf:Label>2 vCPUs, 2 GB RAM, 1 NIC</ovf:Label>
+-      <ovf:Description>Minimal hardware profile - 2 vCPUs, 2 GB RAM, \
+1 NIC</ovf:Description>
+-    </ovf:Configuration>
+     <ovf:Configuration ovf:default="true" ovf:id="4CPU-4GB-3NIC">
+...
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
+-        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+-        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+-        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
+-        <rasd:InstanceID>1</rasd:InstanceID>
+-        <rasd:ResourceType>3</rasd:ResourceType>
+-        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+-        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+-      </ovf:Item>
+       <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
+...
+         <rasd:VirtualQuantity>1024</rasd:VirtualQuantity>
+-      </ovf:Item>
+-      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
+-        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+-        <rasd:Description>Memory Size</rasd:Description>
+-        <rasd:ElementName>2048MB of memory</rasd:ElementName>
+-        <rasd:InstanceID>2</rasd:InstanceID>
+-        <rasd:ResourceType>4</rasd:ResourceType>
+-        <rasd:VirtualQuantity>2048</rasd:VirtualQuantity>
+       </ovf:Item>
+""")
+
+    def test_delete_all_profiles(self):
+        """Delete all configuration profiles, leaving only the default hw."""
+        self.instance.package = self.input_ovf
+        self.instance.delete_all_other_profiles = True
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+   </ovf:NetworkSection>
+-  <ovf:DeploymentOptionSection>
+-    <ovf:Info>Configuration Profiles</ovf:Info>
+-    <ovf:Configuration ovf:id="1CPU-1GB-1NIC">
+-      <ovf:Label>1 vCPU, 1 GB RAM, 1 NIC</ovf:Label>
+-      <ovf:Description>Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC\
+</ovf:Description>
+-    </ovf:Configuration>
+-    <ovf:Configuration ovf:id="2CPU-2GB-1NIC">
+-      <ovf:Label>2 vCPUs, 2 GB RAM, 1 NIC</ovf:Label>
+-      <ovf:Description>Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC\
+</ovf:Description>
+-    </ovf:Configuration>
+-    <ovf:Configuration ovf:default="true" ovf:id="4CPU-4GB-3NIC">
+-      <ovf:Label>4 vCPUs, 4 GB RAM, 3 NICs</ovf:Label>
+-      <ovf:Description>Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs\
+</ovf:Description>
+-    </ovf:Configuration>
+-  </ovf:DeploymentOptionSection>
+   <ovf:VirtualSystem ovf:id="test">
+...
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
+-        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+-        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+-        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
+-        <rasd:InstanceID>1</rasd:InstanceID>
+-        <rasd:ResourceType>3</rasd:ResourceType>
+-        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+-        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+-      </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
+-        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+-        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+-        <rasd:ElementName>4 virtual CPU(s)</rasd:ElementName>
+-        <rasd:InstanceID>1</rasd:InstanceID>
+-        <rasd:ResourceType>3</rasd:ResourceType>
+-        <rasd:VirtualQuantity>4</rasd:VirtualQuantity>
+-        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+-      </ovf:Item>
+       <ovf:Item>
+...
+         <rasd:VirtualQuantity>1024</rasd:VirtualQuantity>
+-      </ovf:Item>
+-      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
+-        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+-        <rasd:Description>Memory Size</rasd:Description>
+-        <rasd:ElementName>2048MB of memory</rasd:ElementName>
+-        <rasd:InstanceID>2</rasd:InstanceID>
+-        <rasd:ResourceType>4</rasd:ResourceType>
+-        <rasd:VirtualQuantity>2048</rasd:VirtualQuantity>
+-      </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
+-        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+-        <rasd:Description>Memory Size</rasd:Description>
+-        <rasd:ElementName>4096MB of memory</rasd:ElementName>
+-        <rasd:InstanceID>2</rasd:InstanceID>
+-        <rasd:ResourceType>4</rasd:ResourceType>
+-        <rasd:VirtualQuantity>4096</rasd:VirtualQuantity>
+       </ovf:Item>
+...
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
+-        <rasd:AddressOnParent>12</rasd:AddressOnParent>
+-        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>VM Network</rasd:Connection>
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
+-        <rasd:InstanceID>12</rasd:InstanceID>
+-        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
+-        <rasd:ResourceType>10</rasd:ResourceType>
+-      </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
+-        <rasd:AddressOnParent>13</rasd:AddressOnParent>
+-        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>VM Network</rasd:Connection>
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
+-        <rasd:InstanceID>13</rasd:InstanceID>
+-        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
+-        <rasd:ResourceType>10</rasd:ResourceType>
+-      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+""")
+
     def test_create_delete_network_no_existing(self):
+        """Create then delete a network in an OVF with none previously."""
         self.instance.package = self.minimal_ovf
         self.instance.nic_networks = ["VM Network", "Foobar"]
         self.instance.nics = 1

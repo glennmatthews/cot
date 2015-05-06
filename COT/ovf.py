@@ -300,7 +300,7 @@ class OVF(VMDescription, XML):
                 required=True)
 
             # Initialize various caches
-            self._configuration_profiles = []
+            self._configuration_profiles = None
 
             try:
                 self.hardware = OVFHardware(self)
@@ -419,18 +419,18 @@ class OVF(VMDescription, XML):
         If this OVF has no defined profiles, returns an empty list.
         If there is a default profile, it will be first in the list.
         """
-        if ((not self._configuration_profiles) and
-                (self.deploy_opt_section is not None)):
+        if self._configuration_profiles is None:
             profile_ids = []
-            profiles = self.deploy_opt_section.findall(self.CONFIG)
-            for profile in profiles:
-                # Force the "default" profile to the head of the list
-                if (profile.get(self.CONFIG_DEFAULT) == 'true' or
-                        profile.get(self.CONFIG_DEFAULT) == '1'):
-                    profile_ids.insert(0, profile.get(self.CONFIG_ID))
-                else:
-                    profile_ids.append(profile.get(self.CONFIG_ID))
-            logger.verbose("Configuration profiles are: {0}"
+            if self.deploy_opt_section is not None:
+                profiles = self.deploy_opt_section.findall(self.CONFIG)
+                for profile in profiles:
+                    # Force the "default" profile to the head of the list
+                    if (profile.get(self.CONFIG_DEFAULT) == 'true' or
+                            profile.get(self.CONFIG_DEFAULT) == '1'):
+                        profile_ids.insert(0, profile.get(self.CONFIG_ID))
+                    else:
+                        profile_ids.append(profile.get(self.CONFIG_ID))
+            logger.verbose("Current configuration profiles are: {0}"
                            .format(profile_ids))
             self._configuration_profiles = profile_ids
         return self._configuration_profiles
@@ -1100,7 +1100,36 @@ class OVF(VMDescription, XML):
         self.set_or_make_child(cfg, self.CFG_LABEL, label)
         self.set_or_make_child(cfg, self.CFG_DESC, description)
         # Clear cache
-        self._configuration_profiles = []
+        logger.debug("New profile {0} created - clear config_profiles cache"
+                     .format(id))
+        self._configuration_profiles = None
+
+    def delete_configuration_profile(self, profile):
+        """Delete the profile with the given ID."""
+        cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
+                              attrib={self.CONFIG_ID: profile})
+        if cfg is None:
+            raise LookupError("No such configuration profile '{0}'"
+                              .format(profile))
+        logger.info("Deleting configuration profile {0}".format(profile))
+
+        # Delete references to this profile from the hardware
+        items = self.hardware.find_all_items(profile_list=[profile])
+        logger.verbose("Removing profile {0} from {1} hardware items"
+                       .format(profile, len(items)))
+        for item in items:
+            item.remove_profile(profile, split_default=False)
+
+        # Delete the profile declaration itself
+        self.deploy_opt_section.remove(cfg)
+
+        if not self.deploy_opt_section.findall(self.CONFIG):
+            self.envelope.remove(self.deploy_opt_section)
+
+        # Clear cache
+        logger.debug("Profile {0} deleted - clear config_profiles cache"
+                     .format(profile))
+        self._configuration_profiles = None
 
     # TODO - how to insert a doc about the profile_list (see vm_description.py)
 
@@ -3207,10 +3236,14 @@ class OVFItem:
         self.modified = True
         self.validate()
 
-    def remove_profile(self, profile):
+    def remove_profile(self, profile, split_default=True):
         """Remove all trace of the given profile from this item.
 
         :param profile: Profile name to remove
+        :param split_default: If false, do not split out 'default'
+          profile items to specifically exclude this profile. Used when the
+          profile being removed will no longer exist anywhere and so
+          'default' will continue to exclude this profile.
         """
         if not self.has_profile(profile):
             logger.error("Requested deletion of profile '{0}' but it is "
@@ -3225,7 +3258,7 @@ class OVFItem:
                 profiles -= p_set
                 # Convert "any profile" to a list of all profiles minus
                 # this one and any profiles already set elsewhere
-                if None in profiles:
+                if None in profiles and split_default:
                     logger.debug("Profile contains 'any profile'; "
                                  "fixing it up")
                     profiles.update(self.ovf.config_profiles)
@@ -3238,6 +3271,8 @@ class OVFItem:
                         profiles -= p
                     logger.debug("profiles are now: {0}".format(profiles))
                 if not profiles:
+                    logger.verbose("No more profiles for value {0} , {1}"
+                                   .format(key, value))
                     del self.property_dict[key][value]
         self.modified = True
         self.validate()

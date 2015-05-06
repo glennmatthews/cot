@@ -98,10 +98,14 @@ class VMDescription(object):
 
         Deletes :attr:`self.working_dir` and its contents.
         """
-        if hasattr(self, 'working_dir') and os.path.exists(self.working_dir):
-            logger.debug("Removing temporary directory '{0}"
-                         .format(self.working_dir))
-            shutil.rmtree(self.working_dir)
+        try:
+            if hasattr(self,
+                       'working_dir') and os.path.exists(self.working_dir):
+                logger.debug("Removing temporary directory '{0}"
+                             .format(self.working_dir))
+                shutil.rmtree(self.working_dir)
+        except AttributeError:
+            pass
 
     def __del__(self):
         """Destructor. Call :meth:`destroy`."""
@@ -376,6 +380,11 @@ class VMDescription(object):
         """
         raise NotImplementedError("create_configuration_profile "
                                   "not implemented!")
+
+    def delete_configuration_profile(self, profile):
+        """Delete the configuration profile with the given ID."""
+        raise NotImplementedError("delete_configuration_profile "
+                                  "not implemented")
 
     # A note on getters/setters that take a profile_list parameter:
     #
