@@ -29,12 +29,6 @@ from setuptools.command.test import test
 
 import versioneer
 
-versioneer.VCS = 'git'
-versioneer.versionfile_source = 'COT/_version.py'
-versioneer.versionfile_build = versioneer.versionfile_source    # TODO
-versioneer.tag_prefix = 'v'
-versioneer.parentdir_prefix = 'cot-'
-
 README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            'README.rst')
 
