@@ -324,6 +324,7 @@ class COT_UT(unittest.TestCase):
                   .format(self.id(), delta_t))
 
     def validate_with_ovftool(self, filename=None):
+        """Use OVFtool to validate the given OVF/OVA file."""
         if filename is None:
             filename = self.temp_file
         if (self.OVFTOOL.path and self.validate_output_with_ovftool and
