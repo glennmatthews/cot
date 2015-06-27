@@ -24,6 +24,7 @@ except ImportError:
 
 import os.path
 import sys
+from distutils.command.build import build
 from setuptools.command.bdist_egg import bdist_egg
 from setuptools.command.test import test
 
@@ -49,7 +50,7 @@ cmdclass = versioneer.get_cmdclass()
 
 
 # Ensure that docs are generated whenever build/sdist are run
-cmdclass['build'].sub_commands.insert(0, ('build_sphinx', None))
+build.sub_commands.insert(0, ('build_sphinx', None))
 cmdclass['sdist'].sub_commands.insert(0, ('build_sphinx', None))
 
 
