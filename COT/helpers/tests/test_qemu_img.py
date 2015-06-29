@@ -81,7 +81,8 @@ Command syntax:
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'qemu-utils']],
+        self.assertEqual([['sudo', 'apt-get', '-q', 'update'],
+                          ['sudo', 'apt-get', '-q', 'install', 'qemu-utils']],
                          self.last_argv)
 
     def test_install_helper_port(self):
@@ -91,7 +92,8 @@ Command syntax:
         Helper.PACKAGE_MANAGERS['port'] = True
         Helper.PACKAGE_MANAGERS['yum'] = False
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'port', 'install', 'qemu']],
+        self.assertEqual([['sudo', 'port', 'selfupdate'],
+                          ['sudo', 'port', 'install', 'qemu']],
                          self.last_argv)
 
     def test_install_helper_yum(self):

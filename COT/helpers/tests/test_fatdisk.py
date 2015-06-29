@@ -55,6 +55,7 @@ class TestFatDisk(HelperUT):
         self.system = 'Linux'
         self.helper.install_helper()
         self.assertEqual([
+            ['sudo', 'apt-get', '-q', 'update'],
             ['sudo', 'apt-get', '-q', 'install', 'make'],
             ['sudo', 'apt-get', '-q', 'install', 'gcc'],
             ['./RUNME'],
@@ -66,8 +67,10 @@ class TestFatDisk(HelperUT):
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = True
         self.helper.install_helper()
-        self.assertEqual(self.last_argv[0],
-                         ['sudo', 'port', 'install', 'fatdisk'])
+        self.assertEqual([
+            ['sudo', 'port', 'selfupdate'],
+            ['sudo', 'port', 'install', 'fatdisk'],
+        ], self.last_argv)
 
     def test_install_helper_yum(self):
         """Test installation via 'yum'."""

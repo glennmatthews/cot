@@ -52,6 +52,7 @@ class TestVmdkTool(HelperUT):
         self.system = 'Linux'
         self.helper.install_helper()
         self.assertEqual([
+            ['sudo', 'apt-get', '-q', 'update'],
             ['sudo', 'apt-get', '-q', 'install', 'make'],
             ['sudo', 'apt-get', '-q', 'install', 'zlib1g-dev'],
             ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
@@ -64,8 +65,10 @@ class TestVmdkTool(HelperUT):
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = True
         self.helper.install_helper()
-        self.assertEqual(self.last_argv[0],
-                         ['sudo', 'port', 'install', 'vmdktool'])
+        self.assertEqual([
+            ['sudo', 'port', 'selfupdate'],
+            ['sudo', 'port', 'install', 'vmdktool']
+        ], self.last_argv)
 
     def test_install_helper_yum(self):
         """Test installation via 'yum'."""
