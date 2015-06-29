@@ -85,7 +85,7 @@ class TestCOTAddDisk(COT_UT):
         # TODO - it would be nice to detect this in ready_to_run()
         # rather than run()
         self.instance.package = self.input_ovf
-        self.instance.disk_image = resource_filename(__name__, "input.iso")
+        self.instance.disk_image = self.input_iso
         # ovf contains input.iso but we're asking it to overwrite input.vmdk
         self.instance.file_id = "vmdisk1"
         self.assertRaises(ValueMismatchError, self.instance.run)
@@ -96,7 +96,7 @@ class TestCOTAddDisk(COT_UT):
         # TODO - it would be nice to detect this in ready_to_run()
         # rather than run()
         self.instance.package = self.input_ovf
-        self.instance.disk_image = resource_filename(__name__, "input.vmdk")
+        self.instance.disk_image = self.input_vmdk
         # ovf contains input.vmdk but we're asking it to overwrite input.iso
         self.instance.controller = "ide"
         self.instance.address = "1:0"
@@ -365,6 +365,95 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
         # Make sure the old disk is not copied
         self.assertFalse(os.path.exists(os.path.join(self.temp_dir,
                                                      "input.vmdk")),
+                         "old disk should be replaced, not exported")
+        # Make sure the new disk is copied
+        self.assertTrue(filecmp.cmp(self.blank_vmdk,
+                                    os.path.join(self.temp_dir, "blank.vmdk")),
+                        "new disk should be exported unchanged")
+
+    def test_overwrite_harddisk_with_cdrom(self):
+        """Replace a hard disk with a cd-rom."""
+        self.instance.package = self.v09_ovf
+        self.instance.disk_image = self.input_iso
+        self.instance.type = 'cdrom'
+        self.instance.controller = 'scsi'
+        self.instance.address = "0:0"
+        self.instance.run()
+        self.assertLogged(**self.OVERWRITING_FILE)
+        self.assertLogged(**self.OVERWRITING_DISK)   # TODO can we block this?
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
+        self.assertLogged(**self.DELETING_DISK)
+        self.assertLogged(**self.DELETING_DISK_SECTION)
+        self.instance.finished()
+        self.check_diff(file1=self.v09_ovf, expected="""
+   <ovf:References>
+-    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />
++    <ovf:File ovf:href="input.iso" ovf:id="file1" ovf:size="{iso_size}" />
+   </ovf:References>
+-  <ovf:Section xsi:type="ovf:DiskSection_Type">
+-    <ovf:Info>Meta-information about the virtual disks</ovf:Info>
+-    <ovf:Disk ovf:capacity="1073741824" ovf:diskId="vmdisk1" \
+ovf:fileRef="file1" ovf:format=\
+"http://www.vmware.com/specifications/vmdk.html#sparse" />
+-  </ovf:Section>
+   <ovf:Section xsi:type="ovf:NetworkSection_Type">
+...
+         <rasd:InstanceId>7</rasd:InstanceId>
+-        <rasd:ResourceType>17</rasd:ResourceType>
+-        <rasd:HostResource>/disk/vmdisk1</rasd:HostResource>
++        <rasd:ResourceType>15</rasd:ResourceType>
++        <rasd:HostResource>/file/file1</rasd:HostResource>
+         <rasd:Parent>4</rasd:Parent>
+""".format(vmdk_size=self.FILE_SIZE['input.vmdk'],
+           iso_size=self.FILE_SIZE['input.iso']))
+        # Make sure the old disk is not copied
+        self.assertFalse(os.path.exists(os.path.join(self.temp_dir,
+                                                     "input.vmdk")),
+                         "old disk should be replaced, not exported")
+        # Make sure the new disk is copied
+        self.assertTrue(filecmp.cmp(self.input_iso,
+                                    os.path.join(self.temp_dir, "input.iso")),
+                        "new disk should be exported unchanged")
+
+    def test_overwrite_cdrom_with_harddisk(self):
+        """Replace a cd-rom with a hard disk."""
+        self.instance.package = self.input_ovf
+        self.instance.disk_image = self.blank_vmdk
+        self.instance.type = 'harddisk'
+        self.instance.controller = 'ide'
+        self.instance.address = "1:0"
+        self.instance.run()
+        self.assertLogged(**self.OVERWRITING_FILE)
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
+        self.instance.finished()
+        self.check_diff("""
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />
+-    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="file2" ovf:size="{blank_size}" />
+   </ovf:References>
+...
+     <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" \
+ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
+"http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" \
+ovf:diskId="file2" ovf:fileRef="file2" ovf:format=\
+"http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+   </ovf:DiskSection>
+...
+         <rasd:ElementName>CD-ROM 1</rasd:ElementName>
+-        <rasd:HostResource>ovf:/file/file2</rasd:HostResource>
++        <rasd:HostResource>ovf:/disk/file2</rasd:HostResource>
+         <rasd:InstanceID>7</rasd:InstanceID>
+         <rasd:Parent>4</rasd:Parent>
+-        <rasd:ResourceType>15</rasd:ResourceType>
++        <rasd:ResourceType>17</rasd:ResourceType>
+       </ovf:Item>
+        """.format(vmdk_size=self.FILE_SIZE['input.vmdk'],
+                   iso_size=self.FILE_SIZE['input.iso'],
+                   blank_size=self.FILE_SIZE['blank.vmdk']))
+        # Make sure the old disk is not copied
+        self.assertFalse(os.path.exists(os.path.join(self.temp_dir,
+                                                     "input.iso")),
                          "old disk should be replaced, not exported")
         # Make sure the new disk is copied
         self.assertTrue(filecmp.cmp(self.blank_vmdk,

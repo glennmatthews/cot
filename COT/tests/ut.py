@@ -180,6 +180,14 @@ class COT_UT(unittest.TestCase):
         'levelname': 'WARNING',
         'msg': "Overwriting existing Disk in OVF",
     }
+    DELETING_DISK = {
+        'levelname': 'WARNING',
+        'msg': "Existing element will be deleted.",
+    }
+    DELETING_DISK_SECTION = {
+        'levelname': 'WARNING',
+        'msg': "removing DiskSection",
+    }
     OVERWRITING_DISK_ITEM = {
         'levelname': 'WARNING',
         'msg': "Overwriting existing disk Item in OVF",
@@ -278,6 +286,7 @@ class COT_UT(unittest.TestCase):
         self.invalid_ovf = resource_filename(__name__, "invalid.ovf")
 
         # Some canned disk images too
+        self.input_iso = resource_filename(__name__, "input.iso")
         self.input_vmdk = resource_filename(__name__, "input.vmdk")
         self.blank_vmdk = resource_filename(__name__, "blank.vmdk")
 

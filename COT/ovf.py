@@ -1792,8 +1792,19 @@ class OVF(VMDescription, XML):
         :return: New or updated disk object
         """
         if disk_type != 'harddisk':
-            logger.debug("Not adding Disk element to OVF, as CD-ROMs do not "
-                         "require a Disk")
+            if disk is not None:
+                logger.warning("CD-ROMs do not require a Disk element. "
+                               "Existing element will be deleted.")
+                if self.disk_section is not None:
+                    self.disk_section.remove(disk)
+                    if not self.disk_section.findall(self.DISK):
+                        logger.warning("No Disks left - removing DiskSection")
+                        self.envelope.remove(self.disk_section)
+                        self.disk_section = None
+                disk = None
+            else:
+                logger.debug("Not adding Disk element to OVF, as CD-ROMs "
+                             "do not require a Disk")
             return disk
 
         self.disk_section = self.create_envelope_section_if_absent(
@@ -1916,6 +1927,7 @@ class OVF(VMDescription, XML):
             logger.debug("Updating existing disk Item")
 
         # Make these changes to the disk Item regardless of new/existing
+        disk_item.set_property(self.RESOURCE_TYPE, self.RES_MAP[type])
         if type == 'harddisk':
             # Link to the Disk we created
             disk_item.set_property(self.HOST_RESOURCE,
