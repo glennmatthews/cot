@@ -49,10 +49,22 @@ class TestVmdkTool(HelperUT):
         Helper.PACKAGE_MANAGERS['apt-get'] = True
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
+        Helper._apt_updated = False
         self.system = 'Linux'
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'apt-get', '-q', 'update'],
+            ['sudo', 'apt-get', '-q', 'install', 'make'],
+            ['sudo', 'apt-get', '-q', 'install', 'zlib1g-dev'],
+            ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
+            ['sudo', 'make', 'install'],
+        ], self.last_argv)
+        self.assertTrue(Helper._apt_updated)
+        # Make sure we don't 'apt-get update' again unnecessarily
+        self.last_argv = []
+        self.helper.install_helper()
+        self.assertEqual([
             ['sudo', 'apt-get', '-q', 'install', 'make'],
             ['sudo', 'apt-get', '-q', 'install', 'zlib1g-dev'],
             ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
@@ -64,9 +76,17 @@ class TestVmdkTool(HelperUT):
         """Test installation via 'port'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = True
+        Helper._port_updated = False
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'port', 'selfupdate'],
+            ['sudo', 'port', 'install', 'vmdktool']
+        ], self.last_argv)
+        self.assertTrue(Helper._port_updated)
+        # Make sure we don't 'port selfupdate' again unnecessarily
+        self.last_argv = []
+        self.helper.install_helper()
+        self.assertEqual([
             ['sudo', 'port', 'install', 'vmdktool']
         ], self.last_argv)
 

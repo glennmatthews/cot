@@ -80,9 +80,16 @@ Command syntax:
         Helper.PACKAGE_MANAGERS['apt-get'] = True
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
+        Helper._apt_updated = False
         self.helper.install_helper()
         self.assertEqual([['sudo', 'apt-get', '-q', 'update'],
                           ['sudo', 'apt-get', '-q', 'install', 'qemu-utils']],
+                         self.last_argv)
+        self.assertTrue(Helper._apt_updated)
+        # Make sure we don't call apt-get update again unnecessarily
+        self.last_argv = []
+        self.helper.install_helper()
+        self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'qemu-utils']],
                          self.last_argv)
 
     def test_install_helper_port(self):
@@ -91,9 +98,16 @@ Command syntax:
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = True
         Helper.PACKAGE_MANAGERS['yum'] = False
+        Helper._port_updated = False
         self.helper.install_helper()
         self.assertEqual([['sudo', 'port', 'selfupdate'],
                           ['sudo', 'port', 'install', 'qemu']],
+                         self.last_argv)
+        self.assertTrue(Helper._port_updated)
+        # Make sure we don't call port selfupdate again unnecessarily
+        self.last_argv = []
+        self.helper.install_helper()
+        self.assertEqual([['sudo', 'port', 'install', 'qemu']],
                          self.last_argv)
 
     def test_install_helper_yum(self):

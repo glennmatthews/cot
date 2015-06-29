@@ -75,10 +75,19 @@ class TestMkIsoFS(HelperUT):
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['apt-get'] = False
         Helper.PACKAGE_MANAGERS['port'] = True
+        Helper._port_updated = False
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'port', 'selfupdate'],
-                          ['sudo', 'port', 'install', 'cdrtools']],
-                         self.last_argv)
+        self.assertEqual([
+            ['sudo', 'port', 'selfupdate'],
+            ['sudo', 'port', 'install', 'cdrtools'],
+        ], self.last_argv)
+        self.assertTrue(Helper._port_updated)
+        # Make sure we don't 'port selfupdate' again unnecessarily
+        self.last_argv = []
+        self.helper.install_helper()
+        self.assertEqual([
+            ['sudo', 'port', 'install', 'cdrtools']
+        ], self.last_argv)
 
     def test_install_helper_apt_get(self):
         """Test installation via 'apt-get'."""
@@ -86,11 +95,19 @@ class TestMkIsoFS(HelperUT):
         Helper.PACKAGE_MANAGERS['apt-get'] = True
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
+        Helper._apt_updated = False
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'apt-get', '-q', 'update'],
-                          ['sudo', 'apt-get', '-q', 'install', 'genisoimage']],
-                         self.last_argv)
+        self.assertEqual([
+            ['sudo', 'apt-get', '-q', 'update'],
+            ['sudo', 'apt-get', '-q', 'install', 'genisoimage'],
+        ], self.last_argv)
         self.assertEqual('genisoimage', self.helper.name)
+        self.assertTrue(Helper._apt_updated)
+        # Make sure we don't 'apt-get update' again unnecessarily
+        self.last_argv = []
+        self.helper.install_helper()
+        self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'genisoimage']],
+                         self.last_argv)
 
     def test_install_helper_unsupported(self):
         """Installation fails with neither apt-get nor port nor yum."""

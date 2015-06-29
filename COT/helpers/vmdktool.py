@@ -58,7 +58,7 @@ class VmdkTool(Helper):
                            .format(self.name, self.path))
             return
         logger.info("Installing 'vmdktool'...")
-        if self.port_install('vmdktool'):
+        if Helper.port_install('vmdktool'):
             pass
         elif platform.system() == 'Linux':
             # We don't have vmdktool in apt or yum yet,
@@ -66,12 +66,12 @@ class VmdkTool(Helper):
             # vmdktool requires make and zlib
             if not self.find_executable('make'):
                 logger.info("vmdktool requires 'make'... installing 'make'")
-                if not (self.apt_install('make') or
-                        self.yum_install('make')):
+                if not (Helper.apt_install('make') or
+                        Helper.yum_install('make')):
                     raise NotImplementedError("Not sure how to install 'make'")
             logger.info("vmdktool requires 'zlib'... installing 'zlib'")
-            if not (self.apt_install('zlib1g-dev') or
-                    self.yum_install('zlib-devel')):
+            if not (Helper.apt_install('zlib1g-dev') or
+                    Helper.yum_install('zlib-devel')):
                 raise NotImplementedError("Not sure how to install 'zlib'")
             with self.download_and_expand('http://people.freebsd.org/~brian/'
                                           'vmdktool/vmdktool-1.4.tar.gz') as d:

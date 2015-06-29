@@ -74,10 +74,10 @@ class MkIsoFS(Helper):
                            .format(self.name, self.path))
             return
         logger.info("Installing 'mkisofs' and/or 'genisoimage'...")
-        if self.port_install('cdrtools'):
+        if Helper.port_install('cdrtools'):
             self._name = 'mkisofs'
-        elif (self.apt_install('genisoimage') or
-              self.yum_install('genisoimage')):
+        elif (Helper.apt_install('genisoimage') or
+              Helper.yum_install('genisoimage')):
             self._name = "genisoimage"
         else:
             raise NotImplementedError(

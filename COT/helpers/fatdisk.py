@@ -54,14 +54,14 @@ class FatDisk(Helper):
                            .format(self.name, self.path))
             return
         logger.info("Installing 'fatdisk'...")
-        if self.port_install('fatdisk'):
+        if Helper.port_install('fatdisk'):
             pass
         elif platform.system() == 'Linux':
             # Fatdisk installation requires make
             if not self.find_executable('make'):
                 logger.info("fatdisk requires 'make'... installing 'make'")
-                if not (self.apt_install('make') or
-                        self.yum_install('make')):
+                if not (Helper.apt_install('make') or
+                        Helper.yum_install('make')):
                     raise NotImplementedError("Not sure how to install 'make'")
             # Fatdisk requires clang or gcc or g++
             if not (self.find_executable('clang') or
@@ -69,8 +69,8 @@ class FatDisk(Helper):
                     self.find_executable('g++')):
                 logger.info(
                     "fatdisk requires a C compiler... installing 'gcc'")
-                if not (self.apt_install('gcc') or
-                        self.yum_install('gcc')):
+                if not (Helper.apt_install('gcc') or
+                        Helper.yum_install('gcc')):
                     raise NotImplementedError(
                         "Not sure how to install a C compiler")
             with self.download_and_expand(
