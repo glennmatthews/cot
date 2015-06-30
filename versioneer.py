@@ -1,7 +1,8 @@
 
 # Version: 0.15+dev
 
-"""
+"""The Versioneer - like a rocketeer, but for versions.
+
 The Versioneer
 ==============
 
@@ -134,7 +135,7 @@ First, decide on values for the following configuration variables:
   a string, like 'PROJECTNAME-', which appears at the start of all VCS tags.
   If your tags look like 'myproject-1.2.0', then you should use
   tag_prefix='myproject-'. If you use unprefixed tags like '1.2.0', this
-  should be an empty string.
+  should be an empty string, using either `tag_prefix=` or `tag_prefix=''`.
 
 * `parentdir_prefix`:
 
@@ -159,7 +160,7 @@ To versioneer-enable your project:
   style = pep440
   versionfile_source = src/myproject/_version.py
   versionfile_build = myproject/_version.py
-  tag_prefix = ""
+  tag_prefix =
   parentdir_prefix = myproject-
   ````
 
@@ -333,9 +334,11 @@ number of intermediate scripts.
 
 ## License
 
-To make Versioneer easier to embed, all its code is hereby released into the
-public domain. The `_version.py` that it creates is also in the public
-domain.
+To make Versioneer easier to embed, all its code is dedicated to the public
+domain. The `_version.py` that it creates is also in the public domain.
+Specifically, both are released under the Creative Commons "Public Domain
+Dedication" license (CC0-1.0), as described in
+https://creativecommons.org/publicdomain/zero/1.0/ .
 
 """
 
@@ -353,12 +356,16 @@ import sys
 
 
 class VersioneerConfig:
-    pass
+
+    """Container for Versioneer configuration parameters."""
 
 
 def get_root():
-    # we require that all commands are run from the project root, i.e. the
-    # directory that contains setup.py, setup.cfg, and versioneer.py .
+    """Get the project root directory.
+
+    We require that all commands are run from the project root, i.e. the
+    directory that contains setup.py, setup.cfg, and versioneer.py .
+    """
     root = os.path.realpath(os.path.abspath(os.getcwd()))
     setup_py = os.path.join(root, "setup.py")
     versioneer_py = os.path.join(root, "versioneer.py")
@@ -391,6 +398,7 @@ def get_root():
 
 
 def get_config_from_root(root):
+    """Read the project setup.cfg file to determine Versioneer config."""
     # This might raise EnvironmentError (if setup.cfg is missing), or
     # configparser.NoSectionError (if it lacks a [versioneer] section), or
     # configparser.NoOptionError (if it lacks "VCS="). See the docstring at
@@ -411,13 +419,16 @@ def get_config_from_root(root):
     cfg.versionfile_source = get(parser, "versionfile_source")
     cfg.versionfile_build = get(parser, "versionfile_build")
     cfg.tag_prefix = get(parser, "tag_prefix")
+    if cfg.tag_prefix in ("''", '""'):
+        cfg.tag_prefix = ""
     cfg.parentdir_prefix = get(parser, "parentdir_prefix")
     cfg.verbose = get(parser, "verbose")
     return cfg
 
 
 class NotThisMethod(Exception):
-    pass
+
+    """Exception raised if a method is not valid for the current scenario."""
 
 # these dictionaries contain VCS-specific tools
 LONG_VERSION_PY = {}
@@ -425,7 +436,9 @@ HANDLERS = {}
 
 
 def register_vcs_handler(vcs, method):  # decorator
+    """Decorator to mark a method as the handler for a particular VCS."""
     def decorate(f):
+        """Store f in HANDLERS[vcs][method]."""
         if vcs not in HANDLERS:
             HANDLERS[vcs] = {}
         HANDLERS[vcs][method] = f
@@ -1110,6 +1123,11 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
 
 
 def do_vcs_install(manifest_in, versionfile_source, ipy):
+    """Git-specific installation logic for Versioneer.
+
+    For Git, this means creating/changing .gitattributes to mark _version.py
+    for export-time keyword substitution.
+    """
     GITS = ["git"]
     if sys.platform == "win32":
         GITS = ["git.cmd", "git.exe"]
@@ -1178,6 +1196,7 @@ def get_versions():
 
 
 def versions_from_file(filename):
+    """Try to determine the version from _version.py if present."""
     try:
         with open(filename) as f:
             contents = f.read()
@@ -1191,6 +1210,7 @@ def versions_from_file(filename):
 
 
 def write_to_version_file(filename, versions):
+    """Write the given version number to the given _version.py file."""
     os.unlink(filename)
     contents = json.dumps(versions, sort_keys=True,
                           indent=1, separators=(",", ": "))
@@ -1368,12 +1388,15 @@ def render(pieces, style):
 
 
 class VersioneerBadRootError(Exception):
-    pass
+
+    """The project root directory is unknown or missing key files."""
 
 
 def get_versions(verbose=False):
-    # returns dict with two keys: 'version' and 'full'
+    """Get the project version from whatever source is available.
 
+    Returns dict with two keys: 'version' and 'full'.
+    """
     if "versioneer" in sys.modules:
         # see the discussion in cmdclass.py:get_cmdclass()
         del sys.modules["versioneer"]
@@ -1445,10 +1468,12 @@ def get_versions(verbose=False):
 
 
 def get_version():
+    """Get the short version string for this project."""
     return get_versions()["version"]
 
 
 def get_cmdclass():
+    """Get the custom setuptools/distutils subclasses used by Versioneer."""
     if "versioneer" in sys.modules:
         del sys.modules["versioneer"]
         # this fixes the "python setup.py develop" case (also 'install' and
@@ -1582,7 +1607,7 @@ a section like:
  style = pep440
  versionfile_source = src/myproject/_version.py
  versionfile_build = myproject/_version.py
- tag_prefix = ""
+ tag_prefix =
  parentdir_prefix = myproject-
 
 You will also need to edit your setup.py to use the results:
@@ -1618,6 +1643,7 @@ del get_versions
 
 
 def do_setup():
+    """Main VCS-independent setup function for installing Versioneer."""
     root = get_root()
     try:
         cfg = get_config_from_root(root)
@@ -1699,6 +1725,7 @@ def do_setup():
 
 
 def scan_setup_py():
+    """Validate the contents of setup.py against Versioneer's expectations."""
     found = set()
     setters = False
     errors = 0

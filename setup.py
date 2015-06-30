@@ -14,6 +14,8 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
+"""COT - the Common OVF Tool."""
+
 # Install setuptools automatically if not already present
 try:
     from setuptools import setup
@@ -55,6 +57,7 @@ cmdclass['sdist'].sub_commands.insert(0, ('build_sphinx', None))
 
 
 class custom_bdist_egg(bdist_egg):
+
     """Custom subclass for the 'bdist_egg' command.
 
     This command is called automatically by 'install', but it doesn't do
@@ -70,6 +73,7 @@ cmdclass['bdist_egg'] = custom_bdist_egg
 
 
 class custom_test(test):
+
     """Custom subclass for the 'test' command."""
 
     def with_project_on_sys_path(self, func):
