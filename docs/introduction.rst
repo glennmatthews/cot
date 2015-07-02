@@ -5,11 +5,11 @@ Introduction
 
    <p style="height:22px">
    <a href="https://pypi.python.org/pypi/cot/">
-   <img src="https://pypip.in/version/cot/badge.svg"
+   <img src="https://img.shields.io/pypi/v/cot.svg"
         alt="Latest Version">
    </a>
    <a href="https://pypi.python.org/pypi/cot/">
-   <img src="https://pypip.in/license/cot/badge.svg"
+   <img src="https://img.shields.io/badge/license-MIT-blue.svg"
         alt="License">
    </a>
    <a href="https://travis-ci.org/glennmatthews/cot">
