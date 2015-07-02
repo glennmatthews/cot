@@ -362,7 +362,8 @@ class COTEditHardware(COTSubmodule):
             formatter_class=argparse.RawDescriptionHelpFormatter,
             usage=self.UI.fill_usage("edit-hardware", [
                 "PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]",
-                "PACKAGE [-o OUTPUT] [-p PROFILE [PROFILE2 ...]] [-c CPUS] \
+                "PACKAGE [-o OUTPUT] \
+[-p PROFILE [PROFILE2 ...] [--delete-all-other-profiles]] [-c CPUS] \
 [-m MEMORY] [-n NICS] [--nic-type {e1000,virtio,vmxnet3}] \
 [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]] \
 [--nic-names NAME1 [NAME2 ...]] [-s SERIAL_PORTS] [-S URI1 [URI2 ...]] \
