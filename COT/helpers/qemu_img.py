@@ -60,9 +60,9 @@ class QEMUImg(Helper):
                            .format(self.name, self.path))
             return
         logger.info("Installing 'qemu-img'...")
-        if not (self.apt_install('qemu-utils') or
-                self.port_install('qemu') or
-                self.yum_install('qemu-img')):
+        if not (Helper.apt_install('qemu-utils') or
+                Helper.port_install('qemu') or
+                Helper.yum_install('qemu-img')):
             raise NotImplementedError(
                 "Unsure how to install qemu-img.\n"
                 "See http://en.wikibooks.org/wiki/QEMU/Installing_QEMU")

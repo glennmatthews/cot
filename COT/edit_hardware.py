@@ -27,6 +27,7 @@
 import argparse
 import logging
 import re
+import textwrap
 
 from .data_validation import natural_sort, no_whitespace, mac_address
 from .data_validation import non_negative_int, positive_int, InvalidInputError
@@ -46,6 +47,7 @@ class COTEditHardware(COTSubmodule):
 
     Attributes:
     :attr:`profiles`,
+    :attr:`delete_all_other_profiles`,
     :attr:`cpus`,
     :attr:`memory`,
     :attr:`nics`,
@@ -65,6 +67,8 @@ class COTEditHardware(COTSubmodule):
         super(COTEditHardware, self).__init__(UI)
         self.profiles = None
         """Configuration profile(s) to edit."""
+        self.delete_all_other_profiles = False
+        """Delete all profiles other than those set in :attr:`profiles`."""
         self._cpus = None
         self._memory = None
         self._nics = None
@@ -72,9 +76,15 @@ class COTEditHardware(COTSubmodule):
         self.mac_addresses_list = None
         """List of MAC addresses to set."""
         self.nic_networks = None
-        """List of NIC-to-network mappings."""
+        """List of NIC-to-network mappings.
+
+        Can use wildcards as described in :meth:`expand_list_wildcard`.
+        """
         self.nic_names = None
-        """List of NIC name strings"""
+        """List of NIC name strings.
+
+        Can use wildcards as described in :meth:`expand_list_wildcard`.
+        """
         self._serial_ports = None
         self.serial_connectivity = None
         """List of serial connection strings."""
@@ -187,6 +197,7 @@ class COTEditHardware(COTSubmodule):
         # Need some work to do!
         if (
                 self.profiles is None and
+                self.delete_all_other_profiles is False and
                 self.cpus is None and
                 self.memory is None and
                 self.nics is None and
@@ -236,6 +247,26 @@ class COTEditHardware(COTSubmodule):
                     vm.create_configuration_profile(profile, label=label,
                                                     description=desc)
 
+        if self.delete_all_other_profiles:
+            if self.profiles is None:
+                self.UI.confirm_or_die(
+                    "--delete-all-other-profiles was specified but no "
+                    "--profiles was specified. Really proceed to delete ALL "
+                    "configuration profiles?")
+                profiles_to_delete = vm.config_profiles
+            else:
+                profiles_to_delete = list(set(vm.config_profiles) -
+                                          set(self.profiles))
+            for profile in profiles_to_delete:
+                if self.profiles is not None:
+                    if not self.UI.confirm("Delete profile {0}?"
+                                           .format(profile)):
+                        logger.verbose("Skipping deletion of profile {0}"
+                                       .format(profile))
+                        continue
+                # else (profiles == None) we already confirmed earlier
+                vm.delete_configuration_profile(profile)
+
         if self.virtual_system_type is not None:
             vm.system_types = self.virtual_system_type
 
@@ -248,8 +279,8 @@ class COTEditHardware(COTSubmodule):
         if self.nic_type is not None:
             vm.set_nic_type(self.nic_type, self.profiles)
 
+        nics_dict = vm.get_nic_count(self.profiles)
         if self.nics is not None:
-            nics_dict = vm.get_nic_count(self.profiles)
             for (profile, count) in nics_dict.items():
                 if self.nics < count:
                     self.UI.confirm_or_die(
@@ -259,10 +290,15 @@ class COTEditHardware(COTSubmodule):
                                 (count - self.nics), self.nics))
             vm.set_nic_count(self.nics, self.profiles)
 
+        nics_dict = vm.get_nic_count(self.profiles)
+        max_nics = max(nics_dict.values())
+
         if self.nic_networks is not None:
             existing_networks = vm.networks
+            new_networks = self.expand_list_wildcard(self.nic_networks,
+                                                     max_nics)
             # Convert nic_networks to a set to merge duplicate entries
-            for network in natural_sort(set(self.nic_networks)):
+            for network in natural_sort(set(new_networks)):
                 if network not in existing_networks:
                     self.UI.confirm_or_die(
                         "Network {0} is not currently defined. "
@@ -270,13 +306,14 @@ class COTEditHardware(COTSubmodule):
                     desc = self.UI.get_input(
                         "Please enter a description for this network", network)
                     vm.create_network(network, desc)
-            vm.set_nic_networks(self.nic_networks, self.profiles)
+            vm.set_nic_networks(new_networks, self.profiles)
 
         if self.mac_addresses_list is not None:
             vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
 
         if self.nic_names is not None:
-            vm.set_nic_names(self.nic_names, self.profiles)
+            names = self.expand_list_wildcard(self.nic_names, max_nics)
+            vm.set_nic_names(names, self.profiles)
 
         if self.serial_ports is not None:
             serial_dict = vm.get_serial_count(self.profiles)
@@ -317,6 +354,9 @@ class COTEditHardware(COTSubmodule):
         :param dict storage: Dict of { 'label': subparser } to be updated with
             subparser(s) created, if any.
         """
+        wrapper = textwrap.TextWrapper(width=self.UI.terminal_width - 1,
+                                       initial_indent='  ',
+                                       subsequent_indent='  ')
         p = parent.add_parser(
             'edit-hardware', add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -330,20 +370,30 @@ class COTEditHardware(COTSubmodule):
             ]),
             help="Edit virtual machine hardware properties of an OVF",
             description="Edit hardware properties of the specified OVF or OVA",
-            epilog=self.UI.fill_examples([
+            epilog=("Notes:\n" + wrapper.fill(
+                "The --nic-names and --nic-networks options support the use"
+                " of a wildcard value to automatically generate a series of"
+                " consecutively numbered names. The syntax for the wildcard"
+                " option is '{' followed by a number to start incrementing"
+                " from, followed by '}'. See examples below."
+            ) + "\n\n" + self.UI.fill_examples([
                 ('Create a new profile named "1CPU-8GB" with 1 CPU and 8'
                  ' gigabytes of RAM',
                  'cot edit-hardware csr1000v.ova --output csr1000v_custom.ova'
                  ' --profile 1CPU-4GB --cpus 1 --memory 8GB'),
-                ("Rename the NICs in the output OVA as 'mgmt', 'eth0',"
-                 " 'eth1', 'eth2'...",
+                ("Wildcard example - without caring about how many NICs are"
+                 " defined in the input OVA, rename all of the NICs in the"
+                 " output OVA as 'Ethernet0/10', 'Ethernet0/11',"
+                 " 'Ethernet0/12', etc., and map them to networks"
+                 " 'Ethernet0_10', 'Ethernet0_11', 'Ethernet0_12', etc.",
+                 'cot edit-hardware input.ova -o output.ova'
+                 ' --nic-names "Ethernet0/{10}"'
+                 ' --nic-networks "Ethernet0_{10}"'),
+                ("Combination of fixed and wildcarded names - rename the NICs"
+                 " in the output OVA as 'mgmt', 'eth0', 'eth1', 'eth2'...",
                  'cot edit-hardware input.ova -o output.ova'
                  ' --nic-names "mgmt" "eth{0}"'),
-                ("Rename the NICs in the output OVA as 'Ethernet0/10',"
-                 " 'Ethernet0/11', 'Ethernet0/12', etc.",
-                 'cot edit-hardware input.ova -o output.ova'
-                 ' --nic-names "Ethernet0/{10}"')
-            ]))
+            ])))
 
         g = p.add_argument_group("general options")
 
@@ -361,6 +411,9 @@ class COTEditHardware(COTSubmodule):
                        help="Make hardware changes only under the given "
                        "configuration profile(s). (default: changes apply "
                        "to all profiles)")
+        g.add_argument('--delete-all-other-profiles', action='store_true',
+                       help="Delete all configuration profiles other than"
+                       " those specified with the --profiles option")
 
         g = p.add_argument_group("computational hardware options")
 
@@ -379,27 +432,20 @@ class COTEditHardware(COTSubmodule):
                        help="Set the hardware type for all NICs. "
                        "(default: do not change existing NICs, and new "
                        "NICs added will match the existing type.)")
+        g.add_argument('--nic-names', nargs='+',
+                       metavar=('NAME1', 'NAME2'),
+                       help="Specify a list of one or more NIC names or "
+                       "patterns to apply to NIC devices. See Notes.")
         g.add_argument('-N', '--nic-networks', nargs='+',
                        metavar=('NETWORK', 'NETWORK2'),
                        help="Specify a series of one or more network names "
-                       "to map NICs to. If N network names are specified, "
-                       "the first (N-1) NICs will be mapped to the first "
-                       "(N-1) networks and all remaining NICs will be "
-                       "mapped to the Nth network.")
+                       "or patterns to map NICs to. See Notes.")
         g.add_argument('-M', '--mac-addresses-list', type=mac_address,
                        metavar=('MAC1', 'MAC2'), nargs='+',
                        help="Specify a list of MAC addresses for the NICs. "
                        "If N MACs are specified, the first (N-1) NICs "
                        "will receive the first (N-1) MACs, and all "
                        "remaining NICs will receive the Nth MAC")
-        g.add_argument('--nic-names', nargs='+',
-                       metavar=('NAME1', 'NAME2'),
-                       help="Specify a list of one or more NIC names or "
-                       "patterns to apply to NIC devices. "
-                       "If N names/patterns are specified, the first (N-1) "
-                       "NICs will receive the first (N-1) names and "
-                       "remaining NICs will be named based on the "
-                       "name or pattern of the Nth item. See examples.")
 
         g = p.add_argument_group("serial port options")
 
@@ -430,3 +476,42 @@ class COTEditHardware(COTSubmodule):
         p.set_defaults(instance=self)
 
         storage['edit-hardware'] = p
+
+    def expand_list_wildcard(self, name_list, length):
+        """Expand a list containing a wildcard to the desired length.
+
+        Since various items (NIC names, network names, etc.) are often
+        named or numbered sequentially, we provide this API to allow the
+        user to specify a wildcard value to permit automatically
+        expanding a list of input strings to the desired length.
+        The syntax for the wildcard option is ``{`` followed by a number
+        (indicating the starting index for the name) followed by ``}``.
+        Examples:
+
+        ``["eth{0}"]``
+          ``Expands to ["eth0", "eth1", "eth2", ...]``
+        ``["mgmt0" "eth{10}"]``
+          ``Expands to ["mgmt0", "eth10", "eth11", "eth12", ...]``
+
+        :param list name_list: List of names to assign.
+        :param list length: Length to expand to
+        :return: Expanded list
+        """
+        if len(name_list) < length:
+            logger.info("Expanding list {0} to {1} entries"
+                        .format(name_list, length))
+            # Extract the pattern and remove it from the list
+            pattern = name_list[-1]
+            name_list = name_list[:-1]
+            # Look for the magic string in the pattern
+            match = re.search("{(\d+)}", pattern)
+            if match:
+                i = int(match.group(1))
+            else:
+                i = 0
+            while len(name_list) < length:
+                name_list.append(re.sub("{\d+}", str(i), pattern))
+                i += 1
+            logger.info("New list is {0}".format(name_list))
+
+        return name_list

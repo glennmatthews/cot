@@ -300,7 +300,7 @@ class OVF(VMDescription, XML):
                 required=True)
 
             # Initialize various caches
-            self._configuration_profiles = []
+            self._configuration_profiles = None
 
             try:
                 self.hardware = OVFHardware(self)
@@ -313,7 +313,7 @@ class OVF(VMDescription, XML):
             # Let's go ahead and walk the file references in the OVF descriptor
             # and make sure they look sane.
             file_list = [f.get(self.FILE_HREF) for f in
-                         self.find_all_children(self.references, self.FILE)]
+                         self.references.findall(self.FILE)]
             self.invalid_files = []
             if (self.output_file is not None or
                     self.input_file == self.ovf_descriptor):
@@ -419,19 +419,18 @@ class OVF(VMDescription, XML):
         If this OVF has no defined profiles, returns an empty list.
         If there is a default profile, it will be first in the list.
         """
-        if ((not self._configuration_profiles) and
-                (self.deploy_opt_section is not None)):
+        if self._configuration_profiles is None:
             profile_ids = []
-            profiles = self.find_all_children(self.deploy_opt_section,
-                                              self.CONFIG)
-            for profile in profiles:
-                # Force the "default" profile to the head of the list
-                if (profile.get(self.CONFIG_DEFAULT) == 'true' or
-                        profile.get(self.CONFIG_DEFAULT) == '1'):
-                    profile_ids.insert(0, profile.get(self.CONFIG_ID))
-                else:
-                    profile_ids.append(profile.get(self.CONFIG_ID))
-            logger.verbose("Configuration profiles are: {0}"
+            if self.deploy_opt_section is not None:
+                profiles = self.deploy_opt_section.findall(self.CONFIG)
+                for profile in profiles:
+                    # Force the "default" profile to the head of the list
+                    if (profile.get(self.CONFIG_DEFAULT) == 'true' or
+                            profile.get(self.CONFIG_DEFAULT) == '1'):
+                        profile_ids.insert(0, profile.get(self.CONFIG_ID))
+                    else:
+                        profile_ids.append(profile.get(self.CONFIG_ID))
+            logger.verbose("Current configuration profiles are: {0}"
                            .format(profile_ids))
             self._configuration_profiles = profile_ids
         return self._configuration_profiles
@@ -447,7 +446,7 @@ class OVF(VMDescription, XML):
         result = []
         if self.product_section is None:
             return result
-        elems = self.find_all_children(self.product_section, self.PROPERTY)
+        elems = self.product_section.findall(self.PROPERTY)
         for elem in elems:
             label = elem.findtext(self.PROPERTY_LABEL, "")
             descr = elem.findtext(self.PROPERTY_DESC, "")
@@ -565,7 +564,7 @@ class OVF(VMDescription, XML):
         self.hardware.update_xml()
 
         # Make sure file references are correct:
-        for file in XML.find_all_children(self.references, self.FILE):
+        for file in self.references.findall(self.FILE):
             file_path = os.path.join(self.working_dir,
                                      file.get(self.FILE_HREF))
             if not os.path.exists(file_path):
@@ -609,6 +608,27 @@ class OVF(VMDescription, XML):
                                 capacity, actual_capacity))
                     self.set_capacity_of_disk(disk, actual_capacity)
 
+        # Make sure all defined networks are actually used by NICs,
+        # and delete any networks that are unused.
+        if self.network_section is not None:
+            networks = self.network_section.findall(self.NETWORK)
+            items = self.virtual_hw_section.findall(self.ETHERNET_PORT_ITEM)
+            connected_networks = set()
+            for item in items:
+                conn = item.find(self.EPASD + self.CONNECTION)
+                if conn is not None:
+                    connected_networks.add(conn.text)
+            for net in networks:
+                name = net.get(self.NETWORK_NAME)
+                if name not in connected_networks:
+                    logger.warning("Removing unused network {0}".format(name))
+                    self.network_section.remove(net)
+            # If all networks were removed, remove the NetworkSection too
+            if not self.network_section.findall(self.NETWORK):
+                logger.warning("No networks left - removing NetworkSection")
+                self.envelope.remove(self.network_section)
+                self.network_section = None
+
         logger.info("Writing out to file {0}".format(self.output_file))
 
         if extension == '.ova':
@@ -623,7 +643,7 @@ class OVF(VMDescription, XML):
             dest_dir = os.path.dirname(os.path.abspath(self.output_file))
             if not dest_dir:
                 dest_dir = os.getcwd()
-            for file in self.find_all_children(self.references, self.FILE):
+            for file in self.references.findall(self.FILE):
                 file_path = os.path.join(self.working_dir,
                                          file.get(self.FILE_HREF))
                 logger.info("Copying {0} to {1}"
@@ -1080,7 +1100,36 @@ class OVF(VMDescription, XML):
         self.set_or_make_child(cfg, self.CFG_LABEL, label)
         self.set_or_make_child(cfg, self.CFG_DESC, description)
         # Clear cache
-        self._configuration_profiles = []
+        logger.debug("New profile {0} created - clear config_profiles cache"
+                     .format(id))
+        self._configuration_profiles = None
+
+    def delete_configuration_profile(self, profile):
+        """Delete the profile with the given ID."""
+        cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
+                              attrib={self.CONFIG_ID: profile})
+        if cfg is None:
+            raise LookupError("No such configuration profile '{0}'"
+                              .format(profile))
+        logger.info("Deleting configuration profile {0}".format(profile))
+
+        # Delete references to this profile from the hardware
+        items = self.hardware.find_all_items(profile_list=[profile])
+        logger.verbose("Removing profile {0} from {1} hardware items"
+                       .format(profile, len(items)))
+        for item in items:
+            item.remove_profile(profile, split_default=False)
+
+        # Delete the profile declaration itself
+        self.deploy_opt_section.remove(cfg)
+
+        if not self.deploy_opt_section.findall(self.CONFIG):
+            self.envelope.remove(self.deploy_opt_section)
+
+        # Clear cache
+        logger.debug("Profile {0} deleted - clear config_profiles cache"
+                     .format(profile))
+        self._configuration_profiles = None
 
     # TODO - how to insert a doc about the profile_list (see vm_description.py)
 
@@ -1195,41 +1244,9 @@ class OVF(VMDescription, XML):
     def set_nic_names(self, name_list, profile_list):
         """Set the device names for NICs under the given profile(s).
 
-        Since NICs are often named sequentially, this API supports a wildcard
-        option for the final element in :attr:`name_list` which can be
-        expanded to automatically assign sequential NIC names.
-        The syntax for the wildcard option is ``{`` followed by a number
-        (indicating the starting index for the name) followed by ``}``.
-        Examples:
-
-        ``["eth{0}"]``
-          ``Expands to ["eth0", "eth1", "eth2", ...]``
-        ``["mgmt0" "eth{10}"]``
-          ``Expands to ["mgmt0", "eth10", "eth11", "eth12", ...]``
-
         :param list name_list: List of names to assign.
         :param list profile_list: Change only the given profiles
         """
-        # Expand the pattern (if any) out to a full list
-        nic_dict = self.get_nic_count(profile_list)
-        max_nics = max(nic_dict.values())
-        if len(name_list) < max_nics:
-            logger.info("Expanding name_list {0} to {1} entries"
-                        .format(name_list, max_nics))
-            # Extract the pattern and remove it from the list
-            pattern = name_list[-1]
-            name_list = name_list[:-1]
-            # Look for the magic string {0}, {1}, etc in the pattern
-            match = re.search("{(\d+)}", pattern)
-            if match:
-                i = int(match.group(1))
-            else:
-                i = 0
-            while len(name_list) < max_nics:
-                name_list.append(re.sub("{\d+}", str(i), pattern))
-                i += 1
-            logger.info("New name_list is {0}".format(name_list))
-
         self.hardware.set_item_values_per_profile('ethernet',
                                                   self.ELEMENT_NAME,
                                                   name_list,
@@ -1775,8 +1792,19 @@ class OVF(VMDescription, XML):
         :return: New or updated disk object
         """
         if disk_type != 'harddisk':
-            logger.debug("Not adding Disk element to OVF, as CD-ROMs do not "
-                         "require a Disk")
+            if disk is not None:
+                logger.warning("CD-ROMs do not require a Disk element. "
+                               "Existing element will be deleted.")
+                if self.disk_section is not None:
+                    self.disk_section.remove(disk)
+                    if not self.disk_section.findall(self.DISK):
+                        logger.warning("No Disks left - removing DiskSection")
+                        self.envelope.remove(self.disk_section)
+                        self.disk_section = None
+                disk = None
+            else:
+                logger.debug("Not adding Disk element to OVF, as CD-ROMs "
+                             "do not require a Disk")
             return disk
 
         self.disk_section = self.create_envelope_section_if_absent(
@@ -1899,6 +1927,7 @@ class OVF(VMDescription, XML):
             logger.debug("Updating existing disk Item")
 
         # Make these changes to the disk Item regardless of new/existing
+        disk_item.set_property(self.RESOURCE_TYPE, self.RES_MAP[type])
         if type == 'harddisk':
             # Link to the Disk we created
             disk_item.set_property(self.HOST_RESOURCE,
@@ -2001,7 +2030,7 @@ class OVF(VMDescription, XML):
                     .format(file=os.path.basename(ovf_file), sum=sha1sum)
                     .encode('utf-8'))
             # Checksum all referenced files as well
-            for file in self.find_all_children(self.references, self.FILE):
+            for file in self.references.findall(self.FILE):
                 file_name = file.get(self.FILE_HREF)
                 file_path = os.path.join(os.path.dirname(ovf_file), file_name)
                 sha1sum = get_checksum(file_path, 'sha1')
@@ -2039,7 +2068,7 @@ class OVF(VMDescription, XML):
                                "so the existing certificate will be omitted "
                                "from {0}.".format(tar_file))
             # Add all other files mentioned in the OVF
-            for file in self.find_all_children(self.references, self.FILE):
+            for file in self.references.findall(self.FILE):
                 file_path = os.path.join(dir, file.get(self.FILE_HREF))
                 tarf.add(file_path, os.path.basename(file_path))
                 logger.verbose("Added {0} to {1}".format(file_path, tar_file))
@@ -3219,10 +3248,14 @@ class OVFItem:
         self.modified = True
         self.validate()
 
-    def remove_profile(self, profile):
+    def remove_profile(self, profile, split_default=True):
         """Remove all trace of the given profile from this item.
 
         :param profile: Profile name to remove
+        :param split_default: If false, do not split out 'default'
+          profile items to specifically exclude this profile. Used when the
+          profile being removed will no longer exist anywhere and so
+          'default' will continue to exclude this profile.
         """
         if not self.has_profile(profile):
             logger.error("Requested deletion of profile '{0}' but it is "
@@ -3237,7 +3270,7 @@ class OVFItem:
                 profiles -= p_set
                 # Convert "any profile" to a list of all profiles minus
                 # this one and any profiles already set elsewhere
-                if None in profiles:
+                if None in profiles and split_default:
                     logger.debug("Profile contains 'any profile'; "
                                  "fixing it up")
                     profiles.update(self.ovf.config_profiles)
@@ -3250,6 +3283,8 @@ class OVFItem:
                         profiles -= p
                     logger.debug("profiles are now: {0}".format(profiles))
                 if not profiles:
+                    logger.verbose("No more profiles for value {0} , {1}"
+                                   .format(key, value))
                     del self.property_dict[key][value]
         self.modified = True
         self.validate()

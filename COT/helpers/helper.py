@@ -169,19 +169,31 @@ class Helper(object):
             finally:
                 logger.debug("Cleaning up temporary directory {0}".format(d))
 
+    _apt_updated = False
+    """Whether we have run 'apt-get update' yet."""
+
     @classmethod
     def apt_install(cls, package):
         """Try to use ``apt-get`` to install a package."""
         if not cls.PACKAGE_MANAGERS['apt-get']:
             return False
+        if not cls._apt_updated:
+            cls._check_call(['sudo', 'apt-get', '-q', 'update'])
+            cls._apt_updated = True
         cls._check_call(['sudo', 'apt-get', '-q', 'install', package])
         return True
+
+    _port_updated = False
+    """Whether we have run 'port selfupdate' yet."""
 
     @classmethod
     def port_install(cls, package):
         """Try to use ``port`` to install a package."""
         if not cls.PACKAGE_MANAGERS['port']:
             return False
+        if not cls._port_updated:
+            cls._check_call(['sudo', 'port', 'selfupdate'])
+            cls._port_updated = True
         cls._check_call(['sudo', 'port', 'install', package])
         return True
 

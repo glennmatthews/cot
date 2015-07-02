@@ -52,7 +52,19 @@ class TestFatDisk(HelperUT):
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['apt-get'] = True
+        Helper._apt_updated = False
         self.system = 'Linux'
+        self.helper.install_helper()
+        self.assertEqual([
+            ['sudo', 'apt-get', '-q', 'update'],
+            ['sudo', 'apt-get', '-q', 'install', 'make'],
+            ['sudo', 'apt-get', '-q', 'install', 'gcc'],
+            ['./RUNME'],
+            ['sudo', 'cp', 'fatdisk', '/usr/local/bin/fatdisk'],
+        ], self.last_argv)
+        self.assertTrue(Helper._apt_updated)
+        # Make sure we don't call apt-get update again unnecessarily.
+        self.last_argv = []
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'apt-get', '-q', 'install', 'make'],
@@ -65,9 +77,19 @@ class TestFatDisk(HelperUT):
         """Test installation via 'port'."""
         Helper.find_executable = self.stub_find_executable
         Helper.PACKAGE_MANAGERS['port'] = True
+        Helper._port_updated = False
         self.helper.install_helper()
-        self.assertEqual(self.last_argv[0],
-                         ['sudo', 'port', 'install', 'fatdisk'])
+        self.assertEqual([
+            ['sudo', 'port', 'selfupdate'],
+            ['sudo', 'port', 'install', 'fatdisk'],
+        ], self.last_argv)
+        self.assertTrue(Helper._port_updated)
+        # Make sure we don't call port selfupdate again unnecessarily.
+        self.last_argv = []
+        self.helper.install_helper()
+        self.assertEqual([
+            ['sudo', 'port', 'install', 'fatdisk'],
+        ], self.last_argv)
 
     def test_install_helper_yum(self):
         """Test installation via 'yum'."""

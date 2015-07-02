@@ -140,7 +140,7 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
         def stub_find_executable(self, name):
             return paths.get(name, None)
 
-        def stub_install(self, package):
+        def stub_install(cls, package):
             if package == "genisoimage":
                 paths["genisoimage"] = "/usr/bin/genisoimage"
                 return True
@@ -155,9 +155,11 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
         _check_output = Helper._check_output
         Helper._check_output = self.stub_check_output
         Helper.find_executable = stub_find_executable
-        Helper.apt_install = stub_install
-        Helper.port_install = stub_install
-        Helper.yum_install = stub_install
+        Helper.apt_install = classmethod(stub_install)
+        Helper.port_install = classmethod(stub_install)
+        Helper.yum_install = classmethod(stub_install)
+        Helper._apt_updated = False
+        Helper._port_updated = False
         expected_output = """
 Results:
 -------------
