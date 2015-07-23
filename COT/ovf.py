@@ -503,6 +503,42 @@ class OVF(VMDescription, XML):
         XML.set_or_make_child(system, self.VIRTUAL_SYSTEM_TYPE, type_string)
 
     @property
+    def product(self):
+        """Short descriptive product string (XML ``Product`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(self.PRODUCT, None)
+        return None
+
+    @product.setter
+    def product(self, product_string):
+        """Set the Product element's value.
+
+        :param str product_string: Product name string.
+        """
+        logger.info("Updating Product element in OVF")
+        self.create_product_section_if_absent(
+            self.PRODUCT,
+            product_string)
+
+    @property
+    def vendor(self):
+        """Short descriptive vendor string (XML ``Vendor`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(self.VENDOR, None)
+        return None
+
+    @vendor.setter
+    def vendor(self, vendor_string):
+        """Set the Vendor element's value.
+
+        :param str vendor_string: Vendor string.
+        """
+        logger.info("Updating Vendor element in OVF")
+        self.create_product_section_if_absent(
+            self.VENDOR,
+            vendor_string)
+
+    @property
     def version_short(self):
         """Short descriptive version string (XML ``Version`` element)."""
         if self.product_section is not None:
@@ -543,6 +579,66 @@ class OVF(VMDescription, XML):
         logger.info("Updating FullVersion element in OVF")
         self.set_or_make_child(self.product_section, self.FULL_VERSION,
                                version_string)
+
+    @property
+    def product_url(self):
+        """Product URL string (XML ``ProductUrl`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(
+                self.PRODUCT_URL,
+                None)
+        return None
+
+    @product_url.setter
+    def product_url(self, product_url_string):
+        """Set the ProductUrl element's value.
+
+        :param str product_url_string: Product URL string.
+        """
+        logger.info("Updating ProductUrl element in OVF")
+        self.create_product_section_if_absent(
+            self.PRODUCT_URL,
+            product_url_string)
+
+    @property
+    def vendor_url(self):
+        """Vendor URL string (XML ``VendorUrl`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(
+                self.VENDOR_URL,
+                None)
+        return None
+
+    @vendor_url.setter
+    def vendor_url(self, vendor_url_string):
+        """Set the VendorUrl element's value.
+
+        :param str vendor_url_string: Vendor URL string.
+        """
+        logger.info("Updating VendorUrl element in OVF")
+        self.create_product_section_if_absent(
+            self.VENDOR_URL,
+            vendor_url_string)
+
+    @property
+    def application_url(self):
+        """Application URL string (XML ``AppUrl`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(
+                self.APPLICATION_URL,
+                None)
+        return None
+
+    @application_url.setter
+    def application_url(self, application_url_string):
+        """Set the AppUrl element's value.
+
+        :param str application_url_string: Application URL string.
+        """
+        logger.info("Updating AppUrl element in OVF")
+        self.create_product_section_if_absent(
+            self.APPLICATION_URL,
+            application_url_string)
 
     def __getattr__(self, name):
         """Transparently pass attribute lookups off to OVFNameHelper."""
@@ -2107,6 +2203,29 @@ class OVF(VMDescription, XML):
 
         return section
 
+    def create_product_section_if_absent(
+            self,
+            product_section_tag,
+            tag_string):
+        """If the OVF doesn't already have the given Section, create it.
+
+        :param str product_section_tag: XML tag of the product section element.
+        :param str tag_string: String to set for the product section element.
+        :return: The product section element that was updated or created
+        """
+        if self.product_section is None:
+            self.product_section = self.set_or_make_child(
+                self.virtual_system, self.PRODUCT_SECTION)
+            # Any Section must have an Info as child
+            self.set_or_make_child(self.product_section, self.INFO,
+                                   "Product Information")
+        self.set_or_make_child(
+            self.product_section,
+            product_section_tag,
+            tag_string)
+
+        return self.product_section
+
     def find_parent_from_item(self, item):
         """Find the parent Item of the given Item.
 
@@ -2399,6 +2518,7 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
         self.FULL_VERSION = OVF + 'FullVersion'
         self.PRODUCT_URL = OVF + 'ProductUrl'
         self.VENDOR_URL = OVF + 'VendorUrl'
+        self.APPLICATION_URL = OVF + 'AppUrl'
         self.PROPERTY = OVF + 'Property'
         # Attributes of a Property element
         self.PROP_KEY = OVF + 'key'

@@ -189,12 +189,13 @@
     </ovf:VirtualHardwareSection>
     <ovf:ProductSection ovf:required="false">
       <ovf:Info>Information about the installed software</ovf:Info>
-      <ovf:Product>generic platform</ovf:Product>
-      <ovf:Vendor>Cisco Systems, Inc.</ovf:Vendor>
+      <ovf:Product>PRODUCT</ovf:Product>
+      <ovf:Vendor>VENDOR</ovf:Vendor>
       <ovf:Version>DEV</ovf:Version>
       <ovf:FullVersion>DEVELOPMENT IMAGE</ovf:FullVersion>
-      <ovf:ProductUrl>http://www.cisco.com/en/US/products/ps12559/index.html</ovf:ProductUrl>
-      <ovf:VendorUrl>http://www.cisco.com</ovf:VendorUrl>
+      <ovf:ProductUrl>PRODUCT_URL</ovf:ProductUrl>
+      <ovf:VendorUrl>VENDOR_URL</ovf:VendorUrl>
+      <ovf:AppUrl>APPLICATION_URL</ovf:AppUrl>
       <ovf:Category>1. Bootstrap Properties</ovf:Category>
       <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
         <ovf:Label>Login Username</ovf:Label>
