@@ -503,6 +503,43 @@ class OVF(VMDescription, XML):
         XML.set_or_make_child(system, self.VIRTUAL_SYSTEM_TYPE, type_string)
 
     @property
+    def product(self):
+        """Short descriptive product string (XML ``Product`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(self.PRODUCT, None)
+        return None
+
+    @product.setter
+    def product(self, product_string):
+        if self.product_section is None:
+            self.product_section = self.set_or_make_child(
+                self.virtual_system, self.PRODUCT_SECTION)
+            # Any Section must have an Info as child
+            self.set_or_make_child(self.product_section, self.INFO,
+                                   "Product Information")
+        logger.info("Updating Product element in OVF")
+        self.set_or_make_child(self.product_section, self.PRODUCT,
+                               product_string)
+    @property
+    def vendor(self):
+        """Short descriptive vendor string (XML ``Vendor`` element)."""
+        if self.product_section is not None:
+            return self.product_section.findtext(self.VENDOR, None)
+        return None
+
+    @vendor.setter
+    def vendor(self, vendor_string):
+        if self.product_section is None:
+            self.product_section = self.set_or_make_child(
+                self.virtual_system, self.PRODUCT_SECTION)
+            # Any Section must have an Info as child
+            self.set_or_make_child(self.product_section, self.INFO,
+                                   "Product Information")
+        logger.info("Updating Vendor element in OVF")
+        self.set_or_make_child(self.product_section, self.VENDOR,
+                               vendor_string)
+
+    @property
     def version_short(self):
         """Short descriptive version string (XML ``Version`` element)."""
         if self.product_section is not None:
@@ -543,6 +580,7 @@ class OVF(VMDescription, XML):
         logger.info("Updating FullVersion element in OVF")
         self.set_or_make_child(self.product_section, self.FULL_VERSION,
                                version_string)
+
 
     def __getattr__(self, name):
         """Transparently pass attribute lookups off to OVFNameHelper."""
