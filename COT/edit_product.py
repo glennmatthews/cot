@@ -127,10 +127,10 @@ Edit product information attributes of the given OVF or OVA""")
                        """"Cisco IOS-XE Software, Version 15.3(4)S" """)
         p.add_argument('-p', '--product', metavar="PRODUCT",
                        help="""Product name string, such as """
-                       """"ICE Cream" """)
+                       """"Cisco IOS-XE" """)
         p.add_argument('-n', '--vendor', metavar="VENDOR",
                        help="""Vendor string, such as """
-                       """"ACME ICE Cream Vending, Inc"  """)
+                       """"Cisco Systems, Inc."  """)
         p.add_argument('PACKAGE',
                        help="""OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
