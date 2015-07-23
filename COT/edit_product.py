@@ -41,6 +41,8 @@ class COTEditProduct(COTSubmodule):
     :attr:`~COTSubmodule.output`
 
     Attributes:
+    :attr:`product`
+    :attr:`vendor`
     :attr:`version`,
     :attr:`full_version`
     """
@@ -48,6 +50,10 @@ class COTEditProduct(COTSubmodule):
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         super(COTEditProduct, self).__init__(UI)
+        self.product = None
+        """Product string."""
+        self.vendor = None
+        """Vendor string."""
         self.version = None
         """Short version string."""
         self.full_version = None
@@ -63,13 +69,17 @@ class COTEditProduct(COTSubmodule):
             return ready, reason
 
         work_to_do = False
-        if self.version is not None:
+        if self.product is not None:
+            work_to_do = True
+        elif self.vendor is not None:
+            work_to_do = True
+        elif self.version is not None:
             work_to_do = True
         elif self.full_version is not None:
             work_to_do = True
 
         if not work_to_do:
-            return False, ("Neither version nor full version was specified "
+            return False, ("Neither product, vendor, version, nor full version was specified "
                            "- nothing to do!")
         return ready, reason
 
@@ -79,7 +89,10 @@ class COTEditProduct(COTSubmodule):
         :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTEditProduct, self).run()
-
+        if self.product is not None:
+            self.vm.product = self.product
+        if self.vendor is not None:
+            self.vm.vendor = self.vendor
         if self.version is not None:
             self.vm.version_short = self.version
         if self.full_version is not None:
@@ -98,7 +111,7 @@ class COTEditProduct(COTSubmodule):
             'edit-product',
             help="""Edit product info in an OVF""",
             usage=self.UI.fill_usage("edit-product", [
-                "PACKAGE [-o OUTPUT] [-v SHORT_VERSION] [-V FULL_VERSION]",
+                "PACKAGE [-o OUTPUT] [-p PRODUCT] [-n VENDOR] [-v SHORT_VERSION] [-V FULL_VERSION]",
             ]),
             description="""
 Edit product information attributes of the given OVF or OVA""")
@@ -112,6 +125,12 @@ Edit product information attributes of the given OVF or OVA""")
         p.add_argument('-V', '--full-version',
                        help="""Software long version string, such as """
                        """"Cisco IOS-XE Software, Version 15.3(4)S" """)
+        p.add_argument('-p', '--product', metavar="PRODUCT",
+                       help="""Product name string, such as """
+                       """"Cisco IOS-XE" """)
+        p.add_argument('-n', '--vendor', metavar="VENDOR",
+                       help="""Vendor string, such as """
+                       """"Cisco Systems, Inc."  """)
         p.add_argument('PACKAGE',
                        help="""OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
