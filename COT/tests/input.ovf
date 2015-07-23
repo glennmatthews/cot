@@ -189,8 +189,8 @@
     </ovf:VirtualHardwareSection>
     <ovf:ProductSection ovf:required="false">
       <ovf:Info>Information about the installed software</ovf:Info>
-      <ovf:Product>generic platform</ovf:Product>
-      <ovf:Vendor>Cisco Systems, Inc.</ovf:Vendor>
+      <ovf:Product>PRODUCT</ovf:Product>
+      <ovf:Vendor>VENDOR</ovf:Vendor>
       <ovf:Version>DEV</ovf:Version>
       <ovf:FullVersion>DEVELOPMENT IMAGE</ovf:FullVersion>
       <ovf:ProductUrl>http://www.cisco.com/en/US/products/ps12559/index.html</ovf:ProductUrl>
