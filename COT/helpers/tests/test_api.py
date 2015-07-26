@@ -38,7 +38,7 @@ class TestGetChecksum(COT_UT):
     def test_get_checksum_md5(self):
         """Test case for get_checksum() with md5 sum."""
         checksum = get_checksum(self.input_ovf, 'md5')
-        self.assertEqual(checksum, "b77010bab91c4a22b3a2ef26dc5347ff")
+        self.assertEqual(checksum, "0a4aaf6b4a4e0c7808199cc3274c20ec")
 
         checksum = get_checksum(self.minimal_ovf, 'md5')
         self.assertEqual(checksum, "288e1e3fcb05265cd9b8c7578e173fef")
@@ -47,7 +47,7 @@ class TestGetChecksum(COT_UT):
         """Test case for get_checksum() with sha1 sum."""
         checksum = get_checksum(self.input_ovf, 'sha1')
         self.assertEqual(checksum,
-                         "f6d5fcdab4114d22af3da963aac8506bf3756476")
+                         "e4bb3f7b4d40447caea2b6c069c772c9a9d8fa48")
 
         checksum = get_checksum(self.minimal_ovf, 'sha1')
         self.assertEqual(checksum,
