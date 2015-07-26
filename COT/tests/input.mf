@@ -1,3 +1,3 @@
-SHA1(input.ovf)= 63b6c9d71cc8b051ffbfa8d1d630d30a2dfb9701
+SHA1(input.ovf)= e4bb3f7b4d40447caea2b6c069c772c9a9d8fa48
 SHA1(input.vmdk)= 264caaa216ad928f82f727bb06d8e6e6fbd94df0
 SHA1(input.iso)= 7ee85ab877bef392cb0d6bb76aceef835057a513

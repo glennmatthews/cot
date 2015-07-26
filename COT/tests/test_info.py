@@ -98,10 +98,10 @@ Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-Product:  generic platform
-          http://www.cisco.com/en/US/products/ps12559/index.html
-Vendor:   Cisco Systems, Inc.
-          http://www.cisco.com
+Product:  PRODUCT
+          PRODUCT_URL
+Vendor:   VENDOR
+          VENDOR_URL
 Version:  DEV
           DEVELOPMENT IMAGE
 
@@ -153,8 +153,8 @@ Properties:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-Product:  generic platform
-Vendor:   Cisco Systems, Inc.
+Product:  PRODUCT
+Vendor:   VENDOR
 Version:  DEV
 
 Files and Disks:     File Size  Capacity Device
@@ -194,10 +194,10 @@ Properties:
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
-Product:  generic platform
-          http://www.cisco.com/en/US/products/ps12559/index.html
-Vendor:   Cisco Systems, Inc.
-          http://www.cisco.com
+Product:  PRODUCT
+          PRODUCT_URL
+Vendor:   VENDOR
+          VENDOR_URL
 Version:  DEV
           DEVELOPMENT IMAGE
 
