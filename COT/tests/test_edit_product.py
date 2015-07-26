@@ -29,7 +29,8 @@ class TestCOTEditProduct(COT_UT):
     """Unit tests for COTEditProduct submodule."""
 
     def setUp(self):
-        """Test case setup function called automatically prior to each test."""
+        """Test case setup function called automatically prior to each
+        test."""
         super(TestCOTEditProduct, self).setUp()
         self.instance = COTEditProduct(UI())
         self.instance.output = self.temp_file
@@ -104,13 +105,15 @@ class TestCOTEditProduct(COT_UT):
     def test_edit_product_url(self):
         """Editing the product url alone."""
         self.instance.package = self.input_ovf
-        self.instance.product_url = "http://www.cisco.com/c/en/us/products/ios-nx-os-software/ios-xe/index.html"
+        self.instance.product_url = "http://www.cisco.com/c/en/us/products/\
+ios-nx-os-software/ios-xe/index.html"
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
        <ovf:FullVersion>DEVELOPMENT IMAGE</ovf:FullVersion>
 -      <ovf:ProductUrl>PRODUCT_URL</ovf:ProductUrl>
-+      <ovf:ProductUrl>http://www.cisco.com/c/en/us/products/ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
++      <ovf:ProductUrl>http://www.cisco.com/c/en/us/products/\
+ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
        <ovf:VendorUrl>VENDOR_URL</ovf:VendorUrl>
 """)
 
@@ -255,7 +258,8 @@ class TestCOTEditProduct(COT_UT):
         self.instance.version = "5.2.0.01I"
         self.instance.full_version = "Cisco IOS XRv, Version 5.2"
         self.instance.product = "Cisco IOS XRv"
-        self.instance.product_url = "http://www.cisco.com/c/en/us/products/ios-nx-os-software/ios-xe/index.html"
+        self.instance.product_url = "http://www.cisco.com/c/en/us/products\
+/ios-nx-os-software/ios-xe/index.html"
         self.instance.vendor = "Cisco Systems, Inc."
         self.instance.vendor_url = "http://www.cisco.com"
         self.instance.application_url = "https://router1:530/"
@@ -274,14 +278,16 @@ class TestCOTEditProduct(COT_UT):
 +      <ovf:Vendor>Cisco Systems, Inc.</ovf:Vendor>
 +      <ovf:Version>5.2.0.01I</ovf:Version>
 +      <ovf:FullVersion>Cisco IOS XRv, Version 5.2</ovf:FullVersion>
-+      <ovf:ProductUrl>http://www.cisco.com/c/en/us/products/ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
++      <ovf:ProductUrl>http://www.cisco.com/c/en/us/products/\
+ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 +      <ovf:VendorUrl>http://www.cisco.com</ovf:VendorUrl>
 +      <ovf:AppUrl>https://router1:530/</ovf:AppUrl>
        <ovf:Category>1. Bootstrap Properties</ovf:Category>
 """)
 
     def test_edit_all_no_existing(self):
-        """Edit all product section strings in an OVF with no previous values."""
+        """Edit all product section strings in an OVF with no previous
+        values."""
         self.instance.package = self.minimal_ovf
         self.instance.version = "Version"
         self.instance.full_version = "Full Version"

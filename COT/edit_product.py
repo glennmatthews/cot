@@ -135,12 +135,11 @@ class COTEditProduct(COTSubmodule):
             help="""Edit product info in an OVF""",
             usage=self.UI.fill_usage(
                 "edit-product",
-                ["""PACKAGE [-o OUTPUT] [-p PRODUCT] [-n VENDOR] [-v SHORT_VERSION]
-                    [-V FULL_VERSION] [-u PRODUCT_URL ] [-r VENDOR_URL]
-                    [-l APPLICATION_URL]""",
-                 ]),
-            description="""Edit product information attributes of the given OVF or OVA""")
-
+                ["""PACKAGE [-o OUTPUT] [-p PRODUCT] [-n VENDOR]
+                 [-v SHORT_VERSION] [-V FULL_VERSION] [-u PRODUCT_URL ]
+                 [-r VENDOR_URL] [-l APPLICATION_URL]""", ]),
+            description="""Edit product information attributes of the given
+                        OVF or OVA""")
         p.add_argument(
             '-o',
             '--output',
@@ -165,7 +164,8 @@ class COTEditProduct(COTSubmodule):
             '-u',
             '--product-url',
             help="""Product url string, such as """
-            """"http://www.cisco.com/c/en/us/products/ios-nx-os-software/ios-xe/index.html" """)
+            """"http://www.cisco.com/c/en/us/products/ios-nx-os-software/
+            ios-xe/index.html" """)
         p.add_argument('-r', '--vendor-url',
                        help="""Vendor URL string, such as """
                        """"http://www.cisco.com"  """)

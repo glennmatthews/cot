@@ -35,9 +35,7 @@ class TestCOTInfo(COT_UT):
         """Test ready_to_run() under various combinations of parameters."""
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertEqual(
-            "At least one package must be specified",
-            reason)
+        self.assertEqual("At least one package must be specified", reason)
         self.assertRaises(InvalidInputError, self.instance.run)
 
         self.instance.package_list = [self.input_ovf]
@@ -55,8 +53,7 @@ class TestCOTInfo(COT_UT):
 
     def test_minimal_ovf(self):
         """Get info for minimal OVF with no real content."""
-        # For an OVF this simple, standard/brief/verbose output are the
-        # same
+        # For an OVF this simple, standard/brief/verbose output are the same
         expected_output = """
 -------------------------------------------------------------------------------
 {0}
@@ -77,9 +74,7 @@ Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
 
     def test_multiple_minimal_ovf(self):
         """Test handling for multiple OVFs at once."""
-        self.instance.package_list = [
-            self.minimal_ovf,
-            self.minimal_ovf]
+        self.instance.package_list = [self.minimal_ovf, self.minimal_ovf]
         self.check_cot_output("""
 -------------------------------------------------------------------------------
 {0}
@@ -596,9 +591,9 @@ Version:  (No version string)
 
 Files and Disks:                       File Size  Capacity Device
                                        --------- --------- --------------------
-  this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB
+  this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB 
   input.iso                            352.00 kB           cdrom @ (?) ?:0
-  (disk placeholder)                          -- 128.00 MB
+  (disk placeholder)                          -- 128.00 MB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
                                     ---- --------- ---- ------- --------------
@@ -648,9 +643,9 @@ Version:  (No version string)
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  this_is_a_reall... 149.00 kB   1.00 GB
+  this_is_a_reall... 149.00 kB   1.00 GB 
   input.iso          352.00 kB           cdrom @ (?) ?:0
-  (disk placeholder)        -- 128.00 MB
+  (disk placeholder)        -- 128.00 MB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
                                     ---- --------- ---- ------- --------------
@@ -688,9 +683,9 @@ Version:  (No version string)
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  this_is_a_reall... 149.00 kB   1.00 GB
+  this_is_a_reall... 149.00 kB   1.00 GB 
   input.iso          352.00 kB           cdrom @ (?) ?:0
-  (disk placeholder)        -- 128.00 MB
+  (disk placeholder)        -- 128.00 MB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
                                     ---- --------- ---- ------- --------------
