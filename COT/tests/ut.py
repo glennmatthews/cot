@@ -22,7 +22,6 @@ except ImportError:
     import unittest
 from difflib import unified_diff
 import os.path
-from os import getenv
 import glob
 import tempfile
 import shutil
@@ -211,14 +210,6 @@ class COT_UT(unittest.TestCase):
             output = sys.stdout.getvalue()
             sys.stdout = sys.__stdout__
         self.maxDiff = None
-        if getenv('debugcot'):
-            if getenv('debugcot') == 'test_wrapping':
-                f = open('test', 'wb')
-                f.write("expected:\n")
-                f.write(expected.strip())
-                f.write("\noutput:\n")
-                f.write(output.strip())
-                f.close()
         self.assertMultiLineEqual(expected.strip(), output.strip())
 
     def check_diff(self, expected, file1=None, file2=None):
