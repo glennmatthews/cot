@@ -5,6 +5,7 @@ pull requests.
 * `Add automated unit tests`_
 * `Update documentation`_
 * `Add yourself as a contributor`_
+* `Open a pull request`_
 
 Follow coding guidelines
 ------------------------
@@ -138,8 +139,15 @@ Add yourself as a contributor
 If you haven't contributed to COT previously, be sure to add yourself as a
 contributor in the ``COPYRIGHT.txt`` file.
 
+Open a pull request
+-------------------
+
+COT follows Vincent Driessen's `A successful Git branching model`_. As such,
+please submit feature enhancement and non-critical bugfix requests to merge
+into the ``develop`` branch rather than ``master``.
 
 .. _flake8: http://flake8.readthedocs.org/en/latest/
 .. _tox: http://tox.readthedocs.org/en/latest/
 .. _coverage: http://nedbatchelder.com/code/coverage/
+.. _`A successful Git branching model`: http://nvie.com/posts/a-successful-git-branching-model/
 
