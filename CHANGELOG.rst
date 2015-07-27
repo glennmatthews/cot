@@ -8,7 +8,10 @@ This project adheres to `Semantic Versioning`_.
 
 **Added**
 
-- Added CHANGELOG.md
+- `#38`_ - ``cot edit-product`` can now set product and vendor information.
+- flake8_ validation now includes pep257_ to validate docstring compliance to
+  `PEP 257`_ as well.
+- Added changelog file.
 
 `1.3.3`_ - 2015-07-02
 ---------------------
@@ -107,7 +110,7 @@ This project adheres to `Semantic Versioning`_.
 
 **Added**
 
-- Now PEP8_ compliant - passes validation by flake8_ code analysis.
+- Now `PEP 8`_ compliant - passes validation by flake8_ code analysis.
 - Very preliminary support for OVF 2.x format
 - Now uses tox_ for easier test execution and `coverage.py`_ for code coverage
   analysis.
@@ -278,10 +281,14 @@ Initial public release.
 .. _#31: https://github.com/glennmatthews/cot/issues/31
 .. _#32: https://github.com/glennmatthews/cot/issues/32
 .. _#34: https://github.com/glennmatthews/cot/issues/34
+.. _#38: https://github.com/glennmatthews/cot/pull/38
 
 .. _Semantic Versioning: http://semver.org/
-.. _PEP8: https://www.python.org/dev/peps/pep-0008/
+.. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
+.. _`PEP 257`: https://www.python.org/dev/peps/pep-0257/
+
 .. _flake8: http://flake8.readthedocs.org/en/latest/
+.. _pep257: https://pypi.python.org/pypi/pep257
 .. _tox: http://tox.readthedocs.org/en/latest/
 .. _coverage.py: http://nedbatchelder.com/code/coverage/
 .. _Coveralls: https://coveralls.io/r/glennmatthews/cot

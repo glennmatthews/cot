@@ -8,6 +8,7 @@ Common OVF Tool (COT)
    introduction
    installation
    usage
+   changelog
    contributing
    thanks
    COT

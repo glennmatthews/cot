@@ -122,12 +122,12 @@ coverage_ (``pip install coverage``) then run ``tox`` from the COT directory:
     clean: commands succeeded
     py26: commands succeeded
     py27: commands succeeded
-    py32: commands succeeded
     py33: commands succeeded
     py34: commands succeeded
     pypy: commands succeeded
-    stats: commands succeeded
     flake8: commands succeeded
+    docs: commands succeeded
+    stats: commands succeeded
     congratulations :)
 
 After running ``tox`` you can check the code coverage details by opening
