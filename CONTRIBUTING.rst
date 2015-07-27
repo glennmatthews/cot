@@ -37,11 +37,17 @@ Logging level usage
 Coding style
 ''''''''''''
 
-To verify that your code meets applicable Python coding standards, use
-flake8_ (``pip install flake8``):
+We try to keep COT's code base compliant with Python coding standards including
+`PEP 8`_ and `PEP 257`_. We use the flake8_ and pep257_ tools to verify this
+as part of our test automation. To run coding style analysis independently
+of the other test automation, you can run ``tox -e flake8``, or you can
+install these tools and run ``flake8`` directly:
 
 ::
 
+  cot/$ sudo pip install --upgrade flake8
+  cot/$ sudo pip install --upgrade pep257
+  cot/$ sudo pip install --upgrade flake8-pep257
   cot/$ flake8
   ./COT/tests/ovf.py:180:80: E501 line too long (80 > 79 characters)
   ./COT/tests/ovf.py:184:77: F841 local variable 'ovf' is assigned to but never used
@@ -146,7 +152,10 @@ COT follows Vincent Driessen's `A successful Git branching model`_. As such,
 please submit feature enhancement and non-critical bugfix requests to merge
 into the ``develop`` branch rather than ``master``.
 
+.. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
+.. _`PEP 257`: https://www.python.org/dev/peps/pep-0257/
 .. _flake8: http://flake8.readthedocs.org/en/latest/
+.. _pep257: http://pep257.readthedocs.org/en/latest/
 .. _tox: http://tox.readthedocs.org/en/latest/
 .. _coverage: http://nedbatchelder.com/code/coverage/
 .. _`A successful Git branching model`: http://nvie.com/posts/a-successful-git-branching-model/
