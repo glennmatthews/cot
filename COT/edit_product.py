@@ -92,19 +92,41 @@ class COTEditProduct(COTSubmodule):
         :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTEditProduct, self).run()
+
         if self.product is not None:
+            logger.verbose("Updating product string from '{0}' to '{1}'"
+                           .format(self.vm.product, self.product))
             self.vm.product = self.product
+
         if self.vendor is not None:
+            logger.verbose("Updating vendor string from '{0}' to '{1}'"
+                           .format(self.vm.vendor, self.vendor))
             self.vm.vendor = self.vendor
+
         if self.version is not None:
+            logger.verbose("Updating short version string from '{0}' to '{1}'"
+                           .format(self.vm.version_short, self.version))
             self.vm.version_short = self.version
+
         if self.full_version is not None:
+            logger.verbose("Updating long version string from '{0}' to '{1}'"
+                           .format(self.vm.version_long, self.full_version))
             self.vm.version_long = self.full_version
+
         if self.product_url is not None:
+            logger.verbose("Updating product URL from '{0}' to '{1}'"
+                           .format(self.vm.product_url, self.product_url))
             self.vm.product_url = self.product_url
+
         if self.vendor_url is not None:
+            logger.verbose("Updating vendor URL from '{0}' to '{1}'"
+                           .format(self.vm.vendor_url, self.vendor_url))
             self.vm.vendor_url = self.vendor_url
+
         if self.application_url is not None:
+            logger.verbose("Updating app URL from '{0}' to '{1}'"
+                           .format(self.vm.application_url,
+                                   self.application_url))
             self.vm.application_url = self.application_url
 
     def create_subparser(self, parent, storage):

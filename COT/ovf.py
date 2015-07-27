@@ -738,28 +738,21 @@ class OVF(VMDescription, XML):
             wrapper.initial_indent = ''
             wrapper.subsequent_indent = '          '
             # All elements in this section are optional
-            product = p.findtext(self.PRODUCT, "(No product string)")
-            str_list.extend(wrapper.wrap("Product:  {0}".format(product)))
-            if verbosity_option != 'brief':
-                product_url = p.findtext(self.PRODUCT_URL, "(No product URL)")
-                str_list.extend(wrapper.wrap(
-                    "          {0}".format(product_url)))
-            vendor = p.findtext(self.VENDOR, "(No vendor string)")
-            str_list.extend(wrapper.wrap("Vendor:   {0}".format(vendor)))
-            if verbosity_option != 'brief':
-                vendor_url = p.findtext(self.VENDOR_URL, "(No vendor URL)")
-                str_list.extend(wrapper.wrap(
-                    "          {0}".format(vendor_url)))
-            version = self.version_short
-            if version is None:
-                version = "(No version string)"
-            str_list.extend(wrapper.wrap("Version:  {0}".format(version)))
-            if verbosity_option != 'brief':
-                full_version = self.version_long
-                if full_version is None:
-                    full_version = "(No detailed version string)"
-                str_list.extend(wrapper.wrap(
-                    "          {0}".format(full_version)))
+            for label, value, default, verbose_only in [
+                ["Product:  ", self.product, "(No product string)", False],
+                ["          ", self.product_url, "(No product URL)", True],
+                ["Vendor:   ", self.vendor, "(No vendor string)", False],
+                ["          ", self.vendor_url, "(No vendor URL)", True],
+                ["Version:  ", self.version_short,
+                 "(No version string)", False],
+                ["          ", self.version_long,
+                 "(No detailed version string)", True],
+            ]:
+                if verbosity_option == 'brief' and verbose_only:
+                    continue
+                if value is None:
+                    value = default
+                str_list.extend(wrapper.wrap("{0}{1}".format(label, value)))
             section_list.append("\n".join(str_list))
 
         # Annotation information
