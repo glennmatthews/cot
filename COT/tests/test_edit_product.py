@@ -29,8 +29,7 @@ class TestCOTEditProduct(COT_UT):
     """Unit tests for COTEditProduct submodule."""
 
     def setUp(self):
-        """Test case setup function called automatically prior to each
-        test."""
+        """Test case setup function called automatically prior to each test."""
         super(TestCOTEditProduct, self).setUp()
         self.instance = COTEditProduct(UI())
         self.instance.output = self.temp_file
@@ -39,13 +38,13 @@ class TestCOTEditProduct(COT_UT):
         """Test ready_to_run() under various combinations of parameters."""
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertEqual("PACKAGE is a mandatory argument!", reason)
+        self.assertTrue(re.search("No work requested", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
         self.instance.package = self.input_ovf
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertTrue(re.search("nothing to do", reason))
+        self.assertTrue(re.search("No work requested", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
         self.instance.version = "X"
@@ -60,7 +59,7 @@ class TestCOTEditProduct(COT_UT):
         self.instance.full_version = None
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertTrue(re.search("nothing to do", reason))
+        self.assertTrue(re.search("No work requested", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
     def test_edit_short_version(self):
@@ -286,8 +285,7 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 """)
 
     def test_edit_all_no_existing(self):
-        """Edit all product section strings in an OVF with no previous
-        values."""
+        """Edit all product section strings with no previous values."""
         self.instance.package = self.minimal_ovf
         self.instance.version = "Version"
         self.instance.full_version = "Full Version"

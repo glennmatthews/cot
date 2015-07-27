@@ -511,14 +511,8 @@ class OVF(VMDescription, XML):
 
     @product.setter
     def product(self, product_string):
-        """Set the Product element's value.
-
-        :param str product_string: Product name string.
-        """
         logger.info("Updating Product element in OVF")
-        self.create_product_section_if_absent(
-            self.PRODUCT,
-            product_string)
+        self.set_product_section_child(self.PRODUCT, product_string)
 
     @property
     def vendor(self):
@@ -529,14 +523,8 @@ class OVF(VMDescription, XML):
 
     @vendor.setter
     def vendor(self, vendor_string):
-        """Set the Vendor element's value.
-
-        :param str vendor_string: Vendor string.
-        """
         logger.info("Updating Vendor element in OVF")
-        self.create_product_section_if_absent(
-            self.VENDOR,
-            vendor_string)
+        self.set_product_section_child(self.VENDOR, vendor_string)
 
     @property
     def version_short(self):
@@ -547,15 +535,8 @@ class OVF(VMDescription, XML):
 
     @version_short.setter
     def version_short(self, version_string):
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
         logger.info("Updating Version element in OVF")
-        self.set_or_make_child(self.product_section, self.VERSION,
-                               version_string)
+        self.set_product_section_child(self.VERSION, version_string)
 
     @property
     def version_long(self):
@@ -566,79 +547,44 @@ class OVF(VMDescription, XML):
 
     @version_long.setter
     def version_long(self, version_string):
-        """Set the FullVersion element's value.
-
-        :param str version_string: Long descriptive version string.
-        """
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
         logger.info("Updating FullVersion element in OVF")
-        self.set_or_make_child(self.product_section, self.FULL_VERSION,
-                               version_string)
+        self.set_product_section_child(self.FULL_VERSION, version_string)
 
     @property
     def product_url(self):
         """Product URL string (XML ``ProductUrl`` element)."""
         if self.product_section is not None:
-            return self.product_section.findtext(
-                self.PRODUCT_URL,
-                None)
+            return self.product_section.findtext(self.PRODUCT_URL, None)
         return None
 
     @product_url.setter
     def product_url(self, product_url_string):
-        """Set the ProductUrl element's value.
-
-        :param str product_url_string: Product URL string.
-        """
         logger.info("Updating ProductUrl element in OVF")
-        self.create_product_section_if_absent(
-            self.PRODUCT_URL,
-            product_url_string)
+        self.set_product_section_child(self.PRODUCT_URL, product_url_string)
 
     @property
     def vendor_url(self):
         """Vendor URL string (XML ``VendorUrl`` element)."""
         if self.product_section is not None:
-            return self.product_section.findtext(
-                self.VENDOR_URL,
-                None)
+            return self.product_section.findtext(self.VENDOR_URL, None)
         return None
 
     @vendor_url.setter
     def vendor_url(self, vendor_url_string):
-        """Set the VendorUrl element's value.
-
-        :param str vendor_url_string: Vendor URL string.
-        """
         logger.info("Updating VendorUrl element in OVF")
-        self.create_product_section_if_absent(
-            self.VENDOR_URL,
-            vendor_url_string)
+        self.set_product_section_child(self.VENDOR_URL, vendor_url_string)
 
     @property
     def application_url(self):
         """Application URL string (XML ``AppUrl`` element)."""
         if self.product_section is not None:
-            return self.product_section.findtext(
-                self.APPLICATION_URL,
-                None)
+            return self.product_section.findtext(self.APPLICATION_URL, None)
         return None
 
     @application_url.setter
-    def application_url(self, application_url_string):
-        """Set the AppUrl element's value.
-
-        :param str application_url_string: Application URL string.
-        """
+    def application_url(self, app_url_string):
         logger.info("Updating AppUrl element in OVF")
-        self.create_product_section_if_absent(
-            self.APPLICATION_URL,
-            application_url_string)
+        self.set_product_section_child(self.APPLICATION_URL, app_url_string)
 
     def __getattr__(self, name):
         """Transparently pass attribute lookups off to OVFNameHelper."""
@@ -2203,14 +2149,11 @@ class OVF(VMDescription, XML):
 
         return section
 
-    def create_product_section_if_absent(
-            self,
-            product_section_tag,
-            tag_string):
+    def set_product_section_child(self, child_tag, child_text):
         """If the OVF doesn't already have the given Section, create it.
 
-        :param str product_section_tag: XML tag of the product section element.
-        :param str tag_string: String to set for the product section element.
+        :param str child_tag: XML tag of the product section child element.
+        :param str child_text: Text to set for the child element.
         :return: The product section element that was updated or created
         """
         if self.product_section is None:
@@ -2219,10 +2162,7 @@ class OVF(VMDescription, XML):
             # Any Section must have an Info as child
             self.set_or_make_child(self.product_section, self.INFO,
                                    "Product Information")
-        self.set_or_make_child(
-            self.product_section,
-            product_section_tag,
-            tag_string)
+        self.set_or_make_child(self.product_section, child_tag, child_text)
 
         return self.product_section
 
