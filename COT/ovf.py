@@ -652,24 +652,7 @@ class OVF(VMDescription, XML):
 
         # Make sure all defined networks are actually used by NICs,
         # and delete any networks that are unused.
-        if self.network_section is not None:
-            networks = self.network_section.findall(self.NETWORK)
-            items = self.virtual_hw_section.findall(self.ETHERNET_PORT_ITEM)
-            connected_networks = set()
-            for item in items:
-                conn = item.find(self.EPASD + self.CONNECTION)
-                if conn is not None:
-                    connected_networks.add(conn.text)
-            for net in networks:
-                name = net.get(self.NETWORK_NAME)
-                if name not in connected_networks:
-                    logger.warning("Removing unused network {0}".format(name))
-                    self.network_section.remove(net)
-            # If all networks were removed, remove the NetworkSection too
-            if not self.network_section.findall(self.NETWORK):
-                logger.warning("No networks left - removing NetworkSection")
-                self.envelope.remove(self.network_section)
-                self.network_section = None
+        self.validate_and_update_networks()
 
         logger.info("Writing out to file {0}".format(self.output_file))
 
@@ -700,6 +683,33 @@ class OVF(VMDescription, XML):
             # We should never get here, but to be safe:
             raise NotImplementedError("Not sure how to write a '{0}' file"
                                       .format(extension))
+
+    def validate_and_update_networks(self):
+        """Make sure all defined networks are actually used by NICs.
+
+        Delete any networks that are unused and warn the user.
+        Helper method for :func:`write`.
+        """
+        if self.network_section is None:
+            return
+
+        networks = self.network_section.findall(self.NETWORK)
+        items = self.virtual_hw_section.findall(self.ETHERNET_PORT_ITEM)
+        connected_networks = set()
+        for item in items:
+            conn = item.find(self.EPASD + self.CONNECTION)
+            if conn is not None:
+                connected_networks.add(conn.text)
+        for net in networks:
+            name = net.get(self.NETWORK_NAME)
+            if name not in connected_networks:
+                logger.warning("Removing unused network {0}".format(name))
+                self.network_section.remove(net)
+        # If all networks were removed, remove the NetworkSection too
+        if not self.network_section.findall(self.NETWORK):
+            logger.warning("No networks left - removing NetworkSection")
+            self.envelope.remove(self.network_section)
+            self.network_section = None
 
     def info_string(self, TEXT_WIDTH=79, verbosity_option=None):
         """Get a descriptive string summarizing the contents of this OVF.
