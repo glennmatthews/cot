@@ -18,6 +18,7 @@
 
 import filecmp
 import os.path
+import platform
 import tempfile
 import shutil
 import subprocess
@@ -264,7 +265,8 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
                 # OVF changes due to 2.6 XML handling, and MF changes due to
                 # checksum difference for the OVF
                 print("'{0}' file comparison skipped due to "
-                      "old Python version ({1})".format(ext, sys.version))
+                      "old Python version ({1})"
+                      .format(ext, platform.python_version()))
                 continue
             self.assertTrue(
                 filecmp.cmp(os.path.join(input_dir, "input" + ext),
