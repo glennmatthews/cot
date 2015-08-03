@@ -55,10 +55,10 @@ QEMUIMG = QEMUImg()
 VMDKTOOL = VmdkTool()
 
 
-def get_checksum(file_path, checksum_type):
+def get_checksum(path_or_obj, checksum_type):
     """Get the checksum of the given file.
 
-    :param str file_path: Path to file to checksum
+    :param str path_or_obj: File path to checksum OR an opened file object
     :param str checksum_type: Supported values are 'md5' and 'sha1'.
     :return: String containing hexadecimal file checksum
     """
@@ -70,13 +70,25 @@ def get_checksum(file_path, checksum_type):
         raise NotImplementedError(
             "No support for generating checksum type {0}"
             .format(checksum_type))
+
     BLOCKSIZE = 65536
-    with open(file_path, 'rb') as file_obj:
+
+    # Is it a file or do we need to open it?
+    try:
+        path_or_obj.read(0)
+        file_obj = path_or_obj
+    except AttributeError:
+        file_obj = open(path_or_obj, 'rb')
+
+    try:
         while True:
             buf = file_obj.read(BLOCKSIZE)
             if len(buf) == 0:
                 break
             h.update(buf)
+    finally:
+        if file_obj != path_or_obj:
+            file_obj.close()
 
     return h.hexdigest()
 
