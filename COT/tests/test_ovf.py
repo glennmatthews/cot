@@ -165,7 +165,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         shutil.copy(self.input_vmdk, self.staging_dir)
         # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
-                              self.temp_file) as ovf:
+                              self.temp_file):
             self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.REMOVING_FILE)
         self.check_diff("""
@@ -176,12 +176,14 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
 
         # Read-only OVF
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
-                              None) as ovf:
+                              None):
             self.assertLogged(**self.NONEXISTENT_FILE)
 
         # File exists at read time but has disappeared by write time
-        with VMContextManager(self.input_ovf, self.temp_file) as ovf:
-            os.remove(os.path.join(ovf.working_dir, 'input.iso'))
+        shutil.copy(self.input_iso, self.staging_dir)
+        with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
+                              self.temp_file):
+            os.remove(os.path.join(self.staging_dir, 'input.iso'))
         self.assertLogged(**self.FILE_DISAPPEARED)
         self.assertLogged(**self.REMOVING_FILE)
         self.check_diff("""
@@ -201,7 +203,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             tarf.close()
         with VMContextManager(
                 os.path.join(self.staging_dir, 'input.ova'),
-                os.path.join(self.temp_dir, 'output.ovf')) as ovf:
+                os.path.join(self.temp_dir, 'output.ovf')):
             self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.REMOVING_FILE)
         self.check_diff(file2=os.path.join(self.temp_dir, 'output.ovf'),
@@ -237,13 +239,16 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
 
         # Now read in the OVA
         with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
-                              os.path.join(self.temp_dir, "temp.ovf")) as ova:
-            # Replace the extracted fake .vmdk with the real .vmdk
-            shutil.copy(self.input_vmdk, ova.working_dir)
+                              os.path.join(self.temp_dir, "temp.ovf")):
+            # Replace the tar file fake .vmdk with the real .vmdk
+            tarf = tarfile.open(os.path.join(self.temp_dir, "temp.ova"), 'a')
+            tarf.add(self.input_vmdk, 'input.vmdk')
+            tarf.close()
         self.assertLogged(msg="Size of file.*seems to have changed.*"
                           "The updated OVF will reflect this change.")
-        self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
-                          "The updated OVF will reflect this change.")
+        # TODO: When the disk is in the input OVA we can't validate capacity.
+        # self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
+        #                  "The updated OVF will reflect this change.")
 
     def test_tar_untar(self):
         """Output OVF to OVA and vice versa."""
