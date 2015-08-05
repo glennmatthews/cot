@@ -316,22 +316,22 @@ class OVF(VMDescription, XML):
             # make sure they look sane, and store file references for later.
             file_list = [f.get(self.FILE_HREF) for f in
                          self.references.findall(self.FILE)]
-            self.invalid_files = []
             if self.input_file == self.ovf_descriptor:
                 # Check files in the directory referenced by the OVF descriptor
-                input_dir = os.path.dirname(self.ovf_descriptor)
-                for f in file_list:
-                    self._file_references[f] = FileOnDisk(input_dir, f)
+                input_path = os.path.dirname(self.ovf_descriptor)
+                ref_cls = FileOnDisk
             else:
                 # OVA - check contents of TAR file.
-                for f in file_list:
-                    self._file_references[f] = FileInTAR(self.input_file, f)
+                input_path = self.input_file
+                ref_cls = FileInTAR
 
-            for ref in self._file_references.values():
-                if not ref.exists():
+            for f in file_list:
+                try:
+                    self._file_references[f] = ref_cls(input_path, f)
+                except IOError:
                     logger.error("File '{0}' referenced in the OVF descriptor "
                                  "does not exist.".format(f))
-                    self.invalid_files.append(f)
+                    self._file_references[f] = None
 
         except Exception as e:
             self.destroy()
@@ -626,11 +626,14 @@ class OVF(VMDescription, XML):
             href = file_elem.get(self.FILE_HREF)
             file_ref = self._file_references[href]
 
-            if not file_ref.exists():
-                if href not in self.invalid_files:
-                    # otherwise we already warned about it at read time.
-                    logger.error("Referenced file '{0}' does not exist!"
-                                 .format(href))
+            if file_ref is not None and not file_ref.exists():
+                # file used to exist but no longer does??
+                logger.error("Referenced file '{0}' does not exist!"
+                             .format(href))
+                self._file_references[href] = None
+                file_ref = None
+
+            if file_ref is None:
                 # TODO this should probably have a confirm() check...
                 logger.warning("Removing reference to missing file {0}"
                                .format(href))

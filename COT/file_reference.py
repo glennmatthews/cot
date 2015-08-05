@@ -38,11 +38,17 @@ class FileOnDisk(object):
         else:
             self.file_path = os.path.join(file_path, filename)
             self.filename = filename
+        if not self.exists():
+            raise IOError("File {0} does not exist!".format(self.file_path))
         self.obj = None
 
     def exists(self):
         """Check whether the file exists on disk."""
         return os.path.exists(self.file_path)
+
+    def size(self):
+        """Get the size of this file, in bytes."""
+        return os.path.getsize(self.file_path)
 
     def open(self, mode):
         """Open the file and return a reference to the file object."""
@@ -60,12 +66,6 @@ class FileOnDisk(object):
         logger.info("Copying {0} to {1}".format(self.file_path, dest_dir))
         shutil.copy(self.file_path, dest_dir)
 
-    def size(self):
-        """Get the size of this file, in bytes."""
-        if self.exists():
-            return os.path.getsize(self.file_path)
-        return None
-
     def add_to_archive(self, tarf):
         """Copy this file into the given tarfile object."""
         logger.info("Adding {0} to TAR file as {1}"
@@ -79,9 +79,14 @@ class FileInTAR(object):
 
     def __init__(self, tarfile_path, filename):
         """Create a reference to a file contained in a TAR archive."""
+        if not tarfile.is_tarfile(tarfile_path):
+            raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
         self.tarfile_path = tarfile_path
-        self.file_path = None
         self.filename = filename
+        if not self.exists():
+            raise IOError("{0} does not exist in {1}"
+                          .format(filename, tarfile_path))
+        self.file_path = None
         self.tarf = None
         self.obj = None
 
@@ -93,6 +98,11 @@ class FileInTAR(object):
                 return True
             except KeyError:
                 return False
+
+    def size(self):
+        """Get the size of this file in bytes."""
+        with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
+            return tarf.getmember(self.filename).size
 
     def open(self, mode):
         """Open the TAR and return a reference to the relevant file object."""
@@ -118,14 +128,6 @@ class FileInTAR(object):
             logger.info("Extracting {0} from {1} to {2}"
                         .format(self.filename, self.tarfile_path, dest_dir))
             tarf.extract(self.filename, dest_dir)
-
-    def size(self):
-        """Get the size of this file in bytes."""
-        with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
-            try:
-                return tarf.getmember(self.filename).size
-            except KeyError:
-                return None
 
     def add_to_archive(self, tarf):
         """Copy this file into the given tarfile object."""
