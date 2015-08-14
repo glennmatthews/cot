@@ -144,7 +144,7 @@ class COT_UT(unittest.TestCase):
     }
     FILE_DISAPPEARED = {
         'levelname': 'ERROR',
-        'msg': "Referenced file '.*' does not exist in working directory",
+        'msg': "Referenced file '.*' does not exist",
     }
 
     # Standard WARNING logger messages we may expect at various points:

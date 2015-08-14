@@ -47,6 +47,7 @@ Helper library modules
   :toctree:
 
   COT.data_validation
+  COT.file_reference
   COT.platforms
 
 User interface modules

@@ -43,7 +43,6 @@ import os
 import os.path
 import re
 import tarfile
-import shutil
 import xml.etree.ElementTree as ET
 # In 2.7+, ET raises a ParseError if XML parsing fails,
 # but in 2.6 it raises an ExpatError. Hide this variation.
@@ -52,11 +51,13 @@ try:
 except ImportError:
     from xml.parsers.expat import ExpatError as ParseError
 import textwrap
+from contextlib import closing
 
 from .xml_file import XML
 from .vm_description import VMDescription, VMInitError
 from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
+from COT.file_reference import FileOnDisk, FileInTAR
 from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
 import COT.platforms as Platform
 
@@ -301,6 +302,7 @@ class OVF(VMDescription, XML):
 
             # Initialize various caches
             self._configuration_profiles = None
+            self._file_references = {}
 
             try:
                 self.hardware = OVFHardware(self)
@@ -310,50 +312,26 @@ class OVF(VMDescription, XML):
 
             self.platform
 
-            # Let's go ahead and walk the file references in the OVF descriptor
-            # and make sure they look sane.
+            # Let's go ahead and walk the file entries in the OVF descriptor,
+            # make sure they look sane, and store file references for later.
             file_list = [f.get(self.FILE_HREF) for f in
                          self.references.findall(self.FILE)]
-            self.invalid_files = []
-            if (self.output_file is not None or
-                    self.input_file == self.ovf_descriptor):
-                # Read OVF: input_file == ovf_descriptor, output_file = None
-                #   In this case, walk the file list but do not copy files
-                # R/W OVF: input_file == ovf_descriptor, output_file != None
-                #   In this case, walk the file list and copy to working dir
-                # R/W OVA: input_file != ovf_descriptor, output_file != None
-                #   In this case, walk the file list but do not copy files,
-                #   as they were already moved by untar() above.
-                input_dir = os.path.dirname(self.ovf_descriptor)
-                for f in file_list:
-                    filepath = os.path.join(input_dir, f)
-                    if not os.path.exists(filepath):
-                        logger.error(
-                            "File '{0}' referenced in the OVF does not exist."
-                            .format(f))
-                        self.invalid_files.append(f)
-                        continue
-                    if (input_dir != self.working_dir and
-                            self.output_file is not None):
-                        logger.debug("Copying {0} to {1}"
-                                     .format(filepath, self.working_dir))
-                        shutil.copy(filepath, self.working_dir)
+            if self.input_file == self.ovf_descriptor:
+                # Check files in the directory referenced by the OVF descriptor
+                input_path = os.path.dirname(self.ovf_descriptor)
+                ref_cls = FileOnDisk
             else:
-                # Read-only OVA:
-                #   We didn't extract the other files from the archive,
-                #   but we can check to make sure they're in there...
+                # OVA - check contents of TAR file.
+                input_path = self.input_file
+                ref_cls = FileInTAR
+
+            for f in file_list:
                 try:
-                    tarf = tarfile.open(self.input_file, 'r')
-                    for f in file_list:
-                        try:
-                            tarf.getmember(f)
-                        except KeyError:
-                            logger.error("File '{0}' referenced in the OVF "
-                                         "descriptor does not exist in the OVA"
-                                         .format(f))
-                            self.invalid_files.append(f)
-                finally:
-                    tarf.close()
+                    self._file_references[f] = ref_cls(input_path, f)
+                except IOError:
+                    logger.error("File '{0}' referenced in the OVF descriptor "
+                                 "does not exist.".format(f))
+                    self._file_references[f] = None
 
         except Exception as e:
             self.destroy()
@@ -606,70 +584,11 @@ class OVF(VMDescription, XML):
         self.hardware.update_xml()
 
         # Make sure file references are correct:
-        for file in self.references.findall(self.FILE):
-            file_path = os.path.join(self.working_dir,
-                                     file.get(self.FILE_HREF))
-            if not os.path.exists(file_path):
-                if not file.get(self.FILE_HREF) in self.invalid_files:
-                    # otherwise we already warned about it at read time.
-                    logger.error(
-                        "Referenced file '{0}' does not exist in working "
-                        "directory {1}"
-                        .format(file.get(self.FILE_HREF), self.working_dir))
-                # TODO this should probably have a confirm() check...
-                logger.warning("Removing reference to missing file {0}"
-                               .format(file.get(self.FILE_HREF)))
-                self.references.remove(file)
-                # TODO remove references to this file from Disk, Item?
-                continue
-            # FILE_SIZE is optional in the OVF standard
-            reported_size = file.get(self.FILE_SIZE)
-            file_size_string = str(os.path.getsize(file_path))
-            if file_size_string != reported_size:
-                if reported_size is not None:
-                    logger.warning("Size of file '{0}' seems to have changed "
-                                   "from {1} (reported in the original OVF) "
-                                   "to {2} (current file size). "
-                                   "The updated OVF will reflect this change."
-                                   .format(file.get(self.FILE_HREF),
-                                           reported_size,
-                                           file_size_string))
-                file.set(self.FILE_SIZE, file_size_string)
-
-            disk = self.find_disk_from_file_id(file.get(self.FILE_ID))
-            if disk is not None:
-                capacity = str(self.get_capacity_from_disk(disk))
-                actual_capacity = get_disk_capacity(file_path)
-                if capacity != actual_capacity:
-                    logger.warning(
-                        "Capacity of disk '{0}' seems to have changed "
-                        "from {1} (reported in the original OVF) "
-                        "to {2} (actual capacity). "
-                        "The updated OVF will reflect this change."
-                        .format(file.get(self.FILE_HREF),
-                                capacity, actual_capacity))
-                    self.set_capacity_of_disk(disk, actual_capacity)
+        self.validate_and_update_file_references()
 
         # Make sure all defined networks are actually used by NICs,
         # and delete any networks that are unused.
-        if self.network_section is not None:
-            networks = self.network_section.findall(self.NETWORK)
-            items = self.virtual_hw_section.findall(self.ETHERNET_PORT_ITEM)
-            connected_networks = set()
-            for item in items:
-                conn = item.find(self.EPASD + self.CONNECTION)
-                if conn is not None:
-                    connected_networks.add(conn.text)
-            for net in networks:
-                name = net.get(self.NETWORK_NAME)
-                if name not in connected_networks:
-                    logger.warning("Removing unused network {0}".format(name))
-                    self.network_section.remove(net)
-            # If all networks were removed, remove the NetworkSection too
-            if not self.network_section.findall(self.NETWORK):
-                logger.warning("No networks left - removing NetworkSection")
-                self.envelope.remove(self.network_section)
-                self.network_section = None
+        self.validate_and_update_networks()
 
         logger.info("Writing out to file {0}".format(self.output_file))
 
@@ -685,21 +604,104 @@ class OVF(VMDescription, XML):
             dest_dir = os.path.dirname(os.path.abspath(self.output_file))
             if not dest_dir:
                 dest_dir = os.getcwd()
+
             for file in self.references.findall(self.FILE):
-                file_path = os.path.join(self.working_dir,
-                                         file.get(self.FILE_HREF))
-                logger.info("Copying {0} to {1}"
-                            .format(file.get(self.FILE_HREF),
-                                    dest_dir))
-                shutil.copy(os.path.join(self.working_dir,
-                                         file.get(self.FILE_HREF)),
-                            dest_dir)
+                file_name = file.get(self.FILE_HREF)
+                file_ref = self._file_references[file_name]
+                file_ref.copy_to(dest_dir)
+
             # Generate manifest
             self.generate_manifest(self.output_file)
         else:
             # We should never get here, but to be safe:
             raise NotImplementedError("Not sure how to write a '{0}' file"
                                       .format(extension))
+
+    def validate_and_update_file_references(self):
+        """Check all File entries to make sure they are valid and up to date.
+
+        Helper method for :func:`write`.
+        """
+        for file_elem in self.references.findall(self.FILE):
+            href = file_elem.get(self.FILE_HREF)
+            file_ref = self._file_references[href]
+
+            if file_ref is not None and not file_ref.exists():
+                # file used to exist but no longer does??
+                logger.error("Referenced file '{0}' does not exist!"
+                             .format(href))
+                self._file_references[href] = None
+                file_ref = None
+
+            if file_ref is None:
+                # TODO this should probably have a confirm() check...
+                logger.warning("Removing reference to missing file {0}"
+                               .format(href))
+                self.references.remove(file_elem)
+                # TODO remove references to this file from Disk, Item?
+                continue
+
+            real_size = str(file_ref.size())
+            real_capacity = None
+            # We can't check disk capacity inside a tar file.
+            # It seems wasteful to extract the disk file (could be
+            # quite large) from the TAR just to check, so we don't.
+            if file_ref.file_path is not None:
+                real_capacity = get_disk_capacity(file_ref.file_path)
+
+            disk_item = self.find_disk_from_file_id(
+                file_elem.get(self.FILE_ID))
+
+            reported_size = file_elem.get(self.FILE_SIZE)
+            if real_size != reported_size:
+                # FILE_SIZE is optional in the OVF standard
+                if reported_size is not None:
+                    logger.warning("Size of file '{0}' seems to have changed "
+                                   "from {1} (reported in the original OVF) "
+                                   "to {2} (current file size). "
+                                   "The updated OVF will reflect this change."
+                                   .format(href,
+                                           reported_size,
+                                           real_size))
+                file_elem.set(self.FILE_SIZE, real_size)
+
+            if disk_item is not None and real_capacity is not None:
+                reported_capacity = str(self.get_capacity_from_disk(disk_item))
+                if reported_capacity != real_capacity:
+                    logger.warning(
+                        "Capacity of disk '{0}' seems to have changed "
+                        "from {1} (reported in the original OVF) "
+                        "to {2} (actual capacity). "
+                        "The updated OVF will reflect this change."
+                        .format(href, reported_capacity, real_capacity))
+                    self.set_capacity_of_disk(disk_item, real_capacity)
+
+    def validate_and_update_networks(self):
+        """Make sure all defined networks are actually used by NICs.
+
+        Delete any networks that are unused and warn the user.
+        Helper method for :func:`write`.
+        """
+        if self.network_section is None:
+            return
+
+        networks = self.network_section.findall(self.NETWORK)
+        items = self.virtual_hw_section.findall(self.ETHERNET_PORT_ITEM)
+        connected_networks = set()
+        for item in items:
+            conn = item.find(self.EPASD + self.CONNECTION)
+            if conn is not None:
+                connected_networks.add(conn.text)
+        for net in networks:
+            name = net.get(self.NETWORK_NAME)
+            if name not in connected_networks:
+                logger.warning("Removing unused network {0}".format(name))
+                self.network_section.remove(net)
+        # If all networks were removed, remove the NetworkSection too
+        if not self.network_section.findall(self.NETWORK):
+            logger.warning("No networks left - removing NetworkSection")
+            self.envelope.remove(self.network_section)
+            self.network_section = None
 
     def info_string(self, TEXT_WIDTH=79, verbosity_option=None):
         """Get a descriptive string summarizing the contents of this OVF.
@@ -1810,9 +1812,8 @@ class OVF(VMDescription, XML):
         file.set(self.FILE_HREF, file_name)
         file.set(self.FILE_SIZE, file_size_string)
 
-        # Copy the file to our working directory if it's not already there
-        if os.path.dirname(file_path) != self.working_dir:
-            shutil.copy(file_path, os.path.join(self.working_dir, file_name))
+        # Make a note of the file's location - we'll copy it at write time.
+        self._file_references[file_name] = FileOnDisk(file_path)
 
         return file
 
@@ -1984,7 +1985,7 @@ class OVF(VMDescription, XML):
     # Helper methods - for internal use only
 
     def untar(self, file):
-        """Untar the provided .ova to a the working directory.
+        """Untar the OVF descriptor from an .ova to the working directory.
 
         :param str file: OVA file path
         :raise VMInitError: if the given file does not represent a valid
@@ -2030,17 +2031,12 @@ class OVF(VMDescription, XML):
                     raise VMInitError(1, "Tar file contains malicious/unsafe "
                                       "file path '{0}'!".format(n))
 
-            if self.output_file is not None:
-                # Extract all of the contents
-                tarf.extractall(path=self.working_dir)
-                logger.verbose("Extracted all files in {0} to working dir {1}"
-                               .format(file, self.working_dir))
-            else:
-                # Read-only mode - only extract the OVF descriptor file.
-                tarf.extract(ovf_descriptor, path=self.working_dir)
-                logger.verbose(
-                    "Extracted OVF descriptor from {0} to working dir {1}"
-                    .format(file, self.working_dir))
+            # TODO: In theory we could read the ovf descriptor XML directly
+            # from the TAR and not need to even extract this file to disk...
+            tarf.extract(ovf_descriptor, path=self.working_dir)
+            logger.verbose(
+                "Extracted OVF descriptor from {0} to working dir {1}"
+                .format(file, self.working_dir))
         finally:
             tarf.close()
 
@@ -2067,11 +2063,17 @@ class OVF(VMDescription, XML):
             # Checksum all referenced files as well
             for file in self.references.findall(self.FILE):
                 file_name = file.get(self.FILE_HREF)
-                file_path = os.path.join(os.path.dirname(ovf_file), file_name)
-                sha1sum = get_checksum(file_path, 'sha1')
+                file_ref = self._file_references[file_name]
+                try:
+                    file_obj = file_ref.open('rb')
+                    sha1sum = get_checksum(file_obj, 'sha1')
+                finally:
+                    file_ref.close()
+
                 f.write("SHA1({file})= {sum}\n"
                         .format(file=file_name, sum=sha1sum)
                         .encode('utf-8'))
+
         logger.debug("Manifest generated successfully")
         return True
 
@@ -2083,12 +2085,22 @@ class OVF(VMDescription, XML):
         """
         logger.verbose("Creating tar file {0}".format(tar_file))
 
-        dir = os.path.dirname(ovf_descriptor)
         (prefix, extension) = os.path.splitext(ovf_descriptor)
 
-        tarf = tarfile.open(tar_file, 'w')
+        if self.input_file == tar_file:
+            # We're about to overwrite the input OVA with a new OVA.
+            # (Python tarfile module doesn't support in-place edits.)
+            # Any files that we need to carry over need to be extracted NOW!
+            logger.verbose("Extracting files from {0} before overwriting it."
+                           .format(self.input_file))
+            for filename in self._file_references.keys():
+                file_ref = self._file_references[filename]
+                if file_ref.file_path is None:
+                    file_ref.copy_to(self.working_dir)
+                    self._file_references[filename] = FileOnDisk(
+                        self.working_dir, filename)
 
-        try:
+        with closing(tarfile.open(tar_file, 'w')) as tarf:
             # OVF is always first
             logger.verbose("Adding {0} to {1}".format(ovf_descriptor,
                                                       tar_file))
@@ -2104,11 +2116,10 @@ class OVF(VMDescription, XML):
                                "from {0}.".format(tar_file))
             # Add all other files mentioned in the OVF
             for file in self.references.findall(self.FILE):
-                file_path = os.path.join(dir, file.get(self.FILE_HREF))
-                tarf.add(file_path, os.path.basename(file_path))
-                logger.verbose("Added {0} to {1}".format(file_path, tar_file))
-        finally:
-            tarf.close()
+                file_name = file.get(self.FILE_HREF)
+                file_ref = self._file_references[file_name]
+                file_ref.add_to_archive(tarf)
+                logger.verbose("Added {0} to {1}".format(file_name, tar_file))
 
     def create_envelope_section_if_absent(self, section_tag, info_string,
                                           attrib={}):
