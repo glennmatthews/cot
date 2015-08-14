@@ -12,6 +12,11 @@ This project adheres to `Semantic Versioning`_.
 - flake8_ validation now includes pep257_ to validate docstring compliance to
   `PEP 257`_ as well.
 - Added changelog file.
+- Added COT.file_reference submodule in support of `#39`_.
+
+**Fixed**
+
+- `#39`_ - avoid unnecessary file copies to save time and disk space.
 
 `1.3.3`_ - 2015-07-02
 ---------------------
@@ -282,6 +287,7 @@ Initial public release.
 .. _#32: https://github.com/glennmatthews/cot/issues/32
 .. _#34: https://github.com/glennmatthews/cot/issues/34
 .. _#38: https://github.com/glennmatthews/cot/pull/38
+.. _#39: https://github.com/glennmatthews/cot/issues/39
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
