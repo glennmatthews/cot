@@ -24,11 +24,16 @@
 """
 
 import logging
+import os.path
 import re
+import requests
 import shlex
+import ssl
 import getpass
 
 from distutils.version import StrictVersion
+from pyVmomi import vim
+from pyVim.connect import SmartConnect, Disconnect
 
 from .submodule import COTReadOnlySubmodule
 from .helpers.ovftool import OVFTool
@@ -246,6 +251,69 @@ class COTDeploy(COTReadOnlySubmodule):
             "may be repeated as needed to specify multiple mappings.")
 
 
+class PyVmomiConnection:
+
+    """Context manager for PyVmomi connections."""
+
+    def __init__(self, UI, server, username, password, port=443):
+        """Create a connection to the given server."""
+        try:
+            self.si = SmartConnect(host=server, port=port,
+                                   user=username, pwd=password)
+        except vim.fault.HostConnectFault as e:
+            if not re.search("certificate verify failed", e.msg):
+                raise
+            # Self-signed certificates are pretty common for ESXi servers
+            logger.warning(e.msg)
+            UI.confirm_or_die("SSL certificate for {0} is self-signed or "
+                              "otherwise not recognized as valid. "
+                              "Accept certificate anyway?"
+                              .format(server))
+            requests.packages.urllib3.disable_warnings()
+            _create_unverified_context = ssl._create_unverified_context
+            ssl._create_default_https_context = _create_unverified_context
+            self.si = SmartConnect(host=server, port=port,
+                                   user=username, pwd=password)
+
+    def __enter__(self):
+        """Use the connection as the context manager object."""
+        return self.si
+
+    def __exit__(self, type, value, trace):
+        """Disconnect from the server."""
+        Disconnect(self.si)
+        # TODO - re-enable SSL certificate validation?
+
+
+class PyVmomiVmReconfigSpec:
+
+    """Context manager for reconfiguring an ESXi VM using PyVmomi."""
+
+    def __init__(self, conn, vm_name):
+        """Use the given name to look up a VM using the given connection."""
+        content = conn.RetrieveContent()
+        container = content.viewManager.CreateContainerView(
+            content.rootFolder, [vim.VirtualMachine], True)
+        vm = None
+        for c in container.view:
+            if c.name == vm_name:
+                vm = c
+                break
+        assert(vm)
+        self.vm = vm
+        self.spec = vim.vm.ConfigSpec()
+
+    def __enter__(self):
+        """Use a ConfigSpec as the context manager object."""
+        return self.spec
+
+    def __exit__(self, type, value, trace):
+        """If the block exited cleanly, apply the ConfigSpec to the VM."""
+        # Did we exit cleanly?
+        if type is None:
+            self.vm.ReconfigVM_Task(spec=self.spec)
+
+
 class COTDeployESXi(COTDeploy):
 
     """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
@@ -273,10 +341,13 @@ class COTDeployESXi(COTDeploy):
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         super(COTDeployESXi, self).__init__(UI)
-        self.locator = None
-        """vSphere target locator."""
         self.datastore = None
         """ESXi datastore to deploy to."""
+        self.host = None
+        """vSphere host to deploy to - set implicitly by self.locator."""
+        self.server = None
+        """vCenter server or vSphere host - set implicitly by self.locator."""
+        self._locator = None
         self._ovftool_args = []
 
         self.ovftool = OVFTool()
@@ -292,6 +363,19 @@ class COTDeployESXi(COTDeploy):
         self._ovftool_args = shlex.split(value)
         logger.debug("ovftool_args split to: {0}"
                      .format(self._ovftool_args))
+
+    @property
+    def locator(self):
+        """Target vSphere locator."""
+        return self._locator
+
+    @locator.setter
+    def locator(self, value):
+        self._locator = value
+        self.server = value.split("/")[0]
+        self.host = os.path.basename(value)
+        logger.debug("locator {0} --> server {1} / host {2}"
+                     .format(value, self.server, self.host))
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -310,11 +394,10 @@ class COTDeployESXi(COTDeploy):
         super(COTDeployESXi, self).run()
 
         # ensure user provided proper credentials
-        server = self.locator.split("/")[0]
         if self.username is None:
             self.username = getpass.getuser()
         if self.password is None:
-            self.password = self.UI.get_password(self.username, server)
+            self.password = self.UI.get_password(self.username, self.server)
 
         target = ("vi://" + self.username + ":" + self.password +
                   "@" + self.locator)
@@ -403,8 +486,9 @@ class COTDeployESXi(COTDeploy):
                 ovftool_args.append("--net:" + nm)
 
         # check if user entered a name for the VM
-        if self.vm_name is not None:
-            ovftool_args.append("--name=" + self.vm_name)
+        if self.vm_name is None:
+            self.vm_name = os.path.splitext(os.path.basename(self.package))[0]
+        ovftool_args.append("--name=" + self.vm_name)
 
         # tell ovftool to power on the VM
         # TODO - if serial port fixup (below) is implemented,
@@ -427,14 +511,38 @@ class COTDeployESXi(COTDeploy):
 
         # Post-fix of serial ports (ovftool will not implement)
         if serial_count > 0:
-            # TODO - fixup not implemented yet
             # add serial ports as requested
-            # power on VM if power_on
-            logger.warning(
-                "Package '{0}' contains {1} serial ports, but ovftool "
-                "ignores serial port declarations. If these ports are "
-                "needed, you must add them manually to the new VM."
-                .format(self.package, serial_count))
+            self.fixup_serial_ports(serial_count)
+        # power on VM if power_on
+
+    def fixup_serial_ports(self, serial_count):
+        """Use PyVmomi to create and configure serial ports for the new VM."""
+        logger.info("Fixing up serial ports...")
+        with PyVmomiConnection(self.UI, self.server,
+                               self.username, self.password) as conn:
+            with PyVmomiVmReconfigSpec(conn, self.vm_name) as spec:
+                spec.deviceChange = []
+                portnum = 1024
+                for i in range(0, serial_count):
+                    serial_spec = vim.vm.device.VirtualDeviceSpec()
+                    serial_spec.operation = 'add'
+                    serial_port = vim.vm.device.VirtualSerialPort()
+                    serial_port.yieldOnPoll = True
+
+                    # TODO - import backing info from OVF environment
+                    # TODO - support other backing types
+                    backing = vim.vm.device.VirtualSerialPort.URIBackingInfo()
+                    # TODO - support telnet client as well as server
+                    backing.direction = 'server'
+                    portnum = int(self.UI.get_input(
+                        'Telnet port number for serial port {0}'.format(i + 1),
+                        portnum + 1))
+                    backing.serviceURI = 'telnet://:{0}'.format(portnum)
+
+                    serial_port.backing = backing
+
+                    serial_spec.device = serial_port
+                    spec.deviceChange.append(serial_spec)
 
     def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
