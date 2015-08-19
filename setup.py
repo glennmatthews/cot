@@ -38,6 +38,7 @@ README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 install_requires = [
     'argparse',
     'colorlog>=2.5.0',
+    'pyvmomi>=5.5.0.2014.1',
     'requests>=2.5.1',
     'verboselogs>=1.0',
 ]
