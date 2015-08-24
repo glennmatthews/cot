@@ -5,10 +5,12 @@ We would like to thank:
 
 * For evangelization, user feedback and bug reports:
 
+  * Arun Arunkumar
   * Mark Coverdill
   * Jonathan Muslow
   * Rick Ogg
   * David Rosenfeld
+  * Rafal Skorka
   * Perumal Venkatesh
 
 * For initial design review and comments:
