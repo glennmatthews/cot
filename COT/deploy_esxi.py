@@ -308,6 +308,16 @@ class COTDeployESXi(COTDeploy):
 
     def fixup_serial_ports(self, serial_count):
         """Use PyVmomi to create and configure serial ports for the new VM."""
+        if serial_count > len(self.serial_connection):
+            logger.warning("No serial connectivity information is "
+                           "available for {0} serial port(s) - "
+                           "they will not be created or configured."
+                           .format(serial_count -
+                                   len(self.serial_connection)))
+
+        if len(self.serial_connection) == 0:
+            return
+
         logger.info("Fixing up serial ports...")
         with PyVmomiConnection(self.UI, self.server,
                                self.username, self.password) as conn:
@@ -351,13 +361,6 @@ class COTDeployESXi(COTDeploy):
                     serial_port.backing = backing
                     serial_spec.device = serial_port
                     spec.deviceChange.append(serial_spec)
-
-                if serial_count > len(self.serial_connection):
-                    logger.warning("No serial connectivity information is "
-                                   "available for {0} serial port(s) - "
-                                   "they will not be created or configured."
-                                   .format(serial_count -
-                                           len(self.serial_connection)))
 
         logger.info("Done with serial port fixup")
 
