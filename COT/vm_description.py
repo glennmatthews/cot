@@ -523,6 +523,14 @@ class VMDescription(object):
         """
         raise NotImplementedError("set_serial_connectivity not implemented!")
 
+    def get_serial_connectivity(self, profile):
+        """Get the serial port connectivity strings under the given profile.
+
+        :param str profile: Profile of interest.
+        :return: List of connectivity strings
+        """
+        raise NotImplementedError("get_serial_connectivity not implemented!")
+
     def set_scsi_subtype(self, type, profile_list):
         """Set the device subtype for the SCSI controller(s).
 

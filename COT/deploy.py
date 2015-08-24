@@ -20,26 +20,140 @@
   :nosignatures:
 
   COTDeploy
-  COTDeployESXi
+  SerialConnection
 """
 
 import logging
-import os.path
 import re
-import requests
-import shlex
-import ssl
-import getpass
-
-from distutils.version import StrictVersion
-from pyVmomi import vim
-from pyVim.connect import SmartConnect, Disconnect
 
 from .submodule import COTReadOnlySubmodule
-from .helpers.ovftool import OVFTool
-from COT.data_validation import InvalidInputError
+from COT.data_validation import InvalidInputError, ValueUnsupportedError
 
 logger = logging.getLogger(__name__)
+
+
+class SerialConnection:
+
+    """Generic class defining a serial port connection."""
+
+    @classmethod
+    def from_cli_string(cls, cli_string):
+        """Parse a string 'kind:value[,opts]' to build a SerialConnection.
+
+        Based on the QEMU CLI for serial ports.
+        """
+        if cli_string is None:
+            return None
+        cli_string = cli_string.strip()
+        if not cli_string:
+            return None
+        match = re.match(r"^([a-z]*):?([^ \t,]+),?(.*)$", cli_string)
+        if not match:
+            raise InvalidInputError("Could not parse string '{0}'"
+                                    .format(cli_string))
+        options = match.group(3)
+        entries = options.split(',')
+        options = {}
+        for entry in entries:
+            if not entry:
+                continue
+            m = re.match(r"([^=]+)=?(.*)", entry)
+            if m:
+                key = m.group(1)
+                value = m.group(2)
+                if not value:
+                    value = True
+                options[key] = value
+
+        return cls(match.group(1), match.group(2), options)
+
+    @classmethod
+    def validate_kind(cls, kind):
+        """Validate the connection type string and munge it as needed.
+
+        :param str kind: Connection type string, possibly in need of munging.
+        :return: A valid type string
+        :raise ValueUnsupportedError: if type string is not recognized as valid
+        """
+        kind = kind.lower()
+        if kind == '':
+            kind = 'device'
+        valid_kinds = [
+            'device',   # physical serial port like /dev/ttyS0
+            'file',     # output to file, no input
+            'pipe',     # named pipe
+            'tcp',      # raw tcp socket
+            'telnet',   # telnet socket
+        ]
+        if kind in valid_kinds:
+            return kind
+        else:
+            raise ValueUnsupportedError('connection type', kind, valid_kinds)
+
+    @classmethod
+    def validate_value(cls, kind, value):
+        """Check that the given value is valid for the given connection kind.
+
+        :param str kind: Connection type, valid per :func:`validate_kind`.
+        :param str value: Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
+        :return: Munged value string.
+        :raise InvalidInputError: if value string is not recognized as valid
+        """
+        if kind == 'device' or kind == 'file' or kind == 'pipe':
+            # TODO: Validate that device path exists on target?
+            return value
+        elif kind == 'file':
+            # TODO: Validate that datastore and file path exists on target?
+            return value
+        elif kind == 'pipe':
+            # TODO: Validate that pipe path exists on target?
+            return value
+        elif kind == 'tcp' or kind == 'telnet':
+            # //<host>:<port>
+            # //:<port>
+            # <host>:<port>
+            # :<port>
+            m = re.match('/?/?(.*:\d+)', value)
+            if m:
+                return m.group(1)
+            raise InvalidInputError("'{0}' is not a valid value for "
+                                    "a {1} connection"
+                                    .format(value, kind))
+        else:
+            raise NotImplementedError("No support yet for validating '{0}'"
+                                      .format(kind))
+
+    @classmethod
+    def validate_options(cls, kind, value, options):
+        """Check that the given set of options are valid for this connection.
+
+        :param str kind: Validated 'kind' string.
+        :param str value: Validated 'value' string.
+        :param dict options: Input options dictionary.
+        :return: validated options dict
+        :raise InvalidInputError: if options are not valid.
+        """
+        if kind == 'file':
+            if 'datastore' not in options:
+                raise InvalidInputError("For a serial connection to a file, "
+                                        "the datastore= option is required")
+        return options
+
+    def __init__(self, kind, value, options=None):
+        """Construct a SerialConnection object of the given kind and value."""
+        if options is None:
+            options = {}
+        logger.debug("Creating SerialConnection: "
+                     "kind: {0}, value: {1}, options: {2}"
+                     .format(kind, value, options))
+        self.kind = self.validate_kind(kind)
+        self.value = self.validate_value(self.kind, value)
+        self.options = self.validate_options(self.kind, self.value, options)
+
+    def __str__(self):
+        """Represent SerialConnection object as a string."""
+        return ("<SerialConnection kind: {0} value: {1} options: {2}>"
+                .format(self.kind, self.value, self.options))
 
 
 class COTDeploy(COTReadOnlySubmodule):
@@ -80,6 +194,7 @@ class COTDeploy(COTReadOnlySubmodule):
         self.vm_name = None
         """Name of the created virtual machine"""
         self._network_map = None
+        self._serial_connection = []
         # Internal attributes
         self.generic_parser = None
         """Generic parser object providing args that most subclasses will use.
@@ -163,6 +278,19 @@ class COTDeploy(COTReadOnlySubmodule):
                                         .format(key_value_pair))
         self._network_map = value
 
+    @property
+    def serial_connection(self):
+        """Mapping of serial ports to various connection types."""
+        return self._serial_connection
+
+    @serial_connection.setter
+    def serial_connection(self, value):
+        self._serial_connection = []
+        for string in value:
+            conn = SerialConnection.from_cli_string(string)
+            if conn:
+                self._serial_connection.append(conn)
+
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
@@ -171,6 +299,37 @@ class COTDeploy(COTReadOnlySubmodule):
         if self.hypervisor is None:
             return False, "HYPERVISOR is a mandatory argument"
         return super(COTDeploy, self).ready_to_run()
+
+    def run(self):
+        """Do the actual work of this submodule."""
+        super(COTDeploy, self).run()
+
+        # ensure configuration was specified
+        # if not specified and force not specified prompt for selection
+        profile_list = self.vm.config_profiles
+
+        if profile_list and self.configuration is None:
+            if len(profile_list) == 1:
+                # No need to prompt the user
+                self.configuration = profile_list[0]
+                logger.debug("Auto-selected only profile '{0}'"
+                             .format(self.configuration))
+            else:
+                header, profile_info_list = self.vm.profile_info_list(
+                    self.UI.terminal_width - 1)
+                # Correct for the indentation of the list:
+                header = "\n".join(["  " + h for h in header.split("\n")])
+                self.configuration = self.UI.choose_from_list(
+                    header=header,
+                    option_list=profile_list,
+                    info_list=profile_info_list,
+                    footer="Enter configuration name or number",
+                    default_value=self.vm.default_config_profile)
+
+        if not self.serial_connection:
+            # Get default serial connection information from VM definition.
+            self.serial_connection = self.vm.get_serial_connectivity(
+                self.configuration)
 
     def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
@@ -250,362 +409,9 @@ class COTDeploy(COTReadOnlySubmodule):
             "vSwitches, etc.) in the hypervisor environment. This argument "
             "may be repeated as needed to specify multiple mappings.")
 
-
-class PyVmomiConnection:
-
-    """Context manager for PyVmomi connections."""
-
-    def __init__(self, UI, server, username, password, port=443):
-        """Create a connection to the given server."""
-        try:
-            self.si = SmartConnect(host=server, port=port,
-                                   user=username, pwd=password)
-        except vim.fault.HostConnectFault as e:
-            if not re.search("certificate verify failed", e.msg):
-                raise
-            # Self-signed certificates are pretty common for ESXi servers
-            logger.warning(e.msg)
-            UI.confirm_or_die("SSL certificate for {0} is self-signed or "
-                              "otherwise not recognized as valid. "
-                              "Accept certificate anyway?"
-                              .format(server))
-            requests.packages.urllib3.disable_warnings()
-            _create_unverified_context = ssl._create_unverified_context
-            ssl._create_default_https_context = _create_unverified_context
-            self.si = SmartConnect(host=server, port=port,
-                                   user=username, pwd=password)
-
-    def __enter__(self):
-        """Use the connection as the context manager object."""
-        return self.si
-
-    def __exit__(self, type, value, trace):
-        """Disconnect from the server."""
-        Disconnect(self.si)
-        # TODO - re-enable SSL certificate validation?
-
-
-class PyVmomiVmReconfigSpec:
-
-    """Context manager for reconfiguring an ESXi VM using PyVmomi."""
-
-    def __init__(self, conn, vm_name):
-        """Use the given name to look up a VM using the given connection."""
-        content = conn.RetrieveContent()
-        container = content.viewManager.CreateContainerView(
-            content.rootFolder, [vim.VirtualMachine], True)
-        vm = None
-        for c in container.view:
-            if c.name == vm_name:
-                vm = c
-                break
-        assert(vm)
-        self.vm = vm
-        self.spec = vim.vm.ConfigSpec()
-
-    def __enter__(self):
-        """Use a ConfigSpec as the context manager object."""
-        return self.spec
-
-    def __exit__(self, type, value, trace):
-        """If the block exited cleanly, apply the ConfigSpec to the VM."""
-        # Did we exit cleanly?
-        if type is None:
-            self.vm.ReconfigVM_Task(spec=self.spec)
-
-
-class COTDeployESXi(COTDeploy):
-
-    """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
-
-    Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`,
-    :attr:`~COTReadOnlySubmodule.package`,
-    :attr:`generic_parser`,
-    :attr:`parser`,
-    :attr:`subparsers`,
-    :attr:`hypervisor`,
-    :attr:`configuration`,
-    :attr:`username`,
-    :attr:`password`,
-    :attr:`power_on`,
-    :attr:`vm_name`,
-    :attr:`network_map`
-
-    Attributes:
-    :attr:`locator`,
-    :attr:`datastore`,
-    :attr:`ovftool_args`
-    """
-
-    def __init__(self, UI):
-        """Instantiate this submodule with the given UI."""
-        super(COTDeployESXi, self).__init__(UI)
-        self.datastore = None
-        """ESXi datastore to deploy to."""
-        self.host = None
-        """vSphere host to deploy to - set implicitly by self.locator."""
-        self.server = None
-        """vCenter server or vSphere host - set implicitly by self.locator."""
-        self._locator = None
-        self._ovftool_args = []
-
-        self.ovftool = OVFTool()
-
-    @property
-    def ovftool_args(self):
-        """List of CLI arguments to pass through to ``ovftool``."""
-        return list(self._ovftool_args)
-
-    @ovftool_args.setter
-    def ovftool_args(self, value):
-        # Use shlex to split ovftool_args but respect quoted whitespace
-        self._ovftool_args = shlex.split(value)
-        logger.debug("ovftool_args split to: {0}"
-                     .format(self._ovftool_args))
-
-    @property
-    def locator(self):
-        """Target vSphere locator."""
-        return self._locator
-
-    @locator.setter
-    def locator(self, value):
-        self._locator = value
-        self.server = value.split("/")[0]
-        self.host = os.path.basename(value)
-        logger.debug("locator {0} --> server {1} / host {2}"
-                     .format(value, self.server, self.host))
-
-    def ready_to_run(self):
-        """Check whether the module is ready to :meth:`run`.
-
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
-        """
-        if self.locator is None:
-            return False, "LOCATOR is a mandatory argument"
-        return super(COTDeployESXi, self).ready_to_run()
-
-    def run(self):
-        """Do the actual work of this submodule - deploying to ESXi.
-
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
-        """
-        super(COTDeployESXi, self).run()
-
-        # ensure user provided proper credentials
-        if self.username is None:
-            self.username = getpass.getuser()
-        if self.password is None:
-            self.password = self.UI.get_password(self.username, self.server)
-
-        target = ("vi://" + self.username + ":" + self.password +
-                  "@" + self.locator)
-
-        ovftool_args = self.ovftool_args
-
-        configuration = self.configuration
-
-        vm = self.vm
-
-        # If locator is a vCenter locator "<vCenter>/datacenter/host/<host>"
-        # then environment properties will always be used.
-        # Otherwise we may need to help and/or warn the user:
-        if vm.environment_properties and not re.search("/host/", self.locator):
-            if self.ovftool.version < StrictVersion("4.0.0"):
-                self.UI.confirm_or_die(
-                    "When deploying an OVF directly to a vSphere target "
-                    "using ovftool prior to version 4.0.0, any OVF "
-                    "environment properties will not be made available "
-                    "to the new guest.\n"
-                    "If your guest needs environment properties, please "
-                    "either specify a vCenter target locator (such as "
-                    "'<vCenter>/<datacenter>/host/<host>') "
-                    "or upgrade to ovftool 4.0.0 or later.\n"
-                    "Continue deployment without OVF environment?")
-                logger.warning("deploying directly to vSphere and ovftool "
-                               "version is too low to add injectOvfEnv "
-                               "option. OVF environment properties will "
-                               "be ignored.")
-            elif not self.power_on:
-                self.UI.confirm_or_die(
-                    "When deploying an OVF directly to a vSphere target, "
-                    "OVF environment properties can only be made available to "
-                    "the new guest if the guest is to be powered on "
-                    "immediately.\n"
-                    "If your guest needs environment properties, please "
-                    "either specify the '--power-on'/'-P' option or provide "
-                    "a vCenter target locator (such as "
-                    "'<vCenter>/<datacenter>/host/<host>') "
-                    "instead of a vSphere target.\n"
-                    "Continue deployment without OVF environment?")
-                logger.warning("deploying directly to vSphere but "
-                               "--power-on is not requested. OVF "
-                               "environment properties will be ignored.")
-            else:
-                logger.debug("Since ovftool version is sufficient and user "
-                             "requested --power-on, adding ovftool args to "
-                             "ensure passthru of OVF environment to guest.")
-                ovftool_args.append("--X:injectOvfEnv")
-
-        # ensure configuration was specified
-        # will use ovf tool --deploymentOption
-        # if not specified and force not specified prompt for selection
-        profile_list = vm.config_profiles
-
-        if profile_list and configuration is None:
-            if len(profile_list) == 1:
-                # No need to prompt the user
-                configuration = profile_list[0]
-                logger.debug("Auto-selected only profile '{0}'"
-                             .format(configuration))
-            else:
-                header, profile_info_list = vm.profile_info_list(
-                    self.UI.terminal_width - 1)
-                # Correct for the indentation of the list:
-                header = "\n".join(["  " + h for h in header.split("\n")])
-                configuration = self.UI.choose_from_list(
-                    header=header,
-                    option_list=profile_list,
-                    info_list=profile_info_list,
-                    footer="Enter configuration name or number",
-                    default_value=self.vm.default_config_profile)
-
-        if configuration is not None:
-            ovftool_args.append("--deploymentOption=" + configuration)
-
-        # Get the number of serial ports in the OVA.
-        # ovftool does not create serial ports when deploying to a VM,
-        # so we'll have to fix this up manually later.
-        serial_count = vm.get_serial_count([configuration])
-        serial_count = serial_count[configuration]
-
-        # pass network settings on to ovftool
-        if self.network_map is not None:
-            for nm in self.network_map:
-                ovftool_args.append("--net:" + nm)
-
-        # check if user entered a name for the VM
-        if self.vm_name is None:
-            self.vm_name = os.path.splitext(os.path.basename(self.package))[0]
-        ovftool_args.append("--name=" + self.vm_name)
-
-        # tell ovftool to power on the VM
-        # TODO - if serial port fixup (below) is implemented,
-        # do not power on VM until after serial ports are added.
-        if self.power_on:
-            ovftool_args.append("--powerOn")
-
-        # specify target datastore
-        if self.datastore is not None:
-            ovftool_args.append("--datastore=" + self.datastore)
-
-        # add package and target to the list
-        ovftool_args.append(self.package)
-        ovftool_args.append(target)
-
-        logger.debug("Final args to pass to OVFtool: {0}".format(ovftool_args))
-
-        logger.info("Deploying VM...")
-        self.ovftool.call_helper(ovftool_args, capture_output=False)
-
-        # Post-fix of serial ports (ovftool will not implement)
-        if serial_count > 0:
-            # add serial ports as requested
-            self.fixup_serial_ports(serial_count)
-        # power on VM if power_on
-
-    def fixup_serial_ports(self, serial_count):
-        """Use PyVmomi to create and configure serial ports for the new VM."""
-        logger.info("Fixing up serial ports...")
-        with PyVmomiConnection(self.UI, self.server,
-                               self.username, self.password) as conn:
-            with PyVmomiVmReconfigSpec(conn, self.vm_name) as spec:
-                spec.deviceChange = []
-                portnum = 1024
-                for i in range(0, serial_count):
-                    serial_spec = vim.vm.device.VirtualDeviceSpec()
-                    serial_spec.operation = 'add'
-                    serial_port = vim.vm.device.VirtualSerialPort()
-                    serial_port.yieldOnPoll = True
-
-                    # TODO - import backing info from OVF environment
-                    # TODO - support other backing types
-                    backing = vim.vm.device.VirtualSerialPort.URIBackingInfo()
-                    # TODO - support telnet client as well as server
-                    backing.direction = 'server'
-                    portnum = int(self.UI.get_input(
-                        'Telnet port number for serial port {0}'.format(i + 1),
-                        portnum + 1))
-                    backing.serviceURI = 'telnet://:{0}'.format(portnum)
-
-                    serial_port.backing = backing
-
-                    serial_spec.device = serial_port
-                    spec.deviceChange.append(serial_spec)
-
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        This will create the shared :attr:`~COTDeploy.parser` under
-        :attr:`parent`, then create our own sub-subparser under
-        :attr:`~COTDeploy.subparsers`.
-
-        :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        super(COTDeployESXi, self).create_subparser(parent, storage)
-
-        import argparse
-        # Create 'cot deploy ... esxi' parser
-        p = self.subparsers.add_parser(
-            'esxi', parents=[self.generic_parser],
-            usage=self.UI.fill_usage("deploy PACKAGE esxi", [
-                "LOCATOR [-u USERNAME] [-p PASSWORD] [-c CONFIGURATION] "
-                "[-n VM_NAME] [-P] [-N OVF1=HOST1 [-N OVF2=HOST2 ...]] "
-                "[-d DATASTORE] [-o=OVFTOOL_ARGS]",
-            ]),
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            help="Deploy to ESXi, vSphere, or vCenter",
-            description="Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor",
-            epilog=self.UI.fill_examples([
-                ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
-                 " admin/admin, creating a VM named 'test_vm' from foo.ova.",
-                 'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
-                 ' -n test_vm'),
-                ("Deploy to vSphere/ESXi server 192.0.2.100, with username"
-                 " admin (prompting the user to input a password at runtime),"
-                 " creating a VM based on profile '1CPU-2.5GB' in foo.ova.",
-                 'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB'),
-                ("Deploy to vSphere server 192.0.2.1 which belongs to"
-                 " datacenter 'mydc' on vCenter server 192.0.2.100, and map"
-                 " the two NIC networks to vSwitches. Note that in this case"
-                 " -u specifies the vCenter login username.",
-                 'cot deploy foo.ova esxi "192.0.2.100/mydc/host/192.0.2.1"'
-                 ' -u administrator -N "GigabitEthernet1=VM Network"'
-                 ' -N "GigabitEthernet2=myvswitch"'),
-                ("Deploy with passthrough arguments to ovftool.",
-                 'cot deploy foo.ova esxi 192.0.2.100 -u admin -p password'
-                 ' --ovftool-args="--overwrite --acceptAllEulas"')
-            ]))
-
-        # ovftool uses '-ds' as shorthand for '--datastore', so let's allow it.
-        p.add_argument("-d", "-ds", "--datastore",
-                       help="ESXi datastore to use for the new VM")
-
-        p.add_argument("-o", "--ovftool-args",
-                       help="Quoted string describing additional CLI "
-                       """parameters to pass through to "ovftool". Examples:"""
-                       """ -o="--foo", --ovftool-args="--foo --bar" """)
-
-        p.add_argument("LOCATOR",
-                       help="vSphere target locator. Examples: "
-                       '"192.0.2.100" (deploy directly to ESXi server), '
-                       '"192.0.2.101/mydatacenter/host/192.0.2.100" '
-                       '(deploy via vCenter server)')
-
-        p.set_defaults(instance=self)
-        storage['deploy-esxi'] = p
+        self.generic_parser.add_argument(
+            '-S', '--serial-connection', action='append', nargs='+',
+            metavar=('CONN1', 'CONN2'),
+            help="Set connectivity for a serial port defined in the OVF. "
+            "This argument may be repeated to specify more port connections. "
+            "Each entry should be structured as 'kind:value[,options]'.")
