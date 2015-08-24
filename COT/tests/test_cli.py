@@ -757,20 +757,25 @@ class TestCLIDeployESXi(TestCOTCLI):
         """Verify help menu for cot deploy ... esxi."""
         self.call_cot(['deploy', self.input_ovf, '-h'])
 
-    def test_invalid_args(self):
-        """Negative testing for cot deploy ... esxi CLI."""
-        # No locator specified
+    def test_invalid_args_no_locator(self):
+        """Negative test: no locator specified."""
         self.call_cot(['deploy', self.input_ovf, 'esxi'],
                       result=2)
-        # No password specified - required if running noninteractively
-        self.call_cot(['deploy', self.input_ovf, 'esxi', 'localhost'],
+
+    def test_invalid_args_no_password_noninteractive(self):
+        """No password specified - required if running noninteractively."""
+        self.call_cot(['deploy', self.minimal_ovf, 'esxi', 'localhost'],
                       result=2)
-        # Missing strings
+
+    def test_invalid_args_missing_strings(self):
+        """Negative test: Missing strings."""
         for param in ['-c', '-n', '-N', '-u', '-p', '-d', '-o']:
             self.call_cot(['deploy', self.input_ovf, 'esxi', 'localhost',
                            '-p', 'password', param],
                           result=2)
-        # Invalid configuration profile
+
+    def test_invalid_args_invalid_configuration(self):
+        """Negative test: Invalid configuration profile."""
         self.call_cot(['deploy', self.input_ovf, 'esxi', 'localhost',
                        '-p', 'password', '-c', 'nonexistent'],
                       result=2)
