@@ -10,12 +10,15 @@ This project adheres to `Semantic Versioning`_.
 
 - `#24`_ - ``cot deploy esxi`` now creates serial ports after deployment using
   `pyVmomi`_ library.
+
   - Serial port connectivity must be specified either via entries in the OVF
     (which can be defined using ``cot edit-hardware ... -S``) or at deployment
     time using the new ``-S`` / ``--serial-connection`` parameter to
-    ``cot deploy``. The syntax for serial port connectivity definition is based
+    ``cot deploy``.
+  - The syntax for serial port connectivity definition is based
     on that of QEMU's ``--serial`` CLI option.
   - Currently only "telnet", "tcp", and "device" connection types are supported.
+
 - `#38`_ - ``cot edit-product`` can now set product and vendor information.
 - flake8_ validation now includes pep257_ to validate docstring compliance to
   `PEP 257`_ as well.
@@ -23,6 +26,7 @@ This project adheres to `Semantic Versioning`_.
 - Added COT.file_reference submodule in support of `#39`_.
 
 **Changed**
+
 - Split ESXi-specific logic out of COT.deploy module and into new
   COT.deploy_esxi module.
 
