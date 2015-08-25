@@ -1317,6 +1317,15 @@ class OVF(VMDescription, XML):
                                                   self.ADDRESS, conn_list,
                                                   profile_list, default="")
 
+    def get_serial_connectivity(self, profile):
+        """Get the serial port connectivity strings under the given profile.
+
+        :param str profile: Profile of interest.
+        :return: List of connectivity strings
+        """
+        return [item.get_value(self.ADDRESS) for item in
+                self.hardware.find_all_items('serial', profile_list=[profile])]
+
     def set_scsi_subtype(self, type, profile_list):
         """Set the device subtype for the SCSI controller(s).
 
@@ -2790,7 +2799,7 @@ class OVFHardware:
                        profile_list=None):
         """Find all items matching the given type, properties, and profiles.
 
-        :param resource_type:
+        :param resource_type: Resource type string like 'scsi' or 'serial'
         :param dict[property, value] properties: Property values to match
         :param list profile_list: List of profiles to filter on
         :return: list of :class:`OVFItem` instances

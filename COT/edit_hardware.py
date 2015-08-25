@@ -433,7 +433,7 @@ class COTEditHardware(COTSubmodule):
                        help="Set the hardware type for all NICs. "
                        "(default: do not change existing NICs, and new "
                        "NICs added will match the existing type.)")
-        g.add_argument('--nic-names', nargs='+',
+        g.add_argument('--nic-names', action='append', nargs='+',
                        metavar=('NAME1', 'NAME2'),
                        help="Specify a list of one or more NIC names or "
                        "patterns to apply to NIC devices. See Notes.")
@@ -442,7 +442,7 @@ class COTEditHardware(COTSubmodule):
                        help="Specify a series of one or more network names "
                        "or patterns to map NICs to. See Notes.")
         g.add_argument('-M', '--mac-addresses-list', type=mac_address,
-                       metavar=('MAC1', 'MAC2'), nargs='+',
+                       metavar=('MAC1', 'MAC2'), action='append', nargs='+',
                        help="Specify a list of MAC addresses for the NICs. "
                        "If N MACs are specified, the first (N-1) NICs "
                        "will receive the first (N-1) MACs, and all "
@@ -453,7 +453,7 @@ class COTEditHardware(COTSubmodule):
         g.add_argument('-s', '--serial-ports', type=non_negative_int,
                        help="Set the number of serial ports.")
         g.add_argument('-S', '--serial-connectivity',
-                       metavar=('URI1', 'URI2'), nargs='+',
+                       metavar=('URI1', 'URI2'), action='append', nargs='+',
                        help="Specify a series of connectivity strings "
                        '(URIs such as "telnet://localhost:9101") to map '
                        "serial ports to. If fewer URIs than serial ports "
