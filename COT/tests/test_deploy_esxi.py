@@ -18,12 +18,17 @@
 
 import getpass
 import logging
+import mock
 import re
+import requests
+import ssl
 
+from pyVmomi import vim
 from distutils.version import StrictVersion
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
+import COT.deploy_esxi
 from COT.deploy_esxi import COTDeployESXi
 from COT.data_validation import InvalidInputError
 
@@ -46,6 +51,14 @@ class TestCOTDeployESXi(COT_UT):
     OVFTOOL_VER_TOO_LOW = {
         'levelname': 'WARNING',
         'msg': "ovftool version is too low.*environment properties.*ignored",
+    }
+    BAD_CERTIFICATE = {
+        'levelname': 'WARNING',
+        'msg': "certificate verify failed",
+    }
+    SESSION_FAILED = {
+        'levelname': 'ERROR',
+        'msg': "Session failed",
     }
 
     def stub_check_call(self, argv, require_success=True):
@@ -185,3 +198,77 @@ class TestCOTDeployESXi(COT_UT):
         ], self.last_argv)
         self.assertLogged(**self.OVFTOOL_VER_TOO_LOW)
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
+
+    def test_serial_fixup_connection_error(self):
+        """Call fixup_serial_ports() to connect to an invalid host."""
+        self.instance.locator = "localhost"
+        self.instance.serial_connection = ['tcp::2222', 'tcp::2223']
+        self.assertRaises(requests.exceptions.ConnectionError,
+                          self.instance.fixup_serial_ports, 2)
+
+    @mock.patch('pyVim.connect.__Login')
+    @mock.patch('pyVim.connect.__FindSupportedVersion')
+    def test_serial_fixup_stubbed(self, mock_fsv, mock_login):
+        """Test fixup_serial_ports by mocking pyVmomi library."""
+        self.instance.locator = "localhost"
+        self.instance.vm_name = "mockery"
+
+        mock_fsv.return_value = ['vim25']
+        mock_si = mock.create_autospec(COT.deploy_esxi.vim.ServiceInstance)
+        mock_login.return_value = (mock_si, None)
+
+        mock_sic = mock.create_autospec(
+            COT.deploy_esxi.vim.ServiceInstanceContent)
+        mock_si.RetrieveContent.return_value = mock_sic
+        mock_sic.rootFolder = 'vim.Folder:group-d1'
+
+        mock_v = mock.create_autospec(COT.deploy_esxi.vim.ViewManager)
+        mock_sic.viewManager = mock_v
+
+        mock_cv = mock.create_autospec(COT.deploy_esxi.vim.view.ContainerView)
+        mock_v.CreateContainerView.return_value = mock_cv
+
+        mock_vm = mock.create_autospec(COT.deploy_esxi.vim.VirtualMachine)
+        mock_vm.name = self.instance.vm_name
+        mock_cv.view = [mock_vm]
+
+        self.instance.serial_connection = ['tcp:localhost:2222',
+                                           'tcp::2223,server',
+                                           '/dev/ttyS0']
+        self.instance.fixup_serial_ports(3)
+
+        self.assertTrue(mock_vm.ReconfigVM_Task.called)
+        args, kwargs = mock_vm.ReconfigVM_Task.call_args
+        spec = kwargs['spec']
+        self.assertEqual(3, len(spec.deviceChange))
+        s1, s2, s3 = spec.deviceChange
+        self.assertEqual('add', s1.operation)
+        self.assertEqual('add', s2.operation)
+        self.assertEqual('add', s3.operation)
+        self.assertEqual('tcp://localhost:2222', s1.device.backing.serviceURI)
+        self.assertEqual('client', s1.device.backing.direction)
+        self.assertEqual('tcp://:2223', s2.device.backing.serviceURI)
+        self.assertEqual('server', s2.device.backing.direction)
+        self.assertEqual('/dev/ttyS0', s3.device.backing.deviceName)
+
+        self.instance.serial_connection = [
+            'file:/tmp/foo.txt,datastore=datastore1'
+        ]
+        self.assertRaises(NotImplementedError,
+                          self.instance.fixup_serial_ports, 1)
+        self.assertLogged(**self.SESSION_FAILED)
+
+    @mock.patch('COT.deploy_esxi.SmartConnection.__enter__')
+    def test_serial_fixup_SSL_failure(self, mock_parent):
+        """Test SSL failure in pyVmomi.
+
+        Only applicable to 2.7+ and 3.4+ that have the new certificate logic.
+        """
+        if hasattr(ssl, '_create_unverified_context'):
+            mock_parent.side_effect = vim.fault.HostConnectFault(
+                msg="certificate verify failed")
+            self.instance.locator = "localhost"
+            self.instance.serial_connection = ['tcp://localhost:2222']
+            self.assertRaises(vim.fault.HostConnectFault,
+                              self.instance.fixup_serial_ports, 1)
+            self.assertLogged(**self.BAD_CERTIFICATE)

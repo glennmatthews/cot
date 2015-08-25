@@ -780,6 +780,13 @@ class TestCLIDeployESXi(TestCOTCLI):
                        '-p', 'password', '-c', 'nonexistent'],
                       result=2)
 
+    def test_invalid_args_too_many_serial(self):
+        """Negative test: ESXi maxes at 4 serial ports."""
+        self.call_cot(['deploy', self.input_ovf, 'esxi', 'localhost',
+                       '-S', 'tcp::2001', '-S', 'tcp::2002', '-S', 'tcp::2003',
+                       '-S', 'tcp::2004', '-S', 'tcp::2005'],
+                      result=2)
+
 
 class TestCLIInstallHelpers(TestCOTCLI):
 

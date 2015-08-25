@@ -29,6 +29,8 @@ This project adheres to `Semantic Versioning`_.
 
 - Split ESXi-specific logic out of COT.deploy module and into new
   COT.deploy_esxi module.
+- UT for COT.deploy_esxi now requires ``mock`` (standard library in Python 3.x,
+  install via pip on Python 2.x).
 
 **Fixed**
 

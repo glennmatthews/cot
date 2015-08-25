@@ -101,11 +101,7 @@ class SerialConnection:
         """
         if kind == 'device' or kind == 'file' or kind == 'pipe':
             # TODO: Validate that device path exists on target?
-            return value
-        elif kind == 'file':
             # TODO: Validate that datastore and file path exists on target?
-            return value
-        elif kind == 'pipe':
             # TODO: Validate that pipe path exists on target?
             return value
         elif kind == 'tcp' or kind == 'telnet':
@@ -139,10 +135,8 @@ class SerialConnection:
                                         "the datastore= option is required")
         return options
 
-    def __init__(self, kind, value, options=None):
+    def __init__(self, kind, value, options):
         """Construct a SerialConnection object of the given kind and value."""
-        if options is None:
-            options = {}
         logger.debug("Creating SerialConnection: "
                      "kind: {0}, value: {1}, options: {2}"
                      .format(kind, value, options))
@@ -330,6 +324,16 @@ class COTDeploy(COTReadOnlySubmodule):
             # Get default serial connection information from VM definition.
             self.serial_connection = self.vm.get_serial_connectivity(
                 self.configuration)
+        else:
+            serial_count = self.vm.get_serial_count(
+                [self.configuration])[self.configuration]
+            if len(self.serial_connection) > serial_count:
+                self.UI.confirm_or_die(
+                    "{0} configuration '{1}' defines only {2} serial ports, "
+                    "but you have given connection information for {3} ports."
+                    "\nContinue to create additional ports?"
+                    .format(self.package, self.configuration, serial_count,
+                            len(self.serial_connection)))
 
     def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.

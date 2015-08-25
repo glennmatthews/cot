@@ -21,8 +21,8 @@ import re
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
-from COT.deploy import COTDeploy
-from COT.data_validation import InvalidInputError
+from COT.deploy import COTDeploy, SerialConnection
+from COT.data_validation import InvalidInputError, ValueUnsupportedError
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +67,54 @@ class TestCOTDeploy(COT_UT):
             self.instance.network_map = ["=bar"]
         with self.assertRaises(InvalidInputError):
             self.instance.network_map = ["foo="]
+
+    def test_run(self):
+        """Test the generic run() implementation."""
+        self.instance.hypervisor = "esxi"
+        self.instance.serial_connection = ["tcp::22", "tcp::23", "tcp::24"]
+        self.instance.run()
+
+
+class TestSerialConnection(COT_UT):
+
+    """Unit test cases for SerialConnection class."""
+
+    def test_from_cli_string_invalid(self):
+        """Negative tests for SerialConnection.from_cli_string() method."""
+        # Parsing failure
+        self.assertRaises(InvalidInputError,
+                          SerialConnection.from_cli_string, ',bar')
+        # Parsing succeeds but invalid kind
+        self.assertRaises(ValueUnsupportedError,
+                          SerialConnection.from_cli_string, 'foo:bar')
+        # Parsing succeeds but invalid value
+        self.assertRaises(InvalidInputError,
+                          SerialConnection.from_cli_string, 'tcp:bar')
+        # Parsing succeeds but incorrect options
+        self.assertRaises(InvalidInputError,
+                          SerialConnection.from_cli_string,
+                          'file:/tmp/foo.txt')
+        self.assertEqual(None, SerialConnection.from_cli_string("   "))
+
+    def test_from_cli_string_valid(self):
+        """Positive tests for SerialConnection.from_cli_string()."""
+        c = SerialConnection.from_cli_string('/dev/ttyS0')
+        self.assertEqual('device', c.kind)
+        self.assertEqual('/dev/ttyS0', c.value)
+        self.assertEqual({}, c.options)
+
+        c = SerialConnection.from_cli_string(
+            'file:/tmp/foo.txt,datastore=datastore1')
+        self.assertEqual('file', c.kind)
+        self.assertEqual('/tmp/foo.txt', c.value)
+        self.assertEqual({'datastore': 'datastore1'}, c.options)
+
+        c = SerialConnection.from_cli_string('tcp::22,server')
+        self.assertEqual('tcp', c.kind)
+        self.assertEqual(':22', c.value)
+        self.assertEqual({'server': True}, c.options)
+
+        c = SerialConnection.from_cli_string('telnet://1.1.1.1:1111')
+        self.assertEqual('telnet', c.kind)
+        self.assertEqual('1.1.1.1:1111', c.value)
+        self.assertEqual({}, c.options)

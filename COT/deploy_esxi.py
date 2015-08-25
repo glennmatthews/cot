@@ -20,7 +20,7 @@
   :nosignatures:
 
   COTDeployESXi
-  PyVmomiConnection
+  SmarterConnection
   PyVmomiVMReconfigSpec
 
 """
@@ -35,35 +35,40 @@ import ssl
 
 from distutils.version import StrictVersion
 from pyVmomi import vim
-from pyVim.connect import SmartConnect, Disconnect
+from pyVim.connect import SmartConnection
 
+from .data_validation import ValueUnsupportedError
 from .deploy import COTDeploy
 from .helpers.ovftool import OVFTool
 
 logger = logging.getLogger(__name__)
 
 
-class PyVmomiConnection:
+class SmarterConnection(SmartConnection):
 
-    """Context manager for PyVmomi connections."""
+    """A smarter version of pyVmomi's SmartConnection context manager."""
 
     def __init__(self, UI, server, username, password, port=443):
         """Create a connection to the given server."""
-        self.si = None
         self.UI = UI
         self.server = server
         self.username = username
         self.password = password
         self.port = port
+        super(SmarterConnection, self).__init__(host=server, user=username,
+                                                pwd=password, port=port)
 
     def __enter__(self):
-        """Use the connection as the context manager object."""
+        """Establish a connection and use it as the context manager object.
+
+        Unlike SmartConnection, this lets the user override SSL certificate
+        validation failures and connect anyway. It also produces slightly
+        more meaningful error messages on failure.
+        """
         logger.verbose("Establishing connection to {0}:{1}..."
                        .format(self.server, self.port))
         try:
-            requests.packages.urllib3.disable_warnings()
-            self.si = SmartConnect(host=self.server, port=self.port,
-                                   user=self.username, pwd=self.password)
+            return super(SmarterConnection, self).__enter__()
         except vim.fault.HostConnectFault as e:
             if not re.search("certificate verify failed", e.msg):
                 raise e
@@ -75,8 +80,7 @@ class PyVmomiConnection:
                                    .format(self.server))
             _create_unverified_context = ssl._create_unverified_context
             ssl._create_default_https_context = _create_unverified_context
-            self.si = SmartConnect(host=self.server, port=self.port,
-                                   user=self.username, pwd=self.password)
+            return super(SmarterConnection, self).__enter__()
         except requests.exceptions.ConnectionError as e:
             # ConnectionError can wrap another internal error; let's unwrap it
             # so COT can log it more cleanly
@@ -86,14 +90,10 @@ class PyVmomiConnection:
                               .format(self.server, self.port,
                                       e.args[0].args[1].strerror))
                 raise
-        logger.verbose("Connection established")
-        return self.si
 
     def __exit__(self, type, value, trace):
         """Disconnect from the server."""
-        if self.si is not None:
-            logger.verbose("Disconnecting from {0}".format(self.server))
-            Disconnect(self.si)
+        super(SmarterConnection, self).__exit__()
         if type is not None:
             logger.error("Session failed - {0}".format(value))
         # TODO - re-enable SSL certificate validation?
@@ -105,17 +105,21 @@ class PyVmomiVMReconfigSpec:
 
     def __init__(self, conn, vm_name):
         """Use the given name to look up a VM using the given connection."""
+        self.vm = self.get_obj(conn, vim.VirtualMachine, vm_name)
+        assert(self.vm)
+        self.spec = vim.vm.ConfigSpec()
+
+    def get_obj(self, conn, vimtype, name):
+        """Look up an object by name."""
+        obj = None
         content = conn.RetrieveContent()
         container = content.viewManager.CreateContainerView(
-            content.rootFolder, [vim.VirtualMachine], True)
-        vm = None
+            content.rootFolder, [vimtype], True)
         for c in container.view:
-            if c.name == vm_name:
-                vm = c
+            if c.name == name:
+                obj = c
                 break
-        assert(vm)
-        self.vm = vm
-        self.spec = vim.vm.ConfigSpec()
+        return obj
 
     def __enter__(self):
         """Use a ConfigSpec as the context manager object."""
@@ -192,6 +196,15 @@ class COTDeployESXi(COTDeploy):
         self.host = os.path.basename(value)
         logger.debug("locator {0} --> server {1} / host {2}"
                      .format(value, self.server, self.host))
+
+    @COTDeploy.serial_connection.setter
+    def serial_connection(self, value):
+        """Override parent property setter to add ESXi validation."""
+        if len(value) > 4:
+            raise ValueUnsupportedError(
+                'serial port connection list', value,
+                'no more than 4 connections (ESXi limitation)')
+        COTDeploy.serial_connection.fset(self, value)
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -319,7 +332,7 @@ class COTDeployESXi(COTDeploy):
             return
 
         logger.info("Fixing up serial ports...")
-        with PyVmomiConnection(self.UI, self.server,
+        with SmarterConnection(self.UI, self.server,
                                self.username, self.password) as conn:
             logger.verbose("Connection established")
             with PyVmomiVMReconfigSpec(conn, self.vm_name) as spec:
