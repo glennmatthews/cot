@@ -399,7 +399,7 @@ class COTDeployESXi(COTDeploy):
             usage=self.UI.fill_usage("deploy PACKAGE esxi", [
                 "LOCATOR [-u USERNAME] [-p PASSWORD] [-c CONFIGURATION] "
                 "[-n VM_NAME] [-P] [-N OVF1=HOST1 [-N OVF2=HOST2 ...]] "
-                "[-d DATASTORE] [-o=OVFTOOL_ARGS]",
+                "[-S CONN1 [-S CONN2 ...]] [-d DATASTORE] [-o=OVFTOOL_ARGS]",
             ]),
             formatter_class=argparse.RawDescriptionHelpFormatter,
             help="Deploy to ESXi, vSphere, or vCenter",
