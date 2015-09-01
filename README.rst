@@ -30,7 +30,7 @@ COT's capabilities include:
 * Display a descriptive summary of the contents of an OVA or OVF package
 * Embed a bootstrap configuration text file into an OVF/OVA.
 * Deploy an OVF/OVA to an ESXi (VMware vSphere or vCenter) server to provision
-  a new virtual machine (VM).
+  a new virtual machine (VM), including serial port configuration as needed.
 
 For more information, refer to the documentation_.
 

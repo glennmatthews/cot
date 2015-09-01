@@ -19,6 +19,7 @@
 import xml.etree.ElementTree as ET
 import logging
 import re
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +95,9 @@ class XML(object):
         # option
         #
         # This is a bug - see http://bugs.python.org/issue17088
-        try:
+        if sys.hexversion >= 0x02070000:
             self.tree.write(file, xml_declaration=True, encoding='utf-8')
-        except TypeError:
+        else:
             # 2.6 doesn't have the xml_declaration parameter. Sigh.
             self.tree.write(file, encoding='utf-8')
 

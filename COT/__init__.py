@@ -33,6 +33,7 @@ Command modules
   COT.add_disk
   COT.add_file
   COT.deploy
+  COT.deploy_esxi
   COT.edit_hardware
   COT.edit_product
   COT.edit_properties
@@ -47,6 +48,7 @@ Helper library modules
   :toctree:
 
   COT.data_validation
+  COT.file_reference
   COT.platforms
 
 User interface modules

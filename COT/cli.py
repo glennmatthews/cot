@@ -81,6 +81,10 @@ class CLI(UI):
         self._terminal_width = terminal_width
         self.wrapper = textwrap.TextWrapper(width=self.terminal_width - 1)
 
+        if sys.hexversion >= 0x02070000:
+            # not available in 2.6, oh well.
+            logging.captureWarnings(True)
+
         self.create_parser()
         self.create_subparsers()
 
@@ -437,7 +441,7 @@ class CLI(UI):
         """
         from COT.add_disk import COTAddDisk
         from COT.add_file import COTAddFile
-        from COT.deploy import COTDeployESXi
+        from COT.deploy_esxi import COTDeployESXi
         from COT.edit_hardware import COTEditHardware
         from COT.edit_product import COTEditProduct
         from COT.edit_properties import COTEditProperties
@@ -543,8 +547,13 @@ class CLI(UI):
                      "Please contact the COT development team."
                      .format(e.args[0]))
         except EnvironmentError as e:
-            print(e.strerror)
-            sys.exit(e.errno)
+            # EnvironmentError may have both or neither of (errno, strerror).
+            if e.errno is not None:
+                print(e.strerror)
+                sys.exit(e.errno)
+            else:
+                print(e.args[0])
+                sys.exit(1)
         except KeyboardInterrupt:
             sys.exit("\nAborted by user.")
         finally:
