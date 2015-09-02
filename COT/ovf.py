@@ -2109,7 +2109,8 @@ class OVF(VMDescription, XML):
                     self._file_references[filename] = FileOnDisk(
                         self.working_dir, filename)
 
-        with closing(tarfile.open(tar_file, 'w')) as tarf:
+        # Be sure to dereference any links to the actual file content!
+        with closing(tarfile.open(tar_file, 'w', dereference=True)) as tarf:
             # OVF is always first
             logger.verbose("Adding {0} to {1}".format(ovf_descriptor,
                                                       tar_file))

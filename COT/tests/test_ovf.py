@@ -17,6 +17,7 @@
 """Unit test cases for COT.ovf.OVF and COT.ovf.OVFItem classes."""
 
 import filecmp
+import os
 import os.path
 import platform
 import tempfile
@@ -29,6 +30,8 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+
+from contextlib import closing
 
 from COT.tests.ut import COT_UT
 from COT.ovf import OVF, OVFNameHelper, OVFItem
@@ -278,6 +281,30 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
                             os.path.join(self.temp_dir, "input" + ext)),
                 "{0} file changed after OVF->OVA->OVF conversion"
                 .format(ext))
+
+    def test_tar_links(self):
+        """Check that OVA dereferences symlinks and hard links."""
+        self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
+        shutil.copy(self.input_ovf, self.staging_dir)
+        # Hardlink self.input_vmdk to the staging dir
+        os.link(self.input_vmdk, os.path.join(self.staging_dir, 'input.vmdk'))
+        # Symlink self.input_iso to the staging dir
+        os.symlink(self.input_iso, os.path.join(self.staging_dir, 'input.iso'))
+        ovf = OVF(os.path.join(self.staging_dir, 'input.ovf'),
+                  os.path.join(self.temp_dir, 'input.ova'))
+        ovf.write()
+        ovf.destroy()
+
+        with closing(tarfile.open(os.path.join(self.temp_dir, 'input.ova'),
+                                  'r')) as tarf:
+            vmdk = tarf.getmember('input.vmdk')
+            self.assertTrue(vmdk.isfile(),
+                            "hardlink was not added as a regular file")
+            self.assertFalse(vmdk.islnk())
+            iso = tarf.getmember('input.iso')
+            self.assertTrue(iso.isfile(),
+                            "symlink was not added as a regular file")
+            self.assertFalse(iso.issym())
 
     def test_invalid_ovf_file(self):
         """Check that various invalid input OVF files result in VMInitError."""
