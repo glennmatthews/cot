@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.4.1`_ - 2015-09-02
+---------------------
+
+**Fixed**
+
+- `#41`_ - symlinks were not dereferenced when writing out to OVA.
+
 `1.4.0`_ - 2015-09-01
 ---------------------
 
@@ -306,6 +313,7 @@ Initial public release.
 .. _#34: https://github.com/glennmatthews/cot/issues/34
 .. _#38: https://github.com/glennmatthews/cot/pull/38
 .. _#39: https://github.com/glennmatthews/cot/issues/39
+.. _#41: https://github.com/glennmatthews/cot/issues/41
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -322,6 +330,7 @@ Initial public release.
 .. _versioneer: https://github.com/warner/python-versioneer
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.4.1: https://github.com/glennmatthews/cot/compare/v1.4.0...v1.4.1
 .. _1.4.0: https://github.com/glennmatthews/cot/compare/v1.3.3...v1.4.0
 .. _1.3.3: https://github.com/glennmatthews/cot/compare/v1.3.2...v1.3.3
 .. _1.3.2: https://github.com/glennmatthews/cot/compare/v1.3.1...v1.3.2
