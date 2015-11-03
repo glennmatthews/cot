@@ -1,12 +1,26 @@
-sudo: required
+sudo: false
 
 language: python
 python:
   - "2.7"
 
+addons:
+  apt:
+    packages:
+      - make
+      - gcc
+      - qemu-utils
+      - xorriso
+      - zlib1g-dev
+
 install:
   - pip install tox
   - pip install coveralls
+
+cache:
+  apt: true
+  directories:
+    - $HOME/.cache/pip
 
 script: tox
 
