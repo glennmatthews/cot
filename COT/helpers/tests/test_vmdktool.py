@@ -58,7 +58,8 @@ class TestVmdkTool(HelperUT):
             ['sudo', 'apt-get', '-q', 'install', 'zlib1g-dev'],
             ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
             ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-            ['sudo', 'make', 'install'],
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+            ['sudo', 'make', 'install', 'DESTDIR=', 'PREFIX=/usr/local'],
         ], self.last_argv)
         self.assertTrue(Helper._apt_updated)
         # Make sure we don't 'apt-get update' again unnecessarily
@@ -69,7 +70,8 @@ class TestVmdkTool(HelperUT):
             ['sudo', 'apt-get', '-q', 'install', 'zlib1g-dev'],
             ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
             ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-            ['sudo', 'make', 'install'],
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+            ['sudo', 'make', 'install', 'DESTDIR=', 'PREFIX=/usr/local'],
         ], self.last_argv)
 
     def test_install_helper_port(self):
@@ -103,7 +105,8 @@ class TestVmdkTool(HelperUT):
             ['sudo', 'yum', '--quiet', 'install', 'zlib-devel'],
             ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
             ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-            ['sudo', 'make', 'install'],
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+            ['sudo', 'make', 'install', 'DESTDIR=', 'PREFIX=/usr/local'],
         ], self.last_argv)
 
     def test_install_helper_unsupported(self):

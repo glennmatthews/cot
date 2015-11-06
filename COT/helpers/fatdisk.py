@@ -85,10 +85,15 @@ class FatDisk(Helper):
                 destination = os.path.join(destdir, prefix, 'bin/fatdisk')
                 logger.info("Compilation complete, installing to " +
                             destination)
-                self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                  os.path.join(destdir, prefix, 'bin')])
-                self._check_call(['sudo', 'cp', 'fatdisk', destination],
-                                 cwd=new_d)
+                # See if it's user-writable or if we need sudo
+                try:
+                    os.renames(os.path.join(new_d, 'fatdisk'), destination)
+                except OSError:
+                    logger.verbose('Installation error, trying sudo')
+                    self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
+                                      os.path.join(destdir, prefix, 'bin')])
+                    self._check_call(['sudo', 'cp', 'fatdisk', destination],
+                                     cwd=new_d)
         else:
             raise NotImplementedError(
                 "Not sure how to install 'fatdisk'.\n"

@@ -13,6 +13,9 @@ addons:
       - xorriso
       - zlib1g-dev
 
+before_script:
+  - export PATH=$PATH:$PWD/bin
+
 install:
   - pip install tox
   - pip install coveralls

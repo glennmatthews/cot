@@ -60,6 +60,7 @@ class TestFatDisk(HelperUT):
             ['sudo', 'apt-get', '-q', 'install', 'make'],
             ['sudo', 'apt-get', '-q', 'install', 'gcc'],
             ['./RUNME'],
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
             ['sudo', 'cp', 'fatdisk', '/usr/local/bin/fatdisk'],
         ], self.last_argv)
         self.assertTrue(Helper._apt_updated)
@@ -70,6 +71,7 @@ class TestFatDisk(HelperUT):
             ['sudo', 'apt-get', '-q', 'install', 'make'],
             ['sudo', 'apt-get', '-q', 'install', 'gcc'],
             ['./RUNME'],
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
             ['sudo', 'cp', 'fatdisk', '/usr/local/bin/fatdisk'],
         ], self.last_argv)
 
@@ -103,6 +105,7 @@ class TestFatDisk(HelperUT):
             ['sudo', 'yum', '--quiet', 'install', 'make'],
             ['sudo', 'yum', '--quiet', 'install', 'gcc'],
             ['./RUNME'],
+            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
             ['sudo', 'cp', 'fatdisk', '/usr/local/bin/fatdisk'],
         ], self.last_argv)
 

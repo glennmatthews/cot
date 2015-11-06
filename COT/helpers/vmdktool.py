@@ -91,13 +91,26 @@ class VmdkTool(Helper):
                 logger.info("Compilation complete, installing to " +
                             os.path.join(destdir, prefix))
                 # Make sure the relevant man and bin directories exist
-                self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                  os.path.join(destdir, prefix, 'man/man8')])
-                self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                  os.path.join(destdir, prefix, 'bin')])
-                self._check_call(['sudo', 'make', 'install',
-                                  'DESTDIR=' + destdir, 'PREFIX=' + prefix],
-                                 cwd=new_d)
+                try:
+                    os.makedirs(os.path.join(destdir, prefix, 'man/man8'),
+                                0755)
+                    os.makedirs(os.path.join(destdir, prefix, 'bin'),
+                                0755)
+                    self._check_call(['make', 'install',
+                                      'DESTDIR=' + destdir,
+                                      'PREFIX=' + prefix],
+                                     cwd=new_d)
+                except OSError:
+                    logger.verbose("Installation failed, trying sudo")
+                    self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
+                                      os.path.join(destdir, prefix,
+                                                   'man/man8')])
+                    self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
+                                      os.path.join(destdir, prefix, 'bin')])
+                    self._check_call(['sudo', 'make', 'install',
+                                      'DESTDIR=' + destdir,
+                                      'PREFIX=' + prefix],
+                                     cwd=new_d)
         else:
             raise NotImplementedError(
                 "Unsure how to install vmdktool.\n"
