@@ -177,6 +177,10 @@ class Helper(object):
         """Try to use ``apt-get`` to install a package."""
         if not cls.PACKAGE_MANAGERS['apt-get']:
             return False
+        # check if it's already installed
+        msg = cls._check_output(['dpkg', '-s', package], require_success=False)
+        if re.search('install ok installed', msg):
+            return True
         if not cls._apt_updated:
             cls._check_call(['sudo', 'apt-get', '-q', 'update'])
             cls._apt_updated = True
