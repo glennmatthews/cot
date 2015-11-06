@@ -15,6 +15,7 @@ addons:
 
 before_script:
   - export PATH=$PATH:$PWD/bin
+  - export PREFIX=$PWD
 
 install:
   - pip install tox
