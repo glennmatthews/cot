@@ -20,6 +20,7 @@ http://github.com/goblinhack/fatdisk
 """
 
 import logging
+import os
 import os.path
 import platform
 
@@ -79,9 +80,14 @@ class FatDisk(Helper):
                 new_d = os.path.join(d, 'fatdisk-1.0.0-beta')
                 logger.info("Compiling 'fatdisk'")
                 self._check_call(['./RUNME'], cwd=new_d)
-                logger.info("Compilation complete, installing now")
-                self._check_call(['sudo', 'cp', 'fatdisk',
-                                  '/usr/local/bin/fatdisk'],
+                destdir = os.getenv('DESTDIR', '')
+                prefix = os.getenv('PREFIX', '/usr/local')
+                destination = os.path.join(destdir, prefix, 'bin/fatdisk')
+                logger.info("Compilation complete, installing to " +
+                            destination)
+                self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
+                                  os.path.join(destdir, prefix, 'bin')])
+                self._check_call(['sudo', 'cp', 'fatdisk', destination],
                                  cwd=new_d)
         else:
             raise NotImplementedError(

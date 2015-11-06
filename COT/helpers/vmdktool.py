@@ -20,6 +20,7 @@ http://www.freshports.org/sysutils/vmdktool/
 """
 
 import logging
+import os
 import os.path
 import platform
 
@@ -85,11 +86,17 @@ class VmdkTool(Helper):
                 self._check_call(['make',
                                   'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
                                  cwd=new_d)
-                logger.info("Compilation complete, installing now.")
-                # Make sure the relevant man directory exists
+                destdir = os.getenv('DESTDIR', '')
+                prefix = os.getenv('PREFIX', '/usr/local')
+                logger.info("Compilation complete, installing to " +
+                            os.path.join(destdir, prefix))
+                # Make sure the relevant man and bin directories exist
                 self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                  '/usr/local/man/man8'])
-                self._check_call(['sudo', 'make', 'install'],
+                                  os.path.join(destdir, prefix, 'man/man8')])
+                self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
+                                  os.path.join(destdir, prefix, 'bin')])
+                self._check_call(['sudo', 'make', 'install',
+                                  'DESTDIR=' + destdir, 'PREFIX=' + prefix],
                                  cwd=new_d)
         else:
             raise NotImplementedError(
