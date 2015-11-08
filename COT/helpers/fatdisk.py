@@ -23,6 +23,7 @@ import logging
 import os
 import os.path
 import platform
+import shutil
 
 from .helper import Helper
 
@@ -82,16 +83,25 @@ class FatDisk(Helper):
                 self._check_call(['./RUNME'], cwd=new_d)
                 destdir = os.getenv('DESTDIR', '')
                 prefix = os.getenv('PREFIX', '/usr/local')
-                destination = os.path.join(destdir, prefix, 'bin/fatdisk')
+                destination = os.path.join(destdir, prefix, 'bin')
                 logger.info("Compilation complete, installing to " +
                             destination)
                 # See if it's user-writable or if we need sudo
+                if not os.path.exists(destination):
+                    try:
+                        os.makedirs(destination, 0755)
+                    except OSError:
+                        logger.verbose("Directory {0} creation failed, "
+                                       "trying sudo".format(destination))
+                        self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
+                                          destination])
                 try:
-                    os.renames(os.path.join(new_d, 'fatdisk'), destination)
+                    shutil.copy(os.path.join(new_d, 'fatdisk'), destination)
+                    print("Destination contents: \n" +
+                          "\n".join(os.listdir(destination)))
+                    print(self._check_output(['ls', '-l', destination]))
                 except OSError:
                     logger.verbose('Installation error, trying sudo')
-                    self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                      os.path.join(destdir, prefix, 'bin')])
                     self._check_call(['sudo', 'cp', 'fatdisk', destination],
                                      cwd=new_d)
         else:
