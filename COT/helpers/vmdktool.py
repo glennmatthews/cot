@@ -91,26 +91,24 @@ class VmdkTool(Helper):
                 logger.info("Compilation complete, installing to " +
                             os.path.join(destdir, prefix))
                 # Make sure the relevant man and bin directories exist
+                for directory in [os.path.join(destdir, prefix, 'man/man8'),
+                                  os.path.join(destdir, prefix, 'bin')]:
+                    if not os.path.exists(directory):
+                        try:
+                            os.makedirs(directory, 0755)
+                        except OSError:
+                            logger.verbose("Directory {0} creation failed, "
+                                           "trying sudo".format(directory))
+                            self._check_call(['sudo', 'mkdir', '-p',
+                                              '--mode=755', directory])
                 try:
-                    os.makedirs(os.path.join(destdir, prefix, 'man/man8'),
-                                0755)
-                    os.makedirs(os.path.join(destdir, prefix, 'bin'),
-                                0755)
-                    self._check_call(['make', 'install',
-                                      'DESTDIR=' + destdir,
-                                      'PREFIX=' + prefix],
-                                     cwd=new_d)
+                    args = ['make', 'install', 'PREFIX=' + prefix]
+                    if destdir != '':
+                        args.append('DESTDIR=' + destdir)
+                    self._check_call(args, cwd=new_d)
                 except OSError:
                     logger.verbose("Installation failed, trying sudo")
-                    self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                      os.path.join(destdir, prefix,
-                                                   'man/man8')])
-                    self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                      os.path.join(destdir, prefix, 'bin')])
-                    self._check_call(['sudo', 'make', 'install',
-                                      'DESTDIR=' + destdir,
-                                      'PREFIX=' + prefix],
-                                     cwd=new_d)
+                    self._check_call(['sudo'] + args, cwd=new_d)
         else:
             raise NotImplementedError(
                 "Unsure how to install vmdktool.\n"
