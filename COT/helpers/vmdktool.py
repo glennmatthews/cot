@@ -88,23 +88,18 @@ class VmdkTool(Helper):
                                  cwd=new_d)
                 destdir = os.getenv('DESTDIR', '')
                 prefix = os.getenv('PREFIX', '/usr/local')
+                args = ['make', 'install', 'PREFIX=' + prefix]
+                if destdir != '':
+                    args.append('DESTDIR=' + destdir)
+                    # os.path.join doesn't like absolute paths in the middle
+                    prefix = prefix.lstrip(os.sep)
                 logger.info("Compilation complete, installing to " +
                             os.path.join(destdir, prefix))
                 # Make sure the relevant man and bin directories exist
-                for directory in [os.path.join(destdir, prefix, 'man/man8'),
-                                  os.path.join(destdir, prefix, 'bin')]:
-                    if not os.path.exists(directory):
-                        try:
-                            os.makedirs(directory, 0755)
-                        except OSError:
-                            logger.verbose("Directory {0} creation failed, "
-                                           "trying sudo".format(directory))
-                            self._check_call(['sudo', 'mkdir', '-p',
-                                              '--mode=755', directory])
+                self.make_install_dir(os.path.join(destdir, prefix,
+                                                   'man', 'man8'))
+                self.make_install_dir(os.path.join(destdir, prefix, 'bin'))
                 try:
-                    args = ['make', 'install', 'PREFIX=' + prefix]
-                    if destdir != '':
-                        args.append('DESTDIR=' + destdir)
                     self._check_call(args, cwd=new_d)
                 except OSError:
                     logger.verbose("Installation failed, trying sudo")

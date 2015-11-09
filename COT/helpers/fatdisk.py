@@ -83,23 +83,15 @@ class FatDisk(Helper):
                 self._check_call(['./RUNME'], cwd=new_d)
                 destdir = os.getenv('DESTDIR', '')
                 prefix = os.getenv('PREFIX', '/usr/local')
+                # os.path.join doesn't like absolute paths in the middle
+                if destdir != '':
+                    prefix = prefix.lstrip(os.sep)
                 destination = os.path.join(destdir, prefix, 'bin')
                 logger.info("Compilation complete, installing to " +
                             destination)
-                # See if it's user-writable or if we need sudo
-                if not os.path.exists(destination):
-                    try:
-                        os.makedirs(destination, 0755)
-                    except OSError:
-                        logger.verbose("Directory {0} creation failed, "
-                                       "trying sudo".format(destination))
-                        self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                          destination])
+                self.make_install_dir(destination)
                 try:
                     shutil.copy(os.path.join(new_d, 'fatdisk'), destination)
-                    print("Destination contents: \n" +
-                          "\n".join(os.listdir(destination)))
-                    print(self._check_output(['ls', '-l', destination]))
                 except OSError:
                     logger.verbose('Installation error, trying sudo')
                     self._check_call(['sudo', 'cp', 'fatdisk', destination],

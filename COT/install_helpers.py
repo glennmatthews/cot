@@ -146,8 +146,6 @@ class COTInstallHelpers(COTGenericSubmodule):
         if not rc:
             result = False
 
-        print("PATH: {0}".format(os.getenv('PATH')))
-        print("PREFIX: {0}".format(os.getenv('PREFIX')))
         print("Results:")
         print("-------------")
         wrapper = textwrap.TextWrapper(width=self.UI.terminal_width,
