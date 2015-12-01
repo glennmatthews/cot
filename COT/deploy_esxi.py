@@ -101,6 +101,8 @@ class SmarterConnection(SmartConnection):
                     inner_message = inner_e.strerror
                 elif hasattr(inner_e, 'message'):
                     inner_message = inner_e.message
+                else:
+                    inner_message = inner_e.args[0]
                 logger.debug("\nInner exception: {0}".format(inner_e))
                 if hasattr(inner_e, 'errno') and inner_e.errno is not None:
                     e.errno = inner_e.errno
