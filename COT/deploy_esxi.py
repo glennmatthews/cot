@@ -84,12 +84,32 @@ class SmarterConnection(SmartConnection):
         except requests.exceptions.ConnectionError as e:
             # ConnectionError can wrap another internal error; let's unwrap it
             # so COT can log it more cleanly
-            if e.errno is None:
-                e.errno = e.args[0].args[1].errno
+            outer_e = e
+            inner_message = None
+            while e.errno is None:
+                inner_e = None
+                if hasattr(outer_e, 'reason'):
+                    inner_e = outer_e.reason
+                else:
+                    for arg in outer_e.args:
+                        if isinstance(arg, Exception):
+                            inner_e = arg
+                            break
+                if inner_e is None:
+                    break
+                if hasattr(inner_e, 'strerror'):
+                    inner_message = inner_e.strerror
+                else:
+                    inner_message = inner_e.message
+                logger.debug("\nInner exception: {0}".format(inner_e))
+                if hasattr(inner_e, 'errno') and inner_e.errno is not None:
+                    e.errno = inner_e.errno
+                    break
+                outer_e = inner_e
+            if e.strerror is None:
                 e.strerror = ("Error connecting to {0}:{1}: {2}"
-                              .format(self.server, self.port,
-                                      e.args[0].args[1].strerror))
-                raise
+                              .format(self.server, self.port, inner_message))
+            raise
 
     def __exit__(self, type, value, trace):
         """Disconnect from the server."""
