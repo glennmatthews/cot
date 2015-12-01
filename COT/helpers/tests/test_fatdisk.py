@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 
 class TestFatDisk(HelperUT):
-
     """Test cases for FatDisk helper class."""
 
     def setUp(self):

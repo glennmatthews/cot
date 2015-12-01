@@ -213,21 +213,18 @@ def positive_int(string):
 
 # Some handy exception and error types we can throw
 class ValueMismatchError(ValueError):
-
     """Values which were expected to be equal turned out to be not equal."""
 
     pass
 
 
 class InvalidInputError(ValueError):
-
     """Miscellaneous error during validation of user input."""
 
     pass
 
 
 class ValueUnsupportedError(InvalidInputError):
-
     """An unsupported value was provided.
 
     :ivar value_type: descriptive string
@@ -249,7 +246,6 @@ class ValueUnsupportedError(InvalidInputError):
 
 
 class ValueTooLowError(ValueUnsupportedError):
-
     """A numerical input was less than the lowest supported value.
 
     :ivar value_type: descriptive string
@@ -265,7 +261,6 @@ class ValueTooLowError(ValueUnsupportedError):
 
 
 class ValueTooHighError(ValueUnsupportedError):
-
     """A numerical input was higher than the highest supported value.
 
     :ivar value_type: descriptive string

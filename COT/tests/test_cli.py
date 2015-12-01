@@ -35,7 +35,6 @@ from COT.data_validation import InvalidInputError
 
 
 class TestCOTCLI(COT_UT):
-
     """Parent class for CLI test cases."""
 
     def setUp(self):
@@ -95,7 +94,6 @@ class TestCOTCLI(COT_UT):
 
 
 class TestCLIModule(TestCOTCLI):
-
     """Test cases for the CLI module itself."""
 
     def setUp(self):
@@ -301,7 +299,6 @@ Examples:
 
 
 class TestCLIGeneral(TestCOTCLI):
-
     """CLI Test cases for top-level "cot" command."""
 
     def test_help(self):
@@ -428,7 +425,6 @@ commands:
 
 
 class TestCLIAddDisk(TestCOTCLI):
-
     """CLI test cases for "cot add-disk" command."""
 
     def test_help(self):
@@ -508,7 +504,6 @@ class TestCLIAddDisk(TestCOTCLI):
 
 
 class TestCLIAddFile(TestCOTCLI):
-
     """CLI test cases for "cot add-file" command."""
 
     def test_help(self):
@@ -538,7 +533,6 @@ class TestCLIAddFile(TestCOTCLI):
 
 
 class TestCLIEditHardware(TestCOTCLI):
-
     """CLI test cases for "cot edit-hardware" command."""
 
     def test_help(self):
@@ -580,7 +574,6 @@ class TestCLIEditHardware(TestCOTCLI):
 
 
 class TestCLIEditProduct(TestCOTCLI):
-
     """CLI test cases for "cot edit-product" command."""
 
     def test_help(self):
@@ -600,7 +593,6 @@ class TestCLIEditProduct(TestCOTCLI):
 
 
 class TestCLIEditProperties(TestCOTCLI):
-
     """CLI test cases for "cot edit-properties" command."""
 
     def test_help(self):
@@ -674,7 +666,6 @@ ovf:userConfigurable="true" ovf:value="true">
 
 
 class TestCLIHelp(TestCOTCLI):
-
     """CLI test cases for "cot help" command."""
 
     def test_help_positive(self):
@@ -697,7 +688,6 @@ class TestCLIHelp(TestCOTCLI):
 
 
 class TestCLIInfo(TestCOTCLI):
-
     """CLI test cases for "cot info" command."""
 
     def test_help(self):
@@ -706,7 +696,6 @@ class TestCLIInfo(TestCOTCLI):
 
 
 class TestCLIInjectConfig(TestCOTCLI):
-
     """CLI test cases for "cot inject-config" command."""
 
     def test_help(self):
@@ -730,7 +719,6 @@ class TestCLIInjectConfig(TestCOTCLI):
 
 
 class TestCLIDeploy(TestCOTCLI):
-
     """CLI test cases for "cot deploy" command."""
 
     def test_help(self):
@@ -750,7 +738,6 @@ class TestCLIDeploy(TestCOTCLI):
 
 
 class TestCLIDeployESXi(TestCOTCLI):
-
     """CLI test cases for 'cot deploy PACKAGE esxi' command."""
 
     def test_help(self):
@@ -789,7 +776,6 @@ class TestCLIDeployESXi(TestCOTCLI):
 
 
 class TestCLIInstallHelpers(TestCOTCLI):
-
     """CLI test cases for 'COT install-helpers' subcommand."""
 
     def test_help(self):

@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 class TestGetChecksum(COT_UT):
-
     """Test cases for get_checksum() function."""
 
     def test_get_checksum_md5(self):
@@ -66,7 +65,6 @@ class TestGetChecksum(COT_UT):
 
 
 class TestGetDiskFormat(COT_UT):
-
     """Test cases for get_disk_format() function."""
 
     def test_get_disk_format(self):
@@ -102,7 +100,6 @@ class TestGetDiskFormat(COT_UT):
 
 
 class TestConvertDiskImage(COT_UT):
-
     """Test cases for convert_disk_image()."""
 
     def test_convert_no_work_needed(self):
@@ -186,7 +183,6 @@ class TestConvertDiskImage(COT_UT):
 
 
 class TestCreateDiskImage(COT_UT):
-
     """Test cases for create_disk_image()."""
 
     def test_create_invalid(self):

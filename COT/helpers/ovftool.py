@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class OVFTool(Helper):
-
     """Helper provider for ``ovftool`` from VMware.
 
     https://www.vmware.com/support/developer/ovf/

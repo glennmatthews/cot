@@ -21,7 +21,6 @@ from COT.xml_file import XML
 
 
 class TestXMLClass(unittest.TestCase):
-
     """Test cases for XML class methods."""
 
     def test_get_ns(self):
@@ -44,7 +43,6 @@ class TestXMLClass(unittest.TestCase):
 
 
 class TestXMLInstance(unittest.TestCase):
-
     """Test cases for XML instance methods."""
 
     OVF = "{http://schemas.dmtf.org/ovf/envelope/1}"

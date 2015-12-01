@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 
 
 class TestCOTDeployESXi(COT_UT):
-
     """Test cases for COTDeployESXi class."""
 
     # Some WARNING logger messages we may expect at various points:

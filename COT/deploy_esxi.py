@@ -45,7 +45,6 @@ logger = logging.getLogger(__name__)
 
 
 class SmarterConnection(SmartConnection):
-
     """A smarter version of pyVmomi's SmartConnection context manager."""
 
     def __init__(self, UI, server, username, password, port=443):
@@ -122,7 +121,6 @@ class SmarterConnection(SmartConnection):
 
 
 class PyVmomiVMReconfigSpec:
-
     """Context manager for reconfiguring an ESXi VM using PyVmomi."""
 
     def __init__(self, conn, vm_name):
@@ -156,7 +154,6 @@ class PyVmomiVMReconfigSpec:
 
 
 class COTDeployESXi(COTDeploy):
-
     """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
 
     Inherited attributes:

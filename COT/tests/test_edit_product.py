@@ -25,7 +25,6 @@ from COT.data_validation import InvalidInputError
 
 
 class TestCOTEditProduct(COT_UT):
-
     """Unit tests for COTEditProduct submodule."""
 
     def setUp(self):

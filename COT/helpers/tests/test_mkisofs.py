@@ -25,7 +25,6 @@ from COT.helpers.mkisofs import MkIsoFS
 
 
 class TestMkIsoFS(HelperUT):
-
     """Test cases for MkIsoFS helper class."""
 
     def setUp(self):

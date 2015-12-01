@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 
 class TestCOTDeploy(COT_UT):
-
     """Test cases for COTDeploy."""
 
     def setUp(self):
@@ -76,7 +75,6 @@ class TestCOTDeploy(COT_UT):
 
 
 class TestSerialConnection(COT_UT):
-
     """Unit test cases for SerialConnection class."""
 
     def test_from_cli_string_invalid(self):

@@ -24,7 +24,6 @@ from COT.helpers.vmdktool import VmdkTool
 
 
 class TestVmdkTool(HelperUT):
-
     """Test cases for VmdkTool helper class."""
 
     def setUp(self):

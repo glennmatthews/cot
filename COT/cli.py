@@ -46,7 +46,6 @@ logger = logging.getLogger(__name__)
 
 
 class CLI(UI):
-
     """Command-line user interface for COT.
 
     .. autosummary::

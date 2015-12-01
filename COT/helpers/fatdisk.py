@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 
 class FatDisk(Helper):
-
     """Helper provider for ``fatdisk`` (http://github.com/goblinhack/fatdisk).
 
     **Methods**

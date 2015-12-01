@@ -26,7 +26,6 @@ from COT.platforms import IOSv, IOSXRv
 
 
 class TestCOTEditHardware(COT_UT):
-
     """Test the COTEditHardware class."""
 
     NEW_HW_FROM_SCRATCH = {

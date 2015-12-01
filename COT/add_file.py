@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTAddFile(COTSubmodule):
-
     """Add a file (such as a README) to the package.
 
     Inherited attributes:
