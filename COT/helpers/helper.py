@@ -72,17 +72,14 @@ def confirm(prompt, force=False):
 
 
 class HelperNotFoundError(OSError):
-
     """A helper program cannot be located."""
 
 
 class HelperError(EnvironmentError):
-
     """A helper program exited with non-zero return code."""
 
 
 class Helper(object):
-
     """A provider of a non-Python helper program.
 
     **Class Properties**

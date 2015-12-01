@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTAddDisk(COTSubmodule):
-
     """Add or replace a disk in a virtual machine.
 
     Inherited attributes:

@@ -30,7 +30,6 @@ from COT.helpers import create_disk_image, get_disk_format
 
 
 class TestCOTAddDisk(COT_UT):
-
     """Test cases for the COTAddDisk module."""
 
     def setUp(self):

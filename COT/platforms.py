@@ -39,7 +39,6 @@ logger = logging.getLogger(__name__)
 
 
 class GenericPlatform(object):
-
     """Generic class for operations that depend on guest platform.
 
     To be used whenever the guest is unrecognized or does not need
@@ -111,7 +110,6 @@ class GenericPlatform(object):
 
 
 class IOSXRv(GenericPlatform):
-
     """Platform-specific logic for Cisco IOS XRv platform."""
 
     PLATFORM_NAME = "Cisco IOS XRv"
@@ -166,7 +164,6 @@ class IOSXRv(GenericPlatform):
 
 
 class IOSXRvRP(IOSXRv):
-
     """Platform-specific logic for Cisco IOS XRv HA-capable RP."""
 
     PLATFORM_NAME = "Cisco IOS XRv route processor card"
@@ -193,7 +190,6 @@ class IOSXRvRP(IOSXRv):
 
 
 class IOSXRvLC(IOSXRv):
-
     """Platform-specific logic for Cisco IOS XRv line card."""
 
     PLATFORM_NAME = "Cisco IOS XRv line card"
@@ -224,7 +220,6 @@ class IOSXRvLC(IOSXRv):
 
 
 class CSR1000V(GenericPlatform):
-
     """Platform-specific logic for Cisco CSR1000V platform."""
 
     PLATFORM_NAME = "Cisco CSR1000V"
@@ -289,7 +284,6 @@ class CSR1000V(GenericPlatform):
 
 
 class IOSv(GenericPlatform):
-
     """Platform-specific logic for Cisco IOSv."""
 
     PLATFORM_NAME = "Cisco IOSv"
@@ -349,7 +343,6 @@ class IOSv(GenericPlatform):
 
 
 class NXOSv(GenericPlatform):
-
     """Platform-specific logic for Cisco NX-OSv (Titanium)."""
 
     PLATFORM_NAME = "Cisco NX-OSv"

@@ -36,7 +36,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTGenericSubmodule(object):
-
     """Abstract interface for COT command submodules.
 
     Attributes:
@@ -100,7 +99,6 @@ class COTGenericSubmodule(object):
 
 
 class COTReadOnlySubmodule(COTGenericSubmodule):
-
     """Class for submodules that do not modify the OVF, such as 'deploy'.
 
     Inherited attributes:
@@ -150,7 +148,6 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
 
 
 class COTSubmodule(COTGenericSubmodule):
-
     """Class for submodules that read and write the OVF.
 
     Inherited attributes:

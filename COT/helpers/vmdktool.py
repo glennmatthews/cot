@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 class VmdkTool(Helper):
-
     """Helper provider for ``vmdktool``.
 
     http://www.freshports.org/sysutils/vmdktool/

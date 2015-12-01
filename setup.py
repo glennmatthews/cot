@@ -58,7 +58,6 @@ cmdclass['sdist'].sub_commands.insert(0, ('build_sphinx', None))
 
 
 class custom_bdist_egg(bdist_egg):
-
     """Custom subclass for the 'bdist_egg' command.
 
     This command is called automatically by 'install', but it doesn't do
@@ -74,7 +73,6 @@ cmdclass['bdist_egg'] = custom_bdist_egg
 
 
 class custom_test(test):
-
     """Custom subclass for the 'test' command."""
 
     def with_project_on_sys_path(self, func):

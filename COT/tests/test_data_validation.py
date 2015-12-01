@@ -30,7 +30,6 @@ from COT.data_validation import ValueTooLowError, ValueTooHighError
 
 
 class TestValidationFunctions(unittest.TestCase):
-
     """Test cases for input validation APIs."""
 
     def test_match_or_die(self):

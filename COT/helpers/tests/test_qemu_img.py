@@ -27,7 +27,6 @@ from COT.helpers.qemu_img import QEMUImg
 
 
 class TestQEMUImg(HelperUT):
-
     """Test cases for QEMUImg helper class."""
 
     def setUp(self):

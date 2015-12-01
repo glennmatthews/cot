@@ -22,7 +22,6 @@ from COT.helpers.ovftool import OVFTool
 
 
 class TestOVFTool(HelperUT):
-
     """Test cases for OVFTool helper class."""
 
     def setUp(self):

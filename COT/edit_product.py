@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTEditProduct(COTSubmodule):
-
     """Edit product, vendor, and version information strings.
 
     Inherited attributes:

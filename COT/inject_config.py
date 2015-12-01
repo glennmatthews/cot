@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTInjectConfig(COTSubmodule):
-
     """Wrap configuration file(s) into a disk image embedded into the VM.
 
     Inherited attributes:

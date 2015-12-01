@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 class QEMUImg(Helper):
-
     """Helper provider for ``qemu-img`` (http://www.qemu.org).
 
     **Methods**

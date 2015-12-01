@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class UI(object):
-
     """Abstract user interface functionality.
 
     Can also be used in test code as a stub that autoconfirms everything.

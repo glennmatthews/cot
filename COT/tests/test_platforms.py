@@ -22,7 +22,6 @@ from COT.data_validation import ValueTooLowError, ValueTooHighError
 
 
 class TestGenericPlatform(unittest.TestCase):
-
     """Test cases for generic platform handling."""
 
     cls = GenericPlatform
@@ -61,7 +60,6 @@ class TestGenericPlatform(unittest.TestCase):
 
 
 class TestIOSXRv(unittest.TestCase):
-
     """Test cases for Cisco IOS XRv platform handling."""
 
     cls = IOSXRv
@@ -118,7 +116,6 @@ class TestIOSXRv(unittest.TestCase):
 
 
 class TestIOSXRvRP(TestIOSXRv):
-
     """Test cases for Cisco IOS XRv HA-capable RP platform handling."""
 
     cls = IOSXRvRP
@@ -145,7 +142,6 @@ class TestIOSXRvRP(TestIOSXRv):
 
 
 class TestIOSXRvLC(TestIOSXRv):
-
     """Test cases for Cisco IOS XRv line card platform handling."""
 
     cls = IOSXRvLC
@@ -177,7 +173,6 @@ class TestIOSXRvLC(TestIOSXRv):
 
 
 class TestCSR1000V(unittest.TestCase):
-
     """Test cases for Cisco CSR 1000V platform handling."""
 
     cls = CSR1000V
@@ -247,7 +242,6 @@ class TestCSR1000V(unittest.TestCase):
 
 
 class TestIOSv(unittest.TestCase):
-
     """Test cases for Cisco IOSv platform handling."""
 
     cls = IOSv
@@ -303,7 +297,6 @@ class TestIOSv(unittest.TestCase):
 
 
 class TestNXOSv(unittest.TestCase):
-
     """Test cases for Cisco NX-OSv platform handling."""
 
     cls = NXOSv

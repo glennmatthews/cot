@@ -30,7 +30,6 @@ from COT.helpers.helper import Helper
 
 
 class TestCOTInstallHelpers(COT_UT):
-
     """Test the COTInstallHelpers class."""
 
     def setUp(self):

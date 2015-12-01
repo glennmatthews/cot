@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 
 class MkIsoFS(Helper):
-
     """Helper provider for ``mkisofs``, ``genisoimage``, or ``xorriso``.
 
     http://cdrecord.org/

@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTInstallHelpers(COTGenericSubmodule):
-
     """Install all helper tools that COT requires."""
 
     def __init__(self, UI):

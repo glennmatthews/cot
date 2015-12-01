@@ -23,7 +23,6 @@ from COT.data_validation import InvalidInputError
 
 
 class TestCOTInfo(COT_UT):
-
     """Test cases for the COTInfo class."""
 
     def setUp(self):

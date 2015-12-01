@@ -26,7 +26,6 @@ from COT.data_validation import ValueUnsupportedError
 
 
 class TestVMDescription(unittest.TestCase):
-
     """Test cases for abstract VMDescription class."""
 
     TEXT_FILE = resource_filename(__name__, 'sample_cfg.txt')

@@ -20,7 +20,6 @@ from COT.ui_shared import UI
 
 
 class TestUI(unittest.TestCase):
-
     """Test cases for the COT.ui_shared.UI class."""
 
     def test_apis_without_force(self):

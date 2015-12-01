@@ -26,7 +26,6 @@ from COT.data_validation import InvalidInputError
 
 
 class TestCOTAddFile(COT_UT):
-
     """Test cases for the COTAddFile module."""
 
     def setUp(self):

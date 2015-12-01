@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTEditProperties(COTSubmodule):
-
     """Edit OVF environment XML properties.
 
     Inherited attributes:

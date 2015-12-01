@@ -45,7 +45,6 @@ logger = logging.getLogger(__name__)
 
 
 class SmarterConnection(SmartConnection):
-
     """A smarter version of pyVmomi's SmartConnection context manager."""
 
     def __init__(self, UI, server, username, password, port=443):
@@ -99,8 +98,10 @@ class SmarterConnection(SmartConnection):
                     break
                 if hasattr(inner_e, 'strerror'):
                     inner_message = inner_e.strerror
-                else:
+                elif hasattr(inner_e, 'message'):
                     inner_message = inner_e.message
+                else:
+                    inner_message = inner_e.args[0]
                 logger.debug("\nInner exception: {0}".format(inner_e))
                 if hasattr(inner_e, 'errno') and inner_e.errno is not None:
                     e.errno = inner_e.errno
@@ -120,7 +121,6 @@ class SmarterConnection(SmartConnection):
 
 
 class PyVmomiVMReconfigSpec:
-
     """Context manager for reconfiguring an ESXi VM using PyVmomi."""
 
     def __init__(self, conn, vm_name):
@@ -154,7 +154,6 @@ class PyVmomiVMReconfigSpec:
 
 
 class COTDeployESXi(COTDeploy):
-
     """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
 
     Inherited attributes:
