@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Fixed**
+
+- `#42`_ - ``cot deploy esxi`` error handling behavior needed to be updated for `requests`_ release 2.8.
+
 `1.4.1`_ - 2015-09-02
 ---------------------
 
@@ -314,6 +321,7 @@ Initial public release.
 .. _#38: https://github.com/glennmatthews/cot/pull/38
 .. _#39: https://github.com/glennmatthews/cot/issues/39
 .. _#41: https://github.com/glennmatthews/cot/issues/41
+.. _#42: https://github.com/glennmatthews/cot/issues/42
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -322,6 +330,7 @@ Initial public release.
 .. _pyVmomi: https://pypi.python.org/pypi/pyvmomi/
 .. _flake8: http://flake8.readthedocs.org/en/latest/
 .. _pep257: https://pypi.python.org/pypi/pep257
+.. _requests: http://python-requests.org/
 .. _tox: http://tox.readthedocs.org/en/latest/
 .. _coverage.py: http://nedbatchelder.com/code/coverage/
 .. _Coveralls: https://coveralls.io/r/glennmatthews/cot

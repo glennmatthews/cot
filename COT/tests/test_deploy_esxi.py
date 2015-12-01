@@ -16,6 +16,7 @@
 
 """Unit test cases for the COT.deploy.COTDeployESXi class and helpers."""
 
+import errno
 import getpass
 import logging
 import mock
@@ -203,8 +204,15 @@ class TestCOTDeployESXi(COT_UT):
         """Call fixup_serial_ports() to connect to an invalid host."""
         self.instance.locator = "localhost"
         self.instance.serial_connection = ['tcp::2222', 'tcp::2223']
-        self.assertRaises(requests.exceptions.ConnectionError,
-                          self.instance.fixup_serial_ports, 2)
+        with self.assertRaises(requests.exceptions.ConnectionError) as cm:
+            self.instance.fixup_serial_ports(2)
+        # In requests 2.7 and earlier, we get the errno,
+        # while in requests 2.8+, it's munged into a string only
+        if cm.exception.errno is not None:
+            self.assertEqual(cm.exception.errno, errno.ECONNREFUSED)
+        self.assertRegexpMatches(
+            cm.exception.strerror,
+            "Error connecting to localhost:443: .*Connection refused")
 
     @mock.patch('pyVim.connect.__Login')
     @mock.patch('pyVim.connect.__FindSupportedVersion')
