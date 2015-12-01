@@ -210,9 +210,9 @@ class TestCOTDeployESXi(COT_UT):
         # while in requests 2.8+, it's munged into a string only
         if cm.exception.errno is not None:
             self.assertEqual(cm.exception.errno, errno.ECONNREFUSED)
-        self.assertRegexpMatches(
-            cm.exception.strerror,
-            "Error connecting to localhost:443: .*Connection refused")
+        self.assertTrue(re.match(
+            "Error connecting to localhost:443: .*Connection refused",
+            cm.exception.strerror))
 
     @mock.patch('pyVim.connect.__Login')
     @mock.patch('pyVim.connect.__FindSupportedVersion')

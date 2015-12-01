@@ -99,7 +99,7 @@ class SmarterConnection(SmartConnection):
                     break
                 if hasattr(inner_e, 'strerror'):
                     inner_message = inner_e.strerror
-                else:
+                elif hasattr(inner_e, 'message'):
                     inner_message = inner_e.message
                 logger.debug("\nInner exception: {0}".format(inner_e))
                 if hasattr(inner_e, 'errno') and inner_e.errno is not None:
