@@ -13,6 +13,7 @@ This project adheres to `Semantic Versioning`_.
 **Fixed**
 
 - `#42`_ - ``cot deploy esxi`` error handling behavior needed to be updated for `requests`_ release 2.8.
+- `#44`_ - test case failure seen when running `pyVmomi`_ 6.0.0.2016.4.
 
 **Changed**
 
@@ -332,6 +333,7 @@ Initial public release.
 .. _#40: https://github.com/glennmatthews/cot/issues/40
 .. _#41: https://github.com/glennmatthews/cot/issues/41
 .. _#42: https://github.com/glennmatthews/cot/issues/42
+.. _#44: https://github.com/glennmatthews/cot/issues/44
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
