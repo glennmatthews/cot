@@ -11,11 +11,31 @@ System requirements
 * COT is tested to work under Mac OS X and Ubuntu Linux and similar distros.
 * COT now has limited support for CentOS and Python 2.6 as well.
 
-On Mac OS X you can install COT from MacPorts_, or you can install it manually
-by following the same steps as Linux, described below.
+Installing COT using ``pip``
+----------------------------
 
-Download COT
-------------
+Since COT is written in Python, it can be installed like any other Python
+package using the pip_ tool. For most users this is the recommended
+installation method.
+
+::
+
+  sudo pip install cot
+
+If you have already installed COT and wish to update to the latest available version:
+
+::
+
+  sudo pip install --upgrade cot
+
+Installing COT from source
+--------------------------
+
+If you wish to install bleeding-edge unreleased code or make code
+contributions of your own, you can install COT from source as described below.
+
+Downloading COT
+'''''''''''''''
 
 You can download COT via Git or using HTTP.
 
@@ -41,14 +61,14 @@ or
   cd cot-master
 
 Install the COT libraries and script
-------------------------------------
+''''''''''''''''''''''''''''''''''''
 
 ::
 
   sudo python setup.py install
 
-Install helper programs
------------------------
+Installing helper programs
+--------------------------
 
 Certain COT features require helper programs - you can install these as part
 of the COT installation process, or they can be installed as-needed by COT:
@@ -90,6 +110,7 @@ If you skip this step, then when you are running COT, and it encounters the
 need for a helper that has not been installed, COT will prompt you to allow it
 to install the helper in question.
 
+.. _pip: https://pip.pypa.io/en/stable/
 .. _qemu-img: http://www.qemu.org
 .. _vmdktool: http://www.freshports.org/sysutils/vmdktool/
 .. _mkisofs: http://cdrecord.org/
