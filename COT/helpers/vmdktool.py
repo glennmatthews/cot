@@ -20,6 +20,7 @@ http://www.freshports.org/sysutils/vmdktool/
 """
 
 import logging
+import os
 import os.path
 import platform
 
@@ -84,12 +85,24 @@ class VmdkTool(Helper):
                 self._check_call(['make',
                                   'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
                                  cwd=new_d)
-                logger.info("Compilation complete, installing now.")
-                # Make sure the relevant man directory exists
-                self._check_call(['sudo', 'mkdir', '-p', '--mode=755',
-                                  '/usr/local/man/man8'])
-                self._check_call(['sudo', 'make', 'install'],
-                                 cwd=new_d)
+                destdir = os.getenv('DESTDIR', '')
+                prefix = os.getenv('PREFIX', '/usr/local')
+                args = ['make', 'install', 'PREFIX=' + prefix]
+                if destdir != '':
+                    args.append('DESTDIR=' + destdir)
+                    # os.path.join doesn't like absolute paths in the middle
+                    prefix = prefix.lstrip(os.sep)
+                logger.info("Compilation complete, installing to " +
+                            os.path.join(destdir, prefix))
+                # Make sure the relevant man and bin directories exist
+                self.make_install_dir(os.path.join(destdir, prefix,
+                                                   'man', 'man8'))
+                self.make_install_dir(os.path.join(destdir, prefix, 'bin'))
+                try:
+                    self._check_call(args, cwd=new_d)
+                except OSError:
+                    logger.verbose("Installation failed, trying sudo")
+                    self._check_call(['sudo'] + args, cwd=new_d)
         else:
             raise NotImplementedError(
                 "Unsure how to install vmdktool.\n"

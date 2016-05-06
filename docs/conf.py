@@ -267,7 +267,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Common OVF Tool (COT)'
-copyright = u'2013-2015, the COT project developers'
+copyright = u'2013-2016, the COT project developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

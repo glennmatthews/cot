@@ -38,7 +38,7 @@ README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 install_requires = [
     'argparse',
     'colorlog>=2.5.0',
-    'pyvmomi>=5.5.0.2014.1',
+    'pyvmomi>=5.5.0.2014.1,<=6.0.0',
     'requests>=2.5.1',
     'verboselogs>=1.0',
 ]
@@ -46,7 +46,7 @@ install_requires = [
 if sys.version_info < (3, 3):
     install_requires.append('backports.shutil_get_terminal_size')
 
-setup_requires = install_requires + ['sphinx>=1.3']
+setup_requires = install_requires + ['sphinx>=1.3', 'sphinx_rtd_theme']
 tests_require = install_requires + ['unittest2', 'mock']
 
 cmdclass = versioneer.get_cmdclass()
