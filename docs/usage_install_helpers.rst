@@ -21,4 +21,5 @@ Verifying and installing helper programs with ``cot install-helpers``
    See also
    --------
 
-   **cot**\(1), **qemu-img**\(1), **mkisofs**\(8), **vmdktool**\(8)
+   **cot**\(1), **qemu-img**\(1), **genisoimage**\(1), **mkisofs**\(1),
+   **xorriso**\(1), **mkisofs**\(8), **vmdktool**\(8)
