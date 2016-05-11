@@ -43,7 +43,6 @@ from COT.vm_context_manager import VMContextManager
 
 
 class TestByteString(unittest.TestCase):
-
     """Test cases for byte-count to string conversion functions."""
 
     def test_byte_count(self):
@@ -65,7 +64,6 @@ class TestByteString(unittest.TestCase):
 
 
 class TestOVFInputOutput(COT_UT):
-
     """Test cases for OVF file input/output."""
 
     def setUp(self):
@@ -425,7 +423,6 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
 
 
 class TestOVFItem(COT_UT):
-
     """Unit test cases for the OVFItem class."""
 
     def setUp(self):

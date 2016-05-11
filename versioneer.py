@@ -356,7 +356,6 @@ import sys
 
 
 class VersioneerConfig:
-
     """Container for Versioneer configuration parameters."""
 
 
@@ -427,7 +426,6 @@ def get_config_from_root(root):
 
 
 class NotThisMethod(Exception):
-
     """Exception raised if a method is not valid for the current scenario."""
 
 # these dictionaries contain VCS-specific tools
@@ -510,7 +508,6 @@ def get_keywords():
 
 
 class VersioneerConfig:
-
     """Container for Versioneer configuration parameters."""
 
 
@@ -529,7 +526,6 @@ def get_config():
 
 
 class NotThisMethod(Exception):
-
     """Exception raised if a method is not valid for the current scenario."""
 
 
@@ -1388,7 +1384,6 @@ def render(pieces, style):
 
 
 class VersioneerBadRootError(Exception):
-
     """The project root directory is unknown or missing key files."""
 
 

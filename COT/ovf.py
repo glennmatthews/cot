@@ -134,7 +134,6 @@ def byte_string(byte_count, base_shift=0):
 
 
 class OVF(VMDescription, XML):
-
     """Representation of the contents of an OVF or OVA.
 
     :ivar ovf_version: Float representing the OVF specification version in use.
@@ -2326,7 +2325,6 @@ class OVF(VMDescription, XML):
 
 
 class OVFNameHelper(object):
-
     """Helper class for :class:`OVF`.
 
     Provides string constants for easier lookup of various OVF XML
@@ -2638,12 +2636,10 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
 
 
 class OVFHardwareDataError(Exception):
-
     """The input data used to construct an :class:`OVFHardware` is not sane."""
 
 
 class OVFHardware:
-
     """Helper class for :class:`OVF`.
 
     Represents all hardware items defined by this OVF;
@@ -3064,12 +3060,10 @@ class OVFHardware:
 
 
 class OVFItemDataError(Exception):
-
     """Data to be added to an :class:`OVFItem` conflicts with existing data."""
 
 
 class OVFItem:
-
     """Helper class for :class:`OVF`.
 
     Represents all variations of a given hardware ``Item`` amongst different

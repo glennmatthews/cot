@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 
 
 class SerialConnection:
-
     """Generic class defining a serial port connection."""
 
     @classmethod
@@ -151,7 +150,6 @@ class SerialConnection:
 
 
 class COTDeploy(COTReadOnlySubmodule):
-
     """Semi-abstract class for submodules used to deploy a VM to a hypervisor.
 
     Provides some baseline parameters and input validation that are expected

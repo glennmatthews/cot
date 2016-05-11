@@ -27,7 +27,6 @@ from COT.helpers.qemu_img import QEMUImg
 
 
 class TestQEMUImg(HelperUT):
-
     """Test cases for QEMUImg helper class."""
 
     def setUp(self):
@@ -81,16 +80,21 @@ Command syntax:
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
         Helper._apt_updated = False
+        self.fake_output = 'not installed'
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'apt-get', '-q', 'update'],
-                          ['sudo', 'apt-get', '-q', 'install', 'qemu-utils']],
-                         self.last_argv)
+        self.assertEqual([
+            ['dpkg', '-s', 'qemu-utils'],
+            ['sudo', 'apt-get', '-q', 'update'],
+            ['sudo', 'apt-get', '-q', 'install', 'qemu-utils'],
+        ], self.last_argv)
         self.assertTrue(Helper._apt_updated)
         # Make sure we don't call apt-get update again unnecessarily
         self.last_argv = []
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'qemu-utils']],
-                         self.last_argv)
+        self.assertEqual([
+            ['dpkg', '-s', 'qemu-utils'],
+            ['sudo', 'apt-get', '-q', 'install', 'qemu-utils'],
+        ], self.last_argv)
 
     def test_install_helper_port(self):
         """Test installation via 'port'."""

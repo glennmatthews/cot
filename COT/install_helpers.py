@@ -3,7 +3,7 @@
 # install_helpers.py - Implements "cot install-helpers" command
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTInstallHelpers(COTGenericSubmodule):
-
     """Install all helper tools that COT requires."""
 
     def __init__(self, UI):
@@ -206,27 +205,26 @@ vmdktool:     NOT FOUND""".strip()),
     INFO: Calling './RUNME'...
 (...)
     INFO: ...done
-    INFO: Compilation complete, installing now
-    INFO: Calling 'sudo cp fatdisk /usr/local/bin/fatdisk'...
-    INFO: ...done
+    INFO: Compilation complete, installing to /usr/local/bin
     INFO: Successfully installed 'fatdisk'
+    INFO: Calling 'fatdisk --version' and capturing its output...
+    INFO: ...done
     INFO: Installing 'vmdktool'...
     INFO: vmdktool requires 'zlib'... installing 'zlib'
-    INFO: Calling 'sudo apt-get -q install zlib1g-dev'...
-(...)
+    INFO: Calling 'dpkg -s zlib1g-dev' and capturing its output...
     INFO: ...done
     INFO: Compiling 'vmdktool'
     INFO: Calling 'make CFLAGS="-D_GNU_SOURCE -g -O -pipe"'...
 (...)
     INFO: ...done
-    INFO: Compilation complete, installing now.
-    INFO: Calling 'sudo mkdir -p --mode=755 /usr/local/man/man8'...
-    INFO: ...done
-    INFO: Calling 'sudo make install'...
+    INFO: Compilation complete, installing to /usr/local
+    INFO: Calling 'make install'...
 install -s vmdktool /usr/local/bin/
 install vmdktool.8 /usr/local/man/man8/
     INFO: ...done
     INFO: Successfully installed 'vmdktool'
+    INFO: Calling 'vmdktool -V' and capturing its output...
+    INFO: ...done
     INFO: Copying cot-add-disk.1 to /usr/share/man/man1/cot-add-disk.1
 (...)
     INFO: Copying cot.1 to /usr/share/man/man1/cot.1

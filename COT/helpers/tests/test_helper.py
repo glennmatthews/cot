@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 
 
 class HelperUT(COT_UT):
-
     """Generic class for testing Helper and subclasses thereof."""
 
     # commonly seen logger message for helpers
@@ -115,7 +114,6 @@ class HelperUT(COT_UT):
 
 
 class HelperGenericTest(HelperUT):
-
     """Test cases for generic Helper class."""
 
     def setUp(self):

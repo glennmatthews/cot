@@ -23,7 +23,6 @@ from COT.vm_description import VMInitError
 
 
 class TestCOTSubmodule(COT_UT):
-
     """Test cases for COTSubmodule class."""
 
     def setUp(self):

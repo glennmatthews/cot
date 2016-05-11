@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTHelp(COTGenericSubmodule):
-
     """Provide 'help <subcommand>' syntax.
 
     Inherited attributes:

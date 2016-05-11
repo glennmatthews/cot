@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTInfo(COTGenericSubmodule):
-
     """Display VM information string.
 
     Inherited attributes:

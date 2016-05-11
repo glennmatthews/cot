@@ -48,7 +48,6 @@ try:
     from logging import NullHandler
 except ImportError:
     class NullHandler(logging.Handler):
-
         """No-op logging handler."""
 
         def emit(self, record):
@@ -59,7 +58,6 @@ logging.getLogger('COT').addHandler(NullHandler())
 
 
 class UTLoggingHandler(BufferingHandler):
-
     """Captures log messages to a buffer so we can inspect them for testing."""
 
     def __init__(self, testcase):
@@ -125,7 +123,6 @@ class UTLoggingHandler(BufferingHandler):
 
 
 class COT_UT(unittest.TestCase):
-
     """Subclass of unittest.TestCase adding some additional behaviors."""
 
     from COT.helpers.ovftool import OVFTool

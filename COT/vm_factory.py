@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class VMFactory:
-
     """Creates a VMDescription instance from a specified input file."""
 
     @classmethod

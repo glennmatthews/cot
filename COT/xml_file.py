@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class XML(object):
-
     """Class capable of reading, editing, and writing XML files."""
 
     @classmethod

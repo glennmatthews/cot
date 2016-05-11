@@ -27,7 +27,6 @@ from COT.data_validation import ValueUnsupportedError
 
 
 class TestCOTEditProperties(COT_UT):
-
     """Unit tests for COTEditProperties submodule."""
 
     def setUp(self):

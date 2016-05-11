@@ -22,6 +22,7 @@ and the ability to run the program as well.
 
 import contextlib
 import logging
+import os
 import os.path
 import re
 import requests
@@ -71,17 +72,14 @@ def confirm(prompt, force=False):
 
 
 class HelperNotFoundError(OSError):
-
     """A helper program cannot be located."""
 
 
 class HelperError(EnvironmentError):
-
     """A helper program exited with non-zero return code."""
 
 
 class Helper(object):
-
     """A provider of a non-Python helper program.
 
     **Class Properties**
@@ -177,6 +175,10 @@ class Helper(object):
         """Try to use ``apt-get`` to install a package."""
         if not cls.PACKAGE_MANAGERS['apt-get']:
             return False
+        # check if it's already installed
+        msg = cls._check_output(['dpkg', '-s', package], require_success=False)
+        if re.search('install ok installed', msg):
+            return True
         if not cls._apt_updated:
             cls._check_call(['sudo', 'apt-get', '-q', 'update'])
             cls._apt_updated = True
@@ -204,6 +206,26 @@ class Helper(object):
             return False
         cls._check_call(['sudo', 'yum', '--quiet', 'install', package])
         return True
+
+    @classmethod
+    def make_install_dir(cls, directory, permissions=493):    # 493 == 0o755
+        """Check whether the given target directory exists, and create if not.
+
+        :param directory: Directory to check/create.
+        """
+        if os.path.isdir(directory):
+            return True
+        elif os.path.exists(directory):
+            raise RuntimeError("Path {0} exists but is not a directory!"
+                               .format(directory))
+        try:
+            logger.verbose("Creating directory " + directory)
+            os.makedirs(directory, permissions)
+            return True
+        except OSError:
+            logger.verbose("Directory {0} creation failed, trying sudo"
+                           .format(directory))
+            cls._check_call(['sudo', 'mkdir', '-p', '--mode=755', directory])
 
     def __init__(self, name, version_args=None,
                  version_regexp="([0-9.]+"):

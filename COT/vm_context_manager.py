@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 class VMContextManager:
-
     """Context manager for virtual machine definitions.
 
     When the context manager exits, unless an error occurred, the virtual

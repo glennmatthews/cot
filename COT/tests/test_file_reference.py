@@ -27,7 +27,6 @@ from COT.file_reference import FileOnDisk, FileInTAR
 
 
 class TestFileOnDisk(COT_UT):
-
     """Test cases for FileOnDisk class."""
 
     def test_nonexistent_file(self):
@@ -74,7 +73,6 @@ class TestFileOnDisk(COT_UT):
 
 
 class TestFileInTAR(COT_UT):
-
     """Test cases for FileInTAR class."""
 
     def setUp(self):

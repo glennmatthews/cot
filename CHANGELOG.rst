@@ -3,6 +3,23 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.4.2`_ - 2016-05-11
+---------------------
+
+**Added**
+
+- COT now supports ``xorriso`` as another alternative to ``mkisofs`` and ``genisoimage``
+
+**Fixed**
+
+- `#42`_ - ``cot deploy esxi`` error handling behavior needed to be updated for `requests`_ release 2.8.
+- `#44`_ - test case failure seen when running `pyVmomi`_ 6.0.0.2016.4.
+
+**Changed**
+
+- Installation document now recommends installation via `pip`_ rather than installing from source.
+- `#40`_ - Now uses faster Docker-based infrastructure from `Travis CI`_ for CI builds/tests.
+
 `1.4.1`_ - 2015-09-02
 ---------------------
 
@@ -313,7 +330,10 @@ Initial public release.
 .. _#34: https://github.com/glennmatthews/cot/issues/34
 .. _#38: https://github.com/glennmatthews/cot/pull/38
 .. _#39: https://github.com/glennmatthews/cot/issues/39
+.. _#40: https://github.com/glennmatthews/cot/issues/40
 .. _#41: https://github.com/glennmatthews/cot/issues/41
+.. _#42: https://github.com/glennmatthews/cot/issues/42
+.. _#44: https://github.com/glennmatthews/cot/issues/44
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -322,14 +342,17 @@ Initial public release.
 .. _pyVmomi: https://pypi.python.org/pypi/pyvmomi/
 .. _flake8: http://flake8.readthedocs.org/en/latest/
 .. _pep257: https://pypi.python.org/pypi/pep257
+.. _requests: http://python-requests.org/
 .. _tox: http://tox.readthedocs.org/en/latest/
 .. _coverage.py: http://nedbatchelder.com/code/coverage/
 .. _Coveralls: https://coveralls.io/r/glennmatthews/cot
 .. _colorlog: https://pypi.python.org/pypi/colorlog
 .. _Travis CI: https://travis-ci.org/glennmatthews/cot/
 .. _versioneer: https://github.com/warner/python-versioneer
+.. _pip: https://pip.pypa.io/en/stable/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.4.2: https://github.com/glennmatthews/cot/compare/v1.4.1...v1.4.2
 .. _1.4.1: https://github.com/glennmatthews/cot/compare/v1.4.0...v1.4.1
 .. _1.4.0: https://github.com/glennmatthews/cot/compare/v1.3.3...v1.4.0
 .. _1.3.3: https://github.com/glennmatthews/cot/compare/v1.3.2...v1.3.3

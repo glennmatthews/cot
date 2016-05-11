@@ -25,7 +25,6 @@ from COT.helpers.mkisofs import MkIsoFS
 
 
 class TestMkIsoFS(HelperUT):
-
     """Test cases for MkIsoFS helper class."""
 
     def setUp(self):
@@ -96,8 +95,10 @@ class TestMkIsoFS(HelperUT):
         Helper.PACKAGE_MANAGERS['port'] = False
         Helper.PACKAGE_MANAGERS['yum'] = False
         Helper._apt_updated = False
+        self.fake_output = 'not installed'
         self.helper.install_helper()
         self.assertEqual([
+            ['dpkg', '-s', 'genisoimage'],
             ['sudo', 'apt-get', '-q', 'update'],
             ['sudo', 'apt-get', '-q', 'install', 'genisoimage'],
         ], self.last_argv)
@@ -106,8 +107,10 @@ class TestMkIsoFS(HelperUT):
         # Make sure we don't 'apt-get update' again unnecessarily
         self.last_argv = []
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'apt-get', '-q', 'install', 'genisoimage']],
-                         self.last_argv)
+        self.assertEqual([
+            ['dpkg', '-s', 'genisoimage'],
+            ['sudo', 'apt-get', '-q', 'install', 'genisoimage'],
+        ], self.last_argv)
 
     def test_install_helper_unsupported(self):
         """Installation fails with neither apt-get nor port nor yum."""

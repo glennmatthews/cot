@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 
 
 class COTEditHardware(COTSubmodule):
-
     """Edit hardware information (CPUs, RAM, NICs, etc.).
 
     Inherited attributes:

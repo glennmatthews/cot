@@ -3,7 +3,7 @@
 # deploy_esxi.py - test cases for the COTDeployESXi class and helpers
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -16,11 +16,13 @@
 
 """Unit test cases for the COT.deploy.COTDeployESXi class and helpers."""
 
+import errno
 import getpass
 import logging
 import mock
 import re
 import requests
+import socket
 import ssl
 
 from pyVmomi import vim
@@ -36,7 +38,6 @@ logger = logging.getLogger(__name__)
 
 
 class TestCOTDeployESXi(COT_UT):
-
     """Test cases for COTDeployESXi class."""
 
     # Some WARNING logger messages we may expect at various points:
@@ -203,8 +204,16 @@ class TestCOTDeployESXi(COT_UT):
         """Call fixup_serial_ports() to connect to an invalid host."""
         self.instance.locator = "localhost"
         self.instance.serial_connection = ['tcp::2222', 'tcp::2223']
-        self.assertRaises(requests.exceptions.ConnectionError,
-                          self.instance.fixup_serial_ports, 2)
+        with self.assertRaises((requests.exceptions.ConnectionError,
+                                socket.error)) as cm:
+            self.instance.fixup_serial_ports(2)
+        # In requests 2.7 and earlier, we get the errno,
+        # while in requests 2.8+, it's munged into a string only
+        if cm.exception.errno is not None:
+            self.assertEqual(cm.exception.errno, errno.ECONNREFUSED)
+        self.assertRegexpMatches(
+            cm.exception.strerror,
+            "(Error connecting to localhost:443: )?.*Connection refused")
 
     @mock.patch('pyVim.connect.__Login')
     @mock.patch('pyVim.connect.__FindSupportedVersion')

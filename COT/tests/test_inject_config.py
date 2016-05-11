@@ -28,7 +28,6 @@ from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
 
 
 class TestCOTInjectConfig(COT_UT):
-
     """Test cases for COTInjectConfig class."""
 
     # Expected WARNING message

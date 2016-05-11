@@ -39,12 +39,10 @@ logger = logging.getLogger(__name__)
 
 
 class VMInitError(EnvironmentError):
-
     """Class representing errors encountered when trying to init/load a VM."""
 
 
 class VMDescription(object):
-
     """Abstract class for reading, editing, and writing VM definitions.
 
     **Properties**

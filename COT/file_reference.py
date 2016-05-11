@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class FileOnDisk(object):
-
     """Wrapper for a 'real' file on disk."""
 
     def __init__(self, file_path, filename=None):
@@ -74,7 +73,6 @@ class FileOnDisk(object):
 
 
 class FileInTAR(object):
-
     """Wrapper for a file inside a TAR archive or OVA."""
 
     def __init__(self, tarfile_path, filename):
