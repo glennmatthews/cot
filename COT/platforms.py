@@ -97,6 +97,12 @@ class GenericPlatform(object):
                             ["E1000", "VIRTIO", "VMXNET3"])
 
     @classmethod
+    def validate_nic_types(cls, type_list):
+        """Throw an error if any NIC type string in the list is unsupported."""
+        for type_string in type_list:
+            cls.validate_nic_type(type_string)
+
+    @classmethod
     def validate_serial_count(cls, count):
         """Throw an error if the number of serial ports is not supported."""
         if count < 0:

@@ -821,10 +821,24 @@ CIM_ResourceAllocationSettingData">
          <rasd:InstanceID>13</rasd:InstanceID>
 """)
 
+    def test_deprecated_nic_type(self):
+        """The nic_type method is deprecated by nic_types."""
+        self.instance.package = self.input_ovf
+        self.assertEqual(self.instance.nic_type, None)
+
+        self.instance.nic_type = 'e1000'
+        self.assertEqual(self.instance.nic_type, 'e1000')
+        self.assertEqual(self.instance.nic_types, ['e1000'])
+
+        self.instance.nic_types = ['e1000', 'virtio']
+        self.assertEqual(self.instance.nic_types, ['e1000', 'virtio'])
+        with self.assertRaises(TypeError):
+            self.instance.nic_type
+
     def test_set_nic_kitchen_sink_all_profiles(self):
         """Test changing many NIC properties at once under all profiles."""
         self.instance.package = self.input_ovf
-        self.instance.nic_type = 'e1000'
+        self.instance.nic_types = ['e1000', 'virtio']
         self.instance.nic_networks = ['UT1', 'UT2', 'UT3']
         self.instance.mac_addresses_list = \
             ['00:00:00:00:00:01', '11:22:33:44:55:66', 'fe:fd:fc:fb:fa:f9']
@@ -853,12 +867,12 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT1</rasd:Connection>
-+        <rasd:Description>E1000 ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 VIRTIO ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
          <rasd:InstanceID>11</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 VIRTIO</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 ...
        <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
@@ -869,12 +883,12 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT2</rasd:Connection>
-+        <rasd:Description>E1000 ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 VIRTIO ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
          <rasd:InstanceID>12</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 VIRTIO</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 ...
        <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
@@ -885,12 +899,12 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT3</rasd:Connection>
-+        <rasd:Description>E1000 ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 VIRTIO ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
          <rasd:InstanceID>13</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>E1000</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 VIRTIO</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 """)
 

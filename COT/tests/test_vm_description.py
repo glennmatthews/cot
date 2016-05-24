@@ -96,6 +96,8 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.set_nic_type, None, None)
         self.assertRaises(NotImplementedError,
+                          ins.set_nic_types, None, None)
+        self.assertRaises(NotImplementedError,
                           ins.get_nic_count, None)
         self.assertRaises(NotImplementedError,
                           ins.set_nic_count, 0, None)

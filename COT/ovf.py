@@ -1197,16 +1197,16 @@ class OVF(VMDescription, XML):
                                               profile_list,
                                               create_new=True)
 
-    def set_nic_type(self, type, profile_list):
-        """Set the hardware type for NICs.
+    def set_nic_types(self, type_list, profile_list):
+        """Set the hardware type(s) for NICs.
 
-        :param str type: NIC hardware type
+        :param list type_list: NIC hardware type(s)
         :param list profile_list: Change only the given profiles.
         """
-        self.platform.validate_nic_type(type)
+        self.platform.validate_nic_types(type_list)
         self.hardware.set_value_for_all_items('ethernet',
                                               self.RESOURCE_SUB_TYPE,
-                                              type.upper(),
+                                              " ".join(type_list).upper(),
                                               profile_list)
 
     def get_nic_count(self, profile_list):

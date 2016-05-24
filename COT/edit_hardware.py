@@ -28,6 +28,7 @@ import argparse
 import logging
 import re
 import textwrap
+import warnings
 
 from .data_validation import natural_sort, no_whitespace, mac_address
 from .data_validation import non_negative_int, positive_int, InvalidInputError
@@ -50,7 +51,7 @@ class COTEditHardware(COTSubmodule):
     :attr:`cpus`,
     :attr:`memory`,
     :attr:`nics`,
-    :attr:`nic_type`,
+    :attr:`nic_types`,
     :attr:`mac_addresses_list`,
     :attr:`nic_networks`,
     :attr:`nic_names`,
@@ -71,7 +72,7 @@ class COTEditHardware(COTSubmodule):
         self._cpus = None
         self._memory = None
         self._nics = None
-        self._nic_type = None
+        self._nic_types = None
         self.mac_addresses_list = None
         """List of MAC addresses to set."""
         self.nic_networks = None
@@ -166,13 +167,34 @@ class COTEditHardware(COTSubmodule):
 
     @property
     def nic_type(self):
-        """NIC type string to set."""
-        return self._nic_type
+        """NIC type string to set.
+
+        .. deprecated:: 1.5
+           Use :attr:`nic_types` instead.
+        """
+        warnings.warn("Use nic_type instead", DeprecationWarning)
+        if self.nic_types is None:
+            return None
+        if len(self.nic_types) > 1:
+            raise TypeError("nic_types has more than one element ({0}). "
+                            "Use nic_types instead of nic_type."
+                            .format(self.nic_types))
+        return self.nic_types[0]
 
     @nic_type.setter
     def nic_type(self, value):
-        self.vm.platform.validate_nic_type(value)
-        self._nic_type = value
+        warnings.warn("Use nic_types instead", DeprecationWarning)
+        self.nic_types = [value]
+
+    @property
+    def nic_types(self):
+        """List of NIC type strings to set."""
+        return self._nic_types
+
+    @nic_types.setter
+    def nic_types(self, value):
+        self.vm.platform.validate_nic_types(value)
+        self._nic_types = value
 
     @property
     def serial_ports(self):
@@ -200,7 +222,7 @@ class COTEditHardware(COTSubmodule):
                 self.cpus is None and
                 self.memory is None and
                 self.nics is None and
-                self.nic_type is None and
+                self.nic_types is None and
                 self.mac_addresses_list is None and
                 self.nic_networks is None and
                 self.nic_names is None and
@@ -275,8 +297,8 @@ class COTEditHardware(COTSubmodule):
         if self.memory is not None:
             vm.set_memory(self.memory, self.profiles)
 
-        if self.nic_type is not None:
-            vm.set_nic_type(self.nic_type, self.profiles)
+        if self.nic_types is not None:
+            vm.set_nic_types(self.nic_types, self.profiles)
 
         nics_dict = vm.get_nic_count(self.profiles)
         if self.nics is not None:
@@ -363,7 +385,7 @@ class COTEditHardware(COTSubmodule):
                 "PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]",
                 "PACKAGE [-o OUTPUT] \
 [-p PROFILE [PROFILE2 ...] [--delete-all-other-profiles]] [-c CPUS] \
-[-m MEMORY] [-n NICS] [--nic-type {e1000,virtio,vmxnet3}] \
+[-m MEMORY] [-n NICS] [--nic-types [{e1000,virtio,vmxnet3} ...]] \
 [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]] \
 [--nic-names NAME1 [NAME2 ...]] [-s SERIAL_PORTS] [-S URI1 [URI2 ...]] \
 [--scsi-subtype SCSI_SUBTYPE] [--ide-subtype IDE_SUBTYPE]",
@@ -427,11 +449,12 @@ class COTEditHardware(COTSubmodule):
 
         g.add_argument('-n', '--nics', type=non_negative_int,
                        help="Set the number of NICs.")
-        g.add_argument('--nic-type',
+        g.add_argument('--nic-types', nargs='+',
+                       metavar=('TYPE', 'TYPE2'),
                        choices=['e1000', 'virtio', 'vmxnet3'],
-                       help="Set the hardware type for all NICs. "
+                       help="Set the hardware type(s) for all NICs. "
                        "(default: do not change existing NICs, and new "
-                       "NICs added will match the existing type.)")
+                       "NICs added will match the existing type(s).)")
         g.add_argument('--nic-names', action='append', nargs='+',
                        metavar=('NAME1', 'NAME2'),
                        help="Specify a list of one or more NIC names or "

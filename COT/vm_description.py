@@ -28,6 +28,7 @@ import logging
 import os.path
 import shutil
 import tempfile
+import warnings
 
 from verboselogs import VerboseLogger
 
@@ -423,10 +424,22 @@ class VMDescription(object):
     def set_nic_type(self, type, profile_list):
         """Set the hardware type for NICs.
 
+        .. deprecated:: 1.5
+           Use :func:`set_nic_types` instead.
+
         :param str type: NIC hardware type
         :param list profile_list: Change only the given profiles.
         """
-        raise NotImplementedError("set_nic_type not implemented!")
+        warnings.warn("Use set_nic_types() instead", DeprecationWarning)
+        self.set_nic_types([type], profile_list)
+
+    def set_nic_types(self, type_list, profile_list):
+        """Set the hardware type(s) for NICs.
+
+        :param list type_list: NIC hardware type(s)
+        :param list profile_list: Change only the given profiles.
+        """
+        raise NotImplementedError("set_nic_types not implemented!")
 
     def get_nic_count(self, profile_list):
         """Get the number of NICs under the given profile(s).
