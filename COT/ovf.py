@@ -1325,26 +1325,28 @@ class OVF(VMDescription, XML):
         return [item.get_value(self.ADDRESS) for item in
                 self.hardware.find_all_items('serial', profile_list=[profile])]
 
-    def set_scsi_subtype(self, type, profile_list):
-        """Set the device subtype for the SCSI controller(s).
+    def set_scsi_subtypes(self, type_list, profile_list):
+        """Set the device subtype(s) for the SCSI controller(s).
 
-        :param str type: SCSI subtype string
+        :param list type_list: SCSI subtype string list
         :param list profile_list: Change only the given profiles
         """
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('scsi',
-                                              self.RESOURCE_SUB_TYPE, type,
+                                              self.RESOURCE_SUB_TYPE,
+                                              " ".join(type_list),
                                               profile_list)
 
-    def set_ide_subtype(self, type, profile_list):
-        """Set the device subtype for the IDE controller(s).
+    def set_ide_subtypes(self, type_list, profile_list):
+        """Set the device subtype(s) for the IDE controller(s).
 
-        :param str type: IDE subtype string
+        :param list type_list: IDE subtype string list
         :param list profile_list: Change only the given profiles
         """
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('ide',
-                                              self.RESOURCE_SUB_TYPE, type,
+                                              self.RESOURCE_SUB_TYPE,
+                                              " ".join(type_list),
                                               profile_list)
 
     def get_property_value(self, key):

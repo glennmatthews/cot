@@ -1164,6 +1164,7 @@ CIM_ResourceAllocationSettingData">
         """Set SCSI controller subtype under all profiles."""
         self.instance.package = self.input_ovf
         self.instance.scsi_subtype = "virtio"
+        self.assertEqual(self.instance.scsi_subtype, "virtio")
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -1177,6 +1178,9 @@ CIM_ResourceAllocationSettingData">
         """Clear SCSI controller subtype under all profiles."""
         self.instance.package = self.input_ovf
         self.instance.scsi_subtype = ""
+        self.assertEqual(self.instance.scsi_subtype, "")
+        # TODO: this should really be an empty list or None
+        self.assertEqual(self.instance.scsi_subtypes, [""])
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -1188,7 +1192,10 @@ CIM_ResourceAllocationSettingData">
     def test_set_scsi_subtype_one_profile(self):
         """Set SCSI controller subtype under a single profile."""
         self.instance.package = self.input_ovf
-        self.instance.scsi_subtype = "virtio"
+        self.instance.scsi_subtypes = ['buslogic', 'lsilogic']
+        self.assertEqual(self.instance.scsi_subtypes, ['buslogic', 'lsilogic'])
+        with self.assertRaises(TypeError):
+            self.instance.scsi_subtype
         self.instance.profiles = ['4CPU-4GB-3NIC']
         self.instance.run()
         self.instance.finished()
@@ -1201,7 +1208,7 @@ CIM_ResourceAllocationSettingData">
 +        <rasd:Description>SCSI Controller</rasd:Description>
 +        <rasd:ElementName>SCSI Controller 0</rasd:ElementName>
 +        <rasd:InstanceID>3</rasd:InstanceID>
-+        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
++        <rasd:ResourceSubType>buslogic lsilogic</rasd:ResourceSubType>
 +        <rasd:ResourceType>6</rasd:ResourceType>
 +      </ovf:Item>
        <ovf:Item>
@@ -1210,6 +1217,8 @@ CIM_ResourceAllocationSettingData">
     def test_set_scsi_subtype_no_existing(self):
         """Set SCSI controller subtype for an OVF with none (no-op)."""
         self.instance.package = self.minimal_ovf
+        self.assertEqual(self.instance.scsi_subtype, None)
+        self.assertEqual(self.instance.scsi_subtypes, None)
         self.instance.scsi_subtype = "virtio"
         self.instance.run()
         self.assertLogged(**self.NO_ITEMS_NO_WORK)
@@ -1219,18 +1228,21 @@ CIM_ResourceAllocationSettingData">
     def test_set_ide_subtype_all_profiles(self):
         """Set IDE controller subtype across all profiles."""
         self.instance.package = self.input_ovf
-        self.instance.ide_subtype = "virtio"
+        self.instance.ide_subtypes = ["virtio", "foobar"]
+        self.assertEqual(self.instance.ide_subtypes, ["virtio", "foobar"])
+        with self.assertRaises(TypeError):
+            self.instance.ide_subtype
         self.instance.run()
         self.instance.finished()
         # Since there is no pre-existing subtype, we just create it
         # under each controller:
         self.check_diff("""
          <rasd:InstanceID>4</rasd:InstanceID>
-+        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio foobar</rasd:ResourceSubType>
          <rasd:ResourceType>5</rasd:ResourceType>
 ...
          <rasd:InstanceID>5</rasd:InstanceID>
-+        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio foobar</rasd:ResourceSubType>
          <rasd:ResourceType>5</rasd:ResourceType>
 """)
 
@@ -1238,6 +1250,8 @@ CIM_ResourceAllocationSettingData">
         """Set IDE controller subtype under a single profile."""
         self.instance.package = self.input_ovf
         self.instance.ide_subtype = "virtio"
+        self.assertEqual(self.instance.ide_subtype, "virtio")
+        self.assertEqual(self.instance.ide_subtypes, ["virtio"])
         self.instance.profiles = ['4CPU-4GB-3NIC']
         self.instance.run()
         self.instance.finished()
@@ -1270,6 +1284,8 @@ CIM_ResourceAllocationSettingData">
     def test_set_ide_subtype_no_existing(self):
         """Set IDE controller subtype for an OVF with none (no-op)."""
         self.instance.package = self.minimal_ovf
+        self.assertEqual(self.instance.ide_subtype, None)
+        self.assertEqual(self.instance.ide_subtypes, None)
         self.instance.ide_subtype = "virtio"
         self.instance.run()
         self.assertLogged(**self.NO_ITEMS_NO_WORK)

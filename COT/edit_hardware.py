@@ -57,8 +57,8 @@ class COTEditHardware(COTSubmodule):
     :attr:`nic_names`,
     :attr:`serial_ports`,
     :attr:`serial_connectivity`,
-    :attr:`scsi_subtype`,
-    :attr:`ide_subtype`,
+    :attr:`scsi_subtypes`,
+    :attr:`ide_subtypes`,
     :attr:`virtual_system_type`
     """
 
@@ -88,10 +88,10 @@ class COTEditHardware(COTSubmodule):
         self._serial_ports = None
         self.serial_connectivity = None
         """List of serial connection strings."""
-        self.scsi_subtype = None
-        """Subtype string for SCSI controllers"""
-        self.ide_subtype = None
-        """Subtype string for IDE controllers"""
+        self.scsi_subtypes = None
+        """Subtype string list for SCSI controllers"""
+        self.ide_subtypes = None
+        """Subtype string list for IDE controllers"""
         self.virtual_system_type = None
         """Virtual system type"""
 
@@ -172,7 +172,7 @@ class COTEditHardware(COTSubmodule):
         .. deprecated:: 1.5
            Use :attr:`nic_types` instead.
         """
-        warnings.warn("Use nic_type instead", DeprecationWarning)
+        warnings.warn("Use nic_types instead", DeprecationWarning)
         if self.nic_types is None:
             return None
         if len(self.nic_types) > 1:
@@ -210,6 +210,48 @@ class COTEditHardware(COTSubmodule):
         self.vm.platform.validate_serial_count(value)
         self._serial_ports = value
 
+    @property
+    def scsi_subtype(self):
+        """SCSI controller subtype string to set.
+
+        .. deprecated:: 1.5
+           Use :attr:`scsi_subtypes` instead.
+        """
+        warnings.warn("Use scsi_subtypes instead", DeprecationWarning)
+        if self.scsi_subtypes is None:
+            return None
+        if len(self.scsi_subtypes) > 1:
+            raise TypeError("scsi_subtypes has more than one element ({0}). "
+                            "Use scsi_subtypes instead of scsi_subtype."
+                            .format(self.scsi_subtypes))
+        return self.scsi_subtypes[0]
+
+    @scsi_subtype.setter
+    def scsi_subtype(self, value):
+        warnings.warn("Use scsi_subtypes instead", DeprecationWarning)
+        self.scsi_subtypes = [value]
+
+    @property
+    def ide_subtype(self):
+        """NIC type string to set.
+
+        .. deprecated:: 1.5
+           Use :attr:`ide_subtypes` instead.
+        """
+        warnings.warn("Use ide_subtypes instead", DeprecationWarning)
+        if self.ide_subtypes is None:
+            return None
+        if len(self.ide_subtypes) > 1:
+            raise TypeError("ide_subtypes has more than one element ({0}). "
+                            "Use ide_subtypes instead of ide_subtype."
+                            .format(self.ide_subtypes))
+        return self.ide_subtypes[0]
+
+    @ide_subtype.setter
+    def ide_subtype(self, value):
+        warnings.warn("Use ide_subtypes instead", DeprecationWarning)
+        self.ide_subtypes = [value]
+
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
@@ -228,8 +270,8 @@ class COTEditHardware(COTSubmodule):
                 self.nic_names is None and
                 self.serial_ports is None and
                 self.serial_connectivity is None and
-                self.scsi_subtype is None and
-                self.ide_subtype is None and
+                self.scsi_subtypes is None and
+                self.ide_subtypes is None and
                 self.virtual_system_type is None
         ):
             return (False, "No work requested! Please specify at least "
@@ -360,11 +402,11 @@ class COTEditHardware(COTSubmodule):
                                 len(self.serial_connectivity)))
             vm.set_serial_connectivity(self.serial_connectivity, self.profiles)
 
-        if self.scsi_subtype is not None:
-            vm.set_scsi_subtype(self.scsi_subtype, self.profiles)
+        if self.scsi_subtypes is not None:
+            vm.set_scsi_subtypes(self.scsi_subtypes, self.profiles)
 
-        if self.ide_subtype is not None:
-            vm.set_ide_subtype(self.ide_subtype, self.profiles)
+        if self.ide_subtypes is not None:
+            vm.set_ide_subtypes(self.ide_subtypes, self.profiles)
 
     def create_subparser(self, parent, storage):
         """Add subparser for the CLI of this submodule.
@@ -385,10 +427,10 @@ class COTEditHardware(COTSubmodule):
                 "PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]",
                 "PACKAGE [-o OUTPUT] \
 [-p PROFILE [PROFILE2 ...] [--delete-all-other-profiles]] [-c CPUS] \
-[-m MEMORY] [-n NICS] [--nic-types [{e1000,virtio,vmxnet3} ...]] \
+[-m MEMORY] [-n NICS] [--nic-types TYPE [TYPE2 ...]] \
 [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]] \
 [--nic-names NAME1 [NAME2 ...]] [-s SERIAL_PORTS] [-S URI1 [URI2 ...]] \
-[--scsi-subtype SCSI_SUBTYPE] [--ide-subtype IDE_SUBTYPE]",
+[--scsi-subtypes TYPE [TYPE2 ...]] [--ide-subtypes TYPE [TYPE2 ...]]",
             ]),
             help="Edit virtual machine hardware properties of an OVF",
             description="Edit hardware properties of the specified OVF or OVA",
@@ -484,13 +526,15 @@ class COTEditHardware(COTSubmodule):
 
         g = p.add_argument_group("disk and disk controller options")
 
-        g.add_argument('--scsi-subtype',
-                       help='Set resource subtype (such as "lsilogic" or '
+        g.add_argument('--scsi-subtypes', action='append', nargs='+',
+                       metavar=('TYPE', 'TYPE2'),
+                       help='Set resource subtype(s) (such as "lsilogic" or '
                        '"virtio") for all SCSI controllers. If an empty '
                        "string is provided, any existing subtype will be "
                        "removed.")
-        g.add_argument('--ide-subtype',
-                       help='Set resource subtype (such as "virtio") for '
+        g.add_argument('--ide-subtypes', action='append', nargs='+',
+                       metavar=('TYPE', 'TYPE2'),
+                       help='Set resource subtype(s) (such as "virtio") for '
                        "all IDE controllers. If an empty string is "
                        "provided, any existing subtype will be removed.")
 

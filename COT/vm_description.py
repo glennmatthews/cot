@@ -545,18 +545,42 @@ class VMDescription(object):
     def set_scsi_subtype(self, type, profile_list):
         """Set the device subtype for the SCSI controller(s).
 
+        .. deprecated:: 1.5
+           Use :func:`set_scsi_subtypes` instead.
+
         :param str type: SCSI subtype string
         :param list profile_list: Change only the given profiles
         """
-        raise NotImplementedError("set_scsi_subtype not implemented!")
+        warnings.warn("Use set_scsi_subtypes() instead", DeprecationWarning)
+        self.set_scsi_subtypes([type], profile_list)
+
+    def set_scsi_subtypes(self, type_list, profile_list):
+        """Set the device subtype list for the SCSI controller(s).
+
+        :param list type_list: SCSI subtype string list
+        :param list profile_list: Change only the given profiles
+        """
+        raise NotImplementedError("set_scsi_subtypes not implemented!")
 
     def set_ide_subtype(self, type, profile_list):
         """Set the device subtype for the IDE controller(s).
 
+        .. deprecated:: 1.5
+           Use :func:`set_ide_subtypes` instead.
+
         :param str type: IDE subtype string
         :param list profile_list: Change only the given profiles
         """
-        raise NotImplementedError("set_ide_subtype not implemented!")
+        warnings.warn("Use set_ide_subtypes() instead", DeprecationWarning)
+        self.set_ide_subtypes([type], profile_list)
+
+    def set_ide_subtypes(self, type_list, profile_list):
+        """Set the device subtype list for the IDE controller(s).
+
+        :param list type: IDE subtype string list
+        :param list profile_list: Change only the given profiles
+        """
+        raise NotImplementedError("set_ide_subtypes not implemented!")
 
     # API methods needed for edit-product
     # API methods needed for edit-properties
