@@ -362,13 +362,17 @@ class OVF(VMDescription, XML):
             platform = None
             product_class = None
             class_to_platform_map = {
-                'com.cisco.csr1000v':   Platform.CSR1000V,
-                'com.cisco.iosv':       Platform.IOSv,
-                'com.cisco.nx-osv':     Platform.NXOSv,
-                'com.cisco.ios-xrv':    Platform.IOSXRv,
-                'com.cisco.ios-xrv.rp': Platform.IOSXRvRP,
-                'com.cisco.ios-xrv.lc': Platform.IOSXRvLC,
-                None:                   Platform.GenericPlatform,
+                'com.cisco.csr1000v':    Platform.CSR1000V,
+                'com.cisco.iosv':        Platform.IOSv,
+                'com.cisco.nx-osv':      Platform.NXOSv,
+                'com.cisco.ios-xrv':     Platform.IOSXRv,
+                'com.cisco.ios-xrv.rp':  Platform.IOSXRvRP,
+                'com.cisco.ios-xrv.lc':  Platform.IOSXRvLC,
+                'com.cisco.ios-xrv9000': Platform.IOSXRv9000,
+                # TODO: some early releases of IOS XRv 9000 used the
+                # incorrect string 'com.cisco.ios-xrv64'.
+                'com.cisco.ios-xrv64':   Platform.IOSXRv9000,
+                None:                    Platform.GenericPlatform,
             }
 
             if self.product_section is None:
@@ -1725,9 +1729,9 @@ class OVF(VMDescription, XML):
                 subtype = item_subtype
                 logger.info("Found {0} subtype {1}".format(type, subtype))
             elif subtype != item_subtype:
-                logger.warning("Found conflicting subtypes ('{0}', '{1}') for "
-                               "device type {2}".format(subtype, item_subtype,
-                                                        type))
+                logger.warning("Found different subtypes ('{0}', '{1}') for "
+                               "device type {2} - no common subtype exists"
+                               .format(subtype, item_subtype, type))
                 return None
         return subtype
 
