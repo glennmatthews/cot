@@ -553,7 +553,7 @@ class TestCLIEditHardware(TestCOTCLI):
         for arg in ['-p', '--profile', '-c', '--cpus',
                     '-m', '--memory', '-n', '--nics',
                     '-N', '--nic-networks',
-                    '--nic-type', '--nic-count',
+                    '--nic-types', '--nic-count',
                     '-M', '--mac-addresses-list',
                     '-s', '--serial-ports', '-S', '--serial-connectivity',
                     '--scsi-subtype', '--ide-subtype',

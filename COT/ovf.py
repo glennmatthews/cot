@@ -362,13 +362,17 @@ class OVF(VMDescription, XML):
             platform = None
             product_class = None
             class_to_platform_map = {
-                'com.cisco.csr1000v':   Platform.CSR1000V,
-                'com.cisco.iosv':       Platform.IOSv,
-                'com.cisco.nx-osv':     Platform.NXOSv,
-                'com.cisco.ios-xrv':    Platform.IOSXRv,
-                'com.cisco.ios-xrv.rp': Platform.IOSXRvRP,
-                'com.cisco.ios-xrv.lc': Platform.IOSXRvLC,
-                None:                   Platform.GenericPlatform,
+                'com.cisco.csr1000v':    Platform.CSR1000V,
+                'com.cisco.iosv':        Platform.IOSv,
+                'com.cisco.nx-osv':      Platform.NXOSv,
+                'com.cisco.ios-xrv':     Platform.IOSXRv,
+                'com.cisco.ios-xrv.rp':  Platform.IOSXRvRP,
+                'com.cisco.ios-xrv.lc':  Platform.IOSXRvLC,
+                'com.cisco.ios-xrv9000': Platform.IOSXRv9000,
+                # TODO: some early releases of IOS XRv 9000 used the
+                # incorrect string 'com.cisco.ios-xrv64'.
+                'com.cisco.ios-xrv64':   Platform.IOSXRv9000,
+                None:                    Platform.GenericPlatform,
             }
 
             if self.product_section is None:
@@ -1197,16 +1201,16 @@ class OVF(VMDescription, XML):
                                               profile_list,
                                               create_new=True)
 
-    def set_nic_type(self, type, profile_list):
-        """Set the hardware type for NICs.
+    def set_nic_types(self, type_list, profile_list):
+        """Set the hardware type(s) for NICs.
 
-        :param str type: NIC hardware type
+        :param list type_list: NIC hardware type(s)
         :param list profile_list: Change only the given profiles.
         """
-        self.platform.validate_nic_type(type)
+        self.platform.validate_nic_types(type_list)
         self.hardware.set_value_for_all_items('ethernet',
                                               self.RESOURCE_SUB_TYPE,
-                                              type.upper(),
+                                              " ".join(type_list),
                                               profile_list)
 
     def get_nic_count(self, profile_list):
@@ -1325,26 +1329,28 @@ class OVF(VMDescription, XML):
         return [item.get_value(self.ADDRESS) for item in
                 self.hardware.find_all_items('serial', profile_list=[profile])]
 
-    def set_scsi_subtype(self, type, profile_list):
-        """Set the device subtype for the SCSI controller(s).
+    def set_scsi_subtypes(self, type_list, profile_list):
+        """Set the device subtype(s) for the SCSI controller(s).
 
-        :param str type: SCSI subtype string
+        :param list type_list: SCSI subtype string list
         :param list profile_list: Change only the given profiles
         """
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('scsi',
-                                              self.RESOURCE_SUB_TYPE, type,
+                                              self.RESOURCE_SUB_TYPE,
+                                              " ".join(type_list),
                                               profile_list)
 
-    def set_ide_subtype(self, type, profile_list):
-        """Set the device subtype for the IDE controller(s).
+    def set_ide_subtypes(self, type_list, profile_list):
+        """Set the device subtype(s) for the IDE controller(s).
 
-        :param str type: IDE subtype string
+        :param list type_list: IDE subtype string list
         :param list profile_list: Change only the given profiles
         """
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('ide',
-                                              self.RESOURCE_SUB_TYPE, type,
+                                              self.RESOURCE_SUB_TYPE,
+                                              " ".join(type_list),
                                               profile_list)
 
     def get_property_value(self, key):
@@ -1723,9 +1729,9 @@ class OVF(VMDescription, XML):
                 subtype = item_subtype
                 logger.info("Found {0} subtype {1}".format(type, subtype))
             elif subtype != item_subtype:
-                logger.warning("Found conflicting subtypes ('{0}', '{1}') for "
-                               "device type {2}".format(subtype, item_subtype,
-                                                        type))
+                logger.warning("Found different subtypes ('{0}', '{1}') for "
+                               "device type {2} - no common subtype exists"
+                               .format(subtype, item_subtype, type))
                 return None
         return subtype
 

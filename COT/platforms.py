@@ -28,6 +28,7 @@
   IOSXRv
   IOSXRvRP
   IOSXRvLC
+  IOSXRv9000
   NXOSv
 """
 
@@ -95,6 +96,12 @@ class GenericPlatform(object):
         # We only really know 3 possible NIC types at present
         cls.valid_list_only("NIC type", type_string.upper(),
                             ["E1000", "VIRTIO", "VMXNET3"])
+
+    @classmethod
+    def validate_nic_types(cls, type_list):
+        """Throw an error if any NIC type string in the list is unsupported."""
+        for type_string in type_list:
+            cls.validate_nic_type(type_string)
 
     @classmethod
     def validate_serial_count(cls, count):
@@ -217,6 +224,52 @@ class IOSXRvLC(IOSXRv):
         """No serial ports are needed but up to 4 can be used for debugging."""
         if count > 4:
             raise ValueTooHighError("serial ports", count, 4)
+
+
+class IOSXRv9000(IOSXRv):
+    """Platform-specific logic for Cisco IOS XRv 9000 platform."""
+
+    PLATFORM_NAME = "Cisco IOS XRv 9000"
+
+    @classmethod
+    def guess_nic_name(cls, nic_number):
+        """MgmtEth0/0/CPU0/0, CtrlEth, DevEth, GigabitEthernet0/0/0/0, etc."""
+        if nic_number == 1:
+            return "MgmtEth0/0/CPU0/0"
+        elif nic_number == 2:
+            return "CtrlEth"
+        elif nic_number == 3:
+            return "DevEth"
+        else:
+            return ("GigabitEthernet0/0/0/" + str(nic_number - 4))
+
+    @classmethod
+    def validate_cpu_count(cls, cpus):
+        """Minimum 1, maximum 32 CPUs."""
+        if cpus < 1:
+            raise ValueTooLowError("CPUs", cpus, 1)
+        elif cpus > 32:
+            raise ValueTooHighError("CPUs", cpus, 32)
+
+    @classmethod
+    def validate_memory_amount(cls, megabytes):
+        """Minimum 8 GB, maximum 32 GB."""
+        if megabytes < 8192:
+            raise ValueTooLowError("RAM", str(megabytes) + "MB", "8GB")
+        elif megabytes > 32768:
+            raise ValueTooHighError("RAM", str(megabytes) + "MB", "32GB")
+
+    @classmethod
+    def validate_nic_count(cls, count):
+        """IOS XRv 9000 requires at least 4 NICs."""
+        if count < 4:
+            raise ValueTooLowError("NIC count", count, 4)
+
+    @classmethod
+    def validate_nic_type(cls, type_string):
+        """IOS XRv 9000 supports E1000, virtio, and VMXNET3."""
+        cls.valid_list_only("NIC type", type_string.upper(),
+                            ["E1000", "VIRTIO", "VMXNET3"])
 
 
 class CSR1000V(GenericPlatform):
