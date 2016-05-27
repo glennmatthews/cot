@@ -246,7 +246,7 @@ class COTEditHardware(COTSubmodule):
 
     @property
     def ide_subtype(self):
-        """NIC type string to set.
+        """IDE controller subtype string to set.
 
         .. deprecated:: 1.5
            Use :attr:`ide_subtypes` instead.
