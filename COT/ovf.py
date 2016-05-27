@@ -1210,7 +1210,7 @@ class OVF(VMDescription, XML):
         self.platform.validate_nic_types(type_list)
         self.hardware.set_value_for_all_items('ethernet',
                                               self.RESOURCE_SUB_TYPE,
-                                              " ".join(type_list).upper(),
+                                              " ".join(type_list),
                                               profile_list)
 
     def get_nic_count(self, profile_list):

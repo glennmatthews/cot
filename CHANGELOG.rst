@@ -3,22 +3,46 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_ - unreleased
+--------------------------
+
+**Added**
+
+- `#45`_ - support for multiple values for ``--nic-types``, ``--ide-subtypes``,
+  and ``--scsi-subtypes`` in ``cot edit-hardware``.
+- COT now recognizes the Cisco IOS XRv 9000 platform identifier
+  ``com.cisco.ios-xrv9000``.
+
+**Changed**
+
+- ``cot edit-hardware`` options ``--nic-types``, ``--ide-subtypes``, and
+  ``--scsi-subtypes`` are now validated and canonicalized by COT, meaning that:
+
+  - ``cot edit-hardware --nic-type virtio-net-pci`` is now a valid command and
+    will correctly create an OVF with ``ResourceSubType`` ``virtio``
+    (not ``virtio-net-pci``)
+  - ``cot edit-hardware --ide-subtype foobar`` will now fail with an error
+
 `1.4.2`_ - 2016-05-11
 ---------------------
 
 **Added**
 
-- COT now supports ``xorriso`` as another alternative to ``mkisofs`` and ``genisoimage``
+- COT now supports ``xorriso`` as another alternative to ``mkisofs`` and
+  ``genisoimage``
 
 **Fixed**
 
-- `#42`_ - ``cot deploy esxi`` error handling behavior needed to be updated for `requests`_ release 2.8.
+- `#42`_ - ``cot deploy esxi`` error handling behavior needed to be updated
+  for `requests`_ release 2.8.
 - `#44`_ - test case failure seen when running `pyVmomi`_ 6.0.0.2016.4.
 
 **Changed**
 
-- Installation document now recommends installation via `pip`_ rather than installing from source.
-- `#40`_ - Now uses faster Docker-based infrastructure from `Travis CI`_ for CI builds/tests.
+- Installation document now recommends installation via `pip`_ rather than
+  installing from source.
+- `#40`_ - Now uses faster Docker-based infrastructure from `Travis CI`_ for
+  CI builds/tests.
 
 `1.4.1`_ - 2015-09-02
 ---------------------
@@ -334,6 +358,7 @@ Initial public release.
 .. _#41: https://github.com/glennmatthews/cot/issues/41
 .. _#42: https://github.com/glennmatthews/cot/issues/42
 .. _#44: https://github.com/glennmatthews/cot/issues/44
+.. _#45: https://github.com/glennmatthews/cot/issues/45
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

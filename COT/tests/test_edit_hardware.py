@@ -400,41 +400,42 @@ CIM_ResourceAllocationSettingData">
     def test_set_nic_type_all_profiles(self):
         """Change NIC hardware type under all profiles."""
         self.instance.package = self.input_ovf
-        self.instance.nic_type = "virtio"
+        self.instance.nic_type = "virtio-net-pci"
+        self.assertEqual(self.instance.nic_type, "virtio")
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
          <rasd:Connection>VM Network</rasd:Connection>
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
-+        <rasd:Description>VIRTIO ethernet adapter on "VM Network"\
++        <rasd:Description>virtio ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
          <rasd:InstanceID>11</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>VIRTIO</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 ...
          <rasd:Connection>VM Network</rasd:Connection>
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
-+        <rasd:Description>VIRTIO ethernet adapter on "VM Network"\
++        <rasd:Description>virtio ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
          <rasd:InstanceID>12</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>VIRTIO</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 ...
          <rasd:Connection>VM Network</rasd:Connection>
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
-+        <rasd:Description>VIRTIO ethernet adapter on "VM Network"\
++        <rasd:Description>virtio ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
          <rasd:InstanceID>13</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>VIRTIO</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 """)
 
@@ -827,11 +828,11 @@ CIM_ResourceAllocationSettingData">
         self.assertEqual(self.instance.nic_type, None)
 
         self.instance.nic_type = 'e1000'
-        self.assertEqual(self.instance.nic_type, 'e1000')
-        self.assertEqual(self.instance.nic_types, ['e1000'])
+        self.assertEqual(self.instance.nic_type, 'E1000')
+        self.assertEqual(self.instance.nic_types, ['E1000'])
 
         self.instance.nic_types = ['e1000', 'virtio']
-        self.assertEqual(self.instance.nic_types, ['e1000', 'virtio'])
+        self.assertEqual(self.instance.nic_types, ['E1000', 'virtio'])
         with self.assertRaises(TypeError):
             self.instance.nic_type
 
@@ -867,12 +868,12 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT1</rasd:Connection>
-+        <rasd:Description>E1000 VIRTIO ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 virtio ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
          <rasd:InstanceID>11</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>E1000 VIRTIO</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 virtio</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 ...
        <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
@@ -883,12 +884,12 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT2</rasd:Connection>
-+        <rasd:Description>E1000 VIRTIO ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 virtio ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
          <rasd:InstanceID>12</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>E1000 VIRTIO</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 virtio</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 ...
        <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
@@ -899,12 +900,12 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT3</rasd:Connection>
-+        <rasd:Description>E1000 VIRTIO ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 virtio ethernet adapter on "VM Network"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
          <rasd:InstanceID>13</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
-+        <rasd:ResourceSubType>E1000 VIRTIO</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 virtio</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
 """)
 
@@ -1178,9 +1179,9 @@ CIM_ResourceAllocationSettingData">
         """Clear SCSI controller subtype under all profiles."""
         self.instance.package = self.input_ovf
         self.instance.scsi_subtype = ""
-        self.assertEqual(self.instance.scsi_subtype, "")
+        self.assertEqual(self.instance.scsi_subtype, None)
         # TODO: this should really be an empty list or None
-        self.assertEqual(self.instance.scsi_subtypes, [""])
+        self.assertEqual(self.instance.scsi_subtypes, [])
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -1219,7 +1220,9 @@ CIM_ResourceAllocationSettingData">
         self.instance.package = self.minimal_ovf
         self.assertEqual(self.instance.scsi_subtype, None)
         self.assertEqual(self.instance.scsi_subtypes, None)
-        self.instance.scsi_subtype = "virtio"
+        self.instance.scsi_subtype = "virtualscsi"
+        self.assertEqual(self.instance.scsi_subtype, "VirtualSCSI")
+        self.assertEqual(self.instance.scsi_subtypes, ["VirtualSCSI"])
         self.instance.run()
         self.assertLogged(**self.NO_ITEMS_NO_WORK)
         self.instance.finished()
@@ -1228,8 +1231,8 @@ CIM_ResourceAllocationSettingData">
     def test_set_ide_subtype_all_profiles(self):
         """Set IDE controller subtype across all profiles."""
         self.instance.package = self.input_ovf
-        self.instance.ide_subtypes = ["virtio", "foobar"]
-        self.assertEqual(self.instance.ide_subtypes, ["virtio", "foobar"])
+        self.instance.ide_subtypes = ["virtio", "piix4"]
+        self.assertEqual(self.instance.ide_subtypes, ["virtio", "PIIX4"])
         with self.assertRaises(TypeError):
             self.instance.ide_subtype
         self.instance.run()
@@ -1238,11 +1241,11 @@ CIM_ResourceAllocationSettingData">
         # under each controller:
         self.check_diff("""
          <rasd:InstanceID>4</rasd:InstanceID>
-+        <rasd:ResourceSubType>virtio foobar</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio PIIX4</rasd:ResourceSubType>
          <rasd:ResourceType>5</rasd:ResourceType>
 ...
          <rasd:InstanceID>5</rasd:InstanceID>
-+        <rasd:ResourceSubType>virtio foobar</rasd:ResourceSubType>
++        <rasd:ResourceSubType>virtio PIIX4</rasd:ResourceSubType>
          <rasd:ResourceType>5</rasd:ResourceType>
 """)
 

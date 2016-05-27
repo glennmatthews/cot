@@ -30,6 +30,8 @@ import re
 import textwrap
 import warnings
 
+from .data_validation import canonicalize_ide_subtype, canonicalize_nic_subtype
+from .data_validation import canonicalize_scsi_subtype
 from .data_validation import natural_sort, no_whitespace, mac_address
 from .data_validation import non_negative_int, positive_int, InvalidInputError
 from .submodule import COTSubmodule
@@ -88,10 +90,8 @@ class COTEditHardware(COTSubmodule):
         self._serial_ports = None
         self.serial_connectivity = None
         """List of serial connection strings."""
-        self.scsi_subtypes = None
-        """Subtype string list for SCSI controllers"""
-        self.ide_subtypes = None
-        """Subtype string list for IDE controllers"""
+        self._scsi_subtypes = None
+        self._ide_subtypes = None
         self.virtual_system_type = None
         """Virtual system type"""
 
@@ -173,7 +173,7 @@ class COTEditHardware(COTSubmodule):
            Use :attr:`nic_types` instead.
         """
         warnings.warn("Use nic_types instead", DeprecationWarning)
-        if self.nic_types is None:
+        if self.nic_types is None or len(self.nic_types) == 0:
             return None
         if len(self.nic_types) > 1:
             raise TypeError("nic_types has more than one element ({0}). "
@@ -193,6 +193,7 @@ class COTEditHardware(COTSubmodule):
 
     @nic_types.setter
     def nic_types(self, value):
+        value = [canonicalize_nic_subtype(v) for v in value]
         self.vm.platform.validate_nic_types(value)
         self._nic_types = value
 
@@ -218,7 +219,7 @@ class COTEditHardware(COTSubmodule):
            Use :attr:`scsi_subtypes` instead.
         """
         warnings.warn("Use scsi_subtypes instead", DeprecationWarning)
-        if self.scsi_subtypes is None:
+        if self.scsi_subtypes is None or len(self.scsi_subtypes) == 0:
             return None
         if len(self.scsi_subtypes) > 1:
             raise TypeError("scsi_subtypes has more than one element ({0}). "
@@ -232,6 +233,18 @@ class COTEditHardware(COTSubmodule):
         self.scsi_subtypes = [value]
 
     @property
+    def scsi_subtypes(self):
+        """SCSI controller subtype string(s) to set."""
+        return self._scsi_subtypes
+
+    @scsi_subtypes.setter
+    def scsi_subtypes(self, value):
+        value = [canonicalize_scsi_subtype(v) for v in value]
+        value = [v for v in value if v]
+        # TODO: self.vm.platform.validate_scsi_types(value)
+        self._scsi_subtypes = value
+
+    @property
     def ide_subtype(self):
         """NIC type string to set.
 
@@ -239,7 +252,7 @@ class COTEditHardware(COTSubmodule):
            Use :attr:`ide_subtypes` instead.
         """
         warnings.warn("Use ide_subtypes instead", DeprecationWarning)
-        if self.ide_subtypes is None:
+        if self.ide_subtypes is None or len(self.ide_subtypes) == 0:
             return None
         if len(self.ide_subtypes) > 1:
             raise TypeError("ide_subtypes has more than one element ({0}). "
@@ -251,6 +264,18 @@ class COTEditHardware(COTSubmodule):
     def ide_subtype(self, value):
         warnings.warn("Use ide_subtypes instead", DeprecationWarning)
         self.ide_subtypes = [value]
+
+    @property
+    def ide_subtypes(self):
+        """IDE controller subtype string(s) to set."""
+        return self._ide_subtypes
+
+    @ide_subtypes.setter
+    def ide_subtypes(self, value):
+        value = [canonicalize_ide_subtype(v) for v in value]
+        value = [v for v in value if v]
+        # TODO: self.vm.platform.validate_ide_types(value)
+        self._ide_subtypes = value
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -493,7 +518,6 @@ class COTEditHardware(COTSubmodule):
                        help="Set the number of NICs.")
         g.add_argument('--nic-types', nargs='+',
                        metavar=('TYPE', 'TYPE2'),
-                       choices=['e1000', 'virtio', 'vmxnet3'],
                        help="Set the hardware type(s) for all NICs. "
                        "(default: do not change existing NICs, and new "
                        "NICs added will match the existing type(s).)")

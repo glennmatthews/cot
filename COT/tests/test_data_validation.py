@@ -21,7 +21,9 @@ try:
 except ImportError:
     import unittest
 
-from COT.data_validation import match_or_die
+import re
+
+from COT.data_validation import canonicalize_helper, match_or_die
 from COT.data_validation import mac_address, device_address, no_whitespace
 from COT.data_validation import validate_int, non_negative_int, positive_int
 from COT.data_validation import InvalidInputError
@@ -31,6 +33,37 @@ from COT.data_validation import ValueTooLowError, ValueTooHighError
 
 class TestValidationFunctions(unittest.TestCase):
     """Test cases for input validation APIs."""
+
+    def test_canonicalize_helper(self):
+        """Test the canonicalize_helper() function."""
+        mappings = [
+            ("lsi *logic *sas", 'lsilogicsas'),
+            ("lsi *logic", 'lsilogic'),
+            ("[fF]oo[0-9]+[bB]ar", 'FooBar'),
+        ]
+        # not case-insensitive by default
+        with self.assertRaises(ValueUnsupportedError) as cm:
+            canonicalize_helper("foo", "LSI Logic SAS", mappings)
+        self.assertEqual(cm.exception.value_type, "foo")
+        self.assertEqual(cm.exception.expected_value,
+                         ["lsilogicsas", "lsilogic", "FooBar"])
+
+        # but can be case-insensitive on request
+        self.assertEqual(canonicalize_helper("", "LSI Logic SAS",
+                                             mappings, re.IGNORECASE),
+                         "lsilogicsas")
+
+        # mappings are checked in order
+        self.assertEqual(canonicalize_helper("", "lsilogics",
+                                             mappings, re.IGNORECASE),
+                         "lsilogic")
+        # mappings are regexps
+        self.assertEqual(canonicalize_helper("", "foo123bar",
+                                             mappings),
+                         "FooBar")
+        # special cases
+        self.assertEqual(canonicalize_helper("", "", mappings), None)
+        self.assertEqual(canonicalize_helper("", None, mappings), None)
 
     def test_match_or_die(self):
         """Test the match_or_die() function."""
