@@ -24,6 +24,7 @@ except ImportError:
 import re
 
 from COT.data_validation import canonicalize_helper, match_or_die
+from COT.data_validation import canonicalize_nic_subtype, NIC_TYPES
 from COT.data_validation import mac_address, device_address, no_whitespace
 from COT.data_validation import validate_int, non_negative_int, positive_int
 from COT.data_validation import InvalidInputError
@@ -64,6 +65,14 @@ class TestValidationFunctions(unittest.TestCase):
         # special cases
         self.assertEqual(canonicalize_helper("", "", mappings), None)
         self.assertEqual(canonicalize_helper("", None, mappings), None)
+
+    def test_nic_types_idempotence(self):
+        """Test the canonicalize_nic_subtype() function.
+
+        Verify that the NIC_TYPES / _NIC_MAPPINGS are idempotent.
+        """
+        for t in NIC_TYPES:
+            self.assertEqual(canonicalize_nic_subtype(t), t)
 
     def test_match_or_die(self):
         """Test the match_or_die() function."""

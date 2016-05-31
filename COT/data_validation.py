@@ -46,6 +46,11 @@
   positive_int
   to_string
   validate_int
+
+**Constants**
+
+.. autosummary::
+  NIC_TYPES
 """
 
 import xml.etree.ElementTree as ET
@@ -136,30 +141,31 @@ def canonicalize_ide_subtype(subtype):
                                ],
                                re.IGNORECASE)
 
+_NIC_MAPPINGS = [
+    ("e1000e", 'E1000e'),
+    ("e1000", 'E1000'),
+    ("pcnet32", 'PCNet32'),
+    ("virtio", 'virtio'),
+    ("vmxnet *3", 'VMXNET3'),
+]
+
+NIC_TYPES = [m[1] for m in _NIC_MAPPINGS]
+"""List of NIC type strings recognized as canonical."""
+
 
 def canonicalize_nic_subtype(subtype):
     """Try to convert the given NIC subtype string to a canonical form.
 
     :param str subtype: User-provided string
-    :returns: The canonical string, one of:
-
-      - ``E1000``
-      - ``E1000e``
-      - ``PCNet32``
-      - ``virtio``
-      - ``VMXNET3``
+    :returns: The canonical string, one of :data:`NIC_TYPES`
 
     :raise ValueUnsupportedError: If the canonical string cannot be determined
+
+    .. seealso::
+       :meth:`COT.platforms.GenericPlatform.validate_nic_type`
     """
     return canonicalize_helper("NIC subtype", subtype,
-                               [
-                                   ("e1000e", 'E1000e'),
-                                   ("e1000", 'E1000'),
-                                   ("pcnet32", 'PCNet32'),
-                                   ("virtio", 'virtio'),
-                                   ("vmxnet *3", 'VMXNET3'),
-                               ],
-                               re.IGNORECASE)
+                               _NIC_MAPPINGS, re.IGNORECASE)
 
 
 def canonicalize_scsi_subtype(subtype):

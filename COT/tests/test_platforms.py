@@ -102,11 +102,13 @@ class TestIOSXRv(unittest.TestCase):
     def test_nic_type(self):
         """Test NIC valid and invalid types."""
         self.assertRaises(ValueUnsupportedError,
-                          self.cls.validate_nic_type, "vmxnet3")
-        self.cls.validate_nic_type("e1000")
+                          self.cls.validate_nic_type, "E1000e")
         self.cls.validate_nic_type("E1000")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "PCNet32")
         self.cls.validate_nic_type("virtio")
-        self.cls.validate_nic_type("VirtIO")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "VMXNET3")
 
     def test_serial_count(self):
         """Test serial port range limits."""
@@ -217,12 +219,13 @@ class TestIOSXRv9000(unittest.TestCase):
 
     def test_nic_type(self):
         """Test NIC valid and invalid types."""
-        self.cls.validate_nic_type("vmxnet3")
-        self.cls.validate_nic_type("VMXNET3")
-        self.cls.validate_nic_type("e1000")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "E1000e")
         self.cls.validate_nic_type("E1000")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "PCNet32")
         self.cls.validate_nic_type("virtio")
-        self.cls.validate_nic_type("VirtIO")
+        self.cls.validate_nic_type("VMXNET3")
 
     def test_serial_count(self):
         """Test serial port range limits."""
@@ -286,12 +289,13 @@ class TestCSR1000V(unittest.TestCase):
 
     def test_nic_type(self):
         """Test NIC valid and invalid types."""
-        self.cls.validate_nic_type("vmxnet3")
-        self.cls.validate_nic_type("VMXNET3")
-        self.cls.validate_nic_type("e1000")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "E1000e")
         self.cls.validate_nic_type("E1000")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "PCNet32")
         self.cls.validate_nic_type("virtio")
-        self.cls.validate_nic_type("VirtIO")
+        self.cls.validate_nic_type("VMXNET3")
 
     def test_serial_count(self):
         """Test serial port range limits."""
@@ -342,11 +346,14 @@ class TestIOSv(unittest.TestCase):
     def test_nic_type(self):
         """Test NIC valid and invalid types."""
         self.assertRaises(ValueUnsupportedError,
-                          self.cls.validate_nic_type, "vmxnet3")
+                          self.cls.validate_nic_type, "E1000e")
+        self.cls.validate_nic_type("E1000")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "PCNet32")
         self.assertRaises(ValueUnsupportedError,
                           self.cls.validate_nic_type, "virtio")
-        self.cls.validate_nic_type("e1000")
-        self.cls.validate_nic_type("E1000")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "VMXNET3")
 
     def test_serial_count(self):
         """Test serial port range limits."""
@@ -403,11 +410,13 @@ class TestNXOSv(unittest.TestCase):
     def test_nic_type(self):
         """Test NIC valid and invalid types."""
         self.assertRaises(ValueUnsupportedError,
-                          self.cls.validate_nic_type, "vmxnet3")
-        self.cls.validate_nic_type("e1000")
+                          self.cls.validate_nic_type, "E1000e")
         self.cls.validate_nic_type("E1000")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "PCNet32")
         self.cls.validate_nic_type("virtio")
-        self.cls.validate_nic_type("VirtIO")
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_nic_type, "VMXNET3")
 
     def test_serial_count(self):
         """Test serial port range limits."""

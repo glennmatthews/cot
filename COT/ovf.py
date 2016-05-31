@@ -57,6 +57,7 @@ from .xml_file import XML
 from .vm_description import VMDescription, VMInitError
 from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
+from .data_validation import canonicalize_nic_subtype
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
 import COT.platforms as Platform
@@ -1207,6 +1208,8 @@ class OVF(VMDescription, XML):
         :param list type_list: NIC hardware type(s)
         :param list profile_list: Change only the given profiles.
         """
+        # Just to be safe...
+        type_list = [canonicalize_nic_subtype(t) for t in type_list]
         self.platform.validate_nic_types(type_list)
         self.hardware.set_value_for_all_items('ethernet',
                                               self.RESOURCE_SUB_TYPE,
