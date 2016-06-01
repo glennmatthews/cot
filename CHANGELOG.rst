@@ -8,6 +8,8 @@ This project adheres to `Semantic Versioning`_.
 
 **Added**
 
+- `#43`_ - add ``cot edit-properties --transport`` option to set environment
+  transport type(s) - iso, VMWare Tools, etc.
 - `#45`_ - support for multiple values for ``--nic-types``, ``--ide-subtypes``,
   and ``--scsi-subtypes`` in ``cot edit-hardware``.
 - COT now recognizes the Cisco IOS XRv 9000 platform identifier
@@ -357,6 +359,7 @@ Initial public release.
 .. _#40: https://github.com/glennmatthews/cot/issues/40
 .. _#41: https://github.com/glennmatthews/cot/issues/41
 .. _#42: https://github.com/glennmatthews/cot/issues/42
+.. _#43: https://github.com/glennmatthews/cot/issues/43
 .. _#44: https://github.com/glennmatthews/cot/issues/44
 .. _#45: https://github.com/glennmatthews/cot/issues/45
 

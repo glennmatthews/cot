@@ -3,7 +3,7 @@
 # vm_description.py - Abstract class for reading, editing, and writing VMs
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -57,6 +57,7 @@ class VMDescription(object):
       config_profiles
       default_config_profile
       environment_properties
+      environment_transports
       networks
       system_types
       version_short
@@ -165,6 +166,18 @@ class VMDescription(object):
           ``"label"``, and ``"description"``.
         """
         raise NotImplementedError("environment_properties not implemented")
+
+    @property
+    def environment_transports(self):
+        """The list of environment transport methods.
+
+        :rtype: list[str]
+        """
+        raise NotImplementedError("environment_transports not implemented")
+
+    @environment_transports.setter
+    def environment_transports(self, value):
+        raise NotImplementedError("environment_transports not implemented")
 
     @property
     def networks(self):

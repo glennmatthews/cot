@@ -134,6 +134,9 @@ NICs and Associated Networks:
   GigabitEthernet2 : VM Network
   GigabitEthernet3 : VM Network
 
+Environment:
+  Transport types: iso
+
 Properties:
   login-username       Login Username                   ""
   login-password       Login Password                   ""
@@ -174,6 +177,9 @@ Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
 
 Networks:
   VM Network  "VM Network"
+
+Environment:
+  Transport types: iso
 
 Properties:
   login-username       Login Username                   ""
@@ -232,6 +238,9 @@ NICs and Associated Networks:
     VMXNET3 ethernet adapter on "VM Network"
   GigabitEthernet3 : VM Network
     VMXNET3 ethernet adapter on "VM Network"
+
+Environment:
+  Transport types: iso
 
 Properties:
   login-username       Login Username                   ""

@@ -3,7 +3,7 @@
 # ovf.py - Class for OVF/OVA handling
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -151,6 +151,7 @@ class OVF(VMDescription, XML):
       config_profiles
       default_config_profile
       environment_properties
+      environment_transports
       networks
       system_types
       version_short
@@ -289,7 +290,8 @@ class OVF(VMDescription, XML):
                 required=True)
             self.product_section = self.find_child(
                 self.virtual_system,
-                self.PRODUCT_SECTION)
+                self.PRODUCT_SECTION,
+                attrib=self.PRODUCT_SECTION_ATTRIB)
             self.annotation_section = self.find_child(
                 self.virtual_system,
                 self.ANNOTATION_SECTION,
@@ -426,7 +428,7 @@ class OVF(VMDescription, XML):
           ``"label"``, and ``"description"``.
         """
         result = []
-        if self.product_section is None:
+        if self.ovf_version < 1.0 or self.product_section is None:
             return result
         elems = self.product_section.findall(self.PROPERTY)
         for elem in elems:
@@ -442,6 +444,31 @@ class OVF(VMDescription, XML):
             })
 
         return result
+
+    @property
+    def environment_transports(self):
+        """The list of environment transport methods.
+
+        :rtype: list[str]
+        """
+        if self.ovf_version < 1.0:
+            return None
+        if self.virtual_hw_section is not None:
+            value = self.virtual_hw_section.get(self.ENVIRONMENT_TRANSPORT)
+            if value:
+                return value.split(" ")
+        return None
+
+    @environment_transports.setter
+    def environment_transports(self, transports):
+        if self.ovf_version < 1.0:
+            raise NotImplementedError("No support for setting environment"
+                                      "transports value on OVF 0.9 format.")
+        transports_string = " ".join(transports)
+        logger.info("Setting {0} to '{1}'".format(self.ENVIRONMENT_TRANSPORT,
+                                                  transports_string))
+        self.virtual_hw_section.set(self.ENVIRONMENT_TRANSPORT,
+                                    transports_string)
 
     @property
     def networks(self):
@@ -965,6 +992,15 @@ class OVF(VMDescription, XML):
                         str_list.extend(wrapper.wrap(desc))
             section_list.append("\n".join(str_list))
 
+        if self.environment_transports:
+            str_list = ["Environment:"]
+            wrapper.initial_indent = '  '
+            wrapper.subsequent_indent = '                   '
+            str_list.extend(wrapper.wrap(
+                "Transport types: {0}"
+                .format(" ".join(self.environment_transports))))
+            section_list.append("\n".join(str_list))
+
         # Property information
         properties = self.environment_properties
         if properties:
@@ -977,9 +1013,13 @@ class OVF(VMDescription, XML):
             wrapper.subsequent_indent = '      '
             for ph in properties:
                 # If the terminal is wide enough, display "key label value",
-                # else only display "label value"
+                # else only display "label value", or "key value" if no label
                 if max_key + max_label + max_value < TEXT_WIDTH - 8:
-                    str_list.append('  {key:{kw}}  {label:{lw}}  {val}'.format(
+                    if max_label > 0:
+                        format_str = '  {key:{kw}}  {label:{lw}}  {val}'
+                    else:
+                        format_str = '  {key:{kw}}  {val}'
+                    str_list.append(format_str.format(
                         key=ph['key'],
                         kw=max_key,
                         label=ph['label'],
@@ -1362,7 +1402,7 @@ class OVF(VMDescription, XML):
         :param str key: Property identifier
         :return: Value of this property, or ``None``
         """
-        if self.product_section is None:
+        if self.ovf_version < 1.0 or self.product_section is None:
             return None
         property = self.find_child(self.product_section, self.PROPERTY,
                                    attrib={self.PROP_KEY: key})
@@ -1377,9 +1417,13 @@ class OVF(VMDescription, XML):
         :param value: Value to set for this property
         :return: the (converted) value that was set.
         """
+        if self.ovf_version < 1.0:
+            raise NotImplementedError("No support for setting environment "
+                                      "properties under OVF v0.9")
         if self.product_section is None:
             self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION)
+                self.virtual_system, self.PRODUCT_SECTION,
+                attrib=self.PRODUCT_SECTION_ATTRIB)
             # Any Section must have an Info as child
             self.set_or_make_child(self.product_section, self.INFO,
                                    "Product Information")
@@ -2180,7 +2224,8 @@ class OVF(VMDescription, XML):
         """
         if self.product_section is None:
             self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION)
+                self.virtual_system, self.PRODUCT_SECTION,
+                attrib=self.PRODUCT_SECTION_ATTRIB)
             # Any Section must have an Info as child
             self.set_or_make_child(self.product_section, self.INFO,
                                    "Product Information")
@@ -2466,10 +2511,15 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
             self.VIRTUAL_SYSTEM_ATTRIB = {
                 XSI + 'type': "ovf:VirtualSystem_Type"
             }
+            self.PRODUCT_SECTION = OVF + 'Section'
+            self.PRODUCT_SECTION_ATTRIB = {
+                XSI + 'type': "ovf:ProductSection_Type"
+            }
         else:
             self.VIRTUAL_SYSTEM = OVF + 'VirtualSystem'
             self.VIRTUAL_SYSTEM_ATTRIB = {}
-        self.PRODUCT_SECTION = OVF + 'ProductSection'
+            self.PRODUCT_SECTION = OVF + 'ProductSection'
+            self.PRODUCT_SECTION_ATTRIB = {}
         # ProductSection attributes
         self.PRODUCT_CLASS = OVF + 'class'
         # ProductSection sub-elements
@@ -2483,12 +2533,17 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
         self.PROPERTY = OVF + 'Property'
         # Attributes of a Property element
         self.PROP_KEY = OVF + 'key'
-        self.PROP_VALUE = OVF + 'value'
+        if self.ovf_version < 1.0:
+            self.PROP_VALUE = OVF + 'defaultValue'
+        else:
+            self.PROP_VALUE = OVF + 'value'
         self.PROP_QUAL = OVF + 'qualifiers'
         self.PROP_TYPE = OVF + 'type'
         # Property sub-elements
         self.PROPERTY_LABEL = OVF + 'Label'
         self.PROPERTY_DESC = OVF + 'Description'
+
+        self.ENVIRONMENT_TRANSPORT = OVF + 'transport'
 
         # Envelope -> VirtualSystem -> EulaSection -> License
         if self.ovf_version < 1.0:

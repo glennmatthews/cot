@@ -1,7 +1,7 @@
 # vm_description.py - Unit test cases for generic VMDescription class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -133,6 +133,10 @@ class TestVMDescription(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             ins.environment_properties
+        with self.assertRaises(NotImplementedError):
+            ins.environment_transports
+        with self.assertRaises(NotImplementedError):
+            ins.environment_transports = ['iso']
         self.assertRaises(NotImplementedError,
                           ins.get_property_value, None)
         self.assertRaises(NotImplementedError,
