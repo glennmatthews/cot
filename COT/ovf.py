@@ -765,8 +765,9 @@ class OVF(VMDescription, XML):
         header = '\n'.join(str_list)
 
         # Product information
-        p = self.product_section
-        if p is not None:
+        if (self.product or self.vendor or self.version_short or
+            verbosity_option != 'brief' and (
+                self.product_url or self.vendor_url or self.version_long)):
             str_list = []
             wrapper.initial_indent = ''
             wrapper.subsequent_indent = '          '
@@ -1005,22 +1006,24 @@ class OVF(VMDescription, XML):
         properties = self.environment_properties
         if properties:
             str_list = ["Properties:"]
-            max_key = max([len(str(ph['key'])) for ph in properties])
+            max_key = 2 + max([len(str(ph['key'])) for ph in properties])
             max_label = max([len(str(ph['label'])) for ph in properties])
             max_value = max([len(str(ph['value'])) for ph in properties])
-            max_width = max(max_key, max_label)
+            if all(ph['label'] for ph in properties):
+                max_width = max_label
+            else:
+                max_width = max(max_key, max_label)
             wrapper.initial_indent = '      '
             wrapper.subsequent_indent = '      '
             for ph in properties:
-                # If the terminal is wide enough, display "key label value",
-                # else only display "label value", or "key value" if no label
-                if max_key + max_label + max_value < TEXT_WIDTH - 8:
-                    if max_label > 0:
-                        format_str = '  {key:{kw}}  {label:{lw}}  {val}'
-                    else:
-                        format_str = '  {key:{kw}}  {val}'
+                # If we have a label, and the terminal is wide enough,
+                # display "<key> label value", else if no label, display
+                # "<key> value", else only display "label value"
+                if max_label > 0 and (max_key + max_label + max_value <
+                                      TEXT_WIDTH - 8):
+                    format_str = '  {key:{kw}}  {label:{lw}}  {val}'
                     str_list.append(format_str.format(
-                        key=ph['key'],
+                        key="<{0}>".format(ph['key']),
                         kw=max_key,
                         label=ph['label'],
                         lw=max_label,

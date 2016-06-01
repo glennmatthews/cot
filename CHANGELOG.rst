@@ -10,6 +10,10 @@ This project adheres to `Semantic Versioning`_.
 
 - `#43`_ - add ``cot edit-properties --transport`` option to set environment
   transport type(s) - iso, VMWare Tools, etc.
+
+  - ``cot info`` now has a new "Environment" section that displays the
+    transport type
+
 - `#45`_ - support for multiple values for ``--nic-types``, ``--ide-subtypes``,
   and ``--scsi-subtypes`` in ``cot edit-hardware``.
 - COT now recognizes the Cisco IOS XRv 9000 platform identifier
@@ -24,6 +28,10 @@ This project adheres to `Semantic Versioning`_.
     will correctly create an OVF with ``ResourceSubType`` ``virtio``
     (not ``virtio-net-pci``)
   - ``cot edit-hardware --ide-subtype foobar`` will now fail with an error
+
+- ``cot info`` is now more self-consistent in how it displays property keys.
+  They are now always wrapped in ``<`` ``>``, whereas previously this was
+  only sometimes the case.
 
 `1.4.2`_ - 2016-05-11
 ---------------------

@@ -168,5 +168,9 @@
       <vmw:Config ovf:required="false" vmw:key="tools.syncTimeWithHost" vmw:value="false" />
       <vmw:Config ovf:required="false" vmw:key="tools.toolsUpgradePolicy" vmw:value="manual" />
     </ovf:VirtualHardwareSection>
+    <ovf:ProductSection>
+      <ovf:Info>Product Information</ovf:Info>
+      <ovf:Property ovf:key="custom-property" ovf:type="string" ovf:value="custom-value" />
+    </ovf:ProductSection>
   </ovf:VirtualSystem>
 </ovf:Envelope>        
