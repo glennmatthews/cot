@@ -33,6 +33,8 @@ This project adheres to `Semantic Versioning`_.
 - ``cot info`` is now more self-consistent in how it displays property keys.
   They are now always wrapped in ``<`` ``>``, whereas previously this was
   only sometimes the case.
+- ``cot info --verbose`` now displays file and disk ID strings under the
+  "Files and Disks" section.
 
 `1.4.2`_ - 2016-05-11
 ---------------------

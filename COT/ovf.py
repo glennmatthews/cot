@@ -891,6 +891,13 @@ class OVF(VMDescription, XML):
                 else:
                     str_list.append(template2.format(href_str, file_size_str))
 
+                if verbosity_option == 'verbose':
+                    str_list.append("    File ID: {0}"
+                                    .format(file.get(self.FILE_ID)))
+                    if disk is not None:
+                        str_list.append("    Disk ID: {0}"
+                                        .format(disk.get(self.DISK_ID)))
+
             # Find placeholder disks as well
             for disk in disk_list:
                 file_id = disk.get(self.DISK_FILE_REF)

@@ -211,8 +211,12 @@ Version:  DEV
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+    File ID: file1
+    Disk ID: vmdisk1
   input.iso          352.00 kB           cdrom @ IDE 1:0
+    File ID: file2
   sample_cfg.txt          78 B
+    File ID: textfile
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -342,6 +346,8 @@ Version:  15.4(2.4)T
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ IDE 0:0
+    File ID: vios-adventerprisek9-m.vmdk
+    Disk ID: vios-adventerprisek9-m.vmdk
   (disk placeholder)        -- 128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
@@ -476,6 +482,8 @@ End User License Agreement(s):
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+    File ID: file1
+    Disk ID: vmdisk1
 
 Hardware Variants:
   System types:             vmx-04
@@ -535,6 +543,8 @@ Properties:
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+    File ID: file1
+    Disk ID: vmdisk1
 
 Hardware Variants:
   System types:             vmx-08
@@ -573,6 +583,8 @@ Properties:
 Files and Disks:        File Size  Capacity Device
                         --------- --------- --------------------
   ubuntu.2.0-disk1.vmdk             8.00 GB harddisk @ SATA 0:0
+    File ID: file1
+    Disk ID: vmdisk1
 
 Hardware Variants:
   System types:             virtualbox-2.2
@@ -640,7 +652,10 @@ Version:  (No version string)
 Files and Disks:                       File Size  Capacity Device
                                        --------- --------- --------------------
   this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB 
+    File ID: input.vmdk
+    Disk ID: input.vmdk
   input.iso                            352.00 kB           cdrom @ (?) ?:0
+    File ID: input.iso
   (disk placeholder)                          -- 128.00 MB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
@@ -744,7 +759,10 @@ Version:  (No version string)
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   this_is_a_reall... 149.00 kB   1.00 GB 
+    File ID: input.vmdk
+    Disk ID: input.vmdk
   input.iso          352.00 kB           cdrom @ (?) ?:0
+    File ID: input.iso
   (disk placeholder)        -- 128.00 MB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
