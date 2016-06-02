@@ -87,8 +87,16 @@ class COTRemoveFile(COTSubmodule):
         if self.file_path is None:
             self.file_path = vm.get_path_from_file(file)
 
-        self.UI.confirm_or_die("Delete file '{0}' (ID '{1}')?"
-                               .format(self.file_path, self.file_id))
+        prompt_info = "file '{0}' (ID '{1}')".format(self.file_path,
+                                                     self.file_id)
+        if disk is not None:
+            # TODO: API
+            prompt_info += " and disk '{0}'".format(disk.get(vm.DISK_ID))
+        if disk_drive is not None:
+            prompt_info += " and device '{0}'".format(
+                vm.device_info_str(disk_drive))
+
+        self.UI.confirm_or_die("Remove {0}?".format(prompt_info))
 
         vm.remove_file(file, disk=disk,
                        disk_drive=disk_drive)
