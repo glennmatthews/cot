@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# add_disk.py - test cases for the COTAddDisk class
+# test_add_disk.py - test cases for the COTAddDisk class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -111,7 +111,8 @@ class TestCOTAddDisk(COT_UT):
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
         self.instance.finished()
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" \
 ovf:size="{blank_size}" />
    </ovf:References>
@@ -134,7 +135,7 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
-""".format(iso_size=self.FILE_SIZE['input.iso'],
+""".format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            blank_size=self.FILE_SIZE['blank.vmdk']))
         # Make sure the disk file is copied over
         self.assertTrue(filecmp.cmp(self.blank_vmdk,
@@ -151,7 +152,8 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
         self.instance.finished()
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" \
 ovf:size="{blank_size}" />
    </ovf:References>
@@ -182,7 +184,7 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
-""".format(iso_size=self.FILE_SIZE['input.iso'],
+""".format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            blank_size=self.FILE_SIZE['blank.vmdk']))
         # Make sure the disk file is copied over
         self.assertTrue(filecmp.cmp(self.blank_vmdk,
@@ -429,7 +431,8 @@ ovf:fileRef="file1" ovf:format=\
      <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />
 -    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
 +    <ovf:File ovf:href="blank.vmdk" ovf:id="file2" ovf:size="{blank_size}" />
-   </ovf:References>
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 ...
      <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" \
 ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
@@ -449,7 +452,8 @@ ovf:diskId="file2" ovf:fileRef="file2" ovf:format=\
        </ovf:Item>
         """.format(vmdk_size=self.FILE_SIZE['input.vmdk'],
                    iso_size=self.FILE_SIZE['input.iso'],
-                   blank_size=self.FILE_SIZE['blank.vmdk']))
+                   blank_size=self.FILE_SIZE['blank.vmdk'],
+                   cfg_size=self.FILE_SIZE['sample_cfg.txt']))
         # Make sure the old disk is not copied
         self.assertFalse(os.path.exists(os.path.join(self.temp_dir,
                                                      "input.iso")),
@@ -473,7 +477,8 @@ ovf:diskId="file2" ovf:fileRef="file2" ovf:format=\
         self.instance.finished()
         # Make sure the disk was converted and added to the OVF
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="new.vmdk" ovf:id="new.vmdk" ovf:size="{new_size}" />
    </ovf:References>
 ...
@@ -495,7 +500,7 @@ ovf:diskId="new.vmdk" ovf:fileRef="new.vmdk" ovf:format=\
 +        <rasd:ResourceType>17</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
-""".format(iso_size=self.FILE_SIZE['input.iso'],
+""".format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            new_size=os.path.getsize(os.path.join(self.temp_dir, "new.vmdk"))))
         # Make sure the disk was actually converted to the right format
         format, subformat = get_disk_format(os.path.join(self.temp_dir,
@@ -598,7 +603,8 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" \
 ovf:size="{blank_size}" />
    </ovf:References>
@@ -613,7 +619,8 @@ ovf:size="{blank_size}" />
 +        <rasd:ResourceType>15</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
-""".format(blank_size=self.FILE_SIZE['blank.vmdk']))
+""".format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
+           blank_size=self.FILE_SIZE['blank.vmdk']))
 
     def test_add_disk_no_room(self):
         """Negative test - add a disk to an OVF whose controllers are full."""

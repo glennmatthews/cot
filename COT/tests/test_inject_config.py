@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# inject_config.py - test cases for the COTInjectConfig class
+# test_inject_config.py - test cases for the COTInjectConfig class
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -90,7 +90,8 @@ class TestCOTInjectConfig(COT_UT):
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="config.iso" ovf:id="config.iso" \
 ovf:size="{config_size}" />
    </ovf:References>
@@ -100,7 +101,7 @@ ovf:size="{config_size}" />
          <rasd:ElementName>CD-ROM 2</rasd:ElementName>
 +        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
          <rasd:InstanceID>8</rasd:InstanceID>"""
-                        .format(iso_size=self.FILE_SIZE['input.iso'],
+                        .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
                                 config_size=os.path.getsize(os.path.join(
                                     self.temp_dir, 'config.iso'))))
 
@@ -113,7 +114,8 @@ ovf:size="{config_size}" />
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="config.iso" ovf:id="config.iso" \
 ovf:size="{config_size}" />
    </ovf:References>
@@ -123,7 +125,7 @@ ovf:size="{config_size}" />
          <rasd:ElementName>CD-ROM 2</rasd:ElementName>
 +        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
          <rasd:InstanceID>8</rasd:InstanceID>"""
-                        .format(iso_size=self.FILE_SIZE['input.iso'],
+                        .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
                                 config_size=os.path.getsize(os.path.join(
                                     self.temp_dir, 'config.iso'))))
 
@@ -193,7 +195,8 @@ for bootstrap configuration.</rasd:Description>
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="config.iso" ovf:id="config.iso" \
 ovf:size="{config_size}" />
    </ovf:References>
@@ -203,7 +206,7 @@ ovf:size="{config_size}" />
          <rasd:ElementName>CD-ROM 2</rasd:ElementName>
 +        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
          <rasd:InstanceID>8</rasd:InstanceID>"""
-                        .format(iso_size=self.FILE_SIZE['input.iso'],
+                        .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
                                 config_size=os.path.getsize(os.path.join(
                                     self.temp_dir, 'config.iso'))))
 

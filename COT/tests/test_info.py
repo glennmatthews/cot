@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# info.py - Unit test cases for COTInfo class.
+# test_info.py - Unit test cases for COTInfo class.
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -108,6 +108,7 @@ Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
   input.iso          352.00 kB           cdrom @ IDE 1:0
+  sample_cfg.txt          78 B
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -163,6 +164,7 @@ Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
   input.iso          352.00 kB           cdrom @ IDE 1:0
+  sample_cfg.txt          78 B
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -210,6 +212,7 @@ Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
   input.iso          352.00 kB           cdrom @ IDE 1:0
+  sample_cfg.txt          78 B
 
 Hardware Variants:
   System types:             vmx-07 vmx-08

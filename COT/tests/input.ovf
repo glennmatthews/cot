@@ -3,6 +3,7 @@
   <ovf:References>
     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="152576" />
     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
+    <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" ovf:size="78" />
   </ovf:References>
   <ovf:DiskSection>
     <ovf:Info>Virtual disk information</ovf:Info>

@@ -1,3 +1,4 @@
-SHA1(input.ovf)= e4bb3f7b4d40447caea2b6c069c772c9a9d8fa48
+SHA1(input.ovf)= c3bd2579c2edc76ea35b5bde7d4f4e41eab08963
 SHA1(input.vmdk)= 264caaa216ad928f82f727bb06d8e6e6fbd94df0
 SHA1(input.iso)= 7ee85ab877bef392cb0d6bb76aceef835057a513
+SHA1(sample_cfg.txt)= 6e5c894c186e89cc7801031589078070394b7514

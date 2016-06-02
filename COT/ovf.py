@@ -853,6 +853,8 @@ class OVF(VMDescription, XML):
         HREF_W += 2    # leading whitespace for disks
         template = ("{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:.{3}}}"
                     .format(HREF_W, SIZE_W, CAP_W, DEV_W))
+        template2 = ("{{0:{0}}} {{1:>{1}}}".format(HREF_W, SIZE_W))
+
         if file_list or disk_list:
             str_list = [template.format("Files and Disks:",
                                         "File Size", "Capacity", "Device"),
@@ -881,10 +883,13 @@ class OVF(VMDescription, XML):
                 # Truncate to fit in available space
                 if len(href_str) > HREF_W:
                     href_str = href_str[:(HREF_W-3)] + "..."
-                str_list.append(template.format(href_str,
-                                                file_size_str,
-                                                disk_cap_string,
-                                                device_str))
+                if disk_cap_string or device_str:
+                    str_list.append(template.format(href_str,
+                                                    file_size_str,
+                                                    disk_cap_string,
+                                                    device_str))
+                else:
+                    str_list.append(template2.format(href_str, file_size_str))
 
             # Find placeholder disks as well
             for disk in disk_list:
