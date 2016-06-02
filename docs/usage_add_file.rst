@@ -14,4 +14,4 @@ Packaging additional files into an OVF with ``cot add-file``
    See also
    --------
 
-   **cot**\(1)
+   **cot**\(1), **cot-remove-file**\(1)

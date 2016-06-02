@@ -340,6 +340,15 @@ class VMDescription(object):
         """
         raise NotImplementedError("add_file not implemented")
 
+    def remove_file(self, file, disk=None, disk_drive=None):
+        """Remove the given file object from the VM.
+
+        :param file: File object to remove
+        :param disk: Disk object referencing :attr:`file`
+        :param disk_drive: Disk drive mapping :attr:`file` to a device
+        """
+        raise NotImplementedError("remove_file not implemented")
+
     def add_disk(self, file_path, file_id, disk_type, disk=None):
         """Add a new disk object to the VM or overwrite the provided one.
 
