@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning`_.
 
 **Added**
 
+- `#47`_ - Added ``cot remove-file`` subcommand.
 - `#43`_ - add ``cot edit-properties --transport`` option to set environment
   transport type(s) - iso, VMWare Tools, etc.
 
@@ -32,6 +33,8 @@ This project adheres to `Semantic Versioning`_.
 - ``cot info`` is now more self-consistent in how it displays property keys.
   They are now always wrapped in ``<`` ``>``, whereas previously this was
   only sometimes the case.
+- ``cot info --verbose`` now displays file and disk ID strings under the
+  "Files and Disks" section.
 
 `1.4.2`_ - 2016-05-11
 ---------------------
@@ -370,6 +373,7 @@ Initial public release.
 .. _#43: https://github.com/glennmatthews/cot/issues/43
 .. _#44: https://github.com/glennmatthews/cot/issues/44
 .. _#45: https://github.com/glennmatthews/cot/issues/45
+.. _#47: https://github.com/glennmatthews/cot/issues/47
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

@@ -3,7 +3,7 @@
 # ut.py - Test case wrapper for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -130,7 +130,12 @@ class COT_UT(unittest.TestCase):
     OVFTOOL = OVFTool()
 
     FILE_SIZE = {}
-    for filename in ['input.iso', 'input.vmdk', 'blank.vmdk']:
+    for filename in [
+            'input.iso',
+            'input.vmdk',
+            'blank.vmdk',
+            'sample_cfg.txt',
+    ]:
         FILE_SIZE[filename] = os.path.getsize(resource_filename(__name__,
                                                                 filename))
 
@@ -282,10 +287,11 @@ class COT_UT(unittest.TestCase):
         # OVF with various odd/invalid contents
         self.invalid_ovf = resource_filename(__name__, "invalid.ovf")
 
-        # Some canned disk images too
+        # Some canned disk images and other files too
         self.input_iso = resource_filename(__name__, "input.iso")
         self.input_vmdk = resource_filename(__name__, "input.vmdk")
         self.blank_vmdk = resource_filename(__name__, "blank.vmdk")
+        self.sample_cfg = resource_filename(__name__, "sample_cfg.txt")
 
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")

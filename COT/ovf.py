@@ -853,6 +853,8 @@ class OVF(VMDescription, XML):
         HREF_W += 2    # leading whitespace for disks
         template = ("{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:.{3}}}"
                     .format(HREF_W, SIZE_W, CAP_W, DEV_W))
+        template2 = ("{{0:{0}}} {{1:>{1}}}".format(HREF_W, SIZE_W))
+
         if file_list or disk_list:
             str_list = [template.format("Files and Disks:",
                                         "File Size", "Capacity", "Device"),
@@ -881,10 +883,20 @@ class OVF(VMDescription, XML):
                 # Truncate to fit in available space
                 if len(href_str) > HREF_W:
                     href_str = href_str[:(HREF_W-3)] + "..."
-                str_list.append(template.format(href_str,
-                                                file_size_str,
-                                                disk_cap_string,
-                                                device_str))
+                if disk_cap_string or device_str:
+                    str_list.append(template.format(href_str,
+                                                    file_size_str,
+                                                    disk_cap_string,
+                                                    device_str))
+                else:
+                    str_list.append(template2.format(href_str, file_size_str))
+
+                if verbosity_option == 'verbose':
+                    str_list.append("    File ID: {0}"
+                                    .format(file.get(self.FILE_ID)))
+                    if disk is not None:
+                        str_list.append("    Disk ID: {0}"
+                                        .format(disk.get(self.DISK_ID)))
 
             # Find placeholder disks as well
             for disk in disk_list:
@@ -1881,6 +1893,35 @@ class OVF(VMDescription, XML):
 
         return file
 
+    def remove_file(self, file, disk=None, disk_drive=None):
+        """Remove the given file object from the VM.
+
+        :param file: File object to remove
+        :param disk: Disk object referencing :attr:`file`
+        :param disk_drive: Disk drive mapping :attr:`file` to a device
+        """
+        self.references.remove(file)
+        del self._file_references[file.get(self.FILE_HREF)]
+
+        if disk is not None:
+            self.disk_section.remove(disk)
+
+        if disk_drive is not None:
+            # For a CD-ROM drive, we can simply unmap the file.
+            # For a hard disk, we need to delete the device altogether.
+            drive_type = disk_drive.get_value(self.RESOURCE_TYPE)
+            if drive_type == self.RES_MAP['cdrom']:
+                disk_drive.set_property(self.HOST_RESOURCE, '')
+            elif drive_type == self.RES_MAP['harddisk']:
+                # TODO we should have an API for this probably
+                del self.hardware.item_dict[
+                    disk_drive.get_value(self.INSTANCE_ID)]
+            else:
+                raise ValueUnsupportedError("drive type", drive_type,
+                                            "CD-ROM ({0}) or hard disk ({1})"
+                                            .format(self.RES_MAP['cdrom'],
+                                                    self.RES_MAP['harddisk']))
+
     def add_disk(self, file_path, file_id, disk_type, disk=None):
         """Add a new disk object to the VM or overwrite the provided one.
 
@@ -2772,10 +2813,16 @@ class OVFHardware:
         Will do nothing if no Items have been changed.
         """
         modified = False
-        for ovfitem in self.item_dict.values():
-            if ovfitem.modified:
-                modified = True
-                break
+        if len(self.item_dict) != len(XML.find_all_children(
+                self.ovf.virtual_hw_section,
+                set([self.ovf.ITEM, self.ovf.STORAGE_ITEM,
+                     self.ovf.ETHERNET_PORT_ITEM]))):
+            modified = True
+        else:
+            for ovfitem in self.item_dict.values():
+                if ovfitem.modified:
+                    modified = True
+                    break
         if not modified:
             logger.debug("No changes to hardware definition, "
                          "so no XML update is required")

@@ -3,7 +3,7 @@
 # cli.py - CLI handling for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -448,6 +448,7 @@ class CLI(UI):
         from COT.info import COTInfo
         from COT.inject_config import COTInjectConfig
         from COT.install_helpers import COTInstallHelpers
+        from COT.remove_file import COTRemoveFile
         for klass in [
                 COTAddDisk,
                 COTAddFile,
@@ -459,6 +460,7 @@ class CLI(UI):
                 COTInfo,
                 COTInjectConfig,
                 COTInstallHelpers,
+                COTRemoveFile,
         ]:
             instance = klass(self)
             # the subparser stores a reference to the instance (args.instance)

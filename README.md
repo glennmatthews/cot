@@ -21,6 +21,7 @@ COT's capabilities include:
 * Edit OVF environment properties
 * Display a descriptive summary of the contents of an OVA or OVF package
 * Embed a bootstrap configuration text file into an OVF/OVA.
+* Remove files and disks from an OVF or OVA package
 * Deploy an OVF/OVA to an ESXi (VMware vSphere or vCenter) server to provision
   a new virtual machine (VM), including serial port configuration as needed.
 

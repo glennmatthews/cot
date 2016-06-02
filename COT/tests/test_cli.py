@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# cli.py - Unit test cases for generic COT CLI.
+# test_cli.py - Unit test cases for generic COT CLI.
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -345,6 +345,7 @@ commands:
     install-helpers
                     Install/verify COT manual pages and any third-party helper
                     programs that COT may require
+    remove-file     Remove a file from an OVF package
         """.format(__version_long__)  # noqa - trailing whitespace above is OK
                                   .strip(), o1.strip())
 
