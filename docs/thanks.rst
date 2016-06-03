@@ -7,8 +7,8 @@ We would like to thank:
 
   * Arun Arunkumar
   * Mark Coverdill
-  * Jonathan Muslow
   * Myles Dear
+  * Jonathan Muslow
   * Rick Ogg
   * David Rosenfeld
   * Rafal Skorka
