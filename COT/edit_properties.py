@@ -217,7 +217,9 @@ class COTEditProperties(COTSubmodule):
             subparser(s) created, if any.
         """
         p = parent.add_parser(
-            'edit-properties', add_help=False,
+            'edit-properties',
+            aliases=['set-properties', 'edit-environment', 'set-environment'],
+            add_help=False,
             help="""Edit environment properties of an OVF""",
             usage=self.UI.fill_usage("edit-properties", [
                 "PACKAGE [-p KEY1=VALUE1 [KEY2=VALUE2 ...]] [-c CONFIG_FILE] "

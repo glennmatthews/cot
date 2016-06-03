@@ -3,7 +3,7 @@
 # edit_product.py - Implements "edit-product" sub-command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -138,7 +138,7 @@ class COTEditProduct(COTSubmodule):
             subparser(s) created, if any.
         """
         p = parent.add_parser(
-            'edit-product',
+            'edit-product', aliases=['set-product', 'set-version'],
             help="""Edit product info in an OVF""",
             usage=self.UI.fill_usage("edit-product", [
                 "PACKAGE [-o OUTPUT] [-p PRODUCT] [-n VENDOR] \

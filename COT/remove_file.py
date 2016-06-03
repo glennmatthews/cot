@@ -111,7 +111,8 @@ class COTRemoveFile(COTSubmodule):
             subparser(s) created, if any.
         """
         p = parent.add_parser(
-            'remove-file', add_help=False,
+            'remove-file', aliases=['delete-file'],
+            add_help=False,
             usage=self.UI.fill_usage("remove-file", [
                 "[-p FILE_PATH] [-f FILE_ID] PACKAGE [-o OUTPUT]",
             ]),

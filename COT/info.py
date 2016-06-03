@@ -103,7 +103,7 @@ class COTInfo(COTGenericSubmodule):
             subparser(s) created, if any.
         """
         p = parent.add_parser(
-            'info',
+            'info', aliases=['describe'],
             help="""Generate a description of an OVF package""",
             usage="""
   cot info --help

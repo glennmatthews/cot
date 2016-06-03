@@ -19,6 +19,14 @@ This project adheres to `Semantic Versioning`_.
   and ``--scsi-subtypes`` in ``cot edit-hardware``.
 - COT now recognizes the Cisco IOS XRv 9000 platform identifier
   ``com.cisco.ios-xrv9000``.
+- `#21`_ - subcommand aliases (Python 3.x only):
+
+  - ``cot edit-product`` aliases: ``cot set-product``, ``cot set-version``
+  - ``cot edit-properties`` aliases: ``cot set-properties``,
+    ``cot edit-environment``, ``cot set-environment``
+  - ``cot info`` alias: ``cot describe``
+  - ``cot inject-config`` alias: ``cot add-bootstrap``
+  - ``cot remove-file`` alias: ``cot delete-file``
 
 **Changed**
 
@@ -357,6 +365,7 @@ Initial public release.
 .. _#17: https://github.com/glennmatthews/cot/issues/17
 .. _#19: https://github.com/glennmatthews/cot/issues/19
 .. _#20: https://github.com/glennmatthews/cot/issues/20
+.. _#21: https://github.com/glennmatthews/cot/issues/21
 .. _#24: https://github.com/glennmatthews/cot/issues/24
 .. _#26: https://github.com/glennmatthews/cot/issues/26
 .. _#28: https://github.com/glennmatthews/cot/issues/28

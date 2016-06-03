@@ -429,6 +429,18 @@ class CLI(UI):
                                                 metavar="<command>",
                                                 title="commands")
 
+        # Subparser aliases are only supported in Python 3.2+
+        # For older versions we monkey-patch the add_parser method.
+        if sys.hexversion < 0x03020000:
+            import types
+
+            self.subparsers._add_parser = self.subparsers.add_parser
+
+            def add_parser(self, title, aliases=None, **kwargs):
+                return self._add_parser(title, **kwargs)
+            self.subparsers.add_parser = types.MethodType(add_parser,
+                                                          self.subparsers)
+
         self.subparser_lookup = {}
 
     def create_subparsers(self):

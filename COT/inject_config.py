@@ -3,7 +3,7 @@
 # inject_config.py - Implements "cot inject-config" command
 #
 # February 2014, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -195,7 +195,7 @@ class COTInjectConfig(COTSubmodule):
             subparser(s) created, if any.
         """
         p = parent.add_parser(
-            'inject-config',
+            'inject-config', aliases=['add-bootstrap'],
             help="Inject a configuration file into an OVF package",
             usage=self.UI.fill_usage("inject-config", [
                 "PACKAGE -c CONFIG_FILE [-o OUTPUT]",

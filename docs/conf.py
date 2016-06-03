@@ -170,6 +170,10 @@ def help_text_to_rst(help, dirpath):
             # --names NAME1 [NAME2 ...] ---->  --names <NAME1...>
             line = re.sub(r"(-+\S+) ([^,]+) \[[^,]+\]",
                           r"\1 <\2...>", line)
+
+            # foobar (foo, bar) ----> foobar, foo, bar
+            line = re.sub(r"(\S+) \((.*)\)", r"\1, \2", line)
+
             if desc_line:
                 options_lines.append(line)
                 line = desc_line
