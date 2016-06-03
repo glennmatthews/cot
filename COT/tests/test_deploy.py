@@ -100,19 +100,32 @@ class TestSerialConnection(COT_UT):
         self.assertEqual('device', c.kind)
         self.assertEqual('/dev/ttyS0', c.value)
         self.assertEqual({}, c.options)
+        self.assertEqual(str(c),
+                         "<SerialConnection kind: device "
+                         "value: /dev/ttyS0 options: {}>")
 
         c = SerialConnection.from_cli_string(
             'file:/tmp/foo.txt,datastore=datastore1')
         self.assertEqual('file', c.kind)
         self.assertEqual('/tmp/foo.txt', c.value)
         self.assertEqual({'datastore': 'datastore1'}, c.options)
+        self.assertEqual(str(c),
+                         "<SerialConnection kind: file "
+                         "value: /tmp/foo.txt "
+                         "options: {'datastore': 'datastore1'}>")
 
         c = SerialConnection.from_cli_string('tcp::22,server')
         self.assertEqual('tcp', c.kind)
         self.assertEqual(':22', c.value)
         self.assertEqual({'server': True}, c.options)
+        self.assertEqual(str(c),
+                         "<SerialConnection kind: tcp value: :22 "
+                         "options: {'server': True}>")
 
         c = SerialConnection.from_cli_string('telnet://1.1.1.1:1111')
         self.assertEqual('telnet', c.kind)
         self.assertEqual('1.1.1.1:1111', c.value)
         self.assertEqual({}, c.options)
+        self.assertEqual(str(c),
+                         "<SerialConnection kind: telnet "
+                         "value: 1.1.1.1:1111 options: {}>")
