@@ -71,6 +71,12 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.add_file, self.TEXT_FILE, None)
         self.assertRaises(NotImplementedError,
+                          ins.remove_file, self.TEXT_FILE)
+        self.assertRaises(NotImplementedError,
+                          ins.remove_file, self.TEXT_FILE, None)
+        self.assertRaises(NotImplementedError,
+                          ins.remove_file, self.TEXT_FILE, None, None)
+        self.assertRaises(NotImplementedError,
                           ins.add_disk, self.TEXT_FILE, None, None)
         self.assertRaises(NotImplementedError,
                           ins.add_controller_device, None, None, None)
