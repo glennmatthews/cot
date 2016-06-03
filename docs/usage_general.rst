@@ -20,4 +20,4 @@ You can always get detailed help for COT by running ``cot --help``,
   **cot-add-disk**\(1), **cot-add-file**\(1), **cot-deploy**\(1),
   **cot-deploy-esxi**\(1), **cot-edit-hardware**\(1), **cot-edit-product**\(1),
   **cot-edit-properties**\(1), **cot-info**\(1), **cot-inject-config**\(1),
-  **cot-install-helpers**\(1)
+  **cot-install-helpers**\(1), **cot-remove-file**\(1)
