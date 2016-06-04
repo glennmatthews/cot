@@ -13,6 +13,8 @@
 # https://github.com/glennmatthews/cot/blob/master/LICENSE.txt. No part
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
+#
+# PYTHON_ARGCOMPLETE_OK
 
 """CLI entry point for the Common OVF Tool (COT) suite.
 
@@ -27,6 +29,11 @@
 import os
 import sys
 import argparse
+try:
+    import argcomplete
+    _argcomplete = True
+except ImportError:
+    _argcomplete = False
 import re
 import logging
 import getpass
@@ -86,6 +93,8 @@ class CLI(UI):
 
         self.create_parser()
         self.create_subparsers()
+        if _argcomplete:
+            argcomplete.autocomplete(self.parser)
 
         import COT.helpers.helper
         COT.helpers.helper.confirm = self.confirm
