@@ -414,7 +414,8 @@ class COTDeployESXi(COTDeploy):
         import argparse
         # Create 'cot deploy ... esxi' parser
         p = self.subparsers.add_parser(
-            'esxi', parents=[self.generic_parser],
+            'esxi', aliases=['vcenter', 'vmware', 'vsphere'],
+            parents=[self.generic_parser],
             usage=self.UI.fill_usage("deploy PACKAGE esxi", [
                 "LOCATOR [-u USERNAME] [-p PASSWORD] [-c CONFIGURATION] "
                 "[-n VM_NAME] [-P] [-N OVF1=HOST1 [-N OVF2=HOST2 ...]] "
