@@ -128,17 +128,11 @@ class COTEditProduct(COTSubmodule):
                                    self.application_url))
             self.vm.application_url = self.application_url
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
-            'edit-product', aliases=['set-product', 'set-version'],
+    def create_subparser(self):
+        """Create 'edit-product' CLI subparser."""
+        p = self.UI.add_subparser(
+            'edit-product',
+            aliases=['set-product', 'set-version'],
             help="""Edit product info in an OVF""",
             usage=self.UI.fill_usage("edit-product", [
                 "PACKAGE [-o OUTPUT] [-p PRODUCT] [-n VENDOR] \
@@ -171,5 +165,3 @@ Edit product information attributes of the given OVF or OVA""")
         p.add_argument('PACKAGE',
                        help="OVF descriptor or OVA file to edit")
         p.set_defaults(instance=self)
-
-        storage['edit-product'] = p

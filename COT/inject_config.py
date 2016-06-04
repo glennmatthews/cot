@@ -185,17 +185,11 @@ class COTInjectConfig(COTSubmodule):
             diskname=None,
         )
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
-            'inject-config', aliases=['add-bootstrap'],
+    def create_subparser(self):
+        """Create 'inject-config' CLI subparser."""
+        p = self.UI.add_subparser(
+            'inject-config',
+            aliases=['add-bootstrap'],
             help="Inject a configuration file into an OVF package",
             usage=self.UI.fill_usage("inject-config", [
                 "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
@@ -218,5 +212,3 @@ class COTInjectConfig(COTSubmodule):
         p.add_argument('PACKAGE',
                        help="""Package, OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
-
-        storage['inject-config'] = p

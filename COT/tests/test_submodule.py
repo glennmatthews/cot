@@ -3,7 +3,7 @@
 # submodule.py - test cases for the generic COTSubmodule class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -39,9 +39,7 @@ class TestCOTSubmodule(COT_UT):
 
     def test_create_subparser_noop(self):
         """The generic class doesn't create a subparser."""
-        subparser_lookup = {}
-        self.instance.create_subparser(None, subparser_lookup)
-        self.assertEqual({}, subparser_lookup)
+        self.instance.create_subparser()
 
     def test_set_output_implicitly(self):
         """If 'output' is not specifically set, run() sets it to 'package'."""

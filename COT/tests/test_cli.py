@@ -348,7 +348,8 @@ class TestCLIGeneral(TestCOTCLI):
 """
             # Help should include subcommand aliases
             command_str = """
-    add-disk            Add a disk image to an OVF package and map it as a
+    add-disk (add-drive)
+                        Add a disk image to an OVF package and map it as a
                         disk in the guest environment
     add-file            Add a file to an OVF package
     deploy              Create a new VM on the target hypervisor from the
