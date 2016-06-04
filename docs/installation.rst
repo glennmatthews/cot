@@ -28,6 +28,24 @@ If you have already installed COT and wish to update to the latest available ver
 
   sudo pip install --upgrade cot
 
+Installing optional features
+''''''''''''''''''''''''''''
+
+COT has a number of optional dependencies that you can choose to specify for
+``pip`` to install:
+
+* Tab-completion of COT CLI parameters in `bash`, using the `argcomplete`_
+  package.
+
+  ::
+
+     sudo pip install cot[tab-completion]
+
+  .. note::
+     After installing `argcomplete`, you must configure your `bash`
+     environment to enable it. Refer to the argcomplete documentation for
+     the required steps.
+
 Installing COT from source
 --------------------------
 
@@ -119,3 +137,4 @@ to install the helper in question.
 .. _fatdisk: http://github.com/goblinhack/fatdisk
 .. _ovftool: https://www.vmware.com/support/developer/ovf/
 .. _MacPorts: http://www.macports.org/
+.. _argcomplete: https://argcomplete.readthedocs.io/en/latest/

@@ -19,6 +19,7 @@ This project adheres to `Semantic Versioning`_.
   and ``--scsi-subtypes`` in ``cot edit-hardware``.
 - COT now recognizes the Cisco IOS XRv 9000 platform identifier
   ``com.cisco.ios-xrv9000``.
+- Support for tab-completion of CLI parameters using `argcomplete`_.
 
 **Changed**
 
@@ -390,6 +391,7 @@ Initial public release.
 .. _Travis CI: https://travis-ci.org/glennmatthews/cot/
 .. _versioneer: https://github.com/warner/python-versioneer
 .. _pip: https://pip.pypa.io/en/stable/
+.. _argcomplete: https://argcomplete.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
 .. _1.4.2: https://github.com/glennmatthews/cot/compare/v1.4.1...v1.4.2

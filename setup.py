@@ -49,6 +49,10 @@ if sys.version_info < (3, 3):
 setup_requires = install_requires + ['sphinx>=1.3', 'sphinx_rtd_theme']
 tests_require = install_requires + ['unittest2', 'mock']
 
+extras_require = {
+    'tab-completion': ['argcomplete>=1.3.0'],
+}
+
 cmdclass = versioneer.get_cmdclass()
 
 
@@ -106,6 +110,7 @@ setup(
     test_suite='unittest2.collector',
     tests_require=tests_require,
     install_requires=install_requires,
+    extras_require=extras_require,
 
     # Package contents
     cmdclass=cmdclass,
