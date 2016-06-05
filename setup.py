@@ -3,7 +3,7 @@
 # setup.py - installer script for COT package
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -48,6 +48,10 @@ if sys.version_info < (3, 3):
 
 setup_requires = install_requires + ['sphinx>=1.3', 'sphinx_rtd_theme']
 tests_require = install_requires + ['unittest2', 'mock']
+
+extras_require = {
+    'tab-completion': ['argcomplete>=1.3.0'],
+}
 
 cmdclass = versioneer.get_cmdclass()
 
@@ -106,6 +110,7 @@ setup(
     test_suite='unittest2.collector',
     tests_require=tests_require,
     install_requires=install_requires,
+    extras_require=extras_require,
 
     # Package contents
     cmdclass=cmdclass,

@@ -28,6 +28,8 @@ This project adheres to `Semantic Versioning`_.
   - ``cot inject-config`` alias: ``cot add-bootstrap``
   - ``cot remove-file`` alias: ``cot delete-file``
 
+- Support for tab-completion of CLI parameters using `argcomplete`_.
+
 **Changed**
 
 - ``cot edit-hardware`` options ``--nic-types``, ``--ide-subtypes``, and
@@ -399,6 +401,7 @@ Initial public release.
 .. _Travis CI: https://travis-ci.org/glennmatthews/cot/
 .. _versioneer: https://github.com/warner/python-versioneer
 .. _pip: https://pip.pypa.io/en/stable/
+.. _argcomplete: https://argcomplete.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
 .. _1.4.2: https://github.com/glennmatthews/cot/compare/v1.4.1...v1.4.2
