@@ -3,7 +3,7 @@
 # add_disk.py - Implements "cot add-disk" command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -167,17 +167,12 @@ class COTAddDisk(COTSubmodule):
                         diskname=self.diskname,
                         description=self.description)
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
-            'add-disk', add_help=False,
+    def create_subparser(self):
+        """Create 'add-disk' CLI subparser."""
+        p = self.UI.add_subparser(
+            'add-disk',
+            aliases=['add-drive'],
+            add_help=False,
             usage=self.UI.fill_usage("add-disk", [
                 "DISK_IMAGE PACKAGE [-o OUTPUT] [-f FILE_ID] \
 [-t {harddisk,cdrom}] [-c {ide,scsi}] [-s SUBTYPE] [-a ADDRESS] \
@@ -239,8 +234,6 @@ otherwise, will create a new disk entry.""")
         p.add_argument('PACKAGE',
                        help="""OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
-
-        storage['add-disk'] = p
 
 
 def add_disk_worker(vm,

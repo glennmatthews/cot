@@ -3,7 +3,7 @@
 # info.py - Implements "info" sub-command
 #
 # October 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -93,17 +93,11 @@ class COTInfo(COTGenericSubmodule):
                                      self.verbosity))
             first = False
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
+    def create_subparser(self):
+        """Create 'info' CLI subparser."""
+        p = self.UI.add_subparser(
             'info',
+            aliases=['describe'],
             help="""Generate a description of an OVF package""",
             usage="""
   cot info --help
@@ -127,5 +121,3 @@ Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
                        metavar='PACKAGE [PACKAGE ...]',
                        help="OVF descriptor(s) and/or OVA file(s) to describe")
         p.set_defaults(instance=self)
-
-        storage['info'] = p

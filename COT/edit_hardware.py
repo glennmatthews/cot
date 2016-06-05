@@ -3,7 +3,7 @@
 # edit_hardware.py - Implements "edit-hardware" sub-command
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -433,20 +433,14 @@ class COTEditHardware(COTSubmodule):
         if self.ide_subtypes is not None:
             vm.set_ide_subtypes(self.ide_subtypes, self.profiles)
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
+    def create_subparser(self):
+        """Create 'edit-hardware' CLI subparser."""
         wrapper = textwrap.TextWrapper(width=self.UI.terminal_width - 1,
                                        initial_indent='  ',
                                        subsequent_indent='  ')
-        p = parent.add_parser(
-            'edit-hardware', add_help=False,
+        p = self.UI.add_subparser(
+            'edit-hardware',
+            add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,
             usage=self.UI.fill_usage("edit-hardware", [
                 "PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]",
@@ -565,8 +559,6 @@ class COTEditHardware(COTSubmodule):
         p.add_argument('PACKAGE',
                        help="OVF descriptor or OVA file to edit")
         p.set_defaults(instance=self)
-
-        storage['edit-hardware'] = p
 
     def expand_list_wildcard(self, name_list, length):
         """Expand a list containing a wildcard to the desired length.

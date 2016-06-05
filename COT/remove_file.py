@@ -101,17 +101,12 @@ class COTRemoveFile(COTSubmodule):
         vm.remove_file(file, disk=disk,
                        disk_drive=disk_drive)
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
-            'remove-file', add_help=False,
+    def create_subparser(self):
+        """Create 'remove-file' CLI subparser."""
+        p = self.UI.add_subparser(
+            'remove-file',
+            aliases=['delete-file'],
+            add_help=False,
             usage=self.UI.fill_usage("remove-file", [
                 "[-p FILE_PATH] [-f FILE_ID] PACKAGE [-o OUTPUT]",
             ]),
@@ -138,5 +133,3 @@ Remove a file from the given OVF. Will prompt for confirmation unless
         p.add_argument('PACKAGE',
                        help="""Package, OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
-
-        storage['remove-file'] = p

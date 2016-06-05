@@ -465,7 +465,36 @@ class CLI(UI):
             instance = klass(self)
             # the subparser stores a reference to the instance (args.instance)
             # so we don't need to persist it here...
-            instance.create_subparser(self.subparsers, self.subparser_lookup)
+            instance.create_subparser()
+
+    def add_subparser(self, title,
+                      parent=None, aliases=None, lookup_prefix="",
+                      **kwargs):
+        """Create a subparser under the specified parent.
+
+        :param str title: Canonical keyword for this subparser
+        :param object parent: Subparser grouping object returned by
+            :meth:`ArgumentParser.add_subparsers`
+        :param list aliases: Aliases for ``title``. Only used
+            in Python 3.x.
+        :param str lookup_prefix: String to prepend to ``title`` and
+            each alias in ``aliases`` for lookup purposes.
+        """
+        # Subparser aliases are only supported by argparse in Python 3.2+
+        if sys.hexversion >= 0x03020000 and aliases:
+            kwargs['aliases'] = aliases
+        else:
+            aliases = None
+
+        if parent is None:
+            parent = self.subparsers
+
+        p = parent.add_parser(title, **kwargs)
+        self.subparser_lookup[lookup_prefix + title] = p
+        if aliases:
+            for alias in aliases:
+                self.subparser_lookup[lookup_prefix + alias] = p
+        return p
 
     def parse_args(self, argv):
         """Parse the given CLI arguments into a namespace object.

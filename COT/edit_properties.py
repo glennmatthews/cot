@@ -207,17 +207,12 @@ class COTEditProperties(COTSubmodule):
                         continue
             continue
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
-            'edit-properties', add_help=False,
+    def create_subparser(self):
+        """Create 'edit-properties' CLI subparser."""
+        p = self.UI.add_subparser(
+            'edit-properties',
+            aliases=['set-properties', 'edit-environment', 'set-environment'],
+            add_help=False,
             help="""Edit environment properties of an OVF""",
             usage=self.UI.fill_usage("edit-properties", [
                 "PACKAGE [-p KEY1=VALUE1 [KEY2=VALUE2 ...]] [-c CONFIG_FILE] "
@@ -258,5 +253,3 @@ the program will run interactively.""")
                        "arbitrary URI may be specified.")
 
         p.set_defaults(instance=self)
-
-        storage['edit-properties'] = p
