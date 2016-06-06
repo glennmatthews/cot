@@ -3,8 +3,8 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
-`Unreleased`_ - unreleased
---------------------------
+`1.5.0`_ - 2016-06-06
+---------------------
 
 **Added**
 
@@ -404,6 +404,7 @@ Initial public release.
 .. _argcomplete: https://argcomplete.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.5.0: https://github.com/glennmatthews/cot/compare/v1.4.2...v1.5.0
 .. _1.4.2: https://github.com/glennmatthews/cot/compare/v1.4.1...v1.4.2
 .. _1.4.1: https://github.com/glennmatthews/cot/compare/v1.4.0...v1.4.1
 .. _1.4.0: https://github.com/glennmatthews/cot/compare/v1.3.3...v1.4.0
