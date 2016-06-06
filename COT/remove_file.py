@@ -108,7 +108,7 @@ class COTRemoveFile(COTSubmodule):
             aliases=['delete-file'],
             add_help=False,
             usage=self.UI.fill_usage("remove-file", [
-                "[-p FILE_PATH] [-f FILE_ID] PACKAGE [-o OUTPUT]",
+                "[-f FILE_PATH] [-i FILE_ID] PACKAGE [-o OUTPUT]",
             ]),
             help="Remove a file from an OVF package",
             description="""
@@ -125,10 +125,10 @@ Remove a file from the given OVF. Will prompt for confirmation unless
 
         group = p.add_argument_group("file selection options")
 
-        group.add_argument('-f', '--file-id',
-                           help="""File ID string within the package""")
-        group.add_argument('-p', '--file-path',
+        group.add_argument('-f', '--file-path',
                            help="""File name or path within the package""")
+        group.add_argument('-i', '--file-id',
+                           help="""File ID string within the package""")
 
         p.add_argument('PACKAGE',
                        help="""Package, OVF descriptor or OVA file to edit""")
