@@ -288,6 +288,14 @@ class VMDescription(object):
         """
         raise NotImplementedError("get_file_ref_from_disk not implemented")
 
+    def get_id_from_disk(self, disk):
+        """Get the identifier string associated with the given Disk object.
+
+        :param disk: Disk object
+        :rtype: string
+        """
+        raise NotImplementedError("get_id_from_disk not implemented")
+
     def get_type_from_device(self, device):
         """Get the type of the given opaque device object.
 

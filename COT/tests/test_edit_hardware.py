@@ -1178,9 +1178,9 @@ CIM_ResourceAllocationSettingData">
     def test_clear_scsi_subtype_all_profiles(self):
         """Clear SCSI controller subtype under all profiles."""
         self.instance.package = self.input_ovf
+        # TODO: this should really be an empty list or None
         self.instance.scsi_subtype = ""
         self.assertEqual(self.instance.scsi_subtype, None)
-        # TODO: this should really be an empty list or None
         self.assertEqual(self.instance.scsi_subtypes, [])
         self.instance.run()
         self.instance.finished()

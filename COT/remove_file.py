@@ -90,8 +90,7 @@ class COTRemoveFile(COTSubmodule):
         prompt_info = "file '{0}' (ID '{1}')".format(self.file_path,
                                                      self.file_id)
         if disk is not None:
-            # TODO: API
-            prompt_info += " and disk '{0}'".format(disk.get(vm.DISK_ID))
+            prompt_info += " and disk '{0}'".format(vm.get_id_from_disk(disk))
         if disk_drive is not None:
             prompt_info += " and device '{0}'".format(
                 vm.device_info_str(disk_drive))

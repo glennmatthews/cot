@@ -372,7 +372,7 @@ class OVF(VMDescription, XML):
                 'com.cisco.ios-xrv.rp':  Platform.IOSXRvRP,
                 'com.cisco.ios-xrv.lc':  Platform.IOSXRvLC,
                 'com.cisco.ios-xrv9000': Platform.IOSXRv9000,
-                # TODO: some early releases of IOS XRv 9000 used the
+                # Some early releases of IOS XRv 9000 used the
                 # incorrect string 'com.cisco.ios-xrv64'.
                 'com.cisco.ios-xrv64':   Platform.IOSXRv9000,
                 None:                    Platform.GenericPlatform,
@@ -1913,9 +1913,7 @@ class OVF(VMDescription, XML):
             if drive_type == self.RES_MAP['cdrom']:
                 disk_drive.set_property(self.HOST_RESOURCE, '')
             elif drive_type == self.RES_MAP['harddisk']:
-                # TODO we should have an API for this probably
-                del self.hardware.item_dict[
-                    disk_drive.get_value(self.INSTANCE_ID)]
+                self.hardware.delete_item(disk_drive)
             else:
                 raise ValueUnsupportedError("drive type", drive_type,
                                             "CD-ROM ({0}) or hard disk ({1})"
@@ -2393,6 +2391,14 @@ class OVF(VMDescription, XML):
         return (self.get_type_from_device(controller),
                 (controller.get_value(self.ADDRESS) + ':' +
                  device.get_value(self.ADDRESS_ON_PARENT)))
+
+    def get_id_from_disk(self, disk):
+        """Get the identifier string associated with the given Disk object.
+
+        :param disk: Disk object
+        :rtype: string
+        """
+        return disk.get(self.DISK_ID)
 
     def get_capacity_from_disk(self, disk):
         """Get the capacity of the given Disk in bytes.
@@ -2887,6 +2893,13 @@ class OVFHardware:
         logger.info("Added new {0} under {1}, instance is {2}"
                     .format(resource_type, profile_list, instance))
         return (instance, ovfitem)
+
+    def delete_item(self, item):
+        """Delete the given :class:`OVFItem`."""
+        instance = item.get_value(self.ovf.INSTANCE_ID)
+        if self.item_dict[instance] == item:
+            del self.item_dict[instance]
+        # TODO: error handling - currently a no-op if item not in item_dict
 
     def clone_item(self, parent_item, profile_list):
         """Clone an :class:`OVFItem` to create a new instance.

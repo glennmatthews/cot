@@ -60,6 +60,8 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.get_file_ref_from_disk, None)
         self.assertRaises(NotImplementedError,
+                          ins.get_id_from_disk, None)
+        self.assertRaises(NotImplementedError,
                           ins.get_type_from_device, None)
         self.assertRaises(NotImplementedError,
                           ins.get_subtype_from_device, None)
