@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# info.py - Unit test cases for COTInfo class.
+# test_info.py - Unit test cases for COTInfo class.
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -108,6 +108,7 @@ Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
   input.iso          352.00 kB           cdrom @ IDE 1:0
+  sample_cfg.txt          78 B
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -134,17 +135,20 @@ NICs and Associated Networks:
   GigabitEthernet2 : VM Network
   GigabitEthernet3 : VM Network
 
+Environment:
+  Transport types: iso
+
 Properties:
-  login-username       Login Username                   ""
-  login-password       Login Password                   ""
-  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
-  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
-  hostname             Router Name                      ""
-  enable-ssh-server    Enable SSH Login                 "false"
-  enable-http-server   Enable HTTP Server               "false"
-  enable-https-server  Enable HTTPS Server              "false"
-  privilege-password   Enable Password                  ""
-  domain-name          Domain Name                      ""
+  <login-username>       Login Username                   ""
+  <login-password>       Login Password                   ""
+  <mgmt-ipv4-addr>       Management IPv4 Address/Mask     ""
+  <mgmt-ipv4-gateway>    Management IPv4 Default Gateway  ""
+  <hostname>             Router Name                      ""
+  <enable-ssh-server>    Enable SSH Login                 "false"
+  <enable-http-server>   Enable HTTP Server               "false"
+  <enable-https-server>  Enable HTTPS Server              "false"
+  <privilege-password>   Enable Password                  ""
+  <domain-name>          Domain Name                      ""
 """.format(self.input_ovf))
 
         self.instance.verbosity = 'brief'
@@ -160,6 +164,7 @@ Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
   input.iso          352.00 kB           cdrom @ IDE 1:0
+  sample_cfg.txt          78 B
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -175,17 +180,20 @@ Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
 Networks:
   VM Network  "VM Network"
 
+Environment:
+  Transport types: iso
+
 Properties:
-  login-username       Login Username                   ""
-  login-password       Login Password                   ""
-  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
-  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
-  hostname             Router Name                      ""
-  enable-ssh-server    Enable SSH Login                 "false"
-  enable-http-server   Enable HTTP Server               "false"
-  enable-https-server  Enable HTTPS Server              "false"
-  privilege-password   Enable Password                  ""
-  domain-name          Domain Name                      ""
+  <login-username>       Login Username                   ""
+  <login-password>       Login Password                   ""
+  <mgmt-ipv4-addr>       Management IPv4 Address/Mask     ""
+  <mgmt-ipv4-gateway>    Management IPv4 Default Gateway  ""
+  <hostname>             Router Name                      ""
+  <enable-ssh-server>    Enable SSH Login                 "false"
+  <enable-http-server>   Enable HTTP Server               "false"
+  <enable-https-server>  Enable HTTPS Server              "false"
+  <privilege-password>   Enable Password                  ""
+  <domain-name>          Domain Name                      ""
 """.format(self.input_ovf))
 
         self.instance.verbosity = 'verbose'
@@ -203,7 +211,12 @@ Version:  DEV
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+    File ID: file1
+    Disk ID: vmdisk1
   input.iso          352.00 kB           cdrom @ IDE 1:0
+    File ID: file2
+  sample_cfg.txt          78 B
+    File ID: textfile
 
 Hardware Variants:
   System types:             vmx-07 vmx-08
@@ -233,33 +246,36 @@ NICs and Associated Networks:
   GigabitEthernet3 : VM Network
     VMXNET3 ethernet adapter on "VM Network"
 
+Environment:
+  Transport types: iso
+
 Properties:
-  login-username       Login Username                   ""
+  <login-username>       Login Username                   ""
       Username for remote login
-  login-password       Login Password                   ""
+  <login-password>       Login Password                   ""
       Password for remote login.
       WARNING: While this password will be stored securely within IOS, the
       plain-text password will be recoverable from the OVF descriptor file.
-  mgmt-ipv4-addr       Management IPv4 Address/Mask     ""
+  <mgmt-ipv4-addr>       Management IPv4 Address/Mask     ""
       IPv4 address and mask for management interface (such as "10.1.1.100/24"
       or "10.1.1.100 255.255.255.0"), or "dhcp" to configure via DHCP
-  mgmt-ipv4-gateway    Management IPv4 Default Gateway  ""
+  <mgmt-ipv4-gateway>    Management IPv4 Default Gateway  ""
       IPv4 default gateway address (such as "10.1.1.1") for management
       interface, or "dhcp" to configure via DHCP
-  hostname             Router Name                      ""
+  <hostname>             Router Name                      ""
       Hostname of this router
-  enable-ssh-server    Enable SSH Login                 "false"
+  <enable-ssh-server>    Enable SSH Login                 "false"
       Enable remote login via SSH and disable remote login via telnet. Requires
       login-username and login-password to be set!
-  enable-http-server   Enable HTTP Server               "false"
+  <enable-http-server>   Enable HTTP Server               "false"
       Enable HTTP server capability for REST API
-  enable-https-server  Enable HTTPS Server              "false"
+  <enable-https-server>  Enable HTTPS Server              "false"
       Enable HTTPS server capability for REST API
-  privilege-password   Enable Password                  ""
+  <privilege-password>   Enable Password                  ""
       Password for privileged (enable) access.
       WARNING: While this password will be stored securely within IOS, the
       plain-text password will be recoverable from the OVF descriptor file.
-  domain-name          Domain Name                      ""
+  <domain-name>          Domain Name                      ""
       Network domain name (such as "cisco.com")
 """.format(self.input_ovf))
 
@@ -330,6 +346,8 @@ Version:  15.4(2.4)T
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ IDE 0:0
+    File ID: vios-adventerprisek9-m.vmdk
+    Disk ID: vios-adventerprisek9-m.vmdk
   (disk placeholder)        -- 128.00 MB harddisk @ IDE 0:1
 
 Hardware Variants:
@@ -464,6 +482,8 @@ End User License Agreement(s):
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+    File ID: file1
+    Disk ID: vmdisk1
 
 Hardware Variants:
   System types:             vmx-04
@@ -510,6 +530,9 @@ NICs and Associated Networks:
   Network adapter 2 : lanethernet0
   Network adapter 3 : lanethernet0
   Network adapter 4 : lanethernet0
+
+Properties:
+  <custom-property>  "custom-value"
 """.format(self.vmware_ovf))
 
         self.instance.verbosity = 'verbose'
@@ -520,6 +543,8 @@ NICs and Associated Networks:
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+    File ID: file1
+    Disk ID: vmdisk1
 
 Hardware Variants:
   System types:             vmx-08
@@ -542,6 +567,9 @@ NICs and Associated Networks:
     E1000 ethernet adapter on "lanethernet0"
   Network adapter 4 : lanethernet0
     E1000 ethernet adapter on "lanethernet0"
+
+Properties:
+  <custom-property>  "custom-value"
 """.format(self.vmware_ovf))
 
     def test_v20_vbox_ovf(self):
@@ -555,6 +583,8 @@ NICs and Associated Networks:
 Files and Disks:        File Size  Capacity Device
                         --------- --------- --------------------
   ubuntu.2.0-disk1.vmdk             8.00 GB harddisk @ SATA 0:0
+    File ID: file1
+    Disk ID: vmdisk1
 
 Hardware Variants:
   System types:             virtualbox-2.2
@@ -576,6 +606,37 @@ NICs and Associated Networks:
     def test_invalid_ovf(self):
         """Test info string for OVF with various invalid/atypical contents."""
         self.instance.package_list = [self.invalid_ovf]
+        self.instance.verbosity = "brief"
+        self.check_cot_output("""
+-------------------------------------------------------------------------------
+{0}
+-------------------------------------------------------------------------------
+Files and Disks:                       File Size  Capacity Device
+                                       --------- --------- --------------------
+  this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB 
+  input.iso                            352.00 kB           cdrom @ (?) ?:0
+  (disk placeholder)                          -- 128.00 MB 
+
+Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
+                                    ---- --------- ---- ------- --------------
+  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
+  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+
+Networks:
+  This is a rather verbose network name, eh what?  "Why yes, it is!"
+  name-but-no-description
+
+Environment:
+  Transport types: http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-
+                   transport iso com.vmware.guestInfo
+
+Properties:
+  Antidisestablishmentarianism       "supercalifragilisticexpialidocious"
+  <frobozz-is-a-magic-word-I-think>  "xyzzy"
+""".format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
+        self.assertLogged(**self.NONEXISTENT_FILE)
+
         self.instance.verbosity = "verbose"
         self.check_cot_output("""
 -------------------------------------------------------------------------------
@@ -586,12 +647,15 @@ Product:  (No product string)
 Vendor:   (No vendor string)
           (No vendor URL)
 Version:  (No version string)
-          (No detailed version string)
+          Full version string goes here
 
 Files and Disks:                       File Size  Capacity Device
                                        --------- --------- --------------------
   this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB 
+    File ID: input.vmdk
+    Disk ID: input.vmdk
   input.iso                            352.00 kB           cdrom @ (?) ?:0
+    File ID: input.iso
   (disk placeholder)                          -- 128.00 MB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
@@ -610,8 +674,12 @@ Networks:
 NICs and Associated Networks:
   <instance 27> : This is a rather verbose network name, eh what?
 
+Environment:
+  Transport types: http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-
+                   transport iso com.vmware.guestInfo
+
 Properties:
-  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+  Antidisestablishmentarianism       "supercalifragilisticexpialidocious"
       Anti-
       dis-
       establishment-
@@ -620,6 +688,7 @@ Properties:
       ...
 
       ism!
+  <frobozz-is-a-magic-word-I-think>  "xyzzy"
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
@@ -638,7 +707,7 @@ Product:  (No product string)
 Vendor:   (No vendor string)
           (No vendor URL)
 Version:  (No version string)
-          (No detailed version string)
+          Full version string goes here
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
@@ -662,8 +731,15 @@ Networks:
 NICs and Associated Networks:
   <instance 27> : This is a rather verbose network name, eh what?
 
+Environment:
+  Transport types:
+                   http://www.ibm.com/xmlns/ovf/transport/f
+                   ilesystem/etc/ovf-transport iso
+                   com.vmware.guestInfo
+
 Properties:
-  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+  Antidisestablishmentarianism       "supercalifragilisticexpialidocious"
+  <frobozz-is-a-magic-word-I-think>  "xyzzy"
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
@@ -678,12 +754,15 @@ Product:  (No product string)
 Vendor:   (No vendor string)
           (No vendor URL)
 Version:  (No version string)
-          (No detailed version string)
+          Full version string goes here
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
   this_is_a_reall... 149.00 kB   1.00 GB 
+    File ID: input.vmdk
+    Disk ID: input.vmdk
   input.iso          352.00 kB           cdrom @ (?) ?:0
+    File ID: input.iso
   (disk placeholder)        -- 128.00 MB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
@@ -704,8 +783,14 @@ Networks:
 NICs and Associated Networks:
   <instance 27> : This is a rather verbose network name, eh what?
 
+Environment:
+  Transport types:
+                   http://www.ibm.com/xmlns/ovf/transport/f
+                   ilesystem/etc/ovf-transport iso
+                   com.vmware.guestInfo
+
 Properties:
-  Antidisestablishmentarianism  "supercalifragilisticexpialidocious"
+  Antidisestablishmentarianism       "supercalifragilisticexpialidocious"
       Anti-
       dis-
       establishment-
@@ -714,6 +799,7 @@ Properties:
       ...
 
       ism!
+  <frobozz-is-a-magic-word-I-think>  "xyzzy"
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)

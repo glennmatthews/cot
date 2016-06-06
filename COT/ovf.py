@@ -3,7 +3,7 @@
 # ovf.py - Class for OVF/OVA handling
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -57,6 +57,7 @@ from .xml_file import XML
 from .vm_description import VMDescription, VMInitError
 from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
+from .data_validation import canonicalize_nic_subtype
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
 import COT.platforms as Platform
@@ -150,6 +151,7 @@ class OVF(VMDescription, XML):
       config_profiles
       default_config_profile
       environment_properties
+      environment_transports
       networks
       system_types
       version_short
@@ -288,7 +290,8 @@ class OVF(VMDescription, XML):
                 required=True)
             self.product_section = self.find_child(
                 self.virtual_system,
-                self.PRODUCT_SECTION)
+                self.PRODUCT_SECTION,
+                attrib=self.PRODUCT_SECTION_ATTRIB)
             self.annotation_section = self.find_child(
                 self.virtual_system,
                 self.ANNOTATION_SECTION,
@@ -362,13 +365,17 @@ class OVF(VMDescription, XML):
             platform = None
             product_class = None
             class_to_platform_map = {
-                'com.cisco.csr1000v':   Platform.CSR1000V,
-                'com.cisco.iosv':       Platform.IOSv,
-                'com.cisco.nx-osv':     Platform.NXOSv,
-                'com.cisco.ios-xrv':    Platform.IOSXRv,
-                'com.cisco.ios-xrv.rp': Platform.IOSXRvRP,
-                'com.cisco.ios-xrv.lc': Platform.IOSXRvLC,
-                None:                   Platform.GenericPlatform,
+                'com.cisco.csr1000v':    Platform.CSR1000V,
+                'com.cisco.iosv':        Platform.IOSv,
+                'com.cisco.nx-osv':      Platform.NXOSv,
+                'com.cisco.ios-xrv':     Platform.IOSXRv,
+                'com.cisco.ios-xrv.rp':  Platform.IOSXRvRP,
+                'com.cisco.ios-xrv.lc':  Platform.IOSXRvLC,
+                'com.cisco.ios-xrv9000': Platform.IOSXRv9000,
+                # Some early releases of IOS XRv 9000 used the
+                # incorrect string 'com.cisco.ios-xrv64'.
+                'com.cisco.ios-xrv64':   Platform.IOSXRv9000,
+                None:                    Platform.GenericPlatform,
             }
 
             if self.product_section is None:
@@ -421,7 +428,7 @@ class OVF(VMDescription, XML):
           ``"label"``, and ``"description"``.
         """
         result = []
-        if self.product_section is None:
+        if self.ovf_version < 1.0 or self.product_section is None:
             return result
         elems = self.product_section.findall(self.PROPERTY)
         for elem in elems:
@@ -437,6 +444,31 @@ class OVF(VMDescription, XML):
             })
 
         return result
+
+    @property
+    def environment_transports(self):
+        """The list of environment transport methods.
+
+        :rtype: list[str]
+        """
+        if self.ovf_version < 1.0:
+            return None
+        if self.virtual_hw_section is not None:
+            value = self.virtual_hw_section.get(self.ENVIRONMENT_TRANSPORT)
+            if value:
+                return value.split(" ")
+        return None
+
+    @environment_transports.setter
+    def environment_transports(self, transports):
+        if self.ovf_version < 1.0:
+            raise NotImplementedError("No support for setting environment"
+                                      "transports value on OVF 0.9 format.")
+        transports_string = " ".join(transports)
+        logger.info("Setting {0} to '{1}'".format(self.ENVIRONMENT_TRANSPORT,
+                                                  transports_string))
+        self.virtual_hw_section.set(self.ENVIRONMENT_TRANSPORT,
+                                    transports_string)
 
     @property
     def networks(self):
@@ -733,8 +765,9 @@ class OVF(VMDescription, XML):
         header = '\n'.join(str_list)
 
         # Product information
-        p = self.product_section
-        if p is not None:
+        if (self.product or self.vendor or self.version_short or
+            verbosity_option != 'brief' and (
+                self.product_url or self.vendor_url or self.version_long)):
             str_list = []
             wrapper.initial_indent = ''
             wrapper.subsequent_indent = '          '
@@ -820,6 +853,8 @@ class OVF(VMDescription, XML):
         HREF_W += 2    # leading whitespace for disks
         template = ("{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:.{3}}}"
                     .format(HREF_W, SIZE_W, CAP_W, DEV_W))
+        template2 = ("{{0:{0}}} {{1:>{1}}}".format(HREF_W, SIZE_W))
+
         if file_list or disk_list:
             str_list = [template.format("Files and Disks:",
                                         "File Size", "Capacity", "Device"),
@@ -848,10 +883,20 @@ class OVF(VMDescription, XML):
                 # Truncate to fit in available space
                 if len(href_str) > HREF_W:
                     href_str = href_str[:(HREF_W-3)] + "..."
-                str_list.append(template.format(href_str,
-                                                file_size_str,
-                                                disk_cap_string,
-                                                device_str))
+                if disk_cap_string or device_str:
+                    str_list.append(template.format(href_str,
+                                                    file_size_str,
+                                                    disk_cap_string,
+                                                    device_str))
+                else:
+                    str_list.append(template2.format(href_str, file_size_str))
+
+                if verbosity_option == 'verbose':
+                    str_list.append("    File ID: {0}"
+                                    .format(file.get(self.FILE_ID)))
+                    if disk is not None:
+                        str_list.append("    Disk ID: {0}"
+                                        .format(disk.get(self.DISK_ID)))
 
             # Find placeholder disks as well
             for disk in disk_list:
@@ -960,22 +1005,37 @@ class OVF(VMDescription, XML):
                         str_list.extend(wrapper.wrap(desc))
             section_list.append("\n".join(str_list))
 
+        if self.environment_transports:
+            str_list = ["Environment:"]
+            wrapper.initial_indent = '  '
+            wrapper.subsequent_indent = '                   '
+            str_list.extend(wrapper.wrap(
+                "Transport types: {0}"
+                .format(" ".join(self.environment_transports))))
+            section_list.append("\n".join(str_list))
+
         # Property information
         properties = self.environment_properties
         if properties:
             str_list = ["Properties:"]
-            max_key = max([len(str(ph['key'])) for ph in properties])
+            max_key = 2 + max([len(str(ph['key'])) for ph in properties])
             max_label = max([len(str(ph['label'])) for ph in properties])
             max_value = max([len(str(ph['value'])) for ph in properties])
-            max_width = max(max_key, max_label)
+            if all(ph['label'] for ph in properties):
+                max_width = max_label
+            else:
+                max_width = max(max_key, max_label)
             wrapper.initial_indent = '      '
             wrapper.subsequent_indent = '      '
             for ph in properties:
-                # If the terminal is wide enough, display "key label value",
-                # else only display "label value"
-                if max_key + max_label + max_value < TEXT_WIDTH - 8:
-                    str_list.append('  {key:{kw}}  {label:{lw}}  {val}'.format(
-                        key=ph['key'],
+                # If we have a label, and the terminal is wide enough,
+                # display "<key> label value", else if no label, display
+                # "<key> value", else only display "label value"
+                if max_label > 0 and (max_key + max_label + max_value <
+                                      TEXT_WIDTH - 8):
+                    format_str = '  {key:{kw}}  {label:{lw}}  {val}'
+                    str_list.append(format_str.format(
+                        key="<{0}>".format(ph['key']),
                         kw=max_key,
                         label=ph['label'],
                         lw=max_label,
@@ -1197,16 +1257,18 @@ class OVF(VMDescription, XML):
                                               profile_list,
                                               create_new=True)
 
-    def set_nic_type(self, type, profile_list):
-        """Set the hardware type for NICs.
+    def set_nic_types(self, type_list, profile_list):
+        """Set the hardware type(s) for NICs.
 
-        :param str type: NIC hardware type
+        :param list type_list: NIC hardware type(s)
         :param list profile_list: Change only the given profiles.
         """
-        self.platform.validate_nic_type(type)
+        # Just to be safe...
+        type_list = [canonicalize_nic_subtype(t) for t in type_list]
+        self.platform.validate_nic_types(type_list)
         self.hardware.set_value_for_all_items('ethernet',
                                               self.RESOURCE_SUB_TYPE,
-                                              type.upper(),
+                                              " ".join(type_list),
                                               profile_list)
 
     def get_nic_count(self, profile_list):
@@ -1325,26 +1387,28 @@ class OVF(VMDescription, XML):
         return [item.get_value(self.ADDRESS) for item in
                 self.hardware.find_all_items('serial', profile_list=[profile])]
 
-    def set_scsi_subtype(self, type, profile_list):
-        """Set the device subtype for the SCSI controller(s).
+    def set_scsi_subtypes(self, type_list, profile_list):
+        """Set the device subtype(s) for the SCSI controller(s).
 
-        :param str type: SCSI subtype string
+        :param list type_list: SCSI subtype string list
         :param list profile_list: Change only the given profiles
         """
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('scsi',
-                                              self.RESOURCE_SUB_TYPE, type,
+                                              self.RESOURCE_SUB_TYPE,
+                                              " ".join(type_list),
                                               profile_list)
 
-    def set_ide_subtype(self, type, profile_list):
-        """Set the device subtype for the IDE controller(s).
+    def set_ide_subtypes(self, type_list, profile_list):
+        """Set the device subtype(s) for the IDE controller(s).
 
-        :param str type: IDE subtype string
+        :param list type_list: IDE subtype string list
         :param list profile_list: Change only the given profiles
         """
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('ide',
-                                              self.RESOURCE_SUB_TYPE, type,
+                                              self.RESOURCE_SUB_TYPE,
+                                              " ".join(type_list),
                                               profile_list)
 
     def get_property_value(self, key):
@@ -1353,7 +1417,7 @@ class OVF(VMDescription, XML):
         :param str key: Property identifier
         :return: Value of this property, or ``None``
         """
-        if self.product_section is None:
+        if self.ovf_version < 1.0 or self.product_section is None:
             return None
         property = self.find_child(self.product_section, self.PROPERTY,
                                    attrib={self.PROP_KEY: key})
@@ -1368,9 +1432,13 @@ class OVF(VMDescription, XML):
         :param value: Value to set for this property
         :return: the (converted) value that was set.
         """
+        if self.ovf_version < 1.0:
+            raise NotImplementedError("No support for setting environment "
+                                      "properties under OVF v0.9")
         if self.product_section is None:
             self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION)
+                self.virtual_system, self.PRODUCT_SECTION,
+                attrib=self.PRODUCT_SECTION_ATTRIB)
             # Any Section must have an Info as child
             self.set_or_make_child(self.product_section, self.INFO,
                                    "Product Information")
@@ -1723,9 +1791,9 @@ class OVF(VMDescription, XML):
                 subtype = item_subtype
                 logger.info("Found {0} subtype {1}".format(type, subtype))
             elif subtype != item_subtype:
-                logger.warning("Found conflicting subtypes ('{0}', '{1}') for "
-                               "device type {2}".format(subtype, item_subtype,
-                                                        type))
+                logger.warning("Found different subtypes ('{0}', '{1}') for "
+                               "device type {2} - no common subtype exists"
+                               .format(subtype, item_subtype, type))
                 return None
         return subtype
 
@@ -1824,6 +1892,33 @@ class OVF(VMDescription, XML):
         self._file_references[file_name] = FileOnDisk(file_path)
 
         return file
+
+    def remove_file(self, file, disk=None, disk_drive=None):
+        """Remove the given file object from the VM.
+
+        :param file: File object to remove
+        :param disk: Disk object referencing :attr:`file`
+        :param disk_drive: Disk drive mapping :attr:`file` to a device
+        """
+        self.references.remove(file)
+        del self._file_references[file.get(self.FILE_HREF)]
+
+        if disk is not None:
+            self.disk_section.remove(disk)
+
+        if disk_drive is not None:
+            # For a CD-ROM drive, we can simply unmap the file.
+            # For a hard disk, we need to delete the device altogether.
+            drive_type = disk_drive.get_value(self.RESOURCE_TYPE)
+            if drive_type == self.RES_MAP['cdrom']:
+                disk_drive.set_property(self.HOST_RESOURCE, '')
+            elif drive_type == self.RES_MAP['harddisk']:
+                self.hardware.delete_item(disk_drive)
+            else:
+                raise ValueUnsupportedError("drive type", drive_type,
+                                            "CD-ROM ({0}) or hard disk ({1})"
+                                            .format(self.RES_MAP['cdrom'],
+                                                    self.RES_MAP['harddisk']))
 
     def add_disk(self, file_path, file_id, disk_type, disk=None):
         """Add a new disk object to the VM or overwrite the provided one.
@@ -2171,7 +2266,8 @@ class OVF(VMDescription, XML):
         """
         if self.product_section is None:
             self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION)
+                self.virtual_system, self.PRODUCT_SECTION,
+                attrib=self.PRODUCT_SECTION_ATTRIB)
             # Any Section must have an Info as child
             self.set_or_make_child(self.product_section, self.INFO,
                                    "Product Information")
@@ -2295,6 +2391,14 @@ class OVF(VMDescription, XML):
         return (self.get_type_from_device(controller),
                 (controller.get_value(self.ADDRESS) + ':' +
                  device.get_value(self.ADDRESS_ON_PARENT)))
+
+    def get_id_from_disk(self, disk):
+        """Get the identifier string associated with the given Disk object.
+
+        :param disk: Disk object
+        :rtype: string
+        """
+        return disk.get(self.DISK_ID)
 
     def get_capacity_from_disk(self, disk):
         """Get the capacity of the given Disk in bytes.
@@ -2457,10 +2561,15 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
             self.VIRTUAL_SYSTEM_ATTRIB = {
                 XSI + 'type': "ovf:VirtualSystem_Type"
             }
+            self.PRODUCT_SECTION = OVF + 'Section'
+            self.PRODUCT_SECTION_ATTRIB = {
+                XSI + 'type': "ovf:ProductSection_Type"
+            }
         else:
             self.VIRTUAL_SYSTEM = OVF + 'VirtualSystem'
             self.VIRTUAL_SYSTEM_ATTRIB = {}
-        self.PRODUCT_SECTION = OVF + 'ProductSection'
+            self.PRODUCT_SECTION = OVF + 'ProductSection'
+            self.PRODUCT_SECTION_ATTRIB = {}
         # ProductSection attributes
         self.PRODUCT_CLASS = OVF + 'class'
         # ProductSection sub-elements
@@ -2474,12 +2583,17 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
         self.PROPERTY = OVF + 'Property'
         # Attributes of a Property element
         self.PROP_KEY = OVF + 'key'
-        self.PROP_VALUE = OVF + 'value'
+        if self.ovf_version < 1.0:
+            self.PROP_VALUE = OVF + 'defaultValue'
+        else:
+            self.PROP_VALUE = OVF + 'value'
         self.PROP_QUAL = OVF + 'qualifiers'
         self.PROP_TYPE = OVF + 'type'
         # Property sub-elements
         self.PROPERTY_LABEL = OVF + 'Label'
         self.PROPERTY_DESC = OVF + 'Description'
+
+        self.ENVIRONMENT_TRANSPORT = OVF + 'transport'
 
         # Envelope -> VirtualSystem -> EulaSection -> License
         if self.ovf_version < 1.0:
@@ -2705,10 +2819,16 @@ class OVFHardware:
         Will do nothing if no Items have been changed.
         """
         modified = False
-        for ovfitem in self.item_dict.values():
-            if ovfitem.modified:
-                modified = True
-                break
+        if len(self.item_dict) != len(XML.find_all_children(
+                self.ovf.virtual_hw_section,
+                set([self.ovf.ITEM, self.ovf.STORAGE_ITEM,
+                     self.ovf.ETHERNET_PORT_ITEM]))):
+            modified = True
+        else:
+            for ovfitem in self.item_dict.values():
+                if ovfitem.modified:
+                    modified = True
+                    break
         if not modified:
             logger.debug("No changes to hardware definition, "
                          "so no XML update is required")
@@ -2773,6 +2893,13 @@ class OVFHardware:
         logger.info("Added new {0} under {1}, instance is {2}"
                     .format(resource_type, profile_list, instance))
         return (instance, ovfitem)
+
+    def delete_item(self, item):
+        """Delete the given :class:`OVFItem`."""
+        instance = item.get_value(self.ovf.INSTANCE_ID)
+        if self.item_dict[instance] == item:
+            del self.item_dict[instance]
+        # TODO: error handling - currently a no-op if item not in item_dict
 
     def clone_item(self, parent_item, profile_list):
         """Clone an :class:`OVFItem` to create a new instance.

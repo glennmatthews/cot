@@ -3,7 +3,7 @@
 # deploy_esxi.py - Implements "cot deploy ... esxi" command
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 #
 # This file is part of the Common OVF Tool (COT) project.
@@ -396,25 +396,22 @@ class COTDeployESXi(COTDeploy):
 
         logger.info("Done with serial port fixup")
 
-    def create_subparser(self, parent, storage):
+    def create_subparser(self):
         """Add subparser for the CLI of this submodule.
 
-        This will create the shared :attr:`~COTDeploy.parser` under
-        :attr:`parent`, then create our own sub-subparser under
-        :attr:`~COTDeploy.subparsers`.
-
-        :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
+        This will create the shared :attr:`~COTDeploy.parser`, then
+        create our own sub-subparser under :attr:`~COTDeploy.subparsers`.
         """
-        super(COTDeployESXi, self).create_subparser(parent, storage)
+        super(COTDeployESXi, self).create_subparser()
 
         import argparse
         # Create 'cot deploy ... esxi' parser
-        p = self.subparsers.add_parser(
-            'esxi', parents=[self.generic_parser],
+        p = self.UI.add_subparser(
+            'esxi',
+            aliases=['vcenter', 'vmware', 'vsphere'],
+            parent=self.subparsers,
+            lookup_prefix="deploy-",
+            parents=[self.generic_parser],
             usage=self.UI.fill_usage("deploy PACKAGE esxi", [
                 "LOCATOR [-u USERNAME] [-p PASSWORD] [-c CONFIGURATION] "
                 "[-n VM_NAME] [-P] [-N OVF1=HOST1 [-N OVF2=HOST2 ...]] "
@@ -463,4 +460,3 @@ class COTDeployESXi(COTDeploy):
                        '(deploy via vCenter server)')
 
         p.set_defaults(instance=self)
-        storage['deploy-esxi'] = p

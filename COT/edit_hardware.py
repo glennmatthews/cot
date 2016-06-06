@@ -3,7 +3,7 @@
 # edit_hardware.py - Implements "edit-hardware" sub-command
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -28,7 +28,10 @@ import argparse
 import logging
 import re
 import textwrap
+import warnings
 
+from .data_validation import canonicalize_ide_subtype, canonicalize_nic_subtype
+from .data_validation import canonicalize_scsi_subtype
 from .data_validation import natural_sort, no_whitespace, mac_address
 from .data_validation import non_negative_int, positive_int, InvalidInputError
 from .submodule import COTSubmodule
@@ -50,14 +53,14 @@ class COTEditHardware(COTSubmodule):
     :attr:`cpus`,
     :attr:`memory`,
     :attr:`nics`,
-    :attr:`nic_type`,
+    :attr:`nic_types`,
     :attr:`mac_addresses_list`,
     :attr:`nic_networks`,
     :attr:`nic_names`,
     :attr:`serial_ports`,
     :attr:`serial_connectivity`,
-    :attr:`scsi_subtype`,
-    :attr:`ide_subtype`,
+    :attr:`scsi_subtypes`,
+    :attr:`ide_subtypes`,
     :attr:`virtual_system_type`
     """
 
@@ -71,7 +74,7 @@ class COTEditHardware(COTSubmodule):
         self._cpus = None
         self._memory = None
         self._nics = None
-        self._nic_type = None
+        self._nic_types = None
         self.mac_addresses_list = None
         """List of MAC addresses to set."""
         self.nic_networks = None
@@ -87,10 +90,8 @@ class COTEditHardware(COTSubmodule):
         self._serial_ports = None
         self.serial_connectivity = None
         """List of serial connection strings."""
-        self.scsi_subtype = None
-        """Subtype string for SCSI controllers"""
-        self.ide_subtype = None
-        """Subtype string for IDE controllers"""
+        self._scsi_subtypes = None
+        self._ide_subtypes = None
         self.virtual_system_type = None
         """Virtual system type"""
 
@@ -166,13 +167,35 @@ class COTEditHardware(COTSubmodule):
 
     @property
     def nic_type(self):
-        """NIC type string to set."""
-        return self._nic_type
+        """NIC type string to set.
+
+        .. deprecated:: 1.5
+           Use :attr:`nic_types` instead.
+        """
+        warnings.warn("Use nic_types instead", DeprecationWarning)
+        if self.nic_types is None or len(self.nic_types) == 0:
+            return None
+        if len(self.nic_types) > 1:
+            raise TypeError("nic_types has more than one element ({0}). "
+                            "Use nic_types instead of nic_type."
+                            .format(self.nic_types))
+        return self.nic_types[0]
 
     @nic_type.setter
     def nic_type(self, value):
-        self.vm.platform.validate_nic_type(value)
-        self._nic_type = value
+        warnings.warn("Use nic_types instead", DeprecationWarning)
+        self.nic_types = [value]
+
+    @property
+    def nic_types(self):
+        """List of NIC type strings to set."""
+        return self._nic_types
+
+    @nic_types.setter
+    def nic_types(self, value):
+        value = [canonicalize_nic_subtype(v) for v in value]
+        self.vm.platform.validate_nic_types(value)
+        self._nic_types = value
 
     @property
     def serial_ports(self):
@@ -188,6 +211,72 @@ class COTEditHardware(COTSubmodule):
         self.vm.platform.validate_serial_count(value)
         self._serial_ports = value
 
+    @property
+    def scsi_subtype(self):
+        """SCSI controller subtype string to set.
+
+        .. deprecated:: 1.5
+           Use :attr:`scsi_subtypes` instead.
+        """
+        warnings.warn("Use scsi_subtypes instead", DeprecationWarning)
+        if self.scsi_subtypes is None or len(self.scsi_subtypes) == 0:
+            return None
+        if len(self.scsi_subtypes) > 1:
+            raise TypeError("scsi_subtypes has more than one element ({0}). "
+                            "Use scsi_subtypes instead of scsi_subtype."
+                            .format(self.scsi_subtypes))
+        return self.scsi_subtypes[0]
+
+    @scsi_subtype.setter
+    def scsi_subtype(self, value):
+        warnings.warn("Use scsi_subtypes instead", DeprecationWarning)
+        self.scsi_subtypes = [value]
+
+    @property
+    def scsi_subtypes(self):
+        """SCSI controller subtype string(s) to set."""
+        return self._scsi_subtypes
+
+    @scsi_subtypes.setter
+    def scsi_subtypes(self, value):
+        value = [canonicalize_scsi_subtype(v) for v in value]
+        value = [v for v in value if v]
+        # TODO: self.vm.platform.validate_scsi_types(value)
+        self._scsi_subtypes = value
+
+    @property
+    def ide_subtype(self):
+        """IDE controller subtype string to set.
+
+        .. deprecated:: 1.5
+           Use :attr:`ide_subtypes` instead.
+        """
+        warnings.warn("Use ide_subtypes instead", DeprecationWarning)
+        if self.ide_subtypes is None or len(self.ide_subtypes) == 0:
+            return None
+        if len(self.ide_subtypes) > 1:
+            raise TypeError("ide_subtypes has more than one element ({0}). "
+                            "Use ide_subtypes instead of ide_subtype."
+                            .format(self.ide_subtypes))
+        return self.ide_subtypes[0]
+
+    @ide_subtype.setter
+    def ide_subtype(self, value):
+        warnings.warn("Use ide_subtypes instead", DeprecationWarning)
+        self.ide_subtypes = [value]
+
+    @property
+    def ide_subtypes(self):
+        """IDE controller subtype string(s) to set."""
+        return self._ide_subtypes
+
+    @ide_subtypes.setter
+    def ide_subtypes(self, value):
+        value = [canonicalize_ide_subtype(v) for v in value]
+        value = [v for v in value if v]
+        # TODO: self.vm.platform.validate_ide_types(value)
+        self._ide_subtypes = value
+
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
@@ -200,14 +289,14 @@ class COTEditHardware(COTSubmodule):
                 self.cpus is None and
                 self.memory is None and
                 self.nics is None and
-                self.nic_type is None and
+                self.nic_types is None and
                 self.mac_addresses_list is None and
                 self.nic_networks is None and
                 self.nic_names is None and
                 self.serial_ports is None and
                 self.serial_connectivity is None and
-                self.scsi_subtype is None and
-                self.ide_subtype is None and
+                self.scsi_subtypes is None and
+                self.ide_subtypes is None and
                 self.virtual_system_type is None
         ):
             return (False, "No work requested! Please specify at least "
@@ -275,8 +364,8 @@ class COTEditHardware(COTSubmodule):
         if self.memory is not None:
             vm.set_memory(self.memory, self.profiles)
 
-        if self.nic_type is not None:
-            vm.set_nic_type(self.nic_type, self.profiles)
+        if self.nic_types is not None:
+            vm.set_nic_types(self.nic_types, self.profiles)
 
         nics_dict = vm.get_nic_count(self.profiles)
         if self.nics is not None:
@@ -338,35 +427,29 @@ class COTEditHardware(COTSubmodule):
                                 len(self.serial_connectivity)))
             vm.set_serial_connectivity(self.serial_connectivity, self.profiles)
 
-        if self.scsi_subtype is not None:
-            vm.set_scsi_subtype(self.scsi_subtype, self.profiles)
+        if self.scsi_subtypes is not None:
+            vm.set_scsi_subtypes(self.scsi_subtypes, self.profiles)
 
-        if self.ide_subtype is not None:
-            vm.set_ide_subtype(self.ide_subtype, self.profiles)
+        if self.ide_subtypes is not None:
+            vm.set_ide_subtypes(self.ide_subtypes, self.profiles)
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
+    def create_subparser(self):
+        """Create 'edit-hardware' CLI subparser."""
         wrapper = textwrap.TextWrapper(width=self.UI.terminal_width - 1,
                                        initial_indent='  ',
                                        subsequent_indent='  ')
-        p = parent.add_parser(
-            'edit-hardware', add_help=False,
+        p = self.UI.add_subparser(
+            'edit-hardware',
+            add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,
             usage=self.UI.fill_usage("edit-hardware", [
                 "PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]",
                 "PACKAGE [-o OUTPUT] \
 [-p PROFILE [PROFILE2 ...] [--delete-all-other-profiles]] [-c CPUS] \
-[-m MEMORY] [-n NICS] [--nic-type {e1000,virtio,vmxnet3}] \
+[-m MEMORY] [-n NICS] [--nic-types TYPE [TYPE2 ...]] \
 [-N NETWORK [NETWORK2 ...]] [-M MAC1 [MAC2 ...]] \
 [--nic-names NAME1 [NAME2 ...]] [-s SERIAL_PORTS] [-S URI1 [URI2 ...]] \
-[--scsi-subtype SCSI_SUBTYPE] [--ide-subtype IDE_SUBTYPE]",
+[--scsi-subtypes TYPE [TYPE2 ...]] [--ide-subtypes TYPE [TYPE2 ...]]",
             ]),
             help="Edit virtual machine hardware properties of an OVF",
             description="Edit hardware properties of the specified OVF or OVA",
@@ -427,11 +510,11 @@ class COTEditHardware(COTSubmodule):
 
         g.add_argument('-n', '--nics', type=non_negative_int,
                        help="Set the number of NICs.")
-        g.add_argument('--nic-type',
-                       choices=['e1000', 'virtio', 'vmxnet3'],
-                       help="Set the hardware type for all NICs. "
+        g.add_argument('--nic-types', nargs='+',
+                       metavar=('TYPE', 'TYPE2'),
+                       help="Set the hardware type(s) for all NICs. "
                        "(default: do not change existing NICs, and new "
-                       "NICs added will match the existing type.)")
+                       "NICs added will match the existing type(s).)")
         g.add_argument('--nic-names', action='append', nargs='+',
                        metavar=('NAME1', 'NAME2'),
                        help="Specify a list of one or more NIC names or "
@@ -461,21 +544,21 @@ class COTEditHardware(COTSubmodule):
 
         g = p.add_argument_group("disk and disk controller options")
 
-        g.add_argument('--scsi-subtype',
-                       help='Set resource subtype (such as "lsilogic" or '
+        g.add_argument('--scsi-subtypes', action='append', nargs='+',
+                       metavar=('TYPE', 'TYPE2'),
+                       help='Set resource subtype(s) (such as "lsilogic" or '
                        '"virtio") for all SCSI controllers. If an empty '
                        "string is provided, any existing subtype will be "
                        "removed.")
-        g.add_argument('--ide-subtype',
-                       help='Set resource subtype (such as "virtio") for '
+        g.add_argument('--ide-subtypes', action='append', nargs='+',
+                       metavar=('TYPE', 'TYPE2'),
+                       help='Set resource subtype(s) (such as "virtio") for '
                        "all IDE controllers. If an empty string is "
                        "provided, any existing subtype will be removed.")
 
         p.add_argument('PACKAGE',
                        help="OVF descriptor or OVA file to edit")
         p.set_defaults(instance=self)
-
-        storage['edit-hardware'] = p
 
     def expand_list_wildcard(self, name_list, length):
         """Expand a list containing a wildcard to the desired length.

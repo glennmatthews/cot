@@ -3,7 +3,7 @@
 # submodule.py - Abstract interface for COT 'command' submodules.
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -86,15 +86,8 @@ class COTGenericSubmodule(object):
             self.vm.destroy()
             self.vm = None
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
+    def create_subparser(self):
+        """Add subparser for the CLI of this submodule."""
         pass
 
 

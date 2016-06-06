@@ -3,7 +3,7 @@
 # ovf.py - Unit test cases for COT OVF/OVA handling
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -164,16 +164,20 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         self.staging_dir = tempfile.mkdtemp(prefix="cot_ut_ovfio_stage")
         shutil.copy(self.input_ovf, self.staging_dir)
         shutil.copy(self.input_vmdk, self.staging_dir)
+        shutil.copy(self.sample_cfg, self.staging_dir)
         # Don't copy input.iso to the staging directory.
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
                               self.temp_file):
             self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.REMOVING_FILE)
         self.check_diff("""
-     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="152576" />
--    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-   </ovf:References>
-""")
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />
+-    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
+""".format(vmdk_size=self.FILE_SIZE['input.vmdk'],
+           iso_size=self.FILE_SIZE['input.iso'],
+           cfg_size=self.FILE_SIZE['sample_cfg.txt']))
 
         # Read-only OVF
         with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
@@ -188,10 +192,13 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         self.assertLogged(**self.FILE_DISAPPEARED)
         self.assertLogged(**self.REMOVING_FILE)
         self.check_diff("""
-     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="152576" />
--    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-   </ovf:References>
-""")
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />
+-    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
+""".format(vmdk_size=self.FILE_SIZE['input.vmdk'],
+           iso_size=self.FILE_SIZE['input.iso'],
+           cfg_size=self.FILE_SIZE['sample_cfg.txt']))
 
         # Read OVA, write OVF
         try:
@@ -200,6 +207,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
             tarf.add(os.path.join(self.staging_dir, 'input.ovf'), 'input.ovf')
             tarf.add(os.path.join(self.staging_dir, 'input.vmdk'),
                      'input.vmdk')
+            tarf.add(self.sample_cfg, 'sample_cfg.txt')
         finally:
             tarf.close()
         with VMContextManager(
@@ -209,10 +217,13 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         self.assertLogged(**self.REMOVING_FILE)
         self.check_diff(file2=os.path.join(self.temp_dir, 'output.ovf'),
                         expected="""
-     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="152576" />
--    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="360448" />
-   </ovf:References>
-""")
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />
+-    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
+""".format(vmdk_size=self.FILE_SIZE['input.vmdk'],
+           iso_size=self.FILE_SIZE['input.iso'],
+           cfg_size=self.FILE_SIZE['sample_cfg.txt']))
 
         # Also test read-only OVA logic:
         with VMContextManager(os.path.join(self.staging_dir, "input.ova"),
@@ -225,6 +236,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         input_dir = os.path.dirname(self.input_ovf)
         shutil.copy(os.path.join(input_dir, 'input.ovf'), self.staging_dir)
         shutil.copy(os.path.join(input_dir, 'input.iso'), self.staging_dir)
+        shutil.copy(self.sample_cfg, self.staging_dir)
         # Copy blank.vmdk to input.vmdk so as to have the wrong size/checksum
         shutil.copy(self.blank_vmdk,
                     os.path.join(self.staging_dir, 'input.vmdk'))
@@ -267,18 +279,22 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         # Make sure everything propagated over successfully
         input_dir = os.path.dirname(self.input_ovf)
         for ext in ['.ovf', '.mf', '.iso', '.vmdk']:
-            if (ext == '.mf' or ext == '.ovf') and sys.hexversion < 0x02070000:
-                # OVF changes due to 2.6 XML handling, and MF changes due to
-                # checksum difference for the OVF
-                print("'{0}' file comparison skipped due to "
-                      "old Python version ({1})"
-                      .format(ext, platform.python_version()))
-                continue
-            self.assertTrue(
-                filecmp.cmp(os.path.join(input_dir, "input" + ext),
-                            os.path.join(self.temp_dir, "input" + ext)),
-                "{0} file changed after OVF->OVA->OVF conversion"
-                .format(ext))
+            if ext == '.mf' or ext == '.ovf':
+                if sys.hexversion < 0x02070000:
+                    # OVF changes due to 2.6 XML handling, and MF changes due
+                    # to checksum difference for the OVF
+                    print("'{0}' file comparison skipped due to "
+                          "old Python version ({1})"
+                          .format(ext, platform.python_version()))
+                    continue
+                self.check_diff("", os.path.join(input_dir, "input" + ext),
+                                os.path.join(self.temp_dir, "input" + ext))
+            else:
+                self.assertTrue(
+                    filecmp.cmp(os.path.join(input_dir, "input" + ext),
+                                os.path.join(self.temp_dir, "input" + ext)),
+                    "{0} file changed after OVF->OVA->OVF conversion"
+                    .format(ext))
 
     def test_tar_links(self):
         """Check that OVA dereferences symlinks and hard links."""
@@ -288,6 +304,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         os.link(self.input_vmdk, os.path.join(self.staging_dir, 'input.vmdk'))
         # Symlink self.input_iso to the staging dir
         os.symlink(self.input_iso, os.path.join(self.staging_dir, 'input.iso'))
+        shutil.copy(self.sample_cfg, self.staging_dir)
         ovf = OVF(os.path.join(self.staging_dir, 'input.ovf'),
                   os.path.join(self.temp_dir, 'input.ova'))
         ovf.write()

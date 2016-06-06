@@ -3,22 +3,69 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.5.0`_ - 2016-06-06
+---------------------
+
+**Added**
+
+- `#47`_ - Added ``cot remove-file`` subcommand.
+- `#43`_ - add ``cot edit-properties --transport`` option to set environment
+  transport type(s) - iso, VMWare Tools, etc.
+
+  - ``cot info`` now has a new "Environment" section that displays the
+    transport type
+
+- `#45`_ - support for multiple values for ``--nic-types``, ``--ide-subtypes``,
+  and ``--scsi-subtypes`` in ``cot edit-hardware``.
+- COT now recognizes the Cisco IOS XRv 9000 platform identifier
+  ``com.cisco.ios-xrv9000``.
+- `#21`_ - subcommand aliases (Python 3.x only):
+
+  - ``cot edit-product`` aliases: ``cot set-product``, ``cot set-version``
+  - ``cot edit-properties`` aliases: ``cot set-properties``,
+    ``cot edit-environment``, ``cot set-environment``
+  - ``cot info`` alias: ``cot describe``
+  - ``cot inject-config`` alias: ``cot add-bootstrap``
+  - ``cot remove-file`` alias: ``cot delete-file``
+
+- Support for tab-completion of CLI parameters using `argcomplete`_.
+
+**Changed**
+
+- ``cot edit-hardware`` options ``--nic-types``, ``--ide-subtypes``, and
+  ``--scsi-subtypes`` are now validated and canonicalized by COT, meaning that:
+
+  - ``cot edit-hardware --nic-type virtio-net-pci`` is now a valid command and
+    will correctly create an OVF with ``ResourceSubType`` ``virtio``
+    (not ``virtio-net-pci``)
+  - ``cot edit-hardware --ide-subtype foobar`` will now fail with an error
+
+- ``cot info`` is now more self-consistent in how it displays property keys.
+  They are now always wrapped in ``<`` ``>``, whereas previously this was
+  only sometimes the case.
+- ``cot info --verbose`` now displays file and disk ID strings under the
+  "Files and Disks" section.
+
 `1.4.2`_ - 2016-05-11
 ---------------------
 
 **Added**
 
-- COT now supports ``xorriso`` as another alternative to ``mkisofs`` and ``genisoimage``
+- COT now supports ``xorriso`` as another alternative to ``mkisofs`` and
+  ``genisoimage``
 
 **Fixed**
 
-- `#42`_ - ``cot deploy esxi`` error handling behavior needed to be updated for `requests`_ release 2.8.
+- `#42`_ - ``cot deploy esxi`` error handling behavior needed to be updated
+  for `requests`_ release 2.8.
 - `#44`_ - test case failure seen when running `pyVmomi`_ 6.0.0.2016.4.
 
 **Changed**
 
-- Installation document now recommends installation via `pip`_ rather than installing from source.
-- `#40`_ - Now uses faster Docker-based infrastructure from `Travis CI`_ for CI builds/tests.
+- Installation document now recommends installation via `pip`_ rather than
+  installing from source.
+- `#40`_ - Now uses faster Docker-based infrastructure from `Travis CI`_ for
+  CI builds/tests.
 
 `1.4.1`_ - 2015-09-02
 ---------------------
@@ -320,6 +367,7 @@ Initial public release.
 .. _#17: https://github.com/glennmatthews/cot/issues/17
 .. _#19: https://github.com/glennmatthews/cot/issues/19
 .. _#20: https://github.com/glennmatthews/cot/issues/20
+.. _#21: https://github.com/glennmatthews/cot/issues/21
 .. _#24: https://github.com/glennmatthews/cot/issues/24
 .. _#26: https://github.com/glennmatthews/cot/issues/26
 .. _#28: https://github.com/glennmatthews/cot/issues/28
@@ -333,7 +381,10 @@ Initial public release.
 .. _#40: https://github.com/glennmatthews/cot/issues/40
 .. _#41: https://github.com/glennmatthews/cot/issues/41
 .. _#42: https://github.com/glennmatthews/cot/issues/42
+.. _#43: https://github.com/glennmatthews/cot/issues/43
 .. _#44: https://github.com/glennmatthews/cot/issues/44
+.. _#45: https://github.com/glennmatthews/cot/issues/45
+.. _#47: https://github.com/glennmatthews/cot/issues/47
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -350,8 +401,10 @@ Initial public release.
 .. _Travis CI: https://travis-ci.org/glennmatthews/cot/
 .. _versioneer: https://github.com/warner/python-versioneer
 .. _pip: https://pip.pypa.io/en/stable/
+.. _argcomplete: https://argcomplete.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.5.0: https://github.com/glennmatthews/cot/compare/v1.4.2...v1.5.0
 .. _1.4.2: https://github.com/glennmatthews/cot/compare/v1.4.1...v1.4.2
 .. _1.4.1: https://github.com/glennmatthews/cot/compare/v1.4.0...v1.4.1
 .. _1.4.0: https://github.com/glennmatthews/cot/compare/v1.3.3...v1.4.0

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# cli.py - Unit test cases for generic COT CLI.
+# test_cli.py - Unit test cases for generic COT CLI.
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -306,20 +306,8 @@ class TestCLIGeneral(TestCOTCLI):
         o1 = self.call_cot(['-h'])
         o2 = self.call_cot(['--help'])
         self.assertMultiLineEqual(o1, o2)
-        self.assertMultiLineEqual("""
-usage: 
-  cot --help
-  cot --version
-  cot help <command>
-  cot <command> --help
-  cot <options> <command> <command-options>
-
-{0}
-A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
-with a focus on virtualized network appliances such as the Cisco CSR 1000V and
-Cisco IOS XRv platforms.
-
-optional arguments:
+        if sys.hexversion < 0x03020000:
+            args_str = """
   -h, --help        show this help message and exit
   -V, --version     show program's version number and exit
   -f, --force       Perform requested actions without prompting for
@@ -327,9 +315,9 @@ optional arguments:
   -q, --quiet       Quiet output and logging (warnings and errors only)
   -v, --verbose     Verbose output and logging
   -d, -vv, --debug  Debug (most verbose) output and logging
-
-commands:
-  <command>
+"""
+            # No command aliases before Python 3.2
+            command_str = """
     add-disk        Add a disk image to an OVF package and map it as a disk in
                     the guest environment
     add-file        Add a file to an OVF package
@@ -345,8 +333,62 @@ commands:
     install-helpers
                     Install/verify COT manual pages and any third-party helper
                     programs that COT may require
-        """.format(__version_long__)  # noqa - trailing whitespace above is OK
-                                  .strip(), o1.strip())
+    remove-file     Remove a file from an OVF package
+"""
+        else:
+            # Spacing in args_str is a bit different due to subcommand aliases
+            args_str = """
+  -h, --help            show this help message and exit
+  -V, --version         show program's version number and exit
+  -f, --force           Perform requested actions without prompting for
+                        confirmation
+  -q, --quiet           Quiet output and logging (warnings and errors only)
+  -v, --verbose         Verbose output and logging
+  -d, -vv, --debug      Debug (most verbose) output and logging
+"""
+            # Help should include subcommand aliases
+            command_str = """
+    add-disk (add-drive)
+                        Add a disk image to an OVF package and map it as a
+                        disk in the guest environment
+    add-file            Add a file to an OVF package
+    deploy              Create a new VM on the target hypervisor from the
+                        given OVF or OVA
+    edit-hardware       Edit virtual machine hardware properties of an OVF
+    edit-product (set-product, set-version)
+                        Edit product info in an OVF
+    edit-properties (set-properties, edit-environment, set-environment)
+                        Edit environment properties of an OVF
+    help                Print help for a command
+    info (describe)     Generate a description of an OVF package
+    inject-config (add-bootstrap)
+                        Inject a configuration file into an OVF package
+    install-helpers     Install/verify COT manual pages and any third-party
+                        helper programs that COT may require
+    remove-file (delete-file)
+                        Remove a file from an OVF package
+"""
+
+        self.assertMultiLineEqual(
+            """
+usage: 
+  cot --help
+  cot --version
+  cot help <command>
+  cot <command> --help
+  cot <options> <command> <command-options>
+
+{0}
+A tool for editing Open Virtualization Format (.ovf, .ova) virtual appliances,
+with a focus on virtualized network appliances such as the Cisco CSR 1000V and
+Cisco IOS XRv platforms.
+
+optional arguments:{1}
+commands:
+  <command>{2}
+"""  # noqa - trailing whitespace above is expected
+            .format(__version_long__, args_str, command_str).strip(),
+            o1.strip())
 
     def test_version(self):
         """Verify --version command."""
@@ -553,7 +595,7 @@ class TestCLIEditHardware(TestCOTCLI):
         for arg in ['-p', '--profile', '-c', '--cpus',
                     '-m', '--memory', '-n', '--nics',
                     '-N', '--nic-networks',
-                    '--nic-type', '--nic-count',
+                    '--nic-types', '--nic-count',
                     '-M', '--mac-addresses-list',
                     '-s', '--serial-ports', '-S', '--serial-connectivity',
                     '--scsi-subtype', '--ide-subtype',

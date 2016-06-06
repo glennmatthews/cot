@@ -3,7 +3,7 @@
 # data_validation.py - Helper libraries to validate data sanity
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -32,6 +32,10 @@
 .. autosummary::
   :nosignatures:
 
+  canonicalize_helper
+  canonicalize_ide_subtype
+  canonicalize_nic_subtype
+  canonicalize_scsi_subtype
   check_for_conflict
   device_address
   mac_address
@@ -42,6 +46,11 @@
   positive_int
   to_string
   validate_int
+
+**Constants**
+
+.. autosummary::
+  NIC_TYPES
 """
 
 import xml.etree.ElementTree as ET
@@ -93,6 +102,95 @@ def match_or_die(first_label, first, second_label, second):
                                          to_string(first),
                                          second_label,
                                          to_string(second)))
+
+
+def canonicalize_helper(label, input, mappings, re_flags=0):
+    """Try to find a mapping of input to output.
+
+    :param str label: Label to use in any error raised
+    :param str input: User-provided string
+    :param list mappings: List of ``(expr, canonical)`` pairs for mapping.
+    :param re_flags: ``re.IGNORECASE``, etc. if desired
+    :returns: The canonical string
+    :raise ValueUnsupportedError: If no ``expr`` in ``mappings`` matches
+      ``input``.
+    """
+    if input is None or input == "":
+        return None
+    for (expr, canonical) in mappings:
+        if re.match(expr, input, flags=re_flags):
+            return canonical
+    raise ValueUnsupportedError(label, input, [c for (e, c) in mappings])
+
+
+def canonicalize_ide_subtype(subtype):
+    """Try to convert the given IDE controller string to a canonical form.
+
+    :param str subtype: User-provided string
+    :returns: The canonical string, one of:
+
+      - ``PIIX4``
+      - ``virtio``
+
+    :raise ValueUnsupportedError: If the canonical string cannot be determined
+    """
+    return canonicalize_helper("IDE controller subtype", subtype,
+                               [
+                                   ("piix4", 'PIIX4'),
+                                   ("virtio", 'virtio'),
+                               ],
+                               re.IGNORECASE)
+
+_NIC_MAPPINGS = [
+    ("e1000e", 'E1000e'),
+    ("e1000", 'E1000'),
+    ("pcnet32", 'PCNet32'),
+    ("virtio", 'virtio'),
+    ("vmxnet *3", 'VMXNET3'),
+]
+
+NIC_TYPES = [m[1] for m in _NIC_MAPPINGS]
+"""List of NIC type strings recognized as canonical."""
+
+
+def canonicalize_nic_subtype(subtype):
+    """Try to convert the given NIC subtype string to a canonical form.
+
+    :param str subtype: User-provided string
+    :returns: The canonical string, one of :data:`NIC_TYPES`
+
+    :raise ValueUnsupportedError: If the canonical string cannot be determined
+
+    .. seealso::
+       :meth:`COT.platforms.GenericPlatform.validate_nic_type`
+    """
+    return canonicalize_helper("NIC subtype", subtype,
+                               _NIC_MAPPINGS, re.IGNORECASE)
+
+
+def canonicalize_scsi_subtype(subtype):
+    """Try to convert the given SCSI controller string to a canonical form.
+
+    :param str subtype: User-provided string
+    :returns: The canonical string, one of:
+
+      - ``buslogic``
+      - ``lsilogic``
+      - ``lsilogicsas``
+      - ``virtio``
+      - ``VirtualSCSI``
+
+    :raise ValueUnsupportedError: If the canonical string cannot be determined
+    """
+    return canonicalize_helper("SCSI controller subtype", subtype,
+                               [
+                                   ("bus *logic", 'buslogic'),
+                                   ("lsi *logic *sas", 'lsilogicsas'),
+                                   ("lsi *logic", 'lsilogic'),
+                                   ("virtio", 'virtio'),
+                                   ("virtual *scsi", 'VirtualSCSI'),
+                               ],
+                               re.IGNORECASE)
 
 
 def check_for_conflict(label, li):

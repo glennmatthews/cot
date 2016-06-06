@@ -3,7 +3,7 @@
 # edit_properties.py - Implements "edit-properties" sub-command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -44,7 +44,8 @@ class COTEditProperties(COTSubmodule):
 
     Attributes:
     :attr:`config_file`,
-    :attr:`properties`
+    :attr:`properties`,
+    :attr:`transports`
     """
 
     def __init__(self, UI):
@@ -52,6 +53,7 @@ class COTEditProperties(COTSubmodule):
         super(COTEditProperties, self).__init__(UI)
         self._config_file = None
         self._properties = {}
+        self._transports = None
 
     @property
     def config_file(self):
@@ -89,6 +91,30 @@ class COTEditProperties(COTSubmodule):
                                         .format(key_value_pair))
         self._properties = new_value
 
+    @property
+    def transports(self):
+        """Transport mechanism(s) for environment properties.."""
+        return self._transports
+
+    _KNOWN_TRANSPORTS = {
+        'iso':    "iso",
+        'vmware': "com.vmware.guestInfo",
+        'ibm':    "http://www.ibm.com/xmlns/ovf/transport/filesystem/"
+                  "etc/ovf-transport",
+    }
+
+    @transports.setter
+    def transports(self, value):
+        self._transports = []
+        for v in value:
+            if v in self._KNOWN_TRANSPORTS.keys():
+                v = self._KNOWN_TRANSPORTS[v]
+            if v not in self._KNOWN_TRANSPORTS.values():
+                logger.warning("Unknown transport value '{0}'. "
+                               "You may want to contact the COT developers "
+                               "to add this as a recognized value.".format(v))
+            self._transports.append(v)
+
     def run(self):
         """Do the actual work of this submodule.
 
@@ -113,7 +139,11 @@ class COTEditProperties(COTSubmodule):
                     # TODO - for new property, prompt for label/descr/type?
                 self.vm.set_property_value(key, value)
 
-        if not self.config_file and not self.properties:
+        if self.transports:
+            self.vm.environment_transports = self.transports
+
+        if (not self.config_file and not self.properties and
+                not self.transports):
             logger.info("No changes specified in CLI; "
                         "entering interactive mode.")
             # Interactive mode!
@@ -177,27 +207,23 @@ class COTEditProperties(COTSubmodule):
                         continue
             continue
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
-            'edit-properties', add_help=False,
+    def create_subparser(self):
+        """Create 'edit-properties' CLI subparser."""
+        p = self.UI.add_subparser(
+            'edit-properties',
+            aliases=['set-properties', 'edit-environment', 'set-environment'],
+            add_help=False,
             help="""Edit environment properties of an OVF""",
             usage=self.UI.fill_usage("edit-properties", [
-                "PACKAGE -p KEY1=VALUE1 [KEY2=VALUE2 ...] [-o OUTPUT]",
-                "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
+                "PACKAGE [-p KEY1=VALUE1 [KEY2=VALUE2 ...]] [-c CONFIG_FILE] "
+                "[-t TRANSPORT [TRANSPORT2 ...]] [-o OUTPUT]",
                 "PACKAGE [-o OUTPUT]",
             ]),
             description="""
 Configure environment properties of the given OVF or OVA. The user may specify
 key-value pairs as command-line arguments or may provide a config-file to
-read from. If neither are specified, the program will run interactively.""")
+read from. If no arguments (other than optionally --output) are specified,
+the program will run interactively.""")
 
         p.add_argument('PACKAGE',
                        help="""OVF descriptor or OVA file to edit""")
@@ -220,7 +246,10 @@ read from. If neither are specified, the program will run interactively.""")
                        help="Set the given property key-value pair(s). "
                        "This argument may be repeated as needed to specify "
                        "multiple properties to edit.")
+        g.add_argument('-t', '--transports', action='append', nargs='+',
+                       metavar=('TRANSPORT', 'TRANSPORT2'),
+                       help="Set the transport method(s) for properties. "
+                       "Known values are 'iso', 'vmware', and 'ibm', or an "
+                       "arbitrary URI may be specified.")
 
         p.set_defaults(instance=self)
-
-        storage['edit-properties'] = p

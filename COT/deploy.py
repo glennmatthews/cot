@@ -3,7 +3,7 @@
 # deploy.py - Implements "cot deploy" command
 #
 # June 2014, Kevin A. Keim
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 #
 # This file is part of the Common OVF Tool (COT) project.
@@ -199,8 +199,8 @@ class COTDeploy(COTReadOnlySubmodule):
         """Subparser grouping for hypervisor-specific sub-subparsers.
 
         Subclasses should generally have their :func:`create_subparser`
-        implementations create their sub-subparsers under :attr:`subparsers`
-        and NOT under :attr:`parent`.
+        implementations create their sub-subparsers with
+        ``parent=``:attr:`subparsers`.
         """
 
     @property
@@ -333,27 +333,22 @@ class COTDeploy(COTReadOnlySubmodule):
                     .format(self.package, self.configuration, serial_count,
                             len(self.serial_connection)))
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
+    def create_subparser(self):
+        """Create 'deploy' CLI subparser if it doesn't already exist.
 
         .. note::
           Unlike most submodules, this one has subparsers of its own -
           ``'cot deploy PACKAGE <hypervisor>'`` so subclasses of this module
-          should call ``super().create_subparser(parent, storage)`` (to create
-          the main 'deploy' subparser if it doesn't already exist) then call
-          ``self.subparsers.add_parser()`` to add their own sub-subparser.
-
-        :param object parent: Subparser grouping object returned by
-            :func:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
+          should call ``super().create_subparser()`` (to create the main
+          'deploy' subparser if it doesn't already exist) then call
+          ``self.UI.add_parser(..., parent=self.subparsers, ...)`` to add
+          their own sub-subparser.
         """
         import argparse
 
-        if storage.get('deploy', None) is None:
+        if self.UI.subparser_lookup.get('deploy', None) is None:
             # Create 'cot deploy' parser
-            p = parent.add_parser(
+            p = self.UI.add_subparser(
                 'deploy',
                 usage=self.UI.fill_usage("deploy", [
                     "PACKAGE esxi ...",
@@ -372,13 +367,13 @@ class COTDeploy(COTReadOnlySubmodule):
                 title="hypervisors")
 
             p.set_defaults(instance=self)
-            storage['deploy'] = p
         else:
             # Unfortunately argparse doesn't readily expose the subparsers of
             # an existing parser. The below should be considered experimental!
-            self.subparsers = next(action for
-                                   action in storage['deploy']._actions if
-                                   type(action).name == '_SubParsersAction')
+            self.subparsers = next(
+                action for
+                action in self.UI.subparser_lookup['deploy']._actions if
+                type(action).name == '_SubParsersAction')
 
         # Create a generic parser with arguments to be shared by all
         self.generic_parser = argparse.ArgumentParser(add_help=False)

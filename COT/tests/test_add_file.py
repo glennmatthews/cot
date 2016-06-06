@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# add_file.py - test cases for the COTAddFile class
+# test_add_file.py - test cases for the COTAddFile class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -58,10 +58,11 @@ class TestCOTAddFile(COT_UT):
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="iosv.ovf" ovf:id="iosv.ovf" ovf:size="{ovf_size}" />
    </ovf:References>
-""".format(iso_size=self.FILE_SIZE['input.iso'],
+""".format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            ovf_size=os.path.getsize(self.iosv_ovf)))
 
     def test_add_file_with_id(self):
@@ -72,10 +73,11 @@ class TestCOTAddFile(COT_UT):
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
-     <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
 +    <ovf:File ovf:href="iosv.ovf" ovf:id="myfile" ovf:size="{ovf_size}" />
    </ovf:References>
-""".format(iso_size=self.FILE_SIZE['input.iso'],
+""".format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            ovf_size=os.path.getsize(self.iosv_ovf)))
 
     def test_overwrite_file(self):

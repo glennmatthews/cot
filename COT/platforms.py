@@ -4,7 +4,7 @@
 #                guest platforms (Cisco CSR1000V, Cisco IOS XRv, etc.)
 #
 # October 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -28,11 +28,13 @@
   IOSXRv
   IOSXRvRP
   IOSXRvLC
+  IOSXRv9000
   NXOSv
 """
 
 from .data_validation import ValueUnsupportedError
 from .data_validation import ValueTooLowError, ValueTooHighError
+from .data_validation import NIC_TYPES
 import logging
 
 logger = logging.getLogger(__name__)
@@ -57,6 +59,8 @@ class GenericPlatform(object):
     # Most platforms use a CD-ROM for bootstrap configuration
     BOOTSTRAP_DISK_TYPE = 'cdrom'
 
+    SUPPORTED_NIC_TYPES = NIC_TYPES
+
     @classmethod
     def controller_type_for_device(cls, device_type):
         """Get the default controller type for the given device type."""
@@ -67,7 +71,7 @@ class GenericPlatform(object):
     def guess_nic_name(cls, nic_number):
         """Guess the name of the Nth NIC for this platform.
 
-        Note that this counts from 1, not from 0!
+        .. note:: This method counts from 1, not from 0!
         """
         return ("Ethernet" + str(nic_number))
 
@@ -91,22 +95,27 @@ class GenericPlatform(object):
 
     @classmethod
     def validate_nic_type(cls, type_string):
-        """Throw an error if the NIC type string is not supported."""
-        # We only really know 3 possible NIC types at present
-        cls.valid_list_only("NIC type", type_string.upper(),
-                            ["E1000", "VIRTIO", "VMXNET3"])
+        """Throw an error if the NIC type string is not supported.
+
+        .. seealso::
+           - :func:`COT.data_validation.canonicalize_nic_subtype`
+           - :data:`COT.data_validation.NIC_TYPES`
+        """
+        if type_string not in cls.SUPPORTED_NIC_TYPES:
+            raise ValueUnsupportedError("NIC type", type_string,
+                                        cls.SUPPORTED_NIC_TYPES)
+
+    @classmethod
+    def validate_nic_types(cls, type_list):
+        """Throw an error if any NIC type string in the list is unsupported."""
+        for type_string in type_list:
+            cls.validate_nic_type(type_string)
 
     @classmethod
     def validate_serial_count(cls, count):
         """Throw an error if the number of serial ports is not supported."""
         if count < 0:
             raise ValueTooLowError("serial port count", count, 0)
-
-    @classmethod
-    def valid_list_only(cls, desc, val, supported_list):
-        """Error if the given value is not an item in the provided list."""
-        if val not in supported_list:
-            raise ValueUnsupportedError(desc, val, supported_list)
 
 
 class IOSXRv(GenericPlatform):
@@ -117,6 +126,7 @@ class IOSXRv(GenericPlatform):
     CONFIG_TEXT_FILE = 'iosxr_config.txt'
     SECONDARY_CONFIG_TEXT_FILE = 'iosxr_config_admin.txt'
     LITERAL_CLI_STRING = None
+    SUPPORTED_NIC_TYPES = ["E1000", "virtio"]
 
     @classmethod
     def guess_nic_name(cls, nic_number):
@@ -147,12 +157,6 @@ class IOSXRv(GenericPlatform):
         """IOS XRv requires at least one NIC."""
         if count < 1:
             raise ValueTooLowError("NIC count", count, 1)
-
-    @classmethod
-    def validate_nic_type(cls, type_string):
-        """IOS XRv supports E1000 and virtio NICs."""
-        cls.valid_list_only("NIC type", type_string.upper(),
-                            ["E1000", "VIRTIO"])
 
     @classmethod
     def validate_serial_count(cls, count):
@@ -219,6 +223,47 @@ class IOSXRvLC(IOSXRv):
             raise ValueTooHighError("serial ports", count, 4)
 
 
+class IOSXRv9000(IOSXRv):
+    """Platform-specific logic for Cisco IOS XRv 9000 platform."""
+
+    PLATFORM_NAME = "Cisco IOS XRv 9000"
+    SUPPORTED_NIC_TYPES = ["E1000", "virtio", "VMXNET3"]
+
+    @classmethod
+    def guess_nic_name(cls, nic_number):
+        """MgmtEth0/0/CPU0/0, CtrlEth, DevEth, GigabitEthernet0/0/0/0, etc."""
+        if nic_number == 1:
+            return "MgmtEth0/0/CPU0/0"
+        elif nic_number == 2:
+            return "CtrlEth"
+        elif nic_number == 3:
+            return "DevEth"
+        else:
+            return ("GigabitEthernet0/0/0/" + str(nic_number - 4))
+
+    @classmethod
+    def validate_cpu_count(cls, cpus):
+        """Minimum 1, maximum 32 CPUs."""
+        if cpus < 1:
+            raise ValueTooLowError("CPUs", cpus, 1)
+        elif cpus > 32:
+            raise ValueTooHighError("CPUs", cpus, 32)
+
+    @classmethod
+    def validate_memory_amount(cls, megabytes):
+        """Minimum 8 GB, maximum 32 GB."""
+        if megabytes < 8192:
+            raise ValueTooLowError("RAM", str(megabytes) + "MB", "8GB")
+        elif megabytes > 32768:
+            raise ValueTooHighError("RAM", str(megabytes) + "MB", "32GB")
+
+    @classmethod
+    def validate_nic_count(cls, count):
+        """IOS XRv 9000 requires at least 4 NICs."""
+        if count < 4:
+            raise ValueTooLowError("NIC count", count, 4)
+
+
 class CSR1000V(GenericPlatform):
     """Platform-specific logic for Cisco CSR1000V platform."""
 
@@ -226,6 +271,8 @@ class CSR1000V(GenericPlatform):
 
     CONFIG_TEXT_FILE = 'iosxe_config.txt'
     LITERAL_CLI_STRING = 'ios-config'
+    # CSR1000v doesn't 'officially' support E1000, but it mostly works
+    SUPPORTED_NIC_TYPES = ["E1000", "virtio", "VMXNET3"]
 
     @classmethod
     def controller_type_for_device(cls, device_type):
@@ -292,6 +339,7 @@ class IOSv(GenericPlatform):
     LITERAL_CLI_STRING = None
     # IOSv has no CD-ROM driver so bootstrap configs must be provided on disk.
     BOOTSTRAP_DISK_TYPE = 'harddisk'
+    SUPPORTED_NIC_TYPES = ["E1000"]
 
     @classmethod
     def guess_nic_name(cls, nic_number):
@@ -327,13 +375,6 @@ class IOSv(GenericPlatform):
             raise ValueTooHighError("NICs", count, 16)
 
     @classmethod
-    def validate_nic_type(cls, type_string):
-        """IOSv only supports E1000 NICs."""
-        if type_string.upper() != "E1000":
-            raise ValueUnsupportedError("NIC type", type_string.upper(),
-                                        "E1000")
-
-    @classmethod
     def validate_serial_count(cls, count):
         """IOSv requires 1-2 serial ports."""
         if count < 1:
@@ -349,6 +390,7 @@ class NXOSv(GenericPlatform):
 
     CONFIG_TEXT_FILE = 'nxos_config.txt'
     LITERAL_CLI_STRING = None
+    SUPPORTED_NIC_TYPES = ["E1000", "virtio"]
 
     @classmethod
     def guess_nic_name(cls, nic_number):
@@ -384,13 +426,6 @@ class NXOSv(GenericPlatform):
             raise ValueTooLowError("RAM", str(megabytes) + "MB", "2GB")
         elif megabytes > 8192:
             raise ValueTooHighError("RAM", str(megabytes) + "MB", "8GB")
-
-    @classmethod
-    def validate_nic_type(cls, type_string):
-        """NX-OSv supports only E1000 and virtio NICs."""
-        # VMXNET3 is not supported
-        cls.valid_list_only("NIC type", type_string.upper(),
-                            ["E1000", "VIRTIO"])
 
     @classmethod
     def validate_serial_count(cls, count):

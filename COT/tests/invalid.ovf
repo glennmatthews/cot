@@ -29,7 +29,7 @@
   </ovf:DeploymentOptionSection>
   <ovf:VirtualSystem ovf:id="x">
     <ovf:Info />
-    <ovf:VirtualHardwareSection>
+    <ovf:VirtualHardwareSection ovf:transport="http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-transport iso com.vmware.guestInfo">
       <ovf:Info />
       <ovf:Item>
         <rasd:Address>0</rasd:Address>
@@ -74,6 +74,7 @@
     </ovf:VirtualHardwareSection>
     <ovf:ProductSection ovf:class="net.e-dad">
       <ovf:Info>ProductSection</ovf:Info>
+      <ovf:FullVersion>Full version string goes here</ovf:FullVersion>
       <ovf:Property ovf:key="jabberwock" ovf:qualifiers="MaxLen(27)" ovf:type="string" ovf:value="supercalifragilisticexpialidocious">
         <ovf:Label>Antidisestablishmentarianism</ovf:Label>
         <ovf:Description>Anti-
@@ -85,6 +86,7 @@ arian-
 
 ism!</ovf:Description>
       </ovf:Property>
+      <ovf:Property ovf:key="frobozz-is-a-magic-word-I-think" ovf:type="string" ovf:value="xyzzy" />
     </ovf:ProductSection>
   </ovf:VirtualSystem>
 </ovf:Envelope>

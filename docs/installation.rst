@@ -28,6 +28,32 @@ If you have already installed COT and wish to update to the latest available ver
 
   sudo pip install --upgrade cot
 
+Installing optional features
+''''''''''''''''''''''''''''
+
+COT has a number of optional Python package dependencies that enable optional
+features. If you want to use these features, you can instruct ``pip`` to
+install them as part of the COT installation process, or you can install them
+separately after the fact.
+
+* Tab-completion of COT CLI parameters in ``bash``, enabled with the
+  `argcomplete`_ package.
+
+  ::
+
+     sudo pip install cot[tab-completion]
+
+  or
+
+  ::
+
+     sudo pip install argcomplete
+
+  .. note::
+     After installing `argcomplete`_ by either method, you must configure
+     your ``bash`` environment to enable it. Refer to the argcomplete
+     documentation for the required steps.
+
 Installing COT from source
 --------------------------
 
@@ -79,7 +105,8 @@ of the COT installation process, or they can be installed as-needed by COT:
 * The ``cot add-disk`` command requires either `qemu-img`_ (version 2.1 or
   later) or vmdktool_ as a helper program when adding hard disks to an OVF.
 * The ``cot inject-config`` command requires mkisofs_ (or its fork
-  ``genisoimage``) to create ISO (CD-ROM) images for platforms that use ISOs.
+  ``genisoimage``) and/or xorriso_ to create ISO (CD-ROM) images for
+  platforms that use ISOs to package the configuration.
 * Similarly, for platforms using hard disks for bootstrap configuration,
   ``cot inject-config`` requires `fatdisk`_ to format hard disk images.
 * The ``cot deploy ... esxi`` command requires ovftool_ to communicate
@@ -114,6 +141,8 @@ to install the helper in question.
 .. _qemu-img: http://www.qemu.org
 .. _vmdktool: http://www.freshports.org/sysutils/vmdktool/
 .. _mkisofs: http://cdrecord.org/
+.. _xorriso: https://www.gnu.org/software/xorriso/
 .. _fatdisk: http://github.com/goblinhack/fatdisk
 .. _ovftool: https://www.vmware.com/support/developer/ovf/
 .. _MacPorts: http://www.macports.org/
+.. _argcomplete: https://argcomplete.readthedocs.io/en/latest/

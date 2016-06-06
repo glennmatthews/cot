@@ -156,16 +156,9 @@ class COTInstallHelpers(COTGenericSubmodule):
         if not result and not self.ignore_errors:
             raise EnvironmentError(1, "Unable to install some helpers")
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
+    def create_subparser(self):
+        """Create 'install-helpers' CLI subparser."""
+        p = self.UI.add_subparser(
             'install-helpers',
             help=("Install/verify COT manual pages and any third-party helper "
                   "programs that COT may require"),
@@ -259,5 +252,3 @@ Unable to install some helpers""".strip())]),
                            "fails.")
 
         p.set_defaults(instance=self)
-
-        storage['install-helpers'] = p

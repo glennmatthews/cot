@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# tests_api.py - Unit test cases for COT.helpers.api module.
+# test_api.py - Unit test cases for COT.helpers.api module.
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -37,7 +37,7 @@ class TestGetChecksum(COT_UT):
     def test_get_checksum_md5(self):
         """Test case for get_checksum() with md5 sum."""
         checksum = get_checksum(self.input_ovf, 'md5')
-        self.assertEqual(checksum, "0a4aaf6b4a4e0c7808199cc3274c20ec")
+        self.assertEqual(checksum, "4e7a3ba0b70f6784a3a91b18336296c7")
 
         checksum = get_checksum(self.minimal_ovf, 'md5')
         self.assertEqual(checksum, "288e1e3fcb05265cd9b8c7578e173fef")
@@ -45,8 +45,7 @@ class TestGetChecksum(COT_UT):
     def test_get_checksum_sha1(self):
         """Test case for get_checksum() with sha1 sum."""
         checksum = get_checksum(self.input_ovf, 'sha1')
-        self.assertEqual(checksum,
-                         "e4bb3f7b4d40447caea2b6c069c772c9a9d8fa48")
+        self.assertEqual(checksum, "c3bd2579c2edc76ea35b5bde7d4f4e41eab08963")
 
         checksum = get_checksum(self.minimal_ovf, 'sha1')
         self.assertEqual(checksum,

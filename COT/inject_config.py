@@ -3,7 +3,7 @@
 # inject_config.py - Implements "cot inject-config" command
 #
 # February 2014, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -185,17 +185,11 @@ class COTInjectConfig(COTSubmodule):
             diskname=None,
         )
 
-    def create_subparser(self, parent, storage):
-        """Add subparser for the CLI of this submodule.
-
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-
-        :param dict storage: Dict of { 'label': subparser } to be updated with
-            subparser(s) created, if any.
-        """
-        p = parent.add_parser(
+    def create_subparser(self):
+        """Create 'inject-config' CLI subparser."""
+        p = self.UI.add_subparser(
             'inject-config',
+            aliases=['add-bootstrap'],
             help="Inject a configuration file into an OVF package",
             usage=self.UI.fill_usage("inject-config", [
                 "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
@@ -218,5 +212,3 @@ class COTInjectConfig(COTSubmodule):
         p.add_argument('PACKAGE',
                        help="""Package, OVF descriptor or OVA file to edit""")
         p.set_defaults(instance=self)
-
-        storage['inject-config'] = p

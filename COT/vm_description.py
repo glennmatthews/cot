@@ -3,7 +3,7 @@
 # vm_description.py - Abstract class for reading, editing, and writing VMs
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -28,6 +28,7 @@ import logging
 import os.path
 import shutil
 import tempfile
+import warnings
 
 from verboselogs import VerboseLogger
 
@@ -56,6 +57,7 @@ class VMDescription(object):
       config_profiles
       default_config_profile
       environment_properties
+      environment_transports
       networks
       system_types
       version_short
@@ -166,6 +168,18 @@ class VMDescription(object):
         raise NotImplementedError("environment_properties not implemented")
 
     @property
+    def environment_transports(self):
+        """The list of environment transport methods.
+
+        :rtype: list[str]
+        """
+        raise NotImplementedError("environment_transports not implemented")
+
+    @environment_transports.setter
+    def environment_transports(self, value):
+        raise NotImplementedError("environment_transports not implemented")
+
+    @property
     def networks(self):
         """The list of network names currently defined in this VM.
 
@@ -274,6 +288,14 @@ class VMDescription(object):
         """
         raise NotImplementedError("get_file_ref_from_disk not implemented")
 
+    def get_id_from_disk(self, disk):
+        """Get the identifier string associated with the given Disk object.
+
+        :param disk: Disk object
+        :rtype: string
+        """
+        raise NotImplementedError("get_id_from_disk not implemented")
+
     def get_type_from_device(self, device):
         """Get the type of the given opaque device object.
 
@@ -325,6 +347,15 @@ class VMDescription(object):
         :return: New or updated file object
         """
         raise NotImplementedError("add_file not implemented")
+
+    def remove_file(self, file, disk=None, disk_drive=None):
+        """Remove the given file object from the VM.
+
+        :param file: File object to remove
+        :param disk: Disk object referencing :attr:`file`
+        :param disk_drive: Disk drive mapping :attr:`file` to a device
+        """
+        raise NotImplementedError("remove_file not implemented")
 
     def add_disk(self, file_path, file_id, disk_type, disk=None):
         """Add a new disk object to the VM or overwrite the provided one.
@@ -423,10 +454,22 @@ class VMDescription(object):
     def set_nic_type(self, type, profile_list):
         """Set the hardware type for NICs.
 
+        .. deprecated:: 1.5
+           Use :func:`set_nic_types` instead.
+
         :param str type: NIC hardware type
         :param list profile_list: Change only the given profiles.
         """
-        raise NotImplementedError("set_nic_type not implemented!")
+        warnings.warn("Use set_nic_types() instead", DeprecationWarning)
+        self.set_nic_types([type], profile_list)
+
+    def set_nic_types(self, type_list, profile_list):
+        """Set the hardware type(s) for NICs.
+
+        :param list type_list: NIC hardware type(s)
+        :param list profile_list: Change only the given profiles.
+        """
+        raise NotImplementedError("set_nic_types not implemented!")
 
     def get_nic_count(self, profile_list):
         """Get the number of NICs under the given profile(s).
@@ -532,18 +575,42 @@ class VMDescription(object):
     def set_scsi_subtype(self, type, profile_list):
         """Set the device subtype for the SCSI controller(s).
 
+        .. deprecated:: 1.5
+           Use :func:`set_scsi_subtypes` instead.
+
         :param str type: SCSI subtype string
         :param list profile_list: Change only the given profiles
         """
-        raise NotImplementedError("set_scsi_subtype not implemented!")
+        warnings.warn("Use set_scsi_subtypes() instead", DeprecationWarning)
+        self.set_scsi_subtypes([type], profile_list)
+
+    def set_scsi_subtypes(self, type_list, profile_list):
+        """Set the device subtype list for the SCSI controller(s).
+
+        :param list type_list: SCSI subtype string list
+        :param list profile_list: Change only the given profiles
+        """
+        raise NotImplementedError("set_scsi_subtypes not implemented!")
 
     def set_ide_subtype(self, type, profile_list):
         """Set the device subtype for the IDE controller(s).
 
+        .. deprecated:: 1.5
+           Use :func:`set_ide_subtypes` instead.
+
         :param str type: IDE subtype string
         :param list profile_list: Change only the given profiles
         """
-        raise NotImplementedError("set_ide_subtype not implemented!")
+        warnings.warn("Use set_ide_subtypes() instead", DeprecationWarning)
+        self.set_ide_subtypes([type], profile_list)
+
+    def set_ide_subtypes(self, type_list, profile_list):
+        """Set the device subtype list for the IDE controller(s).
+
+        :param list type: IDE subtype string list
+        :param list profile_list: Change only the given profiles
+        """
+        raise NotImplementedError("set_ide_subtypes not implemented!")
 
     # API methods needed for edit-product
     # API methods needed for edit-properties

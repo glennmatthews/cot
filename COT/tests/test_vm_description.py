@@ -1,7 +1,7 @@
 # vm_description.py - Unit test cases for generic VMDescription class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -60,6 +60,8 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.get_file_ref_from_disk, None)
         self.assertRaises(NotImplementedError,
+                          ins.get_id_from_disk, None)
+        self.assertRaises(NotImplementedError,
                           ins.get_type_from_device, None)
         self.assertRaises(NotImplementedError,
                           ins.get_subtype_from_device, None)
@@ -70,6 +72,12 @@ class TestVMDescription(unittest.TestCase):
                           None, None, None, None)
         self.assertRaises(NotImplementedError,
                           ins.add_file, self.TEXT_FILE, None)
+        self.assertRaises(NotImplementedError,
+                          ins.remove_file, self.TEXT_FILE)
+        self.assertRaises(NotImplementedError,
+                          ins.remove_file, self.TEXT_FILE, None)
+        self.assertRaises(NotImplementedError,
+                          ins.remove_file, self.TEXT_FILE, None, None)
         self.assertRaises(NotImplementedError,
                           ins.add_disk, self.TEXT_FILE, None, None)
         self.assertRaises(NotImplementedError,
@@ -95,6 +103,8 @@ class TestVMDescription(unittest.TestCase):
                           ins.set_memory, 0, None)
         self.assertRaises(NotImplementedError,
                           ins.set_nic_type, None, None)
+        self.assertRaises(NotImplementedError,
+                          ins.set_nic_types, None, None)
         self.assertRaises(NotImplementedError,
                           ins.get_nic_count, None)
         self.assertRaises(NotImplementedError,
@@ -131,6 +141,10 @@ class TestVMDescription(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             ins.environment_properties
+        with self.assertRaises(NotImplementedError):
+            ins.environment_transports
+        with self.assertRaises(NotImplementedError):
+            ins.environment_transports = ['iso']
         self.assertRaises(NotImplementedError,
                           ins.get_property_value, None)
         self.assertRaises(NotImplementedError,

@@ -3,7 +3,7 @@
 # xml_file.py - class for reading/editing/writing XML-based data
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -161,16 +161,24 @@ class XML(object):
         """Find all matching child elements under the specified parent element.
 
         :param xml.etree.ElementTree.Element parent: Parent element
-        :param str tag: Child tag to match on
+        :param tag: Child tag (or list of tags) to match on
+        :type tag: string or iterable
         :param dict attrib: Child attributes to match on
         :rtype: list of xml.etree.ElementTree.Element instances
         """
         assert parent is not None
-        elements = parent.findall(tag)
+        if type(tag) == str:
+            elements = parent.findall(tag)
+            label = tag
+        else:
+            elements = []
+            for t in tag:
+                elements.extend(parent.findall(t))
+            label = [XML.strip_ns(t) for t in tag]
         logger.debug("Examining {0} {1} elements under {2}"
-                     .format(len(elements), XML.strip_ns(tag),
+                     .format(len(elements), label,
                              XML.strip_ns(parent.tag)))
-        list = []
+        child_list = []
         for e in elements:
             found = True
 
@@ -184,10 +192,10 @@ class XML(object):
                     break
 
             if found:
-                list.append(e)
+                child_list.append(e)
         logger.debug("Found {0} matching {1} elements"
-                     .format(len(list), XML.strip_ns(tag)))
-        return list
+                     .format(len(child_list), label))
+        return child_list
 
     @classmethod
     def add_child(cls, parent, new_child, ordering=None,

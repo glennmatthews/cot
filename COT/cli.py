@@ -3,7 +3,7 @@
 # cli.py - CLI handling for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -13,6 +13,8 @@
 # https://github.com/glennmatthews/cot/blob/master/LICENSE.txt. No part
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
+#
+# PYTHON_ARGCOMPLETE_OK
 
 """CLI entry point for the Common OVF Tool (COT) suite.
 
@@ -27,6 +29,11 @@
 import os
 import sys
 import argparse
+try:
+    import argcomplete
+    _argcomplete = True
+except ImportError:
+    _argcomplete = False
 import re
 import logging
 import getpass
@@ -86,6 +93,8 @@ class CLI(UI):
 
         self.create_parser()
         self.create_subparsers()
+        if _argcomplete:
+            argcomplete.autocomplete(self.parser)
 
         import COT.helpers.helper
         COT.helpers.helper.confirm = self.confirm
@@ -448,6 +457,7 @@ class CLI(UI):
         from COT.info import COTInfo
         from COT.inject_config import COTInjectConfig
         from COT.install_helpers import COTInstallHelpers
+        from COT.remove_file import COTRemoveFile
         for klass in [
                 COTAddDisk,
                 COTAddFile,
@@ -459,11 +469,41 @@ class CLI(UI):
                 COTInfo,
                 COTInjectConfig,
                 COTInstallHelpers,
+                COTRemoveFile,
         ]:
             instance = klass(self)
             # the subparser stores a reference to the instance (args.instance)
             # so we don't need to persist it here...
-            instance.create_subparser(self.subparsers, self.subparser_lookup)
+            instance.create_subparser()
+
+    def add_subparser(self, title,
+                      parent=None, aliases=None, lookup_prefix="",
+                      **kwargs):
+        """Create a subparser under the specified parent.
+
+        :param str title: Canonical keyword for this subparser
+        :param object parent: Subparser grouping object returned by
+            :meth:`ArgumentParser.add_subparsers`
+        :param list aliases: Aliases for ``title``. Only used
+            in Python 3.x.
+        :param str lookup_prefix: String to prepend to ``title`` and
+            each alias in ``aliases`` for lookup purposes.
+        """
+        # Subparser aliases are only supported by argparse in Python 3.2+
+        if sys.hexversion >= 0x03020000 and aliases:
+            kwargs['aliases'] = aliases
+        else:
+            aliases = None
+
+        if parent is None:
+            parent = self.subparsers
+
+        p = parent.add_parser(title, **kwargs)
+        self.subparser_lookup[lookup_prefix + title] = p
+        if aliases:
+            for alias in aliases:
+                self.subparser_lookup[lookup_prefix + alias] = p
+        return p
 
     def parse_args(self, argv):
         """Parse the given CLI arguments into a namespace object.

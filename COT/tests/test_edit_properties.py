@@ -3,7 +3,7 @@
 # edit_properties.py - test cases for the COTEditProperties class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -194,6 +194,12 @@ ovf:value="interface Loopback0" />
    </ovf:VirtualSystem>
 """)
 
+    def test_create_property_no_preexisting_v09(self):
+        """Set property for a v0.9 OVF with no pre-existing properties."""
+        self.instance.package = self.v09_ovf
+        self.instance.properties = ["hello=world"]
+        self.assertRaises(NotImplementedError, self.instance.run)
+
     def test_config_file_not_supported(self):
         """Platform doesn't support literal CLI configuration."""
         self.instance.package = self.iosv_ovf
@@ -201,6 +207,50 @@ ovf:value="interface Loopback0" />
                                                       "sample_cfg.txt")
         self.assertRaises(NotImplementedError,
                           self.instance.run)
+
+    def test_set_transport(self):
+        """Set environment transport value."""
+        self.instance.package = self.input_ovf
+        self.instance.transports = ['ibm', 'iso', 'vmware']
+        self.assertEqual(self.instance.transports,
+                         ["http://www.ibm.com/xmlns/ovf/transport/filesystem/"
+                          "etc/ovf-transport", "iso", "com.vmware.guestInfo"])
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+     </ovf:OperatingSystemSection>
+-    <ovf:VirtualHardwareSection ovf:transport="iso">
++    <ovf:VirtualHardwareSection ovf:transport="http://www.ibm.com/xmlns/ovf/\
+transport/filesystem/etc/ovf-transport iso com.vmware.guestInfo">
+       <ovf:Info>Virtual hardware requirements</ovf:Info>
+""")
+
+    UNKNOWN_TRANSPORT = {
+        'levelname': 'WARNING',
+        'msg': "Unknown transport value 'foobar'. .*"
+    }
+
+    def test_set_transport_unknown(self):
+        """Setting the transport to an unknown value is OK but warned about."""
+        self.instance.package = self.input_ovf
+        self.instance.transports = ['com.vmware.guestInfo', 'foobar']
+        self.assertLogged(**self.UNKNOWN_TRANSPORT)
+        self.assertEqual(self.instance.transports,
+                         ['com.vmware.guestInfo', 'foobar'])
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+     </ovf:OperatingSystemSection>
+-    <ovf:VirtualHardwareSection ovf:transport="iso">
++    <ovf:VirtualHardwareSection ovf:transport="com.vmware.guestInfo foobar">
+       <ovf:Info>Virtual hardware requirements</ovf:Info>
+""")
+
+    def test_set_transport_v09(self):
+        """Set the transport method for a v0.9 OVF."""
+        self.instance.package = self.v09_ovf
+        self.instance.transports = ['iso']
+        self.assertRaises(NotImplementedError, self.instance.run)
 
     def test_edit_interactive(self):
         """Exercise the interactive CLI for COT edit-properties."""

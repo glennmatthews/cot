@@ -41,6 +41,7 @@ Command modules
   COT.info
   COT.inject_config
   COT.install_helpers
+  COT.remove_file
 
 Helper library modules
 ----------------------
