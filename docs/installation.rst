@@ -31,20 +31,28 @@ If you have already installed COT and wish to update to the latest available ver
 Installing optional features
 ''''''''''''''''''''''''''''
 
-COT has a number of optional dependencies that you can choose to specify for
-``pip`` to install:
+COT has a number of optional Python package dependencies that enable optional
+features. If you want to use these features, you can instruct ``pip`` to
+install them as part of the COT installation process, or you can install them
+separately after the fact.
 
-* Tab-completion of COT CLI parameters in `bash`, using the `argcomplete`_
-  package.
+* Tab-completion of COT CLI parameters in ``bash``, enabled with the
+  `argcomplete`_ package.
 
   ::
 
      sudo pip install cot[tab-completion]
 
+  or
+
+  ::
+
+     sudo pip install argcomplete
+
   .. note::
-     After installing `argcomplete`, you must configure your `bash`
-     environment to enable it. Refer to the argcomplete documentation for
-     the required steps.
+     After installing `argcomplete`_ by either method, you must configure
+     your ``bash`` environment to enable it. Refer to the argcomplete
+     documentation for the required steps.
 
 Installing COT from source
 --------------------------
