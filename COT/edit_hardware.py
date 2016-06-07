@@ -32,7 +32,7 @@ import warnings
 
 from .data_validation import canonicalize_ide_subtype, canonicalize_nic_subtype
 from .data_validation import canonicalize_scsi_subtype
-from .data_validation import natural_sort, no_whitespace, mac_address
+from .data_validation import no_whitespace, mac_address
 from .data_validation import non_negative_int, positive_int, InvalidInputError
 from .submodule import COTSubmodule
 
@@ -57,6 +57,7 @@ class COTEditHardware(COTSubmodule):
     :attr:`mac_addresses_list`,
     :attr:`nic_networks`,
     :attr:`nic_names`,
+    :attr:`network_descriptions`,
     :attr:`serial_ports`,
     :attr:`serial_connectivity`,
     :attr:`scsi_subtypes`,
@@ -84,6 +85,11 @@ class COTEditHardware(COTSubmodule):
         """
         self.nic_names = None
         """List of NIC name strings.
+
+        Can use wildcards as described in :meth:`expand_list_wildcard`.
+        """
+        self.network_descriptions = None
+        """List of network description strings.
 
         Can use wildcards as described in :meth:`expand_list_wildcard`.
         """
@@ -293,6 +299,7 @@ class COTEditHardware(COTSubmodule):
                 self.mac_addresses_list is None and
                 self.nic_networks is None and
                 self.nic_names is None and
+                self.network_descriptions is None and
                 self.serial_ports is None and
                 self.serial_connectivity is None and
                 self.scsi_subtypes is None and
@@ -310,12 +317,20 @@ class COTEditHardware(COTSubmodule):
         """
         super(COTEditHardware, self).run()
 
-        if self.profiles is not None and self.virtual_system_type is not None:
-            self.UI.confirm_or_die(
-                "VirtualSystemType is not filtered by configuration profile. "
-                "Requested system type(s) '{0}' will be set for ALL profiles, "
-                "not just profile(s) {1}. Continue?"
-                .format(" ".join(self.virtual_system_type), self.profiles))
+        # Warn user about non-profile-aware properties when setting profiles
+        if self.profiles is not None:
+            if self.virtual_system_type is not None:
+                self.UI.confirm_or_die(
+                    "VirtualSystemType is not filtered by configuration"
+                    " profile. Requested system type(s) '{0}' will be set for"
+                    " ALL profiles, not just profile(s) {1}. Continue?"
+                    .format(" ".join(self.virtual_system_type), self.profiles))
+            if self.network_descriptions is not None:
+                self.UI.confirm_or_die(
+                    "Network descriptions are not filtered by configuration"
+                    " profile. Requested network descriptions will be set for"
+                    " networks across ALL profiles, not just profile(s) {0}."
+                    " Continue?".format(self.profiles))
 
         vm = self.vm
 
@@ -364,9 +379,6 @@ class COTEditHardware(COTSubmodule):
         if self.memory is not None:
             vm.set_memory(self.memory, self.profiles)
 
-        if self.nic_types is not None:
-            vm.set_nic_types(self.nic_types, self.profiles)
-
         nics_dict = vm.get_nic_count(self.profiles)
         if self.nics is not None:
             for (profile, count) in nics_dict.items():
@@ -378,22 +390,45 @@ class COTEditHardware(COTSubmodule):
                                 (count - self.nics), self.nics))
             vm.set_nic_count(self.nics, self.profiles)
 
+        if self.nic_types is not None:
+            vm.set_nic_types(self.nic_types, self.profiles)
+
         nics_dict = vm.get_nic_count(self.profiles)
         max_nics = max(nics_dict.values())
+
+        if self.network_descriptions is None:
+            new_descs = []
+        else:
+            new_descs = self.expand_list_wildcard(self.network_descriptions,
+                                                  max_nics)
+            if self.nic_networks is None:
+                # Just rename existing networks, instead of making new ones
+                for network, desc in zip(vm.networks, new_descs):
+                    # Despite the name, create_network can also be used to
+                    # update an existing network.
+                    vm.create_network(network, desc)
 
         if self.nic_networks is not None:
             existing_networks = vm.networks
             new_networks = self.expand_list_wildcard(self.nic_networks,
                                                      max_nics)
-            # Convert nic_networks to a set to merge duplicate entries
-            for network in natural_sort(set(new_networks)):
+            for network in new_networks:
+                if new_descs:
+                    new_desc = new_descs.pop(0)
+                else:
+                    new_desc = None
+
                 if network not in existing_networks:
                     self.UI.confirm_or_die(
                         "Network {0} is not currently defined. "
                         "Create it?".format(network))
-                    desc = self.UI.get_input(
-                        "Please enter a description for this network", network)
-                    vm.create_network(network, desc)
+                    if not new_desc:
+                        new_desc = self.UI.get_input(
+                            "Please enter a description for this network",
+                            network)
+                # create or update
+                vm.create_network(network, new_desc)
+
             vm.set_nic_networks(new_networks, self.profiles)
 
         if self.mac_addresses_list is not None:
@@ -454,11 +489,12 @@ class COTEditHardware(COTSubmodule):
             help="Edit virtual machine hardware properties of an OVF",
             description="Edit hardware properties of the specified OVF or OVA",
             epilog=("Notes:\n" + wrapper.fill(
-                "The --nic-names and --nic-networks options support the use"
-                " of a wildcard value to automatically generate a series of"
-                " consecutively numbered names. The syntax for the wildcard"
-                " option is '{' followed by a number to start incrementing"
-                " from, followed by '}'. See examples below."
+                "The --nic-names, --nic-networks, and --network-descriptions"
+                " options support the use of a wildcard value to"
+                " automatically generate a series of consecutively numbered"
+                " strings. The syntax for the wildcard option is '{' followed"
+                " by a number to start incrementing from, followed by '}'."
+                " See examples below."
             ) + "\n\n" + self.UI.fill_examples([
                 ('Create a new profile named "1CPU-8GB" with 1 CPU and 8'
                  ' gigabytes of RAM',
@@ -468,10 +504,13 @@ class COTEditHardware(COTSubmodule):
                  " defined in the input OVA, rename all of the NICs in the"
                  " output OVA as 'Ethernet0/10', 'Ethernet0/11',"
                  " 'Ethernet0/12', etc., and map them to networks"
-                 " 'Ethernet0_10', 'Ethernet0_11', 'Ethernet0_12', etc.",
+                 " 'Ethernet0_10', 'Ethernet0_11', 'Ethernet0_12', etc.,"
+                 " which are described as 'Data network 1', 'Data network 2',"
+                 " etc.",
                  'cot edit-hardware input.ova -o output.ova'
                  ' --nic-names "Ethernet0/{10}"'
-                 ' --nic-networks "Ethernet0_{10}"'),
+                 ' --nic-networks "Ethernet0_{10}"'
+                 ' --network-descriptions "Data network {1}"'),
                 ("Combination of fixed and wildcarded names - rename the NICs"
                  " in the output OVA as 'mgmt', 'eth0', 'eth1', 'eth2'...",
                  'cot edit-hardware input.ova -o output.ova'
@@ -523,6 +562,11 @@ class COTEditHardware(COTSubmodule):
                        metavar=('NETWORK', 'NETWORK2'),
                        help="Specify a series of one or more network names "
                        "or patterns to map NICs to. See Notes.")
+        g.add_argument('--network-descriptions', nargs='+',
+                       metavar=('NAME1', 'NAME2'),
+                       help="Specify a list of one or more network "
+                       "descriptions or patterns to apply to the networks. "
+                       "See Notes.")
         g.add_argument('-M', '--mac-addresses-list', type=mac_address,
                        metavar=('MAC1', 'MAC2'), action='append', nargs='+',
                        help="Specify a list of MAC addresses for the NICs. "

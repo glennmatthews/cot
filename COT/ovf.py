@@ -1296,6 +1296,8 @@ class OVF(VMDescription, XML):
     def create_network(self, label, description):
         """Define a new network with the given label and description.
 
+        Also serves to update the description of an existing network label.
+
         :param str label: Brief label for the network
         :param str description: Verbose description of the network
         """
@@ -3271,11 +3273,29 @@ class OVFItem:
             self.set_property(attrib_string, value, profiles, overwrite=False)
 
         # Store any child elements of the Item.
-        # We need to iterate in reverse order because we want to be able
-        # to reference the VirtualQuantity and ResourceSubType
-        # when inspecting the ElementName and Description elements.
-        for child in reversed(list(item)):
-            if XML.strip_ns(child.tag) not in self.ITEM_CHILDREN:
+        # We save the ElementName and Description elements for last because
+        # they may include references to the VirtualQuantity, ResourceSubType,
+        # and/or Connection entries, which we won't know until we process them.
+        children = list(item)
+        name_child = next(
+            (child for child in children if
+             XML.strip_ns(child.tag) == self.ELEMENT_NAME),
+            None)
+        desc_child = next(
+            (child for child in children if
+             XML.strip_ns(child.tag) == self.ITEM_DESCRIPTION),
+            None)
+        if name_child is not None:
+            children.remove(name_child)
+            children.append(name_child)
+        # Description is *after* name because it may reference name
+        if desc_child is not None:
+            children.remove(desc_child)
+            children.append(desc_child)
+
+        for child in children:
+            tag = XML.strip_ns(child.tag)
+            if tag not in self.ITEM_CHILDREN:
                 # Non-standard elements may not follow the standard rules -
                 # for example, VMware OVF extensions may have multiple
                 # vmw:Config elements, each distinguished by its vmw:key attr.
@@ -3287,7 +3307,6 @@ class OVFItem:
                                   profiles, overwrite=False)
                 continue
             # Store the value of this element:
-            tag = XML.strip_ns(child.tag)
             self.set_property(tag, child.text, profiles, overwrite=False)
             # Store any attributes of this element
             for (attrib, value) in child.attrib.items():
@@ -3337,9 +3356,9 @@ class OVFItem:
                 # used by this property.
                 profiles = set.union(*value_dict.values())
         profiles = set(profiles)
-        # If the ElementName or Description references the VirtualQuantity
-        # or ResourceSubType, replace that reference with a placeholder
-        # that we can regenerate at output time. That way, if the
+        # If the ElementName or Description references the VirtualQuantity,
+        # Connection, or ResourceSubType, replace that reference with a
+        # placeholder that we can regenerate at output time. That way, if the
         # VirtualQuantity or ResourceSubType changes, these can change too.
         if key == self.ELEMENT_NAME or key == self.ITEM_DESCRIPTION:
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, profiles)
@@ -3348,6 +3367,9 @@ class OVFItem:
             rst_val = self.get_value(self.RESOURCE_SUB_TYPE, profiles)
             if rst_val is not None:
                 value = re.sub(rst_val, "_RST_", value)
+            conn_val = self.get_value(self.CONNECTION, profiles)
+            if conn_val is not None:
+                value = re.sub(conn_val, "_CONN_", value)
         # Similarly, if the Description references the ElementName...
         if key == self.ITEM_DESCRIPTION:
             en_val = self.get_value(self.ELEMENT_NAME, profiles)
@@ -3547,12 +3569,15 @@ class OVFItem:
             rst_val = self._get_value(self.RESOURCE_SUB_TYPE, profiles)
             vq_val = self._get_value(self.VIRTUAL_QUANTITY, profiles)
             en_val = self._get_value(self.ELEMENT_NAME, profiles)
+            conn_val = self._get_value(self.CONNECTION, profiles)
             if rst_val is not None:
                 val = re.sub("_RST_", str(rst_val), str(val))
             if vq_val is not None:
                 val = re.sub("_VQ_", str(vq_val), str(val))
             if en_val is not None:
                 val = re.sub("_EN_", str(en_val), str(val))
+            if conn_val is not None:
+                val = re.sub("_CONN_", str(conn_val), str(val))
 
         return val
 
@@ -3683,6 +3708,7 @@ class OVFItem:
             rst_val = self.get_value(self.RESOURCE_SUB_TYPE, final_set)
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, final_set)
             en_val = self.get_value(self.ELEMENT_NAME, final_set)
+            conn_val = self.get_value(self.CONNECTION, final_set)
             for key in sorted(self.property_dict.keys()):
                 default_val = None
                 found = False
@@ -3708,6 +3734,8 @@ class OVFItem:
                         val = re.sub("_RST_", str(rst_val), str(val))
                     if vq_val is not None:
                         val = re.sub("_VQ_", str(vq_val), str(val))
+                    if conn_val is not None:
+                        val = re.sub("_CONN_", str(conn_val), str(val))
                 if key == self.ITEM_DESCRIPTION:
                     if en_val is not None:
                         val = re.sub("_EN_", str(en_val), str(val))
