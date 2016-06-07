@@ -510,6 +510,7 @@ CIM_ResourceAllocationSettingData">
         # This involves splitting the existing NIC into two items
         self.instance.package = self.input_ovf
         self.instance.nic_networks = ['UT']
+        self.instance.network_descriptions = ['Unit test network']
         self.instance.profiles = ['2CPU-2GB-1NIC']
         self.instance.run()
         self.instance.finished()
@@ -517,7 +518,7 @@ CIM_ResourceAllocationSettingData">
        <ovf:Description>VM Network</ovf:Description>
 +    </ovf:Network>
 +    <ovf:Network ovf:name="UT">
-+      <ovf:Description>UT</ovf:Description>
++      <ovf:Description>Unit test network</ovf:Description>
      </ovf:Network>
 ...
        </ovf:Item>
@@ -572,10 +573,13 @@ CIM_ResourceAllocationSettingData">
     def test_set_nic_network_list_expansion(self):
         """Specify fewer networks than NICs to test implicit NIC assignment.
 
+        Also specify fewer network descriptions than networks.
+        Remaining networks get the last description in the list.
         Remaining NICs get the last network in the list.
         """
         self.instance.package = self.input_ovf
         self.instance.nic_networks = ['UT1', 'UT2']
+        self.instance.network_descriptions = ['First UT']
         self.instance.run()
         self.instance.finished()
         self.assertLogged(**self.REMOVING_NETWORK)
@@ -584,10 +588,10 @@ CIM_ResourceAllocationSettingData">
 -    <ovf:Network ovf:name="VM Network">
 -      <ovf:Description>VM Network</ovf:Description>
 +    <ovf:Network ovf:name="UT1">
-+      <ovf:Description>UT1</ovf:Description>
++      <ovf:Description>First UT</ovf:Description>
 +    </ovf:Network>
 +    <ovf:Network ovf:name="UT2">
-+      <ovf:Description>UT2</ovf:Description>
++      <ovf:Description>First UT</ovf:Description>
      </ovf:Network>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
@@ -613,6 +617,7 @@ CIM_ResourceAllocationSettingData">
         """Use wildcard expansion to create multiple networks as needed."""
         self.instance.package = self.input_ovf
         self.instance.nic_networks = ["UT_{20}_network"]
+        self.instance.network_descriptions = ['First network', '#{2} Network']
         self.instance.run()
         self.instance.finished()
         self.assertLogged(**self.REMOVING_NETWORK)
@@ -621,13 +626,13 @@ CIM_ResourceAllocationSettingData">
 -    <ovf:Network ovf:name="VM Network">
 -      <ovf:Description>VM Network</ovf:Description>
 +    <ovf:Network ovf:name="UT_20_network">
-+      <ovf:Description>UT_20_network</ovf:Description>
++      <ovf:Description>First network</ovf:Description>
 +    </ovf:Network>
 +    <ovf:Network ovf:name="UT_21_network">
-+      <ovf:Description>UT_21_network</ovf:Description>
++      <ovf:Description>#2 Network</ovf:Description>
 +    </ovf:Network>
 +    <ovf:Network ovf:name="UT_22_network">
-+      <ovf:Description>UT_22_network</ovf:Description>
++      <ovf:Description>#3 Network</ovf:Description>
      </ovf:Network>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
@@ -647,6 +652,19 @@ CIM_ResourceAllocationSettingData">
 +        <rasd:Connection>UT_22_network</rasd:Connection>
          <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
+""")
+
+    def test_set_network_description_only(self):
+        """Set network descriptions without changing network names."""
+        self.instance.package = self.input_ovf
+        self.instance.network_descriptions = ['Network 1', 'Network 2']
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+     <ovf:Network ovf:name="VM Network">
+-      <ovf:Description>VM Network</ovf:Description>
++      <ovf:Description>Network 1</ovf:Description>
+     </ovf:Network>
 """)
 
     def test_set_nic_mac_address_single_all_profiles(self):

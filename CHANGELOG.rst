@@ -6,6 +6,11 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Added**
+
+- ``cot edit-hardware --network-descriptions`` option, to specify the
+  descriptive string(s) associated with each network definition.
+
 **Fixed**
 
 - `#48`_ - NIC type not set when adding NICs to an OVF that had none before.

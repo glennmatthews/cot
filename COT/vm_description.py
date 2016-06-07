@@ -491,6 +491,8 @@ class VMDescription(object):
     def create_network(self, label, description):
         """Define a new network with the given label and description.
 
+        Also serves to update the description of an existing network label.
+
         :param str label: Brief label for the network
         :param str description: Verbose description of the network
         """
