@@ -526,8 +526,7 @@ CIM_ResourceAllocationSettingData">
 +        <rasd:AddressOnParent>11</rasd:AddressOnParent>
 +        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 +        <rasd:Connection>UT</rasd:Connection>
-+        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
-</rasd:Description>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT"</rasd:Description>
 +        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
 +        <rasd:InstanceID>11</rasd:InstanceID>
 +        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
@@ -553,21 +552,27 @@ CIM_ResourceAllocationSettingData">
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
-+        <rasd:Connection>UT</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
++        <rasd:Connection>UT</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT"</rasd:Description>
+         <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
-+        <rasd:Connection>UT</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
++        <rasd:Connection>UT</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT"</rasd:Description>
+         <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
-+        <rasd:Connection>UT</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
++        <rasd:Connection>UT</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT"</rasd:Description>
+         <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
 """)
 
     def test_set_nic_network_list_expansion(self):
@@ -596,21 +601,27 @@ CIM_ResourceAllocationSettingData">
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
 +        <rasd:Connection>UT1</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
-</rasd:Description>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT1"</rasd:Description>
+         <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
-+        <rasd:Connection>UT2</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
++        <rasd:Connection>UT2</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT2"</rasd:Description>
+         <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
-+        <rasd:Connection>UT2</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
++        <rasd:Connection>UT2</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT2"</rasd:Description>
+         <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
 """)
 
     def test_set_nic_network_list_pattern(self):
@@ -637,21 +648,30 @@ CIM_ResourceAllocationSettingData">
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
 +        <rasd:Connection>UT_20_network</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
++        <rasd:Description>VMXNET3 ethernet adapter on "UT_20_network"\
 </rasd:Description>
+         <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
 +        <rasd:Connection>UT_21_network</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
++        <rasd:Description>VMXNET3 ethernet adapter on "UT_21_network"\
 </rasd:Description>
+         <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
-+        <rasd:Connection>UT_22_network</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
++        <rasd:Connection>UT_22_network</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT_22_network"\
+</rasd:Description>
+         <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
 """)
 
     def test_set_network_description_only(self):
@@ -886,7 +906,7 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT1</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 virtio ethernet adapter on "UT1"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
          <rasd:InstanceID>11</rasd:InstanceID>
@@ -902,7 +922,7 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT2</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 virtio ethernet adapter on "UT2"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
          <rasd:InstanceID>12</rasd:InstanceID>
@@ -918,13 +938,14 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT3</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "VM Network"\
++        <rasd:Description>E1000 virtio ethernet adapter on "UT3"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
          <rasd:InstanceID>13</rasd:InstanceID>
 -        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
 +        <rasd:ResourceSubType>E1000 virtio</rasd:ResourceSubType>
          <rasd:ResourceType>10</rasd:ResourceType>
+
 """)
 
     def test_set_nic_kitchen_sink_one_profile(self):
@@ -946,7 +967,7 @@ CIM_ResourceAllocationSettingData">
 +        <rasd:AddressOnParent>11</rasd:AddressOnParent>
 +        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 +        <rasd:Connection>UT</rasd:Connection>
-+        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
++        <rasd:Description>VMXNET3 ethernet adapter on "UT"\
 </rasd:Description>
 +        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
 +        <rasd:InstanceID>11</rasd:InstanceID>
@@ -957,16 +978,19 @@ CIM_ResourceAllocationSettingData">
          <rasd:AddressOnParent>12</rasd:AddressOnParent>
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
-+        <rasd:Connection>UT</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
++        <rasd:Connection>UT</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT"</rasd:Description>
+         <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
 ...
          <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 -        <rasd:Connection>VM Network</rasd:Connection>
-+        <rasd:Connection>UT</rasd:Connection>
-         <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
-...
++        <rasd:Connection>UT</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT"</rasd:Description>
+         <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
          <rasd:InstanceID>13</rasd:InstanceID>
 +        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
 +        <rasd:ResourceType>10</rasd:ResourceType>
@@ -975,8 +999,7 @@ CIM_ResourceAllocationSettingData">
 +        <rasd:AddressOnParent>14</rasd:AddressOnParent>
 +        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
 +        <rasd:Connection>UT</rasd:Connection>
-+        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
-</rasd:Description>
++        <rasd:Description>VMXNET3 ethernet adapter on "UT"</rasd:Description>
 +        <rasd:ElementName>Ethernet4</rasd:ElementName>
 +        <rasd:InstanceID>14</rasd:InstanceID>
          <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
@@ -1597,3 +1620,65 @@ CIM_ResourceAllocationSettingData">
                           msg="removing NetworkSection")
         self.check_diff(file1=self.temp_file, file2=self.minimal_ovf,
                         expected="")
+
+    def test_set_cpus_v09(self):
+        """Test CPU count settings with a v0.9 OVF."""
+        self.instance.package = self.v09_ovf
+        self.instance.cpus = 2
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.v09_ovf,
+                        expected="""
+       <ovf:Item>
+-        <rasd:Caption>1 virtual CPU(s)</rasd:Caption>
++        <rasd:Caption>2 virtual CPU(s)</rasd:Caption>
+         <rasd:Description>Number of Virtual CPUs</rasd:Description>
+...
+         <rasd:AllocationUnits>MegaHertz</rasd:AllocationUnits>
+-        <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
++        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+       </ovf:Item>
+""")
+
+    def test_set_cpus_vmware(self):
+        """Test CPU setting with a VMWare OVF."""
+        self.instance.package = self.vmware_ovf
+        self.instance.cpus = 4
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.vmware_ovf,
+                        expected="""
+-<?xml version="1.0" encoding="UTF-8"?>
+-<ovf:Envelope vmw:buildId="build-880146" \
+xmlns="http://schemas.dmtf.org/ovf/envelope/1" \
+xmlns:cim="http://schemas.dmtf.org/wbem/wscim/1/common" \
+xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" \
+xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_ResourceAllocationSettingData" \
+xmlns:vmw="http://www.vmware.com/schema/ovf" \
+xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_VirtualSystemSettingData" \
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
++<?xml version='1.0' encoding='utf-8'?>
++<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" \
+xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_ResourceAllocationSettingData" \
+xmlns:vmw="http://www.vmware.com/schema/ovf" \
+xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
+   <ovf:References>
+...
+         <rasd:Description>Number of Virtual CPUs</rasd:Description>
+-        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
++        <rasd:ElementName>4 virtual CPU(s)</rasd:ElementName>
+         <rasd:InstanceID>1</rasd:InstanceID>
+...
+         <rasd:ResourceType>3</rasd:ResourceType>
+-        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
++        <rasd:VirtualQuantity>4</rasd:VirtualQuantity>
+         <vmw:CoresPerSocket ovf:required="false">2</vmw:CoresPerSocket>
+...
+   </ovf:VirtualSystem>
+-</ovf:Envelope>        
++</ovf:Envelope>
+""")  # noqa - trailing whitespace above is in base file

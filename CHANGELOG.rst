@@ -14,6 +14,8 @@ This project adheres to `Semantic Versioning`_.
 **Fixed**
 
 - `#48`_ - NIC type not set when adding NICs to an OVF that had none before.
+- When updating NIC network mapping, COT now also updates any Description
+  that references the network mapping.
 
 `1.5.0`_ - 2016-06-06
 ---------------------
