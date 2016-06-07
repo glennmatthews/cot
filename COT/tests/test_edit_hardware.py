@@ -969,6 +969,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.package = self.minimal_ovf
         self.instance.nics = 1
         self.instance.nic_networks = ['testme']
+        self.instance.nic_types = ['virtio-net-pci', 'e1000']
         self.instance.mac_addresses_list = ['12:34:56:78:9a:bc']
         self.instance.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
@@ -995,6 +996,7 @@ CIM_ResourceAllocationSettingData">
 +        <rasd:Connection>testme</rasd:Connection>
 +        <rasd:ElementName>Ethernet1</rasd:ElementName>
 +        <rasd:InstanceID>1</rasd:InstanceID>
++        <rasd:ResourceSubType>virtio E1000</rasd:ResourceSubType>
 +        <rasd:ResourceType>10</rasd:ResourceType>
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>

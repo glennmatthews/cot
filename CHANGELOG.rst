@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Fixed**
+
+- `#48`_ - NIC type not set when adding NICs to an OVF that had none before.
+
 `1.5.0`_ - 2016-06-06
 ---------------------
 
@@ -385,6 +392,7 @@ Initial public release.
 .. _#44: https://github.com/glennmatthews/cot/issues/44
 .. _#45: https://github.com/glennmatthews/cot/issues/45
 .. _#47: https://github.com/glennmatthews/cot/issues/47
+.. _#48: https://github.com/glennmatthews/cot/issues/48
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

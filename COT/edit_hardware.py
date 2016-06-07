@@ -364,9 +364,6 @@ class COTEditHardware(COTSubmodule):
         if self.memory is not None:
             vm.set_memory(self.memory, self.profiles)
 
-        if self.nic_types is not None:
-            vm.set_nic_types(self.nic_types, self.profiles)
-
         nics_dict = vm.get_nic_count(self.profiles)
         if self.nics is not None:
             for (profile, count) in nics_dict.items():
@@ -377,6 +374,9 @@ class COTEditHardware(COTSubmodule):
                         .format(profile, count,
                                 (count - self.nics), self.nics))
             vm.set_nic_count(self.nics, self.profiles)
+
+        if self.nic_types is not None:
+            vm.set_nic_types(self.nic_types, self.profiles)
 
         nics_dict = vm.get_nic_count(self.profiles)
         max_nics = max(nics_dict.values())
