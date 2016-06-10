@@ -3,6 +3,14 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Added**
+
+- ``cot edit-product --product-class`` option, to set or change the
+  product class identifier (such as ``com.cisco.csr1000v``).
+
 `1.5.2`_ - 2016-06-17
 ---------------------
 

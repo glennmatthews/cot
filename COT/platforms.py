@@ -17,6 +17,13 @@
 
 """Handles behavior that varies between guest platforms.
 
+**Functions**
+
+.. autosummary::
+  :nosignatures:
+
+  platform_from_product_class
+
 **Classes**
 
 .. autosummary::
@@ -30,6 +37,11 @@
   IOSXRvLC
   IOSXRv9000
   NXOSv
+
+**Constants**
+
+.. autosummary::
+  PRODUCT_PLATFORM_MAP
 """
 
 from .data_validation import ValueUnsupportedError
@@ -38,6 +50,23 @@ from .data_validation import NIC_TYPES
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def is_known_product_class(product_class):
+    """Determine if the given product class string is a known one."""
+    return (product_class in PRODUCT_PLATFORM_MAP)
+
+
+def platform_from_product_class(product_class):
+    """Get the class of Platform corresponding to a product class string."""
+    if product_class is None:
+        return GenericPlatform
+    if is_known_product_class(product_class):
+        return PRODUCT_PLATFORM_MAP[product_class]
+    logger.warning("Unrecognized product class '{0}' - known classes are "
+                   "{1}. Treating as a generic platform."
+                   .format(product_class, PRODUCT_PLATFORM_MAP.keys()))
+    return GenericPlatform
 
 
 class GenericPlatform(object):
@@ -434,3 +463,17 @@ class NXOSv(GenericPlatform):
             raise ValueTooLowError("serial ports", count, 1)
         elif count > 2:
             raise ValueTooHighError("serial ports", count, 2)
+
+PRODUCT_PLATFORM_MAP = {
+    'com.cisco.csr1000v':    CSR1000V,
+    'com.cisco.iosv':        IOSv,
+    'com.cisco.nx-osv':      NXOSv,
+    'com.cisco.ios-xrv':     IOSXRv,
+    'com.cisco.ios-xrv.rp':  IOSXRvRP,
+    'com.cisco.ios-xrv.lc':  IOSXRvLC,
+    'com.cisco.ios-xrv9000': IOSXRv9000,
+    # Some early releases of IOS XRv 9000 used the
+    # incorrect string 'com.cisco.ios-xrv64'.
+    'com.cisco.ios-xrv64':   IOSXRv9000,
+}
+"""Mapping of known product class strings to Platform classes."""

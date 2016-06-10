@@ -40,6 +40,7 @@ class COTEditProduct(COTSubmodule):
     :attr:`~COTSubmodule.output`
 
     Attributes:
+    :attr:`product_class`
     :attr:`product`
     :attr:`vendor`
     :attr:`version`,
@@ -52,8 +53,10 @@ class COTEditProduct(COTSubmodule):
     def __init__(self, UI):
         """Instantiate this submodule with the given UI."""
         super(COTEditProduct, self).__init__(UI)
+        self.product_class = None
+        """Product class identifier."""
         self.product = None
-        """Product string."""
+        """Product description string."""
         self.vendor = None
         """Vendor string."""
         self.version = None
@@ -73,6 +76,7 @@ class COTEditProduct(COTSubmodule):
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if (
+                self.product_class is None and
                 self.product is None and
                 self.vendor is None and
                 self.version is None and
@@ -91,6 +95,11 @@ class COTEditProduct(COTSubmodule):
         :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTEditProduct, self).run()
+
+        if self.product_class is not None:
+            logger.verbose("Updating product class from '{0}' to '{1}'"
+                           .format(self.vm.product_class, self.product_class))
+            self.vm.product_class = self.product_class
 
         if self.product is not None:
             logger.verbose("Updating product string from '{0}' to '{1}'"
@@ -135,9 +144,9 @@ class COTEditProduct(COTSubmodule):
             aliases=['set-product', 'set-version'],
             help="""Edit product info in an OVF""",
             usage=self.UI.fill_usage("edit-product", [
-                "PACKAGE [-o OUTPUT] [-p PRODUCT] [-n VENDOR] \
-[-v SHORT_VERSION] [-V FULL_VERSION] [-u PRODUCT_URL ] [-r VENDOR_URL] \
-[-l APPLICATION_URL]",
+                "PACKAGE [-o OUTPUT] [-c PRODUCT_CLASS] \
+[-p PRODUCT] [-n VENDOR] [-v SHORT_VERSION] [-V FULL_VERSION] \
+[-u PRODUCT_URL ] [-r VENDOR_URL] [-l APPLICATION_URL]",
             ]),
             description="""
 Edit product information attributes of the given OVF or OVA""")
@@ -145,6 +154,8 @@ Edit product information attributes of the given OVF or OVA""")
         p.add_argument('-o', '--output',
                        help="Name/path of new OVF/OVA package to create "
                        "instead of updating the existing OVF")
+        p.add_argument('-c', '--product-class',
+                       help='Product class, such as "com.cisco.csr1000v"')
         p.add_argument('-p', '--product',
                        help='Product name string, such as "Cisco IOS-XE"')
         p.add_argument('-n', '--vendor',

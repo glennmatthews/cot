@@ -164,7 +164,7 @@ class COT_UT(unittest.TestCase):
     }
     UNRECOGNIZED_PRODUCT_CLASS = {
         'levelname': 'WARNING',
-        'msg': "Unrecognized product class.*Treating as a generic product",
+        'msg': "Unrecognized product class.*Treating as a generic platform",
     }
     ADDRESS_ON_PARENT_NOT_SPECIFIED = {
         'levelname': 'WARNING',

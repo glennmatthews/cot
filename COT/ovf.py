@@ -60,7 +60,7 @@ from .data_validation import ValueTooHighError, ValueUnsupportedError
 from .data_validation import canonicalize_nic_subtype
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
-import COT.platforms as Platform
+from COT.platforms import platform_from_product_class, GenericPlatform
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +147,7 @@ class OVF(VMDescription, XML):
 
       input_file
       output_file
+      product_class
       platform
       config_profiles
       default_config_profile
@@ -355,6 +356,18 @@ class OVF(VMDescription, XML):
         VMDescription.output_file.fset(self, output_file)
 
     @property
+    def product_class(self):
+        """The product class identifier, such as com.cisco.csr1000v."""
+        if self._product_class is None and self.product_section is not None:
+            self._product_class = self.product_section.get(self.PRODUCT_CLASS)
+        return self._product_class
+
+    @product_class.setter
+    def product_class(self, product_class):
+        if product_class == self.product_class:
+            return
+
+    @property
     def platform(self):
         """The platform type, as determined from the OVF descriptor.
 
@@ -362,38 +375,9 @@ class OVF(VMDescription, XML):
           a more-specific subclass if recognized as such.
         """
         if self._platform is None:
-            platform = None
-            product_class = None
-            class_to_platform_map = {
-                'com.cisco.csr1000v':    Platform.CSR1000V,
-                'com.cisco.iosv':        Platform.IOSv,
-                'com.cisco.nx-osv':      Platform.NXOSv,
-                'com.cisco.ios-xrv':     Platform.IOSXRv,
-                'com.cisco.ios-xrv.rp':  Platform.IOSXRvRP,
-                'com.cisco.ios-xrv.lc':  Platform.IOSXRvLC,
-                'com.cisco.ios-xrv9000': Platform.IOSXRv9000,
-                # Some early releases of IOS XRv 9000 used the
-                # incorrect string 'com.cisco.ios-xrv64'.
-                'com.cisco.ios-xrv64':   Platform.IOSXRv9000,
-                None:                    Platform.GenericPlatform,
-            }
-
-            if self.product_section is None:
-                platform = Platform.GenericPlatform
-            else:
-                product_class = self.product_section.get(self.PRODUCT_CLASS)
-                try:
-                    platform = class_to_platform_map[product_class]
-                except KeyError:
-                    logger.warning(
-                        "Unrecognized product class '{0}' - known classes "
-                        "are {1}. Treating as a generic product..."
-                        .format(product_class,
-                                class_to_platform_map.keys()))
-                    platform = Platform.GenericPlatform
+            self._platform = platform_from_product_class(self.product_class)
             logger.info("OVF product class {0} --> platform {1}"
-                        .format(product_class, platform.__name__))
-            self._platform = platform
+                        .format(self.product_class, self._platform.__name__))
         return self._platform
 
     @property
@@ -758,7 +742,7 @@ class OVF(VMDescription, XML):
         str_list = []
         str_list.append('-' * TEXT_WIDTH)
         str_list.append(self.input_file)
-        if self.platform and self.platform is not Platform.GenericPlatform:
+        if self.platform and self.platform is not GenericPlatform:
             str_list.append("COT detected platform type: {0}"
                             .format(self.platform.PLATFORM_NAME))
         str_list.append('-' * TEXT_WIDTH)
@@ -2443,6 +2427,7 @@ class OVFNameHelper(object):
         """Set up string constants appropriate to the given OVF version."""
         self.ovf_version = version
         self._platform = None
+        self._product_class = None
         # For the standard namespace URIs in an OVF descriptor, let's define
         # shorthand identifiers to be used when writing back out to XML:
         cim_uri = "http://schemas.dmtf.org/wbem/wscim/1"
