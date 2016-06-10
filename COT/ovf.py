@@ -366,6 +366,21 @@ class OVF(VMDescription, XML):
     def product_class(self, product_class):
         if product_class == self.product_class:
             return
+        if self.product_section is None:
+            self.product_section = self.set_or_make_child(
+                self.virtual_system, self.PRODUCT_SECTION,
+                attrib=self.PRODUCT_SECTION_ATTRIB)
+            # Any Section must have an Info as child
+            self.set_or_make_child(self.product_section, self.INFO,
+                                   "Product Information")
+        if self.product_class:
+            logger.info("Changing product class from '{0}' to '{1}'"
+                        .format(self.product_class, product_class))
+        self.product_section.set(self.PRODUCT_CLASS, product_class)
+        # Change platform as well!
+        self._platform = None
+        self.platform
+        # TODO: validate hardware properties after changing?
 
     @property
     def platform(self):
