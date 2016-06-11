@@ -57,10 +57,10 @@ class TestByteString(unittest.TestCase):
 
     def test_byte_string(self):
         """Test byte_string() function."""
-        self.assertEqual(byte_string(1024), "1.00 kB")
-        self.assertEqual(byte_string(250691584), "239.08 MB")
-        self.assertEqual(byte_string(2560, base_shift=2), "2.50 GB")
-        self.assertEqual(byte_string(512, base_shift=2), "512 MB")
+        self.assertEqual(byte_string(1024), "1 KiB")
+        self.assertEqual(byte_string(250691584), "239.1 MiB")
+        self.assertEqual(byte_string(2560, base_shift=2), "2.5 GiB")
+        self.assertEqual(byte_string(512, base_shift=2), "512 MiB")
 
 
 class TestOVFInputOutput(COT_UT):
@@ -491,7 +491,7 @@ OVFItem:
   InstanceID
     3                    : [None]
   ResourceSubType
-    lsilogic             : [None]
+    ('lsilogic',)        : [None]
   ResourceType
     6                    : [None]
 """

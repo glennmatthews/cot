@@ -10,6 +10,15 @@ This project adheres to `Semantic Versioning`_.
 
 - ``cot edit-product --product-class`` option, to set or change the
   product class identifier (such as ``com.cisco.csr1000v``).
+- COT now logs warning messages when outputting an OVF if the hardware
+  definitions in the OVF are considered invalid for the given product-class.
+
+**Fixed**
+
+- COT now recognizes ``AllocationUnits`` values like ``megabytes``.
+- COT no longer ignores the ``AllocationUnits`` value given for RAM.
+- :func:`COT.ovf.byte_string` now properly uses binary units (``KiB`` rather
+  than ``kB``, etc.)
 
 `1.5.2`_ - 2016-06-17
 ---------------------

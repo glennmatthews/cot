@@ -111,10 +111,10 @@ class GenericPlatform(object):
             raise ValueTooLowError("CPUs", cpus, 1)
 
     @classmethod
-    def validate_memory_amount(cls, megabytes):
+    def validate_memory_amount(cls, mebibytes):
         """Throw an error if the amount of RAM is not supported."""
-        if megabytes < 1:
-            raise ValueTooLowError("RAM", megabytes, 1)
+        if mebibytes < 1:
+            raise ValueTooLowError("RAM", mebibytes, 1)
 
     @classmethod
     def validate_nic_count(cls, count):
@@ -174,12 +174,12 @@ class IOSXRv(GenericPlatform):
             raise ValueTooHighError("CPUs", cpus, 8)
 
     @classmethod
-    def validate_memory_amount(cls, megabytes):
-        """Minimum 3 GB, max 8 GB of RAM."""
-        if megabytes < 3072:
-            raise ValueTooLowError("RAM", str(megabytes) + "MB", "3GB")
-        elif megabytes > 8192:
-            raise ValueTooHighError("RAM", str(megabytes) + "MB", "8GB")
+    def validate_memory_amount(cls, mebibytes):
+        """Minimum 3 GiB, max 8 GiB of RAM."""
+        if mebibytes < 3072:
+            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "3 GiB")
+        elif mebibytes > 8192:
+            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", " 8GiB")
 
     @classmethod
     def validate_nic_count(cls, count):
@@ -279,12 +279,12 @@ class IOSXRv9000(IOSXRv):
             raise ValueTooHighError("CPUs", cpus, 32)
 
     @classmethod
-    def validate_memory_amount(cls, megabytes):
-        """Minimum 8 GB, maximum 32 GB."""
-        if megabytes < 8192:
-            raise ValueTooLowError("RAM", str(megabytes) + "MB", "8GB")
-        elif megabytes > 32768:
-            raise ValueTooHighError("RAM", str(megabytes) + "MB", "32GB")
+    def validate_memory_amount(cls, mebibytes):
+        """Minimum 8 GiB, maximum 32 GiB."""
+        if mebibytes < 8192:
+            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "8 GiB")
+        elif mebibytes > 32768:
+            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "32 GiB")
 
     @classmethod
     def validate_nic_count(cls, count):
@@ -335,12 +335,12 @@ class CSR1000V(GenericPlatform):
             raise ValueUnsupportedError("CPUs", cpus, [1, 2, 4])
 
     @classmethod
-    def validate_memory_amount(cls, megabytes):
-        """Minimum 2.5 GB, max 8 GB."""
-        if megabytes < 2560:
-            raise ValueTooLowError("RAM", str(megabytes) + "MB", "2.5GB")
-        elif megabytes > 8192:
-            raise ValueTooHighError("RAM", str(megabytes) + "MB", "8GB")
+    def validate_memory_amount(cls, mebibytes):
+        """Minimum 2.5 GiB, max 8 GiB."""
+        if mebibytes < 2560:
+            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "2.5 GiB")
+        elif mebibytes > 8192:
+            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "8 GiB")
 
     @classmethod
     def validate_nic_count(cls, count):
@@ -384,16 +384,16 @@ class IOSv(GenericPlatform):
             raise ValueTooHighError("CPUs", cpus, 1)
 
     @classmethod
-    def validate_memory_amount(cls, megabytes):
-        """IOSv has minimum 192 MB (with minimal feature set), max 3 GB."""
-        if megabytes < 192:
-            raise ValueTooLowError("RAM", str(megabytes) + "MB", "192MB")
-        elif megabytes < 384:
+    def validate_memory_amount(cls, mebibytes):
+        """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB."""
+        if mebibytes < 192:
+            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "192 MiB")
+        elif mebibytes < 384:
             # Warn but allow
-            logger.warning("Less than 384MB of RAM may not be sufficient "
+            logger.warning("Less than 384MiB of RAM may not be sufficient "
                            "for some IOSv feature sets")
-        elif megabytes > 3072:
-            raise ValueTooHighError("RAM", str(megabytes) + "MB", "3GB")
+        elif mebibytes > 3072:
+            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "3 GiB")
 
     @classmethod
     def validate_nic_count(cls, count):
@@ -449,12 +449,12 @@ class NXOSv(GenericPlatform):
             raise ValueTooHighError("CPUs", cpus, 8)
 
     @classmethod
-    def validate_memory_amount(cls, megabytes):
-        """NX-OSv requires 2-8 GB of RAM."""
-        if megabytes < 2048:
-            raise ValueTooLowError("RAM", str(megabytes) + "MB", "2GB")
-        elif megabytes > 8192:
-            raise ValueTooHighError("RAM", str(megabytes) + "MB", "8GB")
+    def validate_memory_amount(cls, mebibytes):
+        """NX-OSv requires 2-8 GiB of RAM."""
+        if mebibytes < 2048:
+            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "2 GiB")
+        elif mebibytes > 8192:
+            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "8 GiB")
 
     @classmethod
     def validate_serial_count(cls, count):

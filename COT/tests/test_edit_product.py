@@ -67,6 +67,7 @@ class TestCOTEditProduct(COT_UT):
         self.instance.product_class = "com.cisco.csr1000v"
         self.instance.run()
         self.instance.finished()
+        self.assertLogged(**self.invalid_hardware_warning(None, '0', 'NICs'))
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>
@@ -82,6 +83,16 @@ class TestCOTEditProduct(COT_UT):
         self.instance.product_class = "com.cisco.ios-xrv9000"
         self.instance.run()
         self.instance.finished()
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-384MB-2NIC', "384 MiB", "RAM"))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-384MB-2NIC', "2", "NIC count"))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-1GB-8NIC', "1024 MiB", "RAM"))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-3GB-10NIC', "3072 MiB", "RAM"))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-3GB-16NIC', "3072 MiB", "RAM"))
         self.check_diff(file1=self.iosv_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>

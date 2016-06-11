@@ -87,6 +87,8 @@ class TestVMDescription(unittest.TestCase):
                           None, None, None, None, None, None, None)
 
         with self.assertRaises(NotImplementedError):
+            ins.validate_hardware()
+        with self.assertRaises(NotImplementedError):
             ins.config_profiles
         with self.assertRaises(NotImplementedError):
             ins.default_config_profile
@@ -173,6 +175,9 @@ class TestVMDescription(unittest.TestCase):
 
         ins.output_file = self.TEXT_FILE
         self.assertEqual(ins.output_file, self.TEXT_FILE)
+
+        ins.product_class = 'generic'
+        self.assertEqual(ins.product_class, 'generic')
 
         out = ins.convert_disk_if_needed(self.TEXT_FILE, None)
         self.assertEqual(out, self.TEXT_FILE)

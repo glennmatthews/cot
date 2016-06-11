@@ -195,6 +195,17 @@ class COT_UT(unittest.TestCase):
         'msg': "Overwriting existing disk Item in OVF",
     }
 
+    def invalid_hardware_warning(self, profile, value, kind):
+        """Warning log message for invalid hardware."""
+        msg = ""
+        if profile:
+            msg += "In profile '{0}':".format(profile)
+        msg += "(Unsupported )?[vV]alue '{0}' for {1}".format(value, kind)
+        return {
+            'levelname': 'WARNING',
+            'msg': msg,
+        }
+
     def __init__(self, method_name='runTest'):
         """Add logging handler to generic UT initialization."""
         super(COT_UT, self).__init__(method_name)

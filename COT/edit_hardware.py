@@ -125,8 +125,8 @@ class COTEditHardware(COTSubmodule):
     @memory.setter
     def memory(self, value):
         value = str(value)
-        # We like to see memory input in the form "4096M" or "4 GB"
-        MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?[bB]?\s*$"
+        # We like to see memory input in the form "4096M" or "4 GB" or "2 GiB"
+        MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?i?[bB]?\s*$"
         match = re.match(MEMORY_REGEXP, value)
         if not match:
             raise InvalidInputError("Could not parse memory string '{0}'"
@@ -146,12 +146,12 @@ class COTEditHardware(COTSubmodule):
             # Try to be clever and guess the units
             if mem_value <= 64:
                 logger.warning("Memory units not specified, "
-                               "guessing '{0}' means '{0}GB'"
+                               "guessing '{0}' means '{0} GiB'"
                                .format(mem_value))
                 mem_value *= 1024
             else:
                 logger.warning("Memory units not specified, "
-                               "guessing '{0}' means '{0}MB'"
+                               "guessing '{0}' means '{0} MiB'"
                                .format(mem_value))
                 pass
         self.vm.platform.validate_memory_amount(mem_value)
@@ -543,7 +543,7 @@ class COTEditHardware(COTSubmodule):
                        help="Set the number of CPUs.")
         g.add_argument('-m', '--memory',
                        help="Set the amount of RAM. "
-                       '(Examples: "4096MB", "4GB")')
+                       '(Examples: "4096M", "4 GiB")')
 
         g = p.add_argument_group("network interface options")
 

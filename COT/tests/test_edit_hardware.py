@@ -342,6 +342,7 @@ CIM_ResourceAllocationSettingData">
 ...
        <ovf:Info />
 +      <ovf:Item>
++        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
 +        <rasd:ElementName>memory</rasd:ElementName>
 +        <rasd:InstanceID>1</rasd:InstanceID>
 +        <rasd:ResourceType>4</rasd:ResourceType>
@@ -906,7 +907,7 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT1</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "UT1"\
++        <rasd:Description>E1000/virtio ethernet adapter on "UT1"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
          <rasd:InstanceID>11</rasd:InstanceID>
@@ -922,7 +923,7 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT2</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "UT2"\
++        <rasd:Description>E1000/virtio ethernet adapter on "UT2"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
          <rasd:InstanceID>12</rasd:InstanceID>
@@ -938,7 +939,7 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT3</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "UT3"\
++        <rasd:Description>E1000/virtio ethernet adapter on "UT3"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
          <rasd:InstanceID>13</rasd:InstanceID>
