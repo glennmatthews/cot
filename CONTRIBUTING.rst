@@ -38,16 +38,17 @@ Coding style
 ''''''''''''
 
 We try to keep COT's code base compliant with Python coding standards including
-`PEP 8`_ and `PEP 257`_. We use the flake8_ and pep257_ tools to verify this
-as part of our test automation. To run coding style analysis independently
-of the other test automation, you can run ``tox -e flake8``, or you can
-install these tools and run ``flake8`` directly:
+`PEP 8`_ and `PEP 257`_. We use the flake8_ tool and its extension packages to
+verify this as part of our test automation.
+To run coding style analysis independently of the other test automation, you
+can run ``tox -e flake8``, or you can install these tools and run ``flake8``
+directly:
 
 ::
 
   cot/$ sudo pip install --upgrade flake8
-  cot/$ sudo pip install --upgrade pep257
-  cot/$ sudo pip install --upgrade flake8-pep257
+  cot/$ sudo pip install --upgrade pydocstyle
+  cot/$ sudo pip install --upgrade flake8-docstrings
   cot/$ flake8
   ./COT/tests/ovf.py:180:80: E501 line too long (80 > 79 characters)
   ./COT/tests/ovf.py:184:77: F841 local variable 'ovf' is assigned to but never used
