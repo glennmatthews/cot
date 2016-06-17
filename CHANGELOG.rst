@@ -3,6 +3,17 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.5.2`_ - 2016-06-17
+---------------------
+
+**Changed**
+
+- Development requirement changes: The package `pep8`_ has been renamed to
+  `pycodestyle`_, and `pep257`_ has been renamed to `pydocstyle`_. Updated
+  configuration and documentation to reflect these changes. Also,
+  `flake8-pep257`_ does not presently handle these changes, so replaced it
+  as a dependency with the more up-to-date `flake8-docstrings`_ package.
+
 `1.5.1`_ - 2016-06-07
 ---------------------
 
@@ -407,6 +418,7 @@ Initial public release.
 
 .. _pyVmomi: https://pypi.python.org/pypi/pyvmomi/
 .. _flake8: http://flake8.readthedocs.org/en/latest/
+.. _pep8: https://pypi.python.org/pypi/pep8
 .. _pep257: https://pypi.python.org/pypi/pep257
 .. _requests: http://python-requests.org/
 .. _tox: http://tox.readthedocs.org/en/latest/
@@ -417,8 +429,13 @@ Initial public release.
 .. _versioneer: https://github.com/warner/python-versioneer
 .. _pip: https://pip.pypa.io/en/stable/
 .. _argcomplete: https://argcomplete.readthedocs.io/en/latest/
+.. _`flake8-pep257`: https://pypi.python.org/pypi/flake8-pep257
+.. _pycodestyle: https://pypi.python.org/pypi/pycodestyle
+.. _pydocstyle: https://pypi.python.org/pypi/pydocstyle
+.. _`flake8-docstrings`: https://pypi.python.org/pypi/flake8-docstrings
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.5.2: https://github.com/glennmatthews/cot/compare/v1.5.1...v1.5.2
 .. _1.5.1: https://github.com/glennmatthews/cot/compare/v1.5.0...v1.5.1
 .. _1.5.0: https://github.com/glennmatthews/cot/compare/v1.4.2...v1.5.0
 .. _1.4.2: https://github.com/glennmatthews/cot/compare/v1.4.1...v1.4.2
