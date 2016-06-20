@@ -476,8 +476,8 @@ class OVF(VMDescription, XML):
             if ram_item:
                 megabytes = (byte_count(
                     ram_item.get_value(self.VIRTUAL_QUANTITY, [profile_id]),
-                    ram_item.get_value(self.ALLOCATION_UNITS, [profile_id])) /
-                             (1024 * 1024))
+                    ram_item.get_value(self.ALLOCATION_UNITS, [profile_id])
+                ) / (1024 * 1024))
                 try:
                     self.platform.validate_memory_amount(int(megabytes))
                 except ValueUnsupportedError as e:
