@@ -1,0 +1,48 @@
+[MASTER]
+
+load-plugins=verboselogs.pylint
+
+# Ignore generated code we don't control
+ignore=_version.py
+
+[MESSAGE CONTROL]
+
+#
+# Disabled due to redundancy with flake8:
+#   bad-continuation
+#   trailing-whitespace
+#
+disable=bad-continuation,
+  duplicate-code,
+  fixme,
+  invalid-name,
+  locally-disabled,
+  too-few-public-methods,
+  too-many-arguments,
+  too-many-boolean-expressions,
+  too-many-branches,
+  too-many-instance-attributes,
+  too-many-lines,
+  too-many-locals,
+  too-many-public-methods,
+  too-many-return-statements,
+  too-many-statements,
+  trailing-whitespace,
+
+[BASIC]
+
+# When enabling invalid-name, stop complaints about 'invalid constant logger'
+# good-names=i,j,k,logger,_
+
+# When enabling invalid-name, stop complaints about test method names too long
+# method-rgx=(test_[a-z0-9_]*|[a-z_][a-z0-9_]{2,30})$
+
+[TYPECHECK]
+
+# Pylint false no-member error about "from pyVmomi import vim"
+ignored-modules=pyVmomi
+
+[VARIABLES]
+
+# Any _foo variable is a valid dummy name
+dummy-variables-rgx=^_.*$

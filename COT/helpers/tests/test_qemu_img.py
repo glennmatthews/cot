@@ -3,7 +3,7 @@
 # test_qemu_img.py - Unit test cases for COT.helpers.qemu_img submodule.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -22,7 +22,6 @@ from distutils.version import StrictVersion
 
 from .test_helper import HelperUT
 from COT.helpers import HelperError
-from COT.helpers.helper import Helper
 from COT.helpers.qemu_img import QEMUImg
 
 
@@ -65,7 +64,7 @@ Command syntax:
         """Negative test for .version getter logic."""
         self.fake_output = "qemu-img: error: unknown argument --version"
         with self.assertRaises(RuntimeError):
-            self.helper.version
+            assert self.helper.version
 
     def test_install_helper_already_present(self):
         """Do nothing when trying to re-install."""
@@ -75,61 +74,22 @@ Command syntax:
 
     def test_install_helper_apt_get(self):
         """Test installation via 'apt-get'."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = True
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = False
-        Helper._apt_updated = False
-        self.fake_output = 'not installed'
-        self.helper.install_helper()
-        self.assertEqual([
-            ['dpkg', '-s', 'qemu-utils'],
-            ['sudo', 'apt-get', '-q', 'update'],
-            ['sudo', 'apt-get', '-q', 'install', 'qemu-utils'],
-        ], self.last_argv)
-        self.assertTrue(Helper._apt_updated)
-        # Make sure we don't call apt-get update again unnecessarily
-        self.last_argv = []
-        self.helper.install_helper()
-        self.assertEqual([
-            ['dpkg', '-s', 'qemu-utils'],
-            ['sudo', 'apt-get', '-q', 'install', 'qemu-utils'],
-        ], self.last_argv)
+        self.apt_install_test('qemu-utils', 'qemu-img')
 
     def test_install_helper_port(self):
         """Test installation via 'port'."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['port'] = True
-        Helper.PACKAGE_MANAGERS['yum'] = False
-        Helper._port_updated = False
-        self.helper.install_helper()
-        self.assertEqual([['sudo', 'port', 'selfupdate'],
-                          ['sudo', 'port', 'install', 'qemu']],
-                         self.last_argv)
-        self.assertTrue(Helper._port_updated)
-        # Make sure we don't call port selfupdate again unnecessarily
-        self.last_argv = []
-        self.helper.install_helper()
-        self.assertEqual([['sudo', 'port', 'install', 'qemu']],
-                         self.last_argv)
+        self.port_install_test('qemu')
 
     def test_install_helper_yum(self):
         """Test installation via 'yum'."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = True
+        self.enable_yum_install()
         self.helper.install_helper()
         self.assertEqual([['sudo', 'yum', '--quiet', 'install', 'qemu-img']],
                          self.last_argv)
 
     def test_install_helper_unsupported(self):
         """Installation fails without a package manager."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = False
+        self.select_package_manager(None)
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
@@ -196,7 +156,7 @@ Command syntax:
         with self.assertRaises(NotImplementedError):
             self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
                                            'vhd')
+        self.set_helper_version(StrictVersion("2.0.99"))
         with self.assertRaises(NotImplementedError):
-            self.helper._version = StrictVersion("2.0.99")
             self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
                                            'vmdk', 'streamOptimized')

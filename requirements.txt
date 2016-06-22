@@ -3,4 +3,4 @@ backports.shutil_get_terminal_size
 colorlog>=2.5.0
 pyvmomi>=5.5.0.2014.1
 requests>=2.5.1
-verboselogs>=1.0
+verboselogs>=1.2

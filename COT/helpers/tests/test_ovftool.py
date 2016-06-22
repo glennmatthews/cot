@@ -35,7 +35,7 @@ class TestOVFTool(HelperUT):
         self.fake_path = "/fake/ovftool"
         self.fake_output = "Error: Unknown option: 'version'"
         with self.assertRaises(RuntimeError):
-            self.helper.version
+            assert self.helper.version
 
     def test_install_helper_already_present(self):
         """Do nothing when trying to re-install."""

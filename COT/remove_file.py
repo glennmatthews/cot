@@ -73,19 +73,19 @@ class COTRemoveFile(COTSubmodule):
         # There may also be a disk device that maps this file to a drive.
         (file1, disk1, _, disk_dev1) = vm.search_from_filename(self.file_path)
         (file2, disk2, _, disk_dev2) = vm.search_from_file_id(self.file_id)
-        file = check_for_conflict("file to remove", [file1, file2])
+        file_obj = check_for_conflict("file to remove", [file1, file2])
         disk = check_for_conflict("disk associated with file to remove",
                                   [disk1, disk2])
         disk_drive = check_for_conflict("disk drive mapping this file",
                                         [disk_dev1, disk_dev2])
 
-        if file is None:
+        if file_obj is None:
             raise InvalidInputError("No such file found")
 
         if self.file_id is None:
-            self.file_id = vm.get_id_from_file(file)
+            self.file_id = vm.get_id_from_file(file_obj)
         if self.file_path is None:
-            self.file_path = vm.get_path_from_file(file)
+            self.file_path = vm.get_path_from_file(file_obj)
 
         prompt_info = "file '{0}' (ID '{1}')".format(self.file_path,
                                                      self.file_id)
@@ -97,7 +97,7 @@ class COTRemoveFile(COTSubmodule):
 
         self.UI.confirm_or_die("Remove {0}?".format(prompt_info))
 
-        vm.remove_file(file, disk=disk,
+        vm.remove_file(file_obj, disk=disk,
                        disk_drive=disk_drive)
 
     def create_subparser(self):

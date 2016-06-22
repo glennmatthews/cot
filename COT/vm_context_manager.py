@@ -3,7 +3,7 @@
 # vm_context_manager.py - Context manager for virtual machine definitions
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -23,7 +23,7 @@ from .vm_factory import VMFactory
 logger = logging.getLogger(__name__)
 
 
-class VMContextManager:
+class VMContextManager(object):
     """Context manager for virtual machine definitions.
 
     When the context manager exits, unless an error occurred, the virtual
@@ -46,12 +46,12 @@ class VMContextManager:
         """Use the VM instance as the context manager object."""
         return self.obj
 
-    def __exit__(self, type, value, trace):
+    def __exit__(self, exc_type, exc_value, trace):
         """If the block exited cleanly, write the VM out to disk.
 
         In any case, destroy the VM.
         """
         # Did we exit cleanly?
-        if type is None:
+        if exc_type is None:
             self.obj.write()
         self.obj.destroy()

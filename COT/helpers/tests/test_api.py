@@ -140,6 +140,7 @@ class TestConvertDiskImage(COT_UT):
 
     def test_convert_to_vmdk_streamoptimized_old_qemu(self):
         """Code flow for old QEMU version."""
+        # pylint: disable=protected-access
         COT.helpers.api.QEMUIMG._version = StrictVersion("1.0.0")
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
@@ -158,6 +159,7 @@ class TestConvertDiskImage(COT_UT):
 
     def test_convert_to_vmdk_streamoptimized_new_qemu(self):
         """Code flow for new QEMU version."""
+        # pylint: disable=protected-access
         COT.helpers.api.QEMUIMG._version = StrictVersion("2.1.0")
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
@@ -233,6 +235,7 @@ class TestCreateDiskImage(COT_UT):
             self.fail(e.strerror)
         (f, sf) = get_disk_format(disk_path)
         self.assertEqual(f, 'raw')
+        self.assertEqual(sf, None)
         try:
             capacity = get_disk_capacity(disk_path)
             self.assertEqual(capacity, "8388608")
@@ -248,6 +251,7 @@ class TestCreateDiskImage(COT_UT):
             self.fail(e.strerror)
         (f, sf) = get_disk_format(disk_path)
         self.assertEqual(f, 'raw')
+        self.assertEqual(sf, None)
         try:
             capacity = get_disk_capacity(disk_path)
             self.assertEqual(capacity, "67108864")

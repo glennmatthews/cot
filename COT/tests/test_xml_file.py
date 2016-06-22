@@ -49,8 +49,7 @@ class TestXMLInstance(unittest.TestCase):
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
-        self.xml = XML()
-        self.xml.read_xml(resource_filename(__name__, "input.ovf"))
+        self.xml = XML(resource_filename(__name__, "input.ovf"))
         super(TestXMLInstance, self).setUp()
 
     def test_find_child(self):
