@@ -12,11 +12,16 @@ ignore=_version.py
 #   bad-continuation
 #   trailing-whitespace
 #
+# Disabled due to useless noise:
+#   locally-disabled
+#   too-few-public-methods
+#
 disable=bad-continuation,
   duplicate-code,
   fixme,
   invalid-name,
   locally-disabled,
+  too-few-public-methods,
   trailing-whitespace,
 
 [BASIC]
@@ -31,19 +36,18 @@ disable=bad-continuation,
 
 # Current thresholds - to be driven down over time
 
-max-args=10
-max-attributes=98
+max-args=10                 ; add_disk_worker
+max-attributes=98           ; OVF
 # default: max-bool-expr=5
-max-branches=67
-max-locals=65
-max-public-methods=73
-min-public-methods=0
-max-returns=9
-max-statements=201
+max-branches=39             ; COTEditHardware.run
+max-locals=32               ; add_disk_worker
+max-public-methods=73       ; OVF
+max-returns=9               ; COTInstallHelpers.install_manpages
+max-statements=161          ; OVFNameHelper.__init__
 
 [FORMAT]
 
-max-module-lines=3800
+max-module-lines=3800       ; OVF
 
 
 [TYPECHECK]
