@@ -72,15 +72,15 @@ class COTEditProduct(COTSubmodule):
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
-        if (
-                self.product is None and
-                self.vendor is None and
-                self.version is None and
-                self.full_version is None and
-                self.product_url is None and
-                self.vendor_url is None and
-                self.application_url is None
-        ):
+        if not any([
+                self.product,
+                self.vendor,
+                self.version,
+                self.full_version,
+                self.product_url,
+                self.vendor_url,
+                self.application_url,
+        ]):
             return False, ("No work requested! Please specify at least "
                            "one product information string to update")
         return super(COTEditProduct, self).ready_to_run()

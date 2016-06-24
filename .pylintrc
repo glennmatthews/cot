@@ -33,7 +33,7 @@ disable=bad-continuation,
 
 max-args=10
 max-attributes=98
-max-bool-expr=15
+# default: max-bool-expr=5
 max-branches=67
 max-locals=65
 max-public-methods=73

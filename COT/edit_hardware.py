@@ -294,23 +294,23 @@ class COTEditHardware(COTSubmodule):
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         # Need some work to do!
-        if (
-                self.profiles is None and
-                self.delete_all_other_profiles is False and
-                self.cpus is None and
-                self.memory is None and
-                self.nics is None and
-                self.nic_types is None and
-                self.mac_addresses_list is None and
-                self.nic_networks is None and
-                self.nic_names is None and
-                self.network_descriptions is None and
-                self.serial_ports is None and
-                self.serial_connectivity is None and
-                self.scsi_subtypes is None and
-                self.ide_subtypes is None and
-                self.virtual_system_type is None
-        ):
+        if not any([x is not None and x is not False for x in [
+                self.profiles,
+                self.delete_all_other_profiles,
+                self.cpus,
+                self.memory,
+                self.nics,
+                self.nic_types,
+                self.mac_addresses_list,
+                self.nic_networks,
+                self.nic_names,
+                self.network_descriptions,
+                self.serial_ports,
+                self.serial_connectivity,
+                self.scsi_subtypes,
+                self.ide_subtypes,
+                self.virtual_system_type,
+        ]]):
             return (False, "No work requested! Please specify at least "
                     "one hardware change")
         return super(COTEditHardware, self).ready_to_run()

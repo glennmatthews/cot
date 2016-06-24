@@ -763,9 +763,9 @@ class OVF(VMDescription, XML):
         header = '\n'.join(str_list)
 
         # Product information
-        if (self.product or self.vendor or self.version_short or
-            verbosity_option != 'brief' and (
-                self.product_url or self.vendor_url or self.version_long)):
+        if (any([self.product, self.vendor, self.version_short]) or
+            verbosity_option != 'brief' and any([
+                self.product_url, self.vendor_url, self.version_long])):
             str_list = []
             wrapper.initial_indent = ''
             wrapper.subsequent_indent = '          '
