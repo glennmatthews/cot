@@ -17,16 +17,6 @@ disable=bad-continuation,
   fixme,
   invalid-name,
   locally-disabled,
-  too-few-public-methods,
-  too-many-arguments,
-  too-many-boolean-expressions,
-  too-many-branches,
-  too-many-instance-attributes,
-  too-many-lines,
-  too-many-locals,
-  too-many-public-methods,
-  too-many-return-statements,
-  too-many-statements,
   trailing-whitespace,
 
 [BASIC]
@@ -36,6 +26,25 @@ disable=bad-continuation,
 
 # When enabling invalid-name, stop complaints about test method names too long
 # method-rgx=(test_[a-z0-9_]*|[a-z_][a-z0-9_]{2,30})$
+
+[DESIGN]
+
+# Current thresholds - to be driven down over time
+
+max-args=10
+max-attributes=98
+max-bool-expr=15
+max-branches=67
+max-locals=65
+max-public-methods=73
+min-public-methods=0
+max-returns=9
+max-statements=201
+
+[FORMAT]
+
+max-module-lines=3800
+
 
 [TYPECHECK]
 
