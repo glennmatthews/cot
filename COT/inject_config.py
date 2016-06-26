@@ -121,9 +121,9 @@ class COTInjectConfig(COTSubmodule):
         # Find the disk drive where the config should be injected
         # First, look for any previously-injected config disk to overwrite:
         if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
-            (f, d, ci, drive_device) = vm.search_from_filename('config.iso')
+            (f, _, _, drive_device) = vm.search_from_filename('config.iso')
         elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
-            (f, d, ci, drive_device) = vm.search_from_filename('config.vmdk')
+            (f, _, _, drive_device) = vm.search_from_filename('config.vmdk')
         else:
             raise ValueUnsupportedError("bootstrap disk type",
                                         platform.BOOTSTRAP_DISK_TYPE,
@@ -133,8 +133,7 @@ class COTInjectConfig(COTSubmodule):
             self.UI.confirm_or_die(
                 "Existing configuration disk '{0}' found.\n"
                 "Continue and overwrite it?".format(file_id))
-            logger.warning("Overwriting existing config disk '{0}'"
-                           .format(file_id))
+            logger.warning("Overwriting existing config disk '%s'", file_id)
         else:
             file_id = None
             # Find the empty slot where we should inject the config
@@ -176,7 +175,7 @@ class COTInjectConfig(COTSubmodule):
             UI=self.UI,
             vm=vm,
             DISK_IMAGE=bootstrap_file,
-            type=platform.BOOTSTRAP_DISK_TYPE,
+            disk_type=platform.BOOTSTRAP_DISK_TYPE,
             file_id=file_id,
             controller=cont_type,
             address=drive_address,

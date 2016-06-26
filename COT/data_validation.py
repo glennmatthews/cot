@@ -75,12 +75,12 @@ def natural_sort(l):
     :param list l: List to sort
     :return: Sorted list
     """
-    # Convert number strings to ints, leave other strings as text
     def convert(text):
+        """Convert number strings to ints, leave other strings as text."""
         return int(text) if text.isdigit() else text
 
-    # Split the key into a list of [text, int, text, int, ...]
     def alphanum_key(key):
+        """Split the key into a list of [text, int, text, int, ...]."""
         return [convert(c) for c in re.split('([0-9]+)', key)]
 
     # Sort based on alphanum_key
@@ -104,23 +104,23 @@ def match_or_die(first_label, first, second_label, second):
                                          to_string(second)))
 
 
-def canonicalize_helper(label, input, mappings, re_flags=0):
+def canonicalize_helper(label, user_input, mappings, re_flags=0):
     """Try to find a mapping of input to output.
 
     :param str label: Label to use in any error raised
-    :param str input: User-provided string
+    :param str user_input: User-provided string
     :param list mappings: List of ``(expr, canonical)`` pairs for mapping.
     :param re_flags: ``re.IGNORECASE``, etc. if desired
     :returns: The canonical string
     :raise ValueUnsupportedError: If no ``expr`` in ``mappings`` matches
       ``input``.
     """
-    if input is None or input == "":
+    if user_input is None or user_input == "":
         return None
     for (expr, canonical) in mappings:
-        if re.match(expr, input, flags=re_flags):
+        if re.match(expr, user_input, flags=re_flags):
             return canonical
-    raise ValueUnsupportedError(label, input, [c for (e, c) in mappings])
+    raise ValueUnsupportedError(label, user_input, [c for (_, c) in mappings])
 
 
 def canonicalize_ide_subtype(subtype):
@@ -231,9 +231,9 @@ def mac_address(string):
     :return: Validated string(with leading/trailing whitespace stripped)
     """
     string = string.strip()
-    if not (re.match("([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$", string) or
-            re.match("([0-9a-fA-F]{2}-){5}[0-9a-fA-F]{2}$", string) or
-            re.match("([0-9a-fA-F]{4}\.){2}[0-9a-fA-F]{4}$", string)):
+    if not (re.match(r"([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$", string) or
+            re.match(r"([0-9a-fA-F]{2}-){5}[0-9a-fA-F]{2}$", string) or
+            re.match(r"([0-9a-fA-F]{4}\.){2}[0-9a-fA-F]{4}$", string)):
         raise InvalidInputError("'{0}' is not a valid MAC address"
                                 .format(string))
     # TODO - reformat string to a consistent output style?
@@ -250,7 +250,7 @@ def device_address(string):
     :return: Validated string (with leading/trailing whitespace stripped)
     """
     string = string.strip()
-    if not re.match("\d+:\d+$", string):
+    if not re.match(r"\d+:\d+$", string):
         raise InvalidInputError("'{0}' is not a valid device address"
                                 .format(string))
     return string
@@ -270,7 +270,9 @@ def no_whitespace(string):
     return string
 
 
-def validate_int(string, min=None, max=None, label="input"):
+def validate_int(string,
+                 min=None, max=None,  # pylint: disable=redefined-builtin
+                 label="input"):
     """Parser helper function for validating integer arguments in a range.
 
     :param str string: String to convert to an integer and validate
@@ -335,6 +337,7 @@ class ValueUnsupportedError(InvalidInputError):
         self.value_type = value_type
         self.actual_value = actual
         self.expected_value = expected
+        super(ValueUnsupportedError, self).__init__(str(self))
 
     def __str__(self):
         """Human-readable string representation."""

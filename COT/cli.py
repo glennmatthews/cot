@@ -18,6 +18,13 @@
 
 """CLI entry point for the Common OVF Tool (COT) suite.
 
+**Functions**
+
+.. autosummary::
+  :nosignatures:
+
+  formatter
+
 **Classes**
 
 .. autosummary::
@@ -26,14 +33,11 @@
   CLI
 """
 
+from __future__ import print_function
+
 import os
 import sys
 import argparse
-try:
-    import argcomplete
-    _argcomplete = True
-except ImportError:
-    _argcomplete = False
 import re
 import logging
 import getpass
@@ -45,11 +49,50 @@ try:
 except ImportError:
     from backports.shutil_get_terminal_size import get_terminal_size
 
+try:
+    import argcomplete
+    _argcomplete = True
+except ImportError:
+    _argcomplete = False
+
 from COT import __version_long__
 from COT.data_validation import InvalidInputError
 from COT.ui_shared import UI
 
 logger = logging.getLogger(__name__)
+
+
+def formatter(verbosity=logging.INFO):
+    """Create formatter for log output.
+
+    We offer different (more verbose) formatting when debugging is enabled,
+    hence this need.
+
+    :param verbosity: Logging level as defined by :mod:`logging`.
+    :return: Formatter object for use with :mod:`logging`.
+    :rtype: instance of :class:`colorlog.ColoredFormatter`
+    """
+    from colorlog import ColoredFormatter
+    log_colors = {
+        'DEBUG':    'blue',
+        'VERBOSE':  'cyan',
+        'INFO':     'green',
+        'WARNING':  'yellow',
+        'ERROR':    'red',
+        'CRITICAL': 'red',
+    }
+    format_string = "%(log_color)s"
+    datefmt = None
+    if verbosity <= logging.DEBUG:
+        format_string += "%(asctime)s.%(msecs)d "
+        datefmt = "%H:%M:%S"
+    format_string += "%(levelname)8s: "
+    if verbosity <= logging.VERBOSE:
+        format_string += "%(name)-22s "
+    format_string += "%(message)s"
+    return ColoredFormatter(format_string,
+                            datefmt=datefmt,
+                            log_colors=log_colors)
 
 
 class CLI(UI):
@@ -63,7 +106,6 @@ class CLI(UI):
       create_subparsers
       fill_examples
       fill_usage
-      formatter
       get_input
       get_password
       main
@@ -253,38 +295,6 @@ class CLI(UI):
                 output_lines.append(wrapped_line)
         return "\n".join(output_lines)
 
-    def formatter(self, verbosity=logging.INFO):
-        """Create formatter for log output.
-
-        We offer different (more verbose) formatting when debugging is enabled,
-        hence this need.
-
-        :param verbosity: Logging level as defined by :mod:`logging`.
-        :return: Formatter object for use with :mod:`logging`.
-        :rtype: instance of :class:`colorlog.ColoredFormatter`
-        """
-        from colorlog import ColoredFormatter
-        log_colors = {
-            'DEBUG':    'blue',
-            'VERBOSE':  'cyan',
-            'INFO':     'green',
-            'WARNING':  'yellow',
-            'ERROR':    'red',
-            'CRITICAL': 'red',
-        }
-        format_string = "%(log_color)s"
-        datefmt = None
-        if verbosity <= logging.DEBUG:
-            format_string += "%(asctime)s.%(msecs)d "
-            datefmt = "%H:%M:%S"
-        format_string += "%(levelname)8s: "
-        if verbosity <= logging.VERBOSE:
-            format_string += "%(name)-22s "
-        format_string += "%(message)s"
-        return ColoredFormatter(format_string,
-                                datefmt=datefmt,
-                                log_colors=log_colors)
-
     def set_verbosity(self, level):
         """Enable logging and/or change the logging verbosity level.
 
@@ -296,7 +306,7 @@ class CLI(UI):
         if not self.handler:
             self.handler = logging.StreamHandler()
         self.handler.setLevel(level)
-        self.handler.setFormatter(self.formatter(level))
+        self.handler.setFormatter(formatter(level))
         if not self.master_logger:
             self.master_logger = logging.getLogger('COT')
             self.master_logger.addHandler(self.handler)
@@ -323,7 +333,7 @@ class CLI(UI):
             (user declines)
         """
         if self.force:
-            logger.warning("Automatically agreeing to '{0}'".format(prompt))
+            logger.warning("Automatically agreeing to '%s'", prompt)
             return True
 
         # Wrap prompt to screen
@@ -359,8 +369,8 @@ class CLI(UI):
         :rtype: str
         """
         if self.force:
-            logger.warning("Automatically entering '{0}' in response to '{1}'"
-                           .format(default_value, prompt))
+            logger.warning("Automatically entering '%s' in response to '%s'",
+                           default_value, prompt)
             return default_value
 
         ans = self.input("{0} [{1}] ".format(prompt, default_value))
@@ -517,7 +527,7 @@ class CLI(UI):
         # If being run non-interactively, treat as if --force is set, in order
         # to avoid hanging while trying to read input that will never come.
         if not (sys.stdin.isatty() and sys.stdout.isatty()):
-            args._force = True
+            args._force = True  # pylint: disable=protected-access
 
         return args
 
@@ -544,6 +554,7 @@ class CLI(UI):
           * 2 on input error (parser error,
             :class:`~COT.data_validation.InvalidInputError`, etc.)
         """
+        # pylint: disable=protected-access
         self.force = args._force
         self.set_verbosity(args._verbosity)
 

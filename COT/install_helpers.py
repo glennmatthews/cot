@@ -16,6 +16,8 @@
 
 """Implements "install-helpers" command."""
 
+from __future__ import print_function
+
 import argparse
 import filecmp
 import logging
@@ -76,12 +78,11 @@ class COTInstallHelpers(COTGenericSubmodule):
 
         # If COT is installed in /foo/bar/bin/cot, man pages go in /foo/bar/man
         bin_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        logger.debug("invoked from directory: {0}".format(sys.argv[0]))
+        logger.debug("invoked from directory: %s", sys.argv[0])
         if os.path.basename(bin_dir) == 'bin':
             man_dir = os.path.join(os.path.dirname(bin_dir), "man")
-            logger.verbose("program install directory {0} matches 'bin', "
-                           "so assume relative man path {1}"
-                           .format(bin_dir, man_dir))
+            logger.verbose("program install directory %s matches 'bin', "
+                           "so assume relative man path %s", bin_dir, man_dir)
         else:
             man_dir = "/usr/local/man"
             logger.verbose("program install directory {0} does not appear "
@@ -96,7 +97,7 @@ class COTInstallHelpers(COTGenericSubmodule):
             if not os.path.exists(dest):
                 if self.verify_only:
                     return True, "DIRECTORY NOT FOUND: {0}".format(dest)
-                logger.verbose("Creating manpage directory {0}".format(dest))
+                logger.verbose("Creating manpage directory %s", dest)
                 try:
                     os.makedirs(dest)
                 except OSError as e:
@@ -106,14 +107,14 @@ class COTInstallHelpers(COTGenericSubmodule):
             if os.path.exists(dest_path):
                 some_preinstalled = True
                 if filecmp.cmp(src_path, dest_path):
-                    logger.verbose("File {0} does not need to be updated"
-                                   .format(dest_path))
+                    logger.verbose("File %s does not need to be updated",
+                                   dest_path)
                     continue
                 if self.verify_only:
                     return True, "NEEDS UPDATE"
             elif self.verify_only:
                 return True, "NOT FOUND"
-            logger.info("Copying {0} to {1}".format(f, dest_path))
+            logger.info("Copying %s to %s", f, dest_path)
             try:
                 shutil.copy(src_path, dest_path)
             except IOError as e:

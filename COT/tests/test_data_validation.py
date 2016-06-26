@@ -16,12 +16,12 @@
 
 """Unit test cases for COT.data_validation module."""
 
+import re
+
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-
-import re
 
 from COT.data_validation import canonicalize_helper, match_or_die
 from COT.data_validation import canonicalize_nic_subtype, NIC_TYPES

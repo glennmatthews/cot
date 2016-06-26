@@ -3,7 +3,7 @@
 # vmdktool.py - Helper for 'vmdktool'
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -52,10 +52,7 @@ class VmdkTool(Helper):
 
     def install_helper(self):
         """Install ``vmdktool``."""
-        if self.path:
-            logger.warning("Tried to install {0} -- "
-                           "but it's already available at {1}!"
-                           .format(self.name, self.path))
+        if self.should_not_be_installed_but_is():
             return
         logger.info("Installing 'vmdktool'...")
         if Helper.port_install('vmdktool'):
@@ -135,21 +132,20 @@ class VmdkTool(Helper):
           :attr:`new_subformat` are not supported conversion targets.
         """
         file_name = os.path.basename(file_path)
-        (file_string, file_extension) = os.path.splitext(file_name)
+        (file_string, _) = os.path.splitext(file_name)
 
         new_file_path = None
 
         if new_format == 'vmdk' and new_subformat == 'streamOptimized':
             new_file_path = os.path.join(output_dir, file_string + '.vmdk')
-            logger.info("Invoking vmdktool to convert {0} to "
-                        "stream-optimized VMDK {1}"
-                        .format(file_path, new_file_path))
+            logger.info("Invoking vmdktool to convert %s to "
+                        "stream-optimized VMDK %s", file_path, new_file_path)
             # Note that vmdktool takes its arguments in unusual order -
             # output file comes before input file
             self.call_helper(['-z9', '-v', new_file_path, file_path])
         else:
             raise NotImplementedError("No support for converting disk image "
-                                      "to format {0} / subformat {1}"
-                                      .format(new_format, new_subformat))
+                                      "to format %s / subformat %s",
+                                      new_format, new_subformat)
 
         return new_file_path

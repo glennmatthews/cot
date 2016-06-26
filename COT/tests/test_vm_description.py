@@ -43,7 +43,7 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.write)
         with self.assertRaises(NotImplementedError):
-            ins.platform
+            assert ins.platform
 
         self.assertRaises(NotImplementedError,
                           ins.search_from_filename, self.TEXT_FILE)
@@ -87,14 +87,14 @@ class TestVMDescription(unittest.TestCase):
                           None, None, None, None, None, None, None)
 
         with self.assertRaises(NotImplementedError):
-            ins.config_profiles
+            assert ins.config_profiles
         with self.assertRaises(NotImplementedError):
-            ins.default_config_profile
+            assert ins.default_config_profile
         self.assertRaises(NotImplementedError,
                           ins.create_configuration_profile,
                           None, None, None)
         with self.assertRaises(NotImplementedError):
-            ins.system_types
+            assert ins.system_types
         with self.assertRaises(NotImplementedError):
             ins.system_types = ["hello", "world"]
         self.assertRaises(NotImplementedError,
@@ -110,7 +110,7 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.set_nic_count, 0, None)
         with self.assertRaises(NotImplementedError):
-            ins.networks
+            assert ins.networks
         self.assertRaises(NotImplementedError,
                           ins.create_network, None, None)
         self.assertRaises(NotImplementedError,
@@ -131,18 +131,18 @@ class TestVMDescription(unittest.TestCase):
                           ins.set_ide_subtype, None, None)
 
         with self.assertRaises(NotImplementedError):
-            ins.version_short
+            assert ins.version_short
         with self.assertRaises(NotImplementedError):
             ins.version_short = "hello"
         with self.assertRaises(NotImplementedError):
-            ins.version_long
+            assert ins.version_long
         with self.assertRaises(NotImplementedError):
             ins.version_long = "hello world!"
 
         with self.assertRaises(NotImplementedError):
-            ins.environment_properties
+            assert ins.environment_properties
         with self.assertRaises(NotImplementedError):
-            ins.environment_transports
+            assert ins.environment_transports
         with self.assertRaises(NotImplementedError):
             ins.environment_transports = ['iso']
         self.assertRaises(NotImplementedError,

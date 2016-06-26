@@ -16,9 +16,20 @@
 
 """Module for adding disks to VMs.
 
+**Functions**
+
 .. autosummary::
-  COTAddDisk
+  :nosignatures:
+
   add_disk_worker
+  validate_controller_address
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  COTAddDisk
 """
 
 import logging
@@ -29,6 +40,31 @@ from .data_validation import check_for_conflict, device_address, match_or_die
 from .submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
+
+
+def validate_controller_address(controller, address):
+    """Check validity of the given address string for the given controller.
+
+    Helper method for the :attr:`controller`/:attr:`address` setters.
+
+    :param str controller: ``'ide'`` or ``'scsi'``
+    :param str address: A string like '0:0' or '2:10'
+    :raises: :exc:`.InvalidInputError` if the address/controller combo
+                                       is invalid.
+    """
+    logger.info("validate_controller_address: %s, %s", controller, address)
+    if controller is not None and address is not None:
+        logger.info("Validating controller/address combo")
+        ctrl_addr = address.split(":")[0]
+        disk_addr = address.split(":")[1]
+        if controller == "scsi" and (int(ctrl_addr) > 3 or
+                                     int(disk_addr) > 15):
+            raise InvalidInputError(
+                "SCSI disk address must be between 0:0 and 3:15")
+        elif controller == "ide" and (int(ctrl_addr) > 1 or
+                                      int(disk_addr) > 1):
+            raise InvalidInputError(
+                "IDE disk address must be between 0:0 and 1:1")
 
 
 class COTAddDisk(COTSubmodule):
@@ -54,7 +90,7 @@ class COTAddDisk(COTSubmodule):
         """Instantiate this submodule with the given UI."""
         super(COTAddDisk, self).__init__(UI)
         self._disk_image = None
-        self.type = None
+        self.disk_type = None
         """Disk type ('harddisk' or 'cdrom')."""
         self.subtype = None
         """Controller subtype, such as "virtio"."""
@@ -93,8 +129,8 @@ class COTAddDisk(COTSubmodule):
 
     @address.setter
     def address(self, value):
-        logger.info("Setting address to '{0}'".format(value))
-        self.validate_controller_address(self.controller, value)
+        logger.info("Setting address to '%s'", value)
+        validate_controller_address(self.controller, value)
         self._address = value
 
     @property
@@ -108,34 +144,9 @@ class COTAddDisk(COTSubmodule):
 
     @controller.setter
     def controller(self, value):
-        logger.info("Setting controller to '{0}'".format(value))
-        self.validate_controller_address(value, self.address)
+        logger.info("Setting controller to '%s'", value)
+        validate_controller_address(value, self.address)
         self._controller = value
-
-    def validate_controller_address(self, controller, address):
-        """Check validity of the given address string for the given controller.
-
-        Helper method for the :attr:`controller`/:attr:`address` setters.
-
-        :param str controller: ``'ide'`` or ``'scsi'``
-        :param str address: A string like '0:0' or '2:10'
-        :raises: :exc:`.InvalidInputError` if the address/controller combo
-          is invalid.
-        """
-        logger.info("validate_controller_address: {0}, {1}"
-                    .format(controller, address))
-        if controller is not None and address is not None:
-            logger.info("Validating controller/address combo")
-            ctrl_addr = address.split(":")[0]
-            disk_addr = address.split(":")[1]
-            if controller == "scsi" and (int(ctrl_addr) > 3 or
-                                         int(disk_addr) > 15):
-                raise InvalidInputError(
-                    "SCSI disk address must be between 0:0 and 3:15")
-            elif controller == "ide" and (int(ctrl_addr) > 1 or
-                                          int(disk_addr) > 1):
-                raise InvalidInputError(
-                    "IDE disk address must be between 0:0 and 1:1")
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -159,7 +170,7 @@ class COTAddDisk(COTSubmodule):
         add_disk_worker(self.vm,
                         UI=self.UI,
                         DISK_IMAGE=self.disk_image,
-                        type=self.type,
+                        disk_type=self.disk_type,
                         subtype=self.subtype,
                         file_id=self.file_id,
                         controller=self.controller,
@@ -201,6 +212,7 @@ otherwise, will create a new disk entry.""")
                            help="""Disk image file ID string within the OVF """
                            """package (default: use disk image filename)""")
         group.add_argument('-t', '--type',
+                           dest='disk_type',
                            choices=['harddisk', 'cdrom'],
                            help="""Disk type (default: files ending in """
                            """.vmdk/.raw/.qcow2/.img will use harddisk """
@@ -239,7 +251,7 @@ otherwise, will create a new disk entry.""")
 def add_disk_worker(vm,
                     UI,
                     DISK_IMAGE,
-                    type=None,
+                    disk_type=None,
                     file_id=None,
                     controller=None,
                     subtype=None,
@@ -258,7 +270,7 @@ def add_disk_worker(vm,
     :param UI: User interface in effect.
     :type UI: instance of :class:`~COT.ui_shared.UI` or subclass.
     :param str DISK_IMAGE: path to disk image to add to the VM.
-    :param str type: Disk type: ``'cdrom'`` or ``'harddisk'``.
+    :param str disk_type: Disk type: ``'cdrom'`` or ``'harddisk'``.
         If not specified, will be derived automatically from the
         DISK_IMAGE file name extension.
 
@@ -279,7 +291,7 @@ def add_disk_worker(vm,
     :param str diskname: Name for disk device
     :param str description: Description of disk device
     """
-    if type is None:
+    if disk_type is None:
         disk_extension = os.path.splitext(DISK_IMAGE)[1]
         ext_type_map = {
             '.iso':   'cdrom',
@@ -289,7 +301,7 @@ def add_disk_worker(vm,
             '.img':   'harddisk',
             }
         try:
-            type = ext_type_map[disk_extension]
+            disk_type = ext_type_map[disk_extension]
         except KeyError:
             raise InvalidInputError(
                 "Unable to guess disk type for file '{0}' "
@@ -299,10 +311,10 @@ def add_disk_worker(vm,
                 .format(DISK_IMAGE, disk_extension,
                         ext_type_map.keys()))
         logger.warning("New disk type not specified, guessing it should "
-                       "be '{0}' based on file extension".format(type))
+                       "be '%s' based on file extension", disk_type)
 
     # Convert the disk to a new format if needed...
-    DISK_IMAGE = vm.convert_disk_if_needed(DISK_IMAGE, type)
+    DISK_IMAGE = vm.convert_disk_if_needed(DISK_IMAGE, disk_type)
 
     disk_file = os.path.basename(DISK_IMAGE)
 
@@ -346,7 +358,7 @@ def add_disk_worker(vm,
     (f3, d3, ci3, di3) = vm.search_from_controller(controller,
                                                    address)
 
-    file = check_for_conflict("File to overwrite", [f1, f2, f3])
+    file_obj = check_for_conflict("File to overwrite", [f1, f2, f3])
     disk = check_for_conflict("Disk to overwrite", [d1, d2, d3])
     ctrl_item = check_for_conflict("controller Item to use",
                                    [ci1, ci2, ci3])
@@ -356,20 +368,20 @@ def add_disk_worker(vm,
     # Ok, we now have confirmed that we have at most one of each of these
     # four objects. Now it's time for some sanity checking...
 
-    if file is not None:
+    if file_obj is not None:
         if file_id is not None:
-            match_or_die("File id", vm.get_id_from_file(file),
+            match_or_die("File id", vm.get_id_from_file(file_obj),
                          "--file-id", file_id)
         # Should never fail this test if the above logic was sound...
         if disk is not None:
-            match_or_die("File id", vm.get_id_from_file(file),
+            match_or_die("File id", vm.get_id_from_file(file_obj),
                          "Disk fileRef", vm.get_file_ref_from_disk(disk))
 
     if disk is not None:
         if file_id is not None:
             match_or_die("Disk fileRef", vm.get_file_ref_from_disk(disk),
                          "--file-id", file_id)
-        if file is None:
+        if file_obj is None:
             # This will happen if we're replacing a placeholder entry
             # (disk exists but has no associated file)
             logger.verbose("Found Disk but not File - maybe placeholder?")
@@ -377,8 +389,8 @@ def add_disk_worker(vm,
     if disk_item is not None:
         UI.confirm_or_die("Existing disk Item is a {0}. Change it to a {1}?"
                           .format(vm.get_type_from_device(disk_item),
-                                  type))
-        vm.check_sanity_of_disk_device(disk, file, disk_item, ctrl_item)
+                                  disk_type))
+        vm.check_sanity_of_disk_device(disk, file_obj, disk_item, ctrl_item)
 
     if ctrl_item is not None:
         if controller is not None:
@@ -391,19 +403,18 @@ def add_disk_worker(vm,
                 raise ValueUnsupportedError("controller ResourceType",
                                             controller,
                                             "'ide' or 'scsi'")
-            logger.info("Guessing controller type '{0}' from existing Item"
-                        .format(controller))
+            logger.info("Guessing controller type '%s' from existing Item",
+                        controller)
     else:
         # If the user didn't tell us which controller type they wanted,
         # and we didn't find a controller item based on existing file/disk,
         # then we need to guess which type of controller we need,
         # based on the platform and the disk type.
         if controller is None:
-            controller = vm.platform.controller_type_for_device(type)
-            logger.warning("Guessing controller type should be {0} "
-                           "based on disk type {1} and platform {2}"
-                           .format(controller, type,
-                                   vm.platform.__name__))
+            controller = vm.platform.controller_type_for_device(disk_type)
+            logger.warning("Guessing controller type should be %s "
+                           "based on disk type %s and platform %s",
+                           controller, disk_type, vm.platform.__name__)
 
         if address is None:
             # We didn't find a specific controller from the user info,
@@ -416,16 +427,16 @@ def add_disk_worker(vm,
 
     # Whew! Everything looks sane!
 
-    if file is not None:
+    if file_obj is not None:
         UI.confirm_or_die("Replace existing file {0} with {1}?"
-                          .format(vm.get_path_from_file(file),
+                          .format(vm.get_path_from_file(file_obj),
                                   DISK_IMAGE))
         logger.warning("Overwriting existing File in OVF")
 
-    if file is None and (disk is not None or disk_item is not None):
+    if file_obj is None and (disk is not None or disk_item is not None):
         UI.confirm_or_die(
             "Add disk file to existing (but empty) {0} drive?"
-            .format(type))
+            .format(disk_type))
 
     if disk is not None:
         logger.warning("Overwriting existing Disk in OVF")
@@ -454,18 +465,18 @@ def add_disk_worker(vm,
             subtype = vm.get_common_subtype(controller)
 
     # OK - let's add things!
-    if file_id is None and file is not None:
-        file_id = vm.get_id_from_file(file)
+    if file_id is None and file_obj is not None:
+        file_id = vm.get_id_from_file(file_obj)
     if file_id is None and disk is not None:
         file_id = vm.get_file_ref_from_disk(disk)
     if file_id is None:
         file_id = disk_file
 
     # First, the File
-    file = vm.add_file(DISK_IMAGE, file_id, file, disk)
+    file_obj = vm.add_file(DISK_IMAGE, file_id, file_obj, disk)
 
     # Next, the Disk
-    disk = vm.add_disk(DISK_IMAGE, file_id, type, disk)
+    disk = vm.add_disk(DISK_IMAGE, file_id, disk_type, disk)
 
     # Next, the controller (if needed)
     if address is not None:
@@ -480,5 +491,5 @@ def add_disk_worker(vm,
                                          ctrl_addr, ctrl_item)
 
     # Finally, the disk Item
-    vm.add_disk_device(type, disk_addr, diskname,
-                       description, disk, file, ctrl_item, disk_item)
+    vm.add_disk_device(disk_type, disk_addr, diskname,
+                       description, disk, file_obj, ctrl_item, disk_item)

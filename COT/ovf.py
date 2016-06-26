@@ -53,7 +53,7 @@ except ImportError:
 import textwrap
 from contextlib import closing
 
-from .xml_file import XML
+from .xml_file import XML, register_namespace
 from .vm_description import VMDescription, VMInitError
 from .data_validation import natural_sort, match_or_die, check_for_conflict
 from .data_validation import ValueTooHighError, ValueUnsupportedError
@@ -82,13 +82,13 @@ def byte_count(base_val, multiplier):
     :return: Number of bytes
     :rtype: int
     """
-    match = re.search("2\^(\d+)", multiplier)
+    match = re.search(r"2\^(\d+)", multiplier)
     if match:
         return int(base_val) << int(match.group(1))
     return int(base_val)
 
 
-def factor_bytes(byte_count):
+def factor_bytes(byte_value):
     """Convert a byte count into OVF-style bytes + multiplier.
 
     Inverse operation of :func:`byte_count`
@@ -104,34 +104,34 @@ def factor_bytes(byte_count):
     :return: ``(base_val, multiplier)``
     """
     shift = 0
-    byte_count = int(byte_count)
-    while (byte_count % 1024 == 0):
+    byte_value = int(byte_value)
+    while byte_value % 1024 == 0:
         shift += 10
-        byte_count /= 1024
-    byte_count = str(int(byte_count))
+        byte_value /= 1024
+    byte_str = str(int(byte_value))
     if shift == 0:
-        return (byte_count, "byte")
-    return (byte_count, "byte * 2^{0}".format(shift))
+        return (byte_str, "byte")
+    return (byte_str, "byte * 2^{0}".format(shift))
 
 
-def byte_string(byte_count, base_shift=0):
+def byte_string(byte_value, base_shift=0):
     """Pretty-print the given bytes value.
 
-    :param float byte_count: Value
-    :param int base_shift: Base value of byte_count
+    :param float byte_value: Value
+    :param int base_shift: Base value of byte_value
       (0 = bytes, 1 = kB, 2 = MB, etc.)
     :return: Pretty-printed byte string such as "1.00 GB"
     """
     tags = ["B", "kB", "MB", "GB", "TB"]
-    byte_count = float(byte_count)
+    byte_value = float(byte_value)
     shift = base_shift
-    while (byte_count > 1000.0):
-        byte_count /= 1024.0
+    while byte_value > 1000.0:
+        byte_value /= 1024.0
         shift += 1
     if shift == base_shift:
-        return "{0} {1}".format(int(byte_count), tags[shift])
+        return "{0} {1}".format(int(byte_value), tags[shift])
     else:
-        return "{0:0.2f} {1}".format(byte_count, tags[shift])
+        return "{0:0.2f} {1}".format(byte_value, tags[shift])
 
 
 class OVF(VMDescription, XML):
@@ -185,12 +185,12 @@ class OVF(VMDescription, XML):
         # when it's probably a zip of an OVF) we'll err on the side of
         # accepting too much rather than incorrectly rejecting something like
         # "foo.ova.2014.05.06A" that's just lazily named.
-        m = re.search("(\.ov[fa])[^a-zA-Z0-9]", filename)
+        m = re.search(r"(\.ov[fa])[^a-zA-Z0-9]", filename)
         if m:
             extension = m.group(1)
-            logger.warning("Filename '{0}' does not end in '.ovf' or '.ova', "
-                           "but found '{1}' in mid-filename; treating as such."
-                           .format(filename, extension))
+            logger.warning("Filename '%s' does not end in '.ovf' or '.ova', "
+                           "but found '%s' in mid-filename; treating as such.",
+                           filename, extension)
             return extension
 
         raise ValueUnsupportedError("filename", filename, ('.ovf', '.ova'))
@@ -205,7 +205,8 @@ class OVF(VMDescription, XML):
           set :attr:`output_file` when it is determined.
         """
         try:
-            super(OVF, self).__init__(input_file, output_file)
+            self.output_extension = None
+            VMDescription.__init__(self, input_file, output_file)
 
             # Make sure we know how to read the input
             extension = self.detect_type_from_name(input_file)
@@ -218,18 +219,19 @@ class OVF(VMDescription, XML):
                 # We should never get here, but be safe...
                 raise VMInitError(
                     2,
-                    "File {0} does not appear to be an OVA or OVF"
-                    .format(input_file))
+                    "File {0} does not appear to be an OVA or OVF "
+                    "(unexpected extension {1})"
+                    .format(input_file, extension))
 
             # Open the provided OVF
             try:
-                self.read_xml(self.ovf_descriptor)
+                XML.__init__(self, self.ovf_descriptor)
             except ParseError as e:
                 raise VMInitError(2, "XML parser error in reading {0}: {1}"
                                   .format(self.ovf_descriptor, str(e)))
 
             # Quick sanity check before we go any further:
-            if ((not re.search("Envelope", self.root.tag)) or
+            if ((not re.search(r"Envelope", self.root.tag)) or
                     (XML.strip_ns(self.root.tag) != 'Envelope')):
                 raise VMInitError(
                     2,
@@ -258,12 +260,12 @@ class OVF(VMDescription, XML):
             self.name_helper = OVFNameHelper(self.ovf_version)
 
             for (prefix, URI) in self.NSM.items():
-                self.register_namespace(prefix, URI)
+                register_namespace(prefix, URI)
 
             # Register additional non-standard namespaces we're aware of:
-            self.register_namespace('vmw', "http://www.vmware.com/schema/ovf")
-            self.register_namespace('vbox',
-                                    "http://www.virtualbox.org/ovf/machine")
+            register_namespace('vmw', "http://www.vmware.com/schema/ovf")
+            register_namespace('vbox',
+                               "http://www.virtualbox.org/ovf/machine")
 
             # Go ahead and set pointers to some of the most useful XML sections
             self.envelope = self.root
@@ -305,6 +307,7 @@ class OVF(VMDescription, XML):
             # Initialize various caches
             self._configuration_profiles = None
             self._file_references = {}
+            self._platform = None
 
             try:
                 self.hardware = OVFHardware(self)
@@ -312,7 +315,7 @@ class OVF(VMDescription, XML):
                 raise VMInitError(1,
                                   "OVF descriptor is invalid: {0}".format(e))
 
-            self.platform
+            assert self.platform
 
             # Let's go ahead and walk the file entries in the OVF descriptor,
             # make sure they look sane, and store file references for later.
@@ -331,8 +334,8 @@ class OVF(VMDescription, XML):
                 try:
                     self._file_references[f] = ref_cls(input_path, f)
                 except IOError:
-                    logger.error("File '{0}' referenced in the OVF descriptor "
-                                 "does not exist.".format(f))
+                    logger.error("File '%s' referenced in the OVF descriptor "
+                                 "does not exist.", f)
                     self._file_references[f] = None
 
         except Exception as e:
@@ -352,7 +355,7 @@ class OVF(VMDescription, XML):
         # Make sure we can write the requested output format, or abort:
         if output_file:
             self.output_extension = self.detect_type_from_name(output_file)
-        VMDescription.output_file.fset(self, output_file)
+        super(OVF, self.__class__).output_file.fset(self, output_file)
 
     @property
     def platform(self):
@@ -386,13 +389,12 @@ class OVF(VMDescription, XML):
                     platform = class_to_platform_map[product_class]
                 except KeyError:
                     logger.warning(
-                        "Unrecognized product class '{0}' - known classes "
-                        "are {1}. Treating as a generic product..."
-                        .format(product_class,
-                                class_to_platform_map.keys()))
+                        "Unrecognized product class '%s' - known classes "
+                        "are %s. Treating as a generic product...",
+                        product_class, class_to_platform_map.keys())
                     platform = Platform.GenericPlatform
-            logger.info("OVF product class {0} --> platform {1}"
-                        .format(product_class, platform.__name__))
+            logger.info("OVF product class %s --> platform %s",
+                        product_class, platform.__name__)
             self._platform = platform
         return self._platform
 
@@ -414,8 +416,8 @@ class OVF(VMDescription, XML):
                         profile_ids.insert(0, profile.get(self.CONFIG_ID))
                     else:
                         profile_ids.append(profile.get(self.CONFIG_ID))
-            logger.verbose("Current configuration profiles are: {0}"
-                           .format(profile_ids))
+            logger.verbose("Current configuration profiles are: %s",
+                           profile_ids)
             self._configuration_profiles = profile_ids
         return self._configuration_profiles
 
@@ -465,8 +467,8 @@ class OVF(VMDescription, XML):
             raise NotImplementedError("No support for setting environment"
                                       "transports value on OVF 0.9 format.")
         transports_string = " ".join(transports)
-        logger.info("Setting {0} to '{1}'".format(self.ENVIRONMENT_TRANSPORT,
-                                                  transports_string))
+        logger.info("Setting %s to '%s'", self.ENVIRONMENT_TRANSPORT,
+                    transports_string)
         self.virtual_hw_section.set(self.ENVIRONMENT_TRANSPORT,
                                     transports_string)
 
@@ -498,7 +500,7 @@ class OVF(VMDescription, XML):
     @system_types.setter
     def system_types(self, type_list):
         type_string = " ".join(type_list)
-        logger.info("Setting VirtualSystemType to '{0}'".format(type_string))
+        logger.info("Setting VirtualSystemType to '%s'", type_string)
         system = self.virtual_hw_section.find(self.SYSTEM)
         if system is None:
             system = XML.set_or_make_child(self.virtual_hw_section,
@@ -598,7 +600,7 @@ class OVF(VMDescription, XML):
     def __getattr__(self, name):
         """Transparently pass attribute lookups off to OVFNameHelper."""
         # Don't pass 'special' attributes through to the helper
-        if re.match("^__", name):
+        if re.match(r"^__", name):
             raise AttributeError("'OVF' object has no attribute '{0}'"
                                  .format(name))
         return getattr(self.name_helper, name)
@@ -621,7 +623,7 @@ class OVF(VMDescription, XML):
         # and delete any networks that are unused.
         self.validate_and_update_networks()
 
-        logger.info("Writing out to file {0}".format(self.output_file))
+        logger.info("Writing out to file %s", self.output_file)
 
         if extension == '.ova':
             ovf_file = os.path.join(self.working_dir, "{0}.ovf"
@@ -636,8 +638,8 @@ class OVF(VMDescription, XML):
             if not dest_dir:
                 dest_dir = os.getcwd()
 
-            for file in self.references.findall(self.FILE):
-                file_name = file.get(self.FILE_HREF)
+            for file_obj in self.references.findall(self.FILE):
+                file_name = file_obj.get(self.FILE_HREF)
                 file_ref = self._file_references[file_name]
                 file_ref.copy_to(dest_dir)
 
@@ -659,15 +661,13 @@ class OVF(VMDescription, XML):
 
             if file_ref is not None and not file_ref.exists():
                 # file used to exist but no longer does??
-                logger.error("Referenced file '{0}' does not exist!"
-                             .format(href))
+                logger.error("Referenced file '%s' does not exist!", href)
                 self._file_references[href] = None
                 file_ref = None
 
             if file_ref is None:
                 # TODO this should probably have a confirm() check...
-                logger.warning("Removing reference to missing file {0}"
-                               .format(href))
+                logger.warning("Removing reference to missing file %s", href)
                 self.references.remove(file_elem)
                 # TODO remove references to this file from Disk, Item?
                 continue
@@ -687,24 +687,22 @@ class OVF(VMDescription, XML):
             if real_size != reported_size:
                 # FILE_SIZE is optional in the OVF standard
                 if reported_size is not None:
-                    logger.warning("Size of file '{0}' seems to have changed "
-                                   "from {1} (reported in the original OVF) "
-                                   "to {2} (current file size). "
-                                   "The updated OVF will reflect this change."
-                                   .format(href,
-                                           reported_size,
-                                           real_size))
+                    logger.warning("Size of file '%s' seems to have changed "
+                                   "from %s (reported in the original OVF) "
+                                   "to %s (current file size). "
+                                   "The updated OVF will reflect this change.",
+                                   href, reported_size, real_size)
                 file_elem.set(self.FILE_SIZE, real_size)
 
             if disk_item is not None and real_capacity is not None:
                 reported_capacity = str(self.get_capacity_from_disk(disk_item))
                 if reported_capacity != real_capacity:
                     logger.warning(
-                        "Capacity of disk '{0}' seems to have changed "
-                        "from {1} (reported in the original OVF) "
-                        "to {2} (actual capacity). "
-                        "The updated OVF will reflect this change."
-                        .format(href, reported_capacity, real_capacity))
+                        "Capacity of disk '%s' seems to have changed "
+                        "from %s (reported in the original OVF) "
+                        "to %s (actual capacity). "
+                        "The updated OVF will reflect this change.",
+                        href, reported_capacity, real_capacity)
                     self.set_capacity_of_disk(disk_item, real_capacity)
 
     def validate_and_update_networks(self):
@@ -726,7 +724,7 @@ class OVF(VMDescription, XML):
         for net in networks:
             name = net.get(self.NETWORK_NAME)
             if name not in connected_networks:
-                logger.warning("Removing unused network {0}".format(name))
+                logger.warning("Removing unused network %s", name)
                 self.network_section.remove(net)
         # If all networks were removed, remove the NetworkSection too
         if not self.network_section.findall(self.NETWORK):
@@ -734,27 +732,8 @@ class OVF(VMDescription, XML):
             self.envelope.remove(self.network_section)
             self.network_section = None
 
-    def info_string(self, TEXT_WIDTH=79, verbosity_option=None):
-        """Get a descriptive string summarizing the contents of this OVF.
-
-        :param int TEXT_WIDTH: Line length to wrap to where possible.
-        :param str verbosity_option: ``'brief'``, ``None`` (default),
-          or ``'verbose'``
-
-        :return: Wrapped, appropriately verbose string.
-        """
-        # Supposedly it's quicker to construct a list of strings then merge
-        # them all together with 'join()' rather than it is to repeatedly
-        # append to an existing string with '+'.
-        # I haven't profiled this to verify - it's fast enough for now.
-        # To make some of the formatting a bit cleverer, we actually do this
-        # in two stages - each 'section' of the info_string is constructed as
-        # a list which is joined with '\n' then appended to the section_list,
-        # then at the end, we join section_list with '\n\n'.
-        section_list = []
-        wrapper = textwrap.TextWrapper(width=TEXT_WIDTH)
-
-        # File description
+    def _info_string_header(self, TEXT_WIDTH):
+        """Generate OVF/OVA file header for :meth:`info_string`."""
         str_list = []
         str_list.append('-' * TEXT_WIDTH)
         str_list.append(self.input_file)
@@ -762,17 +741,19 @@ class OVF(VMDescription, XML):
             str_list.append("COT detected platform type: {0}"
                             .format(self.platform.PLATFORM_NAME))
         str_list.append('-' * TEXT_WIDTH)
-        header = '\n'.join(str_list)
+        return '\n'.join(str_list)
 
-        # Product information
-        if (self.product or self.vendor or self.version_short or
-            verbosity_option != 'brief' and (
-                self.product_url or self.vendor_url or self.version_long)):
-            str_list = []
-            wrapper.initial_indent = ''
-            wrapper.subsequent_indent = '          '
-            # All elements in this section are optional
-            for label, value, default, verbose_only in [
+    def _info_string_product(self, verbosity_option, wrapper):
+        """Generate product information as part of :meth:`info_string`."""
+        if ((not any([self.product, self.vendor, self.version_short])) and
+            (verbosity_option == 'brief' or not any([
+                self.product_url, self.vendor_url, self.version_long]))):
+            return None
+        str_list = []
+        wrapper.initial_indent = ''
+        wrapper.subsequent_indent = '          '
+        # All elements in this section are optional
+        for label, value, default, verbose_only in [
                 ["Product:  ", self.product, "(No product string)", False],
                 ["          ", self.product_url, "(No product URL)", True],
                 ["Vendor:   ", self.vendor, "(No vendor string)", False],
@@ -781,43 +762,47 @@ class OVF(VMDescription, XML):
                  "(No version string)", False],
                 ["          ", self.version_long,
                  "(No detailed version string)", True],
-            ]:
-                if verbosity_option == 'brief' and verbose_only:
-                    continue
-                if value is None:
-                    value = default
-                str_list.extend(wrapper.wrap("{0}{1}".format(label, value)))
-            section_list.append("\n".join(str_list))
+        ]:
+            if verbosity_option == 'brief' and verbose_only:
+                continue
+            if value is None:
+                value = default
+            str_list.extend(wrapper.wrap("{0}{1}".format(label, value)))
 
-        # Annotation information
-        a = self.annotation_section
-        if a is not None:
-            ann = a.find(self.ANNOTATION)
-            if ann is not None and ann.text:
-                str_list = []
-                first = True
-                wrapper.initial_indent = 'Annotation: '
-                wrapper.subsequent_indent = '            '
-                for line in ann.text.splitlines():
-                    if not line:
-                        str_list.append("")
-                    else:
-                        str_list.extend(wrapper.wrap(line))
-                    if first:
-                        wrapper.initial_indent = wrapper.subsequent_indent
-                        first = False
-                section_list.append("\n".join(str_list))
+        return "\n".join(str_list)
 
-        # End user license agreement information
+    def _info_string_annotation(self, wrapper):
+        """Generate annotation information as part of :meth:`info_string`."""
+        if self.annotation_section is None:
+            return None
+        ann = self.annotation_section.find(self.ANNOTATION)
+        if ann is None or not ann.text:
+            return None
+        str_list = []
+        first = True
+        wrapper.initial_indent = 'Annotation: '
+        wrapper.subsequent_indent = '            '
+        for line in ann.text.splitlines():
+            if not line:
+                str_list.append("")
+            else:
+                str_list.extend(wrapper.wrap(line))
+            if first:
+                wrapper.initial_indent = wrapper.subsequent_indent
+                first = False
+        return "\n".join(str_list)
+
+    def _info_string_eula(self, verbosity_option, wrapper):
+        """Generate EULA information as part of :meth:`info_string`."""
         # An OVF may have zero, one, or more
         eula_header = False
+        str_list = []
         for e in self.find_all_children(self.virtual_system,
                                         self.EULA_SECTION,
                                         self.EULA_SECTION_ATTRIB):
             info = e.find(self.INFO)
             lic = e.find(self.EULA_LICENSE)
             if lic is not None and lic.text:
-                str_list = []
                 if not eula_header:
                     str_list.append("End User License Agreement(s):")
                     eula_header = True
@@ -836,15 +821,19 @@ class OVF(VMDescription, XML):
                             str_list.append("")
                         else:
                             str_list.extend(wrapper.wrap(line))
-                section_list.append("\n".join(str_list))
+        return "\n".join(str_list)
 
-        # File information
-        SIZE_W = 9  # "999.99 MB"
-        CAP_W = 9   # "999.99 MB"
-        DEV_W = 20  # "harddisk @ SCSI 1:15"
+    def _info_string_files_disks(self, TEXT_WIDTH, verbosity_option):
+        """Describe files and disks as part of :meth:`info_string`."""
         file_list = self.references.findall(self.FILE)
         disk_list = (self.disk_section.findall(self.DISK)
                      if self.disk_section is not None else [])
+        if not (file_list or disk_list):
+            return None
+
+        SIZE_W = 9  # "999.99 MB"
+        CAP_W = 9   # "999.99 MB"
+        DEV_W = 20  # "harddisk @ SCSI 1:15"
         HREF_W = 0
         if file_list:
             HREF_W = max([len(f.get(self.FILE_HREF)) for f in file_list])
@@ -855,67 +844,66 @@ class OVF(VMDescription, XML):
                     .format(HREF_W, SIZE_W, CAP_W, DEV_W))
         template2 = ("{{0:{0}}} {{1:>{1}}}".format(HREF_W, SIZE_W))
 
-        if file_list or disk_list:
-            str_list = [template.format("Files and Disks:",
-                                        "File Size", "Capacity", "Device"),
-                        template.format("", "-" * SIZE_W, "-" * CAP_W,
-                                        "-" * DEV_W)]
-            for file in file_list:
-                # FILE_SIZE is optional
-                reported_size = file.get(self.FILE_SIZE)
-                if reported_size is None:
-                    # TODO - check file size in working dir and/or tarfile
-                    file_size_str = ""
-                else:
-                    file_size_str = byte_string(file.get(self.FILE_SIZE))
+        str_list = [template.format("Files and Disks:",
+                                    "File Size", "Capacity", "Device"),
+                    template.format("", "-" * SIZE_W, "-" * CAP_W,
+                                    "-" * DEV_W)]
+        for file_obj in file_list:
+            # FILE_SIZE is optional
+            reported_size = file_obj.get(self.FILE_SIZE)
+            if reported_size is None:
+                # TODO - check file size in working dir and/or tarfile
+                file_size_str = ""
+            else:
+                file_size_str = byte_string(file_obj.get(self.FILE_SIZE))
 
-                disk = self.find_disk_from_file_id(file.get(self.FILE_ID))
-                if disk is None:
-                    disk_cap_string = ""
-                    device_item = self.find_item_from_file(file)
-                else:
-                    disk_cap_string = byte_string(
-                        self.get_capacity_from_disk(disk))
-                    device_item = self.find_item_from_disk(disk)
-                device_str = self.device_info_str(device_item)
-
-                href_str = "  " + file.get(self.FILE_HREF)
-                # Truncate to fit in available space
-                if len(href_str) > HREF_W:
-                    href_str = href_str[:(HREF_W-3)] + "..."
-                if disk_cap_string or device_str:
-                    str_list.append(template.format(href_str,
-                                                    file_size_str,
-                                                    disk_cap_string,
-                                                    device_str))
-                else:
-                    str_list.append(template2.format(href_str, file_size_str))
-
-                if verbosity_option == 'verbose':
-                    str_list.append("    File ID: {0}"
-                                    .format(file.get(self.FILE_ID)))
-                    if disk is not None:
-                        str_list.append("    Disk ID: {0}"
-                                        .format(disk.get(self.DISK_ID)))
-
-            # Find placeholder disks as well
-            for disk in disk_list:
-                file_id = disk.get(self.DISK_FILE_REF)
-                file = self.find_child(self.references, self.FILE,
-                                       attrib={self.FILE_ID: file_id})
-                if file is not None:
-                    continue   # already reported on above
+            disk = self.find_disk_from_file_id(file_obj.get(self.FILE_ID))
+            if disk is None:
+                disk_cap_string = ""
+                device_item = self.find_item_from_file(file_obj)
+            else:
                 disk_cap_string = byte_string(
                     self.get_capacity_from_disk(disk))
                 device_item = self.find_item_from_disk(disk)
-                device_str = self.device_info_str(device_item)
-                str_list.append(template.format("  (disk placeholder)",
-                                                "--",
+            device_str = self.device_info_str(device_item)
+
+            href_str = "  " + file_obj.get(self.FILE_HREF)
+            # Truncate to fit in available space
+            if len(href_str) > HREF_W:
+                href_str = href_str[:(HREF_W-3)] + "..."
+            if disk_cap_string or device_str:
+                str_list.append(template.format(href_str,
+                                                file_size_str,
                                                 disk_cap_string,
                                                 device_str))
-            section_list.append("\n".join(str_list))
+            else:
+                str_list.append(template2.format(href_str, file_size_str))
 
-        # Supported hardware information
+            if verbosity_option == 'verbose':
+                str_list.append("    File ID: {0}"
+                                .format(file_obj.get(self.FILE_ID)))
+                if disk is not None:
+                    str_list.append("    Disk ID: {0}"
+                                    .format(disk.get(self.DISK_ID)))
+
+        # Find placeholder disks as well
+        for disk in disk_list:
+            file_id = disk.get(self.DISK_FILE_REF)
+            file_obj = self.find_child(self.references, self.FILE,
+                                       attrib={self.FILE_ID: file_id})
+            if file_obj is not None:
+                continue   # already reported on above
+            disk_cap_string = byte_string(self.get_capacity_from_disk(disk))
+            device_item = self.find_item_from_disk(disk)
+            device_str = self.device_info_str(device_item)
+            str_list.append(template.format("  (disk placeholder)",
+                                            "--",
+                                            disk_cap_string,
+                                            device_str))
+        return "\n".join(str_list)
+
+    def _info_string_hardware(self, wrapper):
+        """Describe hardware subtypes as part of :meth:`info_string`."""
         virtual_system_types = self.system_types
         scsi_subtypes = set()
         for scsi_ctrl in self.hardware.find_all_items('scsi'):
@@ -943,120 +931,160 @@ class OVF(VMDescription, XML):
             if eth_subtypes:
                 wrapper.initial_indent = "  Ethernet device types:    "
                 str_list.extend(wrapper.wrap(" ".join(sorted(eth_subtypes))))
-            section_list.append("\n".join(str_list))
+            return "\n".join(str_list)
+        return None
 
-        # Profile information
-        profile_str = self.profile_info_string(TEXT_WIDTH, verbosity_option)
-        if profile_str:
-            section_list.append(profile_str)
-
-        # Network information
-        if self.network_section is not None:
-            str_list = ["Networks:"]
-            names = []
-            descs = []
-            for network in self.network_section.findall(self.NETWORK):
-                names.append(network.get(self.NETWORK_NAME))
-                descs.append(network.findtext(self.NWK_DESC, None))
-            max_n = max([len(name) for name in names])
-            max_d = max([len(str(desc)) for desc in descs])
-            truncate = (max_n + max_d + 6 >= TEXT_WIDTH and
-                        verbosity_option != 'verbose')
-            wrapper.initial_indent = "  "
-            wrapper.subsequent_indent = ' ' * (5 + max_n)
-            if truncate:
-                max_d = TEXT_WIDTH - 6 - max_n
-            for name, desc in zip(names, descs):
-                if not desc:
-                    str_list.append("  " + name)
-                elif truncate and len(desc) > max_d:
-                    str_list.append('  {name:{w}}  "{tdesc}..."'.format(
-                        name=name, w=max_n, tdesc=desc[:max_d-3]))
-                else:
-                    str_list.extend(wrapper.wrap(
-                        '{name:{w}}  "{desc}"'.format(name=name, w=max_n,
-                                                      desc=desc)))
-            section_list.append("\n".join(str_list))
-
-        # NIC information
-        nics = self.hardware.find_all_items('ethernet')
-        if nics and verbosity_option != 'brief':
-            str_list = ["NICs and Associated Networks:"]
-            wrapper.initial_indent = '    '
-            wrapper.subsequent_indent = '    '
-            max_len = max([len(str(nic.get_value(self.ELEMENT_NAME)))
-                           for nic in nics])
-            max_len = max(max_len, len("<instance 10>"))
-            template = "  {name:{len}} : {nwk}"
-            for nic in nics:
-                network_name = nic.get_value(self.CONNECTION)
-                nic_name = nic.get_value(self.ELEMENT_NAME)
-                if nic_name is None:
-                    nic_name = "<instance {0}>".format(
-                        nic.get_value(self.INSTANCE_ID))
-                str_list.append(template.format(name=nic_name,
-                                                len=max_len,
-                                                nwk=network_name))
-                if verbosity_option == 'verbose':
-                    desc = nic.get_value(self.ITEM_DESCRIPTION)
-                    if desc is None:
-                        desc = nic.get_value(self.CAPTION)
-                    if desc is not None:
-                        str_list.extend(wrapper.wrap(desc))
-            section_list.append("\n".join(str_list))
-
-        if self.environment_transports:
-            str_list = ["Environment:"]
-            wrapper.initial_indent = '  '
-            wrapper.subsequent_indent = '                   '
-            str_list.extend(wrapper.wrap(
-                "Transport types: {0}"
-                .format(" ".join(self.environment_transports))))
-            section_list.append("\n".join(str_list))
-
-        # Property information
-        properties = self.environment_properties
-        if properties:
-            str_list = ["Properties:"]
-            max_key = 2 + max([len(str(ph['key'])) for ph in properties])
-            max_label = max([len(str(ph['label'])) for ph in properties])
-            max_value = max([len(str(ph['value'])) for ph in properties])
-            if all(ph['label'] for ph in properties):
-                max_width = max_label
+    def _info_string_networks(self, TEXT_WIDTH, verbosity_option, wrapper):
+        """Describe virtual networks as part of :meth:`info_string`."""
+        if self.network_section is None:
+            return None
+        str_list = ["Networks:"]
+        names = []
+        descs = []
+        for network in self.network_section.findall(self.NETWORK):
+            names.append(network.get(self.NETWORK_NAME))
+            descs.append(network.findtext(self.NWK_DESC, None))
+        max_n = max([len(name) for name in names])
+        max_d = max([len(str(desc)) for desc in descs])
+        truncate = (max_n + max_d + 6 >= TEXT_WIDTH and
+                    verbosity_option != 'verbose')
+        wrapper.initial_indent = "  "
+        wrapper.subsequent_indent = ' ' * (5 + max_n)
+        if truncate:
+            max_d = TEXT_WIDTH - 6 - max_n
+        for name, desc in zip(names, descs):
+            if not desc:
+                str_list.append("  " + name)
+            elif truncate and len(desc) > max_d:
+                str_list.append('  {name:{w}}  "{tdesc}..."'.format(
+                    name=name, w=max_n, tdesc=desc[:max_d-3]))
             else:
-                max_width = max(max_key, max_label)
-            wrapper.initial_indent = '      '
-            wrapper.subsequent_indent = '      '
-            for ph in properties:
-                # If we have a label, and the terminal is wide enough,
-                # display "<key> label value", else if no label, display
-                # "<key> value", else only display "label value"
-                if max_label > 0 and (max_key + max_label + max_value <
-                                      TEXT_WIDTH - 8):
-                    format_str = '  {key:{kw}}  {label:{lw}}  {val}'
-                    str_list.append(format_str.format(
-                        key="<{0}>".format(ph['key']),
-                        kw=max_key,
-                        label=ph['label'],
-                        lw=max_label,
-                        val=('"{0}"'.format(ph['value'])
-                             if ph['value'] is not None
-                             else '--')))
-                else:
-                    str_list.append('  {label:{width}}  {val}'.format(
-                        label=(ph['label'] if ph['label']
-                               else "<{0}>".format(ph['key'])),
-                        width=max_width,
-                        val=('"{0}"'.format(ph['value'])
-                             if ph['value'] is not None
-                             else '--')))
-                if verbosity_option == 'verbose':
-                    for line in ph['description'].splitlines():
-                        if not line:
-                            str_list.append("")
-                        else:
-                            str_list.extend(wrapper.wrap(line))
-            section_list.append("\n".join(str_list))
+                str_list.extend(wrapper.wrap(
+                    '{name:{w}}  "{desc}"'.format(name=name, w=max_n,
+                                                  desc=desc)))
+        return "\n".join(str_list)
+
+    def _info_string_nics(self, verbosity_option, wrapper):
+        """Describe NICs as part of :meth:`info_string`."""
+        if verbosity_option == 'brief':
+            return None
+        nics = self.hardware.find_all_items('ethernet')
+        if not nics:
+            return None
+        str_list = ["NICs and Associated Networks:"]
+        wrapper.initial_indent = '    '
+        wrapper.subsequent_indent = '    '
+        max_len = max([len(str(nic.get_value(self.ELEMENT_NAME)))
+                       for nic in nics])
+        max_len = max(max_len, len("<instance 10>"))
+        template = "  {name:{len}} : {nwk}"
+        for nic in nics:
+            network_name = nic.get_value(self.CONNECTION)
+            nic_name = nic.get_value(self.ELEMENT_NAME)
+            if nic_name is None:
+                nic_name = "<instance {0}>".format(
+                    nic.get_value(self.INSTANCE_ID))
+            str_list.append(template.format(name=nic_name,
+                                            len=max_len,
+                                            nwk=network_name))
+            if verbosity_option == 'verbose':
+                desc = nic.get_value(self.ITEM_DESCRIPTION)
+                if desc is None:
+                    desc = nic.get_value(self.CAPTION)
+                if desc is not None:
+                    str_list.extend(wrapper.wrap(desc))
+        return "\n".join(str_list)
+
+    def _info_string_environment(self, wrapper):
+        """Describe environment for :meth:`info_string`."""
+        if not self.environment_transports:
+            return None
+        str_list = ["Environment:"]
+        wrapper.initial_indent = '  '
+        wrapper.subsequent_indent = '                   '
+        str_list.extend(wrapper.wrap(
+            "Transport types: {0}"
+            .format(" ".join(self.environment_transports))))
+        return "\n".join(str_list)
+
+    def _info_string_properties(self, TEXT_WIDTH, verbosity_option, wrapper):
+        """Describe config properties for :meth:`info_string`."""
+        properties = self.environment_properties
+        if not properties:
+            return None
+        str_list = ["Properties:"]
+        max_key = 2 + max([len(str(ph['key'])) for ph in properties])
+        max_label = max([len(str(ph['label'])) for ph in properties])
+        max_value = max([len(str(ph['value'])) for ph in properties])
+        if all(ph['label'] for ph in properties):
+            max_width = max_label
+        else:
+            max_width = max(max_key, max_label)
+        wrapper.initial_indent = '      '
+        wrapper.subsequent_indent = '      '
+        for ph in properties:
+            # If we have a label, and the terminal is wide enough,
+            # display "<key> label value", else if no label, display
+            # "<key> value", else only display "label value"
+            if max_label > 0 and (max_key + max_label + max_value <
+                                  TEXT_WIDTH - 8):
+                format_str = '  {key:{kw}}  {label:{lw}}  {val}'
+                str_list.append(format_str.format(
+                    key="<{0}>".format(ph['key']),
+                    kw=max_key,
+                    label=ph['label'],
+                    lw=max_label,
+                    val=('"{0}"'.format(ph['value'])
+                         if ph['value'] is not None
+                         else '--')))
+            else:
+                str_list.append('  {label:{width}}  {val}'.format(
+                    label=(ph['label'] if ph['label']
+                           else "<{0}>".format(ph['key'])),
+                    width=max_width,
+                    val=('"{0}"'.format(ph['value'])
+                         if ph['value'] is not None
+                         else '--')))
+            if verbosity_option == 'verbose':
+                for line in ph['description'].splitlines():
+                    if not line:
+                        str_list.append("")
+                    else:
+                        str_list.extend(wrapper.wrap(line))
+        return "\n".join(str_list)
+
+    def info_string(self, TEXT_WIDTH=79, verbosity_option=None):
+        """Get a descriptive string summarizing the contents of this OVF.
+
+        :param int TEXT_WIDTH: Line length to wrap to where possible.
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+
+        :return: Wrapped, appropriately verbose string.
+        """
+        # Supposedly it's quicker to construct a list of strings then merge
+        # them all together with 'join()' rather than it is to repeatedly
+        # append to an existing string with '+'.
+        # I haven't profiled this to verify - it's fast enough for now.
+        wrapper = textwrap.TextWrapper(width=TEXT_WIDTH)
+
+        # File description
+        header = self._info_string_header(TEXT_WIDTH)
+
+        section_list = [
+            self._info_string_product(verbosity_option, wrapper),
+            self._info_string_annotation(wrapper),
+            self._info_string_eula(verbosity_option, wrapper),
+            self._info_string_files_disks(TEXT_WIDTH, verbosity_option),
+            self._info_string_hardware(wrapper),
+            self.profile_info_string(TEXT_WIDTH, verbosity_option),
+            self._info_string_networks(TEXT_WIDTH, verbosity_option, wrapper),
+            self._info_string_nics(verbosity_option, wrapper),
+            self._info_string_environment(wrapper),
+            self._info_string_properties(TEXT_WIDTH, verbosity_option, wrapper)
+        ]
+        # Discard empty sections
+        section_list = [s for s in section_list if s]
 
         return header + '\n' + "\n\n".join(section_list)
 
@@ -1097,7 +1125,7 @@ class OVF(VMDescription, XML):
             profile_ids = [None]
 
         PROF_W = max(len("Configuration Profiles: "),
-                     2 + max([(len(str(id))) for id in profile_ids]),
+                     2 + max([(len(str(pid))) for pid in profile_ids]),
                      2 + len(str(default_profile_id) + " (default)"))
 
         # Profile information
@@ -1176,10 +1204,10 @@ class OVF(VMDescription, XML):
             TEXT_WIDTH, (verbosity_option != 'brief'))
         return "\n".join([header] + str_list)
 
-    def create_configuration_profile(self, id, label, description):
+    def create_configuration_profile(self, pid, label, description):
         """Create or update a configuration profile with the given ID.
 
-        :param id: Profile identifier
+        :param pid: Profile identifier
         :param str label: Brief descriptive label for the profile
         :param str description: Verbose description of the profile
         """
@@ -1187,17 +1215,17 @@ class OVF(VMDescription, XML):
             self.DEPLOY_OPT_SECTION, "Configuration Profiles")
 
         cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
-                              attrib={self.CONFIG_ID: id})
+                              attrib={self.CONFIG_ID: pid})
         if cfg is None:
             logger.debug("Creating new Configuration element")
             cfg = ET.SubElement(self.deploy_opt_section, self.CONFIG,
-                                {self.CONFIG_ID: id})
+                                {self.CONFIG_ID: pid})
 
         self.set_or_make_child(cfg, self.CFG_LABEL, label)
         self.set_or_make_child(cfg, self.CFG_DESC, description)
         # Clear cache
-        logger.debug("New profile {0} created - clear config_profiles cache"
-                     .format(id))
+        logger.debug("New profile %s created - clear config_profiles cache",
+                     pid)
         self._configuration_profiles = None
 
     def delete_configuration_profile(self, profile):
@@ -1207,12 +1235,12 @@ class OVF(VMDescription, XML):
         if cfg is None:
             raise LookupError("No such configuration profile '{0}'"
                               .format(profile))
-        logger.info("Deleting configuration profile {0}".format(profile))
+        logger.info("Deleting configuration profile %s", profile)
 
         # Delete references to this profile from the hardware
         items = self.hardware.find_all_items(profile_list=[profile])
-        logger.verbose("Removing profile {0} from {1} hardware items"
-                       .format(profile, len(items)))
+        logger.verbose("Removing profile %s from %s hardware items",
+                       profile, len(items))
         for item in items:
             item.remove_profile(profile, split_default=False)
 
@@ -1223,8 +1251,8 @@ class OVF(VMDescription, XML):
             self.envelope.remove(self.deploy_opt_section)
 
         # Clear cache
-        logger.debug("Profile {0} deleted - clear config_profiles cache"
-                     .format(profile))
+        logger.debug("Profile %s deleted - clear config_profiles cache",
+                     profile)
         self._configuration_profiles = None
 
     # TODO - how to insert a doc about the profile_list (see vm_description.py)
@@ -1235,8 +1263,8 @@ class OVF(VMDescription, XML):
         :param int cpus: Number of CPUs
         :param list profile_list: Change only the given profiles
         """
-        logger.info("Updating CPU count in OVF under profile {0} to {1}"
-                    .format(profile_list, cpus))
+        logger.info("Updating CPU count in OVF under profile %s to %s",
+                    profile_list, cpus)
         self.platform.validate_cpu_count(cpus)
         self.hardware.set_value_for_all_items('cpu',
                                               self.VIRTUAL_QUANTITY, cpus,
@@ -1249,8 +1277,8 @@ class OVF(VMDescription, XML):
         :param int megabytes: Memory value, in megabytes
         :param list profile_list: Change only the given profiles
         """
-        logger.info("Updating RAM in OVF under profile {0} to {1}"
-                    .format(profile_list, megabytes))
+        logger.info("Updating RAM in OVF under profile %s to %s",
+                    profile_list, megabytes)
         self.platform.validate_memory_amount(megabytes)
         self.hardware.set_value_for_all_items('memory',
                                               self.VIRTUAL_QUANTITY, megabytes,
@@ -1287,8 +1315,8 @@ class OVF(VMDescription, XML):
         :param int count: number of NICs
         :param list profile_list: Change only the given profiles
         """
-        logger.info("Updating NIC count in OVF under profile {0} to {1}"
-                    .format(profile_list, count))
+        logger.info("Updating NIC count in OVF under profile %s to %s",
+                    profile_list, count)
         self.platform.validate_nic_count(count)
         self.hardware.set_item_count_per_profile('ethernet', count,
                                                  profile_list)
@@ -1366,8 +1394,8 @@ class OVF(VMDescription, XML):
         :param int count: Number of serial ports
         :param list profile_list: Change only the given profiles
         """
-        logger.info("Updating serial port count under profile {0} to {1}"
-                    .format(profile_list, count))
+        logger.info("Updating serial port count under profile %s to %s",
+                    profile_list, count)
         self.hardware.set_item_count_per_profile('serial', count, profile_list)
 
     def set_serial_connectivity(self, conn_list, profile_list):
@@ -1421,11 +1449,11 @@ class OVF(VMDescription, XML):
         """
         if self.ovf_version < 1.0 or self.product_section is None:
             return None
-        property = self.find_child(self.product_section, self.PROPERTY,
-                                   attrib={self.PROP_KEY: key})
-        if property is None:
+        prop = self.find_child(self.product_section, self.PROPERTY,
+                               attrib={self.PROP_KEY: key})
+        if prop is None:
             return None
-        return property.get(self.PROP_VALUE)
+        return prop.get(self.PROP_VALUE)
 
     def set_property_value(self, key, value):
         """Set the value of the given property (converting value if needed).
@@ -1444,9 +1472,9 @@ class OVF(VMDescription, XML):
             # Any Section must have an Info as child
             self.set_or_make_child(self.product_section, self.INFO,
                                    "Product Information")
-        property = self.find_child(self.product_section, self.PROPERTY,
-                                   attrib={self.PROP_KEY: key})
-        if property is None:
+        prop = self.find_child(self.product_section, self.PROPERTY,
+                               attrib={self.PROP_KEY: key})
+        if prop is None:
             self.set_or_make_child(self.product_section, self.PROPERTY,
                                    attrib={self.PROP_KEY: key,
                                            self.PROP_VALUE: value,
@@ -1454,7 +1482,7 @@ class OVF(VMDescription, XML):
             return value
 
         # Else, make sure the requested value is valid
-        prop_type = property.get(self.PROP_TYPE, "")
+        prop_type = prop.get(self.PROP_TYPE, "")
         if prop_type == "boolean":
             # XML prefers to represent booleans as 'true' or 'false'
             value = str(value).lower()
@@ -1467,16 +1495,16 @@ class OVF(VMDescription, XML):
         elif prop_type == "string":
             value = str(value)
 
-        prop_qual = property.get(self.PROP_QUAL, "")
+        prop_qual = prop.get(self.PROP_QUAL, "")
         if prop_qual:
-            m = re.search("MaxLen\((\d+)\)", prop_qual)
+            m = re.search(r"MaxLen\((\d+)\)", prop_qual)
             if m:
                 max_len = int(m.group(1))
                 if len(value) > max_len:
                     raise ValueUnsupportedError(
                         key, value, "string no longer than {0} characters"
                         .format(max_len))
-            m = re.search("MinLen\((\d+)\)", prop_qual)
+            m = re.search(r"MinLen\((\d+)\)", prop_qual)
             if m:
                 min_len = int(m.group(1))
                 if len(value) < min_len:
@@ -1484,22 +1512,22 @@ class OVF(VMDescription, XML):
                         key, value, "string no shorter than {0} characters"
                         .format(min_len))
 
-        property.set(self.PROP_VALUE, value)
+        prop.set(self.PROP_VALUE, value)
         return value
 
-    def config_file_to_properties(self, file):
+    def config_file_to_properties(self, file_path):
         """Import each line of a text file into a configuration property.
 
         :raise NotImplementedError: if the :attr:`platform` for this OVF
           does not define
           :const:`~COT.platforms.GenericPlatform.LITERAL_CLI_STRING`
-        :param str file: File name to import.
+        :param str file_path: File name to import.
         """
         i = 0
         if not self.platform.LITERAL_CLI_STRING:
             raise NotImplementedError("no known support for literal CLI on " +
                                       self.platform.PLATFORM_NAME)
-        with open(file, 'r') as f:
+        with open(file_path, 'r') as f:
             for line in f:
                 line = line.strip()
                 # Skip blank lines and comment lines
@@ -1542,24 +1570,24 @@ class OVF(VMDescription, XML):
         :return: ``(file, disk, ctrl_item, disk_item)``, any or all of which
           may be ``None``
         """
-        file = None
+        file_obj = None
         disk = None
         ctrl_item = None
         disk_item = None
 
-        logger.verbose("Looking for existing disk info based on filename {0}"
-                       .format(filename))
+        logger.verbose("Looking for existing disk info based on filename %s",
+                       filename)
 
-        file = self.find_child(self.references, self.FILE,
-                               attrib={self.FILE_HREF: filename})
+        file_obj = self.find_child(self.references, self.FILE,
+                                   attrib={self.FILE_HREF: filename})
 
-        if file is None:
-            return (file, disk, ctrl_item, disk_item)
+        if file_obj is None:
+            return (file_obj, disk, ctrl_item, disk_item)
 
-        file_id = file.get(self.FILE_ID)
+        file_id = file_obj.get(self.FILE_ID)
         disk = self.find_disk_from_file_id(file_id)
 
-        disk_item_1 = self.find_item_from_file(file)
+        disk_item_1 = self.find_item_from_file(file_obj)
         disk_item_2 = self.find_item_from_disk(disk)
         disk_item = check_for_conflict("disk Item", [disk_item_1, disk_item_2])
 
@@ -1570,7 +1598,7 @@ class OVF(VMDescription, XML):
                               "as its parent?"
                               .format(disk_item))
 
-        return (file, disk, ctrl_item, disk_item)
+        return (file_obj, disk, ctrl_item, disk_item)
 
     def search_from_file_id(self, file_id):
         """From the given file ID, try to find any existing objects.
@@ -1587,26 +1615,26 @@ class OVF(VMDescription, XML):
             return (None, None, None, None)
 
         logger.verbose(
-            "Looking for existing disk information based on file_id {0}"
-            .format(file_id))
+            "Looking for existing disk information based on file_id %s",
+            file_id)
 
-        file = None
+        file_obj = None
         disk = None
         ctrl_item = None
         disk_item = None
 
-        file = self.find_child(self.references, self.FILE,
-                               attrib={self.FILE_ID: file_id})
+        file_obj = self.find_child(self.references, self.FILE,
+                                   attrib={self.FILE_ID: file_id})
 
         disk = self.find_disk_from_file_id(file_id)
 
-        if disk is not None and file is None:
+        if disk is not None and file_obj is None:
             # Should never happen - OVF is not valid
             raise LookupError("Malformed OVF? Found Disk with fileRef {0} but "
                               "no corresponding File with id {0}"
                               .format(file_id))
 
-        disk_item_1 = self.find_item_from_file(file)
+        disk_item_1 = self.find_item_from_file(file_obj)
         disk_item_2 = self.find_item_from_disk(disk)
         disk_item = check_for_conflict("disk Item", [disk_item_1, disk_item_2])
 
@@ -1617,7 +1645,7 @@ class OVF(VMDescription, XML):
                               "as its parent?"
                               .format(disk_item))
 
-        return (file, disk, ctrl_item, disk_item)
+        return (file_obj, disk, ctrl_item, disk_item)
 
     def search_from_controller(self, controller, address):
         """From the controller type and device address, look for existing disk.
@@ -1635,41 +1663,40 @@ class OVF(VMDescription, XML):
             return (None, None, None, None)
 
         logger.verbose("Looking for existing disk information based on "
-                       "controller type ({0}) and disk address ({1})"
-                       .format(controller, address))
+                       "controller type (%s) and disk address (%s)",
+                       controller, address)
 
-        file = None
+        file_obj = None
         disk = None
         ctrl_item = None
         disk_item = None
 
         ctrl_addr = address.split(":")[0]
         disk_addr = address.split(":")[1]
-        logger.debug("Searching for controller address {0}"
-                     .format(ctrl_addr))
+        logger.debug("Searching for controller address %s", ctrl_addr)
 
         ctrl_item = self.hardware.find_item(controller,
                                             {self.ADDRESS: ctrl_addr})
 
         if ctrl_item is None:
-            return (file, disk, ctrl_item, disk_item)
+            return (file_obj, disk, ctrl_item, disk_item)
 
         # From controller Item to its child disk Item
         ctrl_instance = ctrl_item.get_value(self.INSTANCE_ID)
-        logger.debug("Searching for disk address {0} with parent {1}"
-                     .format(disk_addr, ctrl_instance))
+        logger.debug("Searching for disk address %s with parent %s",
+                     disk_addr, ctrl_instance)
         disk_item = self.hardware.find_item(
             properties={self.PARENT: ctrl_instance,
                         self.ADDRESS_ON_PARENT: disk_addr})
 
         if disk_item is None:
-            return (file, disk, ctrl_item, disk_item)
+            return (file_obj, disk, ctrl_item, disk_item)
 
         host_resource = disk_item.get_value(self.HOST_RESOURCE)
         if host_resource is None:
             logger.debug("Disk item has no RASD:HostResource - "
                          "i.e., empty drive")
-            return (file, disk, ctrl_item, disk_item)
+            return (file_obj, disk, ctrl_item, disk_item)
 
         if (host_resource.startswith(self.HOST_RSRC_DISK_REF) or
                 host_resource.startswith(self.OLD_HOST_RSRC_DISK_REF)):
@@ -1683,38 +1710,38 @@ class OVF(VMDescription, XML):
             if disk is not None:
                 # From Disk to File
                 file_id = disk.get(self.DISK_FILE_REF)
-                file = self.find_child(self.references, self.FILE,
-                                       attrib={self.FILE_ID: file_id})
+                file_obj = self.find_child(self.references, self.FILE,
+                                           attrib={self.FILE_ID: file_id})
         elif (host_resource.startswith(self.HOST_RSRC_FILE_REF) or
               host_resource.startswith(self.OLD_HOST_RSRC_FILE_REF)):
             logger.debug("Looking for File and Disk matching disk Item")
             # From disk Item to File
             file_id = os.path.basename(host_resource)
-            file = self.find_child(self.references, self.FILE,
-                                   attrib={self.FILE_ID: file_id})
+            file_obj = self.find_child(self.references, self.FILE,
+                                       attrib={self.FILE_ID: file_id})
 
             if self.disk_section is not None:
                 disk = self.find_child(self.disk_section, self.DISK,
                                        attrib={self.DISK_FILE_REF: file_id})
         else:
             logger.warning(
-                "Unrecognized HostResource format '{0}'; unable to identify "
-                "which File and Disk are associated with this disk Item"
-                .format(host_resource))
+                "Unrecognized HostResource format '%s'; unable to identify "
+                "which File and Disk are associated with this disk Item",
+                host_resource)
 
-        return (file, disk, ctrl_item, disk_item)
+        return (file_obj, disk, ctrl_item, disk_item)
 
-    def find_open_controller(self, type):
+    def find_open_controller(self, controller_type):
         """Find the first open slot on a controller of the given type.
 
-        :param str type: ``'ide'`` or ``'scsi'``
+        :param str controller_type: ``'ide'`` or ``'scsi'``
         :return: ``(ctrl_item, address_string)`` or ``(None, None)``
         """
-        for ctrl_item in self.hardware.find_all_items(type):
+        for ctrl_item in self.hardware.find_all_items(controller_type):
             ctrl_instance = ctrl_item.get_value(self.INSTANCE_ID)
             ctrl_addr = ctrl_item.get_value(self.ADDRESS)
-            logger.debug("Found controller instance {0} address {1}"
-                         .format(ctrl_instance, ctrl_addr))
+            logger.debug("Found controller instance %s address %s",
+                         ctrl_instance, ctrl_addr)
             disk_list = self.hardware.find_all_items(
                 properties={self.PARENT: ctrl_instance})
             address_list = [disk.get_value(self.ADDRESS_ON_PARENT) for
@@ -1722,33 +1749,31 @@ class OVF(VMDescription, XML):
             disk_addr = 0
             while str(disk_addr) in address_list:
                 disk_addr += 1
-            if ((type == 'scsi' and disk_addr > 7) or
-                    (type == 'ide' and disk_addr > 1)):
-                logger.info("Controller address {0} is already full"
-                            .format(ctrl_addr))
+            if ((controller_type == 'scsi' and disk_addr > 7) or
+                    (controller_type == 'ide' and disk_addr > 1)):
+                logger.info("Controller address %s is already full", ctrl_addr)
             else:
-                logger.info("Found open slot {0}:{1}".format(ctrl_addr,
-                                                             disk_addr))
+                logger.info("Found open slot %s:%s", ctrl_addr, disk_addr)
                 return (ctrl_item, "{0}:{1}".format(ctrl_addr, disk_addr))
 
         logger.info("No open controller found")
         return (None, None)
 
-    def get_id_from_file(self, file):
+    def get_id_from_file(self, file_obj):
         """Get the file ID from the given opaque file object.
 
-        :param xml.etree.ElementTree.Element file: 'File' element
+        :param xml.etree.ElementTree.Element file_obj: 'File' element
         :return: 'id' attribute value of this element
         """
-        return file.get(self.FILE_ID)
+        return file_obj.get(self.FILE_ID)
 
-    def get_path_from_file(self, file):
+    def get_path_from_file(self, file_obj):
         """Get the file path from the given opaque file object.
 
-        :param xml.etree.ElementTree.Element file: 'File' element
+        :param xml.etree.ElementTree.Element file_obj: 'File' element
         :return: 'href' attribute value of this element
         """
-        return file.get(self.FILE_HREF)
+        return file_obj.get(self.FILE_HREF)
 
     def get_file_ref_from_disk(self, disk):
         """Get the file reference from the given opaque disk object.
@@ -1764,11 +1789,11 @@ class OVF(VMDescription, XML):
         :param OVFItem device: Device object to query
         :return: string such as 'ide' or 'memory'
         """
-        type = device.get_value(self.RESOURCE_TYPE)
+        device_type = device.get_value(self.RESOURCE_TYPE)
         for key in self.RES_MAP.keys():
-            if type == self.RES_MAP[key]:
+            if device_type == self.RES_MAP[key]:
                 return key
-        return "unknown ({0})".format(type)
+        return "unknown ({0})".format(device_type)
 
     def get_subtype_from_device(self, device):
         """Get the sub-type of the given opaque device object.
@@ -1778,32 +1803,34 @@ class OVF(VMDescription, XML):
         """
         return device.get_value(self.RESOURCE_SUB_TYPE)
 
-    def get_common_subtype(self, type):
+    def get_common_subtype(self, device_type):
         """Get the sub-type common to all devices of the given type.
 
-        :param str type: Device type such as ``'ide'`` or ``'memory'``.
+        :param str device_type: Device type such as ``'ide'`` or ``'memory'``.
         :return: ``None``, if multiple such devices exist and they do not all
           have the same sub-type.
         :return: Subtype string common to all devices of the type.
         """
         subtype = None
-        for item in self.hardware.find_all_items(type):
+        for item in self.hardware.find_all_items(device_type):
             item_subtype = item.get_value(self.RESOURCE_SUB_TYPE)
             if subtype is None:
                 subtype = item_subtype
-                logger.info("Found {0} subtype {1}".format(type, subtype))
+                logger.info("Found %s subtype %s", device_type, subtype)
             elif subtype != item_subtype:
-                logger.warning("Found different subtypes ('{0}', '{1}') for "
-                               "device type {2} - no common subtype exists"
-                               .format(subtype, item_subtype, type))
+                logger.warning("Found different subtypes ('%s', '%s') for "
+                               "device type %s - no common subtype exists",
+                               subtype, item_subtype, device_type)
                 return None
         return subtype
 
-    def check_sanity_of_disk_device(self, disk, file, disk_item, ctrl_item):
+    def check_sanity_of_disk_device(self, disk, file_obj,
+                                    disk_item, ctrl_item):
         """Check if the given disk is linked properly to the other objects.
 
         :param disk: Disk object to validate
-        :param file: File object which this disk should be linked to (optional)
+        :param file_obj: File object which this disk should be linked to
+          (optional)
         :param disk_item: Disk device object which should link to this disk
           (optional)
         :param ctrl_item: Controller device object which should link to the
@@ -1828,10 +1855,10 @@ class OVF(VMDescription, XML):
                              "Disk diskId", disk.get(self.DISK_ID))
             elif ((host_resource.startswith(self.HOST_RSRC_FILE_REF) or
                    host_resource.startswith(self.OLD_HOST_RSRC_FILE_REF)) and
-                  file is not None):
+                  file_obj is not None):
                 match_or_die("disk Item HostResource",
                              os.path.basename(host_resource),
-                             "File id", file.get(self.FILE_ID))
+                             "File id", file_obj.get(self.FILE_ID))
             else:
                 raise ValueUnsupportedError("HostResource prefix",
                                             host_resource,
@@ -1840,22 +1867,22 @@ class OVF(VMDescription, XML):
                                              self.OLD_HOST_RSRC_FILE_REF,
                                              self.OLD_HOST_RSRC_DISK_REF])
 
-    def add_file(self, file_path, file_id, file=None, disk=None):
+    def add_file(self, file_path, file_id, file_obj=None, disk=None):
         """Add a new file object to the VM or overwrite the provided one.
 
         :param str file_path: Path to file to add
         :param str file_id: Identifier string for the file in the VM
-        :param file: Existing file object to overwrite
+        :param file_obj: Existing file object to overwrite
         :param disk: Existing disk object referencing :attr:`file`.
 
         :return: New or updated file object
         """
         logger.debug("Adding File to OVF")
 
-        if file is not None:
-            file.clear()
+        if file_obj is not None:
+            file_obj.clear()
         elif disk is None:
-            file = ET.SubElement(self.references, self.FILE)
+            file_obj = ET.SubElement(self.references, self.FILE)
         else:
             # The OVF standard requires that Disks which reference a File
             # be listed in the same order as the Files.
@@ -1880,30 +1907,30 @@ class OVF(VMDescription, XML):
                     break
                 disk_index += 1
 
-            file = ET.Element(self.FILE)
-            self.references.insert(file_index, file)
+            file_obj = ET.Element(self.FILE)
+            self.references.insert(file_index, file_obj)
 
         file_size_string = str(os.path.getsize(file_path))
         file_name = os.path.basename(file_path)
 
-        file.set(self.FILE_ID, file_id)
-        file.set(self.FILE_HREF, file_name)
-        file.set(self.FILE_SIZE, file_size_string)
+        file_obj.set(self.FILE_ID, file_id)
+        file_obj.set(self.FILE_HREF, file_name)
+        file_obj.set(self.FILE_SIZE, file_size_string)
 
         # Make a note of the file's location - we'll copy it at write time.
         self._file_references[file_name] = FileOnDisk(file_path)
 
-        return file
+        return file_obj
 
-    def remove_file(self, file, disk=None, disk_drive=None):
+    def remove_file(self, file_obj, disk=None, disk_drive=None):
         """Remove the given file object from the VM.
 
-        :param file: File object to remove
+        :param file_obj: File object to remove
         :param disk: Disk object referencing :attr:`file`
         :param disk_drive: Disk drive mapping :attr:`file` to a device
         """
-        self.references.remove(file)
-        del self._file_references[file.get(self.FILE_HREF)]
+        self.references.remove(file_obj)
+        del self._file_references[file_obj.get(self.FILE_HREF)]
 
         if disk is not None:
             self.disk_section.remove(disk)
@@ -1972,10 +1999,11 @@ class OVF(VMDescription, XML):
                   "specifications/vmdk.html#streamOptimized"))
         return disk
 
-    def add_controller_device(self, type, subtype, address, ctrl_item=None):
+    def add_controller_device(self, device_type, subtype, address,
+                              ctrl_item=None):
         """Create a new IDE or SCSI controller, or update existing one.
 
-        :param str type: ``'ide'`` or ``'scsi'``
+        :param str device_type: ``'ide'`` or ``'scsi'``
         :param str subtype: Subtype such as ``'virtio'`` (optional)
         :param int address: Controller address such as 0 or 1 (optional)
         :param ctrl_item: Existing controller device to update (optional)
@@ -1984,42 +2012,41 @@ class OVF(VMDescription, XML):
         """
         if ctrl_item is None:
             logger.info("Controller not found, adding new Item")
-            (ctrl_instance, ctrl_item) = self.hardware.new_item(type)
+            (_, ctrl_item) = self.hardware.new_item(device_type)
             if address is None:
                 # Find a controller address that isn't already used
                 address_list = [
                     ci.get_value(self.ADDRESS) for
-                    ci in self.hardware.find_all_items(type)]
+                    ci in self.hardware.find_all_items(device_type)]
                 address = 0
                 while str(address) in address_list:
                     address += 1
-                logger.info("Selected address {0} for new controller"
-                            .format(address))
-            if type == "scsi" and int(address) > 3:
+                logger.info("Selected address %s for new controller", address)
+            if device_type == "scsi" and int(address) > 3:
                 raise ValueTooHighError("SCSI controller address", address, 3)
-            elif type == "ide" and int(address) > 1:
+            elif device_type == "ide" and int(address) > 1:
                 raise ValueTooHighError("IDE controller address", address, 1)
             ctrl_item.set_property(self.ADDRESS, address)
             ctrl_item.set_property(self.ELEMENT_NAME, "{0} Controller"
-                                   .format(type.upper()))
+                                   .format(device_type.upper()))
             ctrl_item.set_property(self.ITEM_DESCRIPTION,
                                    "{0} Controller {1}"
-                                   .format(type.upper(), address))
+                                   .format(device_type.upper(), address))
         # Change subtype of existing controller or new controller
         if subtype is not None:
             ctrl_item.set_property(self.RESOURCE_SUB_TYPE, subtype)
         return ctrl_item
 
-    def add_disk_device(self, type, address, name, description, disk, file,
-                        ctrl_item, disk_item=None):
+    def add_disk_device(self, disk_type, address, name, description,
+                        disk, file_obj, ctrl_item, disk_item=None):
         """Create a new disk hardware device or overwrite an existing one.
 
-        :param str type: ``'harddisk'`` or ``'cdrom'``
+        :param str disk_type: ``'harddisk'`` or ``'cdrom'``
         :param str address: Address on controller, such as "1:0" (optional)
         :param str name: Device name string (optional)
         :param str description: Description string (optional)
         :param disk: Disk object to map to this device
-        :param file: File object to map to this device
+        :param file_obj: File object to map to this device
         :param ctrl_item: Controller object to serve as parent
         :param disk_item: Existing disk device to update instead of making
           a new device.
@@ -2029,7 +2056,6 @@ class OVF(VMDescription, XML):
         if disk_item is None:
             logger.info("Disk Item not found, adding new Item")
             ctrl_instance = ctrl_item.get_value(self.INSTANCE_ID)
-            disk_instance = self.hardware.find_unused_instance_id()
             if address is None:
                 logger.debug("Working to identify address of new disk")
 
@@ -2041,7 +2067,7 @@ class OVF(VMDescription, XML):
                 while str(address) in addresses:
                     address += 1
                 logger.warning("New disk address on parent not specified, "
-                               "guessing it should be {0}".format(address))
+                               "guessing it should be %s", address)
             ctrl_type = self.get_type_from_device(ctrl_item)
             # Make sure the address is valid!
             if ctrl_type == "scsi" and int(address) > 15:
@@ -2052,24 +2078,24 @@ class OVF(VMDescription, XML):
                                         address, 1)
 
             if name is None:
-                if type == 'cdrom':
+                if disk_type == 'cdrom':
                     name = "CD-ROM Drive"
-                elif type == 'harddisk':
+                elif disk_type == 'harddisk':
                     name = "Hard Disk Drive"
                 else:
                     # Should never get here!
-                    raise ValueUnsupportedError("disk type", type,
+                    raise ValueUnsupportedError("disk type", disk_type,
                                                 "'cdrom' or 'harddisk'")
 
-            (disk_instance, disk_item) = self.hardware.new_item(type)
+            (_, disk_item) = self.hardware.new_item(disk_type)
             disk_item.set_property(self.ADDRESS_ON_PARENT, address)
             disk_item.set_property(self.PARENT, ctrl_instance)
         else:
             logger.debug("Updating existing disk Item")
 
         # Make these changes to the disk Item regardless of new/existing
-        disk_item.set_property(self.RESOURCE_TYPE, self.RES_MAP[type])
-        if type == 'harddisk':
+        disk_item.set_property(self.RESOURCE_TYPE, self.RES_MAP[disk_type])
+        if disk_type == 'harddisk':
             # Link to the Disk we created
             disk_item.set_property(self.HOST_RESOURCE,
                                    (self.HOST_RSRC_DISK_REF +
@@ -2078,7 +2104,7 @@ class OVF(VMDescription, XML):
             # No Disk for CD-ROM; link to the File instead
             disk_item.set_property(self.HOST_RESOURCE,
                                    (self.HOST_RSRC_FILE_REF +
-                                    file.get(self.FILE_ID)))
+                                    file_obj.get(self.FILE_ID)))
 
         if name is not None:
             disk_item.set_property(self.ELEMENT_NAME, name)
@@ -2089,22 +2115,22 @@ class OVF(VMDescription, XML):
 
     # Helper methods - for internal use only
 
-    def untar(self, file):
+    def untar(self, file_path):
         """Untar the OVF descriptor from an .ova to the working directory.
 
-        :param str file: OVA file path
+        :param str file_path: OVA file path
         :raise VMInitError: if the given file does not represent a valid
           OVA archive.
         :return: Path to extracted OVF descriptor
         """
-        logger.verbose("Untarring {0} to working directory {1}"
-                       .format(file, self.working_dir))
+        logger.verbose("Untarring %s to working directory %s",
+                       file_path, self.working_dir)
 
         try:
-            tarf = tarfile.open(file, 'r')
+            tarf = tarfile.open(file_path, 'r')
         except (EOFError, tarfile.TarError) as e:
             raise VMInitError(1, "Could not untar {0}: {1}"
-                              .format(file, e.args))
+                              .format(file_path, e.args))
 
         try:
             # The OVF standard says, with regard to OVAs:
@@ -2120,17 +2146,17 @@ class OVF(VMDescription, XML):
             # For now we just validate #1.
             if not tarf.getmembers():
                 raise VMInitError(1, "No files to untar from {0}!"
-                                  .format(file))
+                                  .format(file_path))
             ovf_descriptor = tarf.getmembers()[0]
             if os.path.splitext(ovf_descriptor.name)[1] != '.ovf':
                 raise VMInitError(1,
                                   "First file in {0} is '{1}' but it should "
                                   "have been an OVF file - OVA is invalid!"
-                                  .format(file, ovf_descriptor.name))
+                                  .format(file_path, ovf_descriptor.name))
             # Make sure the provided file doesn't contain any malicious paths
             # http://stackoverflow.com/questions/8112742/
             for n in tarf.getnames():
-                logger.debug("Examining path of {0} prior to untar".format(n))
+                logger.debug("Examining path of %s prior to untar", n)
                 if not (os.path.abspath(os.path.join(self.working_dir, n))
                         .startswith(self.working_dir)):
                     raise VMInitError(1, "Tar file contains malicious/unsafe "
@@ -2140,8 +2166,8 @@ class OVF(VMDescription, XML):
             # from the TAR and not need to even extract this file to disk...
             tarf.extract(ovf_descriptor, path=self.working_dir)
             logger.verbose(
-                "Extracted OVF descriptor from {0} to working dir {1}"
-                .format(file, self.working_dir))
+                "Extracted OVF descriptor from %s to working dir %s",
+                file_path, self.working_dir)
         finally:
             tarf.close()
 
@@ -2156,8 +2182,8 @@ class OVF(VMDescription, XML):
           False if not successful (such as if checksum helper tools are
           unavailable).
         """
-        (prefix, extension) = os.path.splitext(ovf_file)
-        logger.verbose("Generating manifest for {0}".format(ovf_file))
+        (prefix, _) = os.path.splitext(ovf_file)
+        logger.verbose("Generating manifest for %s", ovf_file)
         manifest = prefix + '.mf'
         # TODO: OVF 2.0 uses SHA256 instead of SHA1.
         sha1sum = get_checksum(ovf_file, 'sha1')
@@ -2166,8 +2192,8 @@ class OVF(VMDescription, XML):
                     .format(file=os.path.basename(ovf_file), sum=sha1sum)
                     .encode('utf-8'))
             # Checksum all referenced files as well
-            for file in self.references.findall(self.FILE):
-                file_name = file.get(self.FILE_HREF)
+            for file_obj in self.references.findall(self.FILE):
+                file_name = file_obj.get(self.FILE_HREF)
                 file_ref = self._file_references[file_name]
                 try:
                     file_obj = file_ref.open('rb')
@@ -2188,16 +2214,16 @@ class OVF(VMDescription, XML):
         :param str ovf_descriptor: File path for an OVF descriptor
         :param str tar_file: File path for the desired OVA archive.
         """
-        logger.verbose("Creating tar file {0}".format(tar_file))
+        logger.verbose("Creating tar file %s", tar_file)
 
-        (prefix, extension) = os.path.splitext(ovf_descriptor)
+        (prefix, _) = os.path.splitext(ovf_descriptor)
 
         if self.input_file == tar_file:
             # We're about to overwrite the input OVA with a new OVA.
             # (Python tarfile module doesn't support in-place edits.)
             # Any files that we need to carry over need to be extracted NOW!
-            logger.verbose("Extracting files from {0} before overwriting it."
-                           .format(self.input_file))
+            logger.verbose("Extracting files from %s before overwriting it.",
+                           self.input_file)
             for filename in self._file_references.keys():
                 file_ref = self._file_references[filename]
                 if file_ref.file_path is None:
@@ -2208,42 +2234,43 @@ class OVF(VMDescription, XML):
         # Be sure to dereference any links to the actual file content!
         with closing(tarfile.open(tar_file, 'w', dereference=True)) as tarf:
             # OVF is always first
-            logger.verbose("Adding {0} to {1}".format(ovf_descriptor,
-                                                      tar_file))
+            logger.verbose("Adding %s to %s", ovf_descriptor, tar_file)
             tarf.add(ovf_descriptor, os.path.basename(ovf_descriptor))
             # Add manifest if present
             manifest_path = prefix + '.mf'
             if os.path.exists(manifest_path):
-                logger.verbose("Adding manifest to {0}".format(tar_file))
+                logger.verbose("Adding manifest to %s", tar_file)
                 tarf.add(manifest_path, os.path.basename(manifest_path))
             if os.path.exists("{0}.cert".format(prefix)):
                 logger.warning("Don't know how to re-sign a certificate file, "
                                "so the existing certificate will be omitted "
-                               "from {0}.".format(tar_file))
+                               "from %s.", tar_file)
             # Add all other files mentioned in the OVF
-            for file in self.references.findall(self.FILE):
-                file_name = file.get(self.FILE_HREF)
+            for file_obj in self.references.findall(self.FILE):
+                file_name = file_obj.get(self.FILE_HREF)
                 file_ref = self._file_references[file_name]
                 file_ref.add_to_archive(tarf)
-                logger.verbose("Added {0} to {1}".format(file_name, tar_file))
+                logger.verbose("Added %s to %s", file_name, tar_file)
 
     def create_envelope_section_if_absent(self, section_tag, info_string,
-                                          attrib={}):
+                                          attrib=None):
         """If the OVF doesn't already have the given Section, create it.
 
         :param str section_tag: XML tag of the desired section.
         :param str info_string: Info string to set if a new Section is created.
         :param dict attrib: Attributes to filter by when looking for any
-          existing section.
+          existing section (optional).
         :return: Section element that was found or created
         """
         section = self.find_child(self.envelope, section_tag, attrib=attrib)
         if section is not None:
             return section
 
-        logger.info("No existing {0}. Creating it."
-                    .format(XML.strip_ns(section_tag)))
-        section = ET.Element(section_tag, attrib=attrib)
+        logger.info("No existing %s. Creating it.", XML.strip_ns(section_tag))
+        if attrib:
+            section = ET.Element(section_tag, attrib=attrib)
+        else:
+            section = ET.Element(section_tag)
         # Section elements may be in arbitrary order relative to one another,
         # but they MUST come after the References and before the VirtualSystem.
         # We'll construct them immediately before the VirtualSystem.
@@ -2316,16 +2343,16 @@ class OVF(VMDescription, XML):
                 })
         return match
 
-    def find_item_from_file(self, file):
+    def find_item_from_file(self, file_obj):
         """Find the disk Item that references the given File.
 
-        :param xml.etree.ElementTree.Element file: File element
+        :param xml.etree.ElementTree.Element file_obj: File element
         :return: :class:`OVFItem` instance, or None.
         """
-        if file is None:
+        if file_obj is None:
             return None
 
-        file_id = file.get(self.FILE_ID)
+        file_id = file_obj.get(self.FILE_ID)
         match = self.hardware.find_item(
             properties={
                 self.HOST_RESOURCE: (self.HOST_RSRC_FILE_REF + file_id)
@@ -2349,18 +2376,18 @@ class OVF(VMDescription, XML):
         return self.find_child(self.disk_section, self.DISK,
                                attrib={self.DISK_FILE_REF: file_id})
 
-    def find_empty_drive(self, type):
+    def find_empty_drive(self, disk_type):
         """Find a disk device that exists but contains no data.
 
-        :param str type: Either 'cdrom' or 'harddisk'
+        :param str disk_type: Either 'cdrom' or 'harddisk'
         :return: Hardware device object, or None.
         """
-        if type == 'cdrom':
+        if disk_type == 'cdrom':
             # Find a drive that has no HostResource property
             return self.hardware.find_item(
-                resource_type=type,
+                resource_type=disk_type,
                 properties={self.HOST_RESOURCE: None})
-        elif type == 'harddisk':
+        elif disk_type == 'harddisk':
             # All harddisk items must have a HostResource, so we need a
             # different way to indicate an empty drive. By convention,
             # we do this with a small placeholder disk (one with a Disk entry
@@ -2378,7 +2405,7 @@ class OVF(VMDescription, XML):
             return None
         else:
             raise ValueUnsupportedError("drive type",
-                                        type,
+                                        disk_type,
                                         "'cdrom' or 'harddisk'")
 
     def find_device_location(self, device):
@@ -2456,7 +2483,7 @@ class OVFNameHelper(object):
         # Non-standard namespaces (such as VMWare's
         # 'http://www.vmware.com/schema/ovf') should not be added to the NSM
         # dictionary, but may be registered manually by calling
-        # self.register_namespace() as needed - see self.write() for examples.
+        # register_namespace() as needed - see self.write() for examples.
 
         if self.ovf_version < 1.0:
             self.NSM['ovf'] = "http://www.vmware.com/schema/ovf/1/envelope"
@@ -2485,7 +2512,7 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
             self.EPASD = self.RASD
             self.SASD = self.RASD
 
-        OVF = self.OVF
+        OVF = self.OVF    # pylint: disable=redefined-outer-name
         VSSD = self.VSSD
         XSI = self.XSI
 
@@ -2755,7 +2782,7 @@ class OVFHardwareDataError(Exception):
     """The input data used to construct an :class:`OVFHardware` is not sane."""
 
 
-class OVFHardware:
+class OVFHardware(object):
     """Helper class for :class:`OVF`.
 
     Represents all hardware items defined by this OVF;
@@ -2808,9 +2835,8 @@ class OVFHardware:
                     raise OVFHardwareDataError("Data conflict for instance {0}"
                                                .format(instance))
         logger.verbose(
-            "OVF contains {0} hardware Item elements describing {1} "
-            "unique devices"
-            .format(item_count, len(self.item_dict)))
+            "OVF contains %s hardware Item elements describing %s "
+            "unique devices", item_count, len(self.item_dict))
         # Treat the current state as golden:
         for ovfitem in self.item_dict.values():
             ovfitem.modified = False
@@ -2843,24 +2869,21 @@ class OVFHardware:
                     item.tag == self.ovf.ETHERNET_PORT_ITEM):
                 self.ovf.virtual_hw_section.remove(item)
                 delete_count += 1
-        logger.verbose("Cleared {0} existing items from VirtualHWSection"
-                       .format(delete_count))
+        logger.verbose("Cleared %d existing items from VirtualHWSection",
+                       delete_count)
         # Generate the new XML Items, in appropriately sorted order by Instance
         ordering = [self.ovf.INFO, self.ovf.SYSTEM, self.ovf.ITEM]
         for instance in natural_sort(self.item_dict.keys()):
-            logger.debug("Writing Item(s) with InstanceID {0}"
-                         .format(instance))
+            logger.debug("Writing Item(s) with InstanceID %s", instance)
             ovfitem = self.item_dict[instance]
             new_items = ovfitem.generate_items()
-            logger.debug("Generated {0} items".format(len(new_items)))
+            logger.debug("Generated %d items", len(new_items))
             for item in new_items:
                 XML.add_child(self.ovf.virtual_hw_section, item, ordering)
-        logger.verbose("Updated XML VirtualHardwareSection, now contains {0} "
-                       "Items representing {1} devices"
-                       .format(
-                           len(self.ovf.virtual_hw_section.findall(
-                               self.ovf.ITEM)),
-                           len(self.item_dict)))
+        logger.verbose("Updated XML VirtualHardwareSection, now contains %d "
+                       "Items representing %d devices",
+                       len(self.ovf.virtual_hw_section.findall(self.ovf.ITEM)),
+                       len(self.item_dict))
 
     def find_unused_instance_id(self):
         """Find the first available ``InstanceID`` number.
@@ -2870,7 +2893,7 @@ class OVFHardware:
         i = 1
         while str(i) in self.item_dict.keys():
             i += 1
-        logger.debug("Found unused InstanceID {0}".format(i))
+        logger.debug("Found unused InstanceID %d", i)
         return str(i)
 
     def new_item(self, resource_type, profile_list=None):
@@ -2892,8 +2915,8 @@ class OVFHardware:
                              profile_list)
         self.item_dict[instance] = ovfitem
         ovfitem.modified = True
-        logger.info("Added new {0} under {1}, instance is {2}"
-                    .format(resource_type, profile_list, instance))
+        logger.info("Added new %s under %s, instance is %s",
+                    resource_type, profile_list, instance)
         return (instance, ovfitem)
 
     def delete_item(self, item):
@@ -2917,8 +2940,8 @@ class OVFHardware:
         ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profile_list)
         ovfitem.modified = True
         self.item_dict[instance] = ovfitem
-        logger.debug("Added clone of {0} under {1}, instance is {2}"
-                     .format(parent_item, profile_list, instance))
+        logger.debug("Added clone of %s under %s, instance is %s",
+                     parent_item, profile_list, instance)
         return (instance, ovfitem)
 
     def find_all_items(self, resource_type=None, properties=None,
@@ -2947,14 +2970,13 @@ class OVFHardware:
                         break
             if not valid:
                 continue
-            for (property, value) in properties.items():
-                if ovfitem.get_value(property) != value:
+            for (prop, value) in properties.items():
+                if ovfitem.get_value(prop) != value:
                     valid = False
                     break
             if valid:
                 filtered_items.append(ovfitem)
-        logger.debug("Found {0} {1} Items"
-                     .format(len(filtered_items), resource_type))
+        logger.debug("Found %s %s Items", len(filtered_items), resource_type)
         return filtered_items
 
     def find_item(self, resource_type=None, properties=None, profile=None):
@@ -3007,8 +3029,8 @@ class OVFHardware:
                 if ovfitem.has_profile(profile):
                     count_dict[profile] += 1
         for (profile, count) in count_dict.items():
-            logger.debug("Profile '{0}' has {1} {2} Item(s)"
-                         .format(profile, count, resource_type))
+            logger.debug("Profile '%s' has %s %s Item(s)",
+                         profile, count, resource_type)
         return count_dict
 
     def set_item_count_per_profile(self, resource_type, count, profile_list):
@@ -3064,7 +3086,7 @@ class OVFHardware:
             if delta > items_to_add:
                 items_to_add = delta
 
-        logger.debug("Creating {0} new items".format(items_to_add))
+        logger.debug("Creating %d new items", items_to_add)
         while items_to_add > 0:
             # Which profiles does this Item need to belong to?
             new_item_profiles = []
@@ -3074,14 +3096,12 @@ class OVFHardware:
                     count_dict[profile] += 1
                     items_seen[profile] += 1
             if last_item is None:
-                logger.warning("No existing items of type {0} found. "
-                               "Will create new {0} from scratch."
-                               .format(resource_type))
-                (new_instance, new_item) = self.new_item(resource_type,
-                                                         new_item_profiles)
+                logger.warning("No existing items of type %s found. "
+                               "Will create new %s from scratch.",
+                               resource_type, resource_type)
+                (_, new_item) = self.new_item(resource_type, new_item_profiles)
             else:
-                (new_instance, new_item) = self.clone_item(last_item,
-                                                           new_item_profiles)
+                (_, new_item) = self.clone_item(last_item, new_item_profiles)
             # Check/update other properties of the clone that should be unique:
             address = new_item.get(self.ovf.ADDRESS)
             if address:
@@ -3123,7 +3143,7 @@ class OVFHardware:
             last_item = new_item
             items_to_add -= 1
 
-    def set_value_for_all_items(self, resource_type, property, new_value,
+    def set_value_for_all_items(self, resource_type, prop_name, new_value,
                                 profile_list, create_new=False):
         """Set a property to the given value for all items of the given type.
 
@@ -3132,7 +3152,7 @@ class OVFHardware:
         and do nothing.
 
         :param str resource_type: Resource type such as 'cpu' or 'harddisk'
-        :param str property: Property name to update
+        :param str prop_name: Property name to update
         :param new_value: New value to set the property to
         :param list profile_list: List of profiles to filter on
           (default: apply across all profiles)
@@ -3142,25 +3162,25 @@ class OVFHardware:
         ovfitem_list = self.find_all_items(resource_type)
         if not ovfitem_list:
             if not create_new:
-                logger.warning("No items of type {0} found. Nothing to do."
-                               .format(resource_type))
+                logger.warning("No items of type %s found. Nothing to do.",
+                               resource_type)
                 return
-            logger.warning("No existing items of type {0} found. Will create "
-                           "new {0} from scratch.".format(resource_type))
-            (instance, ovfitem) = self.new_item(resource_type, profile_list)
+            logger.warning("No existing items of type %s found. "
+                           "Will create new %s from scratch.",
+                           resource_type, resource_type)
+            (_, ovfitem) = self.new_item(resource_type, profile_list)
             ovfitem_list = [ovfitem]
         for ovfitem in ovfitem_list:
-            ovfitem.set_property(property, new_value, profile_list)
-        logger.info("Updated {0} {1} to {2} under {3}"
-                    .format(resource_type, property, new_value,
-                            profile_list))
+            ovfitem.set_property(prop_name, new_value, profile_list)
+        logger.info("Updated %s %s to %s under %s",
+                    resource_type, prop_name, new_value, profile_list)
 
-    def set_item_values_per_profile(self, resource_type, property, value_list,
+    def set_item_values_per_profile(self, resource_type, prop_name, value_list,
                                     profile_list, default=None):
         """Set value(s) for a property of multiple items of a type.
 
         :param str resource_type: Device type such as 'harddisk' or 'cpu'
-        :param str property: Property name to update
+        :param str prop_name: Property name to update
         :param list value_list: List of values to set (one value per item
           of the given :attr:`resource_type`)
         :param list profile_list: List of profiles to filter on
@@ -3177,22 +3197,20 @@ class OVFHardware:
                 new_value = default
             for profile in profile_list:
                 if ovfitem.has_profile(profile):
-                    ovfitem.set_property(property, new_value, [profile])
-            logger.info("Updated {0} property {1} to {2} under {3}"
-                        .format(resource_type, property,
-                                new_value, profile_list))
+                    ovfitem.set_property(prop_name, new_value, [profile])
+            logger.info("Updated %s property %s to %s under %s",
+                        resource_type, prop_name, new_value, profile_list)
         if len(value_list):
-            logger.error("After scanning all known {0} Items, not all "
-                         "{1} values were used - leftover {2}"
-                         .format(resource_type, property,
-                                 value_list))
+            logger.error("After scanning all known %s Items, not all "
+                         "%s values were used - leftover %s",
+                         resource_type, prop_name, value_list)
 
 
 class OVFItemDataError(Exception):
     """Data to be added to an :class:`OVFItem` conflicts with existing data."""
 
 
-class OVFItem:
+class OVFItem(object):
     """Helper class for :class:`OVF`.
 
     Represents all variations of a given hardware ``Item`` amongst different
@@ -3227,19 +3245,19 @@ class OVFItem:
 
     def __str__(self):
         """Get human-readable string representation."""
-        str = "OVFItem:\n"
+        ret = "OVFItem:\n"
         for key in sorted(self.property_dict.keys()):
-            str += "  " + key + "\n"
+            ret += "  " + key + "\n"
             value_dict = self.property_dict[key]
             for value in sorted(value_dict.keys()):
                 profile_set = value_dict[value]
-                str += "    {0:20} : {1}\n".format(value, sorted(profile_set))
-        return str
+                ret += "    {0:20} : {1}\n".format(value, sorted(profile_set))
+        return ret
 
     def __getattr__(self, name):
         """Transparently pass attribute lookups off to OVF/OVFNameHelper."""
         # Don't pass 'special' attributes through to the helper
-        if re.match("^__", name):
+        if re.match(r"^__", name):
             raise AttributeError("'OVFItem' object has no attribute '{0}'"
                                  .format(name))
         # Pass through to designated helper
@@ -3252,7 +3270,7 @@ class OVFItem:
         :raise OVFItemDataError: if the new Item conflicts with existing data
           already in the OVFItem.
         """
-        logger.debug("Adding new {0}".format(item.tag))
+        logger.debug("Adding new %s", item.tag)
         if item.tag == self.ITEM:
             self.NS = self.RASD
         elif item.tag == self.STORAGE_ITEM:
@@ -3315,8 +3333,7 @@ class OVFItem:
                                   overwrite=False)
 
         self.modified = True
-        logger.debug("Added {0} - new status:\n{1}".format(item.tag,
-                                                           str(self)))
+        logger.debug("Added %s - new status:\n%s", item.tag, str(self))
         self.validate()
 
     def set_property(self, key, value, profiles=None, overwrite=True):
@@ -3375,8 +3392,8 @@ class OVFItem:
             en_val = self.get_value(self.ELEMENT_NAME, profiles)
             if en_val is not None:
                 value = re.sub(en_val, "_EN_", value)
-        logger.debug("Setting {0} to {1} under profiles {2}"
-                     .format(key, value, profiles))
+        logger.debug("Setting %s to %s under profiles %s",
+                     key, value, profiles)
         if key not in self.property_dict:
             if value == '':
                 pass
@@ -3399,8 +3416,8 @@ class OVFItem:
                     # Our profiles should not use this old value
                     profile_set -= profiles
                     if not profile_set:
-                        logger.debug("No longer any profiles with value {0}"
-                                     .format(known_value))
+                        logger.debug("No longer any profiles with value %s",
+                                     known_value)
                         del self.property_dict[key][known_value]
                 else:
                     # Add our profiles to the existing set using this value
@@ -3421,8 +3438,7 @@ class OVFItem:
                 else:
                     self.property_dict[key][value] = profiles
             elif not self.property_dict[key]:
-                logger.debug("No longer any values saved for {0}"
-                             .format(key))
+                logger.debug("No longer any values saved for %s", key)
                 del self.property_dict[key]
         self.modified = True
         self.validate()
@@ -3435,22 +3451,22 @@ class OVFItem:
           this defaults to ``self``.
         """
         if self.has_profile(new_profile):
-            logger.error("Profile {0} already exists under {1}!"
-                         .format(new_profile, self))
+            logger.error("Profile %s already exists under %s!",
+                         new_profile, self)
             return
         if from_item is None:
             from_item = self
-        logger.debug("Adding profile {0} to item {1} from item {2}"
-                     .format(new_profile,
-                             self.property_dict.get(self.INSTANCE_ID,
-                                                    "<unknown instance>"),
-                             from_item.property_dict[self.INSTANCE_ID]))
+        logger.debug("Adding profile %s to item %s from item %s",
+                     new_profile,
+                     self.property_dict.get(self.INSTANCE_ID,
+                                            "<unknown instance>"),
+                     from_item.property_dict[self.INSTANCE_ID])
         p_set = set([new_profile])
         for key in from_item.property_dict.keys():
             found = False
             if not from_item.property_dict[key]:
-                logger.debug("No values stored for key {0} - not cloning it"
-                             .format(key))
+                logger.debug("No values stored for key %s - not cloning it",
+                             key)
                 continue
             for (value, profiles) in from_item.property_dict[key].items():
                 if (None in profiles or
@@ -3475,12 +3491,11 @@ class OVFItem:
           'default' will continue to exclude this profile.
         """
         if not self.has_profile(profile):
-            logger.error("Requested deletion of profile '{0}' but it is "
-                         "not present under {1}!"
-                         .format(profile, self))
+            logger.error("Requested deletion of profile '%s' but it is "
+                         "not present under %s!", profile, self)
             return
-        logger.debug("Removing profile {0} from item {1}"
-                     .format(profile, self.property_dict[self.INSTANCE_ID]))
+        logger.debug("Removing profile %s from item %s",
+                     profile, self.property_dict[self.INSTANCE_ID])
         p_set = set([profile])
         for key in self.property_dict.keys():
             for (value, profiles) in list(self.property_dict[key].items()):
@@ -3498,10 +3513,10 @@ class OVFItem:
                         if v == value:
                             continue
                         profiles -= p
-                    logger.debug("profiles are now: {0}".format(profiles))
+                    logger.debug("profiles are now: %s", profiles)
                 if not profiles:
-                    logger.verbose("No more profiles for value {0} , {1}"
-                                   .format(key, value))
+                    logger.verbose("No more profiles for value %s, %s",
+                                   key, value)
                     del self.property_dict[key][value]
         self.modified = True
         self.validate()
@@ -3606,9 +3621,8 @@ class OVFItem:
             set_so_far = set()
             for profile_set in value_dict.values():
                 if None in profile_set and len(profile_set) > 1:
-                    logger.warning("Profile set {0} contains redundant info; "
-                                   "cleaning it up now..."
-                                   .format(profile_set))
+                    logger.warning("Profile set %s contains redundant info; "
+                                   "cleaning it up now...", profile_set)
                     # Clean up...
                     profile_set.clear()
                     profile_set.add(None)
@@ -3616,8 +3630,8 @@ class OVFItem:
                 inter = set_so_far.intersection(profile_set)
                 if inter:
                     raise RuntimeError("OVFItem illegally contains duplicate "
-                                       "profiles {0} under {1}: {2}"
-                                       .format(inter, key, value_dict))
+                                       "profiles %s under %s: %s",
+                                       inter, key, value_dict)
                 set_so_far |= profile_set
 
     def has_profile(self, profile):
@@ -3668,7 +3682,7 @@ class OVFItem:
                     new_list.append(new_set)
                 set_list = new_list
 
-        logger.debug("Final set list is {0}".format(set_list))
+        logger.debug("Final set list is %s", set_list)
 
         # Construct a list of profile strings
         set_string_list = []
@@ -3678,7 +3692,7 @@ class OVFItem:
             else:
                 set_string_list.append(" ".join(natural_sort(final_set)))
         set_string_list = natural_sort(set_string_list)
-        logger.debug("set string list: {0}".format(set_string_list))
+        logger.debug("set string list: %s", set_string_list)
 
         # Now, construct the Items
         if self.NS == self.RASD:
@@ -3702,8 +3716,8 @@ class OVFItem:
             else:
                 item = ET.Element(ITEM, {self.ITEM_CONFIG: set_string})
                 final_set = set(set_string.split())
-            logger.debug("set string: {0}; final_set: {1}"
-                         .format(set_string, final_set))
+            logger.debug("set string: %s; final_set: %s",
+                         set_string, final_set)
             # To regenerate text that depends on these values:
             rst_val = self.get_value(self.RESOURCE_SUB_TYPE, final_set)
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, final_set)
@@ -3721,10 +3735,9 @@ class OVFItem:
                 if not found:
                     if default_val is None:
                         logger.info(
-                            "No value defined for attribute '{0}' "
-                            "under profile set '{2}' for instance {1} "
-                            .format(key, self.get_value(self.INSTANCE_ID),
-                                    set_string))
+                            "No value defined for attribute '%s' "
+                            "under profile set '%s' for instance %s",
+                            key, set_string, self.get_value(self.INSTANCE_ID))
                         continue
                     val = default_val
                 # Regenerate text that depends on the VirtualQuantity
@@ -3741,11 +3754,11 @@ class OVFItem:
                         val = re.sub("_EN_", str(en_val), str(val))
 
                 # Is this an attribute, a child, or a custom element?
-                attrib_match = re.match("(.*)" + self.ATTRIB_KEY_SUFFIX, key)
+                attrib_match = re.match(r"(.*)" + self.ATTRIB_KEY_SUFFIX, key)
                 if attrib_match:
                     attrib_string = attrib_match.group(1)
-                child_attrib = re.match("(.*)_attrib_(.*)", key)
-                custom_elem = re.match("(.*)" + self.ELEMENT_KEY_SUFFIX, key)
+                child_attrib = re.match(r"(.*)_attrib_(.*)", key)
+                custom_elem = re.match(r"(.*)" + self.ELEMENT_KEY_SUFFIX, key)
                 if attrib_match:
                     item.set(attrib_string, val)
                 elif child_attrib:
@@ -3764,7 +3777,7 @@ class OVFItem:
                     XML.set_or_make_child(item, self.NS + key, val,
                                           ordering=child_ordering,
                                           known_namespaces=self.NSM.values())
-            logger.debug("Item is:\n{0}".format(ET.tostring(item)))
+            logger.debug("Item is:\n%s", ET.tostring(item))
             item_list.append(item)
 
         return item_list

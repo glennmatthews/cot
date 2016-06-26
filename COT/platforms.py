@@ -32,10 +32,11 @@
   NXOSv
 """
 
+import logging
+
 from .data_validation import ValueUnsupportedError
 from .data_validation import ValueTooLowError, ValueTooHighError
 from .data_validation import NIC_TYPES
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class GenericPlatform(object):
     SUPPORTED_NIC_TYPES = NIC_TYPES
 
     @classmethod
-    def controller_type_for_device(cls, device_type):
+    def controller_type_for_device(cls, _device_type):
         """Get the default controller type for the given device type."""
         # For most platforms IDE is the correct default.
         return 'ide'
@@ -73,7 +74,7 @@ class GenericPlatform(object):
 
         .. note:: This method counts from 1, not from 0!
         """
-        return ("Ethernet" + str(nic_number))
+        return "Ethernet" + str(nic_number)
 
     @classmethod
     def validate_cpu_count(cls, cpus):
@@ -134,7 +135,7 @@ class IOSXRv(GenericPlatform):
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
         else:
-            return ("GigabitEthernet0/0/0/" + str(nic_number - 2))
+            return "GigabitEthernet0/0/0/" + str(nic_number - 2)
 
     @classmethod
     def validate_cpu_count(cls, cpus):
@@ -182,7 +183,7 @@ class IOSXRvRP(IOSXRv):
         if nic_number == 1:
             return "fabric"
         else:
-            return ("MgmtEth0/{SLOT}/CPU0/" + str(nic_number - 2))
+            return "MgmtEth0/{SLOT}/CPU0/" + str(nic_number - 2)
 
     @classmethod
     def validate_nic_count(cls, count):
@@ -214,7 +215,7 @@ class IOSXRvLC(IOSXRv):
         if nic_number == 1:
             return "fabric"
         else:
-            return ("GigabitEthernet0/{SLOT}/0/" + str(nic_number - 2))
+            return "GigabitEthernet0/{SLOT}/0/" + str(nic_number - 2)
 
     @classmethod
     def validate_serial_count(cls, count):
@@ -239,7 +240,7 @@ class IOSXRv9000(IOSXRv):
         elif nic_number == 3:
             return "DevEth"
         else:
-            return ("GigabitEthernet0/0/0/" + str(nic_number - 4))
+            return "GigabitEthernet0/0/0/" + str(nic_number - 4)
 
     @classmethod
     def validate_cpu_count(cls, cpus):
@@ -293,7 +294,7 @@ class CSR1000V(GenericPlatform):
           Some early versions started at "GigabitEthernet0" but we don't
           support that.
         """
-        return ("GigabitEthernet" + str(nic_number))
+        return "GigabitEthernet" + str(nic_number)
 
     @classmethod
     def validate_cpu_count(cls, cpus):
@@ -344,7 +345,7 @@ class IOSv(GenericPlatform):
     @classmethod
     def guess_nic_name(cls, nic_number):
         """GigabitEthernet0/0, GigabitEthernet0/1, etc."""
-        return ("GigabitEthernet0/" + str(nic_number - 1))
+        return "GigabitEthernet0/" + str(nic_number - 1)
 
     @classmethod
     def validate_cpu_count(cls, cpus):

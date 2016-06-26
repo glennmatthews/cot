@@ -3,7 +3,7 @@
 # vm_factory.py - Factory for virtual machine objects
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -25,7 +25,7 @@ from .data_validation import ValueUnsupportedError
 logger = logging.getLogger(__name__)
 
 
-class VMFactory:
+class VMFactory(object):
     """Creates a VMDescription instance from a specified input file."""
 
     @classmethod
@@ -57,12 +57,11 @@ class VMFactory:
                               "'{0}' - only supported types are {1}"
                               .format(input_file, supported_types))
 
-        logger.info("Loading '{0}' as {1}".format(input_file,
-                                                  vm_class.__name__))
+        logger.info("Loading '%s' as %s", input_file, vm_class.__name__)
         try:
             vm = vm_class(input_file, output_file)
         except ValueUnsupportedError as e:
             raise VMInitError(2, str(e))
-        logger.debug("Loaded VM object from {0}".format(input_file))
+        logger.debug("Loaded VM object from %s", input_file)
 
         return vm

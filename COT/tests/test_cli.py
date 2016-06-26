@@ -56,6 +56,10 @@ class TestCOTCLI(COT_UT):
             self.cli.handler = None
         super(TestCOTCLI, self).tearDown()
 
+    def set_terminal_width(self, width):
+        """Modify the width of the virtual terminal."""
+        self.cli._terminal_width = width  # pylint: disable=protected-access
+
     def call_cot(self, argv, result=0, fixup_args=True):
         """Invoke COT CLI, capturing stdout and stderr, and check the rc.
 
@@ -75,11 +79,10 @@ class TestCOTCLI(COT_UT):
                 sys.stderr = sys.stdout
                 rc = self.cli.run(argv)
         except SystemExit as se:
-            rc = se.code
             try:
-                rc = int(rc)
+                rc = int(se.code)
             except (TypeError, ValueError):
-                print(rc, file=sys.stderr)
+                print(se.code, file=sys.stderr)
                 rc = 1
         finally:
             sys.stdin = _si
@@ -88,7 +91,7 @@ class TestCOTCLI(COT_UT):
             sys.stderr = _se
 
         self.assertEqual(rc, result,
-                         "\nargv: {0}\nstdout:\n{1}"
+                         "\nargv: \n{0}\nstdout:\n{1}"
                          .format(" ".join(argv), stdout))
         return stdout
 
@@ -99,6 +102,7 @@ class TestCLIModule(TestCOTCLI):
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         super(TestCLIModule, self).setUp()
+        self.first_call = True
 
     def test_apis_without_force(self):
         """Test confirm, confirm_or_die, etc. without --force option."""
@@ -121,9 +125,8 @@ class TestCLIModule(TestCOTCLI):
         self.assertEqual("goodbye", self.cli.get_input("Prompt:", "goodbye"))
 
         # confirm will complain and loop until receiving valid input
-        self.first_call = True
-
-        def not_at_first(*args):
+        def not_at_first(*_args):
+            """Return 'dunno' on first call, 'y' on all subsequent calls."""
             if self.first_call:
                 self.first_call = False
                 return 'dunno'
@@ -169,7 +172,7 @@ class TestCLIModule(TestCOTCLI):
                  "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
                  "PACKAGE [-o OUTPUT]"]
 
-        self.cli._terminal_width = 100
+        self.set_terminal_width(100)
         self.assertMultiLineEqual(
             self.cli.fill_usage("edit-properties", usage), """
   cot edit-properties --help
@@ -178,7 +181,7 @@ class TestCLIModule(TestCOTCLI):
   cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
   cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
 
-        self.cli._terminal_width = 80
+        self.set_terminal_width(80)
         self.assertMultiLineEqual(
             self.cli.fill_usage("edit-properties", usage), """
   cot edit-properties --help
@@ -187,7 +190,7 @@ class TestCLIModule(TestCOTCLI):
   cot <opts> edit-properties PACKAGE -c CONFIG_FILE [-o OUTPUT]
   cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
 
-        self.cli._terminal_width = 60
+        self.set_terminal_width(60)
         self.assertMultiLineEqual(
             self.cli.fill_usage("edit-properties", usage), """
   cot edit-properties --help
@@ -197,7 +200,7 @@ class TestCLIModule(TestCOTCLI):
                              [-o OUTPUT]
   cot <opts> edit-properties PACKAGE [-o OUTPUT]""")
 
-        self.cli._terminal_width = 40
+        self.set_terminal_width(40)
         self.assertMultiLineEqual(
             self.cli.fill_usage("edit-properties", usage), """
   cot edit-properties --help
@@ -222,7 +225,7 @@ class TestCLIModule(TestCOTCLI):
              'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB'),
         ]
 
-        self.cli._terminal_width = 100
+        self.set_terminal_width(100)
         self.assertMultiLineEqual("""\
 Examples:
   Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin, \
@@ -239,7 +242,7 @@ foo.ova.
     cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB""",
                                   self.cli.fill_examples(examples))
 
-        self.cli._terminal_width = 80
+        self.set_terminal_width(80)
         self.assertMultiLineEqual("""\
 Examples:
   Deploy to vSphere/ESXi server 192.0.2.100 with credentials admin/admin,
@@ -255,7 +258,7 @@ the
     cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB""",
                                   self.cli.fill_examples(examples))
 
-        self.cli._terminal_width = 60
+        self.set_terminal_width(60)
         self.assertMultiLineEqual("""\
 Examples:
   Deploy to vSphere/ESXi server 192.0.2.100 with
@@ -273,7 +276,7 @@ Examples:
     cot deploy foo.ova esxi 192.0.2.100 -u admin \\
         -c 1CPU-2.5GB""", self.cli.fill_examples(examples),)
 
-        self.cli._terminal_width = 40
+        self.set_terminal_width(40)
         self.assertMultiLineEqual("""\
 Examples:
   Deploy to vSphere/ESXi server
