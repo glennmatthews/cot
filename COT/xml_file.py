@@ -24,6 +24,20 @@ import sys
 logger = logging.getLogger(__name__)
 
 
+def register_namespace(prefix, URI):
+    """Record a particular mapping between a namespace prefix and URI.
+
+    :param str prefix: Namespace prefix such as "ovf"
+    :param str URI: Namespace URI such as
+        "http://schemas.dmtf.org/ovf/envelope/1"
+    """
+    try:
+        ET.register_namespace(prefix, URI)
+    except AttributeError:
+        # 2.6 doesn't have the above API so we must write directly
+        ET._namespace_map[URI] = prefix  # pylint: disable=protected-access
+
+
 class XML(object):
     """Class capable of reading, editing, and writing XML files."""
 
@@ -32,7 +46,7 @@ class XML(object):
         """Get the namespace prefix from an XML element or attribute name."""
         match = re.match(r"\{(.*)\}", str(text))
         if not match:
-            logger.error("No namespace prefix on {0}??".format(text))
+            logger.error("No namespace prefix on %s??", text)
             return ""
         return match.group(1)
 
@@ -41,12 +55,12 @@ class XML(object):
         """Remove a namespace prefix from an XML element or attribute name."""
         match = re.match(r"\{.*\}(.*)", str(text))
         if match is None:
-            logger.error("No namespace prefix on {0}??".format(text))
+            logger.error("No namespace prefix on %s??", text)
             return text
         else:
             return match.group(1)
 
-    def read_xml(self, xml_file):
+    def __init__(self, xml_file):
         """Read the given XML file and store it in memory.
 
         The memory representation is available as :attr:`self.tree` and
@@ -61,25 +75,12 @@ class XML(object):
         self.tree = ET.parse(xml_file)
         self.root = self.tree.getroot()
 
-    def register_namespace(self, prefix, URI):
-        """Record a particular mapping between a namespace prefix and URI.
-
-        :param str prefix: Namespace prefix such as "ovf"
-        :param str URI: Namespace URI such as
-          "http://schemas.dmtf.org/ovf/envelope/1"
-        """
-        try:
-            ET.register_namespace(prefix, URI)
-        except AttributeError:
-            # 2.6 doesn't have the above API so we must write directly
-            ET._namespace_map[URI] = prefix
-
-    def write_xml(self, file):
+    def write_xml(self, xml_file):
         """Write pretty XML out to the given file.
 
-        :param str file: Filename to write to
+        :param str xml_file: Filename to write to
         """
-        logger.debug("Writing XML to {0}".format(file))
+        logger.debug("Writing XML to %s", xml_file)
 
         # Pretty-print the XML for readability
         self.xml_reindent(self.root, 0)
@@ -95,10 +96,10 @@ class XML(object):
         #
         # This is a bug - see http://bugs.python.org/issue17088
         if sys.hexversion >= 0x02070000:
-            self.tree.write(file, xml_declaration=True, encoding='utf-8')
+            self.tree.write(xml_file, xml_declaration=True, encoding='utf-8')
         else:
             # 2.6 doesn't have the xml_declaration parameter. Sigh.
-            self.tree.write(file, encoding='utf-8')
+            self.tree.write(xml_file, encoding='utf-8')
 
     def xml_reindent(self, parent, depth):
         """Recursively add indentation to XML to make it look nice.
@@ -126,7 +127,7 @@ class XML(object):
             parent.tail = "\n"
 
     @classmethod
-    def find_child(cls, parent, tag, attrib={}, required=False):
+    def find_child(cls, parent, tag, attrib=None, required=False):
         """Find the unique child element under the specified parent element.
 
         :raises LookupError: if more than one matching child is found
@@ -157,7 +158,7 @@ class XML(object):
             return matches[0]
 
     @classmethod
-    def find_all_children(cls, parent, tag, attrib={}):
+    def find_all_children(cls, parent, tag, attrib=None):
         """Find all matching child elements under the specified parent element.
 
         :param xml.etree.ElementTree.Element parent: Parent element
@@ -167,7 +168,7 @@ class XML(object):
         :rtype: list of xml.etree.ElementTree.Element instances
         """
         assert parent is not None
-        if type(tag) == str:
+        if isinstance(tag, str):
             elements = parent.findall(tag)
             label = tag
         else:
@@ -175,26 +176,25 @@ class XML(object):
             for t in tag:
                 elements.extend(parent.findall(t))
             label = [XML.strip_ns(t) for t in tag]
-        logger.debug("Examining {0} {1} elements under {2}"
-                     .format(len(elements), label,
-                             XML.strip_ns(parent.tag)))
+        logger.debug("Examining %s %s elements under %s",
+                     len(elements), label, XML.strip_ns(parent.tag))
         child_list = []
         for e in elements:
             found = True
 
-            for key in attrib.keys():
-                if e.get(key, None) != attrib[key]:
-                    logger.debug("Attribute '{0}' ({1}) does not match "
-                                 "expected value ({2})"
-                                 .format(XML.strip_ns(key), e.get(key, ""),
-                                         attrib[key]))
-                    found = False
-                    break
+            if attrib:
+                for key in attrib.keys():
+                    if e.get(key, None) != attrib[key]:
+                        logger.debug("Attribute '%s' (%s) does not match "
+                                     "expected value (%s)",
+                                     XML.strip_ns(key), e.get(key, ""),
+                                     attrib[key])
+                        found = False
+                        break
 
             if found:
                 child_list.append(e)
-        logger.debug("Found {0} matching {1} elements"
-                     .format(len(child_list), label))
+        logger.debug("Found %s matching %s elements", len(child_list), label)
         return child_list
 
     @classmethod
@@ -213,14 +213,14 @@ class XML(object):
            in ``ordering`` will result in COT logging a warning **iff** the
            unaccounted-for tag is in a known namespace.
         """
-        if ordering and not (new_child.tag in ordering):
+        if ordering and new_child.tag not in ordering:
             if (known_namespaces and
                     (XML.get_ns(new_child.tag) in known_namespaces)):
-                logger.warning("New child '{0}' is not in the list of "
-                               "expected children under '{1}': {2}"
-                               .format(new_child.tag,
-                                       XML.strip_ns(parent.tag),
-                                       ordering))
+                logger.warning("New child '%s' is not in the list of "
+                               "expected children under '%s': %s",
+                               new_child.tag,
+                               XML.strip_ns(parent.tag),
+                               ordering)
             # Assume this is some sort of custom element, which
             # implicitly goes at the end of the list.
             ordering = None
@@ -240,11 +240,9 @@ class XML(object):
                     if (known_namespaces and (XML.get_ns(child.tag) in
                                               known_namespaces)):
                         logger.warning(
-                            "Existing child element '{0}' is not in expected "
-                            "list of children under '{1}': \n{2}"
-                            .format(child.tag,
-                                    XML.strip_ns(parent.tag),
-                                    ordering))
+                            "Existing child element '%s' is not in expected "
+                            "list of children under '%s': \n%s",
+                            child.tag, XML.strip_ns(parent.tag), ordering)
                     # Assume this is some sort of custom element - all known
                     # elements should implicitly come before it.
                     found_position = True
@@ -275,8 +273,8 @@ class XML(object):
             attrib = {}
         element = cls.find_child(parent, tag, attrib=attrib)
         if element is None:
-            logger.debug("Creating new {0} under {1}"
-                         .format(XML.strip_ns(tag), XML.strip_ns(parent.tag)))
+            logger.debug("Creating new %s under %s",
+                         XML.strip_ns(tag), XML.strip_ns(parent.tag))
             element = ET.Element(tag)
             XML.add_child(parent, element, ordering, known_namespaces)
         if text is not None:

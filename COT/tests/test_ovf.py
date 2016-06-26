@@ -16,6 +16,8 @@
 
 """Unit test cases for COT.ovf.OVF and COT.ovf.OVFItem classes."""
 
+from __future__ import print_function
+
 import filecmp
 import os
 import os.path
@@ -26,12 +28,11 @@ import subprocess
 import xml.etree.ElementTree as ET
 import sys
 import tarfile
+from contextlib import closing
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-
-from contextlib import closing
 
 from COT.tests.ut import COT_UT
 from COT.ovf import OVF, OVFNameHelper, OVFItem
@@ -86,11 +87,13 @@ class TestOVFInputOutput(COT_UT):
         self.assertEqual('.ovf',
                          OVF.detect_type_from_name("/foo/bar/foo.ovf.5.2.2"))
         self.assertLogged(levelname='WARNING',
-                          msg="found '.ovf' in mid-filename; treating as such")
+                          msg="found '%s' in mid-filename; treating as such",
+                          args=('foo.ovf.5.2.2', '.ovf'))
         self.assertEqual('.ova',
                          OVF.detect_type_from_name("/foo/bar/foo.ova.15.4.T"))
         self.assertLogged(levelname='WARNING',
-                          msg="found '.ova' in mid-filename; treating as such")
+                          msg="found '%s' in mid-filename; treating as such",
+                          args=('foo.ova.15.4.T', '.ova'))
         # Unsupported formats
         self.assertRaises(ValueUnsupportedError, OVF.detect_type_from_name,
                           "/foo/bar.ovf/baz")
@@ -107,8 +110,8 @@ class TestOVFInputOutput(COT_UT):
         with VMContextManager(self.input_ovf, self.temp_file + '.a.b.c'):
             self.assertLogged(
                 levelname='WARNING',
-                msg="found '.ovf' in mid-filename; treating as such")
-            pass
+                msg="found '%s' in mid-filename; treating as such",
+                args=('out.ovf.a.b.c', '.ovf'))
         self.check_diff('', file2=(self.temp_file + ".a.b.c"))
 
     def test_input_output_v09(self):
@@ -283,6 +286,7 @@ ovf:size="{cfg_size}" />
                 if sys.hexversion < 0x02070000:
                     # OVF changes due to 2.6 XML handling, and MF changes due
                     # to checksum difference for the OVF
+                    # TODO: can we log this as a warning or such instead?
                     print("'{0}' file comparison skipped due to "
                           "old Python version ({1})"
                           .format(ext, platform.python_version()))

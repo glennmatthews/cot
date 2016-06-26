@@ -10,6 +10,8 @@
 
 """Git implementation of _version.py."""
 
+from __future__ import print_function
+
 import errno
 import os
 import re
@@ -29,7 +31,7 @@ def get_keywords():
     return keywords
 
 
-class VersioneerConfig:
+class VersioneerConfig(object):
     """Container for Versioneer configuration parameters."""
 
 

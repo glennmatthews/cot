@@ -16,10 +16,8 @@
 
 """Generic unit test case implementation for COT."""
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+from __future__ import print_function
+
 from difflib import unified_diff
 import os.path
 import glob
@@ -31,18 +29,6 @@ import platform
 import time
 import logging
 from logging.handlers import BufferingHandler
-from pkg_resources import resource_filename
-import traceback
-try:
-    import StringIO
-except ImportError:
-    import io as StringIO
-
-from verboselogs import VerboseLogger
-logging.setLoggerClass(VerboseLogger)
-
-logger = logging.getLogger(__name__)
-
 # Make sure there's always a "no-op" logging handler.
 try:
     from logging import NullHandler
@@ -53,6 +39,24 @@ except ImportError:
         def emit(self, record):
             """Do nothing."""
             pass
+
+import traceback
+try:
+    import StringIO
+except ImportError:
+    import io as StringIO
+
+from pkg_resources import resource_filename
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
+
+logger = logging.getLogger(__name__)
+
 
 logging.getLogger('COT').addHandler(NullHandler())
 
@@ -85,6 +89,11 @@ class UTLoggingHandler(BufferingHandler):
                     if not re.search(value, str(record.get(key))):
                         found_match = False
                         break
+                elif key == 'args':
+                    for (exp, act) in zip(value, record.get(key)):
+                        if not re.search(str(exp), str(act)):
+                            found_match = False
+                            break
                 elif not value == record.get(key):
                     found_match = False
                     break
@@ -118,8 +127,9 @@ class UTLoggingHandler(BufferingHandler):
                     "Found {length} unexpected {level} message(s):\n{messages}"
                     .format(length=len(matches),
                             level=logging.getLevelName(level),
-                            messages="\n".join([str(r['msg']) for
-                                                r in matches])))
+                            messages="\n".join(["msg: {0}, args: {1}"
+                                                .format(r['msg'], r['args'])
+                                               for r in matches])))
 
 
 class COT_UT(unittest.TestCase):
@@ -140,27 +150,31 @@ class COT_UT(unittest.TestCase):
                                                                 filename))
 
     # Standard ERROR logger messages we may expect at various points:
+    # TODO: change these to functions so we can populate 'args' for each
     NONEXISTENT_FILE = {
         'levelname': 'ERROR',
-        'msg': "File '.*' referenced in the OVF.*does not exist",
+        'msg': "File '%s' referenced in the OVF.*does not exist",
     }
     FILE_DISAPPEARED = {
         'levelname': 'ERROR',
-        'msg': "Referenced file '.*' does not exist",
+        'msg': "Referenced file '%s' does not exist",
     }
 
     # Standard WARNING logger messages we may expect at various points:
     TYPE_NOT_SPECIFIED_GUESS_HARDDISK = {
         'levelname': 'WARNING',
-        'msg': "disk type not specified.*guessing.*harddisk.*extension",
+        'msg': "disk type not specified.*guessing.*based on file extension",
+        'args': ('harddisk', ),
     }
     TYPE_NOT_SPECIFIED_GUESS_CDROM = {
         'levelname': 'WARNING',
-        'msg': "disk type not specified.*guessing.*cdrom.*extension",
+        'msg': "disk type not specified.*guessing.*based on file extension",
+        'args': ('cdrom', ),
     }
     CONTROLLER_NOT_SPECIFIED_GUESS_IDE = {
         'levelname': 'WARNING',
-        'msg': "Guessing controller type.*ide.*based on disk type",
+        'msg': "Guessing controller type.*based on disk type",
+        'args': ('ide', r'.*', r'.*'),
     }
     UNRECOGNIZED_PRODUCT_CLASS = {
         'levelname': 'WARNING',
@@ -168,7 +182,8 @@ class COT_UT(unittest.TestCase):
     }
     ADDRESS_ON_PARENT_NOT_SPECIFIED = {
         'levelname': 'WARNING',
-        'msg': "New disk address on parent not specified, guessing.*0",
+        'msg': "New disk address on parent not specified, guessing.*%s",
+        'args': ('0', ),
     }
     REMOVING_FILE = {
         'levelname': 'WARNING',
@@ -195,7 +210,8 @@ class COT_UT(unittest.TestCase):
         'msg': "Overwriting existing disk Item in OVF",
     }
 
-    def invalid_hardware_warning(self, profile, value, kind):
+    def invalid_hardware_warning(self,  # pylint: disable=no-self-use
+                                 profile, value, kind):
         """Warning log message for invalid hardware."""
         msg = ""
         if profile:
@@ -210,9 +226,16 @@ class COT_UT(unittest.TestCase):
         """Add logging handler to generic UT initialization."""
         super(COT_UT, self).__init__(method_name)
         self.logging_handler = UTLoggingHandler(self)
+        self.instance = None
+
+    def set_vm_platform(self, plat):
+        """Force the VM under test to use a particular Platform class."""
+        # pylint: disable=protected-access
+        self.instance.vm._platform = plat
 
     def check_cot_output(self, expected):
         """Grab the output from COT and check it against expected output."""
+        # pylint: disable=redefined-variable-type
         sys.stdout = StringIO.StringIO()
         output = None
         try:
@@ -307,7 +330,7 @@ class COT_UT(unittest.TestCase):
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
-        logger.debug("Created temp dir {0}".format(self.temp_dir))
+        logger.debug("Created temp dir %s", self.temp_dir)
         # Monitor the global temp directory to make sure COT cleans up
         self.tmps = set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
 
@@ -320,7 +343,7 @@ class COT_UT(unittest.TestCase):
 
         logging.getLogger('COT').removeHandler(self.logging_handler)
 
-        if hasattr(self, 'instance'):
+        if self.instance:
             self.instance.destroy()
             self.instance = None
 
@@ -328,7 +351,7 @@ class COT_UT(unittest.TestCase):
 
         # Delete the temporary directory
         if os.path.exists(self.temp_dir):
-            logger.debug("Deleting temp dir {0}".format(self.temp_dir))
+            logger.debug("Deleting temp dir %s", self.temp_dir)
             shutil.rmtree(self.temp_dir)
         self.temp_dir = None
         self.temp_file = None

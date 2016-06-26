@@ -4,7 +4,7 @@
 #          helper software not part of a standard Python distro.
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -40,6 +40,7 @@ import os
 import re
 from distutils.version import StrictVersion
 
+from .helper import guess_file_format_from_path
 from .fatdisk import FatDisk
 from .mkisofs import MkIsoFS
 from .ovftool import OVFTool
@@ -62,6 +63,7 @@ def get_checksum(path_or_obj, checksum_type):
     :param str checksum_type: Supported values are 'md5' and 'sha1'.
     :return: String containing hexadecimal file checksum
     """
+    # pylint: disable=redefined-variable-type
     if checksum_type == 'md5':
         h = hashlib.md5()
     elif checksum_type == 'sha1':
@@ -120,7 +122,7 @@ def get_disk_format(file_path):
                 raise RuntimeError("Could not find VMDK 'createType' in the "
                                    "file header:\n{0}".format(header))
             vmdk_format = match.group(1)
-        logger.info("VMDK sub-format is '{0}'".format(vmdk_format))
+        logger.info("VMDK sub-format is '%s'", vmdk_format)
         return (file_format, vmdk_format)
     else:
         # No known/applicable sub-format
@@ -162,15 +164,14 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
     curr_format, curr_subformat = get_disk_format(file_path)
 
     if curr_format == new_format and curr_subformat == new_subformat:
-        logger.info("Disk image {0} is already in '{1}' format - "
-                    "no conversion required."
-                    .format(file_path,
-                            (new_format if not new_subformat else
-                             (new_format + "," + new_subformat))))
+        logger.info("Disk image %s is already in '%s' format - "
+                    "no conversion required.", file_path,
+                    (new_format if not new_subformat else
+                     (new_format + "," + new_subformat)))
         return file_path
 
     file_name = os.path.basename(file_path)
-    (file_string, file_extension) = os.path.splitext(file_name)
+    (file_string, _) = os.path.splitext(file_name)
 
     new_file_path = None
     # any temporary file we should delete before returning
@@ -203,9 +204,8 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
             "no support for converting disk to {0} / {1}"
             .format(new_format, new_subformat))
 
-    logger.info("Successfully converted from ({0},{1}) to ({2},{3})"
-                .format(curr_format, curr_subformat,
-                        new_format, new_subformat))
+    logger.info("Successfully converted from (%s,%s) to (%s,%s)",
+                curr_format, curr_subformat, new_format, new_subformat)
 
     if temp_path is not None:
         os.remove(temp_path)
@@ -214,7 +214,7 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
 
 
 def create_disk_image(file_path, file_format=None,
-                      capacity=None, contents=[]):
+                      capacity=None, contents=None):
     """Create a new disk image at the requested location.
 
     Either :attr:`capacity` or :attr:`contents` or both must be specified.
@@ -231,15 +231,7 @@ def create_disk_image(file_path, file_format=None,
         raise RuntimeError("Either capacity or contents must be specified!")
 
     if not file_format:
-        # Guess format from file extension
-        file_format = os.path.splitext(file_path)[1][1:]
-        if not file_format:
-            raise RuntimeError(
-                "Unable to guess file format from desired filename {0}"
-                .format(file_path))
-        if file_format == 'img':
-            file_format = 'raw'
-        logger.debug("Guessed file format is {0}".format(file_format))
+        file_format = guess_file_format_from_path(file_path)
 
     if not contents:
         QEMUIMG.create_blank_disk(file_path, capacity, file_format)

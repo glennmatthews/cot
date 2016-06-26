@@ -3,7 +3,7 @@
 # test_vmdktool.py - Unit test cases for COT.helpers.vmdktoolsubmodule.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -16,13 +16,12 @@
 
 """Unit test cases for the COT.helpers.vmdktool submodule."""
 
-import mock
 import os
-
 from distutils.version import StrictVersion
 
+import mock
+
 from .test_helper import HelperUT
-from COT.helpers.helper import Helper
 from COT.helpers.vmdktool import VmdkTool
 
 
@@ -56,16 +55,7 @@ class TestVmdkTool(HelperUT):
         mock_isdir.return_value = False
         mock_exists.return_value = False
         mock_makedirs.side_effect = OSError
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = True
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = False
-        Helper._apt_updated = False
-        self.fake_output = 'is not installed and no information is available'
-        self.system = 'Linux'
-        os.environ['PREFIX'] = '/usr/local'
-        if 'DESTDIR' in os.environ:
-            del os.environ['DESTDIR']
+        self.enable_apt_install()
         self.helper.install_helper()
         self.assertEqual([
             ['dpkg', '-s', 'make'],
@@ -78,7 +68,7 @@ class TestVmdkTool(HelperUT):
             ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
             ['make', 'install', 'PREFIX=/usr/local'],
         ], self.last_argv)
-        self.assertTrue(Helper._apt_updated)
+        self.assertAptUpdated()
         # Make sure we don't 'apt-get update/install' again unnecessarily
         self.fake_output = 'install ok installed'
         os.environ['PREFIX'] = '/opt/local'
@@ -97,21 +87,7 @@ class TestVmdkTool(HelperUT):
 
     def test_install_helper_port(self):
         """Test installation via 'port'."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['port'] = True
-        Helper._port_updated = False
-        self.helper.install_helper()
-        self.assertEqual([
-            ['sudo', 'port', 'selfupdate'],
-            ['sudo', 'port', 'install', 'vmdktool']
-        ], self.last_argv)
-        self.assertTrue(Helper._port_updated)
-        # Make sure we don't 'port selfupdate' again unnecessarily
-        self.last_argv = []
-        self.helper.install_helper()
-        self.assertEqual([
-            ['sudo', 'port', 'install', 'vmdktool']
-        ], self.last_argv)
+        self.port_install_test('vmdktool')
 
     @mock.patch('os.path.isdir')
     @mock.patch('os.path.exists')
@@ -124,14 +100,7 @@ class TestVmdkTool(HelperUT):
         mock_isdir.return_value = False
         mock_exists.return_value = False
         mock_makedirs.side_effect = OSError
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = True
-        self.system = 'Linux'
-        os.environ['PREFIX'] = '/usr/local'
-        if 'DESTDIR' in os.environ:
-            del os.environ['DESTDIR']
+        self.enable_yum_install()
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'yum', '--quiet', 'install', 'make'],
@@ -144,10 +113,7 @@ class TestVmdkTool(HelperUT):
 
     def test_install_helper_unsupported(self):
         """Unable to install without a package manager."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = False
+        self.select_package_manager(None)
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 

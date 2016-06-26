@@ -89,8 +89,9 @@ class VMDescription(object):
         self._input_file = input_file
         self._product_class = None
         self.working_dir = tempfile.mkdtemp(prefix="cot")
-        logger.verbose("Temporary directory for VM created from {0}: {1}"
-                       .format(input_file, self.working_dir))
+        logger.verbose("Temporary directory for VM created from %s: %s",
+                       input_file, self.working_dir)
+        self._output_file = None
         self.output_file = output_file
         atexit.register(self.destroy)
 
@@ -102,8 +103,8 @@ class VMDescription(object):
         try:
             if hasattr(self,
                        'working_dir') and os.path.exists(self.working_dir):
-                logger.debug("Removing temporary directory '{0}"
-                             .format(self.working_dir))
+                logger.debug("Removing temporary directory '%s'",
+                             self.working_dir)
                 shutil.rmtree(self.working_dir)
         except AttributeError:
             pass
@@ -232,11 +233,13 @@ class VMDescription(object):
         raise NotImplementedError("version_long setter not implemented")
 
     # API methods needed for add-disk
-    def convert_disk_if_needed(self, file_path, kind):
+    def convert_disk_if_needed(self,   # pylint: disable=no-self-use
+                               file_path,
+                               kind):  # pylint: disable=unused-argument
         """Convert the disk to a more appropriate format if needed.
 
         :param str file_path: Image to inspect and possibly convert
-        :param str kind: Image type (harddisk/cdrom)
+        :param str kind: Image type (harddisk/cdrom).
         :return:
           * :attr:`file_path`, if no conversion was required
           * or a file path in :attr:`output_dir` containing the converted image
@@ -272,26 +275,26 @@ class VMDescription(object):
         """
         raise NotImplementedError("search_from_controller not implemented")
 
-    def find_open_controller(self, type):
+    def find_open_controller(self, controller_type):
         """Find the first open slot on a controller of the given type.
 
-        :param str type: ``'ide'`` or ``'scsi'``
+        :param str controller_type: ``'ide'`` or ``'scsi'``
         :return: ``(controller_device, address_string)`` or ``(None, None)``
         """
         raise NotImplementedError("find_open_controller not implemented")
 
-    def get_id_from_file(self, file):
+    def get_id_from_file(self, file_obj):
         """Get the file ID from the given opaque file object.
 
-        :param file: File object to query
+        :param file_obj: File object to query
         :return: Identifier string associated with this object
         """
         raise NotImplementedError("get_id_from_file not implemented")
 
-    def get_path_from_file(self, file):
+    def get_path_from_file(self, file_obj):
         """Get the file path from the given opaque file object.
 
-        :param file: File object to query
+        :param file_obj: File object to query
         :return: Relative path to the file associated with this object
         """
         raise NotImplementedError("get_path_from_file not implemented")
@@ -329,21 +332,23 @@ class VMDescription(object):
         """
         raise NotImplementedError("get_subtype_from_device not implemented")
 
-    def get_common_subtype(self, type):
+    def get_common_subtype(self, device_type):
         """Get the sub-type common to all devices of the given type.
 
-        :param str type: Device type such as ``'ide'`` or ``'memory'``.
+        :param str device_type: Device type such as ``'ide'`` or ``'memory'``.
         :return: ``None``, if multiple such devices exist and they do not all
           have the same sub-type.
         :return: Subtype string common to all devices of the type.
         """
         raise NotImplementedError("get_common_subtype not implemented")
 
-    def check_sanity_of_disk_device(self, disk, file, disk_item, ctrl_item):
+    def check_sanity_of_disk_device(self, disk, file_obj,
+                                    disk_item, ctrl_item):
         """Check if the given disk is linked properly to the other objects.
 
         :param disk: Disk object to validate
-        :param file: File object which this disk should be linked to (optional)
+        :param file_obj: File object which this disk should be linked to
+          (optional)
         :param disk_item: Disk device object which should link to this disk
           (optional)
         :param ctrl_item: Controller device object which should link to the
@@ -353,22 +358,22 @@ class VMDescription(object):
         raise NotImplementedError(
             "check_sanity_of_disk_device not implemented")
 
-    def add_file(self, file_path, file_id, file=None, disk=None):
+    def add_file(self, file_path, file_id, file_obj=None, disk=None):
         """Add a new file object to the VM or overwrite the provided one.
 
         :param str file_path: Path to file to add
         :param str file_id: Identifier string for the file in the VM
-        :param file: Existing file object to overwrite
+        :param file_obj: Existing file object to overwrite
         :param disk: Existing disk object referencing :attr:`file`.
 
         :return: New or updated file object
         """
         raise NotImplementedError("add_file not implemented")
 
-    def remove_file(self, file, disk=None, disk_drive=None):
+    def remove_file(self, file_obj, disk=None, disk_drive=None):
         """Remove the given file object from the VM.
 
-        :param file: File object to remove
+        :param file_obj: File object to remove
         :param disk: Disk object referencing :attr:`file`
         :param disk_drive: Disk drive mapping :attr:`file` to a device
         """
@@ -386,10 +391,11 @@ class VMDescription(object):
         """
         raise NotImplementedError("add_disk not implemented")
 
-    def add_controller_device(self, type, subtype, address, ctrl_item=None):
+    def add_controller_device(self, device_type, subtype, address,
+                              ctrl_item=None):
         """Create a new IDE or SCSI controller, or update existing one.
 
-        :param str type: ``'ide'`` or ``'scsi'``
+        :param str device_type: ``'ide'`` or ``'scsi'``
         :param str subtype: Subtype such as ``'virtio'`` (optional)
         :param int address: Controller address such as 0 or 1 (optional)
         :param ctrl_item: Existing controller device to update (optional)
@@ -398,16 +404,16 @@ class VMDescription(object):
         """
         raise NotImplementedError("add_controller_device not implemented")
 
-    def add_disk_device(self, type, address, name, description, disk, file,
-                        ctrl_item, disk_item=None):
+    def add_disk_device(self, disk_type, address, name, description,
+                        disk, file_obj, ctrl_item, disk_item=None):
         """Add a new disk device to the VM or update the provided one.
 
-        :param str type: ``'harddisk'`` or ``'cdrom'``
+        :param str disk_type: ``'harddisk'`` or ``'cdrom'``
         :param str address: Address on controller, such as "1:0" (optional)
         :param str name: Device name string (optional)
         :param str description: Description string (optional)
         :param disk: Disk object to map to this device
-        :param file: File object to map to this device
+        :param file_obj: File object to map to this device
         :param ctrl_item: Controller object to serve as parent
         :param disk_item: Existing disk device to update instead of making
           a new device.
@@ -417,10 +423,10 @@ class VMDescription(object):
         raise NotImplementedError("add_disk_device not implemented")
 
     # API methods needed for edit-hardware
-    def create_configuration_profile(self, id, label, description):
+    def create_configuration_profile(self, pid, label, description):
         """Create/update a configuration profile with the given ID.
 
-        :param id: Profile identifier
+        :param pid: Profile identifier
         :param str label: Brief descriptive label for the profile
         :param str description: Verbose description of the profile
         """
@@ -468,17 +474,17 @@ class VMDescription(object):
         """
         raise NotImplementedError("set_memory not implemented!")
 
-    def set_nic_type(self, type, profile_list):
+    def set_nic_type(self, nic_type, profile_list):
         """Set the hardware type for NICs.
 
         .. deprecated:: 1.5
            Use :func:`set_nic_types` instead.
 
-        :param str type: NIC hardware type
+        :param str nic_type: NIC hardware type
         :param list profile_list: Change only the given profiles.
         """
         warnings.warn("Use set_nic_types() instead", DeprecationWarning)
-        self.set_nic_types([type], profile_list)
+        self.set_nic_types([nic_type], profile_list)
 
     def set_nic_types(self, type_list, profile_list):
         """Set the hardware type(s) for NICs.
@@ -591,17 +597,17 @@ class VMDescription(object):
         """
         raise NotImplementedError("get_serial_connectivity not implemented!")
 
-    def set_scsi_subtype(self, type, profile_list):
+    def set_scsi_subtype(self, subtype, profile_list):
         """Set the device subtype for the SCSI controller(s).
 
         .. deprecated:: 1.5
            Use :func:`set_scsi_subtypes` instead.
 
-        :param str type: SCSI subtype string
+        :param str subtype: SCSI subtype string
         :param list profile_list: Change only the given profiles
         """
         warnings.warn("Use set_scsi_subtypes() instead", DeprecationWarning)
-        self.set_scsi_subtypes([type], profile_list)
+        self.set_scsi_subtypes([subtype], profile_list)
 
     def set_scsi_subtypes(self, type_list, profile_list):
         """Set the device subtype list for the SCSI controller(s).
@@ -611,17 +617,17 @@ class VMDescription(object):
         """
         raise NotImplementedError("set_scsi_subtypes not implemented!")
 
-    def set_ide_subtype(self, type, profile_list):
+    def set_ide_subtype(self, subtype, profile_list):
         """Set the device subtype for the IDE controller(s).
 
         .. deprecated:: 1.5
            Use :func:`set_ide_subtypes` instead.
 
-        :param str type: IDE subtype string
+        :param str subtype: IDE subtype string
         :param list profile_list: Change only the given profiles
         """
         warnings.warn("Use set_ide_subtypes() instead", DeprecationWarning)
-        self.set_ide_subtypes([type], profile_list)
+        self.set_ide_subtypes([subtype], profile_list)
 
     def set_ide_subtypes(self, type_list, profile_list):
         """Set the device subtype list for the IDE controller(s).
@@ -650,10 +656,10 @@ class VMDescription(object):
         """
         raise NotImplementedError("set_property_value not implemented")
 
-    def config_file_to_properties(self, file):
+    def config_file_to_properties(self, file_path):
         """Import each line of a text file into a configuration property.
 
-        :param str file: File name to import.
+        :param str file_path: File name to import.
         """
         raise NotImplementedError("config_file_to_properties not implemented")
 
@@ -675,24 +681,22 @@ class VMDescription(object):
         """
         raise NotImplementedError("info_string not implemented")
 
-    def profile_info_string(self, width=79, verbosity_option=None,
-                            enumerate=False):
+    def profile_info_string(self, width=79, verbosity_option=None):
         """Get a string summarizing available configuration profiles.
 
         :param int TEXT_WIDTH: Line length to wrap to if possible
         :param str verbosity_option: ``'brief'``, ``None`` (default),
           or ``'verbose'``
 
-        :param boolean enumerate: If ``True``, number the profiles.
         :return: Appropriately formatted and verbose string.
         """
         raise NotImplementedError("profile_info_string not implemented")
 
     # API methods needed for inject-config
-    def find_empty_drive(self, type):
+    def find_empty_drive(self, disk_type):
         """Find a disk device that exists but contains no data.
 
-        :param str type: Disk type, such as 'cdrom' or 'harddisk'
+        :param str disk_type: Disk type, such as 'cdrom' or 'harddisk'
         :return: Hardware device object, or None.
         """
         raise NotImplementedError("find_empty_drive not implemented")

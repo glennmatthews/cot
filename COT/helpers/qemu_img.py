@@ -3,7 +3,7 @@
 # qemu_img.py - Helper for 'qemu-img'
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -24,7 +24,7 @@ import os.path
 import re
 from distutils.version import StrictVersion
 
-from .helper import Helper
+from .helper import Helper, guess_file_format_from_path
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +53,7 @@ class QEMUImg(Helper):
 
     def install_helper(self):
         """Install ``qemu-img``."""
-        if self.path:
-            logger.warning("Tried to install {0} -- "
-                           "but it's already available at {1}!"
-                           .format(self.name, self.path))
+        if self.should_not_be_installed_but_is():
             return
         logger.info("Installing 'qemu-img'...")
         if not (Helper.apt_install('qemu-utils') or
@@ -79,14 +76,14 @@ class QEMUImg(Helper):
         """
         output = self.call_helper(['info', file_path])
         # Read the format from the output
-        match = re.search("file format: (\S*)", output)
+        match = re.search(r"file format: (\S*)", output)
         if not match:
             raise RuntimeError("Did not find file format string in "
                                "the output from qemu-img:\n{0}"
                                .format(output))
         file_format = match.group(1)
-        logger.info("File format of '{0}' is '{1}'"
-                    .format(os.path.basename(file_path), file_format))
+        logger.info("File format of '%s' is '%s'",
+                    os.path.basename(file_path), file_format)
         return file_format
 
     def get_disk_capacity(self, file_path):
@@ -102,8 +99,7 @@ class QEMUImg(Helper):
                                "qemu-img:\n{0}"
                                .format(output))
         capacity = match.group(1)
-        logger.verbose("Disk {0} capacity is {1} bytes".format(file_path,
-                                                               capacity))
+        logger.verbose("Disk %s capacity is %s bytes", file_path, capacity)
         return capacity
 
     def convert_disk_image(self, file_path, output_dir,
@@ -132,22 +128,22 @@ class QEMUImg(Helper):
           :attr:`new_subformat` are not supported conversion targets.
         """
         file_name = os.path.basename(file_path)
-        (file_string, file_extension) = os.path.splitext(file_name)
+        (file_string, _) = os.path.splitext(file_name)
 
         new_file_path = None
         if new_format == 'raw':
             new_file_path = os.path.join(output_dir, file_string + '.img')
-            logger.info("Invoking qemu-img to convert {0} into raw image {1}"
-                        .format(file_path, new_file_path))
+            logger.info("Invoking qemu-img to convert %s into raw image %s",
+                        file_path, new_file_path)
             self.call_helper(['convert', '-O', 'raw',
                               file_path, new_file_path])
         elif new_format == 'vmdk' and new_subformat == 'streamOptimized':
             if self.version >= StrictVersion("2.1.0"):
                 new_file_path = os.path.join(output_dir, file_string + '.vmdk')
                 # qemu-img finally supports streamOptimized - yay!
-                logger.info("Invoking qemu-img to convert {0} to "
-                            "streamOptimized VMDK {1}"
-                            .format(file_path, new_file_path))
+                logger.info("Invoking qemu-img to convert %s to "
+                            "streamOptimized VMDK %s",
+                            file_path, new_file_path)
                 self.call_helper(['convert', '-O', 'vmdk',
                                   '-o', 'subformat=streamOptimized',
                                   file_path, new_file_path])
@@ -172,17 +168,9 @@ class QEMUImg(Helper):
           will be derived from the file extension of :attr:`file_path`)
         """
         if not file_format:
-            # Guess format from file extension
-            file_format = os.path.splitext(file_path)[1][1:]
-            if not file_format:
-                raise RuntimeError(
-                    "Unable to guess file format from desired filename {0}"
-                    .format(file_path))
-            if file_format == 'img':
-                file_format = 'raw'
-            logger.debug("Guessed file format is {0}".format(file_format))
+            file_format = guess_file_format_from_path(file_path)
 
-        logger.info("Calling qemu-img to create {0} {1} image"
-                    .format(capacity, file_format))
+        logger.info("Calling qemu-img to create %s %s image",
+                    capacity, file_format)
         self.call_helper(['create', '-f', file_format,
                           file_path, capacity])

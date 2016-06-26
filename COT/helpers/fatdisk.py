@@ -49,10 +49,7 @@ class FatDisk(Helper):
 
     def install_helper(self):
         """Install ``fatdisk``."""
-        if self.path:
-            logger.warning("Tried to install {0} -- "
-                           "but it's already available at {1}!"
-                           .format(self.name, self.path))
+        if self.should_not_be_installed_but_is():
             return
         logger.info("Installing 'fatdisk'...")
         if Helper.port_install('fatdisk'):
@@ -111,21 +108,20 @@ class FatDisk(Helper):
         """
         if not capacity:
             # What size disk do we need to contain the requested file(s)?
-            capacity = 0
+            capacity_val = 0
             for content_file in contents:
-                capacity += os.path.getsize(content_file)
+                capacity_val += os.path.getsize(content_file)
             # Round capacity to the next larger multiple of 8 MB
             # just to be safe...
-            capacity = "{0}M".format(((capacity/1024/1024/8) + 1)*8)
+            capacity = "{0}M".format(((capacity_val/1024/1024/8) + 1)*8)
             logger.verbose(
-                "To contain files {0}, disk capacity of {1} will be {2}"
-                .format(contents, file_path, capacity))
+                "To contain files %s, disk capacity of %s will be %s",
+                contents, file_path, capacity)
         logger.info("Calling fatdisk to create and format a raw disk image")
         self.call_helper([file_path, 'format', 'size', capacity, 'fat32'])
         for content_file in contents:
-            logger.verbose("Calling fatdisk to add {0} to the image"
-                           .format(content_file))
+            logger.verbose("Calling fatdisk to add %s to the image",
+                           content_file)
             self.call_helper([file_path, 'fileadd', content_file,
                               os.path.basename(content_file)])
-        logger.info("All requested files successfully added to {0}"
-                    .format(file_path))
+        logger.info("All requested files successfully added to %s", file_path)

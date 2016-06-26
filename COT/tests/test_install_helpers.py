@@ -4,7 +4,7 @@
 # install_helpers.py - test cases for the COTInstallHelpers class
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -64,7 +64,11 @@ class TestCOTInstallHelpers(COT_UT):
         os.path.exists = self._os_path_exists
         filecmp.cmp = self._cmp
 
-    def stub_check_output(self, args, require_success=True, **kwargs):
+    def stub_check_output(         # pylint: disable=no-self-use
+            self,
+            args,
+            require_success=True,  # pylint: disable=unused-argument
+            **kwargs):             # pylint: disable=unused-argument
         """Stub to ensure fixed version number strings."""
         versions = {
             "fatdisk": "fatdisk, version 1.0.0-beta",
@@ -98,7 +102,9 @@ class TestCOTInstallHelpers(COT_UT):
 
     def test_verify_only(self):
         """Make sure expected results are seen with --verify-only option."""
-        def stub_find_executable(self, name):
+        # pylint: disable=protected-access
+        def stub_find_executable(_self, name):
+            """Pretend to find every executable except ovftool."""
             if name == 'ovftool':
                 return None
             return "/usr/local/bin/" + name
@@ -127,6 +133,7 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
 
     def test_install(self):
         """Show results when pretending to install helpers."""
+        # pylint: disable=protected-access
         paths = {
             "fatdisk": "/opt/local/bin/fatdisk",
             "mkisofs": None,
@@ -136,10 +143,13 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
             "vmdktool": None
         }
 
-        def stub_find_executable(self, name):
+        def stub_find_executable(_self, name):
+            """Get canned paths for various executables."""
             return paths.get(name, None)
 
-        def stub_install(cls, package):
+        @classmethod
+        def stub_install(_cls, package):
+            """Fake successful or unsuccessful installation of tools."""
             if package == "genisoimage":
                 paths["genisoimage"] = "/usr/bin/genisoimage"
                 return True
@@ -154,9 +164,9 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
         _check_output = Helper._check_output
         Helper._check_output = self.stub_check_output
         Helper.find_executable = stub_find_executable
-        Helper.apt_install = classmethod(stub_install)
-        Helper.port_install = classmethod(stub_install)
-        Helper.yum_install = classmethod(stub_install)
+        Helper.apt_install = stub_install
+        Helper.port_install = stub_install
+        Helper.yum_install = stub_install
         Helper._apt_updated = False
         Helper._port_updated = False
         expected_output = """
@@ -216,7 +226,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         """Call install_manpages with a simulated makedirs() failure."""
         self.exists[os.path.join(self.manpath, 'man1')] = False
 
-        def makedirs(*args, **kwargs):
+        def makedirs(*_args, **_kwargs):
+            """Fail os.makedirs call."""
             raise OSError(13, "Permission denied",
                           os.path.join(self.manpath, 'man1'))
         _makedirs = os.makedirs
@@ -235,7 +246,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         """Call install_manpages with a simulated copy() failure."""
         self.cmp[os.path.join(self.manpath, 'man1', 'cot.1')] = False
 
-        def copy(*args, **kwargs):
+        def copy(*_args, **_kwargs):
+            """Fail shutil.copy call."""
             raise IOError(13, "Permission denied",
                           "{0}/man1/cot.1".format(self.manpath))
         _shutil_copy = shutil.copy
@@ -256,12 +268,14 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         self.exists[os.path.join(self.manpath, 'man1')] = False
         self.cmp[os.path.join(self.manpath, 'man1')] = False
 
-        def makedirs(*args, **kwargs):
+        def makedirs(*_args, **_kwargs):
+            """Fake successful os.makedirs call."""
             pass
         _makedirs = os.makedirs
         os.makedirs = makedirs
 
-        def copy(*args, **kwargs):
+        def copy(*_args, **_kwargs):
+            """Fake successful shutil.copy call."""
             pass
         _shutil_copy = shutil.copy
         shutil.copy = copy
@@ -280,7 +294,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         """Call install_manpages to simulate updating existing manpages."""
         self.cmp[os.path.join(self.manpath, 'man1', 'cot.1')] = False
 
-        def copy(*args, **kwargs):
+        def copy(*_args, **_kwargs):
+            """Fake successful shutil.copy call."""
             pass
         _shutil_copy = shutil.copy
         shutil.copy = copy

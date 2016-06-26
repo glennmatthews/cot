@@ -16,6 +16,8 @@
 
 """Implements "info" subcommand."""
 
+from __future__ import print_function
+
 import logging
 import os.path
 
@@ -85,6 +87,8 @@ class COTInfo(COTGenericSubmodule):
         super(COTInfo, self).run()
 
         first = True
+        # TODO: UI should provide an "output" method or similar,
+        #       so that we don't call print directly here.
         for package in self.package_list:
             if not first:
                 print("")

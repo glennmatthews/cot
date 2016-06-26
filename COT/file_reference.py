@@ -3,7 +3,7 @@
 # file_reference.py - APIs abstracting away various ways to refer to a file.
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -62,13 +62,13 @@ class FileOnDisk(object):
         """Copy this file to the given destination directory."""
         if self.file_path == os.path.join(dest_dir, self.filename):
             return
-        logger.info("Copying {0} to {1}".format(self.file_path, dest_dir))
+        logger.info("Copying %s to %s", self.file_path, dest_dir)
         shutil.copy(self.file_path, dest_dir)
 
     def add_to_archive(self, tarf):
         """Copy this file into the given tarfile object."""
-        logger.info("Adding {0} to TAR file as {1}"
-                    .format(self.file_path, self.filename))
+        logger.info("Adding %s to TAR file as %s",
+                    self.file_path, self.filename)
         tarf.add(self.file_path, self.filename)
 
 
@@ -123,16 +123,16 @@ class FileInTAR(object):
     def copy_to(self, dest_dir):
         """Extract this file to the given destination directory."""
         with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
-            logger.info("Extracting {0} from {1} to {2}"
-                        .format(self.filename, self.tarfile_path, dest_dir))
+            logger.info("Extracting %s from %s to %s",
+                        self.filename, self.tarfile_path, dest_dir)
             tarf.extract(self.filename, dest_dir)
 
     def add_to_archive(self, tarf):
         """Copy this file into the given tarfile object."""
         self.open('r')
         try:
-            logger.info("Copying {0} directly from {1} to TAR file"
-                        .format(self.filename, self.tarfile_path))
+            logger.info("Copying %s directly from %s to TAR file",
+                        self.filename, self.tarfile_path)
             tarf.addfile(self.tarf.getmember(self.filename), self.obj)
         finally:
             self.close()

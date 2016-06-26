@@ -54,7 +54,7 @@ class COTGenericSubmodule(object):
         self.UI = UI
         """User interface instance (:class:`~ui_shared.UI` or subclass)."""
 
-    def ready_to_run(self):
+    def ready_to_run(self):  # pylint: disable=no-self-use
         """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``

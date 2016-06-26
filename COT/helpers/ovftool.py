@@ -3,7 +3,7 @@
 # ovftool.py - Helper for 'ovftool'
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -51,10 +51,7 @@ class OVFTool(Helper):
         :raise: :exc:`NotImplementedError` as VMware does not currently provide
           any mechanism for automatic download of ovftool.
         """
-        if self.path:
-            logger.warning("Tried to install {0} -- "
-                           "but it's already available at {1}!"
-                           .format(self.name, self.path))
+        if self.should_not_be_installed_but_is():
             return
         raise NotImplementedError(
             "No support for automated installation of ovftool, "

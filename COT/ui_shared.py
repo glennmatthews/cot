@@ -3,7 +3,7 @@
 # ui_shared.py - abstraction between CLI and GUI
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -19,9 +19,10 @@
 import logging
 import sys
 
+from verboselogs import VerboseLogger
+
 # VerboseLogger adds a log level 'verbose' between 'info' and 'debug'.
 # This lets us be a bit more fine-grained in our logging verbosity.
-from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,8 @@ class UI(object):
         """Get the width of the terminal in columns."""
         return self._terminal_width
 
-    def fill_usage(self, subcommand, usage_list):
+    def fill_usage(self,   # pylint: disable=no-self-use
+                   subcommand, usage_list):
         """Pretty-print a list of usage strings.
 
         :param str subcommand: Subcommand name/keyword
@@ -84,7 +86,7 @@ class UI(object):
             (user declines)
         """
         if self.force:
-            logger.warning("Automatically agreeing to '{0}'".format(prompt))
+            logger.warning("Automatically agreeing to '%s'", prompt)
             return True
         return self.default_confirm_response
 
@@ -98,7 +100,7 @@ class UI(object):
             sys.exit("Aborting.")
 
     def choose_from_list(self, footer, option_list, default_value,
-                         header="", info_list=[]):
+                         header="", info_list=None):
         """Prompt the user to choose from a list.
 
         :param footer: Prompt string to display following the list
@@ -150,20 +152,16 @@ class UI(object):
         :rtype: str
         """
         if self.force:
-            logger.warning("Automatically entering {0} in response to '{1}'"
-                           .format(default_value, prompt))
+            logger.warning("Automatically entering %s in response to '%s'",
+                           default_value, prompt)
             return default_value
         return default_value
 
     def get_password(self, username, host):
         """Get password string from the user.
 
-        .. warning::
-          This stub implementation does not actually interact with the user,
-          but instead always returns ``"passwd"``. Subclasses should override
-          this method.
-
         :param str username: Username the password is associated with
         :param str host: Host the password is associated with
+        :raise NotImplementedError: Must be implemented by a subclass.
         """
-        return "passwd"
+        raise NotImplementedError("No implementation of get_password()")

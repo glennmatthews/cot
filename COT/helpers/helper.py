@@ -3,7 +3,7 @@
 # helper.py - Abstract provider of a non-Python helper program.
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -25,7 +25,6 @@ import logging
 import os
 import os.path
 import re
-import requests
 import shutil
 import subprocess
 import tarfile
@@ -40,35 +39,35 @@ except ImportError:
     import tempfile
 
     @contextlib.contextmanager
-    def TemporaryDirectory(suffix='', prefix='tmp', dir=None):
+    def TemporaryDirectory(suffix='', prefix='tmp', dirpath=None):
         """Create a temporary directory and make sure it's deleted later.
 
         Reimplementation of Python 3's ``tempfile.TemporaryDirectory``.
         """
-        tempdir = tempfile.mkdtemp(suffix, prefix, dir)
+        tempdir = tempfile.mkdtemp(suffix, prefix, dirpath)
         try:
             yield tempdir
         finally:
             shutil.rmtree(tempdir)
 
+import requests
 from verboselogs import VerboseLogger
+
 logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
 
-# Default method to be used when COT.helpers is run by itself without
-# the broader COT package.
-# The COT package will override this with e.g. the CLI.confirm method.
-def confirm(prompt, force=False):
-    """Prompt user to confirm the requested operation.
-
-    Auto-accepts if :attr:`force` is set to ``True``.
-
-    :param str prompt: Message to prompt the user with
-    :return: ``True`` (user confirms acceptance) or ``False``
-      (user declines)
-    """
-    return True
+def guess_file_format_from_path(file_path):
+    """Guess the preferred file format based on file path/extension."""
+    file_format = os.path.splitext(file_path)[1][1:]
+    if not file_format:
+        raise RuntimeError(
+            "Unable to guess file format from desired filename {0}"
+            .format(file_path))
+    if file_format == 'img':
+        file_format = 'raw'
+    logger.debug("Guessed file format is %s", file_format)
+    return file_format
 
 
 class HelperNotFoundError(OSError):
@@ -94,6 +93,7 @@ class Helper(object):
     .. autosummary::
       :nosignatures:
 
+      confirm
       apt_install
       port_install
       yum_install
@@ -115,6 +115,20 @@ class Helper(object):
       call_helper
       install_helper
     """
+
+    @classmethod
+    def confirm(cls, _prompt):
+        """Prompt user to confirm the requested operation.
+
+        Default method to be used when COT.helpers is run by itself without
+        the broader COT package.
+        The COT package will override this with e.g. the CLI.confirm method.
+
+        :param str _prompt: Message to prompt the user with
+        :return: ``True`` (user confirms acceptance) or ``False``
+                 (user declines)
+        """
+        return True
 
     PACKAGE_MANAGERS = {
         "port":    find_executable('port'),
@@ -148,14 +162,14 @@ class Helper(object):
         :param str url: URL of a .tgz or .tar.gz file to download.
         """
         with TemporaryDirectory(prefix="cot_helper") as d:
-            logger.debug("Temporary directory is {0}".format(d))
-            logger.verbose("Downloading and extracting {0}".format(url))
+            logger.debug("Temporary directory is %s", d)
+            logger.verbose("Downloading and extracting %s", url)
             response = requests.get(url, stream=True)
             tgz = os.path.join(d, 'helper.tgz')
             with open(tgz, 'wb') as f:
                 shutil.copyfileobj(response.raw, f)
             del response
-            logger.debug("Extracting {0}".format(tgz))
+            logger.debug("Extracting %s", tgz)
             # the "with tarfile.open()..." construct isn't supported in 2.6
             tarf = tarfile.open(tgz, "r:gz")
             try:
@@ -165,7 +179,7 @@ class Helper(object):
             try:
                 yield d
             finally:
-                logger.debug("Cleaning up temporary directory {0}".format(d))
+                logger.debug("Cleaning up temporary directory %s", d)
 
     _apt_updated = False
     """Whether we have run 'apt-get update' yet."""
@@ -223,8 +237,8 @@ class Helper(object):
             os.makedirs(directory, permissions)
             return True
         except OSError:
-            logger.verbose("Directory {0} creation failed, trying sudo"
-                           .format(directory))
+            logger.verbose("Directory %s creation failed, trying sudo",
+                           directory)
             cls._check_call(['sudo', 'mkdir', '-p', '--mode=755', directory])
 
     def __init__(self, name, version_args=None,
@@ -258,14 +272,12 @@ class Helper(object):
     def path(self):
         """Discovered path to the helper."""
         if not self._path:
-            logger.verbose("Checking for helper executable {0}"
-                           .format(self.name))
+            logger.verbose("Checking for helper executable %s", self.name)
             self._path = self.find_executable(self.name)
             if self._path:
-                logger.verbose("{0} is at {1}".format(self.name,
-                                                      self.path))
+                logger.verbose("%s is at %s", self.name, self.path)
             else:
-                logger.verbose("No path to {0} found".format(self.name))
+                logger.verbose("No path to %s found", self.name)
         return self._path
 
     @property
@@ -294,9 +306,9 @@ class Helper(object):
           else ``None``.
         """
         if not self.path:
-            if not confirm("{0} does not appear to be installed.\n"
-                           "Try to install it?"
-                           .format(self.name)):
+            if not self.confirm("{0} does not appear to be installed.\n"
+                                "Try to install it?"
+                                .format(self.name)):
                 raise HelperNotFoundError(
                     1,
                     "Unable to proceed without helper program '{0}'. "
@@ -310,6 +322,18 @@ class Helper(object):
             self._check_call(args, require_success)
             return None
 
+    def should_not_be_installed_but_is(self):
+        """Check whether the tool is already installed.
+
+        :return: False, and logs a warning message, if installed
+        :return: True, if not installed
+        """
+        if self.path:
+            logger.warning("Tried to install %s -- but it's already available "
+                           "at %s!", self.name, self.path)
+            return True
+        return False
+
     # Abstract interfaces to be implemented by subclasses
 
     def install_helper(self):
@@ -318,13 +342,9 @@ class Helper(object):
         :raise: :exc:`NotImplementedError` as this method must be implemented
           by a concrete subclass.
         """
-        if self.path:
-            logger.warning("Tried to install {0} -- "
-                           "but it's already available at {1}!"
-                           .format(self.name, self.path))
+        if self.should_not_be_installed_but_is():
             return
-        raise NotImplementedError("Unsure how to install {0}"
-                                  .format(self.name))
+        raise NotImplementedError("Unsure how to install %s", self.name)
 
     # Private methods
 
@@ -347,7 +367,7 @@ class Helper(object):
           :attr:`require_success` is not ``False``
         """
         cmd = args[0]
-        logger.info("Calling '{0}'...".format(" ".join(args)))
+        logger.info("Calling '%s'...", " ".join(args))
         try:
             subprocess.check_call(args, **kwargs)
         except OSError as e:
@@ -360,7 +380,7 @@ class Helper(object):
                                   "Helper program '{0}' exited with error {1}"
                                   .format(cmd, e.returncode))
         logger.info("...done")
-        logger.debug("{0} exited successfully".format(cmd))
+        logger.debug("%s exited successfully", cmd)
 
     @classmethod
     def _check_output(cls, args, require_success=True, **kwargs):
@@ -381,8 +401,7 @@ class Helper(object):
           :attr:`require_success` is not ``False``
         """
         cmd = args[0]
-        logger.info("Calling '{0}' and capturing its output..."
-                    .format(" ".join(args)))
+        logger.info("Calling '%s' and capturing its output...", " ".join(args))
         # In 2.7+ we can use subprocess.check_output(), but in 2.6,
         # we have to work around its absence.
         try:
@@ -410,7 +429,7 @@ class Helper(object):
                 stdout = e.output.decode()
             except AttributeError:
                 # CalledProcessError doesn't have 'output' in 2.6
-                stdout = "(output unavailable)"
+                stdout = u"(output unavailable)"
             if require_success:
                 raise HelperError(e.returncode,
                                   "Helper program '{0}' exited with error {1}:"
@@ -418,5 +437,5 @@ class Helper(object):
                                                         " ".join(args),
                                                         stdout))
         logger.info("...done")
-        logger.verbose("{0} output:\n{1}".format(cmd, stdout))
+        logger.verbose("%s output:\n%s", cmd, stdout)
         return stdout

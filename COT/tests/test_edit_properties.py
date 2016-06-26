@@ -34,6 +34,7 @@ class TestCOTEditProperties(COT_UT):
         super(TestCOTEditProperties, self).setUp()
         self.instance = COTEditProperties(UI())
         self.instance.output = self.temp_file
+        self.counter = 0
 
     def test_set_property_value(self):
         """Set the value of an existing property."""
@@ -227,7 +228,8 @@ transport/filesystem/etc/ovf-transport iso com.vmware.guestInfo">
 
     UNKNOWN_TRANSPORT = {
         'levelname': 'WARNING',
-        'msg': "Unknown transport value 'foobar'. .*"
+        'msg': "Unknown transport value '%s'. .*",
+        'args': ('foobar', ),
     }
 
     def test_set_transport_unknown(self):
@@ -364,7 +366,6 @@ Enter new value for this property
             },
             None,
         ]
-        self.counter = 0
 
         # sanity check
         self.assertEqual(len(expected_prompts), len(custom_inputs),
@@ -374,12 +375,13 @@ Enter new value for this property
                          "expected_prompts {0} != expected_logs {1}"
                          .format(len(expected_prompts), len(expected_logs)))
 
-        def custom_input(prompt, default_value):
+        def custom_input(prompt,
+                         default_value):  # pylint: disable=unused-argument
             """Mock for get_input."""
             if self.counter > 0:
                 log = expected_logs[self.counter-1]
                 if log is not None:
-                    self.assertLogged(**log)
+                    self.assertLogged(**log)  # pylint: disable=not-a-mapping
                 else:
                     self.assertNoLogsOver(logging.INFO)
             # Get output and flush it
@@ -390,17 +392,18 @@ Enter new value for this property
                 "failed at index {0}! Expected:\n{1}\nActual:\n{2}".format(
                     self.counter, expected_prompts[self.counter], prompt))
             # Return our canned input
-            input = custom_inputs[self.counter]
+            canned_input = custom_inputs[self.counter]
             self.counter += 1
-            return input
+            return canned_input
 
         _input = self.instance.UI.get_input
         try:
             self.instance.UI.get_input = custom_input
             self.instance.package = self.input_ovf
             self.instance.run()
-            if expected_logs[self.counter - 1] is not None:
-                self.assertLogged(**expected_logs[self.counter - 1])
+            log = expected_logs[self.counter - 1]
+            if log is not None:
+                self.assertLogged(**log)  # pylint: disable=not-a-mapping
         finally:
             self.instance.UI.get_input = _input
         self.instance.finished()

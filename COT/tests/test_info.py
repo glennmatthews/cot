@@ -43,6 +43,7 @@ class TestCOTInfo(COT_UT):
 
     def test_invalid_args(self):
         """Test various invalid inputs."""
+        # pylint: disable=redefined-variable-type
         with self.assertRaises(InvalidInputError):
             self.instance.package_list = ["/foo/bar/baz"]
         with self.assertRaises(InvalidInputError):
@@ -695,6 +696,7 @@ Properties:
 
     def test_wrapping(self):
         """Test info string on a narrower-than-usual terminal."""
+        # pylint: disable=protected-access
         self.instance.UI._terminal_width = 60
 
         self.instance.package_list = [self.invalid_ovf]
