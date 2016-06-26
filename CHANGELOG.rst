@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Added**
+
+- Additional code quality validation with `Pylint`_. (`#49`_).
+
 `1.5.2`_ - 2016-06-17
 ---------------------
 
@@ -411,6 +418,7 @@ Initial public release.
 .. _#45: https://github.com/glennmatthews/cot/issues/45
 .. _#47: https://github.com/glennmatthews/cot/issues/47
 .. _#48: https://github.com/glennmatthews/cot/issues/48
+.. _#49: https://github.com/glennmatthews/cot/issues/49
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -433,6 +441,7 @@ Initial public release.
 .. _pycodestyle: https://pypi.python.org/pypi/pycodestyle
 .. _pydocstyle: https://pypi.python.org/pypi/pydocstyle
 .. _`flake8-docstrings`: https://pypi.python.org/pypi/flake8-docstrings
+.. _Pylint: https://www.pylint.org/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
 .. _1.5.2: https://github.com/glennmatthews/cot/compare/v1.5.1...v1.5.2
