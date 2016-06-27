@@ -50,18 +50,11 @@ def guess_manpath():
     return man_dir
 
 
-def verify_manpages():
+def verify_manpages(man_dir):
     """Verify installation of COT's manual pages.
 
     :return: (result, message)
     """
-    try:
-        resource_listdir("COT", "docs/man")
-    except OSError as e:
-        return False, "UNABLE TO FIND PAGES: " + str(e)
-
-    man_dir = guess_manpath()
-
     for f in resource_listdir("COT", "docs/man"):
         src_path = resource_filename("COT", os.path.join("docs/man", f))
         # Which man section does this belong in?
@@ -82,48 +75,60 @@ def verify_manpages():
     return True, "already installed, no updates needed"
 
 
-def install_manpages():
+def _install_manpage(src_path, man_dir):
+    """Install the given manual page for COT.
+
+    :return: (page_previously_installed, page_updated)
+    :raise IOError: if installation fails under some circumstances
+    :raise OSError: if installation fails under other circumstances
+    """
+    # Which man section does this belong in?
+    f = os.path.basename(src_path)
+    section = os.path.splitext(f)[1][1:]
+    dest = os.path.join(man_dir, "man{0}".format(section))
+    if not os.path.exists(dest):
+        logger.verbose("Creating manpage directory %s", dest)
+        os.makedirs(dest)
+
+    previously_installed = False
+    dest_path = os.path.join(dest, f)
+    if os.path.exists(dest_path):
+        previously_installed = True
+        if filecmp.cmp(src_path, dest_path):
+            logger.verbose("File %s does not need to be updated", dest_path)
+            return previously_installed, False
+
+    logger.info("Copying %s to %s", f, dest_path)
+    shutil.copy(src_path, dest_path)
+    return previously_installed, True
+
+
+def install_manpages(man_dir):
     """Install COT's manual pages.
 
     :return: (result, message)
     """
     installed_any = False
     some_preinstalled = False
-    try:
-        resource_listdir("COT", "docs/man")
-    except OSError as e:
-        return False, "UNABLE TO FIND PAGES: " + str(e)
-
-    man_dir = guess_manpath()
+    # default success message, may be overridden below by more specific msg
+    msg = "successfully installed to {0}".format(man_dir)
 
     try:
         for f in resource_listdir("COT", "docs/man"):
             src_path = resource_filename("COT", os.path.join("docs/man", f))
-            # Which man section does this belong in?
-            section = os.path.splitext(f)[1][1:]
-            dest = os.path.join(man_dir, "man{0}".format(section))
-            if not os.path.exists(dest):
-                logger.verbose("Creating manpage directory %s", dest)
-                os.makedirs(dest)
-
-            dest_path = os.path.join(dest, f)
-            if os.path.exists(dest_path):
-                some_preinstalled = True
-                if filecmp.cmp(src_path, dest_path):
-                    logger.verbose("File %s does not need to be updated",
-                                   dest_path)
-                    continue
-            logger.info("Copying %s to %s", f, dest_path)
-            shutil.copy(src_path, dest_path)
-            installed_any = True
+            prev, new = _install_manpage(src_path, man_dir)
+            some_preinstalled |= prev
+            installed_any |= new
     except (IOError, OSError) as e:
         return False, "INSTALLATION FAILED: " + str(e)
 
     if some_preinstalled:
-        if not installed_any:
-            return True, "already installed, no updates needed"
-        return True, "successfully updated in {0}".format(man_dir)
-    return True, "successfully installed to {0}".format(man_dir)
+        if installed_any:
+            msg = "successfully updated in {0}".format(man_dir)
+        else:
+            msg = "already installed, no updates needed"
+
+    return True, msg
 
 
 class COTInstallHelpers(COTGenericSubmodule):
@@ -162,10 +167,17 @@ class COTInstallHelpers(COTGenericSubmodule):
 
         :return: (result, message)
         """
+        try:
+            resource_listdir("COT", "docs/man")
+        except OSError as e:
+            return False, "UNABLE TO FIND PAGES: " + str(e)
+
+        man_dir = guess_manpath()
+
         if self.verify_only:
-            return verify_manpages()
+            return verify_manpages(man_dir)
         else:
-            return install_manpages()
+            return install_manpages(man_dir)
 
     def run(self):
         """Verify all helper tools and install any that are missing."""

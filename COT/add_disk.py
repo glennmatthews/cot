@@ -22,6 +22,11 @@
   :nosignatures:
 
   add_disk_worker
+  confirm_elements
+  guess_controller_type
+  guess_disk_type_from_extension
+  search_for_elements
+  validate_elements
   validate_controller_address
 
 **Classes**
@@ -269,31 +274,34 @@ def guess_disk_type_from_extension(disk_file):
     return disk_type
 
 
-def find_elements(vm, ui, disk_type, disk_file, file_id, controller, address):
-    """Find any existing file, disk, controller item, and disk item."""
-    # TODO: refactor more - there are way too many params being passed around!
-    # A disk is defined by up to four different sections in the OVF:
-    #
-    # File (references the actual disk image file)
-    # Disk (references the File, only used for HD not CD-ROM)
-    # Item (defines the SCSI/IDE controller)
-    # Item (defines the disk drive, links to controller and File or Disk)
-    #
-    # For each of these four sections, we need to know whether to add
-    # a new one or overwrite an existing one. Depending on the user
-    # arguments, we can do this by as many as three different approaches:
-    #
-    # 1) Check whether the DISK_IMAGE file name matches an existing File
-    #    in the OVF (and from there, find the associated Disk and Items)
-    # 2) Check whether the --file-id matches an existing File and/or Disk
-    #    in the OVF (and from there, find the associated Items)
-    # 3) Check whether --controller and/or --address match existing Items
-    #    in the OVF (and from there, find the associated Disk and/or File)
-    #
-    # Where it gets extra fun is if the user has specified more than one
-    # of the above arguments - in which case we need to make sure that
-    # all relevant approaches agree on what sections we're talking about...
+def search_for_elements(vm, disk_file, file_id, controller, address):
+    """Search for a unique set of objects based on the given criteria.
 
+    A disk is defined by up to four different sections in the OVF:
+
+    File (references the actual disk image file)
+    Disk (references the File, only used for HD not CD-ROM)
+    Item (defines the SCSI/IDE controller)
+    Item (defines the disk drive, links to controller and File or Disk)
+
+    For each of these four sections, we need to know whether to add
+    a new one or overwrite an existing one. Depending on the user
+    arguments, we can do this by as many as three different approaches:
+
+    1. Check whether the DISK_IMAGE file name matches an existing File
+       in the OVF (and from there, find the associated Disk and Items)
+    2. Check whether the file-id matches an existing File and/or Disk
+       in the OVF (and from there, find the associated Items)
+    3. Check whether controller type and/or device address match existing Items
+       in the OVF (and from there, find the associated Disk and/or File)
+
+    Where it gets extra fun is if the user has specified more than one
+    of the above arguments - in which case we need to make sure that
+    all relevant approaches agree on what sections we're talking about...
+
+    :raises ValueMismatchError: if the criteria select a non-unique set.
+    :return: (file_object, disk_object, controller_item, disk_item)
+    """
     # 1) Check whether the DISK_IMAGE file name matches an existing File
     #    in the OVF (and from there, find the associated Disk and Items)
     (f1, d1, ci1, di1) = vm.search_from_filename(disk_file)
@@ -313,12 +321,43 @@ def find_elements(vm, ui, disk_type, disk_file, file_id, controller, address):
                                                    address)
 
     file_obj = check_for_conflict("File to overwrite", [f1, f2, f3])
-    disk = check_for_conflict("Disk to overwrite", [d1, d2, d3])
+    disk_obj = check_for_conflict("Disk to overwrite", [d1, d2, d3])
     ctrl_item = check_for_conflict("controller Item to use",
                                    [ci1, ci2, ci3])
     disk_item = check_for_conflict("disk Item to overwrite",
                                    [di1, di2, di3])
 
+    return file_obj, disk_obj, ctrl_item, disk_item
+
+
+def guess_controller_type(vm, ctrl_item, disk_type):
+    """If a controller type wasn't specified, try to guess from context."""
+    if ctrl_item is None:
+        # If the user didn't tell us which controller type they wanted,
+        # and we didn't find a controller item based on existing file/disk,
+        # then we need to guess which type of controller we need,
+        # based on the platform and the disk type.
+        ctrl_type = vm.platform.controller_type_for_device(disk_type)
+        logger.warning("Guessing controller type should be %s "
+                       "based on disk type %s and platform %s",
+                       ctrl_type, disk_type, vm.platform.__name__)
+    else:
+        ctrl_type = vm.get_type_from_device(ctrl_item)
+        if ctrl_type != 'ide' and ctrl_type != 'scsi':
+            raise ValueUnsupportedError("controller ResourceType",
+                                        ctrl_type,
+                                        "'ide' or 'scsi'")
+        logger.info("Guessing controller type '%s' from existing Item",
+                    ctrl_type)
+    return ctrl_type
+
+
+def validate_elements(vm, file_obj, disk_obj, disk_item, ctrl_item,
+                      file_id, ctrl_type):
+    """Validate any existing file, disk, controller item, and disk item.
+
+    :raises ValueMismatchError: if the search criteria select a non-unique set.
+    """
     # Ok, we now have confirmed that we have at most one of each of these
     # four objects. Now it's time for some sanity checking...
 
@@ -327,13 +366,13 @@ def find_elements(vm, ui, disk_type, disk_file, file_id, controller, address):
             match_or_die("File id", vm.get_id_from_file(file_obj),
                          "--file-id", file_id)
         # Should never fail this test if the above logic was sound...
-        if disk is not None:
+        if disk_obj is not None:
             match_or_die("File id", vm.get_id_from_file(file_obj),
-                         "Disk fileRef", vm.get_file_ref_from_disk(disk))
+                         "Disk fileRef", vm.get_file_ref_from_disk(disk_obj))
 
-    if disk is not None:
+    if disk_obj is not None:
         if file_id is not None:
-            match_or_die("Disk fileRef", vm.get_file_ref_from_disk(disk),
+            match_or_die("Disk fileRef", vm.get_file_ref_from_disk(disk_obj),
                          "--file-id", file_id)
         if file_obj is None:
             # This will happen if we're replacing a placeholder entry
@@ -341,46 +380,56 @@ def find_elements(vm, ui, disk_type, disk_file, file_id, controller, address):
             logger.verbose("Found Disk but not File - maybe placeholder?")
 
     if disk_item is not None:
-        ui.confirm_or_die("Existing disk Item is a {0}. Change it to a {1}?"
-                          .format(vm.get_type_from_device(disk_item),
-                                  disk_type))
-        vm.check_sanity_of_disk_device(disk, file_obj, disk_item, ctrl_item)
+        vm.check_sanity_of_disk_device(disk_obj, file_obj,
+                                       disk_item, ctrl_item)
 
     if ctrl_item is not None:
-        if controller is not None:
-            match_or_die("controller type",
-                         vm.get_type_from_device(ctrl_item),
-                         "--controller", controller)
-        else:
-            controller = vm.get_type_from_device(ctrl_item)
-            if controller != 'ide' and controller != 'scsi':
-                raise ValueUnsupportedError("controller ResourceType",
-                                            controller,
-                                            "'ide' or 'scsi'")
-            logger.info("Guessing controller type '%s' from existing Item",
-                        controller)
-    else:
-        # If the user didn't tell us which controller type they wanted,
-        # and we didn't find a controller item based on existing file/disk,
-        # then we need to guess which type of controller we need,
-        # based on the platform and the disk type.
-        if controller is None:
-            controller = vm.platform.controller_type_for_device(disk_type)
-            logger.warning("Guessing controller type should be %s "
-                           "based on disk type %s and platform %s",
-                           controller, disk_type, vm.platform.__name__)
-
-        if address is None:
-            # We didn't find a specific controller from the user info,
-            # but also the user didn't request a specific controller.
-            # So try and just look for any controller of the right type
-            (ctrl_item, address) = vm.find_open_controller(
-                controller)
+        match_or_die("controller type",
+                     vm.get_type_from_device(ctrl_item),
+                     "--controller", ctrl_type)
 
     # Whew! Everything looks sane!
     logger.debug("Validation of existing data complete")
 
-    return (file_obj, disk, ctrl_item, disk_item, controller, address)
+
+def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
+                     disk_type, controller, ctrl_item, subtype):
+    """Get user confirmation of any risky or unusual operations."""
+    # TODO: more refactoring!
+    if file_obj is not None:
+        ui.confirm_or_die("Replace existing file {0} with {1}?"
+                          .format(vm.get_path_from_file(file_obj),
+                                  disk_image))
+        logger.warning("Overwriting existing File in OVF")
+
+    if file_obj is None and (disk_obj is not None or disk_item is not None):
+        ui.confirm_or_die(
+            "Add disk file to existing (but empty) {0} drive?"
+            .format(disk_type))
+
+    if disk_obj is not None:
+        logger.warning("Overwriting existing Disk in OVF")
+
+    if disk_item is not None:
+        ui.confirm_or_die("Existing disk Item is a {0}. Change it to a {1}?"
+                          .format(vm.get_type_from_device(disk_item),
+                                  disk_type))
+        # We'll overwrite the existing disk Item instead of deleting
+        # and recreating it, in order to preserve things like Description
+        logger.warning("Overwriting existing disk Item in OVF")
+
+    if ctrl_item is not None:
+        if subtype is not None:
+            curr_subtype = vm.get_subtype_from_device(ctrl_item)
+            if curr_subtype is not None and curr_subtype != subtype:
+                ui.confirm_or_die("Change {0} controller subtype from "
+                                  "'{1}' to '{2}'?".format(controller,
+                                                           curr_subtype,
+                                                           subtype))
+    else:
+        # In most cases we are NOT adding a new controller, so be safe...
+        ui.confirm_or_die("Add new {0} controller to OVF descriptor?"
+                          .format(controller.upper()))
 
 
 def add_disk_worker(vm,
@@ -436,46 +485,23 @@ def add_disk_worker(vm,
 
     disk_file = os.path.basename(DISK_IMAGE)
 
-    (file_obj, disk, ctrl_item, disk_item, controller, address) = \
-        find_elements(vm, UI, disk_type, disk_file, file_id,
-                      controller, address)
+    (file_obj, disk, ctrl_item, disk_item) = \
+        search_for_elements(vm, disk_file, file_id, controller, address)
 
-    if file_obj is not None:
-        UI.confirm_or_die("Replace existing file {0} with {1}?"
-                          .format(vm.get_path_from_file(file_obj),
-                                  DISK_IMAGE))
-        logger.warning("Overwriting existing File in OVF")
+    if controller is None:
+        controller = guess_controller_type(vm, ctrl_item, disk_type)
 
-    if file_obj is None and (disk is not None or disk_item is not None):
-        UI.confirm_or_die(
-            "Add disk file to existing (but empty) {0} drive?"
-            .format(disk_type))
+    if ctrl_item is None and address is None:
+        # We didn't find a specific controller from the user info,
+        # but also the user didn't request a specific controller.
+        # So try and just look for any controller of the right type
+        (ctrl_item, address) = vm.find_open_controller(controller)
 
-    if disk is not None:
-        logger.warning("Overwriting existing Disk in OVF")
+    validate_elements(vm, file_obj, disk, disk_item, ctrl_item,
+                      file_id, controller)
 
-    if disk_item is not None:
-        # We'll overwrite the existing disk Item instead of deleting
-        # and recreating it, in order to preserve things like Description
-        logger.warning("Overwriting existing disk Item in OVF")
-
-    if ctrl_item is not None:
-        if subtype is not None:
-            curr_subtype = vm.get_subtype_from_device(ctrl_item)
-            if curr_subtype is not None and curr_subtype != subtype:
-                UI.confirm_or_die("Change {0} controller subtype from "
-                                  "'{1}' to '{2}'?".format(controller,
-                                                           curr_subtype,
-                                                           subtype))
-    else:
-        # In most cases we are NOT adding a new controller, so be safe...
-        UI.confirm_or_die("Add new {0} controller to OVF descriptor?"
-                          .format(controller.upper()))
-        if subtype is None:
-            # Look for any existing controller of this type;
-            # if found, re-use its subtype for consistency
-            logger.verbose("Looking for subtype of existing controllers")
-            subtype = vm.get_common_subtype(controller)
+    confirm_elements(vm, UI, file_obj, DISK_IMAGE, disk, disk_item, disk_type,
+                     controller, ctrl_item, subtype)
 
     # OK - let's add things!
     if file_id is None and file_obj is not None:
@@ -499,6 +525,12 @@ def add_disk_worker(vm,
         # let VM choose controller address if necessary
         ctrl_addr = None
         disk_addr = None
+
+    if ctrl_item is None and subtype is None:
+        # Look for any existing controller of this type;
+        # if found, re-use its subtype for consistency
+        logger.verbose("Looking for subtype of existing controllers")
+        subtype = vm.get_common_subtype(controller)
 
     ctrl_item = vm.add_controller_device(controller, subtype,
                                          ctrl_addr, ctrl_item)

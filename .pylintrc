@@ -47,15 +47,15 @@ disable=bad-continuation,
 max-args=10                 ; add_disk_worker
 max-attributes=98           ; OVF
 # default: max-bool-expr=5
-max-branches=28             ; OVFNameHelper.__init__
+# default: max-branches=12
 max-locals=29               ; OVF.profile_info_list
 max-public-methods=74       ; OVF
 # default: max-returns=6
-max-statements=160          ; OVFNameHelper.__init__
+# default: max-statements=50
 
 [FORMAT]
 
-max-module-lines=3900       ; OVF
+max-module-lines=2600       ; OVF
 
 [VARIABLES]
 

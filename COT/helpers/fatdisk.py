@@ -47,6 +47,25 @@ class FatDisk(Helper):
         super(FatDisk, self).__init__("fatdisk",
                                       version_regexp="version ([0-9.]+)")
 
+    def _install_linux_prereqs(self):
+        """Install Linux tools that are prerequisites for fatdisk."""
+        # Fatdisk installation requires make
+        if not self.find_executable('make'):
+            logger.info("fatdisk requires 'make'... installing 'make'")
+            if not (Helper.apt_install('make') or
+                    Helper.yum_install('make')):
+                raise NotImplementedError("Not sure how to install 'make'")
+
+        # Fatdisk requires clang or gcc or g++
+        if not (self.find_executable('clang') or
+                self.find_executable('gcc') or
+                self.find_executable('g++')):
+            logger.info("fatdisk requires a C compiler... installing 'gcc'")
+            if not (Helper.apt_install('gcc') or
+                    Helper.yum_install('gcc')):
+                raise NotImplementedError(
+                    "Not sure how to install a C compiler")
+
     def install_helper(self):
         """Install ``fatdisk``."""
         if self.should_not_be_installed_but_is():
@@ -55,22 +74,7 @@ class FatDisk(Helper):
         if Helper.port_install('fatdisk'):
             pass
         elif platform.system() == 'Linux':
-            # Fatdisk installation requires make
-            if not self.find_executable('make'):
-                logger.info("fatdisk requires 'make'... installing 'make'")
-                if not (Helper.apt_install('make') or
-                        Helper.yum_install('make')):
-                    raise NotImplementedError("Not sure how to install 'make'")
-            # Fatdisk requires clang or gcc or g++
-            if not (self.find_executable('clang') or
-                    self.find_executable('gcc') or
-                    self.find_executable('g++')):
-                logger.info(
-                    "fatdisk requires a C compiler... installing 'gcc'")
-                if not (Helper.apt_install('gcc') or
-                        Helper.yum_install('gcc')):
-                    raise NotImplementedError(
-                        "Not sure how to install a C compiler")
+            self._install_linux_prereqs()
             with self.download_and_expand(
                     'https://github.com/goblinhack/'
                     'fatdisk/archive/v1.0.0-beta.tar.gz') as d:
