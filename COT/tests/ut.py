@@ -74,7 +74,7 @@ class UTLoggingHandler(BufferingHandler):
         """Add the given log record to our internal buffer."""
         self.buffer.append(record.__dict__)
 
-    def shouldFlush(self, record):
+    def shouldFlush(self, record):  # noqa: N802
         """Return False - we only flush manually."""
         return False
 
@@ -101,7 +101,7 @@ class UTLoggingHandler(BufferingHandler):
                 matches.append(record)
         return matches
 
-    def assertLogged(self, **kwargs):
+    def assertLogged(self, **kwargs):  # noqa: N802
         """Fail unless the given log messages were each seen exactly once."""
         matches = self.logs(**kwargs)
         if not matches:
@@ -115,7 +115,7 @@ class UTLoggingHandler(BufferingHandler):
         for r in matches:
             self.buffer.remove(r)
 
-    def assertNoLogsOver(self, max_level):
+    def assertNoLogsOver(self, max_level):  # noqa: N802
         """Fail if any logs are logged higher than the given level."""
         for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
                       logging.INFO, logging.VERBOSE, logging.DEBUG):
@@ -132,7 +132,7 @@ class UTLoggingHandler(BufferingHandler):
                                                for r in matches])))
 
 
-class COT_UT(unittest.TestCase):
+class COT_UT(unittest.TestCase):  # noqa: N801
     """Subclass of unittest.TestCase adding some additional behaviors."""
 
     from COT.helpers.ovftool import OVFTool
@@ -371,13 +371,13 @@ class COT_UT(unittest.TestCase):
                 self.fail("OVF not valid according to ovftool:\n{0}"
                           .format(e.strerror))
 
-    def assertLogged(self, **kwargs):
+    def assertLogged(self, **kwargs):  # noqa: N802
         """Fail unless the given logs were generated.
 
         See :meth:`UTLoggingHandler.assertLogged`.
         """
         self.logging_handler.assertLogged(**kwargs)
 
-    def assertNoLogsOver(self, max_level):
+    def assertNoLogsOver(self, max_level):  # noqa: N802
         """Fail if any logs were logged higher than the given level."""
         self.logging_handler.assertNoLogsOver(max_level)

@@ -59,7 +59,7 @@ class TestCOTInstallHelpers(COT_UT):
         self._cmp = filecmp.cmp
         filecmp.cmp = self.stub_cmp
 
-    def cleanUp(self):
+    def tearDown(self):
         """Cleanup after each test case."""
         os.path.exists = self._os_path_exists
         filecmp.cmp = self._cmp

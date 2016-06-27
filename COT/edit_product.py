@@ -49,9 +49,9 @@ class COTEditProduct(COTSubmodule):
     :attr:`application_url`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTEditProduct, self).__init__(UI)
+        super(COTEditProduct, self).__init__(ui)
         self.product = None
         """Product string."""
         self.vendor = None

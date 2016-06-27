@@ -39,7 +39,9 @@ except ImportError:
     import tempfile
 
     @contextlib.contextmanager
-    def TemporaryDirectory(suffix='', prefix='tmp', dirpath=None):
+    def TemporaryDirectory(suffix='',   # noqa: N802
+                           prefix='tmp',
+                           dirpath=None):
         """Create a temporary directory and make sure it's deleted later.
 
         Reimplementation of Python 3's ``tempfile.TemporaryDirectory``.

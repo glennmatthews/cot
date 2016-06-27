@@ -34,9 +34,9 @@ class COTHelp(COTGenericSubmodule):
     :attr:`subcommand`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTHelp, self).__init__(UI)
+        super(COTHelp, self).__init__(ui)
         self._subcommand = None
 
     @property

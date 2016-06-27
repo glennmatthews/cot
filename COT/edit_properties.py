@@ -48,9 +48,9 @@ class COTEditProperties(COTSubmodule):
     :attr:`transports`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTEditProperties, self).__init__(UI)
+        super(COTEditProperties, self).__init__(ui)
         self._config_file = None
         self._properties = {}
         self._transports = None

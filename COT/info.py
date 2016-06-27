@@ -39,9 +39,9 @@ class COTInfo(COTGenericSubmodule):
     :attr:`verbosity`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTInfo, self).__init__(UI)
+        super(COTInfo, self).__init__(ui)
         self._package_list = None
         self._verbosity = None
 

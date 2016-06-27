@@ -279,7 +279,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.SESSION_FAILED)
 
     @mock.patch('COT.deploy_esxi.SmartConnection.__enter__')
-    def test_serial_fixup_SSL_failure(self, mock_parent):
+    def test_serial_fixup_ssl_failure(self, mock_parent):
         """Test SSL failure in pyVmomi.
 
         Only applicable to 2.7+ and 3.4+ that have the new certificate logic.

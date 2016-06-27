@@ -36,9 +36,9 @@ logger = logging.getLogger(__name__)
 class COTInstallHelpers(COTGenericSubmodule):
     """Install all helper tools that COT requires."""
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTInstallHelpers, self).__init__(UI)
+        super(COTInstallHelpers, self).__init__(ui)
         self.ignore_errors = False
         self.verify_only = False
 

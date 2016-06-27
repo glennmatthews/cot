@@ -86,9 +86,9 @@ class COTAddDisk(COTSubmodule):
     :attr:`description`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTAddDisk, self).__init__(UI)
+        super(COTAddDisk, self).__init__(ui)
         self._disk_image = None
         self.disk_type = None
         """Disk type ('harddisk' or 'cdrom')."""
@@ -168,8 +168,8 @@ class COTAddDisk(COTSubmodule):
         super(COTAddDisk, self).run()
 
         add_disk_worker(self.vm,
-                        UI=self.UI,
-                        DISK_IMAGE=self.disk_image,
+                        ui=self.UI,
+                        disk_image=self.disk_image,
                         disk_type=self.disk_type,
                         subtype=self.subtype,
                         file_id=self.file_id,
@@ -249,8 +249,8 @@ otherwise, will create a new disk entry.""")
 
 
 def add_disk_worker(vm,
-                    UI,
-                    DISK_IMAGE,
+                    ui,
+                    disk_image,
                     disk_type=None,
                     file_id=None,
                     controller=None,
@@ -260,19 +260,19 @@ def add_disk_worker(vm,
                     description=None):
     """Worker function for actually adding the disk.
 
-    All parameters except ``vm``, ``UI``, and ``DISK_IMAGE`` are optional
+    All parameters except ``vm``, ``ui``, and ``disk_image`` are optional
     and will be automatically determined by COT if unspecified.
 
     :param vm: The virtual machine being edited.
     :type vm: :class:`~COT.ovf.OVF` or other
         :class:`~COT.vm_description.VMDescription` subclass
 
-    :param UI: User interface in effect.
-    :type UI: instance of :class:`~COT.ui_shared.UI` or subclass.
-    :param str DISK_IMAGE: path to disk image to add to the VM.
+    :param ui: User interface in effect.
+    :type ui: instance of :class:`~COT.ui_shared.UI` or subclass.
+    :param str disk_image: path to disk image to add to the VM.
     :param str disk_type: Disk type: ``'cdrom'`` or ``'harddisk'``.
         If not specified, will be derived automatically from the
-        DISK_IMAGE file name extension.
+        disk_image file name extension.
 
     :param str file_id: Identifier of the disk file in the VM. If not
         specified, the VM will automatically derive an appropriate value.
@@ -292,7 +292,7 @@ def add_disk_worker(vm,
     :param str description: Description of disk device
     """
     if disk_type is None:
-        disk_extension = os.path.splitext(DISK_IMAGE)[1]
+        disk_extension = os.path.splitext(disk_image)[1]
         ext_type_map = {
             '.iso':   'cdrom',
             '.vmdk':  'harddisk',
@@ -308,15 +308,15 @@ def add_disk_worker(vm,
                 "from its extension '{1}'.\n"
                 "Known extensions are {2}\n"
                 "Please specify '--type harddisk' or '--type cdrom'."
-                .format(DISK_IMAGE, disk_extension,
+                .format(disk_image, disk_extension,
                         ext_type_map.keys()))
         logger.warning("New disk type not specified, guessing it should "
                        "be '%s' based on file extension", disk_type)
 
     # Convert the disk to a new format if needed...
-    DISK_IMAGE = vm.convert_disk_if_needed(DISK_IMAGE, disk_type)
+    disk_image = vm.convert_disk_if_needed(disk_image, disk_type)
 
-    disk_file = os.path.basename(DISK_IMAGE)
+    disk_file = os.path.basename(disk_image)
 
     # A disk is defined by up to four different sections in the OVF:
     #
@@ -329,7 +329,7 @@ def add_disk_worker(vm,
     # a new one or overwrite an existing one. Depending on the user
     # arguments, we can do this by as many as three different approaches:
     #
-    # 1) Check whether the DISK_IMAGE file name matches an existing File
+    # 1) Check whether the disk_image file name matches an existing File
     #    in the OVF (and from there, find the associated Disk and Items)
     # 2) Check whether the --file-id matches an existing File and/or Disk
     #    in the OVF (and from there, find the associated Items)
@@ -340,7 +340,7 @@ def add_disk_worker(vm,
     # of the above arguments - in which case we need to make sure that
     # all relevant approaches agree on what sections we're talking about...
 
-    # 1) Check whether the DISK_IMAGE file name matches an existing File
+    # 1) Check whether the disk_image file name matches an existing File
     #    in the OVF (and from there, find the associated Disk and Items)
     (f1, d1, ci1, di1) = vm.search_from_filename(disk_file)
 
@@ -387,7 +387,7 @@ def add_disk_worker(vm,
             logger.verbose("Found Disk but not File - maybe placeholder?")
 
     if disk_item is not None:
-        UI.confirm_or_die("Existing disk Item is a {0}. Change it to a {1}?"
+        ui.confirm_or_die("Existing disk Item is a {0}. Change it to a {1}?"
                           .format(vm.get_type_from_device(disk_item),
                                   disk_type))
         vm.check_sanity_of_disk_device(disk, file_obj, disk_item, ctrl_item)
@@ -428,13 +428,13 @@ def add_disk_worker(vm,
     # Whew! Everything looks sane!
 
     if file_obj is not None:
-        UI.confirm_or_die("Replace existing file {0} with {1}?"
+        ui.confirm_or_die("Replace existing file {0} with {1}?"
                           .format(vm.get_path_from_file(file_obj),
-                                  DISK_IMAGE))
+                                  disk_image))
         logger.warning("Overwriting existing File in OVF")
 
     if file_obj is None and (disk is not None or disk_item is not None):
-        UI.confirm_or_die(
+        ui.confirm_or_die(
             "Add disk file to existing (but empty) {0} drive?"
             .format(disk_type))
 
@@ -450,13 +450,13 @@ def add_disk_worker(vm,
         if subtype is not None:
             curr_subtype = vm.get_subtype_from_device(ctrl_item)
             if curr_subtype is not None and curr_subtype != subtype:
-                UI.confirm_or_die("Change {0} controller subtype from "
+                ui.confirm_or_die("Change {0} controller subtype from "
                                   "'{1}' to '{2}'?".format(controller,
                                                            curr_subtype,
                                                            subtype))
     else:
         # In most cases we are NOT adding a new controller, so be safe...
-        UI.confirm_or_die("Add new {0} controller to OVF descriptor?"
+        ui.confirm_or_die("Add new {0} controller to OVF descriptor?"
                           .format(controller.upper()))
         if subtype is None:
             # Look for any existing controller of this type;
@@ -473,10 +473,10 @@ def add_disk_worker(vm,
         file_id = disk_file
 
     # First, the File
-    file_obj = vm.add_file(DISK_IMAGE, file_id, file_obj, disk)
+    file_obj = vm.add_file(disk_image, file_id, file_obj, disk)
 
     # Next, the Disk
-    disk = vm.add_disk(DISK_IMAGE, file_id, disk_type, disk)
+    disk = vm.add_disk(disk_image, file_id, disk_type, disk)
 
     # Next, the controller (if needed)
     if address is not None:
