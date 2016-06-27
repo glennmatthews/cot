@@ -57,6 +57,10 @@ max-statements=161          ; OVFNameHelper.__init__
 
 max-module-lines=4000       ; OVF
 
+[LOGGING]
+
+logging-modules=logging,verboselogs
+
 [VARIABLES]
 
 # Any _foo variable is a valid dummy name

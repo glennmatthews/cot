@@ -97,8 +97,8 @@ class COTEditProduct(COTSubmodule):
         super(COTEditProduct, self).run()
 
         if self.product_class is not None:
-            logger.verbose("Updating product class from '{0}' to '{1}'"
-                           .format(self.vm.product_class, self.product_class))
+            logger.verbose("Updating product class from '%s' to '%s'",
+                           self.vm.product_class, self.product_class)
             self.vm.product_class = self.product_class
 
         if self.product is not None:
