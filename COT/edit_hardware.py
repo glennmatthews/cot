@@ -370,25 +370,9 @@ class COTEditHardware(COTSubmodule):
                 # else (profiles == None) we already confirmed earlier
                 vm.delete_configuration_profile(profile)
 
-    def run(self):
-        """Do the actual work of this submodule.
-
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
-        """
-        super(COTEditHardware, self).run()
-
-        self._run_update_profiles()
-
+    def _run_update_nics(self):
+        """Handle NIC and network changes. Helper for :meth:`run`."""
         vm = self.vm
-
-        if self.virtual_system_type is not None:
-            vm.system_types = self.virtual_system_type
-
-        if self.cpus is not None:
-            vm.set_cpu_count(self.cpus, self.profiles)
-
-        if self.memory is not None:
-            vm.set_memory(self.memory, self.profiles)
 
         nics_dict = vm.get_nic_count(self.profiles)
         if self.nics is not None:
@@ -447,6 +431,28 @@ class COTEditHardware(COTSubmodule):
         if self.nic_names is not None:
             names = expand_list_wildcard(self.nic_names, max_nics)
             vm.set_nic_names(names, self.profiles)
+
+    def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
+        super(COTEditHardware, self).run()
+
+        self._run_update_profiles()
+
+        vm = self.vm
+
+        if self.virtual_system_type is not None:
+            vm.system_types = self.virtual_system_type
+
+        if self.cpus is not None:
+            vm.set_cpu_count(self.cpus, self.profiles)
+
+        if self.memory is not None:
+            vm.set_memory(self.memory, self.profiles)
+
+        self._run_update_nics()
 
         if self.serial_ports is not None:
             serial_dict = vm.get_serial_count(self.profiles)

@@ -137,9 +137,6 @@ def byte_string(byte_value, base_shift=0):
 class OVF(VMDescription, XML):
     """Representation of the contents of an OVF or OVA.
 
-    :ivar ovf_version: Float representing the OVF specification version in use.
-      Supported values at present are 0.9, 1.0, and 2.0.
-
     **Properties**
 
     .. autosummary::
@@ -147,6 +144,7 @@ class OVF(VMDescription, XML):
 
       input_file
       output_file
+      ovf_version
       platform
       config_profiles
       default_config_profile
@@ -240,23 +238,7 @@ class OVF(VMDescription, XML):
                     "instead!".format(self.ovf_descriptor, 'Envelope',
                                       self.root.tag))
 
-            root_namespace = XML.get_ns(self.root.tag)
-            logger.verbose("Root namespace is " + root_namespace)
-            if root_namespace == 'http://www.vmware.com/schema/ovf/1/envelope':
-                logger.info("OVF version is 0.9")
-                self.ovf_version = 0.9
-            elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/1':
-                logger.info("OVF version is 1.x")
-                self.ovf_version = 1.0
-            elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/2':
-                logger.info("OVF version is 2.x")
-                self.ovf_version = 2.0
-            else:
-                raise VMInitError(
-                    2,
-                    "File {0} has an Envelope but it is in "
-                    "unknown namespace {1}"
-                    .format(self.ovf_descriptor, root_namespace))
+            self._ovf_version = None
             self.name_helper = OVFNameHelper(self.ovf_version)
 
             for (prefix, URI) in self.NSM.items():
@@ -356,6 +338,32 @@ class OVF(VMDescription, XML):
         if output_file:
             self.output_extension = self.detect_type_from_name(output_file)
         super(OVF, self.__class__).output_file.fset(self, output_file)
+
+    @property
+    def ovf_version(self):
+        """Float representing the OVF specification version in use.
+
+        Supported values at present are 0.9, 1.0, and 2.0.
+        """
+        if self._ovf_version is None:
+            root_namespace = XML.get_ns(self.root.tag)
+            logger.verbose("Root namespace is " + root_namespace)
+            if root_namespace == 'http://www.vmware.com/schema/ovf/1/envelope':
+                logger.info("OVF version is 0.9")
+                self._ovf_version = 0.9
+            elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/1':
+                logger.info("OVF version is 1.x")
+                self._ovf_version = 1.0
+            elif root_namespace == 'http://schemas.dmtf.org/ovf/envelope/2':
+                logger.info("OVF version is 2.x")
+                self._ovf_version = 2.0
+            else:
+                raise VMInitError(
+                    2,
+                    "File {0} has an Envelope but it is in "
+                    "unknown namespace {1}"
+                    .format(self.ovf_descriptor, root_namespace))
+        return self._ovf_version
 
     @property
     def platform(self):
@@ -2492,19 +2500,18 @@ class OVFNameHelper(object):
         else:
             self.NSM['ovf'] = "http://schemas.dmtf.org/ovf/envelope/2"
 
-        if self.ovf_version >= 2.0:
-            self.NSM['epasd'] = "http://schemas.dmtf.org/wbem/wscim/1/\
-cim-schema/2/CIM_EthernetPortAllocationSettingData.xsd"
-            self.NSM['sasd'] = "http://schemas.dmtf.org/wbem/wscim/1/\
-cim-schema/2/CIM_StorageAllocationSettingData.xsd"
-
         # Shortcuts for finding/creating elements in various namespaces
         self.OVF = ('{' + self.NSM['ovf'] + '}')
         self.RASD = ('{' + self.NSM['rasd'] + '}')
         self.VSSD = ('{' + self.NSM['vssd'] + '}')
         self.XSI = ('{' + self.NSM['xsi'] + '}')
         if self.ovf_version >= 2.0:
+            # OVF 2.0 adds new namespaces for ethernet ports & storage devices
+            self.NSM['epasd'] = "http://schemas.dmtf.org/wbem/wscim/1/\
+cim-schema/2/CIM_EthernetPortAllocationSettingData.xsd"
             self.EPASD = ('{' + self.NSM['epasd'] + '}')
+            self.NSM['sasd'] = "http://schemas.dmtf.org/wbem/wscim/1/\
+cim-schema/2/CIM_StorageAllocationSettingData.xsd"
             self.SASD = ('{' + self.NSM['sasd'] + '}')
         else:
             # Older OVF versions have ethernet and storage items
@@ -2777,6 +2784,39 @@ cim-schema/2/CIM_StorageAllocationSettingData.xsd"
             'usb':      '23',
         }
 
+    def namespace_for_item_tag(self, tag):
+        """Get the XML namespace for the given item tag."""
+        if tag == self.ITEM:
+            return self.RASD
+        elif tag == self.STORAGE_ITEM:
+            return self.SASD
+        elif tag == self.ETHERNET_PORT_ITEM:
+            return self.EPASD
+        return None
+
+    def namespace_for_resource_type(self, resource_type):
+        """Get the XML namespace for the given ResourceType."""
+        if resource_type == self.RES_MAP['ethernet']:
+            return self.EPASD
+        elif (resource_type == self.RES_MAP['harddisk'] or
+              resource_type == self.RES_MAP['cdrom']):
+            return self.SASD
+        else:
+            return self.RASD
+
+    def item_tag_for_namespace(self, ns):
+        """Get the item tag for the given XML namespace."""
+        if ns == self.RASD:
+            return self.ITEM
+        elif ns == self.SASD:
+            return self.STORAGE_ITEM
+        elif ns == self.EPASD:
+            return self.ETHERNET_PORT_ITEM
+        else:
+            raise ValueUnsupportedError("namespace",
+                                        ns,
+                                        [self.RASD, self.SASD, self.EPASD])
+
 
 class OVFHardwareDataError(Exception):
     """The input data used to construct an :class:`OVFHardware` is not sane."""
@@ -2802,13 +2842,8 @@ class OVFHardware(object):
         valid_profiles = set(ovf.config_profiles)
         item_count = 0
         for item in ovf.virtual_hw_section:
-            if item.tag == self.ovf.ITEM:
-                NS = self.ovf.RASD
-            elif item.tag == self.ovf.STORAGE_ITEM:
-                NS = self.ovf.SASD
-            elif item.tag == self.ovf.ETHERNET_PORT_ITEM:
-                NS = self.ovf.EPASD
-            else:
+            NS = ovf.namespace_for_item_tag(item.tag)
+            if not NS:
                 continue
             item_count += 1
             # We index the dict by InstanceID as it's the one property of
@@ -3033,26 +3068,14 @@ class OVFHardware(object):
                          profile, count, resource_type)
         return count_dict
 
-    def set_item_count_per_profile(self, resource_type, count, profile_list):
-        """Set the number of items of a given type under the given profile(s).
+    def update_existing_item_count_per_profile(self, resource_type,
+                                               count, profile_list):
+        """Change profile membership of existing items as needed.
 
-        If the new count is greater than the current count under this
-        profile, then additional instances that already exist under
-        another profile will be added to this profile, starting with
-        the lowest-sequence instance not already present, and only as
-        a last resort will new instances be created.
+        Helper method for :meth:`set_item_count_per_profile`.
 
-        If the new count is less than the current count under this profile,
-        then the highest-numbered instances will be removed preferentially.
-
-        :param str resource_type: 'cpu', 'harddisk', etc.
-        :param int count: Desired number of items
-        :param list profile_list: List of profiles to filter on
-          (default: apply across all profiles)
+        :return: (count_dict, items_to_add, last_item)
         """
-        if not profile_list:
-            # Set the profile list for all profiles, including the default
-            profile_list = self.ovf.config_profiles + [None]
         count_dict = self.get_item_count_per_profile(resource_type,
                                                      profile_list)
         items_seen = dict.fromkeys(profile_list, 0)
@@ -3086,6 +3109,33 @@ class OVFHardware(object):
             if delta > items_to_add:
                 items_to_add = delta
 
+        return count_dict, items_to_add, last_item
+
+    def set_item_count_per_profile(self, resource_type, count, profile_list):
+        """Set the number of items of a given type under the given profile(s).
+
+        If the new count is greater than the current count under this
+        profile, then additional instances that already exist under
+        another profile will be added to this profile, starting with
+        the lowest-sequence instance not already present, and only as
+        a last resort will new instances be created.
+
+        If the new count is less than the current count under this profile,
+        then the highest-numbered instances will be removed preferentially.
+
+        :param str resource_type: 'cpu', 'harddisk', etc.
+        :param int count: Desired number of items
+        :param list profile_list: List of profiles to filter on
+          (default: apply across all profiles)
+        """
+        if not profile_list:
+            # Set the profile list for all profiles, including the default
+            profile_list = self.ovf.config_profiles + [None]
+
+        count_dict, items_to_add, last_item = \
+            self.update_existing_item_count_per_profile(
+                resource_type, count, profile_list)
+
         logger.debug("Creating %d new items", items_to_add)
         while items_to_add > 0:
             # Which profiles does this Item need to belong to?
@@ -3094,7 +3144,6 @@ class OVFHardware(object):
                 if count_dict[profile] < count:
                     new_item_profiles.append(profile)
                     count_dict[profile] += 1
-                    items_seen[profile] += 1
             if last_item is None:
                 logger.warning("No existing items of type %s found. "
                                "Will create new %s from scratch.",
@@ -3271,13 +3320,8 @@ class OVFItem(object):
           already in the OVFItem.
         """
         logger.debug("Adding new %s", item.tag)
-        if item.tag == self.ITEM:
-            self.NS = self.RASD
-        elif item.tag == self.STORAGE_ITEM:
-            self.NS = self.SASD
-        elif item.tag == self.ETHERNET_PORT_ITEM:
-            self.NS = self.EPASD
-        else:
+        self.NS = self.name_helper.namespace_for_item_tag(item.tag)
+        if not self.NS:
             raise ValueUnsupportedError("item",
                                         item.tag,
                                         "Item, StorageItem, EthernetPortItem")
@@ -3336,43 +3380,8 @@ class OVFItem(object):
         logger.debug("Added %s - new status:\n%s", item.tag, str(self))
         self.validate()
 
-    def set_property(self, key, value, profiles=None, overwrite=True):
-        """Store the value and profiles associated with it for the given key.
-
-        :param str key: Property key
-        :param value: Value associated with :attr:`key`
-        :param list[str] profiles: If ``None``, set for all profiles currently
-          known to this item, else set only for the given list of profiles.
-        :param boolean overwrite: Whether to permit overwriting of existing
-          value set in this item.
-
-        :raise OVFItemDataError: if a value is already defined and would be
-          overwritten, unless :attr:`overwrite` is ``True``
-        """
-        # Just to be safe...
-        value = str(value)
-
-        if key == self.RESOURCE_TYPE:
-            if value == self.RES_MAP['ethernet']:
-                self.NS = self.EPASD
-            elif (value == self.RES_MAP['harddisk'] or
-                  value == self.RES_MAP['cdrom']):
-                self.NS = self.SASD
-            else:
-                self.NS = self.RASD
-
-        if not profiles:
-            value_dict = self.property_dict.get(key, {})
-            if not value_dict:
-                # No previous values for this property,
-                # and no specified profile set to use.
-                # So mark this property as applicable to all profiles.
-                profiles = set([None])
-            else:
-                # Mark this property as applicable to all profiles currently
-                # used by this property.
-                profiles = set.union(*value_dict.values())
-        profiles = set(profiles)
+    def value_add_wildcards(self, key, value, profiles):
+        """Add wildcard placeholders to a string that may need updating."""
         # If the ElementName or Description references the VirtualQuantity,
         # Connection, or ResourceSubType, replace that reference with a
         # placeholder that we can regenerate at output time. That way, if the
@@ -3392,6 +3401,61 @@ class OVFItem(object):
             en_val = self.get_value(self.ELEMENT_NAME, profiles)
             if en_val is not None:
                 value = re.sub(en_val, "_EN_", value)
+        return value
+
+    def value_replace_wildcards(self, key, value, profiles):
+        """Replace wildcards with actual values."""
+        if not value:
+            return value
+        if key == self.ELEMENT_NAME or key == self.ITEM_DESCRIPTION:
+            # To regenerate text that depends on these values:
+            rst_val = self._get_value(self.RESOURCE_SUB_TYPE, profiles)
+            vq_val = self._get_value(self.VIRTUAL_QUANTITY, profiles)
+            conn_val = self._get_value(self.CONNECTION, profiles)
+            if rst_val is not None:
+                value = re.sub("_RST_", str(rst_val), str(value))
+            if vq_val is not None:
+                value = re.sub("_VQ_", str(vq_val), str(value))
+            if conn_val is not None:
+                value = re.sub("_CONN_", str(conn_val), str(value))
+        if key == self.ITEM_DESCRIPTION:
+            en_val = self._get_value(self.ELEMENT_NAME, profiles)
+            if en_val is not None:
+                value = re.sub("_EN_", str(en_val), str(value))
+        return value
+
+    def set_property(self, key, value, profiles=None, overwrite=True):
+        """Store the value and profiles associated with it for the given key.
+
+        :param str key: Property key
+        :param value: Value associated with :attr:`key`
+        :param list[str] profiles: If ``None``, set for all profiles currently
+          known to this item, else set only for the given list of profiles.
+        :param boolean overwrite: Whether to permit overwriting of existing
+          value set in this item.
+
+        :raise OVFItemDataError: if a value is already defined and would be
+          overwritten, unless :attr:`overwrite` is ``True``
+        """
+        # Just to be safe...
+        value = str(value)
+
+        if key == self.RESOURCE_TYPE:
+            self.NS = self.name_helper.namespace_for_resource_type(value)
+
+        if not profiles:
+            value_dict = self.property_dict.get(key, {})
+            if not value_dict:
+                # No previous values for this property,
+                # and no specified profile set to use.
+                # So mark this property as applicable to all profiles.
+                profiles = set([None])
+            else:
+                # Mark this property as applicable to all profiles currently
+                # used by this property.
+                profiles = set.union(*value_dict.values())
+        profiles = set(profiles)
+        value = self.value_add_wildcards(key, value, profiles)
         logger.debug("Setting %s to %s under profiles %s",
                      key, value, profiles)
         if key not in self.property_dict:
@@ -3578,23 +3642,7 @@ class OVFItem(object):
         :return: Value string or ``None``
         """
         val = self._get_value(tag, profiles)
-
-        if val:
-            # To regenerate text that depends on these values:
-            rst_val = self._get_value(self.RESOURCE_SUB_TYPE, profiles)
-            vq_val = self._get_value(self.VIRTUAL_QUANTITY, profiles)
-            en_val = self._get_value(self.ELEMENT_NAME, profiles)
-            conn_val = self._get_value(self.CONNECTION, profiles)
-            if rst_val is not None:
-                val = re.sub("_RST_", str(rst_val), str(val))
-            if vq_val is not None:
-                val = re.sub("_VQ_", str(vq_val), str(val))
-            if en_val is not None:
-                val = re.sub("_EN_", str(en_val), str(val))
-            if conn_val is not None:
-                val = re.sub("_CONN_", str(conn_val), str(val))
-
-        return val
+        return self.value_replace_wildcards(tag, val, profiles)
 
     def get_all_values(self, tag):
         """Get the set of all value strings for the given tag.
@@ -3651,10 +3699,13 @@ class OVFItem(object):
         return False
 
     def get_set_list(self):
-        """Identify the minimal non-intersecting set of profiles."""
+        """Identify the minimal non-intersecting set of profiles.
+
+        :return: List of profile-set strings.
+        """
         set_list = []
         for key in self.property_dict.keys():
-            for (val, new_set) in self.property_dict[key].items():
+            for (_, new_set) in self.property_dict[key].items():
                 new_list = []
                 for existing_set in set_list:
                     # If the sets are identical or do not intersect, do nothing
@@ -3679,14 +3730,6 @@ class OVFItem(object):
                 set_list = new_list
 
         logger.debug("Final set list is %s", set_list)
-        return set_list
-
-    def generate_items(self):
-        """Get a list of Item XML elements derived from this object's data.
-
-        :rtype: list[xml.etree.ElementTree.Element]
-        """
-        set_list = self.get_set_list()
 
         # Construct a list of profile strings
         set_string_list = []
@@ -3696,19 +3739,20 @@ class OVFItem(object):
             else:
                 set_string_list.append(" ".join(natural_sort(final_set)))
         set_string_list = natural_sort(set_string_list)
+
         logger.debug("set string list: %s", set_string_list)
 
+        return set_string_list
+
+    def generate_items(self):
+        """Get a list of Item XML elements derived from this object's data.
+
+        :rtype: list[xml.etree.ElementTree.Element]
+        """
+        set_string_list = self.get_set_list()
+
         # Now, construct the Items
-        if self.NS == self.RASD:
-            ITEM = self.ITEM
-        elif self.NS == self.SASD:
-            ITEM = self.STORAGE_ITEM
-        elif self.NS == self.EPASD:
-            ITEM = self.ETHERNET_PORT_ITEM
-        else:
-            raise ValueUnsupportedError("namespace",
-                                        self.NS,
-                                        [self.RASD, self.SASD, self.EPASD])
+        ITEM = self.name_helper.item_tag_for_namespace(self.NS)
         child_ordering = [self.NS + i for i in self.ITEM_CHILDREN]
         item_list = []
         for set_string in set_string_list:
@@ -3722,11 +3766,6 @@ class OVFItem(object):
                 final_set = set(set_string.split())
             logger.debug("set string: %s; final_set: %s",
                          set_string, final_set)
-            # To regenerate text that depends on these values:
-            rst_val = self.get_value(self.RESOURCE_SUB_TYPE, final_set)
-            vq_val = self.get_value(self.VIRTUAL_QUANTITY, final_set)
-            en_val = self.get_value(self.ELEMENT_NAME, final_set)
-            conn_val = self.get_value(self.CONNECTION, final_set)
             for key in sorted(self.property_dict.keys()):
                 default_val = None
                 found = False
@@ -3744,18 +3783,7 @@ class OVFItem(object):
                             key, set_string, self.get_value(self.INSTANCE_ID))
                         continue
                     val = default_val
-                # Regenerate text that depends on the VirtualQuantity
-                # or ResourceSubType strings:
-                if key == self.ELEMENT_NAME or key == self.ITEM_DESCRIPTION:
-                    if rst_val is not None:
-                        val = re.sub("_RST_", str(rst_val), str(val))
-                    if vq_val is not None:
-                        val = re.sub("_VQ_", str(vq_val), str(val))
-                    if conn_val is not None:
-                        val = re.sub("_CONN_", str(conn_val), str(val))
-                if key == self.ITEM_DESCRIPTION:
-                    if en_val is not None:
-                        val = re.sub("_EN_", str(en_val), str(val))
+                val = self.value_replace_wildcards(key, val, final_set)
 
                 # Is this an attribute, a child, or a custom element?
                 attrib_match = re.match(r"(.*)" + self.ATTRIB_KEY_SUFFIX, key)

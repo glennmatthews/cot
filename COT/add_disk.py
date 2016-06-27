@@ -248,76 +248,30 @@ otherwise, will create a new disk entry.""")
         p.set_defaults(instance=self)
 
 
-def add_disk_worker(vm,
-                    UI,
-                    DISK_IMAGE,
-                    disk_type=None,
-                    file_id=None,
-                    controller=None,
-                    subtype=None,
-                    address=None,
-                    diskname=None,
-                    description=None):
-    """Worker function for actually adding the disk.
+def guess_disk_type_from_extension(disk_file):
+    """Guess the disk type (harddisk/cdrom) from the disk file name."""
+    disk_extension = os.path.splitext(disk_file)[1]
+    ext_type_map = {
+        '.iso':   'cdrom',
+        '.vmdk':  'harddisk',
+        '.raw':   'harddisk',
+        '.qcow2': 'harddisk',
+        '.img':   'harddisk',
+    }
+    try:
+        disk_type = ext_type_map[disk_extension]
+    except KeyError:
+        raise InvalidInputError(
+            "Unable to guess disk type for file '{0}' from its extension "
+            "'{1}'.\nKnown extensions are {2}\n"
+            "Please specify '--type harddisk' or '--type cdrom'."
+            .format(disk_file, disk_extension, ext_type_map.keys()))
+    return disk_type
 
-    All parameters except ``vm``, ``UI``, and ``DISK_IMAGE`` are optional
-    and will be automatically determined by COT if unspecified.
 
-    :param vm: The virtual machine being edited.
-    :type vm: :class:`~COT.ovf.OVF` or other
-        :class:`~COT.vm_description.VMDescription` subclass
-
-    :param UI: User interface in effect.
-    :type UI: instance of :class:`~COT.ui_shared.UI` or subclass.
-    :param str DISK_IMAGE: path to disk image to add to the VM.
-    :param str disk_type: Disk type: ``'cdrom'`` or ``'harddisk'``.
-        If not specified, will be derived automatically from the
-        DISK_IMAGE file name extension.
-
-    :param str file_id: Identifier of the disk file in the VM. If not
-        specified, the VM will automatically derive an appropriate value.
-
-    :param str controller: Disk controller type: ``'ide'`` or ``'scsi'``.
-        If not specified, will be derived from the `type` and the
-        `platform` of the given `vm`.
-
-    :param str subtype: Controller subtype ('virtio', 'lsilogic', etc.)
-    :param str address: Disk device address on its controller
-        (such as ``'1:0'``). If this matches an existing disk device,
-        that device will be overwritten. If not specified, the first
-        available address not already occupied by an existing device
-        will be selected.
-
-    :param str diskname: Name for disk device
-    :param str description: Description of disk device
-    """
-    if disk_type is None:
-        disk_extension = os.path.splitext(DISK_IMAGE)[1]
-        ext_type_map = {
-            '.iso':   'cdrom',
-            '.vmdk':  'harddisk',
-            '.raw':   'harddisk',
-            '.qcow2': 'harddisk',
-            '.img':   'harddisk',
-            }
-        try:
-            disk_type = ext_type_map[disk_extension]
-        except KeyError:
-            raise InvalidInputError(
-                "Unable to guess disk type for file '{0}' "
-                "from its extension '{1}'.\n"
-                "Known extensions are {2}\n"
-                "Please specify '--type harddisk' or '--type cdrom'."
-                .format(DISK_IMAGE, disk_extension,
-                        ext_type_map.keys()))
-        logger.warning("New disk type not specified, guessing it should "
-                       "be '%s' based on file extension", disk_type)
-
-    # Convert the disk to a new format if needed...
-    DISK_IMAGE = vm.convert_disk_if_needed(DISK_IMAGE, disk_type)
-
-    disk_file = os.path.basename(DISK_IMAGE)
-
+def find_elements(vm, ui, disk_type, disk_file, file_id, controller, address):
+    """Find any existing file, disk, controller item, and disk item."""
+    # TODO: refactor more - there are way too many params being passed around!
     # A disk is defined by up to four different sections in the OVF:
     #
     # File (references the actual disk image file)
@@ -387,7 +341,7 @@ def add_disk_worker(vm,
             logger.verbose("Found Disk but not File - maybe placeholder?")
 
     if disk_item is not None:
-        UI.confirm_or_die("Existing disk Item is a {0}. Change it to a {1}?"
+        ui.confirm_or_die("Existing disk Item is a {0}. Change it to a {1}?"
                           .format(vm.get_type_from_device(disk_item),
                                   disk_type))
         vm.check_sanity_of_disk_device(disk, file_obj, disk_item, ctrl_item)
@@ -423,9 +377,68 @@ def add_disk_worker(vm,
             (ctrl_item, address) = vm.find_open_controller(
                 controller)
 
+    # Whew! Everything looks sane!
     logger.debug("Validation of existing data complete")
 
-    # Whew! Everything looks sane!
+    return (file_obj, disk, ctrl_item, disk_item, controller, address)
+
+
+def add_disk_worker(vm,
+                    UI,
+                    DISK_IMAGE,
+                    disk_type=None,
+                    file_id=None,
+                    controller=None,
+                    subtype=None,
+                    address=None,
+                    diskname=None,
+                    description=None):
+    """Worker function for actually adding the disk.
+
+    All parameters except ``vm``, ``UI``, and ``DISK_IMAGE`` are optional
+    and will be automatically determined by COT if unspecified.
+
+    :param vm: The virtual machine being edited.
+    :type vm: :class:`~COT.ovf.OVF` or other
+        :class:`~COT.vm_description.VMDescription` subclass
+
+    :param UI: User interface in effect.
+    :type UI: instance of :class:`~COT.ui_shared.UI` or subclass.
+    :param str DISK_IMAGE: path to disk image to add to the VM.
+    :param str disk_type: Disk type: ``'cdrom'`` or ``'harddisk'``.
+        If not specified, will be derived automatically from the
+        DISK_IMAGE file name extension.
+
+    :param str file_id: Identifier of the disk file in the VM. If not
+        specified, the VM will automatically derive an appropriate value.
+
+    :param str controller: Disk controller type: ``'ide'`` or ``'scsi'``.
+        If not specified, will be derived from the `type` and the
+        `platform` of the given `vm`.
+
+    :param str subtype: Controller subtype ('virtio', 'lsilogic', etc.)
+    :param str address: Disk device address on its controller
+        (such as ``'1:0'``). If this matches an existing disk device,
+        that device will be overwritten. If not specified, the first
+        available address not already occupied by an existing device
+        will be selected.
+
+    :param str diskname: Name for disk device
+    :param str description: Description of disk device
+    """
+    if disk_type is None:
+        disk_type = guess_disk_type_from_extension(DISK_IMAGE)
+        logger.warning("New disk type not specified, guessing it should "
+                       "be '%s' based on file extension", disk_type)
+
+    # Convert the disk to a new format if needed...
+    DISK_IMAGE = vm.convert_disk_if_needed(DISK_IMAGE, disk_type)
+
+    disk_file = os.path.basename(DISK_IMAGE)
+
+    (file_obj, disk, ctrl_item, disk_item, controller, address) = \
+        find_elements(vm, UI, disk_type, disk_file, file_id,
+                      controller, address)
 
     if file_obj is not None:
         UI.confirm_or_die("Replace existing file {0} with {1}?"
