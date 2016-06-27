@@ -3650,12 +3650,8 @@ class OVFItem(object):
             return True
         return False
 
-    def generate_items(self):
-        """Get a list of Item XML elements derived from this object's data.
-
-        :rtype: list[xml.etree.ElementTree.Element]
-        """
-        # First step - identify the minimal non-intersecting set of profiles
+    def get_set_list(self):
+        """Identify the minimal non-intersecting set of profiles."""
         set_list = []
         for key in self.property_dict.keys():
             for (val, new_set) in self.property_dict[key].items():
@@ -3683,6 +3679,14 @@ class OVFItem(object):
                 set_list = new_list
 
         logger.debug("Final set list is %s", set_list)
+        return set_list
+
+    def generate_items(self):
+        """Get a list of Item XML elements derived from this object's data.
+
+        :rtype: list[xml.etree.ElementTree.Element]
+        """
+        set_list = self.get_set_list()
 
         # Construct a list of profile strings
         set_string_list = []

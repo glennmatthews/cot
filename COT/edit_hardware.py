@@ -315,13 +315,8 @@ class COTEditHardware(COTSubmodule):
                     "one hardware change")
         return super(COTEditHardware, self).ready_to_run()
 
-    def run(self):
-        """Do the actual work of this submodule.
-
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
-        """
-        super(COTEditHardware, self).run()
-
+    def _run_update_profiles(self):
+        """Handle profile changes. Helper for :meth:`run`."""
         # Warn user about non-profile-aware properties when setting profiles
         if self.profiles is not None:
             if self.virtual_system_type is not None:
@@ -374,6 +369,17 @@ class COTEditHardware(COTSubmodule):
                         continue
                 # else (profiles == None) we already confirmed earlier
                 vm.delete_configuration_profile(profile)
+
+    def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
+        super(COTEditHardware, self).run()
+
+        self._run_update_profiles()
+
+        vm = self.vm
 
         if self.virtual_system_type is not None:
             vm.system_types = self.virtual_system_type
