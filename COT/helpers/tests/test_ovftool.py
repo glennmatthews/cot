@@ -3,7 +3,7 @@
 # test_ovftool.py - Unit test cases for COT.helpers.ovftool submodule.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
