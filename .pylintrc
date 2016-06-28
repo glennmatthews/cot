@@ -1,6 +1,6 @@
 [MASTER]
 
-load-plugins=verboselogs.pylint
+load-plugins=pylint.extensions.check_docs,verboselogs.pylint
 
 # Ignore generated code we don't control
 ignore=_version.py

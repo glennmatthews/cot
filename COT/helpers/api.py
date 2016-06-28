@@ -291,7 +291,7 @@ def create_disk_image(file_path, file_format=None,
     :param str file_format: Desired image format (if not specified, this will
       be derived from the file extension of :attr:`file_path`)
 
-    :param capacity: Disk capacity. A string like '16M' or '1G'.
+    :param str capacity: Disk capacity. A string like '16M' or '1G'.
     :param list contents: List of file paths to package into the created image.
       If not specified, the image will be left blank and unformatted.
     """

@@ -168,7 +168,8 @@ class Helper(object):
     def make_install_dir(cls, directory, permissions=493):    # 493 == 0o755
         """Check whether the given target directory exists, and create if not.
 
-        :param directory: Directory to check/create.
+        :param str directory: Directory to check/create.
+        :param int permissions: Permissions to set on the created directory.
         """
         if os.path.isdir(directory):
             # TODO: permissions check, update permissions if needed
@@ -329,6 +330,7 @@ class Helper(object):
           when the command exits with a return code other than 0
         :param boolean retry_with_sudo: If ``True``, if the command gets
           an exception, prepend ``sudo`` to the command and try again.
+        :param kwargs: Arguments passed to :func:`subprocess.check_call`.
 
         :raise HelperNotFoundError: if the command doesn't exist
           (instead of a :class:`OSError`)
@@ -378,6 +380,7 @@ class Helper(object):
         :param list args: Command to invoke and its associated args
         :param boolean require_success: If ``False``, do not raise an error
           when the command exits with a return code other than 0
+        :param kwargs: Arguments passed to :func:`subprocess.check_output`.
 
         :return: Captured stdout/stderr from the command
 

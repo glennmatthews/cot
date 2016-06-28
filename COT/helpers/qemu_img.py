@@ -163,7 +163,7 @@ class QEMUImg(Helper):
         """Create an unformatted disk image at the requested location.
 
         :param str file_path: Desired location of new disk image
-        :param capacity: Disk capacity. A string like '16M' or '1G'.
+        :param str capacity: Disk capacity. A string like '16M' or '1G'.
         :param str file_format: Desired image format (if not specified, this
           will be derived from the file extension of :attr:`file_path`)
         """
