@@ -9,7 +9,12 @@ This project adheres to `Semantic Versioning`_.
 **Added**
 
 - Additional code quality validation with `Pylint`_. (`#49`_).
-- Added `pep8-naming`_ plugin to ``flake8``.
+- Added `pep8-naming`_ plugin to ``flake8``. (`#49`_).
+- Code complexity analysis with `Pylint`_ and `mccabe`_ (`#49`_).
+
+**Changed**
+
+- Lots of refactoring to reduce code complexity.
 
 `1.5.2`_ - 2016-06-17
 ---------------------
@@ -444,6 +449,7 @@ Initial public release.
 .. _`flake8-docstrings`: https://pypi.python.org/pypi/flake8-docstrings
 .. _Pylint: https://www.pylint.org/
 .. _`pep8-naming`: https://pypi.python.org/pypi/pep8-naming
+.. _mccabe: https://pypi.python.org/pypi/mccabe
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
 .. _1.5.2: https://github.com/glennmatthews/cot/compare/v1.5.1...v1.5.2

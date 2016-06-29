@@ -197,33 +197,33 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
             Helper.yum_install = _yum_install
             Helper._check_output = _check_output
 
-    def test_install_manpages_verify_dir_not_found(self):
-        """Call install_manpages with verify-only, directory not found."""
+    def test_manpages_helper_verify_dir_not_found(self):
+        """Call manpages_helper with verify-only, directory not found."""
         self.exists[os.path.join(self.manpath, 'man1')] = False
         self.instance.verify_only = True
-        result, message = self.instance.install_manpages()
+        result, message = self.instance.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("DIRECTORY NOT FOUND: {0}/man1"
                          .format(self.manpath), message)
 
-    def test_install_manpages_verify_file_not_found(self):
-        """Call install_manpages with verify-only, file not found."""
+    def test_manpages_helper_verify_file_not_found(self):
+        """Call manpages_helper with verify-only, file not found."""
         self.exists[os.path.join(self.manpath, 'man1', 'cot.1')] = False
         self.instance.verify_only = True
-        result, message = self.instance.install_manpages()
+        result, message = self.instance.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("NOT FOUND", message)
 
-    def test_install_manpages_verify_file_outdated(self):
-        """Call install_manpages with verify-only, file not found."""
+    def test_manpages_helper_verify_file_outdated(self):
+        """Call manpages_helper with verify-only, file not found."""
         self.cmp[os.path.join(self.manpath, 'man1', 'cot.1')] = False
         self.instance.verify_only = True
-        result, message = self.instance.install_manpages()
+        result, message = self.instance.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("NEEDS UPDATE", message)
 
-    def test_install_manpages_create_dir_fail(self):
-        """Call install_manpages with a simulated makedirs() failure."""
+    def test_manpages_helper_create_dir_fail(self):
+        """Call manpages_helper with a simulated makedirs() failure."""
         self.exists[os.path.join(self.manpath, 'man1')] = False
 
         def makedirs(*_args, **_kwargs):
@@ -233,7 +233,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         _makedirs = os.makedirs
         os.makedirs = makedirs
         try:
-            result, message = self.instance.install_manpages()
+            result, message = self.instance.manpages_helper()
             self.assertFalse(result)
             self.assertEqual("INSTALLATION FAILED: [Errno 13] "
                              "Permission denied: '{0}'"
@@ -242,8 +242,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         finally:
             os.makedirs = _makedirs
 
-    def test_install_manpages_create_file_fail(self):
-        """Call install_manpages with a simulated copy() failure."""
+    def test_manpages_helper_create_file_fail(self):
+        """Call manpages_helper with a simulated copy() failure."""
         self.cmp[os.path.join(self.manpath, 'man1', 'cot.1')] = False
 
         def copy(*_args, **_kwargs):
@@ -254,7 +254,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         shutil.copy = copy
 
         try:
-            result, message = self.instance.install_manpages()
+            result, message = self.instance.manpages_helper()
             self.assertFalse(result)
             self.assertEqual("INSTALLATION FAILED: [Errno 13] "
                              "Permission denied: '{0}/man1/cot.1'"
@@ -263,8 +263,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         finally:
             shutil.copy = _shutil_copy
 
-    def test_install_manpages_all_new(self):
-        """Call install_manpages to simulate installing new manpages."""
+    def test_manpages_helper_all_new(self):
+        """Call manpages_helper to simulate installing new manpages."""
         self.exists[os.path.join(self.manpath, 'man1')] = False
         self.cmp[os.path.join(self.manpath, 'man1')] = False
 
@@ -281,7 +281,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         shutil.copy = copy
 
         try:
-            result, message = self.instance.install_manpages()
+            result, message = self.instance.manpages_helper()
             self.assertTrue(result)
             self.assertEqual("successfully installed to {0}"
                              .format(self.manpath),
@@ -290,8 +290,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
             os.makedirs = _makedirs
             shutil.copy = _shutil_copy
 
-    def test_install_manpages_update(self):
-        """Call install_manpages to simulate updating existing manpages."""
+    def test_manpages_helper_update(self):
+        """Call manpages_helper to simulate updating existing manpages."""
         self.cmp[os.path.join(self.manpath, 'man1', 'cot.1')] = False
 
         def copy(*_args, **_kwargs):
@@ -301,7 +301,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         shutil.copy = copy
 
         try:
-            result, message = self.instance.install_manpages()
+            result, message = self.instance.manpages_helper()
             self.assertTrue(result)
             self.assertEqual("successfully updated in {0}"
                              .format(self.manpath),

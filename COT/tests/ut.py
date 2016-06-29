@@ -132,6 +132,11 @@ class UTLoggingHandler(BufferingHandler):
                                                for r in matches])))
 
 
+def localfile(name):
+    """Get the absolute path to a local resource file."""
+    return os.path.abspath(resource_filename(__name__, name))
+
+
 class COT_UT(unittest.TestCase):  # noqa: N801
     """Subclass of unittest.TestCase adding some additional behaviors."""
 
@@ -291,29 +296,29 @@ class COT_UT(unittest.TestCase):  # noqa: N801
 
         self.start_time = time.time()
         # Set default OVF file. Individual test cases can use others
-        self.input_ovf = resource_filename(__name__, "input.ovf")
+        self.input_ovf = localfile("input.ovf")
         # Alternative OVF files:
         #
         # Absolute minimal OVF descriptor needed to satisfy ovftool.
         # Please verify any changes made to this file by running
         # "ovftool --schemaValidate minimal.ovf"
-        self.minimal_ovf = resource_filename(__name__, "minimal.ovf")
+        self.minimal_ovf = localfile("minimal.ovf")
         # IOSv OVF
-        self.iosv_ovf = resource_filename(__name__, "iosv.ovf")
+        self.iosv_ovf = localfile("iosv.ovf")
         # v0.9 OVF
-        self.v09_ovf = resource_filename(__name__, "v0.9.ovf")
+        self.v09_ovf = localfile("v0.9.ovf")
         # v2.0 OVF from VirtualBox
-        self.v20_vbox_ovf = resource_filename(__name__, "ubuntu.2.0.ovf")
+        self.v20_vbox_ovf = localfile("ubuntu.2.0.ovf")
         # OVF with lots of custom VMware extensions
-        self.vmware_ovf = resource_filename(__name__, "vmware.ovf")
+        self.vmware_ovf = localfile("vmware.ovf")
         # OVF with various odd/invalid contents
-        self.invalid_ovf = resource_filename(__name__, "invalid.ovf")
+        self.invalid_ovf = localfile("invalid.ovf")
 
         # Some canned disk images and other files too
-        self.input_iso = resource_filename(__name__, "input.iso")
-        self.input_vmdk = resource_filename(__name__, "input.vmdk")
-        self.blank_vmdk = resource_filename(__name__, "blank.vmdk")
-        self.sample_cfg = resource_filename(__name__, "sample_cfg.txt")
+        self.input_iso = os.path.abspath(localfile("input.iso"))
+        self.input_vmdk = localfile("input.vmdk")
+        self.blank_vmdk = localfile("blank.vmdk")
+        self.sample_cfg = localfile("sample_cfg.txt")
 
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")

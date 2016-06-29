@@ -114,7 +114,7 @@ setup(
 
     # Package contents
     cmdclass=cmdclass,
-    packages=['COT', 'COT.helpers'],
+    packages=['COT', 'COT.helpers', 'COT.ovf'],
     entry_points={
         'console_scripts': [
             'cot = COT.cli:main',
