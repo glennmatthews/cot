@@ -531,6 +531,38 @@ class CLI(UI):
 
         return args
 
+    def args_to_dict(self, args):  # pylint: disable=no-self-use
+        """Convert args to a dict and perform any needed cleanup."""
+        arg_dict = vars(args)
+        del arg_dict["_verbosity"]
+        del arg_dict["_force"]
+        del arg_dict["_subcommand"]
+        for (arg, value) in arg_dict.items():
+            # When argparse is using both "nargs='+'" and "action=append",
+            # this allows some flexibility in the user CLI, but the parsed
+            # output is a nested list of lists. E.g., "-a 1 2 -a 3" would parse
+            # as [[1, 2][3]] rather than the desired [1, 2, 3].
+            # Flatten it back out before we pass it through to the submodule!
+            if (isinstance(value, list) and
+                    all(isinstance(v, list) for v in value)):
+                arg_dict[arg] = [v for l in value for v in l]
+        return arg_dict
+
+    def set_instance_attributes(self, arg_dict):  # pylint: disable=no-self-use
+        """Pass the CLI argument dictionary to the instance attributes TODO.
+
+        :raise InvalidInputError: if attributes are not validly set.
+        """
+        # Set mandatory (CAPITALIZED) args first, then optional args
+        for (arg, value) in arg_dict.items():
+            if arg[0].isupper() and value is not None:
+                setattr(arg_dict["instance"], arg.lower(), value)
+        for (arg, value) in arg_dict.items():
+            if arg == "instance":
+                continue
+            if not arg[0].isupper() and value is not None:
+                setattr(arg_dict["instance"], arg, value)
+
     def main(self, args):
         """Main worker function for COT when invoked from the CLI.
 
@@ -565,29 +597,9 @@ class CLI(UI):
         subp = self.subparser_lookup[args._subcommand]
 
         # Call the appropriate submodule and handle any resulting errors
-        arg_hash = vars(args)
-        del arg_hash["_verbosity"]
-        del arg_hash["_force"]
-        del arg_hash["_subcommand"]
-        for (arg, value) in arg_hash.items():
-            # When argparse is using both "nargs='+'" and "action=append",
-            # this allows some flexibility in the user CLI, but the parsed
-            # output is a nested list of lists. E.g., "-a 1 2 -a 3" would parse
-            # as [[1, 2][3]] rather than the desired [1, 2, 3].
-            # Flatten it back out before we pass it through to the submodule!
-            if (isinstance(value, list) and
-                    all(isinstance(v, list) for v in value)):
-                arg_hash[arg] = [v for l in value for v in l]
+        arg_dict = self.args_to_dict(args)
         try:
-            # Set mandatory (CAPITALIZED) args first, then optional args
-            for (arg, value) in arg_hash.items():
-                if arg[0].isupper() and value is not None:
-                    setattr(args.instance, arg.lower(), value)
-            for (arg, value) in arg_hash.items():
-                if arg == "instance":
-                    continue
-                if not arg[0].isupper() and value is not None:
-                    setattr(args.instance, arg, value)
+            self.set_instance_attributes(arg_dict)
             args.instance.run()
             args.instance.finished()
         except InvalidInputError as e:

@@ -315,15 +315,53 @@ class COTEditHardware(COTSubmodule):
                     "one hardware change")
         return super(COTEditHardware, self).ready_to_run()
 
-    def run(self):
-        """Do the actual work of this submodule.
+    def _run_create_new_profiles(self):
+        """Create new profiles as needed, with user input.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        Helper for :meth:`_run_update_profiles`.
         """
-        super(COTEditHardware, self).run()
+        # Create new profiles as needed
+        profile_list = self.vm.config_profiles
+        for profile in self.profiles:  # pylint: disable=not-an-iterable
+            if profile not in profile_list:
+                self.UI.confirm_or_die(
+                    "Profile '{0}' does not exist. Create it?"
+                    .format(profile))
+                label = self.UI.get_input(
+                    "Please enter a label for this configuration profile",
+                    profile)
+                desc = self.UI.get_input(
+                    "Please enter a description for this "
+                    "configuration profile", label)
+                self.vm.create_configuration_profile(profile, label=label,
+                                                     description=desc)
 
-        # Warn user about non-profile-aware properties when setting profiles
+    def _run_delete_other_profiles(self):
+        """Delete all profiles except those requested.
+
+        Helper for :meth:`_run_update_profiles`.
+        """
+        if self.profiles is None:
+            self.UI.confirm_or_die(
+                "--delete-all-other-profiles was specified but no "
+                "--profiles was specified. Really proceed to delete ALL "
+                "configuration profiles?")
+            profiles_to_delete = self.vm.config_profiles
+        else:
+            profiles_to_delete = list(set(self.vm.config_profiles) -
+                                      set(self.profiles))
+        for profile in profiles_to_delete:
+            if self.profiles is not None:
+                if not self.UI.confirm("Delete profile {0}?".format(profile)):
+                    logger.verbose("Skipping deletion of profile %s", profile)
+                    continue
+            # else (profiles == None) we already confirmed earlier
+            self.vm.delete_configuration_profile(profile)
+
+    def _run_update_profiles(self):
+        """Handle profile changes. Helper for :meth:`run`."""
         if self.profiles is not None:
+            # Warn user about non-profile-aware properties
             if self.virtual_system_type is not None:
                 self.UI.confirm_or_die(
                     "VirtualSystemType is not filtered by configuration"
@@ -337,52 +375,14 @@ class COTEditHardware(COTSubmodule):
                     " networks across ALL profiles, not just profile(s) {0}."
                     " Continue?".format(self.profiles))
 
-        vm = self.vm
-
-        if self.profiles is not None:
-            profile_list = vm.config_profiles
-            for profile in self.profiles:  # pylint: disable=not-an-iterable
-                if profile not in profile_list:
-                    self.UI.confirm_or_die(
-                        "Profile '{0}' does not exist. Create it?"
-                        .format(profile))
-                    label = self.UI.get_input(
-                        "Please enter a label for this configuration profile",
-                        profile)
-                    desc = self.UI.get_input(
-                        "Please enter a description for this "
-                        "configuration profile", label)
-                    vm.create_configuration_profile(profile, label=label,
-                                                    description=desc)
+            self._run_create_new_profiles()
 
         if self.delete_all_other_profiles:
-            if self.profiles is None:
-                self.UI.confirm_or_die(
-                    "--delete-all-other-profiles was specified but no "
-                    "--profiles was specified. Really proceed to delete ALL "
-                    "configuration profiles?")
-                profiles_to_delete = vm.config_profiles
-            else:
-                profiles_to_delete = list(set(vm.config_profiles) -
-                                          set(self.profiles))
-            for profile in profiles_to_delete:
-                if self.profiles is not None:
-                    if not self.UI.confirm("Delete profile {0}?"
-                                           .format(profile)):
-                        logger.verbose("Skipping deletion of profile %s",
-                                       profile)
-                        continue
-                # else (profiles == None) we already confirmed earlier
-                vm.delete_configuration_profile(profile)
+            self._run_delete_other_profiles()
 
-        if self.virtual_system_type is not None:
-            vm.system_types = self.virtual_system_type
-
-        if self.cpus is not None:
-            vm.set_cpu_count(self.cpus, self.profiles)
-
-        if self.memory is not None:
-            vm.set_memory(self.memory, self.profiles)
+    def _run_update_nics(self):
+        """Handle NIC changes. Helper for :meth:`run`."""
+        vm = self.vm
 
         nics_dict = vm.get_nic_count(self.profiles)
         if self.nics is not None:
@@ -398,6 +398,19 @@ class COTEditHardware(COTSubmodule):
         if self.nic_types is not None:
             vm.set_nic_types(self.nic_types, self.profiles)
 
+        nics_dict = vm.get_nic_count(self.profiles)
+        max_nics = max(nics_dict.values())
+
+        if self.mac_addresses_list is not None:
+            vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
+
+        if self.nic_names is not None:
+            names = expand_list_wildcard(self.nic_names, max_nics)
+            vm.set_nic_names(names, self.profiles)
+
+    def _run_update_networks(self):
+        """Handle network changes. Helper for :meth:`run`."""
+        vm = self.vm
         nics_dict = vm.get_nic_count(self.profiles)
         max_nics = max(nics_dict.values())
 
@@ -435,15 +448,10 @@ class COTEditHardware(COTSubmodule):
 
             vm.set_nic_networks(new_networks, self.profiles)
 
-        if self.mac_addresses_list is not None:
-            vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
-
-        if self.nic_names is not None:
-            names = expand_list_wildcard(self.nic_names, max_nics)
-            vm.set_nic_names(names, self.profiles)
-
+    def _run_update_serial(self):
+        """Handle serial port changes. Helper for :meth:`run`."""
         if self.serial_ports is not None:
-            serial_dict = vm.get_serial_count(self.profiles)
+            serial_dict = self.vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
                 if self.serial_ports < count:
                     self.UI.confirm_or_die(
@@ -451,10 +459,10 @@ class COTEditHardware(COTSubmodule):
                         "Delete {2} port(s) to reduce to {3} total?"
                         .format(profile, count, (count - self.serial_ports),
                                 self.serial_ports))
-            vm.set_serial_count(self.serial_ports, self.profiles)
+            self.vm.set_serial_count(self.serial_ports, self.profiles)
 
         if self.serial_connectivity is not None:
-            serial_dict = vm.get_serial_count(self.profiles)
+            serial_dict = self.vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
                 if len(self.serial_connectivity) < count:
                     self.UI.confirm_or_die(
@@ -464,7 +472,34 @@ class COTEditHardware(COTSubmodule):
                         "\nThe remaining ports will be unreachable. Continue?"
                         .format(count, profile,
                                 len(self.serial_connectivity)))
-            vm.set_serial_connectivity(self.serial_connectivity, self.profiles)
+            self.vm.set_serial_connectivity(self.serial_connectivity,
+                                            self.profiles)
+
+    def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
+        super(COTEditHardware, self).run()
+
+        self._run_update_profiles()
+
+        vm = self.vm
+
+        if self.virtual_system_type is not None:
+            vm.system_types = self.virtual_system_type
+
+        if self.cpus is not None:
+            vm.set_cpu_count(self.cpus, self.profiles)
+
+        if self.memory is not None:
+            vm.set_memory(self.memory, self.profiles)
+
+        self._run_update_nics()
+
+        self._run_update_networks()
+
+        self._run_update_serial()
 
         if self.scsi_subtypes is not None:
             vm.set_scsi_subtypes(self.scsi_subtypes, self.profiles)
