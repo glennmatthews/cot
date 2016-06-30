@@ -172,9 +172,9 @@ class COTDeploy(COTReadOnlySubmodule):
     :attr:`network_map`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTDeploy, self).__init__(UI)
+        super(COTDeploy, self).__init__(ui)
         # User inputs
         self._hypervisor = None
         self._configuration = None

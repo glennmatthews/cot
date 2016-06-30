@@ -71,7 +71,7 @@ class HelperUT(COT_UT):
         if 'DESTDIR' in os.environ:
             del os.environ['DESTDIR']
 
-    def assertAptUpdated(self):
+    def assertAptUpdated(self):  # noqa: N802
         """Assert that the hidden _apt_updated flag is set."""
         # pylint: disable=protected-access
         self.assertTrue(Helper._apt_updated)

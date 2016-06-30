@@ -54,9 +54,9 @@ logger = logging.getLogger(__name__)
 class SmarterConnection(SmartConnection):
     """A smarter version of pyVmomi's SmartConnection context manager."""
 
-    def __init__(self, UI, server, username, password, port=443):
+    def __init__(self, ui, server, username, password, port=443):
         """Create a connection to the given server."""
-        self.UI = UI
+        self.UI = ui
         self.server = server
         self.username = username
         self.password = password
@@ -199,9 +199,9 @@ class COTDeployESXi(COTDeploy):
     :attr:`ovftool_args`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTDeployESXi, self).__init__(UI)
+        super(COTDeployESXi, self).__init__(ui)
         self.datastore = None
         """ESXi datastore to deploy to."""
         self.host = None

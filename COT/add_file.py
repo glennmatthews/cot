@@ -42,9 +42,9 @@ class COTAddFile(COTSubmodule):
     :attr:`file_id`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTAddFile, self).__init__(UI)
+        super(COTAddFile, self).__init__(ui)
         self._file = None
         self.file_id = None
         """File identifier string."""

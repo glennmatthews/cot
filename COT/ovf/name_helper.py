@@ -50,7 +50,7 @@ def name_helper(version):
         return OVFNameHelper2()
 
 
-class _tag(object):
+class _Tag(object):
     """Helper class representing a named XML namespace and associated tag."""
 
     def __init__(self, namespace_name, tag):
@@ -117,104 +117,104 @@ class OVFNameHelper1(object):
     # TagPlusNamespace objects
     _raw = dict(
         # Top-level element is Envelope
-        ENVELOPE=_tag('ovf', 'Envelope'),
+        ENVELOPE=_Tag('ovf', 'Envelope'),
 
         # All Section elements have an Info element as child
-        INFO=_tag('ovf', 'Info'),
+        INFO=_Tag('ovf', 'Info'),
 
         # Envelope -> NetworkSection -> Network
-        NETWORK_SECTION=_tag('ovf', 'NetworkSection'),
-        NETWORK=_tag('ovf', 'Network'),
+        NETWORK_SECTION=_Tag('ovf', 'NetworkSection'),
+        NETWORK=_Tag('ovf', 'Network'),
 
         # Attributes of a Network element
-        NETWORK_NAME=_tag('ovf', 'name'),
+        NETWORK_NAME=_Tag('ovf', 'name'),
 
         # Network sub-elements
-        NWK_DESC=_tag('ovf', 'Description'),
+        NWK_DESC=_Tag('ovf', 'Description'),
 
         # Envelope -> DeploymentOptionSection -> Configuration
-        DEPLOY_OPT_SECTION=_tag('ovf', 'DeploymentOptionSection'),
-        CONFIG=_tag('ovf', 'Configuration'),
+        DEPLOY_OPT_SECTION=_Tag('ovf', 'DeploymentOptionSection'),
+        CONFIG=_Tag('ovf', 'Configuration'),
 
         # Attributes of a Configuration element
-        CONFIG_ID=_tag('ovf', 'id'),
-        CONFIG_DEFAULT=_tag('ovf', 'default'),
+        CONFIG_ID=_Tag('ovf', 'id'),
+        CONFIG_DEFAULT=_Tag('ovf', 'default'),
 
         # Configuration sub-elements
-        CFG_LABEL=_tag('ovf', 'Label'),
-        CFG_DESC=_tag('ovf', 'Description'),
+        CFG_LABEL=_Tag('ovf', 'Label'),
+        CFG_DESC=_Tag('ovf', 'Description'),
 
         # Envelope -> References -> File
-        REFERENCES=_tag('ovf', 'References'),
-        FILE=_tag('ovf', 'File'),
+        REFERENCES=_Tag('ovf', 'References'),
+        FILE=_Tag('ovf', 'File'),
 
         # Attributes of a File element
-        FILE_ID=_tag('ovf', 'id'),
-        FILE_HREF=_tag('ovf', 'href'),
-        FILE_SIZE=_tag('ovf', 'size'),
+        FILE_ID=_Tag('ovf', 'id'),
+        FILE_HREF=_Tag('ovf', 'href'),
+        FILE_SIZE=_Tag('ovf', 'size'),
 
         # Envelope -> DiskSection -> Disk
-        DISK_SECTION=_tag('ovf', 'DiskSection'),
-        DISK=_tag('ovf', 'Disk'),
+        DISK_SECTION=_Tag('ovf', 'DiskSection'),
+        DISK=_Tag('ovf', 'Disk'),
 
         # Attributes of a Disk element
-        DISK_ID=_tag('ovf', 'diskId'),
-        DISK_FILE_REF=_tag('ovf', 'fileRef'),
-        DISK_CAPACITY=_tag('ovf', 'capacity'),
-        DISK_CAP_UNITS=_tag('ovf', 'capacityAllocationUnits'),
-        DISK_FORMAT=_tag('ovf', 'format'),
+        DISK_ID=_Tag('ovf', 'diskId'),
+        DISK_FILE_REF=_Tag('ovf', 'fileRef'),
+        DISK_CAPACITY=_Tag('ovf', 'capacity'),
+        DISK_CAP_UNITS=_Tag('ovf', 'capacityAllocationUnits'),
+        DISK_FORMAT=_Tag('ovf', 'format'),
 
         # Envelope -> VirtualSystem -> AnnotationSection -> Annotation
-        ANNOTATION_SECTION=_tag('ovf', 'AnnotationSection'),
-        ANNOTATION=_tag('ovf', 'Annotation'),
+        ANNOTATION_SECTION=_Tag('ovf', 'AnnotationSection'),
+        ANNOTATION=_Tag('ovf', 'Annotation'),
 
         # Envelope -> VirtualSystem -> ProductSection
-        VIRTUAL_SYSTEM=_tag('ovf', 'VirtualSystem'),
-        PRODUCT_SECTION=_tag('ovf', 'ProductSection'),
+        VIRTUAL_SYSTEM=_Tag('ovf', 'VirtualSystem'),
+        PRODUCT_SECTION=_Tag('ovf', 'ProductSection'),
 
         # ProductSection attributes
-        PRODUCT_CLASS=_tag('ovf', 'class'),
+        PRODUCT_CLASS=_Tag('ovf', 'class'),
 
         # ProductSection sub-elements
-        PRODUCT=_tag('ovf', 'Product'),
-        VENDOR=_tag('ovf', 'Vendor'),
-        VERSION=_tag('ovf', 'Version'),
-        FULL_VERSION=_tag('ovf', 'FullVersion'),
-        PRODUCT_URL=_tag('ovf', 'ProductUrl'),
-        VENDOR_URL=_tag('ovf', 'VendorUrl'),
-        APPLICATION_URL=_tag('ovf', 'AppUrl'),
-        PROPERTY=_tag('ovf', 'Property'),
+        PRODUCT=_Tag('ovf', 'Product'),
+        VENDOR=_Tag('ovf', 'Vendor'),
+        VERSION=_Tag('ovf', 'Version'),
+        FULL_VERSION=_Tag('ovf', 'FullVersion'),
+        PRODUCT_URL=_Tag('ovf', 'ProductUrl'),
+        VENDOR_URL=_Tag('ovf', 'VendorUrl'),
+        APPLICATION_URL=_Tag('ovf', 'AppUrl'),
+        PROPERTY=_Tag('ovf', 'Property'),
 
         # Attributes of a Property element
-        PROP_KEY=_tag('ovf', 'key'),
-        PROP_VALUE=_tag('ovf', 'value'),
-        PROP_QUAL=_tag('ovf', 'qualifiers'),
-        PROP_TYPE=_tag('ovf', 'type'),
+        PROP_KEY=_Tag('ovf', 'key'),
+        PROP_VALUE=_Tag('ovf', 'value'),
+        PROP_QUAL=_Tag('ovf', 'qualifiers'),
+        PROP_TYPE=_Tag('ovf', 'type'),
 
         # Property sub-elements
-        PROPERTY_LABEL=_tag('ovf', 'Label'),
-        PROPERTY_DESC=_tag('ovf', 'Description'),
+        PROPERTY_LABEL=_Tag('ovf', 'Label'),
+        PROPERTY_DESC=_Tag('ovf', 'Description'),
 
-        ENVIRONMENT_TRANSPORT=_tag('ovf', 'transport'),
+        ENVIRONMENT_TRANSPORT=_Tag('ovf', 'transport'),
 
         # Envelope -> VirtualSystem -> EulaSection -> License
-        EULA_SECTION=_tag('ovf', 'EulaSection'),
-        EULA_LICENSE=_tag('ovf', 'License'),
+        EULA_SECTION=_Tag('ovf', 'EulaSection'),
+        EULA_LICENSE=_Tag('ovf', 'License'),
 
         # Envelope -> VirtualSystem -> VirtualHardwareSection -> Item(s)
         # In version 2.x, there can also be StorageItem and EthernetPortItem
-        VIRTUAL_HW_SECTION=_tag('ovf', 'VirtualHardwareSection'),
-        ITEM=_tag('ovf', 'Item'),
+        VIRTUAL_HW_SECTION=_Tag('ovf', 'VirtualHardwareSection'),
+        ITEM=_Tag('ovf', 'Item'),
         # These are just regular Items in older OVF versions
-        STORAGE_ITEM=_tag('ovf', 'Item'),
-        ETHERNET_PORT_ITEM=_tag('ovf', 'Item'),
+        STORAGE_ITEM=_Tag('ovf', 'Item'),
+        ETHERNET_PORT_ITEM=_Tag('ovf', 'Item'),
 
         # Item attributes
-        ITEM_CONFIG=_tag('ovf', 'configuration'),
+        ITEM_CONFIG=_Tag('ovf', 'configuration'),
 
         # ... VirtualHardwareSection -> System -> VirtualSystemType
-        SYSTEM=_tag('ovf', 'System'),
-        VIRTUAL_SYSTEM_TYPE=_tag('vssd', 'VirtualSystemType'),
+        SYSTEM=_Tag('ovf', 'System'),
+        VIRTUAL_SYSTEM_TYPE=_Tag('vssd', 'VirtualSystemType'),
     )
 
     # Item sub-elements
@@ -352,14 +352,14 @@ class OVFNameHelper0(OVFNameHelper1):
     _cache = dict(OVFNameHelper1._cache)
     _raw = dict(
         OVFNameHelper1._raw,
-        NETWORK_SECTION=_tag('ovf', 'Section'),
-        DISK_SECTION=_tag('ovf', 'Section'),
-        ANNOTATION_SECTION=_tag('ovf', 'Section'),
-        VIRTUAL_SYSTEM=_tag('ovf', 'Content'),
-        PRODUCT_SECTION=_tag('ovf', 'Section'),
-        PROP_VALUE=_tag('ovf', 'defaultValue'),
-        EULA_SECTION=_tag('ovf', 'Section'),
-        VIRTUAL_HW_SECTION=_tag('ovf', 'Section'),
+        NETWORK_SECTION=_Tag('ovf', 'Section'),
+        DISK_SECTION=_Tag('ovf', 'Section'),
+        ANNOTATION_SECTION=_Tag('ovf', 'Section'),
+        VIRTUAL_SYSTEM=_Tag('ovf', 'Content'),
+        PRODUCT_SECTION=_Tag('ovf', 'Section'),
+        PROP_VALUE=_Tag('ovf', 'defaultValue'),
+        EULA_SECTION=_Tag('ovf', 'Section'),
+        VIRTUAL_HW_SECTION=_Tag('ovf', 'Section'),
     )
     _item_children = dict(
         OVFNameHelper1._item_children,
@@ -442,8 +442,8 @@ class OVFNameHelper2(OVFNameHelper1):
     _cache = dict(OVFNameHelper1._cache)
     _raw = dict(
         OVFNameHelper1._raw,
-        STORAGE_ITEM=_tag('ovf', 'StorageItem'),
-        ETHERNET_PORT_ITEM=_tag('ovf', 'EthernetPortItem'),
+        STORAGE_ITEM=_Tag('ovf', 'StorageItem'),
+        ETHERNET_PORT_ITEM=_Tag('ovf', 'EthernetPortItem'),
     )
 
     def __init__(self):

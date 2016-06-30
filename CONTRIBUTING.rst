@@ -49,6 +49,7 @@ directly:
   cot/$ sudo pip install --upgrade flake8
   cot/$ sudo pip install --upgrade pydocstyle
   cot/$ sudo pip install --upgrade flake8-docstrings
+  cot/$ sudo pip install --upgrade pep8-naming
   cot/$ sudo pip install --upgrade mccabe
   cot/$ flake8
   ./COT/tests/ovf.py:180:80: E501 line too long (80 > 79 characters)

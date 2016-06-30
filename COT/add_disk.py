@@ -91,9 +91,9 @@ class COTAddDisk(COTSubmodule):
     :attr:`description`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTAddDisk, self).__init__(UI)
+        super(COTAddDisk, self).__init__(ui)
         self._disk_image = None
         self.disk_type = None
         """Disk type ('harddisk' or 'cdrom')."""
@@ -173,8 +173,8 @@ class COTAddDisk(COTSubmodule):
         super(COTAddDisk, self).run()
 
         add_disk_worker(self.vm,
-                        UI=self.UI,
-                        DISK_IMAGE=self.disk_image,
+                        ui=self.UI,
+                        disk_image=self.disk_image,
                         disk_type=self.disk_type,
                         subtype=self.subtype,
                         file_id=self.file_id,
@@ -433,8 +433,8 @@ def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
 
 
 def add_disk_worker(vm,
-                    UI,
-                    DISK_IMAGE,
+                    ui,
+                    disk_image,
                     disk_type=None,
                     file_id=None,
                     controller=None,
@@ -444,19 +444,19 @@ def add_disk_worker(vm,
                     description=None):
     """Worker function for actually adding the disk.
 
-    All parameters except ``vm``, ``UI``, and ``DISK_IMAGE`` are optional
+    All parameters except ``vm``, ``ui``, and ``disk_image`` are optional
     and will be automatically determined by COT if unspecified.
 
     :param vm: The virtual machine being edited.
     :type vm: :class:`~COT.ovf.OVF` or other
         :class:`~COT.vm_description.VMDescription` subclass
 
-    :param UI: User interface in effect.
-    :type UI: instance of :class:`~COT.ui_shared.UI` or subclass.
-    :param str DISK_IMAGE: path to disk image to add to the VM.
+    :param ui: User interface in effect.
+    :type ui: instance of :class:`~COT.ui_shared.UI` or subclass.
+    :param str disk_image: path to disk image to add to the VM.
     :param str disk_type: Disk type: ``'cdrom'`` or ``'harddisk'``.
         If not specified, will be derived automatically from the
-        DISK_IMAGE file name extension.
+        disk_image file name extension.
 
     :param str file_id: Identifier of the disk file in the VM. If not
         specified, the VM will automatically derive an appropriate value.
@@ -476,14 +476,14 @@ def add_disk_worker(vm,
     :param str description: Description of disk device
     """
     if disk_type is None:
-        disk_type = guess_disk_type_from_extension(DISK_IMAGE)
+        disk_type = guess_disk_type_from_extension(disk_image)
         logger.warning("New disk type not specified, guessing it should "
                        "be '%s' based on file extension", disk_type)
 
     # Convert the disk to a new format if needed...
-    DISK_IMAGE = vm.convert_disk_if_needed(DISK_IMAGE, disk_type)
+    disk_image = vm.convert_disk_if_needed(disk_image, disk_type)
 
-    disk_file = os.path.basename(DISK_IMAGE)
+    disk_file = os.path.basename(disk_image)
 
     (file_obj, disk, ctrl_item, disk_item) = \
         search_for_elements(vm, disk_file, file_id, controller, address)
@@ -500,7 +500,7 @@ def add_disk_worker(vm,
     validate_elements(vm, file_obj, disk, disk_item, ctrl_item,
                       file_id, controller)
 
-    confirm_elements(vm, UI, file_obj, DISK_IMAGE, disk, disk_item, disk_type,
+    confirm_elements(vm, ui, file_obj, disk_image, disk, disk_item, disk_type,
                      controller, ctrl_item, subtype)
 
     # OK - let's add things!
@@ -512,10 +512,10 @@ def add_disk_worker(vm,
         file_id = disk_file
 
     # First, the File
-    file_obj = vm.add_file(DISK_IMAGE, file_id, file_obj, disk)
+    file_obj = vm.add_file(disk_image, file_id, file_obj, disk)
 
     # Next, the Disk
-    disk = vm.add_disk(DISK_IMAGE, file_id, disk_type, disk)
+    disk = vm.add_disk(disk_image, file_id, disk_type, disk)
 
     # Next, the controller (if needed)
     if address is not None:

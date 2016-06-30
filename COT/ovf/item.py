@@ -564,17 +564,17 @@ class OVFItem(object):
         set_string_list = self.get_nonintersecting_set_list()
 
         # Now, construct the Items
-        ITEM = self.name_helper.item_tag_for_namespace(self.NS)
+        item_tag = self.name_helper.item_tag_for_namespace(self.NS)
         child_ordering = [self.NS + i for i in self.ITEM_CHILDREN]
         item_list = []
         for set_string in set_string_list:
             if not set_string:
                 # no config profile
-                item = ET.Element(ITEM)
+                item = ET.Element(item_tag)
                 final_set = set([None])
                 set_string = '<generic>'
             else:
-                item = ET.Element(ITEM, {self.ITEM_CONFIG: set_string})
+                item = ET.Element(item_tag, {self.ITEM_CONFIG: set_string})
                 final_set = set(set_string.split())
             logger.debug("set string: %s; final_set: %s",
                          set_string, final_set)

@@ -55,6 +55,8 @@ OVFTOOL = OVFTool()
 QEMUIMG = QEMUImg()
 VMDKTOOL = VmdkTool()
 
+BLOCKSIZE = 65536
+
 
 def get_checksum(path_or_obj, checksum_type):
     """Get the checksum of the given file.
@@ -72,8 +74,6 @@ def get_checksum(path_or_obj, checksum_type):
         raise NotImplementedError(
             "No support for generating checksum type {0}"
             .format(checksum_type))
-
-    BLOCKSIZE = 65536
 
     # Is it a file or do we need to open it?
     try:

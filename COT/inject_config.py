@@ -41,9 +41,9 @@ class COTInjectConfig(COTSubmodule):
     :attr:`secondary_config_file`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTInjectConfig, self).__init__(UI)
+        super(COTInjectConfig, self).__init__(ui)
         self._config_file = None
         self._secondary_config_file = None
 
@@ -172,9 +172,9 @@ class COTInjectConfig(COTSubmodule):
 
         # Inject the disk image into the OVA, using "add-disk" functionality
         add_disk_worker(
-            UI=self.UI,
+            ui=self.UI,
             vm=vm,
-            DISK_IMAGE=bootstrap_file,
+            disk_image=bootstrap_file,
             disk_type=platform.BOOTSTRAP_DISK_TYPE,
             file_id=file_id,
             controller=cont_type,
