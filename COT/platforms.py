@@ -70,6 +70,15 @@ def platform_from_product_class(product_class):
     return GenericPlatform
 
 
+def valid_range(label, value, min_val, max_val):
+    """Raise an exception if the value is not in the valid range."""
+    if min_val is not None and value < min_val:
+        raise ValueTooLowError(label, value, min_val)
+    elif max_val is not None and value > max_val:
+        raise ValueTooHighError(label, value, max_val)
+    return True
+
+
 class GenericPlatform(object):
     """Generic class for operations that depend on guest platform.
 
@@ -108,20 +117,17 @@ class GenericPlatform(object):
     @classmethod
     def validate_cpu_count(cls, cpus):
         """Throw an error if the number of CPUs is not a supported value."""
-        if cpus < 1:
-            raise ValueTooLowError("CPUs", cpus, 1)
+        valid_range("CPUs", cpus, 1, None)
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
         """Throw an error if the amount of RAM is not supported."""
-        if mebibytes < 1:
-            raise ValueTooLowError("RAM", mebibytes, 1)
+        valid_range("RAM", mebibytes, 1, None)
 
     @classmethod
     def validate_nic_count(cls, count):
         """Throw an error if the number of NICs is not supported."""
-        if count < 0:
-            raise ValueTooLowError("NIC count", count, 0)
+        valid_range("NIC count", count, 0, None)
 
     @classmethod
     def validate_nic_type(cls, type_string):
@@ -144,8 +150,7 @@ class GenericPlatform(object):
     @classmethod
     def validate_serial_count(cls, count):
         """Throw an error if the number of serial ports is not supported."""
-        if count < 0:
-            raise ValueTooLowError("serial port count", count, 0)
+        valid_range("serial port count", count, 0, None)
 
 
 class IOSXRv(GenericPlatform):
@@ -169,10 +174,7 @@ class IOSXRv(GenericPlatform):
     @classmethod
     def validate_cpu_count(cls, cpus):
         """IOS XRv supports 1-8 CPUs."""
-        if cpus < 1:
-            raise ValueTooLowError("CPUs", cpus, 1)
-        elif cpus > 8:
-            raise ValueTooHighError("CPUs", cpus, 8)
+        valid_range("CPUs", cpus, 1, 8)
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
@@ -185,16 +187,12 @@ class IOSXRv(GenericPlatform):
     @classmethod
     def validate_nic_count(cls, count):
         """IOS XRv requires at least one NIC."""
-        if count < 1:
-            raise ValueTooLowError("NIC count", count, 1)
+        valid_range("NIC count", count, 1, None)
 
     @classmethod
     def validate_serial_count(cls, count):
         """IOS XRv supports 1-4 serial ports."""
-        if count < 1:
-            raise ValueTooLowError("serial ports", count, 1)
-        elif count > 4:
-            raise ValueTooHighError("serial ports", count, 4)
+        valid_range("serial ports", count, 1, 4)
 
 
 class IOSXRvRP(IOSXRv):
@@ -217,10 +215,7 @@ class IOSXRvRP(IOSXRv):
     @classmethod
     def validate_nic_count(cls, count):
         """Fabric plus an optional management NIC."""
-        if count < 1:
-            raise ValueTooLowError("NIC count", count, 1)
-        if count > 2:
-            raise ValueTooHighError("NIC count", count, 2)
+        valid_range("NIC count", count, 1, 2)
 
 
 class IOSXRvLC(IOSXRv):
@@ -249,8 +244,7 @@ class IOSXRvLC(IOSXRv):
     @classmethod
     def validate_serial_count(cls, count):
         """No serial ports are needed but up to 4 can be used for debugging."""
-        if count > 4:
-            raise ValueTooHighError("serial ports", count, 4)
+        valid_range("serial ports", count, 0, 4)
 
 
 class IOSXRv9000(IOSXRv):
@@ -274,10 +268,7 @@ class IOSXRv9000(IOSXRv):
     @classmethod
     def validate_cpu_count(cls, cpus):
         """Minimum 1, maximum 32 CPUs."""
-        if cpus < 1:
-            raise ValueTooLowError("CPUs", cpus, 1)
-        elif cpus > 32:
-            raise ValueTooHighError("CPUs", cpus, 32)
+        valid_range("CPUs", cpus, 1, 32)
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
@@ -290,8 +281,7 @@ class IOSXRv9000(IOSXRv):
     @classmethod
     def validate_nic_count(cls, count):
         """IOS XRv 9000 requires at least 4 NICs."""
-        if count < 4:
-            raise ValueTooLowError("NIC count", count, 4)
+        valid_range("NIC count", count, 4, None)
 
 
 class CSR1000V(GenericPlatform):
@@ -328,11 +318,8 @@ class CSR1000V(GenericPlatform):
     @classmethod
     def validate_cpu_count(cls, cpus):
         """CSR1000V supports 1, 2, or 4 CPUs."""
-        if cpus < 1:
-            raise ValueTooLowError("CPUs", cpus, 1)
-        elif cpus > 4:
-            raise ValueTooHighError("CPUs", cpus, 4)
-        elif cpus != 1 and cpus != 2 and cpus != 4:
+        valid_range("CPUs", cpus, 1, 4)
+        if cpus != 1 and cpus != 2 and cpus != 4:
             raise ValueUnsupportedError("CPUs", cpus, [1, 2, 4])
 
     @classmethod
@@ -346,18 +333,12 @@ class CSR1000V(GenericPlatform):
     @classmethod
     def validate_nic_count(cls, count):
         """CSR1000V requires 3 NICs and supports up to 26."""
-        if count < 3:
-            raise ValueTooLowError("NICs", count, 3)
-        elif count > 26:
-            raise ValueTooHighError("NICs", count, 26)
+        valid_range("NICs", count, 3, 26)
 
     @classmethod
     def validate_serial_count(cls, count):
         """CSR1000V supports 0-2 serial ports."""
-        if count < 0:
-            raise ValueTooLowError("serial ports", count, 0)
-        elif count > 2:
-            raise ValueTooHighError("serial ports", count, 2)
+        valid_range("serial ports", count, 0, 2)
 
 
 class IOSv(GenericPlatform):
@@ -379,10 +360,7 @@ class IOSv(GenericPlatform):
     @classmethod
     def validate_cpu_count(cls, cpus):
         """IOSv only supports a single CPU."""
-        if cpus < 1:
-            raise ValueTooLowError("CPUs", cpus, 1)
-        elif cpus > 1:
-            raise ValueTooHighError("CPUs", cpus, 1)
+        valid_range("CPUs", cpus, 1, 1)
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
@@ -399,18 +377,12 @@ class IOSv(GenericPlatform):
     @classmethod
     def validate_nic_count(cls, count):
         """IOSv supports up to 16 NICs."""
-        if count < 0:
-            raise ValueTooLowError("NICs", count, 0)
-        elif count > 16:
-            raise ValueTooHighError("NICs", count, 16)
+        valid_range("NICs", count, 0, 16)
 
     @classmethod
     def validate_serial_count(cls, count):
         """IOSv requires 1-2 serial ports."""
-        if count < 1:
-            raise ValueTooLowError("serial ports", count, 1)
-        elif count > 2:
-            raise ValueTooHighError("serial ports", count, 2)
+        valid_range("serial ports", count, 1, 2)
 
 
 class NXOSv(GenericPlatform):
@@ -444,10 +416,7 @@ class NXOSv(GenericPlatform):
     @classmethod
     def validate_cpu_count(cls, cpus):
         """NX-OSv requires 1-8 CPUs."""
-        if cpus < 1:
-            raise ValueTooLowError("CPUs", cpus, 1)
-        elif cpus > 8:
-            raise ValueTooHighError("CPUs", cpus, 8)
+        valid_range("CPUs", cpus, 1, 8)
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
@@ -460,10 +429,7 @@ class NXOSv(GenericPlatform):
     @classmethod
     def validate_serial_count(cls, count):
         """NX-OSv requires 1-2 serial ports."""
-        if count < 1:
-            raise ValueTooLowError("serial ports", count, 1)
-        elif count > 2:
-            raise ValueTooHighError("serial ports", count, 2)
+        valid_range("serial ports", count, 1, 2)
 
 PRODUCT_PLATFORM_MAP = {
     'com.cisco.csr1000v':    CSR1000V,
