@@ -49,13 +49,13 @@ max-attributes=98           ; OVF
 # default: max-bool-expr=5
 # default: max-branches=12
 max-locals=29               ; OVF.profile_info_list
-max-public-methods=74       ; OVF
+max-public-methods=76       ; OVF
 # default: max-returns=6
 # default: max-statements=50
 
 [FORMAT]
 
-max-module-lines=2600       ; OVF
+max-module-lines=2700       ; OVF
 
 [LOGGING]
 

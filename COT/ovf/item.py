@@ -247,12 +247,6 @@ class OVFItem(object):
             en_val = self._get_value(self.ELEMENT_NAME, profiles)
             if en_val is not None:
                 value = re.sub("_EN_", str(en_val), str(value))
-        # Sanity check
-        if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
-            if re.search(r"_RST_|_VQ_|_CONN_|_EN_", value):
-                raise OVFItemDataError("Unreplaced wildcard in value "
-                                       "for {0} profiles {1}:\n{2}\n{3}"
-                                       .format(name, profiles, value, self))
         return value
 
     def _set_new_property(self, name, value, profiles):
@@ -323,18 +317,19 @@ class OVFItem(object):
         # A ResourceSubType in the XML can be a single value or a
         # space-separated list of values. Internally, we'll store it as a
         # tuple, and re-join it later if needed.
+        # pylint: disable=redefined-variable-type
         if name == self.RESOURCE_SUB_TYPE:
             if not value:
                 # empty string -> empty list, not ['']
                 value = []
             if isinstance(value, str):
-                value = value.split(" ")
+                value = value.split(" ")  # pylint: disable=no-member
             # lists can't be used as hash keys, tuples can
             if isinstance(value, list):
                 value = tuple(value)
         else:
             # Just to be safe...
-            value = str(value)   # pylint: disable=redefined-variable-type
+            value = str(value)
 
         if name == self.RESOURCE_TYPE:
             self.NS = self.name_helper.namespace_for_resource_type(value)
@@ -496,7 +491,14 @@ class OVFItem(object):
         :return: Value string or list, or ``None``
         """
         val = self._get_value(tag, profiles)
-        return self.value_replace_wildcards(tag, val, profiles)
+        val = self.value_replace_wildcards(tag, val, profiles)
+        # Sanity check
+        if tag == self.ELEMENT_NAME or tag == self.ITEM_DESCRIPTION:
+            if val and re.search(r"_RST_|_VQ_|_CONN_|_EN_", val):
+                raise OVFItemDataError("Unreplaced wildcard in value "
+                                       "for {0} profiles {1}:\n{2}\n{3}"
+                                       .format(tag, profiles, val, self))
+        return val
 
     def get_all_values(self, tag):
         """Get the list of all value strings for the given tag.
@@ -633,10 +635,7 @@ class OVFItem(object):
                 # Convert list of ResourceSubType values to a space-separated
                 # list for output
                 if name == self.RESOURCE_SUB_TYPE:
-                    if val:
-                        val = " ".join(val)
-                    else:
-                        val = None
+                    val = " ".join(val) if val else None
 
                 # Is this an attribute, a child, or a custom element?
                 attrib_match = re.match(r"(.*)" + self.ATTRIB_KEY_SUFFIX, name)

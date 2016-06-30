@@ -470,6 +470,17 @@ class OVF(VMDescription, XML):
         if not profile_ids:
             profile_ids = [None]
 
+        plat = self.platform
+
+        def _validate_helper(label, fn, *args):
+            """Call validation function, catch errors and warn user instead."""
+            try:
+                fn(*args)
+                return True
+            except ValueUnsupportedError as e:
+                logger.warning(label + str(e))
+                return False
+
         for profile_id in profile_ids:
             profile_str = ""
             if profile_id:
@@ -478,11 +489,8 @@ class OVF(VMDescription, XML):
             if cpu_item:
                 cpus = cpu_item.get_value(self.VIRTUAL_QUANTITY,
                                           [profile_id])
-                try:
-                    self.platform.validate_cpu_count(int(cpus))
-                except ValueUnsupportedError as e:
-                    logger.warning(profile_str + str(e))
-                    result = False
+                result &= _validate_helper(profile_str,
+                                           plat.validate_cpu_count, int(cpus))
 
             ram_item = self.hardware.find_item('memory', profile=profile_id)
             if ram_item:
@@ -490,27 +498,19 @@ class OVF(VMDescription, XML):
                     ram_item.get_value(self.VIRTUAL_QUANTITY, [profile_id]),
                     ram_item.get_value(self.ALLOCATION_UNITS, [profile_id])
                 ) / (1024 * 1024))
-                try:
-                    self.platform.validate_memory_amount(int(megabytes))
-                except ValueUnsupportedError as e:
-                    logger.warning(profile_str + str(e))
-                    result = False
+                result &= _validate_helper(profile_str,
+                                           plat.validate_memory_amount,
+                                           int(megabytes))
 
             nics = self.hardware.get_item_count('ethernet', profile_id)
-            try:
-                self.platform.validate_nic_count(nics)
-            except ValueUnsupportedError as e:
-                logger.warning(profile_str + str(e))
-                result = False
+            result &= _validate_helper(profile_str,
+                                       plat.validate_nic_count, nics)
 
             eth_subtypes = list_union(
                 *[eth.get_all_values(self.RESOURCE_SUB_TYPE) for
                   eth in self.hardware.find_all_items('ethernet')])
-            try:
-                self.platform.validate_nic_types(eth_subtypes)
-            except ValueUnsupportedError as e:
-                logger.warning(profile_str + str(e))
-                result = False
+            result &= _validate_helper(profile_str,
+                                       plat.validate_nic_types, eth_subtypes)
 
             # TODO: validate_ide_subtypes
             # TODO: validate_scsi_subtypes
