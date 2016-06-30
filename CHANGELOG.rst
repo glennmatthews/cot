@@ -10,14 +10,13 @@ This project adheres to `Semantic Versioning`_.
 
 - ``cot edit-product --product-class`` option, to set or change the
   product class identifier (such as ``com.cisco.csr1000v``).
-- COT now logs warning messages when outputting an OVF if the hardware
-  definitions in the OVF are considered invalid for the given product-class.
-- Additional code quality validation with `Pylint`_. (`#49`_).
-- Code complexity analysis with `Pylint`_ and `mccabe`_ (`#49`_).
+- Enabled additional code quality validation with `Pylint`_, `pep8-naming`_,
+  and `mccabe`_ (`#49`_).
 
 **Changed**
 
-- Lots of refactoring to reduce code complexity.
+- Lots of refactoring to reduce code complexity as measured by `Pylint`_
+  and `mccabe`_.
 
 **Fixed**
 
@@ -458,6 +457,7 @@ Initial public release.
 .. _pydocstyle: https://pypi.python.org/pypi/pydocstyle
 .. _`flake8-docstrings`: https://pypi.python.org/pypi/flake8-docstrings
 .. _Pylint: https://www.pylint.org/
+.. _`pep8-naming`: https://pypi.python.org/pypi/pep8-naming
 .. _mccabe: https://pypi.python.org/pypi/mccabe
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop

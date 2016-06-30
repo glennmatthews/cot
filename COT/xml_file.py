@@ -24,18 +24,18 @@ import sys
 logger = logging.getLogger(__name__)
 
 
-def register_namespace(prefix, URI):
+def register_namespace(prefix, uri):
     """Record a particular mapping between a namespace prefix and URI.
 
     :param str prefix: Namespace prefix such as "ovf"
-    :param str URI: Namespace URI such as
+    :param str uri: Namespace URI such as
         "http://schemas.dmtf.org/ovf/envelope/1"
     """
     try:
-        ET.register_namespace(prefix, URI)
+        ET.register_namespace(prefix, uri)
     except AttributeError:
         # 2.6 doesn't have the above API so we must write directly
-        ET._namespace_map[URI] = prefix  # pylint: disable=protected-access
+        ET._namespace_map[uri] = prefix  # pylint: disable=protected-access
 
 
 class XML(object):

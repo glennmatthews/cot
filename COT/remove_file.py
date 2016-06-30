@@ -42,9 +42,9 @@ class COTRemoveFile(COTSubmodule):
     :attr:`file_id`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTRemoveFile, self).__init__(UI)
+        super(COTRemoveFile, self).__init__(ui)
         self.file_path = None
         """File name or path to be removed from the package."""
         self.file_id = None

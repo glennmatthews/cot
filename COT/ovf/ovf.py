@@ -854,15 +854,15 @@ class OVF(VMDescription, XML):
             self.envelope.remove(self.network_section)
             self.network_section = None
 
-    def _info_string_header(self, TEXT_WIDTH):
+    def _info_string_header(self, width):
         """Generate OVF/OVA file header for :meth:`info_string`."""
         str_list = []
-        str_list.append('-' * TEXT_WIDTH)
+        str_list.append('-' * width)
         str_list.append(self.input_file)
         if self.platform and self.platform is not GenericPlatform:
             str_list.append("COT detected platform type: {0}"
                             .format(self.platform.PLATFORM_NAME))
-        str_list.append('-' * TEXT_WIDTH)
+        str_list.append('-' * width)
         return '\n'.join(str_list)
 
     def _info_string_product(self, verbosity_option, wrapper):
@@ -945,6 +945,18 @@ class OVF(VMDescription, XML):
                             str_list.extend(wrapper.wrap(line))
         return "\n".join(str_list)
 
+    INFO_STRING_DISK_TEMPLATE = (
+        "{{0:{0}}} "  # file/disk name - width is dynamically set
+        "{{1:>9}} "   # file size - width 9 for "999.9 MiB"
+        "{{2:>9}} "   # disk capacity - width 9 for "999.9 MiB"
+        "{{3:.20}}"   # disk info - width 20 for "harddisk @ SCSI 1:15"
+    )
+    INFO_STRING_DISK_COLUMNS_WIDTH = (1 + 9 + 1 + 9 + 1 + 20)
+    INFO_STRING_FILE_TEMPLATE = (
+        "{{0:{0}}} "  # file/disk name - width is dynamically set
+        "{{1:>9}}"    # file size - width 9 for "999.9 MiB"
+    )
+
     def _info_strings_for_file(self, file_obj):
         """Get attributes of a file which may describe a disk as well.
 
@@ -978,7 +990,7 @@ class OVF(VMDescription, XML):
                 disk_cap_string,
                 device_str)
 
-    def _info_string_files_disks(self, TEXT_WIDTH, verbosity_option):
+    def _info_string_files_disks(self, width, verbosity_option):
         """Describe files and disks as part of :meth:`info_string`."""
         file_list = self.references.findall(self.FILE)
         disk_list = (self.disk_section.findall(self.DISK)
@@ -986,23 +998,19 @@ class OVF(VMDescription, XML):
         if not (file_list or disk_list):
             return None
 
-        SIZE_W = 9  # "999.9 MiB"
-        CAP_W = 9   # "999.9 MiB"
-        DEV_W = 20  # "harddisk @ SCSI 1:15"
-        HREF_W = 0
+        href_w = 0
         if file_list:
-            HREF_W = max([len(f.get(self.FILE_HREF)) for f in file_list])
-        HREF_W = min(HREF_W, (TEXT_WIDTH - SIZE_W - CAP_W - DEV_W - 5))
-        HREF_W = max(HREF_W, 18)   # len("(placeholder disk)")
-        HREF_W += 2    # leading whitespace for disks
-        template = ("{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:.{3}}}"
-                    .format(HREF_W, SIZE_W, CAP_W, DEV_W))
-        template2 = ("{{0:{0}}} {{1:>{1}}}".format(HREF_W, SIZE_W))
+            href_w = max([len(f.get(self.FILE_HREF)) for f in file_list])
+        href_w = min(href_w, (width - self.INFO_STRING_DISK_COLUMNS_WIDTH - 2))
+        href_w = max(href_w, 18)   # len("(placeholder disk)")
+        href_w += 2    # leading whitespace for disks
+        template = self.INFO_STRING_DISK_TEMPLATE.format(href_w)
+        template2 = self.INFO_STRING_FILE_TEMPLATE.format(href_w)
 
         str_list = [template.format("Files and Disks:",
                                     "File Size", "Capacity", "Device"),
-                    template.format("", "-" * SIZE_W, "-" * CAP_W,
-                                    "-" * DEV_W)]
+                    template.format("", "---------", "---------",
+                                    "--------------------")]
         for file_obj in file_list:
             (file_id, file_size,
              disk_id, disk_cap, device_str) = self._info_strings_for_file(
@@ -1010,8 +1018,8 @@ class OVF(VMDescription, XML):
 
             href_str = "  " + file_obj.get(self.FILE_HREF)
             # Truncate to fit in available space
-            if len(href_str) > HREF_W:
-                href_str = href_str[:(HREF_W-3)] + "..."
+            if len(href_str) > href_w:
+                href_str = href_str[:(href_w-3)] + "..."
             if disk_cap or device_str:
                 str_list.append(template.format(href_str, file_size,
                                                 disk_cap, device_str))
@@ -1071,7 +1079,7 @@ class OVF(VMDescription, XML):
             return "\n".join(str_list)
         return None
 
-    def _info_string_networks(self, TEXT_WIDTH, verbosity_option, wrapper):
+    def _info_string_networks(self, width, verbosity_option, wrapper):
         """Describe virtual networks as part of :meth:`info_string`."""
         if self.network_section is None:
             return None
@@ -1083,12 +1091,12 @@ class OVF(VMDescription, XML):
             descs.append(network.findtext(self.NWK_DESC, None))
         max_n = max([len(name) for name in names])
         max_d = max([len(str(desc)) for desc in descs])
-        truncate = (max_n + max_d + 6 >= TEXT_WIDTH and
+        truncate = (max_n + max_d + 6 >= width and
                     verbosity_option != 'verbose')
         wrapper.initial_indent = "  "
         wrapper.subsequent_indent = ' ' * (5 + max_n)
         if truncate:
-            max_d = TEXT_WIDTH - 6 - max_n
+            max_d = width - 6 - max_n
         for name, desc in zip(names, descs):
             if not desc:
                 str_list.append("  " + name)
@@ -1144,7 +1152,7 @@ class OVF(VMDescription, XML):
             .format(" ".join(self.environment_transports))))
         return "\n".join(str_list)
 
-    def _info_string_properties(self, TEXT_WIDTH, verbosity_option, wrapper):
+    def _info_string_properties(self, width, verbosity_option, wrapper):
         """Describe config properties for :meth:`info_string`."""
         properties = self.environment_properties
         if not properties:
@@ -1164,7 +1172,7 @@ class OVF(VMDescription, XML):
             # display "<key> label value", else if no label, display
             # "<key> value", else only display "label value"
             if max_label > 0 and (max_key + max_label + max_value <
-                                  TEXT_WIDTH - 8):
+                                  width - 8):
                 format_str = '  {key:{kw}}  {label:{lw}}  {val}'
                 str_list.append(format_str.format(
                     key="<{0}>".format(ph['key']),
@@ -1190,10 +1198,10 @@ class OVF(VMDescription, XML):
                         str_list.extend(wrapper.wrap(line))
         return "\n".join(str_list)
 
-    def info_string(self, TEXT_WIDTH=79, verbosity_option=None):
+    def info_string(self, width=79, verbosity_option=None):
         """Get a descriptive string summarizing the contents of this OVF.
 
-        :param int TEXT_WIDTH: Line length to wrap to where possible.
+        :param int width: Line length to wrap to where possible.
         :param str verbosity_option: ``'brief'``, ``None`` (default),
           or ``'verbose'``
 
@@ -1203,22 +1211,22 @@ class OVF(VMDescription, XML):
         # them all together with 'join()' rather than it is to repeatedly
         # append to an existing string with '+'.
         # I haven't profiled this to verify - it's fast enough for now.
-        wrapper = textwrap.TextWrapper(width=TEXT_WIDTH)
+        wrapper = textwrap.TextWrapper(width=width)
 
         # File description
-        header = self._info_string_header(TEXT_WIDTH)
+        header = self._info_string_header(width)
 
         section_list = [
             self._info_string_product(verbosity_option, wrapper),
             self._info_string_annotation(wrapper),
             self._info_string_eula(verbosity_option, wrapper),
-            self._info_string_files_disks(TEXT_WIDTH, verbosity_option),
+            self._info_string_files_disks(width, verbosity_option),
             self._info_string_hardware(wrapper),
-            self.profile_info_string(TEXT_WIDTH, verbosity_option),
-            self._info_string_networks(TEXT_WIDTH, verbosity_option, wrapper),
+            self.profile_info_string(width, verbosity_option),
+            self._info_string_networks(width, verbosity_option, wrapper),
             self._info_string_nics(verbosity_option, wrapper),
             self._info_string_environment(wrapper),
-            self._info_string_properties(TEXT_WIDTH, verbosity_option, wrapper)
+            self._info_string_properties(width, verbosity_option, wrapper)
         ]
         # Discard empty sections
         section_list = [s for s in section_list if s]
@@ -1247,10 +1255,19 @@ class OVF(VMDescription, XML):
             ctrl_addr,
             device_item.get_value(self.ADDRESS_ON_PARENT))
 
-    def profile_info_list(self, TEXT_WIDTH=79, verbose=False):
+    PROFILE_INFO_TEMPLATE = (
+        "{{0:{0}}} "  # profile name - width is dynamically set
+        "{{1:>4}} "   # CPUs   - width 4 for "CPUs"
+        "{{2:>9}} "   # memory - width 9 for "999.9 MiB"
+        "{{3:>4}} "   # NICs   - width 4 for "NICs"
+        "{{4:>7}} "   # serial - width 7 for "Serials"
+        "{{5:>14}}"   # disks  - width 14 for "Disks/Capacity","10 / 999.9 MiB"
+    )
+
+    def profile_info_list(self, width=79, verbose=False):
         """Get a list describing available configuration profiles.
 
-        :param int TEXT_WIDTH: Line length to wrap to if possible
+        :param int width: Line length to wrap to if possible
         :param str verbose: if True, generate multiple lines per profile
         :return: (header, list)
         """
@@ -1261,26 +1278,18 @@ class OVF(VMDescription, XML):
         if not profile_ids:
             profile_ids = [None]
 
-        PROF_W = max(len("Configuration Profiles: "),
+        prof_w = max(len("Configuration Profiles: "),
                      2 + max([(len(str(pid))) for pid in profile_ids]),
                      2 + len(str(default_profile_id) + " (default)"))
 
         # Profile information
-        CPU_W = 4   # "CPUs"
-        MEM_W = 9   # "999.9 MiB"
-        NIC_W = 4   # "NICs"
-        SER_W = 7   # "Serials"
-        HD_W = 14   # "Disks/Capacity", "10 / 999.9 MiB"
-        template = (
-            "{{0:{0}}} {{1:>{1}}} {{2:>{2}}} {{3:>{3}}} {{4:>{4}}} {{5:>{5}}}"
-            .format(PROF_W, CPU_W, MEM_W, NIC_W, SER_W, HD_W))
+        template = self.PROFILE_INFO_TEMPLATE.format(prof_w)
         header = template.format("Configuration Profiles:", "CPUs", "Memory",
                                  "NICs", "Serials", "Disks/Capacity")
-        header += "\n" + template.format("", "-" * CPU_W, "-" * MEM_W,
-                                         "-" * NIC_W, "-" * SER_W,
-                                         "-" * HD_W)
+        header += "\n" + template.format("", "----", "---------", "----",
+                                         "-------", "--------------")
         if verbose:
-            wrapper = textwrap.TextWrapper(width=TEXT_WIDTH,
+            wrapper = textwrap.TextWrapper(width=width,
                                            initial_indent='    ',
                                            subsequent_indent=' ' * 21)
         index = 0
@@ -1329,17 +1338,17 @@ class OVF(VMDescription, XML):
             index += 1
         return (header, str_list)
 
-    def profile_info_string(self, TEXT_WIDTH=79, verbosity_option=None):
+    def profile_info_string(self, width=79, verbosity_option=None):
         """Get a string summarizing available configuration profiles.
 
-        :param int TEXT_WIDTH: Line length to wrap to if possible
+        :param int width: Line length to wrap to if possible
         :param str verbosity_option: ``'brief'``, ``None`` (default),
           or ``'verbose'``
 
         :return: Appropriately formatted and verbose string.
         """
         header, str_list = self.profile_info_list(
-            TEXT_WIDTH, (verbosity_option != 'brief'))
+            width, (verbosity_option != 'brief'))
         return "\n".join([header] + str_list)
 
     def create_configuration_profile(self, pid, label, description):

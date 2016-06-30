@@ -684,7 +684,7 @@ class VMDescription(object):
     def profile_info_string(self, width=79, verbosity_option=None):
         """Get a string summarizing available configuration profiles.
 
-        :param int TEXT_WIDTH: Line length to wrap to if possible
+        :param int width: Line length to wrap to if possible
         :param str verbosity_option: ``'brief'``, ``None`` (default),
           or ``'verbose'``
 

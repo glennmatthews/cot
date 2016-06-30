@@ -72,9 +72,9 @@ class COTEditHardware(COTSubmodule):
     :attr:`virtual_system_type`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTEditHardware, self).__init__(UI)
+        super(COTEditHardware, self).__init__(ui)
         self.profiles = None
         """Configuration profile(s) to edit."""
         self.delete_all_other_profiles = False
@@ -129,12 +129,13 @@ class COTEditHardware(COTSubmodule):
         """Amount of RAM (in megabytes) to set."""
         return self._memory
 
+    # We like to see memory input in the form "4096M" or "4 GB" or "2 GiB"
+    MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?i?[bB]?\s*$"
+
     @memory.setter
     def memory(self, value):
         value = str(value)
-        # We like to see memory input in the form "4096M" or "4 GB" or "2 GiB"
-        MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?i?[bB]?\s*$"
-        match = re.match(MEMORY_REGEXP, value)
+        match = re.match(self.MEMORY_REGEXP, value)
         if not match:
             raise InvalidInputError("Could not parse memory string '{0}'"
                                     .format(value))
