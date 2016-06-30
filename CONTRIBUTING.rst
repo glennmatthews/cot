@@ -38,10 +38,10 @@ Coding style
 ''''''''''''
 
 We try to keep COT's code base compliant with Python coding standards including
-`PEP 8`_ and `PEP 257`_. We use the flake8_ tool and its extension packages to
-verify this as part of our test automation.
+`PEP 8`_ and `PEP 257`_. We use the flake8_ and Pylint_ tools and their
+extension packages to verify this as part of our test automation.
 To run coding style analysis independently of the other test automation, you
-can run ``tox -e flake8``, or you can install these tools and run ``flake8``
+can run ``tox -e flake8,pylint``, or you can install these tools and run them
 directly:
 
 ::
@@ -52,20 +52,30 @@ directly:
   cot/$ sudo pip install --upgrade pep8-naming
   cot/$ sudo pip install --upgrade mccabe
   cot/$ flake8
-  ./COT/tests/ovf.py:180:80: E501 line too long (80 > 79 characters)
-  ./COT/tests/ovf.py:184:77: F841 local variable 'ovf' is assigned to but never used
-  ./COT/tests/ovf.py:184:80: E501 line too long (80 > 79 characters)
-  ./COT/tests/ovf.py:196:40: F841 local variable 'ova' is assigned to but never used
-  ./COT/tests/ovf.py:210:75: F841 local variable 'ovf' is assigned to but never used
-  ./COT/ovf.py:776:5: E303 too many blank lines (2)
+  ./COT/ovf/item.py:229:1: C901 'OVFItem.value_replace_wildcards' is too complex (11)
+  ./COT/ovf/item.py:603:1: C901 'OVFItem.generate_items' is too complex (11)
+  ./COT/ovf/ovf.py:461:1: C901 'OVF.validate_hardware' is too complex (14)
 
-Fix any errors it reports, and run again until no errors are reported.
+::
+
+  cot/$ sudo pip install --upgrade pylint
+  cot/$ pylint COT
+  ************* Module COT.ovf.item
+  E:331,24: Instance of 'list' has no 'split' member (no-member)
+  R:334,16: Redefinition of value type from list to tuple (redefined-variable-type)
+  R:603, 4: Too many branches (13/12) (too-many-branches)
+  ************* Module COT.ovf.ovf
+  C:  1, 0: Too many lines in module (2646/2600) (too-many-lines)
+  R:177, 0: Too many public methods (76/74) (too-many-public-methods)
+
+Fix any errors and warnings these tools report, and run again until no errors are reported.
 
 Add automated unit tests
 ------------------------
 
 Whether adding new functionality or fixing a bug, **please** add appropriate
-unit test case(s) under ``COT/tests/`` to cover your changes. Your changes
+unit test case(s) under ``COT/tests/``, ``COT/helpers/tests/``, or
+``COT/ovf/tests`` (as appropriate) to cover your changes. Your changes
 **must** pass all existing and new automated test cases before your code
 will be accepted.
 
@@ -84,51 +94,46 @@ coverage_ (``pip install coverage``) then run ``tox`` from the COT directory:
   ...
   py27 runtests: commands[0] | coverage run --append setup.py test --quiet
   ...
-  py32 runtests: commands[0] | coverage run --append setup.py test --quiet
-  ...
   py33 runtests: commands[0] | coverage run --append setup.py test --quiet
   ...
   py34 runtests: commands[0] | coverage run --append setup.py test --quiet
   ...
   pypy runtests: commands[0] | coverage run --append setup.py test --quiet
   ...
+  flake8 runtests: commands[0] | flake8 --verbose
+  ...
+  pylint runtests: commands[0] | pylint COT
+  ...
+  docs runtests: commands[0] | sphinx-build -W -b html -d ...
+  ...
   stats runtests: commands[0] | coverage combine
   stats runtests: commands[1] | coverage report -i
   Name                        Stmts   Miss  Cover
   -----------------------------------------------
-  COT/__init__.py                 4      0   100%
-  COT/add_disk.py               147      1    99%
-  COT/add_file.py                50      0   100%
-  COT/cli.py                    143      6    96%
-  COT/data_validation.py         69      0   100%
-  COT/deploy.py                 142      5    96%
-  COT/edit_hardware.py          159      0   100%
-  COT/edit_product.py            36      0   100%
-  COT/edit_properties.py        104     40    62%
-  COT/helper_tools.py           171      3    98%
-  COT/info.py                    41      0   100%
-  COT/inject_config.py           87      2    98%
-  COT/ovf.py                   1586     52    96%
-  COT/platforms.py              173      0   100%
-  COT/submodule.py               80      2    98%
-  COT/ui_shared.py               24      0   100%
-  COT/vm_context_manager.py      12      0   100%
-  COT/vm_description.py         119      1    99%
-  COT/vm_factory.py              25      0   100%
-  COT/xml_file.py               112      0   100%
-  -----------------------------------------------
-  TOTAL                        3284    112    96%
-  stats runtests: commands[2] | coverage html -i
+  COT/__init__.py                 5      0   100%
+  COT/add_disk.py               166      1    99%
+  COT/add_file.py                45      0   100%
+  COT/cli.py                    252     15    94%
+  COT/data_validation.py         88      0   100%
+  COT/deploy.py                 148      4    97%
+  COT/deploy_esxi.py            201     28    86%
+  COT/edit_hardware.py          273      2    99%
   ...
-  flake8 runtests: commands[0] | flake8
+  COT/vm_description.py         168      4    98%
+  COT/vm_factory.py              26      0   100%
+  COT/xml_file.py               120      0   100%
+  -----------------------------------------------
+  TOTAL                        4692    136    97%
+  stats runtests: commands[2] | coverage html -i
   _______________ summary _______________
-    clean: commands succeeded
+    setup: commands succeeded
     py26: commands succeeded
     py27: commands succeeded
     py33: commands succeeded
     py34: commands succeeded
     pypy: commands succeeded
     flake8: commands succeeded
+    pylint: commands succeeded
     docs: commands succeeded
     stats: commands succeeded
     congratulations :)
@@ -159,6 +164,7 @@ into the ``develop`` branch rather than ``master``.
 .. _`PEP 257`: https://www.python.org/dev/peps/pep-0257/
 .. _flake8: http://flake8.readthedocs.org/en/latest/
 .. _pep257: http://pep257.readthedocs.org/en/latest/
+.. _Pylint: http://www.pylint.org/
 .. _tox: http://tox.readthedocs.org/en/latest/
 .. _coverage: http://nedbatchelder.com/code/coverage/
 .. _`A successful Git branching model`: http://nvie.com/posts/a-successful-git-branching-model/
