@@ -129,8 +129,8 @@ class COTEditHardware(COTSubmodule):
         """Amount of RAM (in megabytes) to set."""
         return self._memory
 
-    # We like to see memory input in the form "4096M" or "4 GB"
-    MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?[bB]?\s*$"
+    # We like to see memory input in the form "4096M" or "4 GB" or "2 GiB"
+    MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?i?[bB]?\s*$"
 
     @memory.setter
     def memory(self, value):
@@ -153,12 +153,12 @@ class COTEditHardware(COTSubmodule):
             # Try to be clever and guess the units
             if mem_value <= 64:
                 logger.warning("Memory units not specified, "
-                               "guessing '%s' means '%sGB'",
+                               "guessing '%s' means '%s GiB'",
                                mem_value, mem_value)
                 mem_value *= 1024
             else:
                 logger.warning("Memory units not specified, "
-                               "guessing '%s' means '%sMB'",
+                               "guessing '%s' means '%s MiB'",
                                mem_value, mem_value)
         self.vm.platform.validate_memory_amount(mem_value)
         self._memory = mem_value
@@ -583,7 +583,7 @@ class COTEditHardware(COTSubmodule):
                        help="Set the number of CPUs.")
         g.add_argument('-m', '--memory',
                        help="Set the amount of RAM. "
-                       '(Examples: "4096MB", "4GB")')
+                       '(Examples: "4096M", "4 GiB")')
 
         g = p.add_argument_group("network interface options")
 

@@ -19,6 +19,13 @@
 Represents all variations of a given hardware ``Item`` amongst different
 hardware configuration profiles.
 
+**Functions**
+
+.. autosummary::
+  :nosignatures:
+
+  list_union
+
 **Classes and Exceptions**
 
 .. autosummary::
@@ -35,9 +42,18 @@ import xml.etree.ElementTree as ET
 from COT.data_validation import natural_sort, ValueUnsupportedError
 from COT.xml_file import XML
 
-from .name_helper import name_helper
+from COT.ovf.name_helper import name_helper
 
 logger = logging.getLogger(__name__)
+
+
+def list_union(*lists):
+    """Get union of lists."""
+    result = []
+    for l in lists:
+        result.extend([x for x in l if x not in result])
+    logger.debug("Union of %s is %s", lists, result)
+    return result
 
 
 class OVFItemDataError(Exception):
@@ -85,7 +101,7 @@ class OVFItem(object):
             ret += "  " + name + "\n"
             for value in sorted(self.property_values(name)):
                 ret += "    {0:20} : {1}\n".format(
-                    value, sorted(self.property_profiles(name, value)))
+                    str(value), sorted(self.property_profiles(name, value)))
         return ret
 
     def __getattr__(self, name):
@@ -99,12 +115,12 @@ class OVFItem(object):
 
     @property
     def property_names(self):
-        """Get names of all properties known to this OVFItem."""
-        return self.properties.keys()
+        """List of names of all properties known to this OVFItem."""
+        return list(self.properties.keys())
 
     def property_values(self, name):
         """Get list of values known for a given property name."""
-        return self.properties[name].keys()
+        return list(self.properties[name].keys())
 
     def property_profiles(self, name, value):
         """Get set of profiles associated with a property name and value."""
@@ -197,6 +213,8 @@ class OVFItem(object):
                 value = re.sub(vq_val, "_VQ_", value)
             rst_val = self.get_value(self.RESOURCE_SUB_TYPE, profiles)
             if rst_val is not None:
+                if isinstance(rst_val, tuple):
+                    rst_val = "/".join(rst_val)
                 value = re.sub(rst_val, "_RST_", value)
             conn_val = self.get_value(self.CONNECTION, profiles)
             if conn_val is not None:
@@ -215,6 +233,8 @@ class OVFItem(object):
         if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
             # To regenerate text that depends on these values:
             rst_val = self._get_value(self.RESOURCE_SUB_TYPE, profiles)
+            if isinstance(rst_val, tuple):
+                rst_val = "/".join(rst_val)
             vq_val = self._get_value(self.VIRTUAL_QUANTITY, profiles)
             conn_val = self._get_value(self.CONNECTION, profiles)
             if rst_val is not None:
@@ -231,7 +251,7 @@ class OVFItem(object):
 
     def _set_new_property(self, name, value, profiles):
         """Helper for :meth:`set_property`. Create a new property entry."""
-        if value == '':
+        if not value:
             return
 
         if None in profiles:
@@ -272,7 +292,7 @@ class OVFItem(object):
                 else:
                     self.properties[name][known_value] = new_set
 
-        if value != '' and value not in self.property_values(name):
+        if value and value not in self.property_values(name):
             self.properties[name][value] = profiles
             self.modified = True
         elif not self.properties[name]:
@@ -294,8 +314,22 @@ class OVFItem(object):
         :raise OVFItemDataError: if a value is already defined and would be
           overwritten, unless :attr:`overwrite` is ``True``
         """
-        # Just to be safe...
-        value = str(value)
+        # A ResourceSubType in the XML can be a single value or a
+        # space-separated list of values. Internally, we'll store it as a
+        # tuple, and re-join it later if needed.
+        # pylint: disable=redefined-variable-type
+        if name == self.RESOURCE_SUB_TYPE:
+            if not value:
+                # empty string -> empty list, not ['']
+                value = []
+            if isinstance(value, str):
+                value = value.split(" ")  # pylint: disable=no-member
+            # lists can't be used as hash keys, tuples can
+            if isinstance(value, list):
+                value = tuple(value)
+        else:
+            # Just to be safe...
+            value = str(value)
 
         if name == self.RESOURCE_TYPE:
             self.NS = self.name_helper.namespace_for_resource_type(value)
@@ -308,6 +342,7 @@ class OVFItem(object):
             #    value for all profiles (the magic set([None]))
             profiles = self.all_profiles(name, set([None]))
         profiles = set(profiles)
+
         value = self.value_add_wildcards(name, value, profiles)
         logger.debug("Setting %s to %s under profiles %s",
                      name, value, profiles)
@@ -453,18 +488,28 @@ class OVFItem(object):
         :param str tag: Tag to retrieve value for
         :param profiles: set of profile names, or None
         :type profiles: set of strings
-        :return: Value string or ``None``
+        :return: Value string or list, or ``None``
         """
         val = self._get_value(tag, profiles)
-        return self.value_replace_wildcards(tag, val, profiles)
+        val = self.value_replace_wildcards(tag, val, profiles)
+        # Sanity check
+        if tag == self.ELEMENT_NAME or tag == self.ITEM_DESCRIPTION:
+            if val and re.search(r"_RST_|_VQ_|_CONN_|_EN_", val):
+                raise OVFItemDataError("Unreplaced wildcard in value "
+                                       "for {0} profiles {1}:\n{2}\n{3}"
+                                       .format(tag, profiles, val, self))
+        return val
 
     def get_all_values(self, tag):
-        """Get the set of all value strings for the given tag.
+        """Get the list of all value strings for the given tag.
 
         :param str tag: Tag to retrieve value for
-        :rtype: set
+        :rtype: list
         """
-        return set(self.properties.get(tag, {}).keys())
+        if tag == self.RESOURCE_SUB_TYPE:
+            # ResourceSubType values may themselves be tuples
+            return list_union(*self.properties.get(tag, {}).keys())
+        return list(self.properties.get(tag, {}).keys())
 
     def validate(self):
         """Verify that the OVFItem describes a valid set of items.
@@ -521,8 +566,8 @@ class OVFItem(object):
         """
         set_list = []
         for name in self.property_names:
-            for (_, new_set) in self.properties[name].items():
-                new_set_list = [frozenset(new_set)]
+            for (_, new_set) in list(self.properties[name].items()):
+                new_set_list = []
                 for existing_set in set_list:
                     # If the sets are identical or do not intersect, do nothing
                     if (new_set == existing_set or
@@ -538,6 +583,7 @@ class OVFItem(object):
 
                     new_set = new_set.difference(existing_set)
 
+                new_set_list.append(frozenset(new_set))
                 # Remove duplicate and empty entries
                 set_list = [x for x in set(new_set_list) if x]
 
@@ -580,12 +626,16 @@ class OVFItem(object):
                          set_string, final_set)
             for name in sorted(self.property_names):
                 val = self.get_value(name, final_set)
-                if val is None:
+                if not val:
                     logger.info("No value defined for attribute '%s' "
                                 "under profile set '%s' for instance %s",
                                 name, set_string,
                                 self.get_value(self.INSTANCE_ID))
                     continue
+                # Convert list of ResourceSubType values to a space-separated
+                # list for output
+                if name == self.RESOURCE_SUB_TYPE:
+                    val = " ".join(val) if val else None
 
                 # Is this an attribute, a child, or a custom element?
                 attrib_match = re.match(r"(.*)" + self.ATTRIB_KEY_SUFFIX, name)

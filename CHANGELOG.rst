@@ -8,6 +8,8 @@ This project adheres to `Semantic Versioning`_.
 
 **Added**
 
+- ``cot edit-product --product-class`` option, to set or change the
+  product class identifier (such as ``com.cisco.csr1000v``).
 - Enabled additional code quality validation with `Pylint`_, `pep8-naming`_,
   and `mccabe`_ (`#49`_).
 
@@ -15,6 +17,13 @@ This project adheres to `Semantic Versioning`_.
 
 - Lots of refactoring to reduce code complexity as measured by `Pylint`_
   and `mccabe`_.
+
+**Fixed**
+
+- COT now recognizes ``AllocationUnits`` values like ``megabytes``.
+- COT no longer ignores the ``AllocationUnits`` value given for RAM.
+- :func:`COT.ovf.byte_string` now properly uses binary units (``KiB`` rather
+  than ``kB``, etc.)
 
 `1.5.2`_ - 2016-06-17
 ---------------------

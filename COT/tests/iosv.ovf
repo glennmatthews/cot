@@ -110,20 +110,20 @@
         <rasd:VirtualQuantity>384</rasd:VirtualQuantity>
       </ovf:Item>
       <ovf:Item ovf:configuration="1CPU-1GB-8NIC">
-        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:AllocationUnits>byte * 2^30</rasd:AllocationUnits>
         <rasd:Description>Memory Size</rasd:Description>
         <rasd:ElementName>1 GB of memory</rasd:ElementName>
         <rasd:InstanceID>2</rasd:InstanceID>
         <rasd:ResourceType>4</rasd:ResourceType>
-        <rasd:VirtualQuantity>384</rasd:VirtualQuantity>
+        <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
       </ovf:Item>
       <ovf:Item ovf:configuration="1CPU-3GB-10NIC 1CPU-3GB-16NIC">
-        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:AllocationUnits>byte * 2^30</rasd:AllocationUnits>
         <rasd:Description>Memory Size</rasd:Description>
         <rasd:ElementName>3 GB of memory</rasd:ElementName>
         <rasd:InstanceID>2</rasd:InstanceID>
         <rasd:ResourceType>4</rasd:ResourceType>
-        <rasd:VirtualQuantity>384</rasd:VirtualQuantity>
+        <rasd:VirtualQuantity>3</rasd:VirtualQuantity>
       </ovf:Item>
       <ovf:Item>
         <rasd:Address>0</rasd:Address>

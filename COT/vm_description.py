@@ -87,6 +87,7 @@ class VMDescription(object):
           set :attr:`output` when it is determined.
         """
         self._input_file = input_file
+        self._product_class = None
         self.working_dir = tempfile.mkdtemp(prefix="cot")
         logger.verbose("Temporary directory for VM created from %s: %s",
                        input_file, self.working_dir)
@@ -131,6 +132,15 @@ class VMDescription(object):
         raise NotImplementedError("write not implemented")
 
     @property
+    def product_class(self):
+        """The product class identifier, such as com.cisco.csr1000v."""
+        return self._product_class
+
+    @product_class.setter
+    def product_class(self, product_class):
+        self._product_class = product_class
+
+    @property
     def platform(self):
         """The Platform class object associated with this VM.
 
@@ -138,6 +148,13 @@ class VMDescription(object):
         if recognized as such.
         """
         raise NotImplementedError("no platform value available.")
+
+    def validate_hardware(self):
+        """Check sanity of hardware properties for this VM/product/platform.
+
+        :return: ``True`` if hardware is sane, ``False`` if not.
+        """
+        raise NotImplementedError("validate_hardware not implemented!")
 
     @property
     def config_profiles(self):

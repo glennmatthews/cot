@@ -113,6 +113,16 @@ ovf:size="{config_size}" />
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
+        self.assertLogged(**self.invalid_hardware_warning(
+            '4CPU-4GB-3NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-1GB-1NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-1GB-1NIC', '1024 MiB', 'RAM'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '2CPU-2GB-1NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '2CPU-2GB-1NIC', '2048 MiB', 'RAM'))
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
 ovf:size="{cfg_size}" />

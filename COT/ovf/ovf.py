@@ -56,10 +56,11 @@ from COT.data_validation import ValueTooHighError, ValueUnsupportedError
 from COT.data_validation import canonicalize_nic_subtype
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
-import COT.platforms as Platform
+from COT.platforms import platform_from_product_class, GenericPlatform
 
-from .name_helper import name_helper
-from .hardware import OVFHardware, OVFHardwareDataError
+from COT.ovf.name_helper import name_helper
+from COT.ovf.hardware import OVFHardware, OVFHardwareDataError
+from COT.ovf.item import list_union
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,8 @@ def byte_count(base_val, multiplier):
 
       >>> byte_count("128", "byte * 2^20")
       134217728
+      >>> byte_count("512", "MegaBytes")
+      536870912
 
     :param str base_val: Base value string (value of ``ovf:capacity``, etc.)
     :param str multiplier: Multiplier string (value of
@@ -81,9 +84,27 @@ def byte_count(base_val, multiplier):
     :return: Number of bytes
     :rtype: int
     """
+    if not multiplier:
+        return int(base_val)
+
+    # multiplier like 'byte * 2^30'
     match = re.search(r"2\^(\d+)", multiplier)
     if match:
         return int(base_val) << int(match.group(1))
+
+    # multiplier like 'MegaBytes'
+    si_prefixes = ["", "kilo", "mega", "giga", "tera"]
+    match = re.search("^(.*)bytes$", multiplier, re.IGNORECASE)
+    if match:
+        shift = si_prefixes.index(match.group(1).lower())
+        # Technically the below is correct:
+        #   return int(base_val) * (1000 ** shift)
+        # but instead we'll reflect common usage:
+        return int(base_val) << (10 * shift)
+
+    if multiplier and multiplier != 'byte':
+        logger.warning("Unknown multiplier string '%s'", multiplier)
+
     return int(base_val)
 
 
@@ -116,21 +137,41 @@ def factor_bytes(byte_value):
 def byte_string(byte_value, base_shift=0):
     """Pretty-print the given bytes value.
 
+    ::
+
+      >>> byte_string(512)
+      '512 B'
+      >>> byte_string(512, 2)
+      '512 MiB'
+      >>> byte_string(65536, 2)
+      '64 GiB'
+      >>> byte_string(65547)
+      '64.01 KiB'
+      >>> byte_string(65530, 3)
+      '63.99 TiB'
+      >>> byte_string(1023850)
+      '999.9 KiB'
+      >>> byte_string(1024000)
+      '1000 KiB'
+      >>> byte_string(1048575)
+      '1024 KiB'
+      >>> byte_string(1049200)
+      '1.001 MiB'
+      >>> byte_string(2560)
+      '2.5 KiB'
+
     :param float byte_value: Value
     :param int base_shift: Base value of byte_value
-      (0 = bytes, 1 = kB, 2 = MB, etc.)
-    :return: Pretty-printed byte string such as "1.00 GB"
+      (0 = bytes, 1 = KiB, 2 = MiB, etc.)
+    :return: Pretty-printed byte string such as "1.00 GiB"
     """
-    tags = ["B", "kB", "MB", "GB", "TB"]
+    tags = ["B", "KiB", "MiB", "GiB", "TiB"]
     byte_value = float(byte_value)
     shift = base_shift
-    while byte_value > 1000.0:
+    while byte_value >= 1024.0:
         byte_value /= 1024.0
         shift += 1
-    if shift == base_shift:
-        return "{0} {1}".format(int(byte_value), tags[shift])
-    else:
-        return "{0:0.2f} {1}".format(byte_value, tags[shift])
+    return "{0:.4g} {1}".format(byte_value, tags[shift])
 
 
 class OVF(VMDescription, XML):
@@ -144,6 +185,7 @@ class OVF(VMDescription, XML):
       input_file
       output_file
       ovf_version
+      product_class
       platform
       config_profiles
       default_config_profile
@@ -376,6 +418,34 @@ class OVF(VMDescription, XML):
         return self._ovf_version
 
     @property
+    def product_class(self):
+        """The product class identifier, such as com.cisco.csr1000v."""
+        if self._product_class is None and self.product_section is not None:
+            self._product_class = self.product_section.get(self.PRODUCT_CLASS)
+        return super(OVF, self).product_class
+
+    @product_class.setter
+    def product_class(self, product_class):
+        if product_class == self.product_class:
+            return
+        if self.product_section is None:
+            self.product_section = self.set_or_make_child(
+                self.virtual_system, self.PRODUCT_SECTION,
+                attrib=self.PRODUCT_SECTION_ATTRIB)
+            # Any Section must have an Info as child
+            self.set_or_make_child(self.product_section, self.INFO,
+                                   "Product Information")
+        if self.product_class:
+            logger.info("Changing product class from '%s' to '%s'",
+                        self.product_class, product_class)
+        self.product_section.set(self.PRODUCT_CLASS, product_class)
+        self._product_class = product_class
+
+        # Change platform as well!
+        self._platform = None
+        assert self.platform
+
+    @property
     def platform(self):
         """The platform type, as determined from the OVF descriptor.
 
@@ -383,38 +453,69 @@ class OVF(VMDescription, XML):
           a more-specific subclass if recognized as such.
         """
         if self._platform is None:
-            platform = None
-            product_class = None
-            class_to_platform_map = {
-                'com.cisco.csr1000v':    Platform.CSR1000V,
-                'com.cisco.iosv':        Platform.IOSv,
-                'com.cisco.nx-osv':      Platform.NXOSv,
-                'com.cisco.ios-xrv':     Platform.IOSXRv,
-                'com.cisco.ios-xrv.rp':  Platform.IOSXRvRP,
-                'com.cisco.ios-xrv.lc':  Platform.IOSXRvLC,
-                'com.cisco.ios-xrv9000': Platform.IOSXRv9000,
-                # Some early releases of IOS XRv 9000 used the
-                # incorrect string 'com.cisco.ios-xrv64'.
-                'com.cisco.ios-xrv64':   Platform.IOSXRv9000,
-                None:                    Platform.GenericPlatform,
-            }
-
-            if self.product_section is None:
-                platform = Platform.GenericPlatform
-            else:
-                product_class = self.product_section.get(self.PRODUCT_CLASS)
-                try:
-                    platform = class_to_platform_map[product_class]
-                except KeyError:
-                    logger.warning(
-                        "Unrecognized product class '%s' - known classes "
-                        "are %s. Treating as a generic product...",
-                        product_class, class_to_platform_map.keys())
-                    platform = Platform.GenericPlatform
+            self._platform = platform_from_product_class(self.product_class)
             logger.info("OVF product class %s --> platform %s",
-                        product_class, platform.__name__)
-            self._platform = platform
+                        self.product_class, self.platform.__name__)
         return self._platform
+
+    def validate_hardware(self):
+        """Check sanity of hardware properties for this VM/product/platform.
+
+        :return: ``True`` if hardware is sane, ``False`` if not.
+        """
+        result = True
+
+        # TODO refactor to share logic with profile_info_list()
+        profile_ids = self.config_profiles
+        if not profile_ids:
+            profile_ids = [None]
+
+        plat = self.platform
+
+        def _validate_helper(label, fn, *args):
+            """Call validation function, catch errors and warn user instead."""
+            try:
+                fn(*args)
+                return True
+            except ValueUnsupportedError as e:
+                logger.warning(label + str(e))
+                return False
+
+        for profile_id in profile_ids:
+            profile_str = ""
+            if profile_id:
+                profile_str = "In profile '{0}':".format(profile_id)
+            cpu_item = self.hardware.find_item('cpu', profile=profile_id)
+            if cpu_item:
+                cpus = cpu_item.get_value(self.VIRTUAL_QUANTITY,
+                                          [profile_id])
+                result &= _validate_helper(profile_str,
+                                           plat.validate_cpu_count, int(cpus))
+
+            ram_item = self.hardware.find_item('memory', profile=profile_id)
+            if ram_item:
+                megabytes = (byte_count(
+                    ram_item.get_value(self.VIRTUAL_QUANTITY, [profile_id]),
+                    ram_item.get_value(self.ALLOCATION_UNITS, [profile_id])
+                ) / (1024 * 1024))
+                result &= _validate_helper(profile_str,
+                                           plat.validate_memory_amount,
+                                           int(megabytes))
+
+            nics = self.hardware.get_item_count('ethernet', profile_id)
+            result &= _validate_helper(profile_str,
+                                       plat.validate_nic_count, nics)
+
+            eth_subtypes = list_union(
+                *[eth.get_all_values(self.RESOURCE_SUB_TYPE) for
+                  eth in self.hardware.find_all_items('ethernet')])
+            result &= _validate_helper(profile_str,
+                                       plat.validate_nic_types, eth_subtypes)
+
+            # TODO: validate_ide_subtypes
+            # TODO: validate_scsi_subtypes
+
+        return result
 
     @property
     def config_profiles(self):
@@ -634,6 +735,9 @@ class OVF(VMDescription, XML):
         # Update the XML ElementTree to reflect any hardware changes
         self.hardware.update_xml()
 
+        # Validate the hardware to be written
+        self.validate_hardware()
+
         # Make sure file references are correct:
         self.validate_and_update_file_references()
 
@@ -755,7 +859,7 @@ class OVF(VMDescription, XML):
         str_list = []
         str_list.append('-' * width)
         str_list.append(self.input_file)
-        if self.platform and self.platform is not Platform.GenericPlatform:
+        if self.platform and self.platform is not GenericPlatform:
             str_list.append("COT detected platform type: {0}"
                             .format(self.platform.PLATFORM_NAME))
         str_list.append('-' * width)
@@ -843,14 +947,14 @@ class OVF(VMDescription, XML):
 
     INFO_STRING_DISK_TEMPLATE = (
         "{{0:{0}}} "  # file/disk name - width is dynamically set
-        "{{1:>9}} "   # file size - width 9 for "999.99 MB"
-        "{{2:>9}} "   # disk capacity - width 9 for "999.99 MB"
+        "{{1:>9}} "   # file size - width 9 for "999.9 MiB"
+        "{{2:>9}} "   # disk capacity - width 9 for "999.9 MiB"
         "{{3:.20}}"   # disk info - width 20 for "harddisk @ SCSI 1:15"
     )
     INFO_STRING_DISK_COLUMNS_WIDTH = (1 + 9 + 1 + 9 + 1 + 20)
     INFO_STRING_FILE_TEMPLATE = (
         "{{0:{0}}} "  # file/disk name - width is dynamically set
-        "{{1:>9}}"    # file size - width 9 for "999.99 MB"
+        "{{1:>9}}"    # file size - width 9 for "999.9 MiB"
     )
 
     def _info_strings_for_file(self, file_obj):
@@ -946,15 +1050,15 @@ class OVF(VMDescription, XML):
     def _info_string_hardware(self, wrapper):
         """Describe hardware subtypes as part of :meth:`info_string`."""
         virtual_system_types = self.system_types
-        scsi_subtypes = set()
-        for scsi_ctrl in self.hardware.find_all_items('scsi'):
-            scsi_subtypes |= scsi_ctrl.get_all_values(self.RESOURCE_SUB_TYPE)
-        ide_subtypes = set()
-        for ide_ctrl in self.hardware.find_all_items('ide'):
-            ide_subtypes |= ide_ctrl.get_all_values(self.RESOURCE_SUB_TYPE)
-        eth_subtypes = set()
-        for eth in self.hardware.find_all_items('ethernet'):
-            eth_subtypes |= eth.get_all_values(self.RESOURCE_SUB_TYPE)
+        scsi_subtypes = list_union(
+            *[scsi_ctrl.get_all_values(self.RESOURCE_SUB_TYPE) for
+              scsi_ctrl in self.hardware.find_all_items('scsi')])
+        ide_subtypes = list_union(
+            *[ide_ctrl.get_all_values(self.RESOURCE_SUB_TYPE) for
+              ide_ctrl in self.hardware.find_all_items('ide')])
+        eth_subtypes = list_union(
+            *[eth.get_all_values(self.RESOURCE_SUB_TYPE) for
+              eth in self.hardware.find_all_items('ethernet')])
 
         if ((virtual_system_types is not None) or
                 (scsi_subtypes or ide_subtypes or eth_subtypes)):
@@ -965,13 +1069,13 @@ class OVF(VMDescription, XML):
                 str_list.extend(wrapper.wrap(" ".join(virtual_system_types)))
             if scsi_subtypes:
                 wrapper.initial_indent = "  SCSI device types:        "
-                str_list.extend(wrapper.wrap(" ".join(sorted(scsi_subtypes))))
+                str_list.extend(wrapper.wrap(" ".join(scsi_subtypes)))
             if ide_subtypes:
                 wrapper.initial_indent = "  IDE device types:         "
-                str_list.extend(wrapper.wrap(" ".join(sorted(ide_subtypes))))
+                str_list.extend(wrapper.wrap(" ".join(ide_subtypes)))
             if eth_subtypes:
                 wrapper.initial_indent = "  Ethernet device types:    "
-                str_list.extend(wrapper.wrap(" ".join(sorted(eth_subtypes))))
+                str_list.extend(wrapper.wrap(" ".join(eth_subtypes)))
             return "\n".join(str_list)
         return None
 
@@ -1195,11 +1299,12 @@ class OVF(VMDescription, XML):
             if cpu_item:
                 cpus = cpu_item.get_value(self.VIRTUAL_QUANTITY,
                                           [profile_id])
-            megabytes = 0
+            mem_bytes = 0
             ram_item = self.hardware.find_item('memory', profile=profile_id)
             if ram_item:
-                megabytes = ram_item.get_value(self.VIRTUAL_QUANTITY,
-                                               [profile_id])
+                mem_bytes = byte_count(
+                    ram_item.get_value(self.VIRTUAL_QUANTITY, [profile_id]),
+                    ram_item.get_value(self.ALLOCATION_UNITS, [profile_id]))
             nics = self.hardware.get_item_count('ethernet', profile_id)
             serials = self.hardware.get_item_count('serial', profile_id)
             disk_count = self.hardware.get_item_count('harddisk',
@@ -1215,7 +1320,7 @@ class OVF(VMDescription, XML):
             str_list.append(template.format(
                 profile_str,
                 cpus,
-                byte_string(int(megabytes), base_shift=2),
+                byte_string(mem_bytes),
                 nics,
                 serials,
                 "{0:2} / {1:>9}".format(disk_count,
@@ -1326,6 +1431,10 @@ class OVF(VMDescription, XML):
                                               self.VIRTUAL_QUANTITY, megabytes,
                                               profile_list,
                                               create_new=True)
+        self.hardware.set_value_for_all_items('memory',
+                                              self.ALLOCATION_UNITS,
+                                              'byte * 2^20',
+                                              profile_list)
 
     def set_nic_types(self, type_list, profile_list):
         """Set the hardware type(s) for NICs.
@@ -1338,7 +1447,7 @@ class OVF(VMDescription, XML):
         self.platform.validate_nic_types(type_list)
         self.hardware.set_value_for_all_items('ethernet',
                                               self.RESOURCE_SUB_TYPE,
-                                              " ".join(type_list),
+                                              type_list,
                                               profile_list)
 
     def get_nic_count(self, profile_list):
@@ -1468,7 +1577,7 @@ class OVF(VMDescription, XML):
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('scsi',
                                               self.RESOURCE_SUB_TYPE,
-                                              " ".join(type_list),
+                                              type_list,
                                               profile_list)
 
     def set_ide_subtypes(self, type_list, profile_list):
@@ -1480,7 +1589,7 @@ class OVF(VMDescription, XML):
         # TODO validate supported types by platform
         self.hardware.set_value_for_all_items('ide',
                                               self.RESOURCE_SUB_TYPE,
-                                              " ".join(type_list),
+                                              type_list,
                                               profile_list)
 
     def get_property_value(self, key):
@@ -1860,7 +1969,8 @@ class OVF(VMDescription, XML):
         """Get the sub-type of the given opaque device object.
 
         :param OVFItem device: Device object to query
-        :return: ``None``, or string such as 'virtio' or 'lsilogic'
+        :return: ``None``, or string such as 'virtio' or 'lsilogic', or
+          list of strings
         """
         return device.get_value(self.RESOURCE_SUB_TYPE)
 
@@ -2072,7 +2182,8 @@ class OVF(VMDescription, XML):
         """Create a new IDE or SCSI controller, or update existing one.
 
         :param str device_type: ``'ide'`` or ``'scsi'``
-        :param str subtype: Subtype such as ``'virtio'`` (optional)
+        :param subtype: Subtype such as ``'virtio'`` (optional), or list
+           of subtype values
         :param int address: Controller address such as 0 or 1 (optional)
         :param OVFItem ctrl_item: Existing controller device to update
           (optional)
@@ -2523,7 +2634,7 @@ class OVF(VMDescription, XML):
     def set_capacity_of_disk(self, disk, capacity_bytes):
         """Set the storage capacity of the given Disk.
 
-        Tries to use the most human-readable form possible (i.e., 8 GB
+        Tries to use the most human-readable form possible (i.e., 8 GiB
         instead of 8589934592 bytes).
 
         :param disk: Disk to update
@@ -2537,3 +2648,8 @@ class OVF(VMDescription, XML):
             (capacity, cap_units) = factor_bytes(capacity_bytes)
             disk.set(self.DISK_CAPACITY, capacity)
             disk.set(self.DISK_CAP_UNITS, cap_units)
+
+
+if __name__ == "__main__":
+    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
+    doctest.testmod()

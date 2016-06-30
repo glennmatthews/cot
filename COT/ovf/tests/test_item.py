@@ -81,7 +81,7 @@ OVFItem:
   InstanceID
     3                    : [None]
   ResourceSubType
-    lsilogic             : [None]
+    ('lsilogic',)        : [None]
   ResourceType
     6                    : [None]
 """

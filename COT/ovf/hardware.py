@@ -343,14 +343,14 @@ class OVFHardware(object):
 
         address_on_parent = new_item.get(self.ovf.ADDRESS_ON_PARENT)
         if address_on_parent:
-            address_set = new_item.get_all_values(self.ovf.ADDRESS_ON_PARENT)
-            if len(address_set) > 1:
+            address_list = new_item.get_all_values(self.ovf.ADDRESS_ON_PARENT)
+            if len(address_list) > 1:
                 raise NotImplementedError("AddressOnParent is not common "
                                           "across all profiles but has "
                                           "multiple values {0}. COT can't "
                                           "handle this yet."
-                                          .format(address_set))
-            address_on_parent = address_set.pop()
+                                          .format(address_list))
+            address_on_parent = address_list[0]
             # Currently we only handle integer addresses
             try:
                 address_on_parent = int(address_on_parent)
