@@ -50,29 +50,73 @@ Displaying a summary of OVA contents:
 
 ::
 
-    > cot info --brief iosxrv.5.1.1.ova
-    ---------------------------------------------------------------------------
-    iosxrv.5.1.1.ova
-    COT detected platform type: Cisco IOS XRv
-    ---------------------------------------------------------------------------
-    Product:  Cisco IOS XRv
+    > cot info --brief csr1000v-universalk9.03.17.01.S.156-1.S1-std.ova
+    -------------------------------------------------------------------------
+    csr1000v-universalk9.03.17.01.S.156-1.S1-std.ova
+    COT detected platform type: Cisco CSR1000V
+    -------------------------------------------------------------------------
+    Product:  Cisco CSR 1000V Cloud Services Router
     Vendor:   Cisco Systems, Inc.
-    Version:  5.1.1
+    Version:  03.17.01.S.156-1.S1-std
 
-    Files and Disks:     File Size  Capacity Device
-                         --------- --------- --------------------
-      iosxrv.vmdk        271.59 MB   3.00 GB harddisk @ IDE 0:0
+    Files and Disks:                 File Size  Capacity Device
+                                     --------- --------- --------------------
+      csr1000v_harddisk.vmdk          71.5 KiB     8 GiB harddisk @ SCSI 0:0
+      bdeo.sh                        52.42 KiB
+      README-OVF.txt                 8.534 KiB
+      README-BDEO.txt                6.748 KiB
+      cot.tgz                        116.8 KiB
+      csr1000v-universalk9.03.17....   425 MiB           cdrom @ IDE 1:0
 
     Hardware Variants:
-      System types:             vmx-08 Cisco:Internal:VMCloud-01
-      Ethernet device types:    E1000
+      System types:             vmx-08 vmx-09 vmx-10 vmx-11
+                                Cisco:Internal:VMCloud-01
+      SCSI device types:        virtio lsilogic
+      Ethernet device types:    VMXNET3 virtio
 
-    Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
-                              ---- --------- ---- ------- --------------
-      1CPU-3GB-2NIC (default)    1   3.00 GB    2       2  1 /   3.00 GB
-      2CPU-4GB-8NIC              2   4.00 GB    8       2  1 /   3.00 GB
-      4CPU-6GB-10NIC             4   6.00 GB   10       2  1 /   3.00 GB
+    Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                             ---- --------- ---- ------- --------------
+      1CPU-4GB (default)        1     4 GiB    3       2  1 /     8 GiB
+      2CPU-4GB                  2     4 GiB    3       2  1 /     8 GiB
+      4CPU-4GB                  4     4 GiB    3       2  1 /     8 GiB
+      4CPU-8GB                  4     8 GiB    3       2  1 /     8 GiB
 
+    Networks:
+      GigabitEthernet1  "Data network 1"
+      GigabitEthernet2  "Data network 2"
+      GigabitEthernet3  "Data network 3"
+
+    Environment:
+      Transport types: iso
+
+    Properties:
+      <config-version>                                        "1.0"
+      Router Name                                             ""
+      Login Username                                          ""
+      Login Password                                          ""
+      Management Interface                                    "GigabitEthernet1"
+      Management VLAN                                         ""
+      Management Interface IPv4 Address/Mask                  ""
+      Management IPv4 Gateway                                 ""
+      Management IPv4 Network                                 ""
+      PNSC IPv4 Address                                       ""
+      PNSC Agent Local Port                                   ""
+      PNSC Shared Secret Key                                  ""
+      Remote Management IPv4 Address (optional, deprecated)   ""
+      Enable SCP Server                                       "false"
+      Enable SSH Login and Disable Telnet Login               "false"
+      Enable Password                                         ""
+      Domain Name                                             ""
+      License boot level                                      "ax"
+      Console                                                 ""
+      Resource template                                       "default"
+      Intercloud Mode                                         ""
+      Intercloud Mode Management Key                          ""
+      Intercloud Control Port                                 ""
+      Intercloud Tunnel Port                                  ""
+      Intercloud Tunnel Header Size                           "148"
+      Intercloud Tunnel Interface IPv4 Address                ""
+      Intercloud Tunnel Interface Gateway IPv4 Address        ""
 
 Adding a custom hardware configuration profile to an OVA:
 
