@@ -8,13 +8,13 @@ This project adheres to `Semantic Versioning`_.
 
 **Added**
 
-- Additional code quality validation with `Pylint`_. (`#49`_).
-- Added `pep8-naming`_ plugin to ``flake8``. (`#49`_).
-- Code complexity analysis with `Pylint`_ and `mccabe`_ (`#49`_).
+- Enabled additional code quality validation with `Pylint`_, `pep8-naming`_,
+  and `mccabe`_ (`#49`_).
 
 **Changed**
 
-- Lots of refactoring to reduce code complexity.
+- Lots of refactoring to reduce code complexity as measured by `Pylint`_
+  and `mccabe`_.
 
 `1.5.2`_ - 2016-06-17
 ---------------------
