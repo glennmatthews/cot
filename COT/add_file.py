@@ -42,9 +42,9 @@ class COTAddFile(COTSubmodule):
     :attr:`file_id`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTAddFile, self).__init__(UI)
+        super(COTAddFile, self).__init__(ui)
         self._file = None
         self.file_id = None
         """File identifier string."""
@@ -83,23 +83,23 @@ class COTAddFile(COTSubmodule):
         vm = self.vm
 
         filename = os.path.basename(self.file)
-        (file, _, _, _) = vm.search_from_filename(filename)
+        (file_obj, _, _, _) = vm.search_from_filename(filename)
         if self.file_id is not None:
             (f2, _, _, _) = vm.search_from_file_id(self.file_id)
-            file = check_for_conflict("File to overwrite", [file, f2])
+            file_obj = check_for_conflict("File to overwrite", [file_obj, f2])
         if self.file_id is None:
-            if file is not None:
-                self.file_id = vm.get_id_from_file(file)
+            if file_obj is not None:
+                self.file_id = vm.get_id_from_file(file_obj)
             else:
                 self.file_id = filename
 
-        if file is not None:
+        if file_obj is not None:
             self.UI.confirm_or_die("Replace existing file {0} with {1}?"
-                                   .format(vm.get_path_from_file(file),
+                                   .format(vm.get_path_from_file(file_obj),
                                            self.file))
             logger.warning("Overwriting existing File in OVF")
 
-        vm.add_file(self.file, self.file_id, file)
+        vm.add_file(self.file, self.file_id, file_obj)
 
     def create_subparser(self):
         """Create 'add-file' CLI subparser."""

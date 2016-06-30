@@ -19,14 +19,14 @@
 import errno
 import getpass
 import logging
-import mock
 import re
-import requests
 import socket
 import ssl
-
-from pyVmomi import vim
 from distutils.version import StrictVersion
+
+import mock
+import requests
+from pyVmomi import vim
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -35,6 +35,11 @@ from COT.deploy_esxi import COTDeployESXi
 from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
+
+
+def stub_get_password(_username, _host):
+    """Stub for get_password method, returns a hard-coded string."""
+    return "passwd"
 
 
 class TestCOTDeployESXi(COT_UT):
@@ -64,7 +69,7 @@ class TestCOTDeployESXi(COT_UT):
 
     def stub_check_call(self, argv, require_success=True):
         """Stub for check_call - capture calls to ovftool."""
-        logger.info("stub_check_call({0}, {1})".format(argv, require_success))
+        logger.info("stub_check_call(%s, %s)", argv, require_success)
         if argv[0] == 'ovftool':
             self.last_argv = argv
             logger.info("Caught ovftool invocation")
@@ -78,18 +83,22 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.package = self.input_ovf
         self.instance.hypervisor = 'esxi'
         # Stub out all ovftool dependencies
+        # pylint: disable=protected-access
         self._ovftool_path = self.instance.ovftool._path
         self._check_call = self.instance.ovftool._check_call
         self._ovftool_version = self.instance.ovftool._version
         self.instance.ovftool._path = "/fake/ovftool"
         self.instance.ovftool._check_call = self.stub_check_call
         self.instance.ovftool._version = StrictVersion("4.0.0")
+        # Stub out get_password function
+        self.instance.UI.get_password = stub_get_password
 
         self.last_argv = []
 
     def tearDown(self):
         """Test case cleanup function called automatically."""
         # Remove our stub
+        # pylint: disable=protected-access
         self.instance.ovftool._path = self._ovftool_path
         self.instance.ovftool._check_call = self._check_call
         self.instance.ovftool._version = self._ovftool_version
@@ -186,6 +195,7 @@ class TestCOTDeployESXi(COT_UT):
 
         # With <4.0.0, we don't (can't) fixup, regardless.
         # Discard cached information and update the info that will be returned
+        # pylint: disable=protected-access
         self.instance.ovftool._version = StrictVersion("3.5.0")
         self.instance.run()
         self.assertEqual([
@@ -247,7 +257,8 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.fixup_serial_ports(3)
 
         self.assertTrue(mock_vm.ReconfigVM_Task.called)
-        args, kwargs = mock_vm.ReconfigVM_Task.call_args
+        # TODO: any other validation of args or kwargs?
+        _args, kwargs = mock_vm.ReconfigVM_Task.call_args
         spec = kwargs['spec']
         self.assertEqual(3, len(spec.deviceChange))
         s1, s2, s3 = spec.deviceChange
@@ -268,7 +279,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.SESSION_FAILED)
 
     @mock.patch('COT.deploy_esxi.SmartConnection.__enter__')
-    def test_serial_fixup_SSL_failure(self, mock_parent):
+    def test_serial_fixup_ssl_failure(self, mock_parent):
         """Test SSL failure in pyVmomi.
 
         Only applicable to 2.7+ and 3.4+ that have the new certificate logic.

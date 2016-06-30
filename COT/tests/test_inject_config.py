@@ -67,18 +67,18 @@ class TestCOTInjectConfig(COT_UT):
         """Test input values whose validity depends on the platform."""
         self.instance.package = self.input_ovf
         # IOSXRvLC supports neither primary nor secondary config files
-        self.instance.vm._platform = IOSXRvLC
+        self.set_vm_platform(IOSXRvLC)
         with self.assertRaises(InvalidInputError):
             self.instance.config_file = self.config_file
         with self.assertRaises(InvalidInputError):
             self.instance.secondary_config_file = self.config_file
         # IOSv supports primary but not secondary
-        self.instance.vm._platform = IOSv
+        self.set_vm_platform(IOSv)
         self.instance.config_file = self.config_file
         with self.assertRaises(InvalidInputError):
             self.instance.secondary_config_file = self.config_file
         # IOSXRv supports both
-        self.instance.vm._platform = IOSXRv
+        self.set_vm_platform(IOSXRv)
         self.instance.config_file = self.config_file
         self.instance.secondary_config_file = self.config_file
 
@@ -108,11 +108,21 @@ ovf:size="{config_size}" />
     def test_inject_config_iso_secondary(self):
         """Inject secondary config file on an ISO."""
         self.instance.package = self.input_ovf
-        self.instance.vm._platform = IOSXRv
+        self.set_vm_platform(IOSXRv)
         self.instance.secondary_config_file = self.config_file
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
+        self.assertLogged(**self.invalid_hardware_warning(
+            '4CPU-4GB-3NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-1GB-1NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-1GB-1NIC', '1024 MiB', 'RAM'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '2CPU-2GB-1NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '2CPU-2GB-1NIC', '2048 MiB', 'RAM'))
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
 ovf:size="{cfg_size}" />
@@ -215,15 +225,15 @@ ovf:size="{config_size}" />
         self.instance.package = self.minimal_ovf
         self.instance.config_file = self.config_file
         # CSR1000V wants a CD-ROM drive
-        self.instance.vm._platform = CSR1000V
+        self.set_vm_platform(CSR1000V)
         self.assertRaises(LookupError, self.instance.run)
         # IOSv wants a hard disk - will fail due to no DiskSection
-        self.instance.vm._platform = IOSv
+        self.set_vm_platform(IOSv)
         self.assertRaises(LookupError, self.instance.run)
 
         # Also fail due to DiskSection but no placeholder:
         self.instance.package = self.input_ovf
-        self.instance.vm._platform = IOSv
+        self.set_vm_platform(IOSv)
         self.assertRaises(LookupError, self.instance.run)
 
     def test_find_parent_fail_no_parent(self):

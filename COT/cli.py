@@ -18,6 +18,13 @@
 
 """CLI entry point for the Common OVF Tool (COT) suite.
 
+**Functions**
+
+.. autosummary::
+  :nosignatures:
+
+  formatter
+
 **Classes**
 
 .. autosummary::
@@ -26,14 +33,11 @@
   CLI
 """
 
+from __future__ import print_function
+
 import os
 import sys
 import argparse
-try:
-    import argcomplete
-    _argcomplete = True
-except ImportError:
-    _argcomplete = False
 import re
 import logging
 import getpass
@@ -45,11 +49,50 @@ try:
 except ImportError:
     from backports.shutil_get_terminal_size import get_terminal_size
 
+try:
+    import argcomplete
+    _argcomplete = True
+except ImportError:
+    _argcomplete = False
+
 from COT import __version_long__
 from COT.data_validation import InvalidInputError
 from COT.ui_shared import UI
 
 logger = logging.getLogger(__name__)
+
+
+def formatter(verbosity=logging.INFO):
+    """Create formatter for log output.
+
+    We offer different (more verbose) formatting when debugging is enabled,
+    hence this need.
+
+    :param verbosity: Logging level as defined by :mod:`logging`.
+    :return: Formatter object for use with :mod:`logging`.
+    :rtype: instance of :class:`colorlog.ColoredFormatter`
+    """
+    from colorlog import ColoredFormatter
+    log_colors = {
+        'DEBUG':    'blue',
+        'VERBOSE':  'cyan',
+        'INFO':     'green',
+        'WARNING':  'yellow',
+        'ERROR':    'red',
+        'CRITICAL': 'red',
+    }
+    format_string = "%(log_color)s"
+    datefmt = None
+    if verbosity <= logging.DEBUG:
+        format_string += "%(asctime)s.%(msecs)d "
+        datefmt = "%H:%M:%S"
+    format_string += "%(levelname)8s: "
+    if verbosity <= logging.VERBOSE:
+        format_string += "%(name)-22s "
+    format_string += "%(message)s"
+    return ColoredFormatter(format_string,
+                            datefmt=datefmt,
+                            log_colors=log_colors)
 
 
 class CLI(UI):
@@ -63,7 +106,6 @@ class CLI(UI):
       create_subparsers
       fill_examples
       fill_usage
-      formatter
       get_input
       get_password
       main
@@ -253,38 +295,6 @@ class CLI(UI):
                 output_lines.append(wrapped_line)
         return "\n".join(output_lines)
 
-    def formatter(self, verbosity=logging.INFO):
-        """Create formatter for log output.
-
-        We offer different (more verbose) formatting when debugging is enabled,
-        hence this need.
-
-        :param verbosity: Logging level as defined by :mod:`logging`.
-        :return: Formatter object for use with :mod:`logging`.
-        :rtype: instance of :class:`colorlog.ColoredFormatter`
-        """
-        from colorlog import ColoredFormatter
-        log_colors = {
-            'DEBUG':    'blue',
-            'VERBOSE':  'cyan',
-            'INFO':     'green',
-            'WARNING':  'yellow',
-            'ERROR':    'red',
-            'CRITICAL': 'red',
-        }
-        format_string = "%(log_color)s"
-        datefmt = None
-        if verbosity <= logging.DEBUG:
-            format_string += "%(asctime)s.%(msecs)d "
-            datefmt = "%H:%M:%S"
-        format_string += "%(levelname)8s: "
-        if verbosity <= logging.VERBOSE:
-            format_string += "%(name)-22s "
-        format_string += "%(message)s"
-        return ColoredFormatter(format_string,
-                                datefmt=datefmt,
-                                log_colors=log_colors)
-
     def set_verbosity(self, level):
         """Enable logging and/or change the logging verbosity level.
 
@@ -296,7 +306,7 @@ class CLI(UI):
         if not self.handler:
             self.handler = logging.StreamHandler()
         self.handler.setLevel(level)
-        self.handler.setFormatter(self.formatter(level))
+        self.handler.setFormatter(formatter(level))
         if not self.master_logger:
             self.master_logger = logging.getLogger('COT')
             self.master_logger.addHandler(self.handler)
@@ -323,7 +333,7 @@ class CLI(UI):
             (user declines)
         """
         if self.force:
-            logger.warning("Automatically agreeing to '{0}'".format(prompt))
+            logger.warning("Automatically agreeing to '%s'", prompt)
             return True
 
         # Wrap prompt to screen
@@ -359,8 +369,8 @@ class CLI(UI):
         :rtype: str
         """
         if self.force:
-            logger.warning("Automatically entering '{0}' in response to '{1}'"
-                           .format(default_value, prompt))
+            logger.warning("Automatically entering '%s' in response to '%s'",
+                           default_value, prompt)
             return default_value
 
         ans = self.input("{0} [{1}] ".format(prompt, default_value))
@@ -517,9 +527,41 @@ class CLI(UI):
         # If being run non-interactively, treat as if --force is set, in order
         # to avoid hanging while trying to read input that will never come.
         if not (sys.stdin.isatty() and sys.stdout.isatty()):
-            args._force = True
+            args._force = True  # pylint: disable=protected-access
 
         return args
+
+    def args_to_dict(self, args):  # pylint: disable=no-self-use
+        """Convert args to a dict and perform any needed cleanup."""
+        arg_dict = vars(args)
+        del arg_dict["_verbosity"]
+        del arg_dict["_force"]
+        del arg_dict["_subcommand"]
+        for (arg, value) in arg_dict.items():
+            # When argparse is using both "nargs='+'" and "action=append",
+            # this allows some flexibility in the user CLI, but the parsed
+            # output is a nested list of lists. E.g., "-a 1 2 -a 3" would parse
+            # as [[1, 2][3]] rather than the desired [1, 2, 3].
+            # Flatten it back out before we pass it through to the submodule!
+            if (isinstance(value, list) and
+                    all(isinstance(v, list) for v in value)):
+                arg_dict[arg] = [v for l in value for v in l]
+        return arg_dict
+
+    def set_instance_attributes(self, arg_dict):  # pylint: disable=no-self-use
+        """Pass the CLI argument dictionary to the instance attributes TODO.
+
+        :raise InvalidInputError: if attributes are not validly set.
+        """
+        # Set mandatory (CAPITALIZED) args first, then optional args
+        for (arg, value) in arg_dict.items():
+            if arg[0].isupper() and value is not None:
+                setattr(arg_dict["instance"], arg.lower(), value)
+        for (arg, value) in arg_dict.items():
+            if arg == "instance":
+                continue
+            if not arg[0].isupper() and value is not None:
+                setattr(arg_dict["instance"], arg, value)
 
     def main(self, args):
         """Main worker function for COT when invoked from the CLI.
@@ -544,6 +586,7 @@ class CLI(UI):
           * 2 on input error (parser error,
             :class:`~COT.data_validation.InvalidInputError`, etc.)
         """
+        # pylint: disable=protected-access
         self.force = args._force
         self.set_verbosity(args._verbosity)
 
@@ -554,29 +597,9 @@ class CLI(UI):
         subp = self.subparser_lookup[args._subcommand]
 
         # Call the appropriate submodule and handle any resulting errors
-        arg_hash = vars(args)
-        del arg_hash["_verbosity"]
-        del arg_hash["_force"]
-        del arg_hash["_subcommand"]
-        for (arg, value) in arg_hash.items():
-            # When argparse is using both "nargs='+'" and "action=append",
-            # this allows some flexibility in the user CLI, but the parsed
-            # output is a nested list of lists. E.g., "-a 1 2 -a 3" would parse
-            # as [[1, 2][3]] rather than the desired [1, 2, 3].
-            # Flatten it back out before we pass it through to the submodule!
-            if (isinstance(value, list) and
-                    all(isinstance(v, list) for v in value)):
-                arg_hash[arg] = [v for l in value for v in l]
+        arg_dict = self.args_to_dict(args)
         try:
-            # Set mandatory (CAPITALIZED) args first, then optional args
-            for (arg, value) in arg_hash.items():
-                if arg[0].isupper() and value is not None:
-                    setattr(args.instance, arg.lower(), value)
-            for (arg, value) in arg_hash.items():
-                if arg == "instance":
-                    continue
-                if not arg[0].isupper() and value is not None:
-                    setattr(args.instance, arg, value)
+            self.set_instance_attributes(arg_dict)
             args.instance.run()
             args.instance.finished()
         except InvalidInputError as e:

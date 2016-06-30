@@ -48,9 +48,9 @@ class COTEditProperties(COTSubmodule):
     :attr:`transports`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTEditProperties, self).__init__(UI)
+        super(COTEditProperties, self).__init__(ui)
         self._config_file = None
         self._properties = {}
         self._transports = None
@@ -81,7 +81,7 @@ class COTEditProperties(COTSubmodule):
         for key_value_pair in value:
             try:
                 (k, v) = key_value_pair.split('=', 1)
-                logger.debug("key: {0} value: {1}".format(k, v))
+                logger.debug("key: %s value: %s", k, v)
                 if k == '':
                     raise ValueError()
                 new_value.append((k, v))
@@ -110,9 +110,9 @@ class COTEditProperties(COTSubmodule):
             if v in self._KNOWN_TRANSPORTS.keys():
                 v = self._KNOWN_TRANSPORTS[v]
             if v not in self._KNOWN_TRANSPORTS.values():
-                logger.warning("Unknown transport value '{0}'. "
+                logger.warning("Unknown transport value '%s'. "
                                "You may want to contact the COT developers "
-                               "to add this as a recognized value.".format(v))
+                               "to add this as a recognized value.", v)
             self._transports.append(v)
 
     def run(self):
@@ -159,7 +159,7 @@ class COTEditProperties(COTSubmodule):
             key_list = [p['key'] for p in pa]
             string_list = ["""{0:25} "{1}" """.format(p['key'], p['label'])
                            for p in pa]
-            input = self.UI.choose_from_list(
+            user_input = self.UI.choose_from_list(
                 header="Please choose a property to edit:",
                 option_list=key_list,
                 info_list=string_list,
@@ -167,10 +167,10 @@ class COTEditProperties(COTSubmodule):
                         "'q' to write changes and quit"),
                 default_value='q')
 
-            if input == 'q' or input == 'Q':
+            if user_input == 'q' or user_input == 'Q':
                 break
 
-            p = next(p for p in pa if p['key'] == input)
+            p = next(p for p in pa if p['key'] == user_input)
 
             key = p['key']
             old_value = p['value']
@@ -191,14 +191,13 @@ class COTEditProperties(COTSubmodule):
                 new_value = self.UI.get_input(prompt,
                                               default_value=old_value)
                 if new_value == old_value:
-                    logger.info("Value for property '{0}' is unchanged"
-                                .format(key))
+                    logger.info("Value for property '%s' is unchanged", key)
                     break
                 else:
                     try:
                         new_value = self.vm.set_property_value(key, new_value)
-                        logger.info("Successfully updated property '{0}' "
-                                    "value to '{1}'".format(key, new_value))
+                        logger.info("Successfully updated property '%s' "
+                                    "value to '%s'", key, new_value)
                         # Refresh!
                         pa = self.vm.environment_properties
                         break

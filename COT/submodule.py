@@ -47,14 +47,14 @@ class COTGenericSubmodule(object):
       :class:`COTSubmodule` as appropriate.
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
         self.vm = None
         """Virtual machine description (:class:`VMDescription`)."""
-        self.UI = UI
+        self.UI = ui
         """User interface instance (:class:`~ui_shared.UI` or subclass)."""
 
-    def ready_to_run(self):
+    def ready_to_run(self):  # pylint: disable=no-self-use
         """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
@@ -102,9 +102,9 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
     :attr:`package`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTReadOnlySubmodule, self).__init__(UI)
+        super(COTReadOnlySubmodule, self).__init__(ui)
         self._package = None
 
     @property
@@ -152,9 +152,9 @@ class COTSubmodule(COTGenericSubmodule):
     :attr:`output`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTSubmodule, self).__init__(UI)
+        super(COTSubmodule, self).__init__(ui)
         self._package = None
         # Default to an unspecified output rather than no output
         self._output = ""

@@ -43,6 +43,7 @@ class TestCOTInfo(COT_UT):
 
     def test_invalid_args(self):
         """Test various invalid inputs."""
+        # pylint: disable=redefined-variable-type
         with self.assertRaises(InvalidInputError):
             self.instance.package_list = ["/foo/bar/baz"]
         with self.assertRaises(InvalidInputError):
@@ -59,7 +60,7 @@ class TestCOTInfo(COT_UT):
 -------------------------------------------------------------------------------
 Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
-  None (default)            0      0 MB    0       0  0 /       0 B
+  None (default)            0       0 B    0       0  0 /       0 B
 """.format(self.minimal_ovf)
         self.instance.package_list = [self.minimal_ovf]
 
@@ -80,14 +81,14 @@ Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
 -------------------------------------------------------------------------------
 Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
-  None (default)            0      0 MB    0       0  0 /       0 B
+  None (default)            0       0 B    0       0  0 /       0 B
 
 -------------------------------------------------------------------------------
 {0}
 -------------------------------------------------------------------------------
 Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
-  None (default)            0      0 MB    0       0  0 /       0 B
+  None (default)            0       0 B    0       0  0 /       0 B
 """.format(self.minimal_ovf))
 
     def test_input_ovf(self):
@@ -106,8 +107,8 @@ Version:  DEV
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
-  input.iso          352.00 kB           cdrom @ IDE 1:0
+  input.vmdk           149 KiB     1 GiB harddisk @ SCSI 0:0
+  input.iso            352 KiB           cdrom @ IDE 1:0
   sample_cfg.txt          78 B
 
 Hardware Variants:
@@ -117,13 +118,13 @@ Hardware Variants:
 
 Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
                           ---- --------- ---- ------- --------------
-  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
+  4CPU-4GB-3NIC (default)    4     4 GiB    3       2  1 /     1 GiB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
-  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
+  1CPU-1GB-1NIC              1     1 GiB    1       2  1 /     1 GiB
     Label:          "1 vCPU, 1 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC"
-  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
+  2CPU-2GB-1NIC              2     2 GiB    1       2  1 /     1 GiB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
@@ -162,8 +163,8 @@ Version:  DEV
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
-  input.iso          352.00 kB           cdrom @ IDE 1:0
+  input.vmdk           149 KiB     1 GiB harddisk @ SCSI 0:0
+  input.iso            352 KiB           cdrom @ IDE 1:0
   sample_cfg.txt          78 B
 
 Hardware Variants:
@@ -173,9 +174,9 @@ Hardware Variants:
 
 Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
                           ---- --------- ---- ------- --------------
-  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
-  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
-  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
+  4CPU-4GB-3NIC (default)    4     4 GiB    3       2  1 /     1 GiB
+  1CPU-1GB-1NIC              1     1 GiB    1       2  1 /     1 GiB
+  2CPU-2GB-1NIC              2     2 GiB    1       2  1 /     1 GiB
 
 Networks:
   VM Network  "VM Network"
@@ -210,10 +211,10 @@ Version:  DEV
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.vmdk           149 KiB     1 GiB harddisk @ SCSI 0:0
     File ID: file1
     Disk ID: vmdisk1
-  input.iso          352.00 kB           cdrom @ IDE 1:0
+  input.iso            352 KiB           cdrom @ IDE 1:0
     File ID: file2
   sample_cfg.txt          78 B
     File ID: textfile
@@ -225,13 +226,13 @@ Hardware Variants:
 
 Configuration Profiles:   CPUs    Memory NICs Serials Disks/Capacity
                           ---- --------- ---- ------- --------------
-  4CPU-4GB-3NIC (default)    4   4.00 GB    3       2  1 /   1.00 GB
+  4CPU-4GB-3NIC (default)    4     4 GiB    3       2  1 /     1 GiB
     Label:          "4 vCPUs, 4 GB RAM, 3 NICs"
     Description:    "Default hardware profile - 4 vCPUs, 4 GB RAM, 3 NICs"
-  1CPU-1GB-1NIC              1   1.00 GB    1       2  1 /   1.00 GB
+  1CPU-1GB-1NIC              1     1 GiB    1       2  1 /     1 GiB
     Label:          "1 vCPU, 1 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 1 vCPU, 1 GB RAM, 1 NIC"
-  2CPU-2GB-1NIC              2   2.00 GB    1       2  1 /   1.00 GB
+  2CPU-2GB-1NIC              2     2 GiB    1       2  1 /     1 GiB
     Label:          "2 vCPUs, 2 GB RAM, 1 NIC"
     Description:    "Minimal hardware profile - 2 vCPUs, 2 GB RAM, 1 NIC"
 
@@ -295,8 +296,8 @@ Version:  15.4(2.4)T
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ IDE 0:0
-  (disk placeholder)        -- 128.00 MB harddisk @ IDE 0:1
+  input.vmdk           149 KiB     1 GiB harddisk @ IDE 0:0
+  (disk placeholder)        --   128 MiB harddisk @ IDE 0:1
 
 Hardware Variants:
   System types:             vmx-08 Cisco:Internal:VMCloud-01
@@ -305,10 +306,10 @@ Hardware Variants:
 
 Configuration Profiles:     CPUs    Memory NICs Serials Disks/Capacity
                             ---- --------- ---- ------- --------------
-  1CPU-384MB-2NIC (default)    1    384 MB    2       2  2 /   1.12 GB
-  1CPU-1GB-8NIC                1    384 MB    8       2  2 /   1.12 GB
-  1CPU-3GB-10NIC               1    384 MB   10       2  2 /   1.12 GB
-  1CPU-3GB-16NIC               1    384 MB   16       2  2 /   1.12 GB
+  1CPU-384MB-2NIC (default)    1   384 MiB    2       2  2 / 1.125 GiB
+  1CPU-1GB-8NIC                1     1 GiB    8       2  2 / 1.125 GiB
+  1CPU-3GB-10NIC               1     3 GiB   10       2  2 / 1.125 GiB
+  1CPU-3GB-16NIC               1     3 GiB   16       2  2 / 1.125 GiB
 
 Networks:
   GigabitEthernet0_0   "Data network 1"
@@ -345,10 +346,10 @@ Version:  15.4(2.4)T
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ IDE 0:0
+  input.vmdk           149 KiB     1 GiB harddisk @ IDE 0:0
     File ID: vios-adventerprisek9-m.vmdk
     Disk ID: vios-adventerprisek9-m.vmdk
-  (disk placeholder)        -- 128.00 MB harddisk @ IDE 0:1
+  (disk placeholder)        --   128 MiB harddisk @ IDE 0:1
 
 Hardware Variants:
   System types:             vmx-08 Cisco:Internal:VMCloud-01
@@ -357,17 +358,17 @@ Hardware Variants:
 
 Configuration Profiles:     CPUs    Memory NICs Serials Disks/Capacity
                             ---- --------- ---- ------- --------------
-  1CPU-384MB-2NIC (default)    1    384 MB    2       2  2 /   1.12 GB
+  1CPU-384MB-2NIC (default)    1   384 MiB    2       2  2 / 1.125 GiB
     Label:          "Small"
     Description:    "Minimal hardware profile - 1 vCPU, 384 MB RAM, 2 NICs"
-  1CPU-1GB-8NIC                1    384 MB    8       2  2 /   1.12 GB
+  1CPU-1GB-8NIC                1     1 GiB    8       2  2 / 1.125 GiB
     Label:          "Medium"
     Description:    "Medium hardware profile - 1 vCPU, 1 GB RAM, 8 NICs"
-  1CPU-3GB-10NIC               1    384 MB   10       2  2 /   1.12 GB
+  1CPU-3GB-10NIC               1     3 GiB   10       2  2 / 1.125 GiB
     Label:          "Large (ESXi)"
     Description:    "Large hardware profile for ESXi - 1 vCPU, 3 GB RAM, 10
                      NICs"
-  1CPU-3GB-16NIC               1    384 MB   16       2  2 /   1.12 GB
+  1CPU-3GB-16NIC               1     3 GiB   16       2  2 / 1.125 GiB
     Label:          "Large (non-ESXi)"
     Description:    "Large hardware profile for other hypervisors - 1 vCPU, 3
                      GB RAM, 16 NICs. (Note: ESXi only permits 10 NICs in a VM
@@ -443,7 +444,7 @@ End User License Agreement(s):
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.vmdk           149 KiB     1 GiB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-04
@@ -452,7 +453,7 @@ Hardware Variants:
 
 Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
-  None (default)            1   8.00 GB    1       0  1 /   1.00 GB
+  None (default)            1     8 GiB    1       0  1 /     1 GiB
 
 Networks:
   bridged  "The bridged network"
@@ -481,7 +482,7 @@ End User License Agreement(s):
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.vmdk           149 KiB     1 GiB harddisk @ SCSI 0:0
     File ID: file1
     Disk ID: vmdisk1
 
@@ -492,7 +493,7 @@ Hardware Variants:
 
 Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
-  None (default)            1   8.00 GB    1       0  1 /   1.00 GB
+  None (default)            1     8 GiB    1       0  1 /     1 GiB
 
 Networks:
   bridged  "The bridged network"
@@ -511,7 +512,7 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.vmdk           149 KiB     1 GiB harddisk @ SCSI 0:0
 
 Hardware Variants:
   System types:             vmx-08
@@ -520,7 +521,7 @@ Hardware Variants:
 
 Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
-  None (default)            2   1.50 GB    4       0  1 /   1.00 GB
+  None (default)            2   1.5 GiB    4       0  1 /     1 GiB
 
 Networks:
   lanethernet0  "The lanethernet0 network"
@@ -542,7 +543,7 @@ Properties:
 -------------------------------------------------------------------------------
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  input.vmdk         149.00 kB   1.00 GB harddisk @ SCSI 0:0
+  input.vmdk           149 KiB     1 GiB harddisk @ SCSI 0:0
     File ID: file1
     Disk ID: vmdisk1
 
@@ -553,7 +554,7 @@ Hardware Variants:
 
 Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
-  None (default)            2   1.50 GB    4       0  1 /   1.00 GB
+  None (default)            2   1.5 GiB    4       0  1 /     1 GiB
 
 Networks:
   lanethernet0  "The lanethernet0 network"
@@ -582,7 +583,7 @@ Properties:
 -------------------------------------------------------------------------------
 Files and Disks:        File Size  Capacity Device
                         --------- --------- --------------------
-  ubuntu.2.0-disk1.vmdk             8.00 GB harddisk @ SATA 0:0
+  ubuntu.2.0-disk1.vmdk               8 GiB harddisk @ SATA 0:0
     File ID: file1
     Disk ID: vmdisk1
 
@@ -593,7 +594,7 @@ Hardware Variants:
 
 Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
                          ---- --------- ---- ------- --------------
-  None (default)            1    512 MB    1       0  1 /   8.00 GB
+  None (default)            1   512 MiB    1       0  1 /     8 GiB
 
 Networks:
   NAT  "Logical network used by this appliance."
@@ -613,14 +614,14 @@ NICs and Associated Networks:
 -------------------------------------------------------------------------------
 Files and Disks:                       File Size  Capacity Device
                                        --------- --------- --------------------
-  this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB 
-  input.iso                            352.00 kB           cdrom @ (?) ?:0
-  (disk placeholder)                          -- 128.00 MB 
+  this_is_a_really_long_filename_fo...   149 KiB     1 GiB 
+  input.iso                              352 KiB           cdrom @ (?) ?:0
+  (disk placeholder)                          --   128 MiB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
                                     ---- --------- ---- ------- --------------
-  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
-  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+  myprofile (default)                  3       0 B    1       0  1 / 1.125 GiB
+  howlongofaprofilenamecanweusehere    0       1 B    0       0  1 / 1.125 GiB
 
 Networks:
   This is a rather verbose network name, eh what?  "Why yes, it is!"
@@ -651,19 +652,19 @@ Version:  (No version string)
 
 Files and Disks:                       File Size  Capacity Device
                                        --------- --------- --------------------
-  this_is_a_really_long_filename_fo... 149.00 kB   1.00 GB 
+  this_is_a_really_long_filename_fo...   149 KiB     1 GiB 
     File ID: input.vmdk
     Disk ID: input.vmdk
-  input.iso                            352.00 kB           cdrom @ (?) ?:0
+  input.iso                              352 KiB           cdrom @ (?) ?:0
     File ID: input.iso
-  (disk placeholder)                          -- 128.00 MB 
+  (disk placeholder)                          --   128 MiB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
                                     ---- --------- ---- ------- --------------
-  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
+  myprofile (default)                  3       0 B    1       0  1 / 1.125 GiB
     Label:          "what a profile"
     Description:    "this is"
-  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+  howlongofaprofilenamecanweusehere    0       1 B    0       0  1 / 1.125 GiB
     Label:          "howlongofaprofilenamecanweusehere"
     Description:    "prettylongitappears"
 
@@ -695,6 +696,7 @@ Properties:
 
     def test_wrapping(self):
         """Test info string on a narrower-than-usual terminal."""
+        # pylint: disable=protected-access
         self.instance.UI._terminal_width = 60
 
         self.instance.package_list = [self.invalid_ovf]
@@ -711,16 +713,16 @@ Version:  (No version string)
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  this_is_a_reall... 149.00 kB   1.00 GB 
-  input.iso          352.00 kB           cdrom @ (?) ?:0
-  (disk placeholder)        -- 128.00 MB 
+  this_is_a_reall...   149 KiB     1 GiB 
+  input.iso            352 KiB           cdrom @ (?) ?:0
+  (disk placeholder)        --   128 MiB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
                                     ---- --------- ---- ------- --------------
-  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
+  myprofile (default)                  3       0 B    1       0  1 / 1.125 GiB
     Label:          "what a profile"
     Description:    "this is"
-  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+  howlongofaprofilenamecanweusehere    0       1 B    0       0  1 / 1.125 GiB
     Label:          "howlongofaprofilenamecanweusehere"
     Description:    "prettylongitappears"
 
@@ -758,19 +760,19 @@ Version:  (No version string)
 
 Files and Disks:     File Size  Capacity Device
                      --------- --------- --------------------
-  this_is_a_reall... 149.00 kB   1.00 GB 
+  this_is_a_reall...   149 KiB     1 GiB 
     File ID: input.vmdk
     Disk ID: input.vmdk
-  input.iso          352.00 kB           cdrom @ (?) ?:0
+  input.iso            352 KiB           cdrom @ (?) ?:0
     File ID: input.iso
-  (disk placeholder)        -- 128.00 MB 
+  (disk placeholder)        --   128 MiB 
 
 Configuration Profiles:             CPUs    Memory NICs Serials Disks/Capacity
                                     ---- --------- ---- ------- --------------
-  myprofile (default)                  3      0 MB    1       0  1 /   1.12 GB
+  myprofile (default)                  3       0 B    1       0  1 / 1.125 GiB
     Label:          "what a profile"
     Description:    "this is"
-  howlongofaprofilenamecanweusehere    0      1 MB    0       0  1 /   1.12 GB
+  howlongofaprofilenamecanweusehere    0       1 B    0       0  1 / 1.125 GiB
     Label:          "howlongofaprofilenamecanweusehere"
     Description:    "prettylongitappears"
 

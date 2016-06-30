@@ -32,7 +32,7 @@ from COT.data_validation import InvalidInputError, ValueUnsupportedError
 logger = logging.getLogger(__name__)
 
 
-class SerialConnection:
+class SerialConnection(object):
     """Generic class defining a serial port connection."""
 
     @classmethod
@@ -108,7 +108,7 @@ class SerialConnection:
             # //:<port>
             # <host>:<port>
             # :<port>
-            m = re.match('/?/?(.*:\d+)', value)
+            m = re.match(r'/?/?(.*:\d+)', value)
             if m:
                 return m.group(1)
             raise InvalidInputError("'{0}' is not a valid value for "
@@ -119,11 +119,11 @@ class SerialConnection:
                                       .format(kind))
 
     @classmethod
-    def validate_options(cls, kind, value, options):
+    def validate_options(cls, kind, _value, options):
         """Check that the given set of options are valid for this connection.
 
         :param str kind: Validated 'kind' string.
-        :param str value: Validated 'value' string.
+        :param str _value: Validated 'value' string. Currently unused.
         :param dict options: Input options dictionary.
         :return: validated options dict
         :raise InvalidInputError: if options are not valid.
@@ -137,8 +137,8 @@ class SerialConnection:
     def __init__(self, kind, value, options):
         """Construct a SerialConnection object of the given kind and value."""
         logger.debug("Creating SerialConnection: "
-                     "kind: {0}, value: {1}, options: {2}"
-                     .format(kind, value, options))
+                     "kind: %s, value: %s, options: %s",
+                     kind, value, options)
         self.kind = self.validate_kind(kind)
         self.value = self.validate_value(self.kind, value)
         self.options = self.validate_options(self.kind, self.value, options)
@@ -172,9 +172,9 @@ class COTDeploy(COTReadOnlySubmodule):
     :attr:`network_map`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTDeploy, self).__init__(UI)
+        super(COTDeploy, self).__init__(ui)
         # User inputs
         self._hypervisor = None
         self._configuration = None
@@ -230,7 +230,7 @@ class COTDeploy(COTReadOnlySubmodule):
     def configuration(self, value):
         if self.vm is not None:
             profiles = self.vm.config_profiles
-            if value is not None and not (value in profiles):
+            if value is not None and value not in profiles:
                 raise InvalidInputError(
                     "'Configuration '{0}' is not a recognized "
                     "profile for '{1}'.\nValid options are:\n{2}"
@@ -258,7 +258,7 @@ class COTDeploy(COTReadOnlySubmodule):
         for key_value_pair in value:
             try:
                 (k, v) = key_value_pair.split('=', 1)
-                logger.debug("network_map: key {0} value {1}".format(k, v))
+                logger.debug("network_map: key %s value %s", k, v)
                 if k == '' or v == '':
                     raise ValueError("message is irrelevant")
                 # Don't store the split values for now, as ovftool actually
@@ -304,8 +304,8 @@ class COTDeploy(COTReadOnlySubmodule):
             if len(profile_list) == 1:
                 # No need to prompt the user
                 self.configuration = profile_list[0]
-                logger.debug("Auto-selected only profile '{0}'"
-                             .format(self.configuration))
+                logger.debug("Auto-selected only profile '%s'",
+                             self.configuration)
             else:
                 header, profile_info_list = self.vm.profile_info_list(
                     self.UI.terminal_width - 1)
@@ -371,6 +371,7 @@ class COTDeploy(COTReadOnlySubmodule):
             # Unfortunately argparse doesn't readily expose the subparsers of
             # an existing parser. The below should be considered experimental!
             self.subparsers = next(
+                # pylint: disable=protected-access
                 action for
                 action in self.UI.subparser_lookup['deploy']._actions if
                 type(action).name == '_SubParsersAction')

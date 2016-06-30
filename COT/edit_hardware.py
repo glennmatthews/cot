@@ -16,6 +16,13 @@
 
 """Module for editing hardware details of a VM.
 
+**Functions**
+
+.. autosummary::
+  :nosignatures:
+
+  expand_list_wildcard
+
 **Classes**
 
 .. autosummary::
@@ -65,9 +72,9 @@ class COTEditHardware(COTSubmodule):
     :attr:`virtual_system_type`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTEditHardware, self).__init__(UI)
+        super(COTEditHardware, self).__init__(ui)
         self.profiles = None
         """Configuration profile(s) to edit."""
         self.delete_all_other_profiles = False
@@ -81,17 +88,17 @@ class COTEditHardware(COTSubmodule):
         self.nic_networks = None
         """List of NIC-to-network mappings.
 
-        Can use wildcards as described in :meth:`expand_list_wildcard`.
+        Can use wildcards as described in :func:`expand_list_wildcard`.
         """
         self.nic_names = None
         """List of NIC name strings.
 
-        Can use wildcards as described in :meth:`expand_list_wildcard`.
+        Can use wildcards as described in :func:`expand_list_wildcard`.
         """
         self.network_descriptions = None
         """List of network description strings.
 
-        Can use wildcards as described in :meth:`expand_list_wildcard`.
+        Can use wildcards as described in :func:`expand_list_wildcard`.
         """
         self._serial_ports = None
         self.serial_connectivity = None
@@ -122,12 +129,13 @@ class COTEditHardware(COTSubmodule):
         """Amount of RAM (in megabytes) to set."""
         return self._memory
 
+    # We like to see memory input in the form "4096M" or "4 GB" or "2 GiB"
+    MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?i?[bB]?\s*$"
+
     @memory.setter
     def memory(self, value):
         value = str(value)
-        # We like to see memory input in the form "4096M" or "4 GB"
-        MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?[bB]?\s*$"
-        match = re.match(MEMORY_REGEXP, value)
+        match = re.match(self.MEMORY_REGEXP, value)
         if not match:
             raise InvalidInputError("Could not parse memory string '{0}'"
                                     .format(value))
@@ -137,7 +145,6 @@ class COTEditHardware(COTSubmodule):
         if match.group(2) == 'M' or match.group(2) == 'm':
             # default
             logger.debug("Memory specified in megabytes")
-            pass
         elif match.group(2) == 'G' or match.group(2) == 'g':
             logger.debug("Memory specified in gigabytes - "
                          "converting to megabytes")
@@ -146,14 +153,13 @@ class COTEditHardware(COTSubmodule):
             # Try to be clever and guess the units
             if mem_value <= 64:
                 logger.warning("Memory units not specified, "
-                               "guessing '{0}' means '{0}GB'"
-                               .format(mem_value))
+                               "guessing '%s' means '%s GiB'",
+                               mem_value, mem_value)
                 mem_value *= 1024
             else:
                 logger.warning("Memory units not specified, "
-                               "guessing '{0}' means '{0}MB'"
-                               .format(mem_value))
-                pass
+                               "guessing '%s' means '%s MiB'",
+                               mem_value, mem_value)
         self.vm.platform.validate_memory_amount(mem_value)
         self._memory = mem_value
 
@@ -289,36 +295,74 @@ class COTEditHardware(COTSubmodule):
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         # Need some work to do!
-        if (
-                self.profiles is None and
-                self.delete_all_other_profiles is False and
-                self.cpus is None and
-                self.memory is None and
-                self.nics is None and
-                self.nic_types is None and
-                self.mac_addresses_list is None and
-                self.nic_networks is None and
-                self.nic_names is None and
-                self.network_descriptions is None and
-                self.serial_ports is None and
-                self.serial_connectivity is None and
-                self.scsi_subtypes is None and
-                self.ide_subtypes is None and
-                self.virtual_system_type is None
-        ):
+        if not any([x is not None and x is not False for x in [
+                self.profiles,
+                self.delete_all_other_profiles,
+                self.cpus,
+                self.memory,
+                self.nics,
+                self.nic_types,
+                self.mac_addresses_list,
+                self.nic_networks,
+                self.nic_names,
+                self.network_descriptions,
+                self.serial_ports,
+                self.serial_connectivity,
+                self.scsi_subtypes,
+                self.ide_subtypes,
+                self.virtual_system_type,
+        ]]):
             return (False, "No work requested! Please specify at least "
                     "one hardware change")
         return super(COTEditHardware, self).ready_to_run()
 
-    def run(self):
-        """Do the actual work of this submodule.
+    def _run_create_new_profiles(self):
+        """Create new profiles as needed, with user input.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        Helper for :meth:`_run_update_profiles`.
         """
-        super(COTEditHardware, self).run()
+        # Create new profiles as needed
+        profile_list = self.vm.config_profiles
+        for profile in self.profiles:  # pylint: disable=not-an-iterable
+            if profile not in profile_list:
+                self.UI.confirm_or_die(
+                    "Profile '{0}' does not exist. Create it?"
+                    .format(profile))
+                label = self.UI.get_input(
+                    "Please enter a label for this configuration profile",
+                    profile)
+                desc = self.UI.get_input(
+                    "Please enter a description for this "
+                    "configuration profile", label)
+                self.vm.create_configuration_profile(profile, label=label,
+                                                     description=desc)
 
-        # Warn user about non-profile-aware properties when setting profiles
+    def _run_delete_other_profiles(self):
+        """Delete all profiles except those requested.
+
+        Helper for :meth:`_run_update_profiles`.
+        """
+        if self.profiles is None:
+            self.UI.confirm_or_die(
+                "--delete-all-other-profiles was specified but no "
+                "--profiles was specified. Really proceed to delete ALL "
+                "configuration profiles?")
+            profiles_to_delete = self.vm.config_profiles
+        else:
+            profiles_to_delete = list(set(self.vm.config_profiles) -
+                                      set(self.profiles))
+        for profile in profiles_to_delete:
+            if self.profiles is not None:
+                if not self.UI.confirm("Delete profile {0}?".format(profile)):
+                    logger.verbose("Skipping deletion of profile %s", profile)
+                    continue
+            # else (profiles == None) we already confirmed earlier
+            self.vm.delete_configuration_profile(profile)
+
+    def _run_update_profiles(self):
+        """Handle profile changes. Helper for :meth:`run`."""
         if self.profiles is not None:
+            # Warn user about non-profile-aware properties
             if self.virtual_system_type is not None:
                 self.UI.confirm_or_die(
                     "VirtualSystemType is not filtered by configuration"
@@ -332,52 +376,14 @@ class COTEditHardware(COTSubmodule):
                     " networks across ALL profiles, not just profile(s) {0}."
                     " Continue?".format(self.profiles))
 
-        vm = self.vm
-
-        if self.profiles is not None:
-            profile_list = vm.config_profiles
-            for profile in self.profiles:
-                if profile not in profile_list:
-                    self.UI.confirm_or_die(
-                        "Profile '{0}' does not exist. Create it?"
-                        .format(profile))
-                    label = self.UI.get_input(
-                        "Please enter a label for this configuration profile",
-                        profile)
-                    desc = self.UI.get_input(
-                        "Please enter a description for this "
-                        "configuration profile", label)
-                    vm.create_configuration_profile(profile, label=label,
-                                                    description=desc)
+            self._run_create_new_profiles()
 
         if self.delete_all_other_profiles:
-            if self.profiles is None:
-                self.UI.confirm_or_die(
-                    "--delete-all-other-profiles was specified but no "
-                    "--profiles was specified. Really proceed to delete ALL "
-                    "configuration profiles?")
-                profiles_to_delete = vm.config_profiles
-            else:
-                profiles_to_delete = list(set(vm.config_profiles) -
-                                          set(self.profiles))
-            for profile in profiles_to_delete:
-                if self.profiles is not None:
-                    if not self.UI.confirm("Delete profile {0}?"
-                                           .format(profile)):
-                        logger.verbose("Skipping deletion of profile {0}"
-                                       .format(profile))
-                        continue
-                # else (profiles == None) we already confirmed earlier
-                vm.delete_configuration_profile(profile)
+            self._run_delete_other_profiles()
 
-        if self.virtual_system_type is not None:
-            vm.system_types = self.virtual_system_type
-
-        if self.cpus is not None:
-            vm.set_cpu_count(self.cpus, self.profiles)
-
-        if self.memory is not None:
-            vm.set_memory(self.memory, self.profiles)
+    def _run_update_nics(self):
+        """Handle NIC changes. Helper for :meth:`run`."""
+        vm = self.vm
 
         nics_dict = vm.get_nic_count(self.profiles)
         if self.nics is not None:
@@ -396,11 +402,24 @@ class COTEditHardware(COTSubmodule):
         nics_dict = vm.get_nic_count(self.profiles)
         max_nics = max(nics_dict.values())
 
+        if self.mac_addresses_list is not None:
+            vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
+
+        if self.nic_names is not None:
+            names = expand_list_wildcard(self.nic_names, max_nics)
+            vm.set_nic_names(names, self.profiles)
+
+    def _run_update_networks(self):
+        """Handle network changes. Helper for :meth:`run`."""
+        vm = self.vm
+        nics_dict = vm.get_nic_count(self.profiles)
+        max_nics = max(nics_dict.values())
+
         if self.network_descriptions is None:
             new_descs = []
         else:
-            new_descs = self.expand_list_wildcard(self.network_descriptions,
-                                                  max_nics)
+            new_descs = expand_list_wildcard(self.network_descriptions,
+                                             max_nics)
             if self.nic_networks is None:
                 # Just rename existing networks, instead of making new ones
                 for network, desc in zip(vm.networks, new_descs):
@@ -410,8 +429,7 @@ class COTEditHardware(COTSubmodule):
 
         if self.nic_networks is not None:
             existing_networks = vm.networks
-            new_networks = self.expand_list_wildcard(self.nic_networks,
-                                                     max_nics)
+            new_networks = expand_list_wildcard(self.nic_networks, max_nics)
             for network in new_networks:
                 if new_descs:
                     new_desc = new_descs.pop(0)
@@ -431,15 +449,10 @@ class COTEditHardware(COTSubmodule):
 
             vm.set_nic_networks(new_networks, self.profiles)
 
-        if self.mac_addresses_list is not None:
-            vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
-
-        if self.nic_names is not None:
-            names = self.expand_list_wildcard(self.nic_names, max_nics)
-            vm.set_nic_names(names, self.profiles)
-
+    def _run_update_serial(self):
+        """Handle serial port changes. Helper for :meth:`run`."""
         if self.serial_ports is not None:
-            serial_dict = vm.get_serial_count(self.profiles)
+            serial_dict = self.vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
                 if self.serial_ports < count:
                     self.UI.confirm_or_die(
@@ -447,10 +460,10 @@ class COTEditHardware(COTSubmodule):
                         "Delete {2} port(s) to reduce to {3} total?"
                         .format(profile, count, (count - self.serial_ports),
                                 self.serial_ports))
-            vm.set_serial_count(self.serial_ports, self.profiles)
+            self.vm.set_serial_count(self.serial_ports, self.profiles)
 
         if self.serial_connectivity is not None:
-            serial_dict = vm.get_serial_count(self.profiles)
+            serial_dict = self.vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
                 if len(self.serial_connectivity) < count:
                     self.UI.confirm_or_die(
@@ -460,7 +473,34 @@ class COTEditHardware(COTSubmodule):
                         "\nThe remaining ports will be unreachable. Continue?"
                         .format(count, profile,
                                 len(self.serial_connectivity)))
-            vm.set_serial_connectivity(self.serial_connectivity, self.profiles)
+            self.vm.set_serial_connectivity(self.serial_connectivity,
+                                            self.profiles)
+
+    def run(self):
+        """Do the actual work of this submodule.
+
+        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        """
+        super(COTEditHardware, self).run()
+
+        self._run_update_profiles()
+
+        vm = self.vm
+
+        if self.virtual_system_type is not None:
+            vm.system_types = self.virtual_system_type
+
+        if self.cpus is not None:
+            vm.set_cpu_count(self.cpus, self.profiles)
+
+        if self.memory is not None:
+            vm.set_memory(self.memory, self.profiles)
+
+        self._run_update_nics()
+
+        self._run_update_networks()
+
+        self._run_update_serial()
 
         if self.scsi_subtypes is not None:
             vm.set_scsi_subtypes(self.scsi_subtypes, self.profiles)
@@ -543,7 +583,7 @@ class COTEditHardware(COTSubmodule):
                        help="Set the number of CPUs.")
         g.add_argument('-m', '--memory',
                        help="Set the amount of RAM. "
-                       '(Examples: "4096MB", "4GB")')
+                       '(Examples: "4096M", "4 GiB")')
 
         g = p.add_argument_group("network interface options")
 
@@ -604,41 +644,41 @@ class COTEditHardware(COTSubmodule):
                        help="OVF descriptor or OVA file to edit")
         p.set_defaults(instance=self)
 
-    def expand_list_wildcard(self, name_list, length):
-        """Expand a list containing a wildcard to the desired length.
 
-        Since various items (NIC names, network names, etc.) are often
-        named or numbered sequentially, we provide this API to allow the
-        user to specify a wildcard value to permit automatically
-        expanding a list of input strings to the desired length.
-        The syntax for the wildcard option is ``{`` followed by a number
-        (indicating the starting index for the name) followed by ``}``.
-        Examples:
+def expand_list_wildcard(name_list, length):
+    """Expand a list containing a wildcard to the desired length.
 
-        ``["eth{0}"]``
-          ``Expands to ["eth0", "eth1", "eth2", ...]``
-        ``["mgmt0" "eth{10}"]``
-          ``Expands to ["mgmt0", "eth10", "eth11", "eth12", ...]``
+    Since various items (NIC names, network names, etc.) are often
+    named or numbered sequentially, we provide this API to allow the
+    user to specify a wildcard value to permit automatically
+    expanding a list of input strings to the desired length.
+    The syntax for the wildcard option is ``{`` followed by a number
+    (indicating the starting index for the name) followed by ``}``.
+    Examples:
 
-        :param list name_list: List of names to assign.
-        :param list length: Length to expand to
-        :return: Expanded list
-        """
-        if len(name_list) < length:
-            logger.info("Expanding list {0} to {1} entries"
-                        .format(name_list, length))
-            # Extract the pattern and remove it from the list
-            pattern = name_list[-1]
-            name_list = name_list[:-1]
-            # Look for the magic string in the pattern
-            match = re.search("{(\d+)}", pattern)
-            if match:
-                i = int(match.group(1))
-            else:
-                i = 0
-            while len(name_list) < length:
-                name_list.append(re.sub("{\d+}", str(i), pattern))
-                i += 1
-            logger.info("New list is {0}".format(name_list))
+    ``["eth{0}"]``
+      ``Expands to ["eth0", "eth1", "eth2", ...]``
+    ``["mgmt0" "eth{10}"]``
+      ``Expands to ["mgmt0", "eth10", "eth11", "eth12", ...]``
 
-        return name_list
+    :param list name_list: List of names to assign.
+    :param list length: Length to expand to
+    :return: Expanded list
+    """
+    if len(name_list) < length:
+        logger.info("Expanding list %s to %d entries", name_list, length)
+        # Extract the pattern and remove it from the list
+        pattern = name_list[-1]
+        name_list = name_list[:-1]
+        # Look for the magic string in the pattern
+        match = re.search(r"{(\d+)}", pattern)
+        if match:
+            i = int(match.group(1))
+        else:
+            i = 0
+        while len(name_list) < length:
+            name_list.append(re.sub(r"{\d+}", str(i), pattern))
+            i += 1
+        logger.info("New list is %s", name_list)
+
+    return name_list

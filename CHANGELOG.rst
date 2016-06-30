@@ -3,6 +3,28 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.6.0`_ - 2016-06-30
+---------------------
+
+**Added**
+
+- ``cot edit-product --product-class`` option, to set or change the
+  product class identifier (such as ``com.cisco.csr1000v``).
+- Enabled additional code quality validation with `Pylint`_, `pep8-naming`_,
+  and `mccabe`_ (`#49`_).
+
+**Changed**
+
+- Lots of refactoring to reduce code complexity as measured by `Pylint`_
+  and `mccabe`_.
+
+**Fixed**
+
+- COT now recognizes ``AllocationUnits`` values like ``megabytes``.
+- COT no longer ignores the ``AllocationUnits`` value given for RAM.
+- :func:`COT.ovf.byte_string` now properly uses binary units (``KiB`` rather
+  than ``kB``, etc.)
+
 `1.5.2`_ - 2016-06-17
 ---------------------
 
@@ -411,6 +433,7 @@ Initial public release.
 .. _#45: https://github.com/glennmatthews/cot/issues/45
 .. _#47: https://github.com/glennmatthews/cot/issues/47
 .. _#48: https://github.com/glennmatthews/cot/issues/48
+.. _#49: https://github.com/glennmatthews/cot/issues/49
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -433,8 +456,12 @@ Initial public release.
 .. _pycodestyle: https://pypi.python.org/pypi/pycodestyle
 .. _pydocstyle: https://pypi.python.org/pypi/pydocstyle
 .. _`flake8-docstrings`: https://pypi.python.org/pypi/flake8-docstrings
+.. _Pylint: https://www.pylint.org/
+.. _`pep8-naming`: https://pypi.python.org/pypi/pep8-naming
+.. _mccabe: https://pypi.python.org/pypi/mccabe
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.6.0: https://github.com/glennmatthews/cot/compare/v1.5.2...v1.6.0
 .. _1.5.2: https://github.com/glennmatthews/cot/compare/v1.5.1...v1.5.2
 .. _1.5.1: https://github.com/glennmatthews/cot/compare/v1.5.0...v1.5.1
 .. _1.5.0: https://github.com/glennmatthews/cot/compare/v1.4.2...v1.5.0

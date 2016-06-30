@@ -4,7 +4,7 @@
 # test_mkisofs.py - Unit test cases for COT.helpers.mkisofs submodule.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -45,7 +45,8 @@ class TestMkIsoFS(HelperUT):
 
     def test_find_mkisofs(self):
         """If mkisofs is found, use it."""
-        def find_one(self, name):
+        def find_one(_self, name):
+            """Find mkisofs but no other."""
             if name == "mkisofs":
                 return "/mkisofs"
             return None
@@ -55,7 +56,8 @@ class TestMkIsoFS(HelperUT):
 
     def test_find_genisoimage(self):
         """If mkisofs is not found, but genisoimage is, use that."""
-        def find_one(self, name):
+        def find_one(_self, name):
+            """Find genisoimage but no other."""
             if name == "genisoimage":
                 return "/genisoimage"
             return None
@@ -71,53 +73,15 @@ class TestMkIsoFS(HelperUT):
 
     def test_install_helper_port(self):
         """Test installation via 'port'."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['port'] = True
-        Helper._port_updated = False
-        self.helper.install_helper()
-        self.assertEqual([
-            ['sudo', 'port', 'selfupdate'],
-            ['sudo', 'port', 'install', 'cdrtools'],
-        ], self.last_argv)
-        self.assertTrue(Helper._port_updated)
-        # Make sure we don't 'port selfupdate' again unnecessarily
-        self.last_argv = []
-        self.helper.install_helper()
-        self.assertEqual([
-            ['sudo', 'port', 'install', 'cdrtools']
-        ], self.last_argv)
+        self.port_install_test('cdrtools')
 
     def test_install_helper_apt_get(self):
         """Test installation via 'apt-get'."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = True
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = False
-        Helper._apt_updated = False
-        self.fake_output = 'not installed'
-        self.helper.install_helper()
-        self.assertEqual([
-            ['dpkg', '-s', 'genisoimage'],
-            ['sudo', 'apt-get', '-q', 'update'],
-            ['sudo', 'apt-get', '-q', 'install', 'genisoimage'],
-        ], self.last_argv)
-        self.assertEqual('genisoimage', self.helper.name)
-        self.assertTrue(Helper._apt_updated)
-        # Make sure we don't 'apt-get update' again unnecessarily
-        self.last_argv = []
-        self.helper.install_helper()
-        self.assertEqual([
-            ['dpkg', '-s', 'genisoimage'],
-            ['sudo', 'apt-get', '-q', 'install', 'genisoimage'],
-        ], self.last_argv)
+        self.apt_install_test('genisoimage')
 
     def test_install_helper_unsupported(self):
         """Installation fails with neither apt-get nor port nor yum."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = False
+        self.select_package_manager(None)
         self.system = "Windows"
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()

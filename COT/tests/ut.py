@@ -16,10 +16,8 @@
 
 """Generic unit test case implementation for COT."""
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+from __future__ import print_function
+
 from difflib import unified_diff
 import os.path
 import glob
@@ -31,18 +29,6 @@ import platform
 import time
 import logging
 from logging.handlers import BufferingHandler
-from pkg_resources import resource_filename
-import traceback
-try:
-    import StringIO
-except ImportError:
-    import io as StringIO
-
-from verboselogs import VerboseLogger
-logging.setLoggerClass(VerboseLogger)
-
-logger = logging.getLogger(__name__)
-
 # Make sure there's always a "no-op" logging handler.
 try:
     from logging import NullHandler
@@ -53,6 +39,24 @@ except ImportError:
         def emit(self, record):
             """Do nothing."""
             pass
+
+import traceback
+try:
+    import StringIO
+except ImportError:
+    import io as StringIO
+
+from pkg_resources import resource_filename
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+from verboselogs import VerboseLogger
+logging.setLoggerClass(VerboseLogger)
+
+logger = logging.getLogger(__name__)
+
 
 logging.getLogger('COT').addHandler(NullHandler())
 
@@ -70,7 +74,7 @@ class UTLoggingHandler(BufferingHandler):
         """Add the given log record to our internal buffer."""
         self.buffer.append(record.__dict__)
 
-    def shouldFlush(self, record):
+    def shouldFlush(self, record):  # noqa: N802
         """Return False - we only flush manually."""
         return False
 
@@ -85,6 +89,11 @@ class UTLoggingHandler(BufferingHandler):
                     if not re.search(value, str(record.get(key))):
                         found_match = False
                         break
+                elif key == 'args':
+                    for (exp, act) in zip(value, record.get(key)):
+                        if not re.search(str(exp), str(act)):
+                            found_match = False
+                            break
                 elif not value == record.get(key):
                     found_match = False
                     break
@@ -92,7 +101,7 @@ class UTLoggingHandler(BufferingHandler):
                 matches.append(record)
         return matches
 
-    def assertLogged(self, **kwargs):
+    def assertLogged(self, **kwargs):  # noqa: N802
         """Fail unless the given log messages were each seen exactly once."""
         matches = self.logs(**kwargs)
         if not matches:
@@ -106,7 +115,7 @@ class UTLoggingHandler(BufferingHandler):
         for r in matches:
             self.buffer.remove(r)
 
-    def assertNoLogsOver(self, max_level):
+    def assertNoLogsOver(self, max_level):  # noqa: N802
         """Fail if any logs are logged higher than the given level."""
         for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
                       logging.INFO, logging.VERBOSE, logging.DEBUG):
@@ -118,11 +127,17 @@ class UTLoggingHandler(BufferingHandler):
                     "Found {length} unexpected {level} message(s):\n{messages}"
                     .format(length=len(matches),
                             level=logging.getLevelName(level),
-                            messages="\n".join([str(r['msg']) for
-                                                r in matches])))
+                            messages="\n".join(["msg: {0}, args: {1}"
+                                                .format(r['msg'], r['args'])
+                                               for r in matches])))
 
 
-class COT_UT(unittest.TestCase):
+def localfile(name):
+    """Get the absolute path to a local resource file."""
+    return os.path.abspath(resource_filename(__name__, name))
+
+
+class COT_UT(unittest.TestCase):  # noqa: N801
     """Subclass of unittest.TestCase adding some additional behaviors."""
 
     from COT.helpers.ovftool import OVFTool
@@ -140,35 +155,40 @@ class COT_UT(unittest.TestCase):
                                                                 filename))
 
     # Standard ERROR logger messages we may expect at various points:
+    # TODO: change these to functions so we can populate 'args' for each
     NONEXISTENT_FILE = {
         'levelname': 'ERROR',
-        'msg': "File '.*' referenced in the OVF.*does not exist",
+        'msg': "File '%s' referenced in the OVF.*does not exist",
     }
     FILE_DISAPPEARED = {
         'levelname': 'ERROR',
-        'msg': "Referenced file '.*' does not exist",
+        'msg': "Referenced file '%s' does not exist",
     }
 
     # Standard WARNING logger messages we may expect at various points:
     TYPE_NOT_SPECIFIED_GUESS_HARDDISK = {
         'levelname': 'WARNING',
-        'msg': "disk type not specified.*guessing.*harddisk.*extension",
+        'msg': "disk type not specified.*guessing.*based on file extension",
+        'args': ('harddisk', ),
     }
     TYPE_NOT_SPECIFIED_GUESS_CDROM = {
         'levelname': 'WARNING',
-        'msg': "disk type not specified.*guessing.*cdrom.*extension",
+        'msg': "disk type not specified.*guessing.*based on file extension",
+        'args': ('cdrom', ),
     }
     CONTROLLER_NOT_SPECIFIED_GUESS_IDE = {
         'levelname': 'WARNING',
-        'msg': "Guessing controller type.*ide.*based on disk type",
+        'msg': "Guessing controller type.*based on disk type",
+        'args': ('ide', r'.*', r'.*'),
     }
     UNRECOGNIZED_PRODUCT_CLASS = {
         'levelname': 'WARNING',
-        'msg': "Unrecognized product class.*Treating as a generic product",
+        'msg': "Unrecognized product class.*Treating as a generic platform",
     }
     ADDRESS_ON_PARENT_NOT_SPECIFIED = {
         'levelname': 'WARNING',
-        'msg': "New disk address on parent not specified, guessing.*0",
+        'msg': "New disk address on parent not specified, guessing.*%s",
+        'args': ('0', ),
     }
     REMOVING_FILE = {
         'levelname': 'WARNING',
@@ -195,13 +215,32 @@ class COT_UT(unittest.TestCase):
         'msg': "Overwriting existing disk Item in OVF",
     }
 
+    def invalid_hardware_warning(self,  # pylint: disable=no-self-use
+                                 profile, value, kind):
+        """Warning log message for invalid hardware."""
+        msg = ""
+        if profile:
+            msg += "In profile '{0}':".format(profile)
+        msg += "(Unsupported )?[vV]alue '{0}' for {1}".format(value, kind)
+        return {
+            'levelname': 'WARNING',
+            'msg': msg,
+        }
+
     def __init__(self, method_name='runTest'):
         """Add logging handler to generic UT initialization."""
         super(COT_UT, self).__init__(method_name)
         self.logging_handler = UTLoggingHandler(self)
+        self.instance = None
+
+    def set_vm_platform(self, plat):
+        """Force the VM under test to use a particular Platform class."""
+        # pylint: disable=protected-access
+        self.instance.vm._platform = plat
 
     def check_cot_output(self, expected):
         """Grab the output from COT and check it against expected output."""
+        # pylint: disable=redefined-variable-type
         sys.stdout = StringIO.StringIO()
         output = None
         try:
@@ -269,34 +308,34 @@ class COT_UT(unittest.TestCase):
 
         self.start_time = time.time()
         # Set default OVF file. Individual test cases can use others
-        self.input_ovf = resource_filename(__name__, "input.ovf")
+        self.input_ovf = localfile("input.ovf")
         # Alternative OVF files:
         #
         # Absolute minimal OVF descriptor needed to satisfy ovftool.
         # Please verify any changes made to this file by running
         # "ovftool --schemaValidate minimal.ovf"
-        self.minimal_ovf = resource_filename(__name__, "minimal.ovf")
+        self.minimal_ovf = localfile("minimal.ovf")
         # IOSv OVF
-        self.iosv_ovf = resource_filename(__name__, "iosv.ovf")
+        self.iosv_ovf = localfile("iosv.ovf")
         # v0.9 OVF
-        self.v09_ovf = resource_filename(__name__, "v0.9.ovf")
+        self.v09_ovf = localfile("v0.9.ovf")
         # v2.0 OVF from VirtualBox
-        self.v20_vbox_ovf = resource_filename(__name__, "ubuntu.2.0.ovf")
+        self.v20_vbox_ovf = localfile("ubuntu.2.0.ovf")
         # OVF with lots of custom VMware extensions
-        self.vmware_ovf = resource_filename(__name__, "vmware.ovf")
+        self.vmware_ovf = localfile("vmware.ovf")
         # OVF with various odd/invalid contents
-        self.invalid_ovf = resource_filename(__name__, "invalid.ovf")
+        self.invalid_ovf = localfile("invalid.ovf")
 
         # Some canned disk images and other files too
-        self.input_iso = resource_filename(__name__, "input.iso")
-        self.input_vmdk = resource_filename(__name__, "input.vmdk")
-        self.blank_vmdk = resource_filename(__name__, "blank.vmdk")
-        self.sample_cfg = resource_filename(__name__, "sample_cfg.txt")
+        self.input_iso = os.path.abspath(localfile("input.iso"))
+        self.input_vmdk = localfile("input.vmdk")
+        self.blank_vmdk = localfile("blank.vmdk")
+        self.sample_cfg = localfile("sample_cfg.txt")
 
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")
-        logger.debug("Created temp dir {0}".format(self.temp_dir))
+        logger.debug("Created temp dir %s", self.temp_dir)
         # Monitor the global temp directory to make sure COT cleans up
         self.tmps = set(glob.glob(os.path.join(tempfile.gettempdir(), 'cot*')))
 
@@ -309,7 +348,7 @@ class COT_UT(unittest.TestCase):
 
         logging.getLogger('COT').removeHandler(self.logging_handler)
 
-        if hasattr(self, 'instance'):
+        if self.instance:
             self.instance.destroy()
             self.instance = None
 
@@ -317,7 +356,7 @@ class COT_UT(unittest.TestCase):
 
         # Delete the temporary directory
         if os.path.exists(self.temp_dir):
-            logger.debug("Deleting temp dir {0}".format(self.temp_dir))
+            logger.debug("Deleting temp dir %s", self.temp_dir)
             shutil.rmtree(self.temp_dir)
         self.temp_dir = None
         self.temp_file = None
@@ -349,13 +388,13 @@ class COT_UT(unittest.TestCase):
                 self.fail("OVF not valid according to ovftool:\n{0}"
                           .format(e.strerror))
 
-    def assertLogged(self, **kwargs):
+    def assertLogged(self, **kwargs):  # noqa: N802
         """Fail unless the given logs were generated.
 
         See :meth:`UTLoggingHandler.assertLogged`.
         """
         self.logging_handler.assertLogged(**kwargs)
 
-    def assertNoLogsOver(self, max_level):
+    def assertNoLogsOver(self, max_level):  # noqa: N802
         """Fail if any logs were logged higher than the given level."""
         self.logging_handler.assertNoLogsOver(max_level)

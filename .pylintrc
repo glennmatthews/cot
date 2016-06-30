@@ -1,0 +1,67 @@
+[MASTER]
+
+load-plugins=verboselogs.pylint
+
+# Ignore generated code we don't control
+ignore=_version.py
+
+# Pylint raises false no-member error about "from pyVmomi import vim"
+# Pylint doesn't handle distutils submodules when running in a virtualenv.
+ignored-modules=distutils,pyVmomi
+
+[REPORTS]
+
+reports=no
+
+[MESSAGE CONTROL]
+
+#
+# Disabled due to redundancy with flake8:
+#   bad-continuation
+#   trailing-whitespace
+#
+# Disabled due to useless noise:
+#   locally-disabled
+#   too-few-public-methods
+#
+disable=bad-continuation,
+  duplicate-code,
+  fixme,
+  invalid-name,
+  locally-disabled,
+  too-few-public-methods,
+  trailing-whitespace,
+
+[BASIC]
+
+# When enabling invalid-name, stop complaints about 'invalid constant logger'
+# good-names=i,j,k,logger,_
+
+# When enabling invalid-name, stop complaints about test method names too long
+# method-rgx=(test_[a-z0-9_]*|[a-z_][a-z0-9_]{2,30})$
+
+[DESIGN]
+
+# Current thresholds - to be driven down over time
+
+max-args=10                 ; add_disk_worker
+max-attributes=98           ; OVF
+# default: max-bool-expr=5
+# default: max-branches=12
+max-locals=29               ; OVF.profile_info_list
+max-public-methods=76       ; OVF
+# default: max-returns=6
+# default: max-statements=50
+
+[FORMAT]
+
+max-module-lines=2700       ; OVF
+
+[LOGGING]
+
+logging-modules=logging,verboselogs
+
+[VARIABLES]
+
+# Any _foo variable is a valid dummy name
+dummy-variables-rgx=^_.*$

@@ -3,7 +3,7 @@
 # edit_hardware.py - test cases for the COTEditHardware class
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -80,6 +80,7 @@ class TestCOTEditHardware(COT_UT):
 
     def test_invalid_always_args(self):
         """Verify that various values are always invalid."""
+        # pylint: disable=redefined-variable-type
         self.instance.package = self.input_ovf
         with self.assertRaises(InvalidInputError):
             self.instance.cpus = 0
@@ -102,13 +103,13 @@ class TestCOTEditHardware(COT_UT):
         """Verify that some input values' validity depends on platform."""
         self.instance.package = self.input_ovf
         # IOSv only supports 1 vCPU and up to 3 GB of RAM
-        self.instance.vm._platform = IOSv
+        self.set_vm_platform(IOSv)
         with self.assertRaises(InvalidInputError):
             self.instance.cpus = 2
         with self.assertRaises(InvalidInputError):
             self.instance.memory = "4GB"
         # ...but IOSXRv supports up to 8 CPUs and 3-8 GB of RAM
-        self.instance.vm._platform = IOSXRv
+        self.set_vm_platform(IOSXRv)
         self.instance.cpus = 2
         self.instance.cpus = 8
         with self.assertRaises(InvalidInputError):
@@ -342,6 +343,7 @@ CIM_ResourceAllocationSettingData">
 ...
        <ovf:Info />
 +      <ovf:Item>
++        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
 +        <rasd:ElementName>memory</rasd:ElementName>
 +        <rasd:InstanceID>1</rasd:InstanceID>
 +        <rasd:ResourceType>4</rasd:ResourceType>
@@ -760,7 +762,8 @@ CIM_ResourceAllocationSettingData">
         self.instance.nic_names = ['foo', 'bar', 'baz', 'bat']
         self.instance.run()
         self.assertLogged(levelname="ERROR",
-                          msg="not all ElementName values were used")
+                          msg="not all %s values were used",
+                          args=('ethernet', 'ElementName', ['bat']))
         self.instance.finished()
         self.check_diff("""
          <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
@@ -872,7 +875,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.nic_types = ['e1000', 'virtio']
         self.assertEqual(self.instance.nic_types, ['E1000', 'virtio'])
         with self.assertRaises(TypeError):
-            self.instance.nic_type
+            assert self.instance.nic_type
 
     def test_set_nic_kitchen_sink_all_profiles(self):
         """Test changing many NIC properties at once under all profiles."""
@@ -906,7 +909,7 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT1</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "UT1"\
++        <rasd:Description>E1000/virtio ethernet adapter on "UT1"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
          <rasd:InstanceID>11</rasd:InstanceID>
@@ -922,7 +925,7 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT2</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "UT2"\
++        <rasd:Description>E1000/virtio ethernet adapter on "UT2"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
          <rasd:InstanceID>12</rasd:InstanceID>
@@ -938,7 +941,7 @@ CIM_ResourceAllocationSettingData">
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
 +        <rasd:Connection>UT3</rasd:Connection>
-+        <rasd:Description>E1000 virtio ethernet adapter on "UT3"\
++        <rasd:Description>E1000/virtio ethernet adapter on "UT3"\
 </rasd:Description>
          <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
          <rasd:InstanceID>13</rasd:InstanceID>
@@ -1239,7 +1242,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.scsi_subtypes = ['buslogic', 'lsilogic']
         self.assertEqual(self.instance.scsi_subtypes, ['buslogic', 'lsilogic'])
         with self.assertRaises(TypeError):
-            self.instance.scsi_subtype
+            assert self.instance.scsi_subtype
         self.instance.profiles = ['4CPU-4GB-3NIC']
         self.instance.run()
         self.instance.finished()
@@ -1277,7 +1280,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.ide_subtypes = ["virtio", "piix4"]
         self.assertEqual(self.instance.ide_subtypes, ["virtio", "PIIX4"])
         with self.assertRaises(TypeError):
-            self.instance.ide_subtype
+            assert self.instance.ide_subtype
         self.instance.run()
         self.instance.finished()
         # Since there is no pre-existing subtype, we just create it
@@ -1575,7 +1578,8 @@ CIM_ResourceAllocationSettingData">
         self.instance.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
         self.assertLogged(levelname="ERROR",
-                          msg="not all Connection values were used")
+                          msg="not all %s values were used",
+                          args=('ethernet', 'Connection', ['Foobar']))
         self.instance.finished()
         # network 'Foobar' is not used, so it'll be deleted
         self.assertLogged(**self.REMOVING_NETWORK)

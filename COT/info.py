@@ -16,6 +16,8 @@
 
 """Implements "info" subcommand."""
 
+from __future__ import print_function
+
 import logging
 import os.path
 
@@ -37,9 +39,9 @@ class COTInfo(COTGenericSubmodule):
     :attr:`verbosity`
     """
 
-    def __init__(self, UI):
+    def __init__(self, ui):
         """Instantiate this submodule with the given UI."""
-        super(COTInfo, self).__init__(UI)
+        super(COTInfo, self).__init__(ui)
         self._package_list = None
         self._verbosity = None
 
@@ -85,6 +87,8 @@ class COTInfo(COTGenericSubmodule):
         super(COTInfo, self).run()
 
         first = True
+        # TODO: UI should provide an "output" method or similar,
+        #       so that we don't call print directly here.
         for package in self.package_list:
             if not first:
                 print("")

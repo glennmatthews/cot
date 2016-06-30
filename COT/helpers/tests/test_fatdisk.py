@@ -3,7 +3,7 @@
 # fatdisk.py - Unit test cases for COT.helpers.fatdisk submodule.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2015 the COT project developers.
+# Copyright (c) 2014-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -17,11 +17,11 @@
 """Unit test cases for the COT.helpers.fatdisk module."""
 
 import logging
-import mock
 import os
 import re
-
 from distutils.version import StrictVersion
+
+import mock
 
 from .test_helper import HelperUT
 from COT.helpers.helper import Helper
@@ -63,15 +63,7 @@ class TestFatDisk(HelperUT):
         mock_exists.return_value = False
         mock_makedirs.side_effect = OSError
         mock_copy.return_value = True
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['apt-get'] = True
-        Helper._apt_updated = False
-        self.fake_output = 'is not installed and no information is available'
-        self.system = 'Linux'
-        os.environ['PREFIX'] = '/usr/local'
-        if 'DESTDIR' in os.environ:
-            del os.environ['DESTDIR']
+        self.enable_apt_install()
         self.helper.install_helper()
         self.assertEqual([
             ['dpkg', '-s', 'make'],
@@ -84,7 +76,7 @@ class TestFatDisk(HelperUT):
         ], self.last_argv)
         self.assertTrue(re.search("/fatdisk$", mock_copy.call_args[0][0]))
         self.assertEqual('/usr/local/bin', mock_copy.call_args[0][1])
-        self.assertTrue(Helper._apt_updated)
+        self.assertAptUpdated()
         # Make sure we don't call apt-get update/install again unnecessarily.
         self.last_argv = []
         self.fake_output = 'install ok installed'
@@ -102,21 +94,7 @@ class TestFatDisk(HelperUT):
 
     def test_install_helper_port(self):
         """Test installation via 'port'."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['port'] = True
-        Helper._port_updated = False
-        self.helper.install_helper()
-        self.assertEqual([
-            ['sudo', 'port', 'selfupdate'],
-            ['sudo', 'port', 'install', 'fatdisk'],
-        ], self.last_argv)
-        self.assertTrue(Helper._port_updated)
-        # Make sure we don't call port selfupdate again unnecessarily.
-        self.last_argv = []
-        self.helper.install_helper()
-        self.assertEqual([
-            ['sudo', 'port', 'install', 'fatdisk'],
-        ], self.last_argv)
+        self.port_install_test('fatdisk')
 
     @mock.patch('shutil.copy')
     @mock.patch('os.path.isdir')
@@ -132,14 +110,7 @@ class TestFatDisk(HelperUT):
         mock_exists.return_value = False
         mock_makedirs.side_effect = OSError
         mock_copy.return_value = True
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = True
-        self.system = 'Linux'
-        os.environ['PREFIX'] = '/usr/local'
-        if 'DESTDIR' in os.environ:
-            del os.environ['DESTDIR']
+        self.enable_yum_install()
         self.helper.install_helper()
         self.assertEqual([
             ['sudo', 'yum', '--quiet', 'install', 'make'],
@@ -152,35 +123,30 @@ class TestFatDisk(HelperUT):
 
     def test_install_helper_linux_need_make_no_package_manager(self):
         """Linux installation requires yum or apt-get if 'make' missing."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = False
+        self.select_package_manager(None)
         self.system = 'Linux'
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
     def test_install_helper_linux_need_compiler_no_package_manager(self):
         """Linux installation requires yum or apt-get if 'gcc' missing."""
-        def new_stub_find_executable(self, name):
+        self.select_package_manager(None)
+
+        def new_stub_find_executable(_, name):
             """Stub for Helper.find_executable - returns a fixed response."""
-            logger.info("stub_find_executable({0})".format(name))
+            logger.info("stub_find_executable(%s)", name)
             if name == 'make':
                 return "/bin/make"
             else:
                 return None
         Helper.find_executable = new_stub_find_executable
-        Helper.PACKAGE_MANAGERS['port'] = False
-        Helper.PACKAGE_MANAGERS['apt-get'] = False
-        Helper.PACKAGE_MANAGERS['yum'] = False
         self.system = 'Linux'
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
     def test_install_helper_unsupported(self):
         """No support for installation under Windows."""
-        Helper.find_executable = self.stub_find_executable
-        Helper.PACKAGE_MANAGERS['port'] = False
+        self.select_package_manager(None)
         self.system = 'Windows'
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()

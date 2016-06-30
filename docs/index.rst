@@ -13,6 +13,7 @@ Common OVF Tool (COT)
    thanks
    COT
    COT.helpers
+   COT.ovf
 
 
 Indices and tables

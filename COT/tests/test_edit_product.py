@@ -3,7 +3,7 @@
 # edit_product.py - test cases for the COTEditProduct class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -60,6 +60,56 @@ class TestCOTEditProduct(COT_UT):
         self.assertFalse(ready)
         self.assertTrue(re.search("No work requested", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
+
+    def test_edit_product_class_no_existing(self):
+        """Add a product class where none existed before."""
+        self.instance.package = self.minimal_ovf
+        self.instance.product_class = "com.cisco.csr1000v"
+        self.instance.run()
+        self.instance.finished()
+        self.assertLogged(**self.invalid_hardware_warning(None, '0', 'NICs'))
+        self.check_diff(file1=self.minimal_ovf,
+                        expected="""
+     </ovf:VirtualHardwareSection>
++    <ovf:ProductSection ovf:class="com.cisco.csr1000v">
++      <ovf:Info>Product Information</ovf:Info>
++    </ovf:ProductSection>
+   </ovf:VirtualSystem>
+""")
+
+    def test_edit_product_class(self):
+        """Change the product class."""
+        self.instance.package = self.iosv_ovf
+        self.instance.product_class = "com.cisco.ios-xrv9000"
+        self.instance.run()
+        self.instance.finished()
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-384MB-2NIC', "384 MiB", "RAM"))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-384MB-2NIC', "2", "NIC count"))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-1GB-8NIC', "1024 MiB", "RAM"))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-3GB-10NIC', "3072 MiB", "RAM"))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-3GB-16NIC', "3072 MiB", "RAM"))
+        self.check_diff(file1=self.iosv_ovf,
+                        expected="""
+     </ovf:VirtualHardwareSection>
+-    <ovf:ProductSection ovf:class="com.cisco.iosv" ovf:instance="1" \
+ovf:required="false">
++    <ovf:ProductSection ovf:class="com.cisco.ios-xrv9000" \
+ovf:instance="1" ovf:required="false">
+       <ovf:Info>Information about the installed software</ovf:Info>
+""")
+
+    def test_edit_product_class_noop(self):
+        """Setting the product class to itself should do nothing."""
+        self.instance.package = self.iosv_ovf
+        self.instance.product_class = "com.cisco.iosv"
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff(file1=self.iosv_ovf, expected="")
 
     def test_edit_short_version(self):
         """Editing the short version alone."""
@@ -253,6 +303,7 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
     def test_edit_all(self):
         """Edit all product section strings."""
         self.instance.package = self.input_ovf
+        self.instance.product_class = ''
         self.instance.version = "5.2.0.01I"
         self.instance.full_version = "Cisco IOS XRv, Version 5.2"
         self.instance.product = "Cisco IOS XRv"
@@ -262,8 +313,12 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
         self.instance.vendor_url = "http://www.cisco.com"
         self.instance.application_url = "https://router1:530/"
         self.instance.run()
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.instance.finished()
         self.check_diff("""
+     </ovf:VirtualHardwareSection>
+-    <ovf:ProductSection ovf:required="false">
++    <ovf:ProductSection ovf:class="" ovf:required="false">
        <ovf:Info>Information about the installed software</ovf:Info>
 -      <ovf:Product>PRODUCT</ovf:Product>
 -      <ovf:Vendor>VENDOR</ovf:Vendor>
@@ -286,6 +341,7 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
     def test_edit_all_no_existing(self):
         """Edit all product section strings with no previous values."""
         self.instance.package = self.minimal_ovf
+        self.instance.product_class = "foobar"
         self.instance.version = "Version"
         self.instance.full_version = "Full Version"
         self.instance.product = "Product"
@@ -294,11 +350,12 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
         self.instance.vendor_url = "Vendor URL"
         self.instance.application_url = "Application URL"
         self.instance.run()
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.instance.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>
-+    <ovf:ProductSection>
++    <ovf:ProductSection ovf:class="foobar">
 +      <ovf:Info>Product Information</ovf:Info>
 +      <ovf:Product>Product</ovf:Product>
 +      <ovf:Vendor>Vendor</ovf:Vendor>

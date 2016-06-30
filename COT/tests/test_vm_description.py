@@ -36,14 +36,33 @@ class TestVMDescription(unittest.TestCase):
                           VMDescription.detect_type_from_name,
                           self.TEXT_FILE)
 
-    def test_abstract_instance_apis(self):
-        """Verify NotImplementedError from APIs that have no generic form."""
+    def test_abstract_io_apis(self):
+        """Get NotImplementedError from abstract I/O APIs."""
         ins = VMDescription(self.TEXT_FILE, None)
 
         self.assertRaises(NotImplementedError,
                           ins.write)
+
+        ins.destroy()
+        self.assertFalse(os.path.exists(ins.working_dir))
+
+    def test_abstract_info_apis(self):
+        """Get NotImplementedError from abstract info APIs."""
+        ins = VMDescription(self.TEXT_FILE, None)
+
         with self.assertRaises(NotImplementedError):
-            ins.platform
+            assert ins.platform
+        self.assertRaises(NotImplementedError,
+                          ins.info_string)
+        self.assertRaises(NotImplementedError,
+                          ins.profile_info_string)
+
+        ins.destroy()
+        self.assertFalse(os.path.exists(ins.working_dir))
+
+    def test_abstract_disk_file_apis(self):
+        """Get NotImplementedError from abstract disk and file APIs."""
+        ins = VMDescription(self.TEXT_FILE, None)
 
         self.assertRaises(NotImplementedError,
                           ins.search_from_filename, self.TEXT_FILE)
@@ -85,16 +104,27 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.add_disk_device,
                           None, None, None, None, None, None, None)
+        self.assertRaises(NotImplementedError,
+                          ins.find_empty_drive, None)
+
+        ins.destroy()
+        self.assertFalse(os.path.exists(ins.working_dir))
+
+    def test_abstract_hardware_apis(self):
+        """Get NotImplementedError from abstract hardware APIs."""
+        ins = VMDescription(self.TEXT_FILE, None)
 
         with self.assertRaises(NotImplementedError):
-            ins.config_profiles
+            ins.validate_hardware()
         with self.assertRaises(NotImplementedError):
-            ins.default_config_profile
+            assert ins.config_profiles
+        with self.assertRaises(NotImplementedError):
+            assert ins.default_config_profile
         self.assertRaises(NotImplementedError,
                           ins.create_configuration_profile,
                           None, None, None)
         with self.assertRaises(NotImplementedError):
-            ins.system_types
+            assert ins.system_types
         with self.assertRaises(NotImplementedError):
             ins.system_types = ["hello", "world"]
         self.assertRaises(NotImplementedError,
@@ -110,7 +140,7 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.set_nic_count, 0, None)
         with self.assertRaises(NotImplementedError):
-            ins.networks
+            assert ins.networks
         self.assertRaises(NotImplementedError,
                           ins.create_network, None, None)
         self.assertRaises(NotImplementedError,
@@ -129,20 +159,36 @@ class TestVMDescription(unittest.TestCase):
                           ins.set_scsi_subtype, None, None)
         self.assertRaises(NotImplementedError,
                           ins.set_ide_subtype, None, None)
+        self.assertRaises(NotImplementedError,
+                          ins.find_device_location, None)
+
+        ins.destroy()
+        self.assertFalse(os.path.exists(ins.working_dir))
+
+    def test_abstract_product_apis(self):
+        """Get NotImplementedError from abstract product APIs."""
+        ins = VMDescription(self.TEXT_FILE, None)
 
         with self.assertRaises(NotImplementedError):
-            ins.version_short
+            assert ins.version_short
         with self.assertRaises(NotImplementedError):
             ins.version_short = "hello"
         with self.assertRaises(NotImplementedError):
-            ins.version_long
+            assert ins.version_long
         with self.assertRaises(NotImplementedError):
             ins.version_long = "hello world!"
 
+        ins.destroy()
+        self.assertFalse(os.path.exists(ins.working_dir))
+
+    def test_abstract_property_apis(self):
+        """Get NotImplementedError from abstract property APIs."""
+        ins = VMDescription(self.TEXT_FILE, None)
+
         with self.assertRaises(NotImplementedError):
-            ins.environment_properties
+            assert ins.environment_properties
         with self.assertRaises(NotImplementedError):
-            ins.environment_transports
+            assert ins.environment_transports
         with self.assertRaises(NotImplementedError):
             ins.environment_transports = ['iso']
         self.assertRaises(NotImplementedError,
@@ -151,15 +197,6 @@ class TestVMDescription(unittest.TestCase):
                           ins.set_property_value, None, None)
         self.assertRaises(NotImplementedError,
                           ins.config_file_to_properties, self.TEXT_FILE)
-        self.assertRaises(NotImplementedError,
-                          ins.info_string)
-        self.assertRaises(NotImplementedError,
-                          ins.profile_info_string)
-
-        self.assertRaises(NotImplementedError,
-                          ins.find_empty_drive, None)
-        self.assertRaises(NotImplementedError,
-                          ins.find_device_location, None)
 
         ins.destroy()
         self.assertFalse(os.path.exists(ins.working_dir))
@@ -173,6 +210,9 @@ class TestVMDescription(unittest.TestCase):
 
         ins.output_file = self.TEXT_FILE
         self.assertEqual(ins.output_file, self.TEXT_FILE)
+
+        ins.product_class = 'generic'
+        self.assertEqual(ins.product_class, 'generic')
 
         out = ins.convert_disk_if_needed(self.TEXT_FILE, None)
         self.assertEqual(out, self.TEXT_FILE)

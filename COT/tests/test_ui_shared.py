@@ -1,7 +1,7 @@
 # ui_shared.py - Unit test cases for generic UI class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -34,7 +34,6 @@ class TestUI(unittest.TestCase):
         self.assertRaises(SystemExit, ins.confirm_or_die, "prompt")
 
         self.assertEqual("hello", ins.get_input("Prompt:", "hello"))
-        self.assertEqual("passwd", ins.get_password("user", "host"))
 
     def test_apis_with_force(self):
         """Test confirm(), confirm_or_die(), etc. with --force."""
@@ -49,7 +48,6 @@ class TestUI(unittest.TestCase):
         ins.confirm_or_die("prompt")
 
         self.assertEqual("hello", ins.get_input("Prompt:", "hello"))
-        self.assertEqual("passwd", ins.get_password("user", "host"))
 
     def test_stub_apis(self):
         """Test stub APIs that subclasses should override."""
@@ -60,3 +58,6 @@ class TestUI(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.fill_examples,
                           [("foo", "bar"), ("baz", "bat")])
+
+        self.assertRaises(NotImplementedError,
+                          ins.get_password, "user", "host")

@@ -22,7 +22,6 @@ Virtual machine definition modules
   COT.vm_factory
   COT.vm_context_manager
   COT.xml_file
-  COT.ovf
 
 Command modules
 ---------------
@@ -59,6 +58,14 @@ User interface modules
 
   COT.ui_shared
   COT.cli
+
+Sub-packages
+------------
+.. autosummary::
+  :toctree:
+
+  COT.helpers
+  COT.ovf
 """
 
 from ._version import get_versions

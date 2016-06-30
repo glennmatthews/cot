@@ -3,6 +3,7 @@
 omit =
     COT/tests/*
     COT/helpers/tests/*
+    COT/ovf/tests/*
     COT/_version.py
     setup.py
     versioneer.py

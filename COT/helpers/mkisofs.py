@@ -3,7 +3,7 @@
 # mkisofs.py - Helper for 'mkisofs' and 'genisoimage'
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2013-2015 the COT project developers.
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -68,15 +68,12 @@ class MkIsoFS(Helper):
     @property
     def path(self):
         """Find ``mkisofs``, ``genisoimage``, or ``xorriso`` if available."""
-        self.name
+        assert self.name
         return self._path
 
     def install_helper(self):
         """Install ``mkisofs``, ``genisoimage``, or ``xorriso``."""
-        if self.path:
-            logger.warning("Tried to install {0} -- "
-                           "but it's already available at {1}!"
-                           .format(self.name, self.path))
+        if self.should_not_be_installed_but_is():
             return
         logger.info("Installing 'mkisofs' and/or 'genisoimage'...")
         if Helper.port_install('cdrtools'):
@@ -90,7 +87,7 @@ class MkIsoFS(Helper):
             raise NotImplementedError(
                 "Unsure how to install mkisofs.\n"
                 "See http://cdrecord.org/")
-        logger.info("Successfully installed '{0}'".format(self.name))
+        logger.info("Successfully installed '%s'", self.name)
 
     def create_iso(self, file_path, contents):
         """Create a new ISO image at the requested location.
@@ -99,8 +96,7 @@ class MkIsoFS(Helper):
         :param list contents: List of file paths to package into the created
           image.
         """
-        logger.info("Calling {0} to create an ISO image"
-                    .format(self.name))
+        logger.info("Calling %s to create an ISO image", self.name)
         # mkisofs and genisoimage take the same parameters, conveniently,
         # while xorriso needs to be asked to pretend to be mkisofs
         args = ['-output', file_path, '-full-iso9660-filenames',
