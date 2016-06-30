@@ -91,30 +91,7 @@ class SmarterConnection(SmartConnection):
         except requests.exceptions.ConnectionError as e:
             # ConnectionError can wrap another internal error; let's unwrap it
             # so COT can log it more cleanly
-            outer_e = e
-            inner_message = None
-            while e.errno is None:
-                inner_e = None
-                if hasattr(outer_e, 'reason'):
-                    inner_e = outer_e.reason  # pylint: disable=no-member
-                else:
-                    for arg in outer_e.args:
-                        if isinstance(arg, Exception):
-                            inner_e = arg
-                            break
-                if inner_e is None:
-                    break
-                if hasattr(inner_e, 'strerror'):
-                    inner_message = inner_e.strerror
-                elif hasattr(inner_e, 'message'):
-                    inner_message = inner_e.message
-                else:
-                    inner_message = inner_e.args[0]
-                logger.debug("\nInner exception: %s", inner_e)
-                if hasattr(inner_e, 'errno') and inner_e.errno is not None:
-                    e.errno = inner_e.errno
-                    break
-                outer_e = inner_e
+            e.errno, inner_message = self.unwrap_connection_error(e)
             if e.strerror is None:
                 e.strerror = ("Error connecting to {0}:{1}: {2}"
                               .format(self.server, self.port, inner_message))
@@ -127,6 +104,41 @@ class SmarterConnection(SmartConnection):
         if exc_type is not None:
             logger.error("Session failed - %s", exc_value)
         # TODO - re-enable SSL certificate validation?
+
+    def unwrap_connection_error(self, outer_e):  # pylint: disable=no-self-use
+        """Extract inner attributes from a ConnectionError.
+
+        ConnectionError often wraps another exception with more context;
+        this function dives inside the ConnectionError to find that context.
+
+        :param ConnectionError outer_e: ConnectionError to unwrap
+        :return: extracted (errno, inner_message)
+        """
+        errno = None
+        inner_message = None
+        while errno is None:
+            inner_e = None
+            if hasattr(outer_e, 'reason'):
+                inner_e = outer_e.reason  # pylint: disable=no-member
+            else:
+                for arg in outer_e.args:
+                    if isinstance(arg, Exception):
+                        inner_e = arg
+                        break
+            if inner_e is None:
+                break
+            if hasattr(inner_e, 'strerror'):
+                inner_message = inner_e.strerror
+            elif hasattr(inner_e, 'message'):
+                inner_message = inner_e.message
+            else:
+                inner_message = inner_e.args[0]
+            logger.debug("\nInner exception: %s", inner_e)
+            if hasattr(inner_e, 'errno') and inner_e.errno is not None:
+                errno = inner_e.errno
+                break
+            outer_e = inner_e
+        return errno, inner_message
 
 
 def get_object_from_connection(conn, vimtype, name):
@@ -244,6 +256,45 @@ class COTDeployESXi(COTDeploy):
             return False, "LOCATOR is a mandatory argument"
         return super(COTDeployESXi, self).ready_to_run()
 
+    def fixup_ovftool_args(self, ovftool_args, target):
+        """Make any needed modifications to the ovftool arguments.
+
+        :param list ovftool_args: Any existing ovftool arguments to begin with.
+        :param str target: deployment target URI
+        :return: Updated ovftool arguments
+        """
+        # pass selected configuration profile to ovftool
+        if self.configuration is not None:
+            ovftool_args.append("--deploymentOption=" + self.configuration)
+
+        # pass network settings on to ovftool
+        if self.network_map is not None:
+            for nm in self.network_map:
+                ovftool_args.append("--net:" + nm)
+
+        # check if user entered a name for the VM
+        if self.vm_name is None:
+            self.vm_name = os.path.splitext(os.path.basename(self.package))[0]
+        # pass name to ovftool
+        ovftool_args.append("--name=" + self.vm_name)
+
+        # tell ovftool to power on the VM if requested
+        # TODO: if serial port fixup is needed, do not power on VM until
+        # after serial ports are added.
+        if self.power_on:
+            ovftool_args.append("--powerOn")
+
+        # specify target datastore
+        if self.datastore is not None:
+            ovftool_args.append("--datastore=" + self.datastore)
+
+        # add package and target to the list
+        ovftool_args.append(self.package)
+        ovftool_args.append(target)
+
+        logger.debug("Final args to pass to OVFtool: %s", ovftool_args)
+        return ovftool_args
+
     def run(self):
         """Do the actual work of this submodule - deploying to ESXi.
 
@@ -304,40 +355,13 @@ class COTDeployESXi(COTDeploy):
                              "ensure passthru of OVF environment to guest.")
                 ovftool_args.append("--X:injectOvfEnv")
 
-        if self.configuration is not None:
-            ovftool_args.append("--deploymentOption=" + self.configuration)
+        ovftool_args = self.fixup_ovftool_args(ovftool_args, target)
 
         # Get the number of serial ports in the OVA.
         # ovftool does not create serial ports when deploying to a VM,
         # so we'll have to fix this up manually later.
         serial_count = vm.get_serial_count([self.configuration])
         serial_count = serial_count[self.configuration]
-
-        # pass network settings on to ovftool
-        if self.network_map is not None:
-            for nm in self.network_map:
-                ovftool_args.append("--net:" + nm)
-
-        # check if user entered a name for the VM
-        if self.vm_name is None:
-            self.vm_name = os.path.splitext(os.path.basename(self.package))[0]
-        ovftool_args.append("--name=" + self.vm_name)
-
-        # tell ovftool to power on the VM
-        # TODO - if serial port fixup (below) is implemented,
-        # do not power on VM until after serial ports are added.
-        if self.power_on:
-            ovftool_args.append("--powerOn")
-
-        # specify target datastore
-        if self.datastore is not None:
-            ovftool_args.append("--datastore=" + self.datastore)
-
-        # add package and target to the list
-        ovftool_args.append(self.package)
-        ovftool_args.append(target)
-
-        logger.debug("Final args to pass to OVFtool: %s", ovftool_args)
 
         logger.info("Deploying VM...")
         self.ovftool.call_helper(ovftool_args, capture_output=False)
@@ -346,7 +370,7 @@ class COTDeployESXi(COTDeploy):
         if serial_count > 0:
             # add serial ports as requested
             self.fixup_serial_ports(serial_count)
-        # power on VM if power_on
+        # TODO: only now power on VM if power_on was requested
 
     def fixup_serial_ports(self, serial_count):
         """Use PyVmomi to create and configure serial ports for the new VM."""

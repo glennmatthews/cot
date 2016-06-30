@@ -13,6 +13,11 @@ This project adheres to `Semantic Versioning`_.
 - COT now logs warning messages when outputting an OVF if the hardware
   definitions in the OVF are considered invalid for the given product-class.
 - Additional code quality validation with `Pylint`_. (`#49`_).
+- Code complexity analysis with `Pylint`_ and `mccabe`_ (`#49`_).
+
+**Changed**
+
+- Lots of refactoring to reduce code complexity.
 
 **Fixed**
 
@@ -453,6 +458,7 @@ Initial public release.
 .. _pydocstyle: https://pypi.python.org/pypi/pydocstyle
 .. _`flake8-docstrings`: https://pypi.python.org/pypi/flake8-docstrings
 .. _Pylint: https://www.pylint.org/
+.. _mccabe: https://pypi.python.org/pypi/mccabe
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
 .. _1.5.2: https://github.com/glennmatthews/cot/compare/v1.5.1...v1.5.2
