@@ -48,7 +48,10 @@ logger = logging.getLogger(__name__)
 
 
 def list_union(*lists):
-    """Get union of lists."""
+    """Get union of lists.
+
+    :param list lists: List of lists to unify.
+    """
     result = []
     for l in lists:
         result.extend([x for x in l if x not in result])
@@ -70,6 +73,10 @@ class OVFItem(object):
 
     * a dict of ``Item`` properties (indexed by element name)
     * each of which is a dict of sets of profiles (indexed by element value)
+
+    :param OVF ovf: OVF instance that owns the Item (optional)
+    :param item: 'Item' element (optional)
+    :type item: :class:`xml.etree.ElementTree.Element`
     """
 
     # Magic strings
@@ -80,7 +87,8 @@ class OVFItem(object):
         """Create a new OVFItem with contents based on the given Item element.
 
         :param OVF ovf: OVF instance that owns the Item (optional)
-        :param xml.etree.ElementTree.Element item: 'Item' element (optional)
+        :param item: 'Item' element (optional)
+        :type item: :class:`xml.etree.ElementTree.Element`
         """
         self.ovf = ovf
         if ovf is not None:
@@ -105,7 +113,10 @@ class OVFItem(object):
         return ret
 
     def __getattr__(self, name):
-        """Transparently pass attribute lookups off to OVF/OVFNameHelper."""
+        """Transparently pass attribute lookups off to OVF/OVFNameHelper.
+
+        :param str name: Attribute name.
+        """
         # Don't pass 'special' attributes through to the helper
         if re.match(r"^__", name):
             raise AttributeError("'OVFItem' object has no attribute '{0}'"
@@ -119,15 +130,27 @@ class OVFItem(object):
         return list(self.properties.keys())
 
     def property_values(self, name):
-        """Get list of values known for a given property name."""
+        """Get list of values known for a given property name.
+
+        :param str name: Property name.
+        """
         return list(self.properties[name].keys())
 
     def property_profiles(self, name, value):
-        """Get set of profiles associated with a property name and value."""
+        """Get set of profiles associated with a property name and value.
+
+        :param str name: Property name.
+        :param value: Property value of interest.
+        :type value: str, tuple
+        """
         return self.properties[name][value]
 
     def all_profiles(self, name, default=None):
-        """Superset of all profiles for which this name has a value."""
+        """Superset of all profiles for which this name has a value.
+
+        :param str name: Property name.
+        :param object default: Default value to return if there are no matches
+        """
         value_dict = self.properties.get(name, None)
         if not value_dict:
             return default
@@ -136,7 +159,8 @@ class OVFItem(object):
     def add_item(self, item):
         """Add the given ``Item`` element to this OVFItem.
 
-        :param xml.etree.ElementTree.Element item: XML ``Item`` element
+        :param item: XML ``Item`` element
+        :type item: :class:`xml.etree.ElementTree.Element`
         :raise OVFItemDataError: if the new Item conflicts with existing data
           already in the OVFItem.
         """
@@ -202,11 +226,17 @@ class OVFItem(object):
         self.validate()
 
     def value_add_wildcards(self, name, value, profiles):
-        """Add wildcard placeholders to a string that may need updating."""
-        # If the ElementName or Description references the VirtualQuantity,
-        # Connection, or ResourceSubType, replace that reference with a
-        # placeholder that we can regenerate at output time. That way, if the
-        # VirtualQuantity or ResourceSubType changes, these can change too.
+        """Add wildcard placeholders to a string that may need updating.
+
+        If the ElementName or Description references the VirtualQuantity,
+        Connection, or ResourceSubType, replace that reference with a
+        placeholder that we can regenerate at output time. That way, if the
+        VirtualQuantity or ResourceSubType changes, these can change too.
+
+        :param str name: Property name
+        :param str value: Value to add wildcards to.
+        :param list profiles: Profiles to which this (name, value) applies.
+        """
         if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, profiles)
             if vq_val is not None:
@@ -227,7 +257,12 @@ class OVFItem(object):
         return value
 
     def value_replace_wildcards(self, name, value, profiles):
-        """Replace wildcards with actual values."""
+        """Replace wildcards with actual values.
+
+        :param str name: Property name
+        :param str value: Value to replace wildcards from.
+        :param list profiles: Profiles to which this (name, value) applies.
+        """
         if not value:
             return value
         if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
@@ -250,7 +285,12 @@ class OVFItem(object):
         return value
 
     def _set_new_property(self, name, value, profiles):
-        """Helper for :meth:`set_property`. Create a new property entry."""
+        """Helper for :meth:`set_property`. Create a new property entry.
+
+        :param str name: Property name
+        :param str value: Value to store for this property.
+        :param list profiles: Profiles to which this (name, value) applies.
+        """
         if not value:
             return
 
@@ -261,7 +301,13 @@ class OVFItem(object):
         self.modified = True
 
     def _set_existing_property(self, name, value, profiles, overwrite):
-        """Helper for :meth:`set_property`. Update an existing property."""
+        """Helper for :meth:`set_property`. Update an existing property.
+
+        :param str name: Property name
+        :param str value: Value to store for this property.
+        :param list profiles: Profiles to which this (name, value) applies.
+        :param bool overwrite: Whether to permit overwriting existing values.
+        """
         for (known_value, profile_set) in list(self.properties[name].items()):
             if not overwrite and profile_set.intersection(profiles):
                 raise OVFItemDataError(

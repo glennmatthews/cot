@@ -75,6 +75,9 @@ def validate_controller_address(controller, address):
 class COTAddDisk(COTSubmodule):
     """Add or replace a disk in a virtual machine.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,
@@ -92,7 +95,11 @@ class COTAddDisk(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTAddDisk, self).__init__(ui)
         self._disk_image = None
         self.disk_type = None
@@ -254,7 +261,11 @@ otherwise, will create a new disk entry.""")
 
 
 def guess_disk_type_from_extension(disk_file):
-    """Guess the disk type (harddisk/cdrom) from the disk file name."""
+    """Guess the disk type (harddisk/cdrom) from the disk file name.
+
+    :param str disk_file: File name or file path.
+    :return: "cdrom" or "harrdisk"
+    """
     disk_extension = os.path.splitext(disk_file)[1]
     ext_type_map = {
         '.iso':   'cdrom',
@@ -299,6 +310,13 @@ def search_for_elements(vm, disk_file, file_id, controller, address):
     of the above arguments - in which case we need to make sure that
     all relevant approaches agree on what sections we're talking about...
 
+    :param vm: Virtual machine object
+    :type vm: :class:`~COT.vm_description.VMDescription`
+    :param str disk_file: Disk file name or path
+    :param str file_id: File identifier
+    :param str controller: controller type, "ide" or "scsi"
+    :param str address: device address, such as "1:0"
+
     :raises ValueMismatchError: if the criteria select a non-unique set.
     :return: (file_object, disk_object, controller_item, disk_item)
     """
@@ -331,7 +349,13 @@ def search_for_elements(vm, disk_file, file_id, controller, address):
 
 
 def guess_controller_type(vm, ctrl_item, disk_type):
-    """If a controller type wasn't specified, try to guess from context."""
+    """If a controller type wasn't specified, try to guess from context.
+
+    :param vm: Virtual machine object
+    :type vm: :class:`~COT.vm_description.VMDescription`
+    :param object ctrl_item: Any known controller object
+    :param str disk_type: "cdrom" or "harddisk"
+    """
     if ctrl_item is None:
         # If the user didn't tell us which controller type they wanted,
         # and we didn't find a controller item based on existing file/disk,
@@ -357,6 +381,14 @@ def validate_elements(vm, file_obj, disk_obj, disk_item, ctrl_item,
     """Validate any existing file, disk, controller item, and disk item.
 
     :raises ValueMismatchError: if the search criteria select a non-unique set.
+    :param vm: Virtual machine object
+    :type vm: :class:`~COT.vm_description.VMDescription`
+    :param object file_obj: Known file object
+    :param object disk_obj: Known disk object
+    :param object disk_item: Known disk device object
+    :param object ctrl_item: Known controller device object
+    :param str file_id: File identifier string
+    :param str ctrl_type: Controller type ("ide" or "scsi")
     """
     # Ok, we now have confirmed that we have at most one of each of these
     # four objects. Now it's time for some sanity checking...
@@ -394,7 +426,21 @@ def validate_elements(vm, file_obj, disk_obj, disk_item, ctrl_item,
 
 def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
                      disk_type, controller, ctrl_item, subtype):
-    """Get user confirmation of any risky or unusual operations."""
+    """Get user confirmation of any risky or unusual operations.
+
+    :param vm: Virtual machine object
+    :type vm: :class:`~COT.vm_description.VMDescription`
+    :param ui: User interface object
+    :type ui: :class:`~COT.ui_shared.UI`
+    :param object file_obj: Known file object
+    :param str disk_image: Filename or path for disk file
+    :param object disk_obj: Known disk object
+    :param object disk_item: Known disk device object
+    :param str disk_type: "harddisk" or "cdrom"
+    :param str controller: Controller type ("ide" or "scsi")
+    :param object ctrl_item: Known controller device object
+    :param str subtype: Controller subtype (such as "virtio")
+    """
     # TODO: more refactoring!
     if file_obj is not None:
         ui.confirm_or_die("Replace existing file {0} with {1}?"

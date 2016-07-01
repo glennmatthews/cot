@@ -37,6 +37,9 @@ logger = logging.getLogger(__name__)
 class COTEditProperties(COTSubmodule):
     """Edit OVF environment XML properties.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,
@@ -49,7 +52,11 @@ class COTEditProperties(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTEditProperties, self).__init__(ui)
         self._config_file = None
         self._properties = {}

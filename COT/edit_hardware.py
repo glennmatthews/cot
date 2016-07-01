@@ -52,6 +52,9 @@ logger = logging.getLogger(__name__)
 class COTEditHardware(COTSubmodule):
     """Edit hardware information (CPUs, RAM, NICs, etc.).
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,
@@ -76,7 +79,11 @@ class COTEditHardware(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTEditHardware, self).__init__(ui)
         self.profiles = None
         """Configuration profile(s) to edit."""

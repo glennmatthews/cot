@@ -27,10 +27,29 @@ logger = logging.getLogger(__name__)
 
 
 class FileOnDisk(object):
-    """Wrapper for a 'real' file on disk."""
+    """Wrapper for a 'real' file on disk.
+
+    :param str file_path: File path or directory path
+    :param str filename: If specified, file_path is considered to be
+      a directory containing this filename. If not specified, the
+      final element in file_path is considered the filename.
+    """
 
     def __init__(self, file_path, filename=None):
-        """Create a reference to a file on disk."""
+        """Create a reference to a file on disk.
+
+        :param str file_path: File path or directory path
+        :param str filename: If specified, file_path is considered to be
+          a directory containing this filename. If not specified, the
+          final element in file_path is considered the filename.
+
+        ::
+
+          >>> a = FileOnDisk('/etc/resolv.conf')
+          >>> b = FileOnDisk('/etc', 'resolv.conf')
+          >>> a == b
+          True
+        """
         if filename is None:
             self.file_path = file_path
             self.filename = os.path.basename(file_path)
@@ -41,6 +60,22 @@ class FileOnDisk(object):
             raise IOError("File {0} does not exist!".format(self.file_path))
         self.obj = None
 
+    def __eq__(self, other):
+        """FileOnDisk instances are equal if they point to the same path.
+
+        No attempt is made to check file equivalence, symlinks, etc.
+
+        :param object other: Other object to compare against
+        """
+        return type(other) is type(self) and self.file_path == other.file_path
+
+    def __ne__(self, other):
+        """FileOnDisk instances are not equal if they have different paths.
+
+        :param object other: Other object to compare against
+        """
+        return not self.__eq__(other)
+
     def exists(self):
         """Check whether the file exists on disk."""
         return os.path.exists(self.file_path)
@@ -50,7 +85,10 @@ class FileOnDisk(object):
         return os.path.getsize(self.file_path)
 
     def open(self, mode):
-        """Open the file and return a reference to the file object."""
+        """Open the file and return a reference to the file object.
+
+        :param str mode: Mode such as 'r', 'w', 'a', 'w+', etc.
+        """
         self.obj = open(self.file_path, mode)
         return self.obj
 
@@ -59,24 +97,39 @@ class FileOnDisk(object):
         self.obj.close()
 
     def copy_to(self, dest_dir):
-        """Copy this file to the given destination directory."""
+        """Copy this file to the given destination directory.
+
+        :param str dest_dir: Destination directory or filename.
+        """
         if self.file_path == os.path.join(dest_dir, self.filename):
             return
         logger.info("Copying %s to %s", self.file_path, dest_dir)
         shutil.copy(self.file_path, dest_dir)
 
     def add_to_archive(self, tarf):
-        """Copy this file into the given tarfile object."""
+        """Copy this file into the given tarfile object.
+
+        :param tarf: Add this file to that archive.
+        :type tarf: :class:`tarfile.TarFile`
+        """
         logger.info("Adding %s to TAR file as %s",
                     self.file_path, self.filename)
         tarf.add(self.file_path, self.filename)
 
 
 class FileInTAR(object):
-    """Wrapper for a file inside a TAR archive or OVA."""
+    """Wrapper for a file inside a TAR archive or OVA.
+
+    :param str tarfile_path: Path to TAR archive to read
+    :param str filename: File name in the TAR archive.
+    """
 
     def __init__(self, tarfile_path, filename):
-        """Create a reference to a file contained in a TAR archive."""
+        """Create a reference to a file contained in a TAR archive.
+
+        :param str tarfile_path: Path to TAR archive to read
+        :param str filename: File name in the TAR archive.
+        """
         if not tarfile.is_tarfile(tarfile_path):
             raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
         self.tarfile_path = tarfile_path
@@ -87,6 +140,25 @@ class FileInTAR(object):
         self.file_path = None
         self.tarf = None
         self.obj = None
+
+    def __eq__(self, other):
+        """FileInTAR are equal if they have the same filename and tarfile.
+
+        No attempt is made to check file equivalence, symlinks, etc.
+
+        :param object other: Other object to compare against
+        """
+        if type(other) is type(self):
+            return (self.tarfile_path == other.tarfile_path and
+                    self.filename == other.filename)
+        return False
+
+    def __ne__(self, other):
+        """FileInTar are not equal if they have different paths or names.
+
+        :param object other: Other object to compare against
+        """
+        return not self.__eq__(other)
 
     def exists(self):
         """Check whether the file exists in the TAR archive."""
@@ -103,7 +175,10 @@ class FileInTAR(object):
             return tarf.getmember(self.filename).size
 
     def open(self, mode):
-        """Open the TAR and return a reference to the relevant file object."""
+        """Open the TAR and return a reference to the relevant file object.
+
+        :param str mode: Only 'r' and 'rb' modes are supported.
+        """
         # We can only extract a file object from a TAR file in read mode.
         if mode != 'r' and mode != 'rb':
             raise ValueError("FileInTar.open() only supports 'r'/'rb' mode")
@@ -121,14 +196,21 @@ class FileInTAR(object):
             self.obj = None
 
     def copy_to(self, dest_dir):
-        """Extract this file to the given destination directory."""
+        """Extract this file to the given destination directory.
+
+        :param str dest_dir: Destination directory or filename.
+        """
         with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
             logger.info("Extracting %s from %s to %s",
                         self.filename, self.tarfile_path, dest_dir)
             tarf.extract(self.filename, dest_dir)
 
     def add_to_archive(self, tarf):
-        """Copy this file into the given tarfile object."""
+        """Copy this file into the given tarfile object.
+
+        :param tarf: Add this file to that archive.
+        :type tarf: :class:`tarfile.TarFile`
+        """
         self.open('r')
         try:
             logger.info("Copying %s directly from %s to TAR file",
@@ -136,3 +218,8 @@ class FileInTAR(object):
             tarf.addfile(self.tarf.getmember(self.filename), self.obj)
         finally:
             self.close()
+
+
+if __name__ == "__main__":
+    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
+    doctest.testmod()

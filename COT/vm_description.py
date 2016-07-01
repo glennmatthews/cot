@@ -46,6 +46,12 @@ class VMInitError(EnvironmentError):
 class VMDescription(object):
     """Abstract class for reading, editing, and writing VM definitions.
 
+    :param str input_file: Data file to read in.
+    :param str output_file: File name to write to. If this VM is read-only,
+      (there will never be an output file) this value should be ``None``;
+      if the output filename is not yet known, use ``""`` and subsequently
+      set :attr:`output` when it is determined.
+
     **Properties**
 
     .. autosummary::
@@ -70,6 +76,7 @@ class VMDescription(object):
 
         Does not check file contents, as the given filename may not yet exist.
 
+        :param str filename: File name or path
         :return: A string representing a recognized and supported type of file
         :raise ValueUnsupportedError: if we don't know how to handle this file.
         """
@@ -259,7 +266,7 @@ class VMDescription(object):
     def search_from_file_id(self, file_id):
         """From the given file ID, try to find any existing objects.
 
-        :param str filename: Filename to search from
+        :param str file_id: File ID to search from
         :return: ``(file, disk, controller_device, disk_device)``,
           opaque objects of which any or all may be ``None``
         """
@@ -286,7 +293,7 @@ class VMDescription(object):
     def get_id_from_file(self, file_obj):
         """Get the file ID from the given opaque file object.
 
-        :param file_obj: File object to query
+        :param object file_obj: File object to query
         :return: Identifier string associated with this object
         """
         raise NotImplementedError("get_id_from_file not implemented")
@@ -294,7 +301,7 @@ class VMDescription(object):
     def get_path_from_file(self, file_obj):
         """Get the file path from the given opaque file object.
 
-        :param file_obj: File object to query
+        :param object file_obj: File object to query
         :return: Relative path to the file associated with this object
         """
         raise NotImplementedError("get_path_from_file not implemented")
@@ -302,7 +309,7 @@ class VMDescription(object):
     def get_file_ref_from_disk(self, disk):
         """Get the file reference from the given opaque disk object.
 
-        :param disk: Disk object to query
+        :param object disk: Disk object to query
         :return: String that can be used to identify the file associated
           with this disk
         """
@@ -311,7 +318,7 @@ class VMDescription(object):
     def get_id_from_disk(self, disk):
         """Get the identifier string associated with the given Disk object.
 
-        :param disk: Disk object
+        :param object disk: Disk object
         :rtype: string
         """
         raise NotImplementedError("get_id_from_disk not implemented")
@@ -319,7 +326,7 @@ class VMDescription(object):
     def get_type_from_device(self, device):
         """Get the type of the given opaque device object.
 
-        :param device: Device object to query
+        :param object device: Device object to query
         :return: string such as 'ide' or 'memory'
         """
         raise NotImplementedError("get_type_from_device not implemented")
@@ -327,7 +334,7 @@ class VMDescription(object):
     def get_subtype_from_device(self, device):
         """Get the sub-type of the given opaque device object.
 
-        :param device: Device object to query
+        :param object device: Device object to query
         :return: ``None``, or string such as 'virtio' or 'lsilogic'
         """
         raise NotImplementedError("get_subtype_from_device not implemented")
@@ -346,13 +353,13 @@ class VMDescription(object):
                                     disk_item, ctrl_item):
         """Check if the given disk is linked properly to the other objects.
 
-        :param disk: Disk object to validate
-        :param file_obj: File object which this disk should be linked to
+        :param object disk: Disk object to validate
+        :param object file_obj: File object which this disk should be linked to
           (optional)
-        :param disk_item: Disk device object which should link to this disk
-          (optional)
-        :param ctrl_item: Controller device object which should link to the
-          :attr:`disk_item`
+        :param object disk_item: Disk device object which should link to
+          this disk (optional)
+        :param object ctrl_item: Controller device object which should link to
+          the :attr:`disk_item`
         :raise ValueMismatchError: if the given items are not linked properly.
         """
         raise NotImplementedError(
@@ -363,8 +370,8 @@ class VMDescription(object):
 
         :param str file_path: Path to file to add
         :param str file_id: Identifier string for the file in the VM
-        :param file_obj: Existing file object to overwrite
-        :param disk: Existing disk object referencing :attr:`file`.
+        :param object file_obj: Existing file object to overwrite
+        :param object disk: Existing disk object referencing :attr:`file`.
 
         :return: New or updated file object
         """
@@ -373,9 +380,9 @@ class VMDescription(object):
     def remove_file(self, file_obj, disk=None, disk_drive=None):
         """Remove the given file object from the VM.
 
-        :param file_obj: File object to remove
-        :param disk: Disk object referencing :attr:`file`
-        :param disk_drive: Disk drive mapping :attr:`file` to a device
+        :param object file_obj: File object to remove
+        :param object disk: Disk object referencing :attr:`file`
+        :param object disk_drive: Disk drive mapping :attr:`file` to a device
         """
         raise NotImplementedError("remove_file not implemented")
 
@@ -385,7 +392,7 @@ class VMDescription(object):
         :param str file_path: Path to disk image file
         :param str file_id: Identifier string for the file/disk mapping
         :param str disk_type: 'harddisk' or 'cdrom'
-        :param disk: Existing disk object to overwrite
+        :param object disk: Existing disk object to overwrite
 
         :return: New or updated disk object
         """
@@ -398,7 +405,8 @@ class VMDescription(object):
         :param str device_type: ``'ide'`` or ``'scsi'``
         :param str subtype: Subtype such as ``'virtio'`` (optional)
         :param int address: Controller address such as 0 or 1 (optional)
-        :param ctrl_item: Existing controller device to update (optional)
+        :param object ctrl_item: Existing controller device to
+          update (optional)
 
         :return: New or updated controller device object
         """
@@ -412,11 +420,11 @@ class VMDescription(object):
         :param str address: Address on controller, such as "1:0" (optional)
         :param str name: Device name string (optional)
         :param str description: Description string (optional)
-        :param disk: Disk object to map to this device
-        :param file_obj: File object to map to this device
-        :param ctrl_item: Controller object to serve as parent
-        :param disk_item: Existing disk device to update instead of making
-          a new device.
+        :param object disk: Disk object to map to this device
+        :param object file_obj: File object to map to this device
+        :param object ctrl_item: Controller object to serve as parent
+        :param object disk_item: Existing disk device to update instead of
+          making a new device.
 
         :return: New or updated disk device object.
         """
@@ -426,7 +434,7 @@ class VMDescription(object):
     def create_configuration_profile(self, pid, label, description):
         """Create/update a configuration profile with the given ID.
 
-        :param pid: Profile identifier
+        :param str pid: Profile identifier
         :param str label: Brief descriptive label for the profile
         :param str description: Verbose description of the profile
         """
@@ -434,7 +442,10 @@ class VMDescription(object):
                                   "not implemented!")
 
     def delete_configuration_profile(self, profile):
-        """Delete the configuration profile with the given ID."""
+        """Delete the configuration profile with the given ID.
+
+        :param str profile: Profile identifier
+        """
         raise NotImplementedError("delete_configuration_profile "
                                   "not implemented")
 
@@ -568,6 +579,7 @@ class VMDescription(object):
     def get_serial_count(self, profile_list):
         """Get the number of serial ports under the given profile(s).
 
+        :param list profile_list: Change only the given profiles
         :rtype: dict
         :return: ``{ profile_name : serial_count }``
         """
@@ -632,7 +644,7 @@ class VMDescription(object):
     def set_ide_subtypes(self, type_list, profile_list):
         """Set the device subtype list for the IDE controller(s).
 
-        :param list type: IDE subtype string list
+        :param list type_list: IDE subtype string list
         :param list profile_list: Change only the given profiles
         """
         raise NotImplementedError("set_ide_subtypes not implemented!")
@@ -651,7 +663,7 @@ class VMDescription(object):
         """Set the value of the given property (converting value if needed).
 
         :param str key: Property identifier
-        :param value: Value to set for this property
+        :param object value: Value to set for this property
         :return: the (converted) value that was set.
         """
         raise NotImplementedError("set_property_value not implemented")
@@ -704,7 +716,7 @@ class VMDescription(object):
     def find_device_location(self, device):
         """Find the controller type and address of a given device object.
 
-        :param device: Hardware device object.
+        :param object device: Hardware device object.
         :returns: ``(type, address)``, such as ``("ide", "1:0")``.
         """
         raise NotImplementedError("find_device_location not implemented")

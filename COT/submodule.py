@@ -38,6 +38,9 @@ logger = logging.getLogger(__name__)
 class COTGenericSubmodule(object):
     """Abstract interface for COT command submodules.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Attributes:
     :attr:`vm`,
     :attr:`UI`
@@ -48,7 +51,11 @@ class COTGenericSubmodule(object):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         self.vm = None
         """Virtual machine description (:class:`VMDescription`)."""
         self.UI = ui
@@ -94,6 +101,9 @@ class COTGenericSubmodule(object):
 class COTReadOnlySubmodule(COTGenericSubmodule):
     """Class for submodules that do not modify the OVF, such as 'deploy'.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`vm`,
     :attr:`UI`
@@ -103,7 +113,11 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTReadOnlySubmodule, self).__init__(ui)
         self._package = None
 
@@ -143,6 +157,9 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
 class COTSubmodule(COTGenericSubmodule):
     """Class for submodules that read and write the OVF.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`vm`,
     :attr:`UI`
@@ -153,7 +170,11 @@ class COTSubmodule(COTGenericSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTSubmodule, self).__init__(ui)
         self._package = None
         # Default to an unspecified output rather than no output

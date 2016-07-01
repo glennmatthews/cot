@@ -39,11 +39,20 @@ def register_namespace(prefix, uri):
 
 
 class XML(object):
-    """Class capable of reading, editing, and writing XML files."""
+    """Class capable of reading, editing, and writing XML files.
+
+    :param str xml_file: XML file path to instantiate from.
+    """
 
     @classmethod
     def get_ns(cls, text):
-        """Get the namespace prefix from an XML element or attribute name."""
+        """Get the namespace prefix from an XML element or attribute name.
+
+        :param str text: Element name or attribute name, such as
+          "{http://schemas.dmtf.org/ovf/envelope/1}Element".
+        :return: Namespace prefix, such as
+          "http://schemas.dmtf.org/ovf/envelope/1", or "" if no prefix present.
+        """
         match = re.match(r"\{(.*)\}", str(text))
         if not match:
             logger.error("No namespace prefix on %s??", text)
@@ -52,7 +61,12 @@ class XML(object):
 
     @classmethod
     def strip_ns(cls, text):
-        """Remove a namespace prefix from an XML element or attribute name."""
+        """Remove a namespace prefix from an XML element or attribute name.
+
+        :param str text: Element name or attribute name, such as
+          "{http://schemas.dmtf.org/ovf/envelope/1}Element".
+        :return: Bare name, such as "Element".
+        """
         match = re.match(r"\{.*\}(.*)", str(text))
         if match is None:
             logger.error("No namespace prefix on %s??", text)
@@ -63,17 +77,20 @@ class XML(object):
     def __init__(self, xml_file):
         """Read the given XML file and store it in memory.
 
-        The memory representation is available as :attr:`self.tree` and
-        :attr:`self.root`.
+        The memory representation is available as properties :attr:`tree` and
+        :attr:`root`.
+
+        :param str xml_file: File path to read.
 
         :raise xml.etree.ElementTree.ParseError: if parsing fails under Python
           2.7 or later
         :raise xml.parsers.expat.ExpatError: if parsing fails under Python 2.6
-        :param str xml_file: File path to read.
         """
         # Parse the XML into memory
         self.tree = ET.parse(xml_file)
+        """:class:`xml.etree.ElementTree.ElementTree` describing this file."""
         self.root = self.tree.getroot()
+        """Root :class:`xml.etree.ElementTree.Element` instance of the tree."""
 
     def write_xml(self, xml_file):
         """Write pretty XML out to the given file.
@@ -104,7 +121,8 @@ class XML(object):
     def xml_reindent(self, parent, depth):
         """Recursively add indentation to XML to make it look nice.
 
-        :param xml.etree.ElementTree.Element parent: Current parent element
+        :param parent: Current parent element
+        :type parent: :class:`xml.etree.ElementTree.Element`
         :param int depth: How far down the rabbit hole we have recursed.
            Increments by 2 for each successive level of nesting.
         """
@@ -133,11 +151,12 @@ class XML(object):
         :raises LookupError: if more than one matching child is found
         :raises KeyError: if no matching child is found and :attr:`required`
           is True
-        :param xml.etree.ElementTree.Element parent: Parent element
+        :param parent: Parent element
+        :type parent: :class:`xml.etree.ElementTree.Element`
         :param str tag: Child tag to match on
         :param dict attrib: Child attributes to match on
         :param boolean required: Whether to raise an error if no child exists
-        :rtype: xml.etree.ElementTree.Element
+        :rtype: :class:`xml.etree.ElementTree.Element`
         """
         matches = cls.find_all_children(parent, tag, attrib)
         if len(matches) > 1:
@@ -161,11 +180,12 @@ class XML(object):
     def find_all_children(cls, parent, tag, attrib=None):
         """Find all matching child elements under the specified parent element.
 
-        :param xml.etree.ElementTree.Element parent: Parent element
+        :param parent: Parent element
+        :type parent: :class:`xml.etree.ElementTree.Element`
         :param tag: Child tag (or list of tags) to match on
         :type tag: string or iterable
         :param dict attrib: Child attributes to match on
-        :rtype: list of xml.etree.ElementTree.Element instances
+        :rtype: list of :class:`xml.etree.ElementTree.Element` instances
         """
         assert parent is not None
         if isinstance(tag, str):
@@ -202,8 +222,10 @@ class XML(object):
                   known_namespaces=None):
         """Add the given child element under the given parent element.
 
-        :param xml.etree.ElementTree.Element parent: Parent element
-        :param xml.etree.ElementTree.Element new_child: Child element to attach
+        :param parent: Parent element
+        :type parent: :class:`xml.etree.ElementTree.Element`
+        :param new_child: Child element to attach
+        :type new_child: :class:`xml.etree.ElementTree.Element`
         :param list ordering: (Optional) List describing the expected ordering
            of child tags under the parent; if a new child element is created,
            its placement under the parent will respect this sequence.
@@ -258,7 +280,8 @@ class XML(object):
                           ordering=None, known_namespaces=None):
         """Update or create a child element under the specified parent element.
 
-        :param xml.etree.ElementTree.Element parent: Parent element
+        :param parent: Parent element
+        :type parent: :class:`xml.etree.ElementTree.Element`
         :param str tag: Child element text tag to find or create
         :param str text: Value to set the child's text attribute to
         :param dict attrib: Dict of child attributes to match on
@@ -266,7 +289,7 @@ class XML(object):
         :param list ordering: See :meth:`add_child`
         :param list known_namespaces: See :meth:`add_child`
         :return: New or updated child Element.
-        :rtype: xml.etree.ElementTree.Element
+        :rtype: :class:`xml.etree.ElementTree.Element`
         """
         assert parent is not None
         if attrib is None:

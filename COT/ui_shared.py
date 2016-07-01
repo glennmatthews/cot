@@ -31,10 +31,15 @@ class UI(object):
     """Abstract user interface functionality.
 
     Can also be used in test code as a stub that autoconfirms everything.
+
+    :param bool force: See :attr:`force`.
     """
 
     def __init__(self, force=False):
-        """Constructor."""
+        """Constructor.
+
+        :param bool force: See :attr:`force`.
+        """
         self.force = force
         """Whether to automatically select the default value in all cases.
 
@@ -95,6 +100,8 @@ class UI(object):
 
         A simple wrapper for :meth:`confirm` that calls :func:`sys.exit` if
         :meth:`confirm` returns ``False``.
+
+        :param str prompt: Message to prompt the user with
         """
         if not self.confirm(prompt):
             sys.exit("Aborting.")
@@ -103,11 +110,13 @@ class UI(object):
                          header="", info_list=None):
         """Prompt the user to choose from a list.
 
-        :param footer: Prompt string to display following the list
-        :param option_list: List of strings to choose amongst
-        :param default_value: Default value to select if user declines
-        :param header: String to display prior to the list
-        :param info_list: Verbose strings to display instead of option_list
+        :param str footer: Prompt string to display following the list
+        :param list option_list: List of strings to choose amongst
+        :param str default_value: Default value to select if user declines
+        :param str header: String to display prior to the list
+        :param list info_list: Verbose strings to display in place of
+           :attr:`option_list`
+        :return: :attr:`default_value` or an item from :attr:`option_list`.
         """
         if not info_list:
             info_list = option_list

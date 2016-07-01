@@ -54,12 +54,19 @@ logger = logging.getLogger(__name__)
 
 
 def is_known_product_class(product_class):
-    """Determine if the given product class string is a known one."""
+    """Determine if the given product class string is a known one.
+
+    :param str product_class: String like 'com.cisco.csr1000v'
+    """
     return product_class in PRODUCT_PLATFORM_MAP
 
 
 def platform_from_product_class(product_class):
-    """Get the class of Platform corresponding to a product class string."""
+    """Get the class of Platform corresponding to a product class string.
+
+    :param str product_class: String like 'com.cisco.csr1000v'
+    :rtype: Instance of :class:`GenericPlatform` or subclass thereof.
+    """
     if product_class is None:
         return GenericPlatform
     if is_known_product_class(product_class):
@@ -71,7 +78,13 @@ def platform_from_product_class(product_class):
 
 
 def valid_range(label, value, min_val, max_val):
-    """Raise an exception if the value is not in the valid range."""
+    """Raise an exception if the value is not in the valid range.
+
+    :param str label: Label to include in any exception raised
+    :param int value: Value to validate
+    :param int min_val: Minimum valid value (or None if no minimum)
+    :param int max_val: Maximum valid value (or None if no maximum)
+    """
     if min_val is not None and value < min_val:
         raise ValueTooLowError(label, value, min_val)
     elif max_val is not None and value > max_val:
@@ -100,9 +113,22 @@ class GenericPlatform(object):
 
     SUPPORTED_NIC_TYPES = NIC_TYPES
 
+    # Valid value ranges - may be overridden by subclasses
+    CPU_MIN = 1
+    CPU_MAX = None
+    RAM_MIN = 1
+    RAM_MAX = None
+    NIC_MIN = 0
+    NIC_MAX = None
+    SER_MIN = 0
+    SER_MAX = None
+
     @classmethod
     def controller_type_for_device(cls, _device_type):
-        """Get the default controller type for the given device type."""
+        """Get the default controller type for the given device type.
+
+        :param str _device_type: 'harddisk', 'cdrom', etc.
+        """
         # For most platforms IDE is the correct default.
         return 'ide'
 
@@ -111,23 +137,47 @@ class GenericPlatform(object):
         """Guess the name of the Nth NIC for this platform.
 
         .. note:: This method counts from 1, not from 0!
+
+        :param int nic_number: Nth NIC to name.
         """
         return "Ethernet" + str(nic_number)
 
     @classmethod
     def validate_cpu_count(cls, cpus):
-        """Throw an error if the number of CPUs is not a supported value."""
-        valid_range("CPUs", cpus, 1, None)
+        """Throw an error if the number of CPUs is not a supported value.
+
+        :param int cpus: Number of CPUs
+        """
+        valid_range("CPUs", cpus, cls.CPU_MIN, cls.CPU_MAX)
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
-        """Throw an error if the amount of RAM is not supported."""
-        valid_range("RAM", mebibytes, 1, None)
+        """Throw an error if the amount of RAM is not supported.
+
+        :param int mebibytes: RAM, in MiB.
+        """
+        if cls.RAM_MIN is not None and mebibytes < cls.RAM_MIN:
+            if cls.RAM_MIN > 1024 and cls.RAM_MIN % 1024 == 0:
+                raise ValueTooLowError("RAM", str(mebibytes) + " MiB",
+                                       str(cls.RAM_MIN / 1024) + " GiB")
+            else:
+                raise ValueTooLowError("RAM", str(mebibytes) + " MiB",
+                                       str(cls.RAM_MIN) + " MiB")
+        if cls.RAM_MAX is not None and mebibytes > cls.RAM_MAX:
+            if cls.RAM_MAX > 1024 and cls.RAM_MAX % 1024 == 0:
+                raise ValueTooHighError("RAM", str(mebibytes) + " MiB",
+                                        str(cls.RAM_MAX / 1024) + " GiB")
+            else:
+                raise ValueTooHighError("RAM", str(mebibytes) + " MiB",
+                                        str(cls.RAM_MAX) + " MiB")
 
     @classmethod
     def validate_nic_count(cls, count):
-        """Throw an error if the number of NICs is not supported."""
-        valid_range("NIC count", count, 0, None)
+        """Throw an error if the number of NICs is not supported.
+
+        :param int count: Number of NICs.
+        """
+        valid_range("NIC count", count, cls.NIC_MIN, cls.NIC_MAX)
 
     @classmethod
     def validate_nic_type(cls, type_string):
@@ -136,6 +186,8 @@ class GenericPlatform(object):
         .. seealso::
            - :func:`COT.data_validation.canonicalize_nic_subtype`
            - :data:`COT.data_validation.NIC_TYPES`
+
+        :param str type_string: See :data:`COT.data_validation.NIC_TYPES`
         """
         if type_string not in cls.SUPPORTED_NIC_TYPES:
             raise ValueUnsupportedError("NIC type", type_string,
@@ -143,14 +195,20 @@ class GenericPlatform(object):
 
     @classmethod
     def validate_nic_types(cls, type_list):
-        """Throw an error if any NIC type string in the list is unsupported."""
+        """Throw an error if any NIC type string in the list is unsupported.
+
+        :param list type_list: See :data:`COT.data_validation.NIC_TYPES`
+        """
         for type_string in type_list:
             cls.validate_nic_type(type_string)
 
     @classmethod
     def validate_serial_count(cls, count):
-        """Throw an error if the number of serial ports is not supported."""
-        valid_range("serial port count", count, 0, None)
+        """Throw an error if the number of serial ports is not supported.
+
+        :param int count: Number of serial ports.
+        """
+        valid_range("serial port count", count, cls.SER_MIN, cls.SER_MAX)
 
 
 class IOSXRv(GenericPlatform):
@@ -163,36 +221,27 @@ class IOSXRv(GenericPlatform):
     LITERAL_CLI_STRING = None
     SUPPORTED_NIC_TYPES = ["E1000", "virtio"]
 
+    # IOS XRv supports 1-8 CPUs.
+    CPU_MAX = 8
+    # Minimum 3 GiB, max 8 GiB of RAM.
+    RAM_MIN = 3072
+    RAM_MAX = 8192
+    # IOS XRv requires at least one NIC.
+    NIC_MIN = 1
+    # IOS XRv supports 1-4 serial ports.
+    SER_MIN = 1
+    SER_MAX = 4
+
     @classmethod
     def guess_nic_name(cls, nic_number):
-        """MgmtEth0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc."""
+        """MgmtEth0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc.
+
+        :param int nic_number: Nth NIC to name.
+        """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
         else:
             return "GigabitEthernet0/0/0/" + str(nic_number - 2)
-
-    @classmethod
-    def validate_cpu_count(cls, cpus):
-        """IOS XRv supports 1-8 CPUs."""
-        valid_range("CPUs", cpus, 1, 8)
-
-    @classmethod
-    def validate_memory_amount(cls, mebibytes):
-        """Minimum 3 GiB, max 8 GiB of RAM."""
-        if mebibytes < 3072:
-            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "3 GiB")
-        elif mebibytes > 8192:
-            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", " 8GiB")
-
-    @classmethod
-    def validate_nic_count(cls, count):
-        """IOS XRv requires at least one NIC."""
-        valid_range("NIC count", count, 1, None)
-
-    @classmethod
-    def validate_serial_count(cls, count):
-        """IOS XRv supports 1-4 serial ports."""
-        valid_range("serial ports", count, 1, 4)
 
 
 class IOSXRvRP(IOSXRv):
@@ -200,22 +249,23 @@ class IOSXRvRP(IOSXRv):
 
     PLATFORM_NAME = "Cisco IOS XRv route processor card"
 
+    # Fabric plus an optional management NIC.
+    NIC_MIN = 1
+    NIC_MAX = 2
+
     @classmethod
     def guess_nic_name(cls, nic_number):
         """Fabric and management only.
 
         * fabric
         * MgmtEth0/{SLOT}/CPU0/0
+
+        :param int nic_number: Nth NIC to name.
         """
         if nic_number == 1:
             return "fabric"
         else:
             return "MgmtEth0/{SLOT}/CPU0/" + str(nic_number - 2)
-
-    @classmethod
-    def validate_nic_count(cls, count):
-        """Fabric plus an optional management NIC."""
-        valid_range("NIC count", count, 1, 2)
 
 
 class IOSXRvLC(IOSXRv):
@@ -227,6 +277,9 @@ class IOSXRvLC(IOSXRv):
     CONFIG_TEXT_FILE = None
     SECONDARY_CONFIG_TEXT_FILE = None
 
+    # No serial ports are needed but up to 4 can be used for debugging.
+    SER_MIN = 0
+
     @classmethod
     def guess_nic_name(cls, nic_number):
         """Fabric interface plus slot-appropriate GigabitEthernet interfaces.
@@ -235,16 +288,13 @@ class IOSXRvLC(IOSXRv):
         * GigabitEthernet0/{SLOT}/0/0
         * GigabitEthernet0/{SLOT}/0/1
         * etc.
+
+        :param int nic_number: Nth NIC to name.
         """
         if nic_number == 1:
             return "fabric"
         else:
             return "GigabitEthernet0/{SLOT}/0/" + str(nic_number - 2)
-
-    @classmethod
-    def validate_serial_count(cls, count):
-        """No serial ports are needed but up to 4 can be used for debugging."""
-        valid_range("serial ports", count, 0, 4)
 
 
 class IOSXRv9000(IOSXRv):
@@ -253,9 +303,20 @@ class IOSXRv9000(IOSXRv):
     PLATFORM_NAME = "Cisco IOS XRv 9000"
     SUPPORTED_NIC_TYPES = ["E1000", "virtio", "VMXNET3"]
 
+    # Minimum 1, maximum 32 CPUs.
+    CPU_MAX = 32
+    # Minimum 8 GiB, maximum 32 GiB.
+    RAM_MIN = 8192
+    RAM_MAX = 32768
+    # IOS XRv 9000 requires at least 4 NICs.
+    NIC_MIN = 4
+
     @classmethod
     def guess_nic_name(cls, nic_number):
-        """MgmtEth0/0/CPU0/0, CtrlEth, DevEth, GigabitEthernet0/0/0/0, etc."""
+        """MgmtEth0/0/CPU0/0, CtrlEth, DevEth, GigabitEthernet0/0/0/0, etc.
+
+        :param int nic_number: Nth NIC to name.
+        """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
         elif nic_number == 2:
@@ -264,24 +325,6 @@ class IOSXRv9000(IOSXRv):
             return "DevEth"
         else:
             return "GigabitEthernet0/0/0/" + str(nic_number - 4)
-
-    @classmethod
-    def validate_cpu_count(cls, cpus):
-        """Minimum 1, maximum 32 CPUs."""
-        valid_range("CPUs", cpus, 1, 32)
-
-    @classmethod
-    def validate_memory_amount(cls, mebibytes):
-        """Minimum 8 GiB, maximum 32 GiB."""
-        if mebibytes < 8192:
-            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "8 GiB")
-        elif mebibytes > 32768:
-            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "32 GiB")
-
-    @classmethod
-    def validate_nic_count(cls, count):
-        """IOS XRv 9000 requires at least 4 NICs."""
-        valid_range("NIC count", count, 4, None)
 
 
 class CSR1000V(GenericPlatform):
@@ -294,9 +337,23 @@ class CSR1000V(GenericPlatform):
     # CSR1000v doesn't 'officially' support E1000, but it mostly works
     SUPPORTED_NIC_TYPES = ["E1000", "virtio", "VMXNET3"]
 
+    # CSR1000V supports 1, 2, 4, or 8 CPUs.
+    CPU_MAX = 8
+    # Minimum 2.5 GiB, max 8 GiB.
+    RAM_MIN = 2560
+    RAM_MAX = 8192
+    # CSR1000V requires 3 NICs and supports up to 26.
+    NIC_MIN = 3
+    NIC_MAX = 26
+    # CSR1000V supports 0-2 serial ports.
+    SER_MAX = 2
+
     @classmethod
     def controller_type_for_device(cls, device_type):
-        """CSR1000V uses SCSI for hard disks and IDE for CD-ROMs."""
+        """CSR1000V uses SCSI for hard disks and IDE for CD-ROMs.
+
+        :param str device_type: 'harddisk' or 'cdrom'
+        """
         if device_type == 'harddisk':
             return 'scsi'
         elif device_type == 'cdrom':
@@ -312,33 +369,20 @@ class CSR1000V(GenericPlatform):
           In all current CSR releases, NIC names start at "GigabitEthernet1".
           Some early versions started at "GigabitEthernet0" but we don't
           support that.
+
+        :param int nic_number: Nth NIC to name.
         """
         return "GigabitEthernet" + str(nic_number)
 
     @classmethod
     def validate_cpu_count(cls, cpus):
-        """CSR1000V supports 1, 2, or 4 CPUs."""
-        valid_range("CPUs", cpus, 1, 4)
-        if cpus != 1 and cpus != 2 and cpus != 4:
-            raise ValueUnsupportedError("CPUs", cpus, [1, 2, 4])
+        """CSR1000V supports 1, 2, 4, or 8 CPUs.
 
-    @classmethod
-    def validate_memory_amount(cls, mebibytes):
-        """Minimum 2.5 GiB, max 8 GiB."""
-        if mebibytes < 2560:
-            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "2.5 GiB")
-        elif mebibytes > 8192:
-            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "8 GiB")
-
-    @classmethod
-    def validate_nic_count(cls, count):
-        """CSR1000V requires 3 NICs and supports up to 26."""
-        valid_range("NICs", count, 3, 26)
-
-    @classmethod
-    def validate_serial_count(cls, count):
-        """CSR1000V supports 0-2 serial ports."""
-        valid_range("serial ports", count, 0, 2)
+        :param int cpus: Number of CPUs.
+        """
+        valid_range("CPUs", cpus, 1, 8)
+        if cpus not in [1, 2, 4, 8]:
+            raise ValueUnsupportedError("CPUs", cpus, [1, 2, 4, 8])
 
 
 class IOSv(GenericPlatform):
@@ -352,19 +396,28 @@ class IOSv(GenericPlatform):
     BOOTSTRAP_DISK_TYPE = 'harddisk'
     SUPPORTED_NIC_TYPES = ["E1000"]
 
+    # IOSv only supports a single CPU.
+    CPU_MAX = 1
+    # IOSv supports up to 16 NICs.
+    NIC_MAX = 16
+    # IOSv requires 1-2 serial ports.
+    SER_MIN = 1
+    SER_MAX = 2
+
     @classmethod
     def guess_nic_name(cls, nic_number):
-        """GigabitEthernet0/0, GigabitEthernet0/1, etc."""
+        """GigabitEthernet0/0, GigabitEthernet0/1, etc.
+
+        :param int nic_number: Nth NIC to name.
+        """
         return "GigabitEthernet0/" + str(nic_number - 1)
 
     @classmethod
-    def validate_cpu_count(cls, cpus):
-        """IOSv only supports a single CPU."""
-        valid_range("CPUs", cpus, 1, 1)
-
-    @classmethod
     def validate_memory_amount(cls, mebibytes):
-        """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB."""
+        """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB.
+
+        :param int mebibytes: RAM amount, in MiB.
+        """
         if mebibytes < 192:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "192 MiB")
         elif mebibytes < 384:
@@ -373,16 +426,6 @@ class IOSv(GenericPlatform):
                            "for some IOSv feature sets")
         elif mebibytes > 3072:
             raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "3 GiB")
-
-    @classmethod
-    def validate_nic_count(cls, count):
-        """IOSv supports up to 16 NICs."""
-        valid_range("NICs", count, 0, 16)
-
-    @classmethod
-    def validate_serial_count(cls, count):
-        """IOSv requires 1-2 serial ports."""
-        valid_range("serial ports", count, 1, 2)
 
 
 class NXOSv(GenericPlatform):
@@ -393,6 +436,15 @@ class NXOSv(GenericPlatform):
     CONFIG_TEXT_FILE = 'nxos_config.txt'
     LITERAL_CLI_STRING = None
     SUPPORTED_NIC_TYPES = ["E1000", "virtio"]
+
+    # NX-OSv requires 1-8 CPUs.
+    CPU_MAX = 8
+    # NX-OSv requires 2-8 GiB of RAM.
+    RAM_MIN = 2048
+    RAM_MAX = 8192
+    # NX-OSv requires 1-2 serial ports.
+    SER_MIN = 1
+    SER_MAX = 2
 
     @classmethod
     def guess_nic_name(cls, nic_number):
@@ -406,6 +458,8 @@ class NXOSv(GenericPlatform):
         * Ethernet3/1
         * Ethernet3/2
         * ...
+
+        :param int nic_number: Nth NIC to name.
         """
         if nic_number == 1:
             return "mgmt0"
@@ -413,23 +467,6 @@ class NXOSv(GenericPlatform):
             return ("Ethernet{0}/{1}".format((nic_number - 2) // 48 + 2,
                                              (nic_number - 2) % 48 + 1))
 
-    @classmethod
-    def validate_cpu_count(cls, cpus):
-        """NX-OSv requires 1-8 CPUs."""
-        valid_range("CPUs", cpus, 1, 8)
-
-    @classmethod
-    def validate_memory_amount(cls, mebibytes):
-        """NX-OSv requires 2-8 GiB of RAM."""
-        if mebibytes < 2048:
-            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "2 GiB")
-        elif mebibytes > 8192:
-            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "8 GiB")
-
-    @classmethod
-    def validate_serial_count(cls, count):
-        """NX-OSv requires 1-2 serial ports."""
-        valid_range("serial ports", count, 1, 2)
 
 PRODUCT_PLATFORM_MAP = {
     'com.cisco.csr1000v':    CSR1000V,

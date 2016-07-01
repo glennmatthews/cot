@@ -58,7 +58,10 @@ import re
 
 
 def to_string(obj):
-    """Get string representation of an object, special-case for XML Element."""
+    """Get string representation of an object, special-case for XML Element.
+
+    :param object obj: Object to represent as a string.
+    """
     if ET.iselement(obj):
         return ET.tostring(obj)
     else:
@@ -76,11 +79,19 @@ def natural_sort(l):
     :return: Sorted list
     """
     def convert(text):
-        """Convert number strings to ints, leave other strings as text."""
+        """Convert number strings to ints, leave other strings as text.
+
+        :param text: Input to convert
+        :type text: str, int
+        :rtype: str, int
+        """
         return int(text) if text.isdigit() else text
 
     def alphanum_key(key):
-        """Split the key into a list of [text, int, text, int, ...]."""
+        """Split the key into a list of [text, int, text, int, ...].
+
+        :param str key: String to split.
+        """
         return [convert(c) for c in re.split('([0-9]+)', key)]
 
     # Sort based on alphanum_key
@@ -91,9 +102,9 @@ def match_or_die(first_label, first, second_label, second):
     """Make sure "first" and "second" are equal or raise an error.
 
     :param str first_label: Descriptive label for :attr:`first`
-    :param first: First object to compare
+    :param object first: First object to compare
     :param str second_label: Descriptive label for :attr:`second`
-    :param second: Second object to compare
+    :param object second: Second object to compare
     :raise ValueMismatchError: if ``first != second``
     """
     if first != second:
@@ -110,7 +121,7 @@ def canonicalize_helper(label, user_input, mappings, re_flags=0):
     :param str label: Label to use in any error raised
     :param str user_input: User-provided string
     :param list mappings: List of ``(expr, canonical)`` pairs for mapping.
-    :param re_flags: ``re.IGNORECASE``, etc. if desired
+    :param int re_flags: ``re.IGNORECASE``, etc. if desired
     :returns: The canonical string
     :raise ValueUnsupportedError: If no ``expr`` in ``mappings`` matches
       ``input``.
@@ -226,7 +237,7 @@ def mac_address(string):
     * xx-xx-xx-xx-xx-xx
     * xxxx.xxxx.xxxx
 
-    :param string: String to validate
+    :param str string: String to validate
     :raise InvalidInputError: if string is not a valid MAC address
     :return: Validated string(with leading/trailing whitespace stripped)
     """
@@ -299,6 +310,8 @@ def non_negative_int(string):
     """Parser helper function for integer arguments that must be 0 or more.
 
     Alias for :func:`validate_int` setting :attr:`minimum` to 0.
+
+    :param str string: String to validate.
     """
     return validate_int(string, minimum=0)
 
@@ -307,6 +320,8 @@ def positive_int(string):
     """Parser helper function for integer arguments that must be 1 or more.
 
     Alias for :func:`validate_int` setting :attr:`minimum` to 1.
+
+    :param str string: String to validate.
     """
     return validate_int(string, minimum=1)
 
@@ -327,16 +342,23 @@ class InvalidInputError(ValueError):
 class ValueUnsupportedError(InvalidInputError):
     """An unsupported value was provided.
 
-    :ivar value_type: descriptive string
-    :ivar actual_value: invalid value that was provided
-    :ivar expected_value: expected (valid) value or values (item or list)
+    :param str value_type: descriptive string
+    :param str actual_value: invalid value that was provided
+    :param expected_value: expected (valid) value or values (item or list)
+    :type expected_value: str, int, list
     """
 
-    def __init__(self, value_type, actual, expected):
-        """Create an instance of this class."""
+    def __init__(self, value_type, actual_value, expected_value):
+        """Create an instance of this class.
+
+        :param str value_type: descriptive string
+        :param str actual_value: invalid value that was provided
+        :param expected_value: expected (valid) value or values (item or list)
+        :type expected_value: str, int, list
+        """
         self.value_type = value_type
-        self.actual_value = actual
-        self.expected_value = expected
+        self.actual_value = actual_value
+        self.expected_value = expected_value
         super(ValueUnsupportedError, self).__init__(str(self))
 
     def __str__(self):

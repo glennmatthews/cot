@@ -53,6 +53,7 @@ def guess_manpath():
 def verify_manpages(man_dir):
     """Verify installation of COT's manual pages.
 
+    :param str man_dir: Base directory where manpages should be found.
     :return: (result, message)
     """
     for f in resource_listdir("COT", "docs/man"):
@@ -79,6 +80,8 @@ def verify_manpages(man_dir):
 def _install_manpage(src_path, man_dir):
     """Install the given manual page for COT.
 
+    :param str src_path: Path to manual page file.
+    :param str man_dir: Base directory where page should be installed.
     :return: (page_previously_installed, page_updated)
     :raise IOError: if installation fails under some circumstances
     :raise OSError: if installation fails under other circumstances
@@ -104,6 +107,7 @@ def _install_manpage(src_path, man_dir):
 def install_manpages(man_dir):
     """Install COT's manual pages.
 
+    :param str man_dir: Base directory where manpages should be installed.
     :return: (result, message)
     """
     installed_any = False
@@ -130,10 +134,23 @@ def install_manpages(man_dir):
 
 
 class COTInstallHelpers(COTGenericSubmodule):
-    """Install all helper tools that COT requires."""
+    """Install all helper tools that COT requires.
+
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+    """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTInstallHelpers, self).__init__(ui)
         self.ignore_errors = False
         self.verify_only = False
@@ -141,6 +158,8 @@ class COTInstallHelpers(COTGenericSubmodule):
     def install_helper(self, helper):
         """Install the given helper module.
 
+        :param helper: Helper module to install.
+        :type helper: :class:`~COT.helpers.helper.Helper`
         :return: (result, message)
         """
         if helper.path:

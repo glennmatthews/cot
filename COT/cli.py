@@ -68,7 +68,7 @@ def formatter(verbosity=logging.INFO):
     We offer different (more verbose) formatting when debugging is enabled,
     hence this need.
 
-    :param verbosity: Logging level as defined by :mod:`logging`.
+    :param int verbosity: Logging level as defined by :mod:`logging`.
     :return: Formatter object for use with :mod:`logging`.
     :rtype: instance of :class:`colorlog.ColoredFormatter`
     """
@@ -98,6 +98,9 @@ def formatter(verbosity=logging.INFO):
 class CLI(UI):
     """Command-line user interface for COT.
 
+    :param int terminal_width: (optional) Set the terminal width for this CLI,
+      independent of the actual terminal in use.
+
     .. autosummary::
       :nosignatures:
 
@@ -116,7 +119,11 @@ class CLI(UI):
     """
 
     def __init__(self, terminal_width=None):
-        """Create CLI handler instance."""
+        """Create CLI handler instance.
+
+        :param int terminal_width: (optional) Set the terminal width for this
+          CLI, independent of the actual terminal in use.
+        """
         super(CLI, self).__init__(force=True)
         # In python 2.7, we want raw_input, but in python 3 we want input.
         try:
@@ -303,7 +310,7 @@ class CLI(UI):
         Will call :func:`formatter` and associate the resulting formatter
         with logging.
 
-        :param level: Logging level as defined by :mod:`logging`
+        :param int level: Logging level as defined by :mod:`logging`
         """
         if not self.handler:
             self.handler = logging.StreamHandler()
@@ -500,6 +507,7 @@ class CLI(UI):
             in Python 3.x.
         :param str lookup_prefix: String to prepend to ``title`` and
             each alias in ``aliases`` for lookup purposes.
+        :param kwargs: Passed through to :meth:`parent.add_parser`
         """
         # Subparser aliases are only supported by argparse in Python 3.2+
         if sys.hexversion >= 0x03020000 and aliases:
@@ -522,6 +530,7 @@ class CLI(UI):
 
         :param list argv: List of CLI arguments, not including argv0
         :return: Parser namespace object
+        :rtype: :class:`argparse.Namespace`
         """
         # Parse the user input
         args = self.parser.parse_args(argv)
@@ -535,7 +544,12 @@ class CLI(UI):
 
     @staticmethod
     def args_to_dict(args):
-        """Convert args to a dict and perform any needed cleanup."""
+        """Convert args to a dict and perform any needed cleanup.
+
+        :param args: Namespace returned from :meth:`parse_args`.
+        :type args: :class:`argparse.Namespace`
+        :rtype: dict
+        """
         arg_dict = vars(args)
         del arg_dict["_verbosity"]
         del arg_dict["_force"]
@@ -553,8 +567,9 @@ class CLI(UI):
 
     @staticmethod
     def set_instance_attributes(arg_dict):
-        """Pass the CLI argument dictionary to the instance attributes TODO.
+        """Set attributes of the :attr:`instance` based on the given arg_dict.
 
+        :param dict arg_dict: Dictionary of (attribute, value).
         :raise InvalidInputError: if attributes are not validly set.
         """
         # Set mandatory (CAPITALIZED) args first, then optional args
@@ -582,6 +597,7 @@ class CLI(UI):
         * Catches various exceptions and handles them appropriately.
 
         :param args: Parser namespace object returned from :func:`parse_args`.
+        :type args: object
         :rtype: int
         :return: Exit code for the COT executable.
 

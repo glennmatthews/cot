@@ -79,6 +79,7 @@ except ImportError:
         """Create a temporary directory and make sure it's deleted later.
 
         Reimplementation of Python 3's ``tempfile.TemporaryDirectory``.
+        For the parameters, see :class:`tempfile.TemporaryDirectory`.
         """
         tempdir = tempfile.mkdtemp(suffix, prefix, dirpath)
         try:

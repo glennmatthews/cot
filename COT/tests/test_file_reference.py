@@ -71,6 +71,15 @@ class TestFileOnDisk(COT_UT):
             tarf.extract('input.ovf', self.temp_dir)
         self.check_diff("", file2=os.path.join(self.temp_dir, 'input.ovf'))
 
+    def test_equality(self):
+        """Test the __eq__ and __ne__ operators."""
+        a = FileOnDisk(self.input_ovf)
+        b = FileOnDisk(os.path.dirname(self.input_ovf),
+                       os.path.basename(self.input_ovf))
+        self.assertEqual(a, b)
+        c = FileOnDisk(self.input_vmdk)
+        self.assertNotEqual(a, c)
+
 
 class TestFileInTAR(COT_UT):
     """Test cases for FileInTAR class."""
@@ -141,3 +150,10 @@ class TestFileInTAR(COT_UT):
         self.check_diff("",
                         file1=resource_filename(__name__, 'sample_cfg.txt'),
                         file2=os.path.join(self.temp_dir, 'sample_cfg.txt'))
+
+    def test_equality(self):
+        """Test the __eq__ and __ne__ operators."""
+        same_ref = FileInTAR(self.tarfile, "sample_cfg.txt")
+        self.assertEqual(self.valid_ref, same_ref)
+        another_ref = FileInTAR(self.tarfile, "input.mf")
+        self.assertNotEqual(self.valid_ref, another_ref)

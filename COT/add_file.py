@@ -32,6 +32,9 @@ logger = logging.getLogger(__name__)
 class COTAddFile(COTSubmodule):
     """Add a file (such as a README) to the package.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,
@@ -43,7 +46,11 @@ class COTAddFile(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTAddFile, self).__init__(ui)
         self._file = None
         self.file_id = None

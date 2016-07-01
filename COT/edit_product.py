@@ -34,6 +34,9 @@ logger = logging.getLogger(__name__)
 class COTEditProduct(COTSubmodule):
     """Edit product, vendor, and version information strings.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,
@@ -51,7 +54,11 @@ class COTEditProduct(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTEditProduct, self).__init__(ui)
         self.product_class = None
         """Product class identifier."""

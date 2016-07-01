@@ -36,10 +36,15 @@ class VMContextManager(object):
       with VMContextManager(input_file, output_file) as vm:
           vm.foo()
           vm.bar()
+
+    For the parameters, see :class:`~COT.vm_description.VMDescription`.
     """
 
     def __init__(self, input_file, output_file):
-        """Create a VM instance."""
+        """Create a VM instance.
+
+        For the parameters, see :class:`~COT.vm_description.VMDescription`.
+        """
         self.obj = VMFactory.create(input_file, output_file)
 
     def __enter__(self):
@@ -50,6 +55,7 @@ class VMContextManager(object):
         """If the block exited cleanly, write the VM out to disk.
 
         In any case, destroy the VM.
+        For the parameters, see :module:`contextlib`.
         """
         # Did we exit cleanly?
         try:

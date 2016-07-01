@@ -28,6 +28,7 @@ This project adheres to `Semantic Versioning`_.
 
 **Fixed**
 
+- CSR1000v platform supports 8 CPUs as a valid option.
 - ``ValueMismatchError`` exceptions are properly caught by the CLI wrapper
   so as to result in a graceful exit rather than a stack trace.
 - ``cot remove-file`` now errors if the user specifies both file-id and
@@ -35,7 +36,6 @@ This project adheres to `Semantic Versioning`_.
   match this or any other file.
 - Better handling of exceptions and usage of ``sudo`` when installing helpers.
 - Manual pages are now correctly included in the distribution. Oops!
-
 
 `1.6.0`_ - 2016-06-30
 ---------------------

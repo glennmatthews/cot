@@ -256,6 +256,12 @@ autodoc_member_order = 'groupwise'
 # show-inheritance
 autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    """Always document __init__ method."""
+    if name == "__init__":
+        return False
+    return skip
+
 # -- General configuration, continued ---------
 
 # Add any paths that contain templates here, relative to this directory.
@@ -558,3 +564,6 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+def setup(app):
+    app.connect("autodoc-skip-member", autodoc_skip_member)

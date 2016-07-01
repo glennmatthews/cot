@@ -37,7 +37,10 @@ except ImportError:
         """No-op logging handler."""
 
         def emit(self, record):
-            """Do nothing."""
+            """Do nothing.
+
+            :param LogRecord record: Record to ignore.
+            """
             pass
 
 import traceback
@@ -63,24 +66,41 @@ logging.getLogger('COT').addHandler(NullHandler())
 
 
 class UTLoggingHandler(BufferingHandler):
-    """Captures log messages to a buffer so we can inspect them for testing."""
+    """Captures log messages to a buffer so we can inspect them for testing.
+
+    :param testcase: Test case owning this logging handler.
+    :type testcase: :class:`unittest.TestCase`
+    """
 
     def __init__(self, testcase):
-        """Create a logging handler for the given test case."""
+        """Create a logging handler for the given test case.
+
+        :param testcase: Test case owning this logging handler.
+        :type testcase: :class:`unittest.TestCase`
+        """
         BufferingHandler.__init__(self, capacity=0)
         self.setLevel(logging.DEBUG)
         self.testcase = testcase
 
     def emit(self, record):
-        """Add the given log record to our internal buffer."""
+        """Add the given log record to our internal buffer.
+
+        :param LogRecord record: Record to store.
+        """
         self.buffer.append(record.__dict__)
 
     def shouldFlush(self, record):  # noqa: N802
-        """Return False - we only flush manually."""
+        """Return False - we only flush manually.
+
+        :param LogRecord record: Record to ignore.
+        """
         return False
 
     def logs(self, **kwargs):
-        """Look for log entries matching the given dict."""
+        """Look for log entries matching the given dict.
+
+        :param kwargs: logging arguments to match against.
+        """
         matches = []
         for record in self.buffer:
             found_match = True
@@ -103,7 +123,10 @@ class UTLoggingHandler(BufferingHandler):
         return matches
 
     def assertLogged(self, info='', **kwargs):  # noqa: N802
-        """Fail unless the given log messages were each seen exactly once."""
+        """Fail unless the given log messages were each seen exactly once.
+
+        :param kwargs: logging arguments to match against.
+        """
         matches = self.logs(**kwargs)
         if not matches:
             self.testcase.fail(
@@ -117,7 +140,10 @@ class UTLoggingHandler(BufferingHandler):
             self.buffer.remove(r)
 
     def assertNoLogsOver(self, max_level, info=''):  # noqa: N802
-        """Fail if any logs are logged higher than the given level."""
+        """Fail if any logs are logged higher than the given level.
+
+        :param int max_level: Highest logging level to permit.
+        """
         for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
                       logging.INFO, logging.VERBOSE, logging.DEBUG):
             if level <= max_level:
@@ -135,7 +161,10 @@ class UTLoggingHandler(BufferingHandler):
 
 
 class COT_UT(unittest.TestCase):  # noqa: N801
-    """Subclass of unittest.TestCase adding some additional behaviors."""
+    """Subclass of unittest.TestCase adding some additional behaviors.
+
+    For the parameters, see :class:`unittest.TestCase`.
+    """
 
     from COT.helpers.ovftool import OVFTool
 
@@ -214,12 +243,20 @@ class COT_UT(unittest.TestCase):  # noqa: N801
 
     @staticmethod
     def localfile(name):
-        """Get the absolute path to a local resource file."""
+        """Get the absolute path to a local resource file.
+
+        :param str name: File name.
+        """
         return os.path.abspath(resource_filename(__name__, name))
 
     @staticmethod
     def invalid_hardware_warning(profile, value, kind):
-        """Warning log message for invalid hardware."""
+        """Warning log message for invalid hardware.
+
+        :param str profile: Config profile, or "".
+        :param object value: Invalid value
+        :param str kind: Label for this hardware kind.
+        """
         msg = ""
         if profile:
             msg += "In profile '{0}':".format(profile)
@@ -230,18 +267,28 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         }
 
     def __init__(self, method_name='runTest'):
-        """Add logging handler to generic UT initialization."""
+        """Add logging handler to generic UT initialization.
+
+        For the parameters, see :class:`unittest.TestCase`.
+        """
         super(COT_UT, self).__init__(method_name)
         self.logging_handler = UTLoggingHandler(self)
         self.instance = None
 
     def set_vm_platform(self, plat):
-        """Force the VM under test to use a particular Platform class."""
+        """Force the VM under test to use a particular Platform class.
+
+        :param plat: Platform class to use
+        :type plat: :class:`~COT.platforms.GenericPlatform`
+        """
         # pylint: disable=protected-access
         self.instance.vm._platform = plat
 
     def check_cot_output(self, expected):
-        """Grab the output from COT and check it against expected output."""
+        """Grab the output from COT and check it against expected output.
+
+        :param str expected: Expected output
+        """
         # pylint: disable=redefined-variable-type
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as so:
             try:
@@ -261,6 +308,10 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         Note that comparison of OVF files is currently skipped when
         running under Python 2.6, as it produces different XML output than
         later Python versions.
+
+        :param str expected: Expected diff output
+        :param str file1: File path to compare
+        :param str file2: File path to compare
         """
         if file1 is None:
             file1 = self.input_ovf
@@ -268,6 +319,7 @@ class COT_UT(unittest.TestCase):  # noqa: N801
             file2 = self.temp_file
 
         if re.search("ovf", file1) and sys.hexversion < 0x02070000:
+            # TODO: logging or something, this is noisy!
             print("OVF file diff comparison skipped "
                   "due to old Python version ({0})"
                   .format(platform.python_version()))
@@ -374,7 +426,11 @@ class COT_UT(unittest.TestCase):  # noqa: N801
                   .format(self.id(), delta_t))
 
     def validate_with_ovftool(self, filename=None):
-        """Use OVFtool to validate the given OVF/OVA file."""
+        """Use OVFtool to validate the given OVF/OVA file.
+
+        :param str filename: File name to validate (optional, default is
+          :attr:`temp_file`).
+        """
         if filename is None:
             filename = self.temp_file
         if (self.OVFTOOL.path and self.validate_output_with_ovftool and
@@ -390,10 +446,13 @@ class COT_UT(unittest.TestCase):  # noqa: N801
     def assertLogged(self, info='', **kwargs):  # noqa: N802
         """Fail unless the given logs were generated.
 
-        See :meth:`UTLoggingHandler.assertLogged`.
+        For the parameters, see :meth:`UTLoggingHandler.assertLogged`.
         """
         self.logging_handler.assertLogged(info=info, **kwargs)
 
     def assertNoLogsOver(self, max_level, info=''):  # noqa: N802
-        """Fail if any logs were logged higher than the given level."""
+        """Fail if any logs were logged higher than the given level.
+
+        For the parameters, see :meth:`UTLoggingHandler.assertNoLogsOver`.
+        """
         self.logging_handler.assertNoLogsOver(max_level, info=info)

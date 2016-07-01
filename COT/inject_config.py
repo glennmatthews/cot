@@ -31,6 +31,9 @@ logger = logging.getLogger(__name__)
 class COTInjectConfig(COTSubmodule):
     """Wrap configuration file(s) into a disk image embedded into the VM.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,
@@ -42,7 +45,11 @@ class COTInjectConfig(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTInjectConfig, self).__init__(ui)
         self._config_file = None
         self._secondary_config_file = None

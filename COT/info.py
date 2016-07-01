@@ -31,6 +31,9 @@ logger = logging.getLogger(__name__)
 class COTInfo(COTGenericSubmodule):
     """Display VM information string.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`
 
@@ -40,7 +43,11 @@ class COTInfo(COTGenericSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTInfo, self).__init__(ui)
         self._package_list = None
         self._verbosity = None

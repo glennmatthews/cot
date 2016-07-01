@@ -51,9 +51,18 @@ def name_helper(version):
 
 
 class _Tag(object):
-    """Helper class representing a named XML namespace and associated tag."""
+    """Helper class representing a named XML namespace and associated tag.
+
+    :param str namespace_name: XML namespace name
+    :param str tag: XML tag
+    """
 
     def __init__(self, namespace_name, tag):
+        """Store namespace name and tag.
+
+        :param str namespace_name: XML namespace name
+        :param str tag: XML tag
+        """
         self.namespace_name = namespace_name.upper()
         self.tag = tag
 
@@ -250,7 +259,10 @@ class OVFNameHelper1(object):
     )
 
     def __getattr__(self, name):
-        """Transparently pass attribute lookups to _raw and _cache."""
+        """Transparently pass attribute lookups to _raw and _cache.
+
+        :param str name: Attribute name to look up.
+        """
         if name in self._item_children:
             return self._item_children[name]
         if name not in self._cache:
@@ -305,7 +317,10 @@ class OVFNameHelper1(object):
         self.VIRTUAL_HW_SECTION_ATTRIB = {}
 
     def namespace_for_item_tag(self, tag):
-        """Get the XML namespace for the given item tag."""
+        """Get the XML namespace for the given item tag.
+
+        :param str tag: Un-namespaced XML tag.
+        """
         if tag == self.ITEM:
             return self.RASD
         elif tag == self.STORAGE_ITEM:
@@ -315,7 +330,10 @@ class OVFNameHelper1(object):
         return None
 
     def namespace_for_resource_type(self, resource_type):
-        """Get the XML namespace for the given ResourceType."""
+        """Get the XML namespace for the given ResourceType.
+
+        :param str resource_type: ResourceType value string.
+        """
         if resource_type == self.RES_MAP['ethernet']:
             return self.EPASD
         elif (resource_type == self.RES_MAP['harddisk'] or
@@ -325,7 +343,10 @@ class OVFNameHelper1(object):
             return self.RASD
 
     def item_tag_for_namespace(self, ns):
-        """Get the item tag for the given XML namespace."""
+        """Get the Item tag for the given XML namespace.
+
+        :param str ns: XML namespace
+        """
         if ns == self.RASD:
             return self.ITEM
         elif ns == self.SASD:

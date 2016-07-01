@@ -40,18 +40,23 @@ class OVFHardwareDataError(Exception):
 
 
 class OVFHardware(object):
-    """Helper class for :class:`OVF`.
+    """Helper class for :class:`~COT.ovf.ovf.OVF`.
 
     Represents all hardware items defined by this OVF;
     i.e., the contents of all Items in the VirtualHardwareSection.
 
-    Fundamentally it's just a dict of :class:`OVFItem` objects with a bunch of
-    helper methods.
+    Fundamentally it's just a dict of :class:`~COT.ovf.item.OVFItem` objects
+    with a bunch of helper methods.
+
+    :param ovf: OVF instance to extract hardware information from.
+    :type ovf: :class:`~COT.ovf.ovf.OVF`
     """
 
     def __init__(self, ovf):
         """Construct an OVFHardware object describing all Items in the OVF.
 
+        :param ovf: OVF instance to extract hardware information from.
+        :type ovf: :class:`~COT.ovf.ovf.OVF`
         :raise OVFHardwareDataError: if any data errors are seen
         """
         self.ovf = ovf
@@ -172,7 +177,11 @@ class OVFHardware(object):
         return (instance, ovfitem)
 
     def delete_item(self, item):
-        """Delete the given :class:`OVFItem`."""
+        """Delete the given Item from the hardware.
+
+        :param item: Item to delete
+        :type item: :class:`~COT.ovf.item.OVFItem`
+        """
         instance = item.get_value(self.ovf.INSTANCE_ID)
         if self.item_dict[instance] == item:
             del self.item_dict[instance]
@@ -197,7 +206,15 @@ class OVFHardware(object):
         return (instance, ovfitem)
 
     def item_match(self, item, resource_type, properties, profile_list):
-        """Check whether the given item matches the given filters."""
+        """Check whether the given item matches the given filters.
+
+        :param item: Item to validate
+        :type item: :class:`~COT.ovf.item.OVFItem`
+        :param str resource_type: Resource type string like 'scsi' or 'serial'
+        :param properties: Property values to match
+        :type properties: dict[property, value]
+        :param list profile_list: List of profiles to filter on
+        """
         if resource_type and (self.ovf.RES_MAP[resource_type] !=
                               item.get_value(self.ovf.RESOURCE_TYPE)):
             return False
@@ -292,6 +309,10 @@ class OVFHardware(object):
 
         Helper method for :meth:`set_item_count_per_profile`.
 
+        :param str resource_type: 'cpu', 'harddisk', etc.
+        :param int count: Desired number of items
+        :param list profile_list: List of profiles to filter on
+          (default: apply across all profiles)
         :return: (count_dict, items_to_add, last_item)
         """
         count_dict = self.get_item_count_per_profile(resource_type,
@@ -333,6 +354,13 @@ class OVFHardware(object):
         """Update a cloned item to make it distinct from its parent.
 
         Helper method for :meth:`set_item_count_per_profile`.
+
+        :param new_item: Newly cloned Item
+        :type new_item: :class:`~COT.ovf.item.OVFItem`
+        :param list new_item_profiles: Profiles new_item should belong to
+        :param int item_count: How many Items of this type (including this
+          item) now exist. Used with
+          :meth:`COT.platform.GenericPlatform.guess_nic_name`
         """
         resource_type = self.ovf.get_type_from_device(new_item)
         address = new_item.get(self.ovf.ADDRESS)

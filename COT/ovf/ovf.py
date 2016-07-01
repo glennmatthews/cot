@@ -177,6 +177,12 @@ def byte_string(byte_value, base_shift=0):
 class OVF(VMDescription, XML):
     """Representation of the contents of an OVF or OVA.
 
+    :param str input_file: Data file to read in.
+    :param str output_file: File name to write to. If this VM is read-only,
+      (there will never be an output file) this value should be ``None``;
+      if the output filename is not yet known, use ``""`` and subsequently
+      set :attr:`output_file` when it is determined.
+
     **Properties**
 
     .. autosummary::
@@ -209,6 +215,7 @@ class OVF(VMDescription, XML):
 
         Does not check file contents, as the given filename may not yet exist.
 
+        :param str filename: File name/path
         :return: '.ovf' or '.ova'
         :raise ValueUnsupportedError: if filename doesn't match ovf/ova
         """
@@ -240,6 +247,8 @@ class OVF(VMDescription, XML):
         1. The file may be an OVF descriptor itself.
         2. The file may be an OVA, in which case we need to untar it and
            return the path to the extracted OVF descriptor.
+
+        :param str input_file: Path to an OVF descriptor or OVA file.
         """
         extension = self.detect_type_from_name(input_file)
         if extension == '.ova':
@@ -475,7 +484,12 @@ class OVF(VMDescription, XML):
         plat = self.platform
 
         def _validate_helper(label, fn, *args):
-            """Call validation function, catch errors and warn user instead."""
+            """Call validation function, catch errors and warn user instead.
+
+            :param str label: Label to prepend to any warning messages
+            :param function fn: Validation function to call.
+            :param args: Arguments to validation function.
+            """
             try:
                 fn(*args)
                 return True
@@ -719,7 +733,10 @@ class OVF(VMDescription, XML):
         self.set_product_section_child(self.APPLICATION_URL, app_url_string)
 
     def __getattr__(self, name):
-        """Transparently pass attribute lookups off to name_helper."""
+        """Transparently pass attribute lookups off to name_helper.
+
+        :param str name: Attribute being looked up.
+        """
         # Don't pass 'special' attributes through to the helper
         if re.match(r"^__", name):
             raise AttributeError("'OVF' object has no attribute '{0}'"
@@ -855,7 +872,10 @@ class OVF(VMDescription, XML):
             self.network_section = None
 
     def _info_string_header(self, width):
-        """Generate OVF/OVA file header for :meth:`info_string`."""
+        """Generate OVF/OVA file header for :meth:`info_string`.
+
+        :param int width: Line length to wrap to where possible.
+        """
         str_list = []
         str_list.append('-' * width)
         str_list.append(self.input_file)
@@ -866,7 +886,13 @@ class OVF(VMDescription, XML):
         return '\n'.join(str_list)
 
     def _info_string_product(self, verbosity_option, wrapper):
-        """Generate product information as part of :meth:`info_string`."""
+        """Generate product information as part of :meth:`info_string`.
+
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+        :param wrapper: Helper object for wrapping text lines if needed.
+        :type wrapper: :class:`textwrap.TextWrapper`
+        """
         if ((not any([self.product, self.vendor, self.version_short])) and
             (verbosity_option == 'brief' or not any([
                 self.product_url, self.vendor_url, self.version_long]))):
@@ -894,7 +920,11 @@ class OVF(VMDescription, XML):
         return "\n".join(str_list)
 
     def _info_string_annotation(self, wrapper):
-        """Generate annotation information as part of :meth:`info_string`."""
+        """Generate annotation information as part of :meth:`info_string`.
+
+        :param wrapper: Helper object for wrapping text lines if needed.
+        :type wrapper: :class:`textwrap.TextWrapper`
+        """
         if self.annotation_section is None:
             return None
         ann = self.annotation_section.find(self.ANNOTATION)
@@ -915,7 +945,13 @@ class OVF(VMDescription, XML):
         return "\n".join(str_list)
 
     def _info_string_eula(self, verbosity_option, wrapper):
-        """Generate EULA information as part of :meth:`info_string`."""
+        """Generate EULA information as part of :meth:`info_string`.
+
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+        :param wrapper: Helper object for wrapping text lines if needed.
+        :type wrapper: :class:`textwrap.TextWrapper`
+        """
         # An OVF may have zero, one, or more
         eula_header = False
         str_list = []
@@ -962,6 +998,8 @@ class OVF(VMDescription, XML):
 
         Helper for :meth:`_info_string_files_disks`.
 
+        :param file_obj: File to inspect
+        :type file_obj: :class:`xml.etree.ElementTree.Element`
         :return: (file_id, file_size, disk_id, disk_capacity, device_info)
         """
         # FILE_SIZE is optional
@@ -991,7 +1029,12 @@ class OVF(VMDescription, XML):
                 device_str)
 
     def _info_string_files_disks(self, width, verbosity_option):
-        """Describe files and disks as part of :meth:`info_string`."""
+        """Describe files and disks as part of :meth:`info_string`.
+
+        :param int width: Line length to wrap to where possible.
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+        """
         file_list = self.references.findall(self.FILE)
         disk_list = (self.disk_section.findall(self.DISK)
                      if self.disk_section is not None else [])
@@ -1048,7 +1091,11 @@ class OVF(VMDescription, XML):
         return "\n".join(str_list)
 
     def _info_string_hardware(self, wrapper):
-        """Describe hardware subtypes as part of :meth:`info_string`."""
+        """Describe hardware subtypes as part of :meth:`info_string`.
+
+        :param wrapper: Helper object for wrapping text lines if needed.
+        :type wrapper: :class:`textwrap.TextWrapper`
+        """
         virtual_system_types = self.system_types
         scsi_subtypes = list_union(
             *[scsi_ctrl.get_all_values(self.RESOURCE_SUB_TYPE) for
@@ -1079,11 +1126,18 @@ class OVF(VMDescription, XML):
             return "\n".join(str_list)
         return None
 
-    def _info_string_networks(self, width, verbosity_option, wrapper):
-        """Describe virtual networks as part of :meth:`info_string`."""
+    def _info_string_networks(self, verbosity_option, wrapper):
+        """Describe virtual networks as part of :meth:`info_string`.
+
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+        :param wrapper: Helper object for wrapping text lines if needed.
+        :type wrapper: :class:`textwrap.TextWrapper`
+        """
         if self.network_section is None:
             return None
         str_list = ["Networks:"]
+        width = wrapper.width
         names = []
         descs = []
         for network in self.network_section.findall(self.NETWORK):
@@ -1110,7 +1164,13 @@ class OVF(VMDescription, XML):
         return "\n".join(str_list)
 
     def _info_string_nics(self, verbosity_option, wrapper):
-        """Describe NICs as part of :meth:`info_string`."""
+        """Describe NICs as part of :meth:`info_string`.
+
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+        :param wrapper: Helper object for wrapping text lines if needed.
+        :type wrapper: :class:`textwrap.TextWrapper`
+        """
         if verbosity_option == 'brief':
             return None
         nics = self.hardware.find_all_items('ethernet')
@@ -1141,7 +1201,11 @@ class OVF(VMDescription, XML):
         return "\n".join(str_list)
 
     def _info_string_environment(self, wrapper):
-        """Describe environment for :meth:`info_string`."""
+        """Describe environment for :meth:`info_string`.
+
+        :param wrapper: Helper object for wrapping text lines if needed.
+        :type wrapper: :class:`textwrap.TextWrapper`
+        """
         if not self.environment_transports:
             return None
         str_list = ["Environment:"]
@@ -1152,8 +1216,14 @@ class OVF(VMDescription, XML):
             .format(" ".join(self.environment_transports))))
         return "\n".join(str_list)
 
-    def _info_string_properties(self, width, verbosity_option, wrapper):
-        """Describe config properties for :meth:`info_string`."""
+    def _info_string_properties(self, verbosity_option, wrapper):
+        """Describe config properties for :meth:`info_string`.
+
+        :param str verbosity_option: ``'brief'``, ``None`` (default),
+          or ``'verbose'``
+        :param wrapper: Helper object for wrapping text lines if needed.
+        :type wrapper: :class:`textwrap.TextWrapper`
+        """
         properties = self.environment_properties
         if not properties:
             return None
@@ -1161,6 +1231,7 @@ class OVF(VMDescription, XML):
         max_key = 2 + max([len(str(ph['key'])) for ph in properties])
         max_label = max([len(str(ph['label'])) for ph in properties])
         max_value = max([len(str(ph['value'])) for ph in properties])
+        width = wrapper.width
         if all(ph['label'] for ph in properties):
             max_width = max_label
         else:
@@ -1229,10 +1300,10 @@ class OVF(VMDescription, XML):
             self._info_string_files_disks(width, verbosity_option),
             self._info_string_hardware(wrapper),
             self.profile_info_string(width, verbosity_option),
-            self._info_string_networks(width, verbosity_option, wrapper),
+            self._info_string_networks(verbosity_option, wrapper),
             self._info_string_nics(verbosity_option, wrapper),
             self._info_string_environment(wrapper),
-            self._info_string_properties(width, verbosity_option, wrapper)
+            self._info_string_properties(verbosity_option, wrapper)
         ]
         # Discard empty sections
         section_list = [s for s in section_list if s]
@@ -1382,7 +1453,10 @@ class OVF(VMDescription, XML):
         self._configuration_profiles = None
 
     def delete_configuration_profile(self, profile):
-        """Delete the profile with the given ID."""
+        """Delete the profile with the given ID.
+
+        :param str profile: Profile ID to delete.
+        """
         cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
                               attrib={self.CONFIG_ID: profile})
         if cfg is None:
@@ -1540,6 +1614,7 @@ class OVF(VMDescription, XML):
     def get_serial_count(self, profile_list):
         """Get the number of serial ports under the given profile(s).
 
+        :param list profile_list: Profile(s) of interest.
         :rtype: dict
         :return: ``{ profile_name : serial_count }``
         """
@@ -1619,6 +1694,7 @@ class OVF(VMDescription, XML):
         it knows nothing of the property's actual meaning.
 
         :param prop: Existing Property element.
+        :type prop: :class:`xml.etree.ElementTree.Element`
         :param str value: Proposed value to set for this property.
         :raise ValueUnsupportedError: if the value does not meet criteria.
         :return: the value, potentially canonicalized.
@@ -1783,7 +1859,7 @@ class OVF(VMDescription, XML):
         ``File`` in the OVF, then using that to find a matching ``Disk`` and
         ``Item`` entries.
 
-        :param str file_id: Filename to search from
+        :param str file_id: File ID to search from
         :return: ``(file, disk, ctrl_item, disk_item)``, any or all of which
           may be ``None``
         """
@@ -1938,7 +2014,8 @@ class OVF(VMDescription, XML):
     def get_id_from_file(self, file_obj):
         """Get the file ID from the given opaque file object.
 
-        :param xml.etree.ElementTree.Element file_obj: 'File' element
+        :param file_obj: 'File' element
+        :type file_obj: xml.etree.ElementTree.Element
         :return: 'id' attribute value of this element
         """
         return file_obj.get(self.FILE_ID)
@@ -1946,7 +2023,8 @@ class OVF(VMDescription, XML):
     def get_path_from_file(self, file_obj):
         """Get the file path from the given opaque file object.
 
-        :param xml.etree.ElementTree.Element file_obj: 'File' element
+        :param file_obj: 'File' element
+        :type file_obj: xml.etree.ElementTree.Element
         :return: 'href' attribute value of this element
         """
         return file_obj.get(self.FILE_HREF)
@@ -1954,7 +2032,8 @@ class OVF(VMDescription, XML):
     def get_file_ref_from_disk(self, disk):
         """Get the file reference from the given opaque disk object.
 
-        :param xml.etree.ElementTree.Element disk: 'Disk' element
+        :param disk: 'Disk' element
+        :type disk: xml.etree.ElementTree.Element
         :return: 'fileRef' attribute value of this element
         """
         return disk.get(self.DISK_FILE_REF)
@@ -2190,6 +2269,7 @@ class OVF(VMDescription, XML):
         :param str device_type: ``'ide'`` or ``'scsi'``
         :param subtype: Subtype such as ``'virtio'`` (optional), or list
            of subtype values
+        :type subtype: string, list of strings
         :param int address: Controller address such as 0 or 1 (optional)
         :param OVFItem ctrl_item: Existing controller device to update
           (optional)
@@ -2224,7 +2304,13 @@ class OVF(VMDescription, XML):
         return ctrl_item
 
     def _create_new_disk_device(self, disk_type, address, name, ctrl_item):
-        """Helper for :meth:`add_disk_device`, in the case of no prior Item."""
+        """Helper for :meth:`add_disk_device`, in the case of no prior Item.
+
+        :param str disk_type: ``'harddisk'`` or ``'cdrom'``
+        :param str address: Address on controller, such as "1:0" (optional)
+        :param str name: Device name string (optional)
+        :param OVFItem ctrl_item: Controller object to serve as parent
+        """
         ctrl_instance = ctrl_item.get_value(self.INSTANCE_ID)
         if address is None:
             logger.debug("Working to identify address of new disk")
@@ -2520,7 +2606,8 @@ class OVF(VMDescription, XML):
     def find_item_from_disk(self, disk):
         """Find the disk Item that references the given Disk.
 
-        :param xml.etree.ElementTree.Element disk: Disk element
+        :param disk: Disk element
+        :type disk: :class:`xml.etree.ElementTree.Element`
         :return: :class:`OVFItem` instance, or None
         """
         if disk is None:
@@ -2542,7 +2629,8 @@ class OVF(VMDescription, XML):
     def find_item_from_file(self, file_obj):
         """Find the disk Item that references the given File.
 
-        :param xml.etree.ElementTree.Element file_obj: File element
+        :param file_obj: File element
+        :type file_obj: :class:`xml.etree.ElementTree.Element`
         :return: :class:`OVFItem` instance, or None.
         """
         if file_obj is None:

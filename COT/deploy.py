@@ -33,13 +33,29 @@ logger = logging.getLogger(__name__)
 
 
 class SerialConnection(object):
-    """Generic class defining a serial port connection."""
+    """Generic class defining a serial port connection.
+
+    :param str kind: Connection type string, possibly in need of munging.
+    :param str value: Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
+    :param dict options: Input options dictionary.
+    """
 
     @classmethod
     def from_cli_string(cls, cli_string):
         """Parse a string 'kind:value[,opts]' to build a SerialConnection.
 
         Based on the QEMU CLI for serial ports.
+
+        :param str cli_string: String of the form 'kind:value[,opts]'
+
+        ::
+
+          >>> str(SerialConnection.from_cli_string('/dev/ttyS0'))
+          '<SerialConnection kind: device value: /dev/ttyS0 options: {}>'
+          >>> str(SerialConnection.from_cli_string('tcp::22,server'))
+          "<SerialConnection kind: tcp value: :22 options: {'server': True}>"
+          >>> str(SerialConnection.from_cli_string('telnet://1.1.1.1:1111'))
+          '<SerialConnection kind: telnet value: 1.1.1.1:1111 options: {}>'
         """
         if cli_string is None:
             return None
@@ -135,7 +151,12 @@ class SerialConnection(object):
         return options
 
     def __init__(self, kind, value, options):
-        """Construct a SerialConnection object of the given kind and value."""
+        """Construct a SerialConnection object of the given kind and value.
+
+        :param str kind: Connection type string, possibly in need of munging.
+        :param str value: Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
+        :param dict options: Input options dictionary.
+        """
         logger.debug("Creating SerialConnection: "
                      "kind: %s, value: %s, options: %s",
                      kind, value, options)
@@ -155,9 +176,12 @@ class COTDeploy(COTReadOnlySubmodule):
     Provides some baseline parameters and input validation that are expected
     to be common across all concrete subclasses.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`,
-    :attr:`~COTReadOnlySubmodule.package`,
+    :attr:`~COT.submodule.COTGenericSubmodule.UI`,
+    :attr:`~COT.submodule.COTReadOnlySubmodule.package`,
 
     Attributes:
     :attr:`generic_parser`,
@@ -173,7 +197,11 @@ class COTDeploy(COTReadOnlySubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTDeploy, self).__init__(ui)
         # User inputs
         self._hypervisor = None
@@ -413,3 +441,8 @@ class COTDeploy(COTReadOnlySubmodule):
             help="Set connectivity for a serial port defined in the OVF. "
             "This argument may be repeated to specify more port connections. "
             "Each entry should be structured as 'kind:value[,options]'.")
+
+
+if __name__ == "__main__":
+    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
+    doctest.testmod()

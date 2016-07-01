@@ -37,7 +37,10 @@ logger = logging.getLogger(__name__)
 
 
 def guess_file_format_from_path(file_path):
-    """Guess the preferred file format based on file path/extension."""
+    """Guess the preferred file format based on file path/extension.
+
+    :param str file_path: Filename or file path.
+    """
     file_format = os.path.splitext(file_path)[1][1:]
     if not file_format:
         raise RuntimeError(
@@ -59,6 +62,12 @@ class HelperError(EnvironmentError):
 
 class Helper(object):
     """A provider of a non-Python helper program.
+
+    :param str name: Name of helper executable
+    :param list version_args: Args to pass to the helper to
+      get its version. Defaults to ``['--version']`` if unset.
+    :param str version_regexp: Regexp to get the version number from
+      the output of the command.
 
     **Class Properties**
 
@@ -119,7 +128,10 @@ class Helper(object):
 
     @staticmethod
     def find_executable(name):
-        """Wrapper for :func:`distutils.spawn.find_executable`."""
+        """Wrapper for :func:`distutils.spawn.find_executable`.
+
+        :param str name: Executable name.
+        """
         return distutils.spawn.find_executable(name)
 
     _apt_updated = False
@@ -127,7 +139,10 @@ class Helper(object):
 
     @classmethod
     def apt_install(cls, package):
-        """Try to use ``apt-get`` to install a package."""
+        """Try to use ``apt-get`` to install a package.
+
+        :param str package: Package name.
+        """
         if not cls.PACKAGE_MANAGERS['apt-get']:
             return False
         # check if it's already installed
@@ -146,7 +161,10 @@ class Helper(object):
 
     @classmethod
     def port_install(cls, package):
-        """Try to use ``port`` to install a package."""
+        """Try to use ``port`` to install a package.
+
+        :param str package: Package name.
+        """
         if not cls.PACKAGE_MANAGERS['port']:
             return False
         if not cls._port_updated:
@@ -157,7 +175,10 @@ class Helper(object):
 
     @classmethod
     def yum_install(cls, package):
-        """Try to use ``yum`` to install a package."""
+        """Try to use ``yum`` to install a package.
+
+        :param str package: Package name.
+        """
         if not cls.PACKAGE_MANAGERS['yum']:
             return False
         cls._check_call(['yum', '--quiet', 'install', package],
@@ -217,10 +238,10 @@ class Helper(object):
                  version_regexp="([0-9.]+"):
         """Initializer.
 
-        :param name: Name of helper executable
+        :param str name: Name of helper executable
         :param list version_args: Args to pass to the helper to
           get its version. Defaults to ``['--version']`` if unset.
-        :param version_regexp: Regexp to get the version number from
+        :param str version_regexp: Regexp to get the version number from
           the output of the command.
         """
         self._name = name

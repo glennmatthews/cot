@@ -52,17 +52,29 @@ logger = logging.getLogger(__name__)
 
 
 class SmarterConnection(SmartConnection):
-    """A smarter version of pyVmomi's SmartConnection context manager."""
+    """A smarter version of pyVmomi's SmartConnection context manager.
 
-    def __init__(self, ui, server, username, password, port=443):
-        """Create a connection to the given server."""
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
+    For the other parameters, see :class:`pyVim.connect.SmartConnection`
+    """
+
+    def __init__(self, ui, host, user, pwd, port=443):
+        """Create a connection to the given server.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+
+        For the other parameters, see :class:`pyVim.connect.SmartConnection`
+        """
         self.UI = ui
-        self.server = server
-        self.username = username
-        self.password = password
+        self.server = host
+        self.username = user
+        self.password = pwd
         self.port = port
-        super(SmarterConnection, self).__init__(host=server, user=username,
-                                                pwd=password, port=port)
+        super(SmarterConnection, self).__init__(host=host, user=user,
+                                                pwd=pwd, port=port)
 
     def __enter__(self):
         """Establish a connection and use it as the context manager object.
@@ -100,7 +112,10 @@ class SmarterConnection(SmartConnection):
 
     def __exit__(self,     # pylint: disable=arguments-differ
                  exc_type, exc_value, trace):
-        """Disconnect from the server."""
+        """Disconnect from the server.
+
+        For the parameters, see :module:`contextlib`.
+        """
         super(SmarterConnection, self).__exit__()
         if exc_type is not None:
             logger.error("Session failed - %s", exc_value)
@@ -144,7 +159,13 @@ class SmarterConnection(SmartConnection):
 
 
 def get_object_from_connection(conn, vimtype, name):
-    """Look up an object by name."""
+    """Look up an object by name.
+
+    :param conn: Connection to ESXi.
+    :type conn: :class:`SmarterConnection`
+    :param object vimtype: currently only `vim.VirtualMachine``
+    :param str name: Name of the object to look up.
+    """
     obj = None
     content = conn.RetrieveContent()
     container = content.viewManager.CreateContainerView(
@@ -157,10 +178,20 @@ def get_object_from_connection(conn, vimtype, name):
 
 
 class PyVmomiVMReconfigSpec(object):
-    """Context manager for reconfiguring an ESXi VM using PyVmomi."""
+    """Context manager for reconfiguring an ESXi VM using PyVmomi.
+
+    :param conn: Connection to ESXi.
+    :type conn: :class:`SmarterConnection`
+    :param str vm_name: Virtual machine name.
+    """
 
     def __init__(self, conn, vm_name):
-        """Use the given name to look up a VM using the given connection."""
+        """Use the given name to look up a VM using the given connection.
+
+        :param conn: Connection to ESXi.
+        :type conn: :class:`SmarterConnection`
+        :param str name: Virtual machine name.
+        """
         self.vm = get_object_from_connection(conn, vim.VirtualMachine, vm_name)
         assert self.vm
         self.spec = vim.vm.ConfigSpec()
@@ -170,7 +201,10 @@ class PyVmomiVMReconfigSpec(object):
         return self.spec
 
     def __exit__(self, exc_type, exc_value, trace):
-        """If the block exited cleanly, apply the ConfigSpec to the VM."""
+        """If the block exited cleanly, apply the ConfigSpec to the VM.
+
+        For the parameters, see :module:`contextlib`.
+        """
         # Did we exit cleanly?
         if exc_type is None:
             logger.verbose("Reconfiguring VM...")
@@ -180,20 +214,23 @@ class PyVmomiVMReconfigSpec(object):
 class COTDeployESXi(COTDeploy):
     """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
 
+    :param ui: User interface instance.
+    :type ui: :class:`~COT.ui_shared.UI`
+
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`,
-    :attr:`~COTReadOnlySubmodule.package`,
-    :attr:`generic_parser`,
-    :attr:`parser`,
-    :attr:`subparsers`,
-    :attr:`hypervisor`,
-    :attr:`configuration`,
-    :attr:`username`,
-    :attr:`password`,
-    :attr:`power_on`,
-    :attr:`vm_name`,
-    :attr:`network_map`
-    :attr:`serial_connection`
+    :attr:`~COT.submodule.COTGenericSubmodule.UI`,
+    :attr:`~COT.submodule.COTReadOnlySubmodule.package`,
+    :attr:`~COT.deploy.COTDeploy.generic_parser`,
+    :attr:`~COT.deploy.COTDeploy.parser`,
+    :attr:`~COT.deploy.COTDeploy.subparsers`,
+    :attr:`~COT.deploy.COTDeploy.hypervisor`,
+    :attr:`~COT.deploy.COTDeploy.configuration`,
+    :attr:`~COT.deploy.COTDeploy.username`,
+    :attr:`~COT.deploy.COTDeploy.password`,
+    :attr:`~COT.deploy.COTDeploy.power_on`,
+    :attr:`~COT.deploy.COTDeploy.vm_name`,
+    :attr:`~COT.deploy.COTDeploy.network_map`
+    :attr:`~COT.deploy.COTDeploy.serial_connection`
 
     Attributes:
     :attr:`locator`,
@@ -202,7 +239,11 @@ class COTDeployESXi(COTDeploy):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        :param ui: User interface instance.
+        :type ui: :class:`~COT.ui_shared.UI`
+        """
         super(COTDeployESXi, self).__init__(ui)
         self.datastore = None
         """ESXi datastore to deploy to."""
@@ -241,7 +282,10 @@ class COTDeployESXi(COTDeploy):
 
     @COTDeploy.serial_connection.setter  # pylint: disable=no-member
     def serial_connection(self, value):
-        """Override parent property setter to add ESXi validation."""
+        """Override parent property setter to add ESXi validation.
+
+        For the parameters, see :meth:`~COTDeploy.serial_connection`
+        """
         if len(value) > 4:
             raise ValueUnsupportedError(
                 'serial port connection list', value,
@@ -375,7 +419,10 @@ class COTDeployESXi(COTDeploy):
         # TODO: only now power on VM if power_on was requested
 
     def fixup_serial_ports(self, serial_count):
-        """Use PyVmomi to create and configure serial ports for the new VM."""
+        """Use PyVmomi to create and configure serial ports for the new VM.
+
+        :param int serial_count: Number of serial ports desired.
+        """
         if serial_count > len(self.serial_connection):
             logger.warning("No serial connectivity information is "
                            "available for %d serial port(s) - "
