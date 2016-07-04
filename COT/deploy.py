@@ -33,12 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class SerialConnection(object):
-    """Generic class defining a serial port connection.
-
-    :param str kind: Connection type string, possibly in need of munging.
-    :param str value: Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
-    :param dict options: Input options dictionary.
-    """
+    """Generic class defining a serial port connection."""
 
     @classmethod
     def from_cli_string(cls, cli_string):
@@ -175,9 +170,6 @@ class COTDeploy(COTReadOnlySubmodule):
 
     Provides some baseline parameters and input validation that are expected
     to be common across all concrete subclasses.
-
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
 
     Inherited attributes:
     :attr:`~COT.submodule.COTGenericSubmodule.UI`,
@@ -441,8 +433,3 @@ class COTDeploy(COTReadOnlySubmodule):
             help="Set connectivity for a serial port defined in the OVF. "
             "This argument may be repeated to specify more port connections. "
             "Each entry should be structured as 'kind:value[,options]'.")
-
-
-if __name__ == "__main__":
-    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
-    doctest.testmod()

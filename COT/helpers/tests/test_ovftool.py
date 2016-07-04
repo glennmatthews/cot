@@ -21,6 +21,8 @@ import mock
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.ovftool import OVFTool
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 class TestOVFTool(HelperUT):
     """Test cases for OVFTool helper class."""

@@ -36,6 +36,8 @@ from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-param-doc,missing-type-doc
+
 
 class TestCOTDeployESXi(COT_UT):
     """Test cases for COTDeployESXi class."""

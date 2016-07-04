@@ -32,6 +32,8 @@ from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 class HelperUT(COT_UT):
     """Generic class for testing Helper and subclasses thereof."""
@@ -43,7 +45,10 @@ class HelperUT(COT_UT):
     }
 
     def __init__(self, method_name='runTest'):
-        """Add helper instance variable."""
+        """Add helper instance variable to generic UT initialization.
+
+        For the parameters, see :class:`unittest.TestCase`.
+        """
         self.helper = None
         super(HelperUT, self).__init__(method_name)
 
@@ -60,10 +65,13 @@ class HelperUT(COT_UT):
                          [a[0][0] for a in mock_function.call_args_list])
 
     def set_helper_version(self, ver):
+        # pylint: disable=missing-param-doc,missing-type-doc
         """Override the version number of the helper class."""
         self.helper._version = ver      # pylint: disable=protected-access
 
-    def select_package_manager(self, name):  # pylint: disable=no-self-use
+    @staticmethod
+    def select_package_manager(name):
+        # pylint: disable=missing-param-doc,missing-type-doc
         """Select the specified installer program for Helper to use."""
         for pm in Helper.PACKAGE_MANAGERS:
             Helper.PACKAGE_MANAGERS[pm] = (pm == name)
@@ -90,7 +98,12 @@ class HelperUT(COT_UT):
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def apt_install_test(self, pkgname, helpername, *_):
-        """Test installation with 'dpkg' and 'apt-get'."""
+        """Test installation with 'dpkg' and 'apt-get'.
+
+        :param str pkgname: Apt package to test installation for.
+        :param str helpername: Expected value of
+          :attr:`~COT.helpers.helper.name`, if different from :attr:`pkgname`.
+        """
         # Python 2.6 doesn't let us do multiple mocks in one 'with'
         with mock.patch.object(self.helper, '_path', new=None):
             with mock.patch('subprocess.check_call') as mock_check_call:
@@ -122,7 +135,10 @@ class HelperUT(COT_UT):
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
-        """Test installation with 'port'."""
+        """Test installation with 'port'.
+
+        :param str portname: MacPorts package name to test.
+        """
         # pylint: disable=protected-access
         self.select_package_manager('port')
         Helper._port_updated = False

@@ -35,6 +35,8 @@ from COT.tests.ut import COT_UT
 from COT.cli import CLI
 from COT.data_validation import InvalidInputError
 
+# pylint: disable=missing-param-doc,missing-type-doc
+
 
 class TestCOTCLI(COT_UT):
     """Parent class for CLI test cases."""

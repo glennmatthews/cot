@@ -28,6 +28,8 @@ from COT.helpers.fatdisk import FatDisk
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 @mock.patch('COT.helpers.download_and_expand',
             side_effect=HelperUT.stub_download_and_expand)
@@ -70,6 +72,7 @@ class TestFatDisk(HelperUT):
                                     mock_copy,
                                     mock_find_executable,
                                     *_):
+        # pylint: disable=missing-param-doc,missing-type-doc
         """Test installation via 'apt-get'."""
         self.enable_apt_install()
         mock_find_executable.side_effect = [
@@ -148,6 +151,7 @@ class TestFatDisk(HelperUT):
                                 mock_copy,
                                 mock_find_executable,
                                 *_):
+        # pylint: disable=missing-param-doc,missing-type-doc
         """Test installation via 'yum'."""
         self.enable_yum_install()
         mock_find_executable.side_effect = [
@@ -181,7 +185,8 @@ class TestFatDisk(HelperUT):
             self.helper.install_helper()
 
     @staticmethod
-    def _find_make_only(name):  # pylint: disable=no-self-use
+    def _find_make_only(name):
+        # pylint: disable=missing-param-doc,missing-type-doc
         """Stub for distutils.spawn.find_executable - only finds 'make'."""
         logger.info("stub_find_executable(%s)", name)
         if name == 'make':

@@ -52,13 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 class SmarterConnection(SmartConnection):
-    """A smarter version of pyVmomi's SmartConnection context manager.
-
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
-
-    For the other parameters, see :class:`pyVim.connect.SmartConnection`
-    """
+    """A smarter version of pyVmomi's SmartConnection context manager."""
 
     def __init__(self, ui, host, user, pwd, port=443):
         """Create a connection to the given server.
@@ -178,19 +172,14 @@ def get_object_from_connection(conn, vimtype, name):
 
 
 class PyVmomiVMReconfigSpec(object):
-    """Context manager for reconfiguring an ESXi VM using PyVmomi.
-
-    :param conn: Connection to ESXi.
-    :type conn: :class:`SmarterConnection`
-    :param str vm_name: Virtual machine name.
-    """
+    """Context manager for reconfiguring an ESXi VM using PyVmomi."""
 
     def __init__(self, conn, vm_name):
         """Use the given name to look up a VM using the given connection.
 
         :param conn: Connection to ESXi.
         :type conn: :class:`SmarterConnection`
-        :param str name: Virtual machine name.
+        :param str vm_name: Virtual machine name.
         """
         self.vm = get_object_from_connection(conn, vim.VirtualMachine, vm_name)
         assert self.vm
@@ -213,9 +202,6 @@ class PyVmomiVMReconfigSpec(object):
 
 class COTDeployESXi(COTDeploy):
     """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
-
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
 
     Inherited attributes:
     :attr:`~COT.submodule.COTGenericSubmodule.UI`,

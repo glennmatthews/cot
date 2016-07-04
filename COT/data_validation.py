@@ -349,13 +349,7 @@ class ValueUnsupportedError(InvalidInputError):
     """
 
     def __init__(self, value_type, actual_value, expected_value):
-        """Create an instance of this class.
-
-        :param str value_type: descriptive string
-        :param str actual_value: invalid value that was provided
-        :param expected_value: expected (valid) value or values (item or list)
-        :type expected_value: str, int, list
-        """
+        """Create an instance of this class."""
         self.value_type = value_type
         self.actual_value = actual_value
         self.expected_value = expected_value

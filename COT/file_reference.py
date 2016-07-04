@@ -27,13 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class FileOnDisk(object):
-    """Wrapper for a 'real' file on disk.
-
-    :param str file_path: File path or directory path
-    :param str filename: If specified, file_path is considered to be
-      a directory containing this filename. If not specified, the
-      final element in file_path is considered the filename.
-    """
+    """Wrapper for a 'real' file on disk."""
 
     def __init__(self, file_path, filename=None):
         """Create a reference to a file on disk.
@@ -118,11 +112,7 @@ class FileOnDisk(object):
 
 
 class FileInTAR(object):
-    """Wrapper for a file inside a TAR archive or OVA.
-
-    :param str tarfile_path: Path to TAR archive to read
-    :param str filename: File name in the TAR archive.
-    """
+    """Wrapper for a file inside a TAR archive or OVA."""
 
     def __init__(self, tarfile_path, filename):
         """Create a reference to a file contained in a TAR archive.
@@ -218,8 +208,3 @@ class FileInTAR(object):
             tarf.addfile(self.tarf.getmember(self.filename), self.obj)
         finally:
             self.close()
-
-
-if __name__ == "__main__":
-    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
-    doctest.testmod()

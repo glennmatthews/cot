@@ -177,12 +177,6 @@ def byte_string(byte_value, base_shift=0):
 class OVF(VMDescription, XML):
     """Representation of the contents of an OVF or OVA.
 
-    :param str input_file: Data file to read in.
-    :param str output_file: File name to write to. If this VM is read-only,
-      (there will never be an output file) this value should be ``None``;
-      if the output filename is not yet known, use ``""`` and subsequently
-      set :attr:`output_file` when it is determined.
-
     **Properties**
 
     .. autosummary::

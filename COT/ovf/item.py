@@ -73,10 +73,6 @@ class OVFItem(object):
 
     * a dict of ``Item`` properties (indexed by element name)
     * each of which is a dict of sets of profiles (indexed by element value)
-
-    :param OVF ovf: OVF instance that owns the Item (optional)
-    :param item: 'Item' element (optional)
-    :type item: :class:`xml.etree.ElementTree.Element`
     """
 
     # Magic strings

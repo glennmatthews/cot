@@ -366,7 +366,10 @@ Enter new value for this property
 
         def custom_input(prompt,
                          default_value):  # pylint: disable=unused-argument
-            """Mock for get_input."""
+            """Mock for :meth:`COT.ui_shared.UI.get_input`.
+
+            For the parameters, see get_input.
+            """
             if self.counter > 0:
                 log = expected[self.counter-1][msgs_idx]
                 if log is not None:

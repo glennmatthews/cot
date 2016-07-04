@@ -39,10 +39,7 @@ def register_namespace(prefix, uri):
 
 
 class XML(object):
-    """Class capable of reading, editing, and writing XML files.
-
-    :param str xml_file: XML file path to instantiate from.
-    """
+    """Class capable of reading, editing, and writing XML files."""
 
     @classmethod
     def get_ns(cls, text):

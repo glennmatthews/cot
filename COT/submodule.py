@@ -38,9 +38,6 @@ logger = logging.getLogger(__name__)
 class COTGenericSubmodule(object):
     """Abstract interface for COT command submodules.
 
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
-
     Attributes:
     :attr:`vm`,
     :attr:`UI`
@@ -101,9 +98,6 @@ class COTGenericSubmodule(object):
 class COTReadOnlySubmodule(COTGenericSubmodule):
     """Class for submodules that do not modify the OVF, such as 'deploy'.
 
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
-
     Inherited attributes:
     :attr:`vm`,
     :attr:`UI`
@@ -156,9 +150,6 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
 
 class COTSubmodule(COTGenericSubmodule):
     """Class for submodules that read and write the OVF.
-
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
 
     Inherited attributes:
     :attr:`vm`,

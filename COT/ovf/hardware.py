@@ -47,9 +47,6 @@ class OVFHardware(object):
 
     Fundamentally it's just a dict of :class:`~COT.ovf.item.OVFItem` objects
     with a bunch of helper methods.
-
-    :param ovf: OVF instance to extract hardware information from.
-    :type ovf: :class:`~COT.ovf.ovf.OVF`
     """
 
     def __init__(self, ovf):

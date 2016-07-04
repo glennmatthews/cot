@@ -25,6 +25,8 @@ from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers import HelperError
 from COT.helpers.qemu_img import QEMUImg
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 class TestQEMUImg(HelperUT):
     """Test cases for QEMUImg helper class."""

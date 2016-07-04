@@ -25,6 +25,8 @@ from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.vmdktool import VmdkTool
 
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 @mock.patch('COT.helpers.download_and_expand',
             side_effect=HelperUT.stub_download_and_expand)
 class TestVmdkTool(HelperUT):
@@ -63,6 +65,7 @@ class TestVmdkTool(HelperUT):
                                     mock_check_output,
                                     mock_find_executable,
                                     *_):
+        # pylint: disable=missing-param-doc,missing-type-doc
         """Test installation via 'apt-get'."""
         self.enable_apt_install()
         mock_find_executable.side_effect = [
@@ -132,6 +135,7 @@ class TestVmdkTool(HelperUT):
                                 mock_check_call,
                                 mock_find_executable,
                                 *_):
+        # pylint: disable=missing-param-doc,missing-type-doc
         """Test installation via 'yum'."""
         self.enable_yum_install()
         mock_find_executable.side_effect = [

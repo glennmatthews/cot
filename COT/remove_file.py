@@ -32,9 +32,6 @@ logger = logging.getLogger(__name__)
 class COTRemoveFile(COTSubmodule):
     """Remove a file (such as a README) from the package.
 
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
-
     Inherited attributes:
 
     :attr:`~COTGenericSubmodule.UI`,

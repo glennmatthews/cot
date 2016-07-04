@@ -37,9 +37,6 @@ logger = logging.getLogger(__name__)
 class COTEditProperties(COTSubmodule):
     """Edit OVF environment XML properties.
 
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
-
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,

@@ -1,6 +1,6 @@
 [MASTER]
 
-load-plugins=pylint.extensions.check_docs,verboselogs.pylint
+load-plugins=pylint.extensions.docparams,verboselogs.pylint
 
 # Ignore generated code we don't control
 ignore=_version.py
@@ -31,6 +31,8 @@ disable=bad-continuation,
   locally-disabled,
   too-few-public-methods,
   trailing-whitespace,
+  missing-returns-doc,
+  missing-raises-doc
 
 [BASIC]
 
@@ -61,11 +63,15 @@ max-public-methods=75
 # default: max-returns=6
 # default: max-statements=50
 
+[DOCS]
+
+accept-no-param-doc=no
+
 [FORMAT]
 
 # default: max-module-lines: 1000
 # current worst offender: OVF
-max-module-lines=2700
+max-module-lines=2800
 
 [LOGGING]
 

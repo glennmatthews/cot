@@ -63,12 +63,6 @@ class HelperError(EnvironmentError):
 class Helper(object):
     """A provider of a non-Python helper program.
 
-    :param str name: Name of helper executable
-    :param list version_args: Args to pass to the helper to
-      get its version. Defaults to ``['--version']`` if unset.
-    :param str version_regexp: Regexp to get the version number from
-      the output of the command.
-
     **Class Properties**
 
     .. autosummary::

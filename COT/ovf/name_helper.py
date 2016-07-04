@@ -51,11 +51,7 @@ def name_helper(version):
 
 
 class _Tag(object):
-    """Helper class representing a named XML namespace and associated tag.
-
-    :param str namespace_name: XML namespace name
-    :param str tag: XML tag
-    """
+    """Helper class representing a named XML namespace and associated tag."""
 
     def __init__(self, namespace_name, tag):
         """Store namespace name and tag.

@@ -31,6 +31,8 @@ from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 class TestGetChecksum(COT_UT):
     """Test cases for get_checksum() function."""

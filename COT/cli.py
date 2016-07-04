@@ -98,9 +98,6 @@ def formatter(verbosity=logging.INFO):
 class CLI(UI):
     """Command-line user interface for COT.
 
-    :param int terminal_width: (optional) Set the terminal width for this CLI,
-      independent of the actual terminal in use.
-
     .. autosummary::
       :nosignatures:
 

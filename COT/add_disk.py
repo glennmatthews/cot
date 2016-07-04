@@ -75,9 +75,6 @@ def validate_controller_address(controller, address):
 class COTAddDisk(COTSubmodule):
     """Add or replace a disk in a virtual machine.
 
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
-
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,

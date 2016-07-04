@@ -21,9 +21,14 @@ from unittest import TestSuite
 
 
 def load_tests(*_):
-    """Load doctests as unittest test suite."""
+    """Load doctests as unittest test suite.
+
+    For the parameters, see :mod:`unittest`. The parameters are unused here.
+    """
     suite = TestSuite()
     suite.addTests(DocTestSuite('COT.cli'))
+    suite.addTests(DocTestSuite('COT.deploy'))
     suite.addTests(DocTestSuite('COT.edit_hardware'))
+    suite.addTests(DocTestSuite('COT.file_reference'))
     suite.addTests(DocTestSuite('COT.ovf.ovf'))
     return suite

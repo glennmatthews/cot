@@ -27,9 +27,6 @@ logger = logging.getLogger(__name__)
 class COTHelp(COTGenericSubmodule):
     """Provide 'help <subcommand>' syntax.
 
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
-
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`
 

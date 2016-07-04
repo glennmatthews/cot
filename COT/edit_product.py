@@ -34,9 +34,6 @@ logger = logging.getLogger(__name__)
 class COTEditProduct(COTSubmodule):
     """Edit product, vendor, and version information strings.
 
-    :param ui: User interface instance.
-    :type ui: :class:`~COT.ui_shared.UI`
-
     Inherited attributes:
     :attr:`~COTGenericSubmodule.UI`,
     :attr:`~COTSubmodule.package`,

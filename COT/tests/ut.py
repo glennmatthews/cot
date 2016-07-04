@@ -66,11 +66,7 @@ logging.getLogger('COT').addHandler(NullHandler())
 
 
 class UTLoggingHandler(BufferingHandler):
-    """Captures log messages to a buffer so we can inspect them for testing.
-
-    :param testcase: Test case owning this logging handler.
-    :type testcase: :class:`unittest.TestCase`
-    """
+    """Captures log messages to a buffer so we can inspect them for testing."""
 
     def __init__(self, testcase):
         """Create a logging handler for the given test case.
@@ -125,6 +121,7 @@ class UTLoggingHandler(BufferingHandler):
     def assertLogged(self, info='', **kwargs):  # noqa: N802
         """Fail unless the given log messages were each seen exactly once.
 
+        :param str info: Optional string to prepend to any failure messages.
         :param kwargs: logging arguments to match against.
         """
         matches = self.logs(**kwargs)
@@ -143,6 +140,7 @@ class UTLoggingHandler(BufferingHandler):
         """Fail if any logs are logged higher than the given level.
 
         :param int max_level: Highest logging level to permit.
+        :param str info: Optional string to prepend to any failure messages.
         """
         for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
                       logging.INFO, logging.VERBOSE, logging.DEBUG):

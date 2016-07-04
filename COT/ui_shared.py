@@ -31,8 +31,6 @@ class UI(object):
     """Abstract user interface functionality.
 
     Can also be used in test code as a stub that autoconfirms everything.
-
-    :param bool force: See :attr:`force`.
     """
 
     def __init__(self, force=False):
