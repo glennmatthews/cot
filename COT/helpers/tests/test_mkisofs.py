@@ -18,6 +18,7 @@
 """Unit test cases for the COT.helpers.mkisofs submodule."""
 
 from distutils.version import StrictVersion
+import mock
 
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.helper import Helper
@@ -32,43 +33,51 @@ class TestMkIsoFS(HelperUT):
         self.helper = MkIsoFS()
         super(TestMkIsoFS, self).setUp()
 
-    def test_get_version_mkisofs(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output',
+                return_value=("mkisofs 3.00 (--) Copyright (C) 1993-1997 "
+                              "Eric Youngdale (C) 1997-2010 Jörg Schilling"))
+    def test_get_version_mkisofs(self, _):
         """Test .version getter logic for mkisofs."""
-        self.fake_output = ("mkisofs 3.00 (--) Copyright (C) 1993-1997 "
-                            "Eric Youngdale (C) 1997-2010 Jörg Schilling")
         self.assertEqual(StrictVersion("3.0"), self.helper.version)
 
-    def test_get_version_genisoimage(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output',
+                return_value="genisoimage 1.1.11 (Linux)")
+    def test_get_version_genisoimage(self, _):
         """Test .version getter logic for genisoimage."""
-        self.fake_output = "genisoimage 1.1.11 (Linux)"
         self.assertEqual(StrictVersion("1.1.11"), self.helper.version)
 
-    def test_find_mkisofs(self):
+    @mock.patch('COT.helpers.helper.Helper.find_executable')
+    def test_find_mkisofs(self, mock_find_executable):
         """If mkisofs is found, use it."""
-        def find_one(_self, name):
+        def find_one(name):
             """Find mkisofs but no other."""
             if name == "mkisofs":
                 return "/mkisofs"
             return None
-        Helper.find_executable = find_one
+        mock_find_executable.side_effect = find_one
         self.assertEqual("mkisofs", self.helper.name)
         self.assertEqual(self.helper.path, "/mkisofs")
 
-    def test_find_genisoimage(self):
+    @mock.patch('COT.helpers.helper.Helper.find_executable')
+    def test_find_genisoimage(self, mock_find_executable):
         """If mkisofs is not found, but genisoimage is, use that."""
-        def find_one(_self, name):
+        def find_one(name):
             """Find genisoimage but no other."""
             if name == "genisoimage":
                 return "/genisoimage"
             return None
-        Helper.find_executable = find_one
+        mock_find_executable.side_effect = find_one
         self.assertEqual("genisoimage", self.helper.name)
         self.assertEqual(self.helper.path, "/genisoimage")
 
-    def test_install_helper_already_present(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    @mock.patch('subprocess.check_call')
+    def test_install_helper_already_present(self, mock_check_call,
+                                            mock_check_output):
         """Don't re-install if already installed."""
         self.helper.install_helper()
-        self.assertEqual([], self.last_argv)
+        mock_check_output.assert_not_called()
+        mock_check_call.assert_not_called()
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_port(self):
@@ -77,11 +86,4 @@ class TestMkIsoFS(HelperUT):
 
     def test_install_helper_apt_get(self):
         """Test installation via 'apt-get'."""
-        self.apt_install_test('genisoimage')
-
-    def test_install_helper_unsupported(self):
-        """Installation fails with neither apt-get nor port nor yum."""
-        self.select_package_manager(None)
-        self.system = "Windows"
-        with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+        self.apt_install_test('genisoimage', 'genisoimage')

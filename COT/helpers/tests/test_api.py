@@ -23,7 +23,6 @@ from distutils.version import StrictVersion
 import mock
 
 from COT.tests.ut import COT_UT
-import COT.helpers.api
 from COT.helpers import get_checksum
 from COT.helpers import create_disk_image, convert_disk_image
 from COT.helpers import get_disk_format, get_disk_capacity
@@ -140,10 +139,11 @@ class TestConvertDiskImage(COT_UT):
         self.assertEqual(f, 'vmdk')
         self.assertEqual(sf, 'streamOptimized')
 
-    def test_convert_to_vmdk_streamoptimized_old_qemu(self):
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
+                new_callable=mock.PropertyMock,
+                return_value=StrictVersion("1.0.0"))
+    def test_convert_to_vmdk_streamoptimized_old_qemu(self, _):
         """Code flow for old QEMU version."""
-        # pylint: disable=protected-access
-        COT.helpers.api.QEMUIMG._version = StrictVersion("1.0.0")
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
             create_disk_image(temp_disk, capacity="16M")
@@ -156,13 +156,12 @@ class TestConvertDiskImage(COT_UT):
             self.assertEqual(sf, 'streamOptimized')
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        finally:
-            COT.helpers.api.QEMUIMG._version = None
 
-    def test_convert_to_vmdk_streamoptimized_new_qemu(self):
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
+                new_callable=mock.PropertyMock,
+                return_value=StrictVersion("2.1.0"))
+    def test_convert_to_vmdk_streamoptimized_new_qemu(self, _):
         """Code flow for new QEMU version."""
-        # pylint: disable=protected-access
-        COT.helpers.api.QEMUIMG._version = StrictVersion("2.1.0")
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
             create_disk_image(temp_disk, capacity="16M")
@@ -175,8 +174,6 @@ class TestConvertDiskImage(COT_UT):
             self.assertEqual(sf, 'streamOptimized')
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        finally:
-            COT.helpers.api.QEMUIMG._version = None
 
     def test_convert_to_raw(self):
         """No support for converting VMDK to RAW at present."""

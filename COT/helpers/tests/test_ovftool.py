@@ -16,6 +16,8 @@
 
 """Unit test cases for the COT.helpers.ovftool submodule."""
 
+import mock
+
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.helper import Helper
 from COT.helpers.ovftool import OVFTool
@@ -28,31 +30,41 @@ class TestOVFTool(HelperUT):
         """Test case setup function called automatically prior to each test."""
         self.helper = OVFTool()
         super(TestOVFTool, self).setUp()
-        Helper.find_executable = self.stub_find_executable
 
-    def test_invalid_version(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output',
+                return_value="Error: Unknown option: 'version'")
+    @mock.patch('distutils.spawn.find_executable',
+                return_value="/fake/ovftool")
+    def test_invalid_version(self, *_):
         """Negative test for .version getter logic."""
-        self.fake_path = "/fake/ovftool"
-        self.fake_output = "Error: Unknown option: 'version'"
         with self.assertRaises(RuntimeError):
             assert self.helper.version
 
-    def test_install_helper_already_present(self):
+    @mock.patch('COT.helpers.helper.Helper.find_executable',
+                return_value="/fake/ovftool")
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    @mock.patch('subprocess.check_call')
+    def test_install_helper_already_present(self, mock_check_call,
+                                            mock_check_output, *_):
         """Do nothing when trying to re-install."""
-        self.fake_path = "/fake/ovftool"
         self.helper.install_helper()
-        self.assertEqual([], self.last_argv)
+        mock_check_call.assert_not_called()
+        mock_check_output.assert_not_called()
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_unsupported(self):
         """No support for automated installation of ovftool."""
-        with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+        with mock.patch('COT.helpers.ovftool.OVFTool.path',
+                        new_callable=mock.PropertyMock, return_value=None):
+            with self.assertRaises(NotImplementedError):
+                self.helper.install_helper()
 
-    def test_validate_ovf(self):
+    @mock.patch('distutils.spawn.find_executable',
+                return_value="/fake/ovftool")
+    @mock.patch('COT.helpers.helper.Helper._check_output', return_value="")
+    def test_validate_ovf(self, mock_check_output, *_):
         """Try the validate_ovf() API."""
-        self.fake_path = "/fake/ovftool"
-        self.fake_output = ""
         self.helper.validate_ovf(self.input_ovf)
-        self.assertEqual(['ovftool', '--schemaValidate', self.input_ovf],
-                         self.last_argv[0])
+        self.assertSubprocessCalls(
+            mock_check_output,
+            [['ovftool', '--schemaValidate', self.input_ovf]])

@@ -28,6 +28,8 @@ try:
 except ImportError:
     import io as StringIO
 
+import mock
+
 from COT import __version_long__
 from COT.tests.ut import COT_UT
 from COT.cli import CLI
@@ -69,26 +71,21 @@ class TestCOTCLI(COT_UT):
         rc = -1
         if fixup_args:
             argv = ['--quiet'] + argv
-        _si = sys.stdin
-        _so = sys.stdout
-        _se = sys.stderr
-        try:
-            with open(os.devnull, 'w') as devnull:
-                sys.stdin = devnull
-                sys.stdout = StringIO.StringIO()
-                sys.stderr = sys.stdout
-                rc = self.cli.run(argv)
-        except SystemExit as se:
-            try:
-                rc = int(se.code)
-            except (TypeError, ValueError):
-                print(se.code, file=sys.stderr)
-                rc = 1
-        finally:
-            sys.stdin = _si
-            stdout = sys.stdout.getvalue()
-            sys.stdout = _so
-            sys.stderr = _se
+
+        # Python 2.6 doesn't let us mock multiple times in one 'with'
+        with mock.patch('sys.stdin'):
+            with mock.patch('sys.stdout',
+                            new_callable=StringIO.StringIO) as _so:
+                with mock.patch('sys.stderr'):
+                    try:
+                        rc = self.cli.run(argv)
+                    except SystemExit as se:
+                        try:
+                            rc = int(se.code)
+                        except (TypeError, ValueError):
+                            print(se.code, file=sys.stderr)
+                            rc = 1
+                    stdout = _so.getvalue()
 
         self.assertEqual(rc, result,
                          "\nargv: \n{0}\nstdout:\n{1}"
