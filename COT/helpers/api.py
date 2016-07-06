@@ -32,6 +32,8 @@ The actual helper programs are provided by individual classes in this package.
   get_checksum
   get_disk_capacity
   get_disk_format
+  install_file
+  create_install_dir
 """
 
 import hashlib
@@ -40,7 +42,7 @@ import os
 import re
 from distutils.version import StrictVersion
 
-from .helper import guess_file_format_from_path
+from .helper import Helper, guess_file_format_from_path
 from .fatdisk import FatDisk
 from .mkisofs import MkIsoFS
 from .ovftool import OVFTool
@@ -245,3 +247,23 @@ def create_disk_image(file_path, file_format=None,
         raise NotImplementedError(
             "unable to create disk of format {0} with the given contents"
             .format(file_format))
+
+
+def install_file(src, dest):
+    """Copy the given src to the given dest, using sudo if needed.
+
+    :param str src: Source path.
+    :param str dest: Destination path.
+    :return: True
+    """
+    return Helper.install_file(src, dest)
+
+
+def create_install_dir(directory, permissions=493):  # 493 == 0o755
+    """Check whether the given target directory exists, and create if not.
+
+    :param str directory: Directory to check/create.
+    :param int permissions: Permissions bits to set on the directory.
+    :return: True
+    """
+    return Helper.make_install_dir(directory, permissions)

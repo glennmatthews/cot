@@ -20,7 +20,7 @@ import os
 
 from distutils.version import StrictVersion
 
-from .test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers import HelperError
 from COT.helpers.qemu_img import QEMUImg
 
@@ -84,7 +84,7 @@ Command syntax:
         """Test installation via 'yum'."""
         self.enable_yum_install()
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'yum', '--quiet', 'install', 'qemu-img']],
+        self.assertEqual([['yum', '--quiet', 'install', 'qemu-img']],
                          self.last_argv)
 
     def test_install_helper_unsupported(self):

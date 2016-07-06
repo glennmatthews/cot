@@ -13,6 +13,8 @@ This project adheres to `Semantic Versioning`_.
 - ``cot remove-file`` now errors if the user specifies both file-id and
   file-path, one of which matches a file in the OVF, but the other does not
   match this or any other file.
+- Better handling of exceptions and usage of ``sudo`` when installing helpers.
+- Manual pages are now correctly included in the distribution. Oops!
 
 
 `1.6.0`_ - 2016-06-30

@@ -23,7 +23,6 @@ import logging
 import os
 import os.path
 import platform
-import shutil
 
 from .helper import Helper
 
@@ -90,12 +89,7 @@ class FatDisk(Helper):
                 logger.info("Compilation complete, installing to " +
                             destination)
                 self.make_install_dir(destination)
-                try:
-                    shutil.copy(os.path.join(new_d, 'fatdisk'), destination)
-                except OSError:
-                    logger.verbose('Installation error, trying sudo')
-                    self._check_call(['sudo', 'cp', 'fatdisk', destination],
-                                     cwd=new_d)
+                self.install_file(os.path.join(new_d, 'fatdisk'), destination)
         else:
             raise NotImplementedError(
                 "Not sure how to install 'fatdisk'.\n"

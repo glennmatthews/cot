@@ -24,6 +24,7 @@ import contextlib
 import logging
 import os
 import os.path
+import errno
 import re
 import shutil
 import subprocess
@@ -101,6 +102,8 @@ class Helper(object):
       yum_install
       download_and_expand
       find_executable
+      make_install_dir
+      install_file
 
     **Instance Properties**
 
@@ -196,9 +199,10 @@ class Helper(object):
         if re.search('install ok installed', msg):
             return True
         if not cls._apt_updated:
-            cls._check_call(['sudo', 'apt-get', '-q', 'update'])
+            cls._check_call(['apt-get', '-q', 'update'], retry_with_sudo=True)
             cls._apt_updated = True
-        cls._check_call(['sudo', 'apt-get', '-q', 'install', package])
+        cls._check_call(['apt-get', '-q', 'install', package],
+                        retry_with_sudo=True)
         return True
 
     _port_updated = False
@@ -210,9 +214,9 @@ class Helper(object):
         if not cls.PACKAGE_MANAGERS['port']:
             return False
         if not cls._port_updated:
-            cls._check_call(['sudo', 'port', 'selfupdate'])
+            cls._check_call(['port', 'selfupdate'], retry_with_sudo=True)
             cls._port_updated = True
-        cls._check_call(['sudo', 'port', 'install', package])
+        cls._check_call(['port', 'install', package], retry_with_sudo=True)
         return True
 
     @classmethod
@@ -220,7 +224,8 @@ class Helper(object):
         """Try to use ``yum`` to install a package."""
         if not cls.PACKAGE_MANAGERS['yum']:
             return False
-        cls._check_call(['sudo', 'yum', '--quiet', 'install', package])
+        cls._check_call(['yum', '--quiet', 'install', package],
+                        retry_with_sudo=True)
         return True
 
     @classmethod
@@ -230,6 +235,7 @@ class Helper(object):
         :param directory: Directory to check/create.
         """
         if os.path.isdir(directory):
+            # TODO: permissions check, update permissions if needed
             return True
         elif os.path.exists(directory):
             raise RuntimeError("Path {0} exists but is not a directory!"
@@ -238,10 +244,37 @@ class Helper(object):
             logger.verbose("Creating directory " + directory)
             os.makedirs(directory, permissions)
             return True
-        except OSError:
+        except OSError as e:
             logger.verbose("Directory %s creation failed, trying sudo",
                            directory)
-            cls._check_call(['sudo', 'mkdir', '-p', '--mode=755', directory])
+            try:
+                cls._check_call(['sudo', 'mkdir', '-p',
+                                 '--mode=%o' % permissions,
+                                 directory])
+            except HelperError:
+                # That failed too - re-raise the original exception
+                raise e
+            return True
+
+    @classmethod
+    def install_file(cls, src, dest):
+        """Copy the given src to the given dest, using sudo if needed.
+
+        :param str src: Source path.
+        :param str dest: Destination path.
+        :return: True
+        """
+        logger.verbose("Copying %s to %s", src, dest)
+        try:
+            shutil.copy(src, dest)
+        except (OSError, IOError) as e:
+            logger.verbose('Installation error, trying sudo.')
+            try:
+                cls._check_call(['sudo', 'cp', src, dest])
+            except HelperError:
+                # That failed too - re-raise the original exception
+                raise e
+        return True
 
     def __init__(self, name, version_args=None,
                  version_regexp="([0-9.]+"):
@@ -351,7 +384,8 @@ class Helper(object):
     # Private methods
 
     @classmethod
-    def _check_call(cls, args, require_success=True, **kwargs):
+    def _check_call(cls, args, require_success=True, retry_with_sudo=False,
+                    **kwargs):
         """Wrapper for :func:`subprocess.check_call`.
 
         Unlike :meth:`check_output` below, this does not redirect stdout
@@ -361,23 +395,40 @@ class Helper(object):
         :param list args: Command to invoke and its associated args
         :param boolean require_success: If ``False``, do not raise an error
           when the command exits with a return code other than 0
+        :param boolean retry_with_sudo: If ``True``, if the command gets
+          an exception, prepend ``sudo`` to the command and try again.
 
         :raise HelperNotFoundError: if the command doesn't exist
           (instead of a :class:`OSError`)
-
         :raise HelperError: if the command returns a value other than 0 and
           :attr:`require_success` is not ``False``
+        :raise OSError: as :func:`subprocess.check_call`.
         """
         cmd = args[0]
         logger.info("Calling '%s'...", " ".join(args))
         try:
             subprocess.check_call(args, **kwargs)
         except OSError as e:
+            if retry_with_sudo and (e.errno == errno.EPERM or
+                                    e.errno == errno.EACCES):
+                cls._check_call(['sudo'] + args,
+                                require_success=require_success,
+                                retry_with_sudo=False,
+                                **kwargs)
+                return
+            if e.errno != errno.ENOENT:
+                raise
             raise HelperNotFoundError(e.errno,
                                       "Unable to locate helper program '{0}'. "
                                       "Please check your $PATH.".format(cmd))
         except subprocess.CalledProcessError as e:
             if require_success:
+                if retry_with_sudo:
+                    cls._check_call(['sudo'] + args,
+                                    require_success=require_success,
+                                    retry_with_sudo=False,
+                                    **kwargs)
+                    return
                 raise HelperError(e.returncode,
                                   "Helper program '{0}' exited with error {1}"
                                   .format(cmd, e.returncode))
@@ -396,11 +447,12 @@ class Helper(object):
           when the command exits with a return code other than 0
 
         :return: Captured stdout/stderr from the command
+
         :raise HelperNotFoundError: if the command doesn't exist
           (instead of a :class:`OSError`)
-
         :raise HelperError: if the command returns a value other than 0 and
           :attr:`require_success` is not ``False``
+        :raise OSError: as :func:`subprocess.check_call`.
         """
         cmd = args[0]
         logger.info("Calling '%s' and capturing its output...", " ".join(args))
@@ -423,6 +475,8 @@ class Helper(object):
                                                   **kwargs)
                           .decode('ascii', 'ignore'))
         except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
             raise HelperNotFoundError(e.errno,
                                       "Unable to locate helper program '{0}'. "
                                       "Please check your $PATH.".format(cmd))

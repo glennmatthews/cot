@@ -30,6 +30,8 @@ API
   ~COT.helpers.api.get_checksum
   ~COT.helpers.api.get_disk_capacity
   ~COT.helpers.api.get_disk_format
+  ~COT.helpers.api.install_file
+  ~COT.helpers.api.create_install_dir
 
 Exceptions
 ----------
@@ -56,8 +58,12 @@ Helper modules
 
 from .api import convert_disk_image, create_disk_image
 from .api import get_checksum, get_disk_capacity, get_disk_format
+from .api import create_install_dir, install_file
 from .helper import HelperError, HelperNotFoundError
 
-__all__ = ('HelperError', 'HelperNotFoundError',
-           'convert_disk_image', 'create_disk_image',
-           'get_checksum', 'get_disk_capacity', 'get_disk_format')
+__all__ = (
+    'HelperError', 'HelperNotFoundError',
+    'convert_disk_image', 'create_disk_image',
+    'get_checksum', 'get_disk_capacity', 'get_disk_format',
+    'create_install_dir', 'install_file',
+)
