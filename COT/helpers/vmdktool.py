@@ -95,11 +95,7 @@ class VmdkTool(Helper):
                 self.make_install_dir(os.path.join(destdir, prefix,
                                                    'man', 'man8'))
                 self.make_install_dir(os.path.join(destdir, prefix, 'bin'))
-                try:
-                    self._check_call(args, cwd=new_d)
-                except OSError:
-                    logger.verbose("Installation failed, trying sudo")
-                    self._check_call(['sudo'] + args, cwd=new_d)
+                self._check_call(args, retry_with_sudo=True, cwd=new_d)
         else:
             raise NotImplementedError(
                 "Unsure how to install vmdktool.\n"

@@ -3,6 +3,20 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.6.1`_ - 2016-07-07
+---------------------
+
+**Fixed**
+
+- ``ValueMismatchError`` exceptions are properly caught by the CLI wrapper
+  so as to result in a graceful exit rather than a stack trace.
+- ``cot remove-file`` now errors if the user specifies both file-id and
+  file-path, one of which matches a file in the OVF, but the other does not
+  match this or any other file.
+- Better handling of exceptions and usage of ``sudo`` when installing helpers.
+- Manual pages are now correctly included in the distribution. Oops!
+
+
 `1.6.0`_ - 2016-06-30
 ---------------------
 
@@ -461,6 +475,7 @@ Initial public release.
 .. _mccabe: https://pypi.python.org/pypi/mccabe
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.6.1: https://github.com/glennmatthews/cot/compare/v1.6.0...v1.6.1
 .. _1.6.0: https://github.com/glennmatthews/cot/compare/v1.5.2...v1.6.0
 .. _1.5.2: https://github.com/glennmatthews/cot/compare/v1.5.1...v1.5.2
 .. _1.5.1: https://github.com/glennmatthews/cot/compare/v1.5.0...v1.5.1

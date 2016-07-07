@@ -20,12 +20,14 @@ import os
 import logging
 
 from distutils.version import StrictVersion
+import mock
 
 from COT.tests.ut import COT_UT
 import COT.helpers.api
 from COT.helpers import get_checksum
 from COT.helpers import create_disk_image, convert_disk_image
 from COT.helpers import get_disk_format, get_disk_capacity
+from COT.helpers import create_install_dir, install_file
 from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -258,3 +260,88 @@ class TestCreateDiskImage(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
         # TODO check raw file contents
+
+
+@mock.patch('COT.helpers.helper.Helper._check_call')
+@mock.patch('os.makedirs')
+@mock.patch('os.path.exists', return_value=False)
+@mock.patch('os.path.isdir', return_value=False)
+class TestCreateInstallDir(COT_UT):
+    """Test cases for create_install_dir()."""
+
+    def test_already_exists(self, mock_isdir, mock_exists,
+                            mock_makedirs, mock_check_call):
+        """Test case where the target directory already exists."""
+        mock_isdir.return_value = True
+        self.assertTrue(create_install_dir('/foo/bar'))
+        mock_isdir.assert_called_with('/foo/bar')
+        mock_exists.assert_not_called()
+        mock_makedirs.assert_not_called()
+        mock_check_call.assert_not_called()
+
+    def test_not_directory(self, mock_isdir, mock_exists,
+                           mock_makedirs, mock_check_call):
+        """Test case where a file exists at the target path."""
+        mock_exists.return_value = True
+        self.assertRaises(RuntimeError, create_install_dir, '/foo/bar')
+        mock_isdir.assert_called_with('/foo/bar')
+        mock_exists.assert_called_with('/foo/bar')
+        mock_makedirs.assert_not_called()
+        mock_check_call.assert_not_called()
+
+    def test_permission_ok(self, mock_isdir, mock_exists,
+                           mock_makedirs, mock_check_call):
+        """Successfully create directory with user permissions."""
+        self.assertTrue(create_install_dir('/foo/bar'))
+        mock_isdir.assert_called_with('/foo/bar')
+        mock_exists.assert_called_with('/foo/bar')
+        mock_makedirs.assert_called_with('/foo/bar', 493)  # 493 == 0o755
+        mock_check_call.assert_not_called()
+
+    def test_need_sudo(self, mock_isdir, mock_exists,
+                       mock_makedirs, mock_check_call):
+        """Directory creation needs sudo."""
+        mock_makedirs.side_effect = OSError
+        self.assertTrue(create_install_dir('/foo/bar'))
+        mock_isdir.assert_called_with('/foo/bar')
+        mock_exists.assert_called_with('/foo/bar')
+        mock_makedirs.assert_called_with('/foo/bar', 493)  # 493 == 0o755
+        mock_check_call.assert_called_with(
+            ['sudo', 'mkdir', '-p', '--mode=755', '/foo/bar'])
+
+    def test_nondefault_permissions(self, mock_isdir, mock_exists,
+                                    mock_makedirs, mock_check_call):
+        """Non-default permissions should be applied whether sudo or not."""
+        # Non-sudo case
+        self.assertTrue(create_install_dir('/foo/bar', 511))  # 511 == 0o777
+        mock_isdir.assert_called_with('/foo/bar')
+        mock_exists.assert_called_with('/foo/bar')
+        mock_makedirs.assert_called_with('/foo/bar', 511)
+        mock_check_call.assert_not_called()
+
+        # Sudo case
+        mock_makedirs.reset_mock()
+        mock_makedirs.side_effect = OSError
+        self.assertTrue(create_install_dir('/foo/bar', 511))  # 511 == 0o777
+        mock_makedirs.assert_called_with('/foo/bar', 511)
+        mock_check_call.assert_called_with(
+            ['sudo', 'mkdir', '-p', '--mode=777', '/foo/bar'])
+
+
+@mock.patch('COT.helpers.helper.Helper._check_call')
+@mock.patch('shutil.copy')
+class TestInstallFile(COT_UT):
+    """Test cases for install_file()."""
+
+    def test_permission_ok(self, mock_copy, mock_check_call):
+        """File copy succeeds with user permissions."""
+        self.assertTrue(install_file('/foo', '/bar'))
+        mock_copy.assert_called_with('/foo', '/bar')
+        mock_check_call.assert_not_called()
+
+    def test_need_sudo(self, mock_copy, mock_check_call):
+        """File copy needs sudo."""
+        mock_copy.side_effect = OSError
+        self.assertTrue(install_file('/foo', '/bar'))
+        mock_copy.assert_called_with('/foo', '/bar')
+        mock_check_call.assert_called_with(['sudo', 'cp', '/foo', '/bar'])

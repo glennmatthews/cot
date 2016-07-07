@@ -23,7 +23,7 @@ from distutils.version import StrictVersion
 
 import mock
 
-from .test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.helper import Helper
 from COT.helpers.fatdisk import FatDisk
 
@@ -67,10 +67,10 @@ class TestFatDisk(HelperUT):
         self.helper.install_helper()
         self.assertEqual([
             ['dpkg', '-s', 'make'],
-            ['sudo', 'apt-get', '-q', 'update'],
-            ['sudo', 'apt-get', '-q', 'install', 'make'],
+            ['apt-get', '-q', 'update'],
+            ['apt-get', '-q', 'install', 'make'],
             ['dpkg', '-s', 'gcc'],
-            ['sudo', 'apt-get', '-q', 'install', 'gcc'],
+            ['apt-get', '-q', 'install', 'gcc'],
             ['./RUNME'],
             ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
         ], self.last_argv)
@@ -113,8 +113,8 @@ class TestFatDisk(HelperUT):
         self.enable_yum_install()
         self.helper.install_helper()
         self.assertEqual([
-            ['sudo', 'yum', '--quiet', 'install', 'make'],
-            ['sudo', 'yum', '--quiet', 'install', 'gcc'],
+            ['yum', '--quiet', 'install', 'make'],
+            ['yum', '--quiet', 'install', 'gcc'],
             ['./RUNME'],
             ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
         ], self.last_argv)

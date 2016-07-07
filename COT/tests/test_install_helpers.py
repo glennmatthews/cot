@@ -17,16 +17,36 @@
 
 """Unit test cases for COT.install_helpers.COTInstallHelpers class."""
 
-import filecmp
 import os
-import shutil
 import sys
+
+import mock
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.install_helpers import COTInstallHelpers
 from COT.helpers import HelperError
 from COT.helpers.helper import Helper
+
+
+def stub_check_output(arg_list, *_args, **_kwargs):
+    """Stub to ensure fixed version number strings."""
+    versions = {
+        "fatdisk": "fatdisk, version 1.0.0-beta",
+        "genisoimage": "genisoimage 1.1.11 (Linux)",
+        "mkisofs": "mkisofs 3.00 (--) Copyright (C) 1993-1997 "
+        "Eric Youngdale (C) 1997-2010 Jörg Schilling",
+        "ovftool": "VMware ovftool 4.0.0 (build-2301625)",
+        "qemu-img": "qemu-img version 2.1.2, "
+        "Copyright (c) 2004-2008 Fabrice Bellard",
+        "vmdktool": "vmdktool version 1.4",
+    }
+    return versions.get(arg_list[0], "")
+
+
+def stub_dir_exists_but_not_file(path):
+    """Stub for os.path.exists; return true for man dir, false for man file."""
+    return os.path.basename(path) != "cot.1"
 
 
 class TestCOTInstallHelpers(COT_UT):
@@ -42,77 +62,22 @@ class TestCOTInstallHelpers(COT_UT):
         sys.argv[0] = "/foo/bar/bin/cot"
         self.manpath = os.path.join(
             os.path.dirname(os.path.dirname(sys.argv[0])), "man")
-        # Hash of directories to override os.path.exists for.
-        # If an explicit match is found for a file, returns that value.
-        # Otherwise, walk back up the directory tree and see if there's a
-        # match for a parent directory. If that doesn't match either, call
-        # the real os.path.exists
-        self.exists = {
-            os.path.join(self.manpath, 'man1'): True,
-        }
-        # As above but for filecmp.cmp
-        self.cmp = {
-            os.path.join(self.manpath, 'man1'): True,
-        }
-        self._os_path_exists = os.path.exists
-        os.path.exists = self.stub_exists
-        self._cmp = filecmp.cmp
-        filecmp.cmp = self.stub_cmp
 
-    def tearDown(self):
-        """Cleanup after each test case."""
-        os.path.exists = self._os_path_exists
-        filecmp.cmp = self._cmp
-
-    def stub_check_output(         # pylint: disable=no-self-use
-            self,
-            args,
-            require_success=True,  # pylint: disable=unused-argument
-            **kwargs):             # pylint: disable=unused-argument
-        """Stub to ensure fixed version number strings."""
-        versions = {
-            "fatdisk": "fatdisk, version 1.0.0-beta",
-            "genisoimage": "genisoimage 1.1.11 (Linux)",
-            "mkisofs": "mkisofs 3.00 (--) Copyright (C) 1993-1997 "
-                       "Eric Youngdale (C) 1997-2010 Jörg Schilling",
-            "ovftool": "VMware ovftool 4.0.0 (build-2301625)",
-            "qemu-img": "qemu-img version 2.1.2, "
-                        "Copyright (c) 2004-2008 Fabrice Bellard",
-            "vmdktool": "vmdktool version 1.4",
-        }
-        return versions.get(args[0], "")
-
-    def stub_exists(self, path):
-        """Stub for os.path.exists."""
-        dir_path = path
-        while dir_path and dir_path != "/":
-            if dir_path in self.exists.keys():
-                return self.exists[dir_path]
-            dir_path = os.path.dirname(dir_path)
-        return self._os_path_exists(path)
-
-    def stub_cmp(self, f1, f2):
-        """Stub for filecmp.cmp."""
-        for path in [f1, f2]:
-            while path and path != "/":
-                if path in self.cmp.keys():
-                    return self.cmp[path]
-                path = os.path.dirname(path)
-        return self._cmp(f1, f2)
-
-    def test_verify_only(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output',
+                side_effect=stub_check_output)
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch('filecmp.cmp', return_value=True)
+    @mock.patch('COT.helpers.helper.Helper.find_executable')
+    def test_verify_only(self, mock_find_executable, *_):
         """Make sure expected results are seen with --verify-only option."""
         # pylint: disable=protected-access
-        def stub_find_executable(_self, name):
+        def stub_find_executable(name):
             """Pretend to find every executable except ovftool."""
             if name == 'ovftool':
                 return None
             return "/usr/local/bin/" + name
 
-        _find_executable = Helper.find_executable
-        Helper.find_executable = stub_find_executable
-        _check_output = Helper._check_output
-        Helper._check_output = self.stub_check_output
+        mock_find_executable.side_effect = stub_find_executable
 
         self.instance.verify_only = True
         expected_output = """
@@ -125,13 +90,23 @@ ovftool:      NOT FOUND
 qemu-img:     version 2.1.2, present at /usr/local/bin/qemu-img
 vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
 """
-        try:
-            self.check_cot_output(expected_output)
-        finally:
-            Helper.find_executable = _find_executable
-            Helper._check_output = _check_output
+        self.check_cot_output(expected_output)
 
-    def test_install(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output',
+                side_effect=stub_check_output)
+    @mock.patch('os.path.isdir', return_value=True)
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch('filecmp.cmp', return_value=True)
+    @mock.patch('COT.helpers.helper.Helper.apt_install')
+    @mock.patch('COT.helpers.helper.Helper.yum_install')
+    @mock.patch('COT.helpers.helper.Helper.port_install')
+    @mock.patch('COT.helpers.helper.Helper.find_executable')
+    def test_install(self,
+                     mock_find_executable,
+                     mock_port_install,
+                     mock_yum_install,
+                     mock_apt_install,
+                     *_):
         """Show results when pretending to install helpers."""
         # pylint: disable=protected-access
         paths = {
@@ -143,12 +118,11 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
             "vmdktool": None
         }
 
-        def stub_find_executable(_self, name):
+        def stub_find_executable(name):
             """Get canned paths for various executables."""
             return paths.get(name, None)
 
-        @classmethod
-        def stub_install(_cls, package):
+        def stub_install(package):
             """Fake successful or unsuccessful installation of tools."""
             if package == "genisoimage":
                 paths["genisoimage"] = "/usr/bin/genisoimage"
@@ -157,16 +131,10 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
                 return False
             raise HelperError(1, "not really installing!")
 
-        _find_executable = Helper.find_executable
-        _apt_install = Helper.apt_install
-        _port_install = Helper.port_install
-        _yum_install = Helper.yum_install
-        _check_output = Helper._check_output
-        Helper._check_output = self.stub_check_output
-        Helper.find_executable = stub_find_executable
-        Helper.apt_install = stub_install
-        Helper.port_install = stub_install
-        Helper.yum_install = stub_install
+        mock_find_executable.side_effect = stub_find_executable
+        mock_apt_install.side_effect = stub_install
+        mock_port_install.side_effect = stub_install
+        mock_yum_install.side_effect = stub_install
         Helper._apt_updated = False
         Helper._port_updated = False
         expected_output = """
@@ -181,130 +149,93 @@ ovftool:      INSTALLATION FAILED: No support for automated installation of
 qemu-img:     INSTALLATION FAILED: [Errno 1] not really installing!
 vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
 """
-        try:
-            # Normally we raise an error due to the failed installations
-            with self.assertRaises(EnvironmentError):
-                self.check_cot_output(expected_output)
-            # ...but we can set ignore_errors to suppress this behavior
-            self.instance.ignore_errors = True
-            # revert to initial state
-            paths["genisoimage"] = None
+        # Normally we raise an error due to the failed installations
+        with self.assertRaises(EnvironmentError):
             self.check_cot_output(expected_output)
-        finally:
-            Helper.find_executable = _find_executable
-            Helper.apt_install = _apt_install
-            Helper.port_install = _port_install
-            Helper.yum_install = _yum_install
-            Helper._check_output = _check_output
+        # ...but we can set ignore_errors to suppress this behavior
+        self.instance.ignore_errors = True
+        # revert to initial state
+        paths["genisoimage"] = None
+        self.check_cot_output(expected_output)
 
-    def test_manpages_helper_verify_dir_not_found(self):
+    @mock.patch('os.path.exists', return_value=False)
+    def test_manpages_helper_verify_dir_not_found(self, *_):
         """Call manpages_helper with verify-only, directory not found."""
-        self.exists[os.path.join(self.manpath, 'man1')] = False
         self.instance.verify_only = True
         result, message = self.instance.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("DIRECTORY NOT FOUND: {0}/man1"
                          .format(self.manpath), message)
 
-    def test_manpages_helper_verify_file_not_found(self):
+    @mock.patch('filecmp.cmp', return_value=True)
+    @mock.patch('os.path.exists', side_effect=stub_dir_exists_but_not_file)
+    def test_manpages_helper_verify_file_not_found(self, *_):
         """Call manpages_helper with verify-only, file not found."""
-        self.exists[os.path.join(self.manpath, 'man1', 'cot.1')] = False
         self.instance.verify_only = True
         result, message = self.instance.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("NOT FOUND", message)
 
-    def test_manpages_helper_verify_file_outdated(self):
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch('filecmp.cmp', return_value=False)
+    def test_manpages_helper_verify_file_outdated(self, *_):
         """Call manpages_helper with verify-only, file not found."""
-        self.cmp[os.path.join(self.manpath, 'man1', 'cot.1')] = False
         self.instance.verify_only = True
         result, message = self.instance.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("NEEDS UPDATE", message)
 
-    def test_manpages_helper_create_dir_fail(self):
+    @mock.patch('os.path.exists', return_value=False)
+    @mock.patch('COT.helpers.helper.Helper._check_call',
+                side_effect=HelperError)
+    @mock.patch('os.makedirs')
+    def test_manpages_helper_create_dir_fail(self, mock_makedirs, *_):
         """Call manpages_helper with a simulated makedirs() failure."""
-        self.exists[os.path.join(self.manpath, 'man1')] = False
+        mock_makedirs.side_effect = OSError(13, "Permission denied",
+                                            os.path.join(self.manpath, 'man1'))
 
-        def makedirs(*_args, **_kwargs):
-            """Fail os.makedirs call."""
-            raise OSError(13, "Permission denied",
-                          os.path.join(self.manpath, 'man1'))
-        _makedirs = os.makedirs
-        os.makedirs = makedirs
-        try:
-            result, message = self.instance.manpages_helper()
-            self.assertFalse(result)
-            self.assertEqual("INSTALLATION FAILED: [Errno 13] "
-                             "Permission denied: '{0}'"
-                             .format(os.path.join(self.manpath, 'man1')),
-                             message)
-        finally:
-            os.makedirs = _makedirs
+        result, message = self.instance.manpages_helper()
+        self.assertFalse(result)
+        self.assertEqual("INSTALLATION FAILED: [Errno 13] "
+                         "Permission denied: '{0}'"
+                         .format(os.path.join(self.manpath, 'man1')),
+                         message)
 
-    def test_manpages_helper_create_file_fail(self):
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch('os.path.isdir', return_value=True)
+    @mock.patch('filecmp.cmp', return_value=False)
+    @mock.patch('COT.helpers.helper.Helper._check_call',
+                side_effect=HelperError)
+    @mock.patch('shutil.copy')
+    def test_manpages_helper_create_file_fail(self, mock_copy, *_):
         """Call manpages_helper with a simulated copy() failure."""
-        self.cmp[os.path.join(self.manpath, 'man1', 'cot.1')] = False
+        mock_copy.side_effect = IOError(13, "Permission denied",
+                                        "{0}/man1/cot.1".format(self.manpath))
 
-        def copy(*_args, **_kwargs):
-            """Fail shutil.copy call."""
-            raise IOError(13, "Permission denied",
-                          "{0}/man1/cot.1".format(self.manpath))
-        _shutil_copy = shutil.copy
-        shutil.copy = copy
+        result, message = self.instance.manpages_helper()
+        self.assertFalse(result)
+        self.assertEqual("INSTALLATION FAILED: [Errno 13] "
+                         "Permission denied: '{0}/man1/cot.1'"
+                         .format(self.manpath),
+                         message)
 
-        try:
-            result, message = self.instance.manpages_helper()
-            self.assertFalse(result)
-            self.assertEqual("INSTALLATION FAILED: [Errno 13] "
-                             "Permission denied: '{0}/man1/cot.1'"
-                             .format(self.manpath),
-                             message)
-        finally:
-            shutil.copy = _shutil_copy
-
-    def test_manpages_helper_all_new(self):
+    @mock.patch('shutil.copy')
+    @mock.patch('filecmp.cmp', return_value=False)
+    @mock.patch('os.makedirs', return_value=False)
+    def test_manpages_helper_all_new(self, *_):
         """Call manpages_helper to simulate installing new manpages."""
-        self.exists[os.path.join(self.manpath, 'man1')] = False
-        self.cmp[os.path.join(self.manpath, 'man1')] = False
+        result, message = self.instance.manpages_helper()
+        self.assertTrue(result)
+        self.assertEqual("successfully installed to {0}".format(self.manpath),
+                         message)
 
-        def makedirs(*_args, **_kwargs):
-            """Fake successful os.makedirs call."""
-            pass
-        _makedirs = os.makedirs
-        os.makedirs = makedirs
-
-        def copy(*_args, **_kwargs):
-            """Fake successful shutil.copy call."""
-            pass
-        _shutil_copy = shutil.copy
-        shutil.copy = copy
-
-        try:
-            result, message = self.instance.manpages_helper()
-            self.assertTrue(result)
-            self.assertEqual("successfully installed to {0}"
-                             .format(self.manpath),
-                             message)
-        finally:
-            os.makedirs = _makedirs
-            shutil.copy = _shutil_copy
-
-    def test_manpages_helper_update(self):
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch('os.path.isdir', return_value=True)
+    @mock.patch('shutil.copy')
+    @mock.patch('filecmp.cmp', return_value=False)
+    def test_manpages_helper_update(self, *_):
         """Call manpages_helper to simulate updating existing manpages."""
-        self.cmp[os.path.join(self.manpath, 'man1', 'cot.1')] = False
-
-        def copy(*_args, **_kwargs):
-            """Fake successful shutil.copy call."""
-            pass
-        _shutil_copy = shutil.copy
-        shutil.copy = copy
-
-        try:
-            result, message = self.instance.manpages_helper()
-            self.assertTrue(result)
-            self.assertEqual("successfully updated in {0}"
-                             .format(self.manpath),
-                             message)
-        finally:
-            shutil.copy = _shutil_copy
+        result, message = self.instance.manpages_helper()
+        self.assertTrue(result)
+        self.assertEqual("successfully updated in {0}".format(self.manpath),
+                         message)

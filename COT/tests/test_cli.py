@@ -725,6 +725,7 @@ class TestCLIHelp(TestCOTCLI):
         self.call_cot(['help', 'help'])
         self.call_cot(['help', 'info'])
         self.call_cot(['help', 'inject-config'])
+        self.call_cot(['help', 'remove-file'])
 
     def test_help_negative(self):
         """Negative tests for cot help."""
@@ -831,4 +832,27 @@ class TestCLIInstallHelpers(TestCOTCLI):
         """Invalid combinations of arguments."""
         # Mutually exclusive
         self.call_cot(['install-helpers', '--ignore-errors', '--verify-only'],
+                      result=2)
+
+
+class TestCLIRemoveFile(TestCOTCLI):
+    """CLI test cases for 'cot remove-file' subcommand."""
+
+    def test_help(self):
+        """Verify help menu for cot remove-file."""
+        self.call_cot(['remove-file', '-h'])
+
+    def test_invalid_args(self):
+        """Invalid combinations of arguments."""
+        # input.vmdk is file1, file2 is input.iso
+        self.call_cot(['remove-file', self.input_ovf, '-o', self.temp_file,
+                       '--file-path', 'input.vmdk', '--file-id', 'file2'],
+                      result=2)
+        # file1 is not foo.bar
+        self.call_cot(['remove-file', self.input_ovf, '-o', self.temp_file,
+                       '--file-id', 'file1', '--file-path', 'foo.bar'],
+                      result=2)
+        # input.vmdk is not "frobozz"
+        self.call_cot(['remove-file', self.input_ovf, '-o', self.temp_file,
+                       '--file-path', 'input.vmdk', '--file-id', 'frobozz'],
                       result=2)

@@ -56,7 +56,7 @@ except ImportError:
     _argcomplete = False
 
 from COT import __version_long__
-from COT.data_validation import InvalidInputError
+from COT.data_validation import InvalidInputError, ValueMismatchError
 from COT.ui_shared import UI
 
 logger = logging.getLogger(__name__)
@@ -602,7 +602,7 @@ class CLI(UI):
             self.set_instance_attributes(arg_dict)
             args.instance.run()
             args.instance.finished()
-        except InvalidInputError as e:
+        except (InvalidInputError, ValueMismatchError) as e:
             subp.error(e)
         except NotImplementedError as e:
             sys.exit("Missing functionality:\n{0}\n"

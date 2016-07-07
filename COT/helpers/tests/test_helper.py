@@ -20,7 +20,9 @@ import contextlib
 import os
 import logging
 import platform
+import subprocess
 from requests.exceptions import ConnectionError
+import mock
 
 from COT.tests.ut import COT_UT
 from COT.helpers.helper import Helper
@@ -82,8 +84,8 @@ class HelperUT(COT_UT):
         self.helper.install_helper()
         self.assertEqual([
             ['dpkg', '-s', pkgname],
-            ['sudo', 'apt-get', '-q', 'update'],
-            ['sudo', 'apt-get', '-q', 'install', pkgname],
+            ['apt-get', '-q', 'update'],
+            ['apt-get', '-q', 'install', pkgname],
         ], self.last_argv)
         if not helpername:
             helpername = pkgname
@@ -94,7 +96,7 @@ class HelperUT(COT_UT):
         self.helper.install_helper()
         self.assertEqual([
             ['dpkg', '-s', pkgname],
-            ['sudo', 'apt-get', '-q', 'install', pkgname],
+            ['apt-get', '-q', 'install', pkgname],
         ], self.last_argv)
 
     def port_install_test(self, portname):
@@ -103,14 +105,14 @@ class HelperUT(COT_UT):
         self.select_package_manager('port')
         Helper._port_updated = False
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'port', 'selfupdate'],
-                          ['sudo', 'port', 'install', portname]],
+        self.assertEqual([['port', 'selfupdate'],
+                          ['port', 'install', portname]],
                          self.last_argv)
         self.assertTrue(Helper._port_updated)
         # Make sure we don't call port selfupdate again unnecessarily
         self.last_argv = []
         self.helper.install_helper()
-        self.assertEqual([['sudo', 'port', 'install', portname]],
+        self.assertEqual([['port', 'install', portname]],
                          self.last_argv)
 
     def stub_check_call(self, argv, require_success=True, **_kwargs):
@@ -215,6 +217,57 @@ class HelperGenericTest(HelperUT):
 
         Helper._check_call(["false"], require_success=False)
 
+    @mock.patch('subprocess.check_call')
+    def test_check_call_permissions_needed(self, mock_check_call):
+        """Test cases where sudo permission is needed."""
+        # pylint: disable=protected-access
+        Helper._check_call = self._check_call
+
+        def raise_oserror(args, **_):
+            """Raise an OSError unless using 'sudo'."""
+            if args[0] != 'sudo':
+                raise OSError(13, 'permission denied')
+            return
+        mock_check_call.side_effect = raise_oserror
+
+        # Without retry_on_sudo, we reraise the permissions error
+        with self.assertRaises(OSError) as cm:
+            Helper._check_call(["false"])
+        self.assertEqual(cm.exception.errno, 13)
+        mock_check_call.assert_called_once_with(["false"])
+
+        # With retry_on_sudo, we retry.
+        mock_check_call.reset_mock()
+        Helper._check_call(["false"], retry_with_sudo=True)
+        mock_check_call.assert_has_calls([
+            mock.call(['false']),
+            mock.call(['sudo', 'false']),
+        ])
+
+        # Now a variant - the subprocess call actually executed, but the
+        # process exited with a non-zero exit code
+        def raise_subprocess_error(args, **_):
+            """Raise a CalledProcessError unless using 'sudo'."""
+            if args[0] != 'sudo':
+                raise subprocess.CalledProcessError(1, " ".join(args))
+            return
+        mock_check_call.reset_mock()
+        mock_check_call.side_effect = raise_subprocess_error
+
+        # Without retry_on_sudo, we reraise the permissions error
+        with self.assertRaises(HelperError) as cm:
+            Helper._check_call(["false"])
+        self.assertEqual(cm.exception.errno, 1)
+        mock_check_call.assert_called_once_with(["false"])
+
+        # With retry_on_sudo, we retry.
+        mock_check_call.reset_mock()
+        Helper._check_call(["false"], retry_with_sudo=True)
+        mock_check_call.assert_has_calls([
+            mock.call(['false']),
+            mock.call(['sudo', 'false']),
+        ])
+
     def test_check_output_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist."""
         # pylint: disable=protected-access
@@ -223,6 +276,12 @@ class HelperGenericTest(HelperUT):
         self.assertRaises(HelperNotFoundError,
                           Helper._check_output, ["not_a_command"],
                           require_success=True)
+
+    def test_check_output_oserror(self):
+        """OSError if requested command isn't an executable."""
+        # pylint: disable=protected-access
+        self.assertRaises(OSError,
+                          Helper._check_output, self.input_ovf)
 
     def test_check_output_helpererror(self):
         """HelperError if executable fails and require_success is set."""

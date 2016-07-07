@@ -19,7 +19,7 @@
 
 from distutils.version import StrictVersion
 
-from .test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.helper import Helper
 from COT.helpers.mkisofs import MkIsoFS
 

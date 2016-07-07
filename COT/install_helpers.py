@@ -22,13 +22,13 @@ import argparse
 import filecmp
 import logging
 import os
-import shutil
 import sys
 import textwrap
 from pkg_resources import resource_listdir, resource_filename
 
 from .submodule import COTGenericSubmodule
 from COT.helpers import HelperError, HelperNotFoundError
+from COT.helpers import create_install_dir, install_file
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,7 @@ def verify_manpages(man_dir):
                 logger.verbose("File %s does not need to be updated",
                                dest_path)
                 continue
+            logger.verbose("File %s needs to be updated", dest_path)
             return True, "NEEDS UPDATE"
         return True, "NOT FOUND"
 
@@ -86,9 +87,7 @@ def _install_manpage(src_path, man_dir):
     f = os.path.basename(src_path)
     section = os.path.splitext(f)[1][1:]
     dest = os.path.join(man_dir, "man{0}".format(section))
-    if not os.path.exists(dest):
-        logger.verbose("Creating manpage directory %s", dest)
-        os.makedirs(dest)
+    create_install_dir(dest)
 
     previously_installed = False
     dest_path = os.path.join(dest, f)
@@ -98,8 +97,7 @@ def _install_manpage(src_path, man_dir):
             logger.verbose("File %s does not need to be updated", dest_path)
             return previously_installed, False
 
-    logger.info("Copying %s to %s", f, dest_path)
-    shutil.copy(src_path, dest_path)
+    install_file(src_path, dest_path)
     return previously_installed, True
 
 
@@ -119,7 +117,7 @@ def install_manpages(man_dir):
             prev, new = _install_manpage(src_path, man_dir)
             some_preinstalled |= prev
             installed_any |= new
-    except (IOError, OSError) as e:
+    except (IOError, OSError, HelperError) as e:
         return False, "INSTALLATION FAILED: " + str(e)
 
     if some_preinstalled:

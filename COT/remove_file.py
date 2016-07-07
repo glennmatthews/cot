@@ -22,8 +22,9 @@
 
 import logging
 
-from .submodule import COTSubmodule
-from .data_validation import check_for_conflict, InvalidInputError
+from COT.submodule import COTSubmodule
+from COT.data_validation import check_for_conflict, match_or_die
+from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
@@ -84,8 +85,15 @@ class COTRemoveFile(COTSubmodule):
 
         if self.file_id is None:
             self.file_id = vm.get_id_from_file(file_obj)
+        else:
+            match_or_die('--file-id', self.file_id,
+                         'file id in OVF', vm.get_id_from_file(file_obj))
+
         if self.file_path is None:
             self.file_path = vm.get_path_from_file(file_obj)
+        else:
+            match_or_die('--file-path', self.file_path,
+                         'file path in OVF', vm.get_path_from_file(file_obj))
 
         prompt_info = "file '{0}' (ID '{1}')".format(self.file_path,
                                                      self.file_id)
