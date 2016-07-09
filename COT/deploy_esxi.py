@@ -105,7 +105,8 @@ class SmarterConnection(SmartConnection):
             logger.error("Session failed - %s", exc_value)
         # TODO - re-enable SSL certificate validation?
 
-    def unwrap_connection_error(self, outer_e):  # pylint: disable=no-self-use
+    @staticmethod
+    def unwrap_connection_error(outer_e):
         """Extract inner attributes from a ConnectionError.
 
         ConnectionError often wraps another exception with more context;

@@ -215,8 +215,8 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         'msg': "Overwriting existing disk Item in OVF",
     }
 
-    def invalid_hardware_warning(self,  # pylint: disable=no-self-use
-                                 profile, value, kind):
+    @staticmethod
+    def invalid_hardware_warning(profile, value, kind):
         """Warning log message for invalid hardware."""
         msg = ""
         if profile:
