@@ -52,7 +52,7 @@ class HelperUT(COT_UT):
     def select_package_manager(self, name):
         """Select the specified installer program for Helper to use."""
         Helper.find_executable = self.stub_find_executable
-        for pm in Helper.PACKAGE_MANAGERS.keys():
+        for pm in Helper.PACKAGE_MANAGERS:
             Helper.PACKAGE_MANAGERS[pm] = (pm == name)
 
     def enable_apt_install(self):

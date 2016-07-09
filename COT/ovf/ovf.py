@@ -1960,7 +1960,7 @@ class OVF(VMDescription, XML):
         :return: string such as 'ide' or 'memory'
         """
         device_type = device.get_value(self.RESOURCE_TYPE)
-        for key in self.RES_MAP.keys():
+        for key in self.RES_MAP:
             if device_type == self.RES_MAP[key]:
                 return key
         return "unknown ({0})".format(device_type)
@@ -2414,7 +2414,7 @@ class OVF(VMDescription, XML):
             # Any files that we need to carry over need to be extracted NOW!
             logger.verbose("Extracting files from %s before overwriting it.",
                            self.input_file)
-            for filename in self._file_references.keys():
+            for filename in self._file_references:
                 file_ref = self._file_references[filename]
                 if file_ref.file_path is None:
                     file_ref.copy_to(self.working_dir)

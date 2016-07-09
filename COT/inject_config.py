@@ -20,10 +20,10 @@ import logging
 import os.path
 import shutil
 
-from .add_disk import add_disk_worker
-from .data_validation import ValueUnsupportedError, InvalidInputError
+from COT.add_disk import add_disk_worker
+from COT.data_validation import ValueUnsupportedError, InvalidInputError
 from COT.helpers import create_disk_image
-from .submodule import COTSubmodule
+from COT.submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
 

@@ -26,7 +26,7 @@ import sys
 import textwrap
 from pkg_resources import resource_listdir, resource_filename
 
-from .submodule import COTGenericSubmodule
+from COT.submodule import COTGenericSubmodule
 from COT.helpers import HelperError, HelperNotFoundError
 from COT.helpers import create_install_dir, install_file
 
@@ -201,7 +201,7 @@ class COTInstallHelpers(COTGenericSubmodule):
         wrapper = textwrap.TextWrapper(width=self.UI.terminal_width,
                                        initial_indent="",
                                        subsequent_indent=(" " * 14))
-        for k in sorted(results.keys()):
+        for k in sorted(results):
             print(wrapper.fill("{0:13} {1}".format(k + ":", results[k])))
         print("")
         if not result and not self.ignore_errors:

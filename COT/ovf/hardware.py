@@ -125,7 +125,7 @@ class OVFHardware(object):
                        delete_count)
         # Generate the new XML Items, in appropriately sorted order by Instance
         ordering = [self.ovf.INFO, self.ovf.SYSTEM, self.ovf.ITEM]
-        for instance in natural_sort(self.item_dict.keys()):
+        for instance in natural_sort(self.item_dict):
             logger.debug("Writing Item(s) with InstanceID %s", instance)
             ovfitem = self.item_dict[instance]
             new_items = ovfitem.generate_items()
@@ -221,7 +221,7 @@ class OVFHardware(object):
         :return: list of :class:`OVFItem` instances
         """
         items = [self.item_dict[instance] for instance in
-                 natural_sort(self.item_dict.keys())]
+                 natural_sort(self.item_dict)]
         filtered_items = []
         if properties is None:
             properties = {}
