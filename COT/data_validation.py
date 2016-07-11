@@ -271,44 +271,44 @@ def no_whitespace(string):
 
 
 def validate_int(string,
-                 min=None, max=None,  # pylint: disable=redefined-builtin
+                 minimum=None, maximum=None,
                  label="input"):
     """Parser helper function for validating integer arguments in a range.
 
     :param str string: String to convert to an integer and validate
-    :param int min: Minimum valid value (optional)
-    :param int max: Maximum valid value (optional)
+    :param int minimum: Minimum valid value (optional)
+    :param int maximum: Maximum valid value (optional)
     :param str label: Label to include in any errors raised
     :return: Validated integer value
     :raise ValueUnsupportedError: if :attr:`string` can't be converted to int
-    :raise ValueTooLowError: if value is less than :attr:`min`
-    :raise ValueTooHighError: if value is more than :attr:`max`
+    :raise ValueTooLowError: if value is less than :attr:`minimum`
+    :raise ValueTooHighError: if value is more than :attr:`maximum`
     """
     try:
         i = int(string)
     except ValueError:
         raise ValueUnsupportedError(label, string, "integer")
-    if min is not None and i < min:
-        raise ValueTooLowError(label, i, min)
-    if max is not None and i > max:
-        raise ValueTooHighError(label, i, max)
+    if minimum is not None and i < minimum:
+        raise ValueTooLowError(label, i, minimum)
+    if maximum is not None and i > maximum:
+        raise ValueTooHighError(label, i, maximum)
     return i
 
 
 def non_negative_int(string):
     """Parser helper function for integer arguments that must be 0 or more.
 
-    Alias for :func:`validate_int` setting :attr:`min` to 0.
+    Alias for :func:`validate_int` setting :attr:`minimum` to 0.
     """
-    return validate_int(string, min=0)
+    return validate_int(string, minimum=0)
 
 
 def positive_int(string):
     """Parser helper function for integer arguments that must be 1 or more.
 
-    Alias for :func:`validate_int` setting :attr:`min` to 1.
+    Alias for :func:`validate_int` setting :attr:`minimum` to 1.
     """
-    return validate_int(string, min=1)
+    return validate_int(string, minimum=1)
 
 
 # Some handy exception and error types we can throw

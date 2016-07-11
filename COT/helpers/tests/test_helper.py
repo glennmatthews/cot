@@ -21,7 +21,8 @@ import os
 import logging
 import platform
 import subprocess
-from requests.exceptions import ConnectionError
+
+import requests
 import mock
 
 from COT.tests.ut import COT_UT
@@ -333,7 +334,7 @@ class HelperGenericTest(HelperUT):
                 self.assertTrue(os.path.exists(
                     os.path.join(directory, "cot-master", "COT", "tests",
                                  "ut.py")))
-        except ConnectionError:
+        except requests.exceptions.ConnectionError:
             # unable to connect to github - might be an isolated environment
             self.fail("ConnectionError when trying to download from GitHub")
         # Temporary directory should be cleaned up when done

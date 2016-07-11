@@ -38,7 +38,7 @@ class TestCOTRemoveFile(COT_UT):
         self.instance.package = self.input_ovf
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertRegexpMatches(reason, "No file information")
+        self.assertRegex(reason, "No file information")
         self.assertRaises(InvalidInputError, self.instance.run)
 
         self.instance.file_path = "input.vmdk"

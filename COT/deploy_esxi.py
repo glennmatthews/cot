@@ -84,7 +84,8 @@ class SmarterConnection(SmartConnection):
                                    "otherwise not recognized as valid. "
                                    "Accept certificate anyway?"
                                    .format(self.server))
-            # pylint: disable=protected-access
+            # pylint: disable=protected-access, no-member
+            # ssl._create_unverified_context doesn't exist in Python 3.3.
             _create_unverified_context = ssl._create_unverified_context
             ssl._create_default_https_context = _create_unverified_context
             return super(SmarterConnection, self).__enter__()
