@@ -1146,7 +1146,7 @@ class OVF(VMDescription, XML):
             return None
         str_list = ["Environment:"]
         wrapper.initial_indent = '  '
-        wrapper.subsequent_indent = '                   '
+        wrapper.subsequent_indent = '    '
         str_list.extend(wrapper.wrap(
             "Transport types: {0}"
             .format(" ".join(self.environment_transports))))
@@ -1211,7 +1211,13 @@ class OVF(VMDescription, XML):
         # them all together with 'join()' rather than it is to repeatedly
         # append to an existing string with '+'.
         # I haven't profiled this to verify - it's fast enough for now.
-        wrapper = textwrap.TextWrapper(width=width)
+
+        # Don't break in mid-word or on hyphens, as the usual case where
+        # we may exceed the available width is URI literals, and there's
+        # no ideal way to wrap these.
+        wrapper = textwrap.TextWrapper(width=width,
+                                       break_long_words=False,
+                                       break_on_hyphens=False)
 
         # File description
         header = self._info_string_header(width)
