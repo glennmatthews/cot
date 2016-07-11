@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Added**
+
+- Support for Python 3.5
+
 `1.6.1`_ - 2016-07-07
 ---------------------
 

@@ -4,6 +4,9 @@ COT: the Common OVF Tool
 .. image:: https://img.shields.io/pypi/v/cot.svg
     :target: https://pypi.python.org/pypi/cot/
     :alt: Latest Version
+.. image:: https://img.shields.io/pypi/pyversions/cot.svg
+    :target: https://pypi.python.org/pypi/cot
+    :alt: Python Versions Supported
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
     :target: https://pypi.python.org/pypi/cot/
     :alt: License

@@ -2,6 +2,7 @@ Common OVF Tool (COT)
 =====================
 
 [![Latest Version](https://img.shields.io/pypi/v/cot.svg)](https://pypi.python.org/pypi/cot/)
+[![Python Versions Supported](https://img.shields.io/pypi/pyversions/cot.svg)](https://pypi.python.org/pypi/cot)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://pypi.python.org/pypi/cot/)
 [![build status](https://api.travis-ci.org/glennmatthews/cot.svg?branch=master)](https://travis-ci.org/glennmatthews/cot)
 [![Coverage Status](https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master)](https://coveralls.io/r/glennmatthews/cot?branch=master)
