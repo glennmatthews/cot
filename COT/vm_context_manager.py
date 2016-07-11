@@ -18,7 +18,7 @@
 
 import logging
 
-from .vm_factory import VMFactory
+from COT.vm_factory import VMFactory
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,8 @@ class VMContextManager(object):
         In any case, destroy the VM.
         """
         # Did we exit cleanly?
-        if exc_type is None:
-            self.obj.write()
-        self.obj.destroy()
+        try:
+            if exc_type is None:
+                self.obj.write()
+        finally:
+            self.obj.destroy()

@@ -166,8 +166,8 @@ ovf:value="interface Loopback0" />
      </ovf:ProductSection>
 """)
 
-    def test_qualifiers(self):
-        """Ensure property values are limited by qualifiers."""
+    def test_qualifiers_maxlen(self):
+        """Ensure property values are limited by MaxLen qualifiers."""
         self.instance.package = self.input_ovf
         vm = self.instance.vm
 
@@ -177,8 +177,17 @@ ovf:value="interface Loopback0" />
                           # max length 25 characters according to OVF
                           "abcdefghijklmnopqrstuvwxyz")
 
-        # TODO - we don't currently have any qualifiers other than MaxLen
-        # in our example OVF files. Need to get some good samples to use here.
+    def test_qualifiers_minlen(self):
+        """Ensure property values are limited by MinLen qualifiers."""
+        self.instance.package = self.invalid_ovf
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
+        self.assertLogged(**self.NONEXISTENT_FILE)
+        vm = self.instance.vm
+
+        self.assertRaises(ValueUnsupportedError,
+                          vm.set_property_value,
+                          "jabberwock",
+                          "short")
 
     def test_create_property_no_preexisting(self):
         """Set property values for an OVF that has none previously."""
@@ -256,7 +265,7 @@ transport/filesystem/etc/ovf-transport iso com.vmware.guestInfo">
 
     def test_edit_interactive(self):
         """Exercise the interactive CLI for COT edit-properties."""
-        menu_string = """
+        menu_prompt = """
 Please choose a property to edit:
  1) login-username            "Login Username"
  2) login-password            "Login Password"
@@ -271,7 +280,7 @@ Please choose a property to edit:
 Enter property key or number to edit, or 'q' to write changes and quit
         """.strip()
 
-        username_edit_string = """
+        username_edit_prompt = """
 Key:            "login-username"
 Label:          "Login Username"
 Description:    "Username for remote login"
@@ -282,7 +291,7 @@ Current Value:  ""
 Enter new value for this property
         """.strip()
 
-        ssh_edit_string = """
+        ssh_edit_prompt = """
 Key:            "enable-ssh-server"
 Label:          "Enable SSH Login"
 Description:    "Enable remote login via SSH and disable remote login
@@ -295,104 +304,88 @@ Current Value:  "false"
 Enter new value for this property
         """.strip()
 
-        expected_prompts = [
-            menu_string,
-            username_edit_string,
-            menu_string,
-            username_edit_string,
-            username_edit_string,
-            menu_string,
-            menu_string,
-            re.sub('Value:  ""', 'Value:  "hello"',
-                   username_edit_string),
-            menu_string,
-            menu_string,
-            ssh_edit_string,
-            ssh_edit_string,
-            menu_string
-        ]
-        custom_inputs = [
-            "login-u",     # select by name prefix
-            "",            # no change, return to menu
-            "1",           # select by number
-            ("thisiswaytoolongofastringtouseforausername"
-             "whatamipossiblythinking!"),  # invalid value
-            "hello",       # valid value, return to menu
-            "27",          # out of range
-            "1",           # select by number
-            "goodbye",     # valid value, return to menu
-            "enable-",     # ambiguous selection
-            "enable-ssh",  # unambiguous selection
-            "nope",        # not a valid boolean
-            "true",        # valid boolean
-            "q",
-        ]
-        expected_logs = [
-            None,
-            {
-                'levelname': 'INFO',
-                'msg': 'Value.*unchanged',
-            },
-            None,
-            {
-                'levelname': 'ERROR',
-                'msg': 'Unsupported value.*login-username.*64 characters',
-            },
-            {
-                'levelname': 'INFO',
-                'msg': 'Successfully updated property',
-            },
-            {
-                'levelname': 'ERROR',
-                'msg': 'Invalid input',
-            },
-            None,
-            {
-                'levelname': 'INFO',
-                'msg': 'Successfully updated property',
-            },
-            {
-                'levelname': 'ERROR',
-                'msg': 'Invalid input',
-            },
-            None,
-            {
-                'levelname': 'ERROR',
-                'msg': 'Unsupported value.*enable-ssh-server.*boolean',
-            },
-            {
-                'levelname': 'INFO',
-                'msg': 'Successfully updated property',
-            },
-            None,
-        ]
+        # List of tuples:
+        # (expected_prompt, input_to_provide, expected_log)
+        prompt_idx = 0
+        input_idx = 1
+        msgs_idx = 2
+        expected = [
+            # select by name prefix
+            (menu_prompt, "login-u", None),
+            # unchanged value, return to menu
+            (username_edit_prompt, "", {'levelname': 'INFO',
+                                        'msg': 'Value.*unchanged', }),
 
-        # sanity check
-        self.assertEqual(len(expected_prompts), len(custom_inputs),
-                         "expected_prompts {0} != custom_inputs {1}"
-                         .format(len(expected_prompts), len(custom_inputs)))
-        self.assertEqual(len(expected_prompts), len(expected_logs),
-                         "expected_prompts {0} != expected_logs {1}"
-                         .format(len(expected_prompts), len(expected_logs)))
+            # select by number
+            (menu_prompt, "1", None),
+            # invalid value
+            (username_edit_prompt,
+             ("thisiswaytoolongofastringtouseforausername"
+              "whatamipossiblythinking!"),
+             {'levelname': 'ERROR',
+              'msg': 'Unsupported value.*login-username.*64 characters', }),
+            # valid value, update and return to menu
+            (username_edit_prompt, "hello",
+             {'levelname': 'INFO',
+              'msg': 'Successfully updated property', }),
+
+            # out of range menu selection
+            (menu_prompt, "27",
+             {'levelname': 'ERROR', 'msg': 'Invalid input', }),
+
+            # select by number
+            (menu_prompt, "1", None),
+            # valid value, return to menu
+            (re.sub('Value:  ""', 'Value:  "hello"', username_edit_prompt),
+             "goodbye",
+             {'levelname': 'INFO', 'msg': 'Successfully updated property', }),
+
+            # ambiguous selection
+            (menu_prompt, "enable-",
+             {'levelname': 'ERROR', 'msg': 'Invalid input', }),
+
+            # unambiguous selection
+            (menu_prompt, "enable-ssh", None),
+            # value to be munged, no change, return
+            (ssh_edit_prompt, "n",
+             {'levelname': 'INFO', 'msg': 'Successfully updated property', }),
+
+            # unambiguous selection
+            (menu_prompt, "enable-ssh", None),
+            # not a valid boolean
+            (ssh_edit_prompt, "nope",
+             {'levelname': 'ERROR',
+              'msg': 'Unsupported value.*enable-ssh-server.*boolean', }),
+            # valid boolean, update and return to menu
+            (ssh_edit_prompt, "true",
+             {'levelname': 'INFO', 'msg': 'Successfully updated property', }),
+
+            # done
+            (menu_prompt, "q", None),
+        ]
 
         def custom_input(prompt,
                          default_value):  # pylint: disable=unused-argument
             """Mock for get_input."""
             if self.counter > 0:
-                log = expected_logs[self.counter-1]
+                log = expected[self.counter-1][msgs_idx]
                 if log is not None:
-                    self.assertLogged(**log)  # pylint: disable=not-a-mapping
+                    self.assertLogged(info='After step {0}, '
+                                      .format(self.counter - 1),
+                                      **log)  # pylint: disable=not-a-mapping
                 else:
-                    self.assertNoLogsOver(logging.INFO)
+                    self.assertNoLogsOver(logging.INFO,
+                                          info='After step {0}, '
+                                          .format(self.counter - 1))
             # Get output and flush it
             # Make sure it matches expectations
             self.maxDiff = None
             self.assertMultiLineEqual(
-                expected_prompts[self.counter], prompt,
+                expected[self.counter][prompt_idx], prompt,
                 "failed at index {0}! Expected:\n{1}\nActual:\n{2}".format(
-                    self.counter, expected_prompts[self.counter], prompt))
+                    self.counter, expected[self.counter][prompt_idx], prompt))
             # Return our canned input
-            canned_input = custom_inputs[self.counter]
+            canned_input = expected[self.counter][input_idx]
             self.counter += 1
             return canned_input
 
@@ -401,7 +394,7 @@ Enter new value for this property
             self.instance.UI.get_input = custom_input
             self.instance.package = self.input_ovf
             self.instance.run()
-            log = expected_logs[self.counter - 1]
+            log = expected[self.counter - 1][msgs_idx]
             if log is not None:
                 self.assertLogged(**log)  # pylint: disable=not-a-mapping
         finally:

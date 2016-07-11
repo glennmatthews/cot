@@ -611,9 +611,13 @@ class CLI(UI):
                      "Please contact the COT development team."
                      .format(e.args[0]))
         except EnvironmentError as e:
-            # EnvironmentError may have both or neither of (errno, strerror).
+            # EnvironmentError may have some of (errno, strerror, filename).
             if e.errno is not None:
-                print(e.strerror)
+                if e.filename is not None:
+                    # implicitly we also have e.strerror
+                    print("{0}: {1}".format(e.filename, e.strerror))
+                else:
+                    print(e)
                 sys.exit(e.errno)
             else:
                 print(e.args[0])

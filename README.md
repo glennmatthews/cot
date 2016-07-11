@@ -6,6 +6,7 @@ Common OVF Tool (COT)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://pypi.python.org/pypi/cot/)
 [![build status](https://api.travis-ci.org/glennmatthews/cot.svg?branch=master)](https://travis-ci.org/glennmatthews/cot)
 [![Coverage Status](https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master)](https://coveralls.io/r/glennmatthews/cot?branch=master)
+[![Codecov](https://img.shields.io/codecov/c/github/glennmatthews/cot.svg)](https://codecov.io/gh/glennmatthews/cot)
 [![Documentation Status](https://readthedocs.org/projects/cot/badge/?version=latest)](https://readthedocs.org/projects/cot/?badge=latest)
 
 COT (the Common OVF Tool) is a tool for editing
