@@ -28,10 +28,6 @@ import subprocess
 import sys
 import tarfile
 from contextlib import closing
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import mock
 
 from COT.tests.ut import COT_UT
@@ -43,13 +39,19 @@ from COT.helpers import HelperError
 from COT.vm_context_manager import VMContextManager
 
 
-class TestByteString(unittest.TestCase):
+class TestByteString(COT_UT):
     """Test cases for byte-count to string conversion functions."""
 
     def test_byte_count(self):
         """Test byte_count() function."""
         self.assertEqual(byte_count("128", "byte"), 128)
         self.assertEqual(byte_count("1", "byte * 2^10"), 1024)
+
+        # unknown multiplier is ignored with a warning
+        self.assertEqual(byte_count("100", "foobar"), 100)
+        self.assertLogged(levelname='WARNING',
+                          msg="Unknown multiplier string '%s'",
+                          args=('foobar',))
 
     def test_factor_bytes(self):
         """Test factor_bytes() function."""
@@ -273,6 +275,13 @@ ovf:size="{cfg_size}" />
                   os.path.join(self.temp_dir, "temp.ova"))
         ovf.write()
         ovf.destroy()
+
+        # Read OVA and overwrite itself
+        ova = OVF(os.path.join(self.temp_dir, "temp.ova"),
+                  os.path.join(self.temp_dir, "temp.ova"))
+        ova.write()
+        ova.destroy()
+
         # Read OVA and write to OVF
         ovf2 = OVF(os.path.join(self.temp_dir, "temp.ova"),
                    os.path.join(self.temp_dir, "input.ovf"))
@@ -398,7 +407,11 @@ ovf:size="{cfg_size}" />
         # .ova that is an empty TAR file
         tarf = tarfile.open(fake_file, 'w')
         tarf.close()
-        self.assertRaises(VMInitError, OVF, fake_file, None)
+        with self.assertRaises(VMInitError) as cm:
+            OVF(fake_file, None)
+        self.assertEqual(cm.exception.errno, 1)
+        self.assertEqual(cm.exception.strerror, "No files to untar")
+        self.assertEqual(cm.exception.filename, fake_file)
 
         # .ova that is a TAR file but does not contain an OVF descriptor
         tarf = tarfile.open(fake_file, 'w')
