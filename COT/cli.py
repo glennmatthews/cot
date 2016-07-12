@@ -164,10 +164,12 @@ class CLI(UI):
 
         ::
 
-          >>> fill_usage('add-file', ["FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"])
+          >>> print(CLI(50).fill_usage('add-file',
+          ...       ["FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"]))
+          <BLANKLINE>
             cot add-file --help
-            cot add-file FILE PACKAGE [-o OUTPUT]
-                         [-f FILE_ID]
+            cot <opts> add-file FILE PACKAGE [-o OUTPUT]
+                                [-f FILE_ID]
 
         :param str subcommand: Subcommand name/keyword
         :param list usage_list: List of usage strings for this subcommand.
@@ -230,7 +232,7 @@ class CLI(UI):
 
         ::
 
-          >>> fill_examples([
+          >>> print(CLI(70).fill_examples([
           ...    ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
           ...     " admin/admin, creating a VM named 'test_vm' from foo.ova.",
           ...     'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
@@ -239,18 +241,18 @@ class CLI(UI):
           ...     " admin (prompting the user to input a password at runtime),"
           ...     " creating a VM based on profile '1CPU-2.5GB' in foo.ova.",
           ...     'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB')
-          ... ])
+          ... ]))
           Examples:
             Deploy to vSphere/ESXi server 192.0.2.100 with credentials
             admin/admin, creating a VM named 'test_vm' from foo.ova.
-
+          <BLANKLINE>
               cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
                   -n test_vm
-
+          <BLANKLINE>
             Deploy to vSphere/ESXi server 192.0.2.100, with username admin
             (prompting the user to input a password at runtime), creating a VM
             based on profile '1CPU-2.5GB' in foo.ova.
-
+          <BLANKLINE>
               cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
 
         :param list example_list: List of (description, CLI example)
@@ -611,9 +613,13 @@ class CLI(UI):
                      "Please contact the COT development team."
                      .format(e.args[0]))
         except EnvironmentError as e:
-            # EnvironmentError may have both or neither of (errno, strerror).
+            # EnvironmentError may have some of (errno, strerror, filename).
             if e.errno is not None:
-                print(e.strerror)
+                if e.filename is not None:
+                    # implicitly we also have e.strerror
+                    print("{0}: {1}".format(e.filename, e.strerror))
+                else:
+                    print(e)
                 sys.exit(e.errno)
             else:
                 print(e.args[0])

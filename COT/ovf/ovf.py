@@ -199,8 +199,8 @@ class OVF(VMDescription, XML):
 
     # API methods to be called by clients
 
-    @classmethod
-    def detect_type_from_name(cls, filename):
+    @staticmethod
+    def detect_type_from_name(filename):
         """Check the given filename to see if it looks like a type we support.
 
         For our purposes, the file needs to match ".ov[af]" to appear to be
@@ -269,25 +269,26 @@ class OVF(VMDescription, XML):
                 # We should never get here, but be safe...
                 raise VMInitError(
                     2,
-                    "File {0} does not appear to be an OVA or OVF"
-                    .format(input_file))
+                    "File does not appear to be an OVA or OVF",
+                    input_file)
 
             # Open the provided OVF
             try:
                 XML.__init__(self, self.ovf_descriptor)
             except ParseError as e:
-                raise VMInitError(2, "XML parser error in reading {0}: {1}"
-                                  .format(self.ovf_descriptor, str(e)))
+                raise VMInitError(2,
+                                  "XML error in parsing file: " + str(e),
+                                  self.ovf_descriptor)
 
             # Quick sanity check before we go any further:
             if ((not re.search(r"Envelope", self.root.tag)) or
                     (XML.strip_ns(self.root.tag) != 'Envelope')):
                 raise VMInitError(
                     2,
-                    "File {0} does not appear to be an OVF descriptor - "
-                    "expected top-level element {1} but found {2} "
-                    "instead!".format(self.ovf_descriptor, 'Envelope',
-                                      self.root.tag))
+                    "File does not appear to be an OVF descriptor - "
+                    "expected top-level element {0} but found {1} instead"
+                    .format('Envelope', self.root.tag),
+                    self.ovf_descriptor)
 
             self._ovf_version = None
             self.name_helper = name_helper(self.ovf_version)
@@ -345,7 +346,8 @@ class OVF(VMDescription, XML):
                 self.hardware = OVFHardware(self)
             except OVFHardwareDataError as e:
                 raise VMInitError(1,
-                                  "OVF descriptor is invalid: {0}".format(e))
+                                  "OVF descriptor is invalid: {0}".format(e),
+                                  self.ovf_descriptor)
 
             assert self.platform
 
@@ -412,9 +414,9 @@ class OVF(VMDescription, XML):
             else:
                 raise VMInitError(
                     2,
-                    "File {0} has an Envelope but it is in "
-                    "unknown namespace {1}"
-                    .format(self.ovf_descriptor, root_namespace))
+                    "File has an Envelope but it is in unknown namespace {0}"
+                    .format(root_namespace),
+                    self.ovf_descriptor)
         return self._ovf_version
 
     @property
@@ -757,8 +759,6 @@ class OVF(VMDescription, XML):
             self.write_xml(self.output_file)
             # Copy all files from working directory to destination
             dest_dir = os.path.dirname(os.path.abspath(self.output_file))
-            if not dest_dir:
-                dest_dir = os.getcwd()
 
             for file_obj in self.references.findall(self.FILE):
                 file_name = file_obj.get(self.FILE_HREF)
@@ -1364,7 +1364,7 @@ class OVF(VMDescription, XML):
         :param str label: Brief descriptive label for the profile
         :param str description: Verbose description of the profile
         """
-        self.deploy_opt_section = self.create_envelope_section_if_absent(
+        self.deploy_opt_section = self._create_envelope_section_if_absent(
             self.DEPLOY_OPT_SECTION, "Configuration Profiles")
 
         cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
@@ -1486,7 +1486,7 @@ class OVF(VMDescription, XML):
         :param str label: Brief label for the network
         :param str description: Verbose description of the network
         """
-        self.network_section = self.create_envelope_section_if_absent(
+        self.network_section = self._create_envelope_section_if_absent(
             self.NETWORK_SECTION,
             "Logical networks",
             attrib=self.NETWORK_SECTION_ATTRIB)
@@ -2159,7 +2159,7 @@ class OVF(VMDescription, XML):
                              "do not require a Disk")
             return disk
 
-        self.disk_section = self.create_envelope_section_if_absent(
+        self.disk_section = self._create_envelope_section_if_absent(
             self.DISK_SECTION,
             "Virtual disk information",
             attrib=self.DISK_SECTION_ATTRIB)
@@ -2325,8 +2325,8 @@ class OVF(VMDescription, XML):
         try:
             tarf = tarfile.open(file_path, 'r')
         except (EOFError, tarfile.TarError) as e:
-            raise VMInitError(1, "Could not untar {0}: {1}"
-                              .format(file_path, e.args))
+            raise VMInitError(1, "Could not untar file: {0}".format(e.args),
+                              file_path)
 
         try:
             # The OVF standard says, with regard to OVAs:
@@ -2341,14 +2341,14 @@ class OVF(VMDescription, XML):
             #
             # For now we just validate #1.
             if not tarf.getmembers():
-                raise VMInitError(1, "No files to untar from {0}!"
-                                  .format(file_path))
+                raise VMInitError(1, "No files to untar", file_path)
             ovf_descriptor = tarf.getmembers()[0]
             if os.path.splitext(ovf_descriptor.name)[1] != '.ovf':
                 raise VMInitError(1,
-                                  "First file in {0} is '{1}' but it should "
+                                  "First file in TAR is '{0}' but it should "
                                   "have been an OVF file - OVA is invalid!"
-                                  .format(file_path, ovf_descriptor.name))
+                                  .format(ovf_descriptor.name),
+                                  file_path)
             # Make sure the provided file doesn't contain any malicious paths
             # http://stackoverflow.com/questions/8112742/
             for n in tarf.getnames():
@@ -2356,7 +2356,7 @@ class OVF(VMDescription, XML):
                 if not (os.path.abspath(os.path.join(self.working_dir, n))
                         .startswith(self.working_dir)):
                     raise VMInitError(1, "Tar file contains malicious/unsafe "
-                                      "file path '{0}'!".format(n))
+                                      "file path '{0}'!".format(n), file_path)
 
             # TODO: In theory we could read the ovf descriptor XML directly
             # from the TAR and not need to even extract this file to disk...
@@ -2448,8 +2448,8 @@ class OVF(VMDescription, XML):
                 file_ref.add_to_archive(tarf)
                 logger.verbose("Added %s to %s", file_name, tar_file)
 
-    def create_envelope_section_if_absent(self, section_tag, info_string,
-                                          attrib=None):
+    def _create_envelope_section_if_absent(self, section_tag, info_string,
+                                           attrib=None):
         """If the OVF doesn't already have the given Section, create it.
 
         :param str section_tag: XML tag of the desired section.
@@ -2654,8 +2654,3 @@ class OVF(VMDescription, XML):
             (capacity, cap_units) = factor_bytes(capacity_bytes)
             disk.set(self.DISK_CAPACITY, capacity)
             disk.set(self.DISK_CAP_UNITS, cap_units)
-
-
-if __name__ == "__main__":
-    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
-    doctest.testmod()

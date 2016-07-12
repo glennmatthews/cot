@@ -28,10 +28,7 @@ import subprocess
 import sys
 import tarfile
 from contextlib import closing
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import mock
 
 from COT.tests.ut import COT_UT
 from COT.ovf import OVF
@@ -42,13 +39,19 @@ from COT.helpers import HelperError
 from COT.vm_context_manager import VMContextManager
 
 
-class TestByteString(unittest.TestCase):
+class TestByteString(COT_UT):
     """Test cases for byte-count to string conversion functions."""
 
     def test_byte_count(self):
         """Test byte_count() function."""
         self.assertEqual(byte_count("128", "byte"), 128)
         self.assertEqual(byte_count("1", "byte * 2^10"), 1024)
+
+        # unknown multiplier is ignored with a warning
+        self.assertEqual(byte_count("100", "foobar"), 100)
+        self.assertLogged(levelname='WARNING',
+                          msg="Unknown multiplier string '%s'",
+                          args=('foobar',))
 
     def test_factor_bytes(self):
         """Test factor_bytes() function."""
@@ -101,8 +104,8 @@ class TestOVFInputOutput(COT_UT):
 
     def test_input_output(self):
         """Read an OVF then write it again, verify no changes."""
-        with VMContextManager(self.input_ovf, self.temp_file):
-            pass
+        with VMContextManager(self.input_ovf, self.temp_file) as vm:
+            self.assertEqual(vm.ovf_version, 1.0)
         self.check_diff('')
 
         # Filename output too
@@ -115,14 +118,14 @@ class TestOVFInputOutput(COT_UT):
 
     def test_input_output_v09(self):
         """Test reading/writing of a v0.9 OVF."""
-        with VMContextManager(self.v09_ovf, self.temp_file):
-            pass
+        with VMContextManager(self.v09_ovf, self.temp_file) as vm:
+            self.assertEqual(vm.ovf_version, 0.9)
         self.check_diff('', file1=self.v09_ovf)
 
     def test_input_output_v20_vbox(self):
         """Test reading/writing of a v2.0 OVF from VirtualBox."""
-        with VMContextManager(self.v20_vbox_ovf, self.temp_file):
-            pass
+        with VMContextManager(self.v20_vbox_ovf, self.temp_file) as vm:
+            self.assertEqual(vm.ovf_version, 2.0)
 
         # TODO - vbox XML is not very clean so the diffs are large...
         # self.check_diff('', file1=self.v20_vbox_ovf)
@@ -272,6 +275,13 @@ ovf:size="{cfg_size}" />
                   os.path.join(self.temp_dir, "temp.ova"))
         ovf.write()
         ovf.destroy()
+
+        # Read OVA and overwrite itself
+        ova = OVF(os.path.join(self.temp_dir, "temp.ova"),
+                  os.path.join(self.temp_dir, "temp.ova"))
+        ova.write()
+        ova.destroy()
+
         # Read OVA and write to OVF
         ovf2 = OVF(os.path.join(self.temp_dir, "temp.ova"),
                    os.path.join(self.temp_dir, "input.ovf"))
@@ -350,6 +360,37 @@ ovf:size="{cfg_size}" />
             f.write("<foo/>")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
+        # .ovf claiming to be OVF version 3.0, which doesn't exist yet
+        with self.assertRaises(VMInitError) as cm:
+            OVF(self.localfile("ersatz_ovf_3.0.ovf"), None)
+        self.assertEqual(cm.exception.errno, 2)
+        self.assertEqual(cm.exception.strerror,
+                         "File has an Envelope but it is in unknown namespace "
+                         "http://schemas.dmtf.org/ovf/envelope/3")
+        self.assertEqual(cm.exception.filename,
+                         self.localfile("ersatz_ovf_3.0.ovf"))
+
+    @mock.patch("COT.ovf.OVF.detect_type_from_name", return_value=".vbox")
+    def test_unknown_extension(self, mock_type):
+        """Test handling of unexpected behavior in detect_type_from_name."""
+        # unsupported input file type
+        with self.assertRaises(VMInitError) as cm:
+            OVF(self.input_ovf, None)
+        self.assertEqual(cm.exception.errno, 2)
+        self.assertEqual(cm.exception.strerror,
+                         "File does not appear to be an OVA or OVF")
+        self.assertEqual(cm.exception.filename, self.input_ovf)
+
+        # unsupported output file type
+        mock_type.return_value = ".ovf"
+        with self.assertRaises(NotImplementedError) as cm:
+            with VMContextManager(self.input_ovf, None) as vm:
+                mock_type.return_value = ".qcow2"
+                vm.output_file = os.path.join(self.temp_dir, "foo.qcow2")
+
+        self.assertEqual(cm.exception.args[0],
+                         "Not sure how to write a '.qcow2' file")
+
     def test_invalid_ova_file(self):
         """Check that various invalid input OVA files result in VMInitError."""
         fake_file = os.path.join(self.temp_dir, "foo.ova")
@@ -366,7 +407,14 @@ ovf:size="{cfg_size}" />
         # .ova that is an empty TAR file
         tarf = tarfile.open(fake_file, 'w')
         tarf.close()
-        self.assertRaises(VMInitError, OVF, fake_file, None)
+        with self.assertRaises(VMInitError) as cm:
+            OVF(fake_file, None)
+        self.assertEqual(cm.exception.errno, 1)
+        if sys.hexversion < 0x02070000:
+            self.assertRegex(cm.exception.strerror, "Could not untar file:")
+        else:
+            self.assertEqual(cm.exception.strerror, "No files to untar")
+        self.assertEqual(cm.exception.filename, fake_file)
 
         # .ova that is a TAR file but does not contain an OVF descriptor
         tarf = tarfile.open(fake_file, 'w')

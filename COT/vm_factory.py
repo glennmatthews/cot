@@ -53,15 +53,16 @@ class VMFactory(object):
 
         if not vm_class:
             raise VMInitError(2,
-                              "Unknown VM description type for input file "
-                              "'{0}' - only supported types are {1}"
-                              .format(input_file, supported_types))
+                              "Unknown VM description type for input file - "
+                              "only supported types are {0}"
+                              .format(supported_types),
+                              input_file)
 
         logger.info("Loading '%s' as %s", input_file, vm_class.__name__)
         try:
             vm = vm_class(input_file, output_file)
         except ValueUnsupportedError as e:
-            raise VMInitError(2, str(e))
+            raise VMInitError(2, str(e), input_file)
         logger.debug("Loaded VM object from %s", input_file)
 
         return vm
