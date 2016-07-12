@@ -410,7 +410,10 @@ ovf:size="{cfg_size}" />
         with self.assertRaises(VMInitError) as cm:
             OVF(fake_file, None)
         self.assertEqual(cm.exception.errno, 1)
-        self.assertEqual(cm.exception.strerror, "No files to untar")
+        if sys.hexversion < 0x02070000:
+            self.assertRegex(cm.exception.strerror, "Could not untar file:")
+        else:
+            self.assertEqual(cm.exception.strerror, "No files to untar")
         self.assertEqual(cm.exception.filename, fake_file)
 
         # .ova that is a TAR file but does not contain an OVF descriptor
