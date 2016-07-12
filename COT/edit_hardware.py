@@ -697,7 +697,3 @@ def expand_list_wildcard(name_list, length):
         logger.info("New list is %s", name_list)
 
     return name_list
-
-if __name__ == "__main__":
-    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
-    doctest.testmod()

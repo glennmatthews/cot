@@ -2654,8 +2654,3 @@ class OVF(VMDescription, XML):
             (capacity, cap_units) = factor_bytes(capacity_bytes)
             disk.set(self.DISK_CAPACITY, capacity)
             disk.set(self.DISK_CAP_UNITS, cap_units)
-
-
-if __name__ == "__main__":
-    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
-    doctest.testmod()
