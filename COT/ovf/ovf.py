@@ -1364,7 +1364,7 @@ class OVF(VMDescription, XML):
         :param str label: Brief descriptive label for the profile
         :param str description: Verbose description of the profile
         """
-        self.deploy_opt_section = self.create_envelope_section_if_absent(
+        self.deploy_opt_section = self._create_envelope_section_if_absent(
             self.DEPLOY_OPT_SECTION, "Configuration Profiles")
 
         cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
@@ -1486,7 +1486,7 @@ class OVF(VMDescription, XML):
         :param str label: Brief label for the network
         :param str description: Verbose description of the network
         """
-        self.network_section = self.create_envelope_section_if_absent(
+        self.network_section = self._create_envelope_section_if_absent(
             self.NETWORK_SECTION,
             "Logical networks",
             attrib=self.NETWORK_SECTION_ATTRIB)
@@ -2159,7 +2159,7 @@ class OVF(VMDescription, XML):
                              "do not require a Disk")
             return disk
 
-        self.disk_section = self.create_envelope_section_if_absent(
+        self.disk_section = self._create_envelope_section_if_absent(
             self.DISK_SECTION,
             "Virtual disk information",
             attrib=self.DISK_SECTION_ATTRIB)
@@ -2448,8 +2448,8 @@ class OVF(VMDescription, XML):
                 file_ref.add_to_archive(tarf)
                 logger.verbose("Added %s to %s", file_name, tar_file)
 
-    def create_envelope_section_if_absent(self, section_tag, info_string,
-                                          attrib=None):
+    def _create_envelope_section_if_absent(self, section_tag, info_string,
+                                           attrib=None):
         """If the OVF doesn't already have the given Section, create it.
 
         :param str section_tag: XML tag of the desired section.
