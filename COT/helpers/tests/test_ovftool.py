@@ -40,7 +40,7 @@ class TestOVFTool(HelperUT):
         with self.assertRaises(RuntimeError):
             assert self.helper.version
 
-    @mock.patch('COT.helpers.helper.Helper.find_executable',
+    @mock.patch('distutils.spawn.find_executable',
                 return_value="/fake/ovftool")
     @mock.patch('COT.helpers.helper.Helper._check_output')
     @mock.patch('subprocess.check_call')

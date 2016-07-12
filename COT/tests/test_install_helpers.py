@@ -67,7 +67,7 @@ class TestCOTInstallHelpers(COT_UT):
                 side_effect=stub_check_output)
     @mock.patch('os.path.exists', return_value=True)
     @mock.patch('filecmp.cmp', return_value=True)
-    @mock.patch('COT.helpers.helper.Helper.find_executable')
+    @mock.patch('distutils.spawn.find_executable')
     def test_verify_only(self, mock_find_executable, *_):
         """Make sure expected results are seen with --verify-only option."""
         # pylint: disable=protected-access
@@ -100,7 +100,7 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
     @mock.patch('COT.helpers.helper.Helper.apt_install')
     @mock.patch('COT.helpers.helper.Helper.yum_install')
     @mock.patch('COT.helpers.helper.Helper.port_install')
-    @mock.patch('COT.helpers.helper.Helper.find_executable')
+    @mock.patch('distutils.spawn.find_executable')
     def test_install(self,
                      mock_find_executable,
                      mock_port_install,

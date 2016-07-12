@@ -89,7 +89,7 @@ class HelperUT(COT_UT):
         # pylint: disable=protected-access
         self.assertTrue(Helper._apt_updated)
 
-    @mock.patch('COT.helpers.helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     def apt_install_test(self, pkgname, helpername, *_):
         """Test installation with 'dpkg' and 'apt-get'."""
         # Python 2.6 doesn't let us do multiple mocks in one 'with'
@@ -121,7 +121,7 @@ class HelperUT(COT_UT):
                         mock_check_call,
                         [['apt-get', '-q', 'install', pkgname]])
 
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
         """Test installation with 'port'."""
         # pylint: disable=protected-access
@@ -143,7 +143,7 @@ class HelperUT(COT_UT):
                     mock_check_call,
                     [['port', 'install', portname]])
 
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     def yum_install_test(self, pkgname, *_):
         """Test installation with yum."""
         self.enable_yum_install()
@@ -183,7 +183,7 @@ class HelperUT(COT_UT):
         Helper.PACKAGE_MANAGERS['yum'] = self._yum
         super(HelperUT, self).tearDown()
 
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('platform.system', return_value='Windows')
     def test_install_helper_unsupported(self, *_):
         """Unable to install without a package manager."""

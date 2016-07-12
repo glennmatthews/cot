@@ -46,7 +46,7 @@ class TestMkIsoFS(HelperUT):
         """Test .version getter logic for genisoimage."""
         self.assertEqual(StrictVersion("1.1.11"), self.helper.version)
 
-    @mock.patch('COT.helpers.helper.Helper.find_executable')
+    @mock.patch('distutils.spawn.find_executable')
     def test_find_mkisofs(self, mock_find_executable):
         """If mkisofs is found, use it."""
         def find_one(name):
@@ -58,7 +58,7 @@ class TestMkIsoFS(HelperUT):
         self.assertEqual("mkisofs", self.helper.name)
         self.assertEqual(self.helper.path, "/mkisofs")
 
-    @mock.patch('COT.helpers.helper.Helper.find_executable')
+    @mock.patch('distutils.spawn.find_executable')
     def test_find_genisoimage(self, mock_find_executable):
         """If mkisofs is not found, but genisoimage is, use that."""
         def find_one(name):

@@ -59,7 +59,7 @@ class TestFatDisk(HelperUT):
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('shutil.copy', return_value=True)
     @mock.patch('COT.helpers.helper.Helper._check_output', return_value="")
     @mock.patch('subprocess.check_call')
@@ -120,7 +120,7 @@ class TestFatDisk(HelperUT):
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('shutil.copy', return_value=True)
     @mock.patch('subprocess.check_call')
     def test_install_helper_yum(self, mock_check_call, mock_copy, *_):
@@ -139,7 +139,7 @@ class TestFatDisk(HelperUT):
         self.assertEqual('/usr/local/bin', mock_copy.call_args[0][1])
 
     @mock.patch('platform.system', return_value='Linux')
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     def test_install_helper_linux_need_make_no_package_manager(self, *_):
         """Linux installation requires yum or apt-get if 'make' missing."""
         self.select_package_manager(None)
@@ -147,7 +147,7 @@ class TestFatDisk(HelperUT):
             self.helper.install_helper()
 
     def _find_make_only(self, name):  # pylint: disable=no-self-use
-        """Stub for Helper.find_executable - returns a fixed response."""
+        """Stub for distutils.spawn.find_executable - only finds 'make'."""
         logger.info("stub_find_executable(%s)", name)
         if name == 'make':
             return "/bin/make"
@@ -156,7 +156,7 @@ class TestFatDisk(HelperUT):
 
     @mock.patch('platform.system', return_value='Linux')
     @mock.patch('COT.helpers.helper.Helper')
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     def test_install_linux_need_compiler_no_package_manager(self, helper, *_):
         """Linux installation requires yum or apt-get if 'gcc' missing."""
         self.select_package_manager(None)

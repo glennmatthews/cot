@@ -29,7 +29,7 @@ import re
 import shutil
 import subprocess
 import tarfile
-from distutils.spawn import find_executable
+import distutils.spawn
 from distutils.version import StrictVersion
 
 try:
@@ -136,16 +136,16 @@ class Helper(object):
         return True
 
     PACKAGE_MANAGERS = {
-        "port":    find_executable('port'),
-        "apt-get": find_executable('apt-get'),
-        "yum":     find_executable('yum'),
+        "port":    distutils.spawn.find_executable('port'),
+        "apt-get": distutils.spawn.find_executable('apt-get'),
+        "yum":     distutils.spawn.find_executable('yum'),
     }
     """Class-level lookup for package manager executables."""
 
-    @classmethod
-    def find_executable(cls, name):
+    @staticmethod
+    def find_executable(name):
         """Wrapper for :func:`distutils.spawn.find_executable`."""
-        return find_executable(name)
+        return distutils.spawn.find_executable(name)
 
     @classmethod
     @contextlib.contextmanager

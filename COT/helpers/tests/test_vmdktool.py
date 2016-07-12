@@ -53,7 +53,7 @@ class TestVmdkTool(HelperUT):
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('COT.helpers.helper.Helper._check_output', return_value="")
     @mock.patch('subprocess.check_call')
     def test_install_helper_apt_get(self, mock_check_call, mock_check_output,
@@ -111,7 +111,7 @@ class TestVmdkTool(HelperUT):
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
-    @mock.patch('COT.helpers.helper.Helper.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('subprocess.check_call')
     def test_install_helper_yum(self, mock_check_call, *_):
         """Test installation via 'yum'."""
