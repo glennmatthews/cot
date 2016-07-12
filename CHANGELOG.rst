@@ -10,6 +10,19 @@ This project adheres to `Semantic Versioning`_.
 
 - Support for Python 3.5
 
+**Changed**
+
+- Switched from statement coverage to branch coverage for better test analysis.
+- Moved from `Coveralls`_ to `Codecov`_ for test coverage tracking, since
+  Coveralls does not support branch coverage reporting.
+
+**Fixed**
+
+- When ``cot edit-hardware`` is used to create new NICs in an OVF that
+  previously had none, and the user does not specify any corresponding Network
+  entries, automatically create a 'VM Network' entry, because all NICs must
+  be mapped to Networks for a valid OVF descriptor.
+
 `1.6.1`_ - 2016-07-07
 ---------------------
 
@@ -480,6 +493,7 @@ Initial public release.
 .. _Pylint: https://www.pylint.org/
 .. _`pep8-naming`: https://pypi.python.org/pypi/pep8-naming
 .. _mccabe: https://pypi.python.org/pypi/mccabe
+.. _Codecov: https://codecov.io
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
 .. _1.6.1: https://github.com/glennmatthews/cot/compare/v1.6.0...v1.6.1

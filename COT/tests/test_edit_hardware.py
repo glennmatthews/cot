@@ -44,6 +44,15 @@ class TestCOTEditHardware(COT_UT):
         'levelname': 'WARNING',
         'msg': "Removing unused network.*",
     }
+    REMOVING_NETWORKSECTION = {
+        'levelname': "WARNING",
+        'msg': "removing NetworkSection",
+    }
+    GENERIC_NETWORK = {
+        'levelname': "WARNING",
+        'msg': "No network names specified, but NICs must be mapped.*",
+        'args': ('VM Network',),
+    }
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
@@ -504,6 +513,84 @@ CIM_ResourceAllocationSettingData">
 -      <ovf:Item>
 +      <ovf:Item ovf:configuration="2CPU-2GB-1NIC 4CPU-4GB-3NIC">
          <rasd:AddressOnParent>11</rasd:AddressOnParent>
+""")
+
+    def test_set_nic_count_no_existing(self):
+        """Create a NIC when nothing pre-exists."""
+        self.instance.package = self.minimal_ovf
+        self.instance.nics = 2
+        self.instance.run()
+        self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
+        self.assertLogged(**self.GENERIC_NETWORK)
+        self.instance.finished()
+        self.check_diff(file1=self.minimal_ovf, expected="""
+ <?xml version='1.0' encoding='utf-8'?>
+-<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
++<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" \
+xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
+CIM_ResourceAllocationSettingData">
+   <ovf:References />
++  <ovf:NetworkSection>
++    <ovf:Info>Logical networks</ovf:Info>
++    <ovf:Network ovf:name="VM Network">
++      <ovf:Description>VM Network</ovf:Description>
++    </ovf:Network>
++  </ovf:NetworkSection>
+   <ovf:VirtualSystem ovf:id="x">
+...
+       <ovf:Info />
++      <ovf:Item>
++        <rasd:Connection>VM Network</rasd:Connection>
++        <rasd:ElementName>Ethernet1</rasd:ElementName>
++        <rasd:InstanceID>1</rasd:InstanceID>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:Connection>VM Network</rasd:Connection>
++        <rasd:ElementName>Ethernet2</rasd:ElementName>
++        <rasd:InstanceID>2</rasd:InstanceID>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+""")
+
+    def test_set_nic_count_zero_then_re_add(self):
+        """Set NIC count to zero, then recreate the NICs."""
+        self.instance.package = self.v09_ovf
+        self.instance.nics = 0
+        self.instance.run()
+        self.instance.finished()
+        self.assertLogged(**self.REMOVING_NETWORK)
+        self.assertLogged(**self.REMOVING_NETWORKSECTION)
+
+        self.instance.package = self.temp_file
+        self.instance.nics = 1
+        self.instance.run()
+        self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
+        self.assertLogged(**self.GENERIC_NETWORK)
+        self.instance.finished()
+        self.check_diff(file1=self.v09_ovf, expected="""
+   <ovf:Section xsi:type="ovf:NetworkSection_Type">
+-    <ovf:Info>The list of logical networks</ovf:Info>
+-    <ovf:Network ovf:name="bridged">
+-      <ovf:Description>The bridged network</ovf:Description>
++    <ovf:Info>Logical networks</ovf:Info>
++    <ovf:Network ovf:name="VM Network">
++      <ovf:Description>VM Network</ovf:Description>
+     </ovf:Network>
+...
+       <ovf:Item>
+-        <rasd:Caption>ethernet0</rasd:Caption>
+-        <rasd:Description>PCNet32 ethernet adapter</rasd:Description>
++        <rasd:Caption>Ethernet1</rasd:Caption>
+         <rasd:InstanceId>8</rasd:InstanceId>
+         <rasd:ResourceType>10</rasd:ResourceType>
+-        <rasd:ResourceSubType>PCNet32</rasd:ResourceSubType>
+-        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>bridged</rasd:Connection>
+-        <rasd:AddressOnParent>1</rasd:AddressOnParent>
++        <rasd:Connection>VM Network</rasd:Connection>
+       </ovf:Item>
 """)
 
     def test_set_nic_network_one_profile(self):
@@ -1620,8 +1707,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.run()
         self.instance.finished()
         self.assertLogged(**self.REMOVING_NETWORK)
-        self.assertLogged(levelname="WARNING",
-                          msg="removing NetworkSection")
+        self.assertLogged(**self.REMOVING_NETWORKSECTION)
         self.check_diff(file1=self.temp_file, file2=self.minimal_ovf,
                         expected="")
 

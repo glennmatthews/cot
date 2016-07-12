@@ -37,11 +37,14 @@ import re
 import textwrap
 import warnings
 
-from .data_validation import canonicalize_ide_subtype, canonicalize_nic_subtype
-from .data_validation import canonicalize_scsi_subtype
-from .data_validation import no_whitespace, mac_address
-from .data_validation import non_negative_int, positive_int, InvalidInputError
-from .submodule import COTSubmodule
+from COT.data_validation import (
+    canonicalize_ide_subtype,
+    canonicalize_nic_subtype,
+    canonicalize_scsi_subtype,
+    no_whitespace, mac_address, non_negative_int, positive_int,
+    InvalidInputError,
+)
+from COT.submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
 
@@ -414,21 +417,29 @@ class COTEditHardware(COTSubmodule):
         vm = self.vm
         nics_dict = vm.get_nic_count(self.profiles)
         max_nics = max(nics_dict.values())
+        existing_networks = vm.networks
 
-        if self.network_descriptions is None:
-            new_descs = []
-        else:
-            new_descs = expand_list_wildcard(self.network_descriptions,
-                                             max_nics)
+        # Special case:
+        # If we added NICs in _run_update_nics to an OVF previously with none,
+        # we MUST create a network, as NICs with no Connection are not valid.
+        if max_nics > 0 and not existing_networks:
             if self.nic_networks is None:
-                # Just rename existing networks, instead of making new ones
-                for network, desc in zip(vm.networks, new_descs):
-                    # Despite the name, create_network can also be used to
-                    # update an existing network.
-                    vm.create_network(network, desc)
+                self.nic_networks = ['VM Network']
+                logger.warning("No network names specified, but NICs must be "
+                               "mapped to a network. Will add network '%s'.",
+                               self.nic_networks[0])
+
+        new_descs = expand_list_wildcard(self.network_descriptions,
+                                         max_nics)
+        if self.nic_networks is None and self.network_descriptions is not None:
+            # Just rename existing networks, instead of making new ones
+            for network, desc in zip(vm.networks, new_descs):
+                # Despite the name, create_network can also be used to
+                # update an existing network.
+                vm.create_network(network, desc)
+            return
 
         if self.nic_networks is not None:
-            existing_networks = vm.networks
             new_networks = expand_list_wildcard(self.nic_networks, max_nics)
             for network in new_networks:
                 if new_descs:
@@ -654,17 +665,21 @@ def expand_list_wildcard(name_list, length):
     expanding a list of input strings to the desired length.
     The syntax for the wildcard option is ``{`` followed by a number
     (indicating the starting index for the name) followed by ``}``.
-    Examples:
+    Examples::
 
-    ``["eth{0}"]``
-      ``Expands to ["eth0", "eth1", "eth2", ...]``
-    ``["mgmt0" "eth{10}"]``
-      ``Expands to ["mgmt0", "eth10", "eth11", "eth12", ...]``
+      >>> expand_list_wildcard(None, 3)
+      []
+      >>> expand_list_wildcard(["eth{0}"], 3)
+      ['eth0', 'eth1', 'eth2']
+      >>> expand_list_wildcard(["mgmt0", "eth{10}"], 4)
+      ['mgmt0', 'eth10', 'eth11', 'eth12']
 
-    :param list name_list: List of names to assign.
+    :param list name_list: List of names to assign, or None
     :param list length: Length to expand to
-    :return: Expanded list
+    :return: Expanded list, or empty list if ``name_list`` is None or empty.
     """
+    if not name_list:
+        return []
     if len(name_list) < length:
         logger.info("Expanding list %s to %d entries", name_list, length)
         # Extract the pattern and remove it from the list
@@ -682,3 +697,7 @@ def expand_list_wildcard(name_list, length):
         logger.info("New list is %s", name_list)
 
     return name_list
+
+if __name__ == "__main__":
+    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
+    doctest.testmod()
