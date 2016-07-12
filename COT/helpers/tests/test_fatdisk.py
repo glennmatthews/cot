@@ -30,6 +30,8 @@ from COT.helpers.fatdisk import FatDisk
 logger = logging.getLogger(__name__)
 
 
+@mock.patch('COT.helpers.download_and_expand',
+            side_effect=HelperUT.stub_download_and_expand)
 class TestFatDisk(HelperUT):
     """Test cases for FatDisk helper class."""
 
@@ -41,14 +43,14 @@ class TestFatDisk(HelperUT):
 
     @mock.patch('COT.helpers.helper.Helper._check_output',
                 return_value="fatdisk, version 1.0.0-beta")
-    def test_get_version(self, _):
+    def test_get_version(self, *_):
         """Validate .version getter."""
         self.assertEqual(StrictVersion("1.0.0"), self.helper.version)
 
     @mock.patch('COT.helpers.helper.Helper._check_output')
     @mock.patch('subprocess.check_call')
     def test_install_helper_already_present(self, mock_check_call,
-                                            mock_check_output):
+                                            mock_check_output, *_):
         """Trying to re-install is a no-op."""
         self.helper.install_helper()
         mock_check_output.assert_not_called()
@@ -112,7 +114,7 @@ class TestFatDisk(HelperUT):
         self.assertTrue(re.search("/fatdisk$", mock_copy.call_args[0][0]))
         self.assertEqual('/home/cot/opt/local/bin', mock_copy.call_args[0][1])
 
-    def test_install_helper_port(self):
+    def test_install_helper_port(self, *_):
         """Test installation via 'port'."""
         self.port_install_test('fatdisk')
 

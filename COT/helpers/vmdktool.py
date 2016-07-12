@@ -24,7 +24,8 @@ import os
 import os.path
 import platform
 
-from .helper import Helper
+import COT.helpers
+from COT.helpers.helper import Helper
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +71,9 @@ class VmdkTool(Helper):
             if not (Helper.apt_install('zlib1g-dev') or
                     Helper.yum_install('zlib-devel')):
                 raise NotImplementedError("Not sure how to install 'zlib'")
-            with self.download_and_expand('http://people.freebsd.org/~brian/'
-                                          'vmdktool/vmdktool-1.4.tar.gz') as d:
+            with COT.helpers.download_and_expand(
+                    'http://people.freebsd.org/~brian/'
+                    'vmdktool/vmdktool-1.4.tar.gz') as d:
                 new_d = os.path.join(d, "vmdktool-1.4")
                 logger.info("Compiling 'vmdktool'")
                 # vmdktool is originally a BSD tool so it has some build

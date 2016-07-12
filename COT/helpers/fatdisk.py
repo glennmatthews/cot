@@ -24,7 +24,8 @@ import os
 import os.path
 import platform
 
-from .helper import Helper
+import COT.helpers
+from COT.helpers.helper import Helper
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ class FatDisk(Helper):
             pass
         elif platform.system() == 'Linux':
             self._install_linux_prereqs()
-            with self.download_and_expand(
+            with COT.helpers.download_and_expand(
                     'https://github.com/goblinhack/'
                     'fatdisk/archive/v1.0.0-beta.tar.gz') as d:
                 new_d = os.path.join(d, 'fatdisk-1.0.0-beta')

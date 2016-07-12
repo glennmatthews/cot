@@ -28,7 +28,9 @@ import mock
 import mock
 
 from COT.tests.ut import COT_UT
+from COT.helpers.api import TemporaryDirectory
 from COT.helpers.helper import Helper
+import COT.helpers
 from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -153,11 +155,11 @@ class HelperUT(COT_UT):
                 mock_check_call.assert_called_with(
                     ['yum', '--quiet', 'install', pkgname])
 
+    @staticmethod
     @contextlib.contextmanager
-    def stub_download_and_expand(self, _url):
+    def stub_download_and_expand(_url):
         """Stub for Helper.download_and_expand - create a fake directory."""
-        from COT.helpers.helper import TemporaryDirectory
-        with TemporaryDirectory(prefix=("cot_ut_" + self.helper.name)) as d:
+        with TemporaryDirectory(prefix="cot_ut_helper") as d:
             yield d
 
     def setUp(self):
@@ -166,9 +168,6 @@ class HelperUT(COT_UT):
         super(HelperUT, self).setUp()
         if self.helper:
             self.helper._path = None   # pylint: disable=protected-access
-        # pylint: disable=protected-access
-        self._download_and_expand = Helper.download_and_expand
-        Helper.download_and_expand = self.stub_download_and_expand
         # save some environment properties for sanity
         self._port = Helper.PACKAGE_MANAGERS['port']
         self._apt_get = Helper.PACKAGE_MANAGERS['apt-get']
@@ -176,8 +175,6 @@ class HelperUT(COT_UT):
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test."""
-        # pylint: disable=protected-access
-        Helper.download_and_expand = self._download_and_expand
         Helper.PACKAGE_MANAGERS['port'] = self._port
         Helper.PACKAGE_MANAGERS['apt-get'] = self._apt_get
         Helper.PACKAGE_MANAGERS['yum'] = self._yum
@@ -318,10 +315,8 @@ class HelperGenericTest(HelperUT):
 
     def test_download_and_expand(self):
         """Validate the download_and_expand() context_manager."""
-        # Remove our stub for this test only
-        Helper.download_and_expand = self._download_and_expand
         try:
-            with Helper.download_and_expand(
+            with COT.helpers.download_and_expand(
                 "https://github.com/glennmatthews/cot/archive/master.tar.gz"
             ) as directory:
                 self.assertTrue(os.path.exists(directory))

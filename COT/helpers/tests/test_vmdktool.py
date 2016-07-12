@@ -25,6 +25,8 @@ from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.vmdktool import VmdkTool
 
 
+@mock.patch('COT.helpers.download_and_expand',
+            side_effect=HelperUT.stub_download_and_expand)
 class TestVmdkTool(HelperUT):
     """Test cases for VmdkTool helper class."""
 
@@ -35,14 +37,14 @@ class TestVmdkTool(HelperUT):
 
     @mock.patch('COT.helpers.helper.Helper._check_output',
                 return_value="vmdktool version 1.4")
-    def test_get_version(self, _):
+    def test_get_version(self, *_):
         """Test .version getter logic."""
         self.assertEqual(StrictVersion("1.4"), self.helper.version)
 
     @mock.patch('COT.helpers.helper.Helper._check_output')
     @mock.patch('subprocess.check_call')
     def test_install_helper_already_present(self, mock_check_call,
-                                            mock_check_output):
+                                            mock_check_output, *_):
         """Do nothing instead of re-installing."""
         self.helper.install_helper()
         mock_check_output.assert_not_called()
@@ -103,7 +105,7 @@ class TestVmdkTool(HelperUT):
                 ['make', 'install', 'PREFIX=/opt/local', 'DESTDIR=/home/cot'],
             ])
 
-    def test_install_helper_port(self):
+    def test_install_helper_port(self, *_):
         """Test installation via 'port'."""
         self.port_install_test('vmdktool')
 
@@ -128,7 +130,7 @@ class TestVmdkTool(HelperUT):
                 ['make', 'install', 'PREFIX=/usr/local'],
             ])
 
-    def test_convert_unsupported(self):
+    def test_convert_unsupported(self, *_):
         """Negative test - conversion to unsupported format/subformat."""
         with self.assertRaises(NotImplementedError):
             self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
