@@ -23,7 +23,6 @@ before_script:
 
 install:
   - pip install tox-travis
-  - pip install coveralls
   - pip install codecov
 
 cache:
@@ -34,5 +33,4 @@ cache:
 script: tox
 
 after_success:
-  - coveralls
   - codecov

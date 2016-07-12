@@ -13,10 +13,7 @@ COT: the Common OVF Tool
 .. image:: https://travis-ci.org/glennmatthews/cot.svg?branch=master
     :target: https://travis-ci.org/glennmatthews/cot
     :alt: Build Status
-.. image:: https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master
-    :target: https://coveralls.io/r/glennmatthews/cot?branch=master
-    :alt: Coverage Status
-.. image:: https://img.shields.io/codecov/c/github/glennmatthews/cot.svg
+.. image:: https://codecov.io/gh/glennmatthews/cot/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/glennmatthews/cot
     :alt: Coverage Status
 .. image:: https://readthedocs.org/projects/cot/badge/?version=latest
