@@ -19,12 +19,9 @@
 import contextlib
 import os
 import logging
-import platform
 import subprocess
 
 import requests
-import mock
-
 import mock
 
 from COT.tests.ut import COT_UT
@@ -220,13 +217,14 @@ class HelperGenericTest(HelperUT):
     @mock.patch('subprocess.check_call')
     def test_check_call_permissions_needed(self, mock_check_call):
         """Test cases where sudo permission is needed."""
-
         def raise_oserror(args, **_):
             """Raise an OSError unless using 'sudo'."""
             if args[0] != 'sudo':
                 raise OSError(13, 'permission denied')
             return
         mock_check_call.side_effect = raise_oserror
+
+        # pylint: disable=protected-access
 
         # Without retry_on_sudo, we reraise the permissions error
         with self.assertRaises(OSError) as cm:

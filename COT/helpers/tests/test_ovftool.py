@@ -19,7 +19,6 @@
 import mock
 
 from COT.helpers.tests.test_helper import HelperUT
-from COT.helpers.helper import Helper
 from COT.helpers.ovftool import OVFTool
 
 

@@ -24,7 +24,6 @@ from distutils.version import StrictVersion
 import mock
 
 from COT.helpers.tests.test_helper import HelperUT
-from COT.helpers.helper import Helper
 from COT.helpers.fatdisk import FatDisk
 
 logger = logging.getLogger(__name__)
