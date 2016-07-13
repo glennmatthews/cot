@@ -22,7 +22,7 @@ https://www.gnu.org/software/xorriso/
 
 import logging
 
-from .helper import Helper
+from .helper import Helper, HelperError
 
 logger = logging.getLogger(__name__)
 
@@ -76,17 +76,25 @@ class MkIsoFS(Helper):
         if self.should_not_be_installed_but_is():
             return
         logger.info("Installing 'mkisofs' and/or 'genisoimage'...")
+        self._name = None
         if Helper.port_install('cdrtools'):
             self._name = 'mkisofs'
-        elif (Helper.apt_install('genisoimage') or
-              Helper.yum_install('genisoimage')):
+        elif Helper.yum_install('genisoimage'):
             self._name = "genisoimage"
-        elif Helper.apt_install('xorriso'):
-            self._name = "xorriso"
         else:
-            raise NotImplementedError(
-                "Unsure how to install mkisofs.\n"
-                "See http://cdrecord.org/")
+            try:
+                if Helper.apt_install('genisoimage'):
+                    self._name = "genisoimage"
+            except HelperError:
+                pass
+
+        if not self._name:
+            if Helper.apt_install('xorriso'):
+                self._name = "xorriso"
+            else:
+                raise NotImplementedError(
+                    "Unsure how to install mkisofs.\n"
+                    "See http://cdrecord.org/")
         logger.info("Successfully installed '%s'", self.name)
 
     def create_iso(self, file_path, contents):

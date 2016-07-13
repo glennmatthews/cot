@@ -19,14 +19,15 @@
 import contextlib
 import os
 import logging
-import platform
 import subprocess
 
 import requests
 import mock
 
 from COT.tests.ut import COT_UT
+from COT.helpers.api import TemporaryDirectory
 from COT.helpers.helper import Helper
+import COT.helpers
 from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -46,13 +47,24 @@ class HelperUT(COT_UT):
         self.helper = None
         super(HelperUT, self).__init__(method_name)
 
+    def assertSubprocessCalls(self, mock_function, args_list):  # noqa: N802
+        """Assert the mock_function was called with the given lists of args."""
+        self.assertEqual(args_list,
+                         # mock_function.call_args_list is a list of calls.
+                         # A call is a tuple (args, kwargs)
+                         # call_args_list[i] is the ith call to the mock,
+                         # call_args_list[i][0] is the args for the ith call,
+                         # and for the subprocess.check_[call|output] methods
+                         # we are testing here,
+                         # call_args_list[i][0][0] is the ith subprocess args.
+                         [a[0][0] for a in mock_function.call_args_list])
+
     def set_helper_version(self, ver):
         """Override the version number of the helper class."""
         self.helper._version = ver      # pylint: disable=protected-access
 
-    def select_package_manager(self, name):
+    def select_package_manager(self, name):  # pylint: disable=no-self-use
         """Select the specified installer program for Helper to use."""
-        Helper.find_executable = self.stub_find_executable
         for pm in Helper.PACKAGE_MANAGERS:
             Helper.PACKAGE_MANAGERS[pm] = (pm == name)
 
@@ -60,8 +72,6 @@ class HelperUT(COT_UT):
         """Set flags and values to force an apt-get update and apt install."""
         self.select_package_manager('apt-get')
         Helper._apt_updated = False     # pylint: disable=protected-access
-        self.fake_output = 'is not installed and no information is available'
-        self.system = 'Linux'
         os.environ['PREFIX'] = '/usr/local'
         if 'DESTDIR' in os.environ:
             del os.environ['DESTDIR']
@@ -69,7 +79,6 @@ class HelperUT(COT_UT):
     def enable_yum_install(self):
         """Set flags and values to force a yum install."""
         self.select_package_manager('yum')
-        self.system = 'Linux'
         os.environ['PREFIX'] = '/usr/local'
         if 'DESTDIR' in os.environ:
             del os.environ['DESTDIR']
@@ -79,115 +88,104 @@ class HelperUT(COT_UT):
         # pylint: disable=protected-access
         self.assertTrue(Helper._apt_updated)
 
-    def apt_install_test(self, pkgname, helpername=None):
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    def apt_install_test(self, pkgname, helpername, *_):
         """Test installation with 'dpkg' and 'apt-get'."""
-        self.enable_apt_install()
-        self.helper.install_helper()
-        self.assertEqual([
-            ['dpkg', '-s', pkgname],
-            ['apt-get', '-q', 'update'],
-            ['apt-get', '-q', 'install', pkgname],
-        ], self.last_argv)
-        if not helpername:
-            helpername = pkgname
-        self.assertEqual(helpername, self.helper.name)
-        self.assertAptUpdated()
-        # Make sure we don't 'apt-get update' again unnecessarily
-        self.last_argv = []
-        self.helper.install_helper()
-        self.assertEqual([
-            ['dpkg', '-s', pkgname],
-            ['apt-get', '-q', 'install', pkgname],
-        ], self.last_argv)
+        # Python 2.6 doesn't let us do multiple mocks in one 'with'
+        with mock.patch.object(self.helper, '_path', new=None):
+            with mock.patch('subprocess.check_call') as mock_check_call:
+                with mock.patch(
+                        'COT.helpers.helper.Helper._check_output',
+                        return_value="is not installed and no"
+                        "information is available") as mock_check_output:
+                    self.enable_apt_install()
+                    self.helper.install_helper()
+                    self.assertSubprocessCalls(mock_check_output,
+                                               [['dpkg', '-s', pkgname]])
+                    self.assertSubprocessCalls(
+                        mock_check_call,
+                        [
+                            ['apt-get', '-q', 'update'],
+                            ['apt-get', '-q', 'install', pkgname],
+                        ])
+                    self.assertEqual(helpername, self.helper.name)
+                    self.assertAptUpdated()
+                    # Make sure we don't 'apt-get update' again unnecessarily
+                    mock_check_call.reset_mock()
+                    mock_check_output.reset_mock()
+                    self.helper.install_helper()
+                    self.assertSubprocessCalls(mock_check_output,
+                                               [['dpkg', '-s', pkgname]])
+                    self.assertSubprocessCalls(
+                        mock_check_call,
+                        [['apt-get', '-q', 'install', pkgname]])
 
-    def port_install_test(self, portname):
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    def port_install_test(self, portname, *_):
         """Test installation with 'port'."""
         # pylint: disable=protected-access
         self.select_package_manager('port')
         Helper._port_updated = False
-        self.helper.install_helper()
-        self.assertEqual([['port', 'selfupdate'],
-                          ['port', 'install', portname]],
-                         self.last_argv)
-        self.assertTrue(Helper._port_updated)
-        # Make sure we don't call port selfupdate again unnecessarily
-        self.last_argv = []
-        self.helper.install_helper()
-        self.assertEqual([['port', 'install', portname]],
-                         self.last_argv)
+        # Python 2.6 doesn't let us use multiple contexts in one 'with'
+        with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch.object(self.helper, '_path', new=None):
+                self.helper.install_helper()
+                self.assertSubprocessCalls(
+                    mock_check_call,
+                    [['port', 'selfupdate'],
+                     ['port', 'install', portname]])
+                self.assertTrue(Helper._port_updated)
+                # Make sure we don't call port selfupdate again unnecessarily
+                mock_check_call.reset_mock()
+                self.helper.install_helper()
+                self.assertSubprocessCalls(
+                    mock_check_call,
+                    [['port', 'install', portname]])
 
-    def stub_check_call(self, argv, require_success=True, **_kwargs):
-        """Stub for Helper._check_call - store the argv and do nothing."""
-        logger.info("stub_check_call(%s, %s)", argv, require_success)
-        self.last_argv.append(argv)
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    def yum_install_test(self, pkgname, *_):
+        """Test installation with yum."""
+        self.enable_yum_install()
+        with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch.object(self.helper, '_path', new=None):
+                self.helper.install_helper()
+                mock_check_call.assert_called_with(
+                    ['yum', '--quiet', 'install', pkgname])
 
-    def stub_check_output(self, argv, require_success=True, **_kwargs):
-        """Stub for Helper._check_output - return canned output."""
-        logger.info("stub_check_output(%s, %s)", argv, require_success)
-        self.last_argv.append(argv)
-        if self.fake_output is not None:
-            return self.fake_output
-        return self._check_output(argv, require_success)
-
-    def stub_find_executable(self, name):
-        """Stub for Helper.find_executable - returns a fixed response."""
-        logger.info("stub_find_executable(%s)", name)
-        return self.fake_path
-
+    @staticmethod
     @contextlib.contextmanager
-    def stub_download_and_expand(self, _url):
+    def stub_download_and_expand(_url):
         """Stub for Helper.download_and_expand - create a fake directory."""
-        from COT.helpers.helper import TemporaryDirectory
-        with TemporaryDirectory(prefix=("cot_ut_" + self.helper.name)) as d:
+        with TemporaryDirectory(prefix="cot_ut_helper") as d:
             yield d
-
-    def stub_confirm(self, _prompt):
-        """Stub for confirm() - return fixed response."""
-        return self.default_confirm_response
-
-    def stub_system(self):
-        """Stub for platform.system() - return fixed platform string."""
-        return self.system
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         # subclass needs to set self.helper
         super(HelperUT, self).setUp()
-        self.fake_output = None
-        self.fake_path = None
-        self.last_argv = []
-        # pylint: disable=protected-access
-        self._check_call = Helper._check_call
-        Helper._check_call = self.stub_check_call
-        self._check_output = Helper._check_output
-        Helper._check_output = self.stub_check_output
-        self._download_and_expand = Helper.download_and_expand
-        Helper.download_and_expand = self.stub_download_and_expand
-        self.default_confirm_response = True
-        self._confirm = Helper.confirm
-        Helper.confirm = self.stub_confirm
-        self._system = platform.system
-        self.system = None
-        platform.system = self.stub_system
+        if self.helper:
+            self.helper._path = None   # pylint: disable=protected-access
         # save some environment properties for sanity
         self._port = Helper.PACKAGE_MANAGERS['port']
         self._apt_get = Helper.PACKAGE_MANAGERS['apt-get']
         self._yum = Helper.PACKAGE_MANAGERS['yum']
-        self._find_executable = Helper.find_executable
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test."""
-        # pylint: disable=protected-access
-        Helper.confirm = self._confirm
-        Helper._check_call = self._check_call
-        Helper._check_output = self._check_output
-        Helper.download_and_expand = self._download_and_expand
         Helper.PACKAGE_MANAGERS['port'] = self._port
         Helper.PACKAGE_MANAGERS['apt-get'] = self._apt_get
         Helper.PACKAGE_MANAGERS['yum'] = self._yum
-        platform.system = self._system
-        Helper.find_executable = self._find_executable
         super(HelperUT, self).tearDown()
+
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    @mock.patch('platform.system', return_value='Windows')
+    def test_install_helper_unsupported(self, *_):
+        """Unable to install without a package manager."""
+        self.select_package_manager(None)
+        if self.helper:
+            with mock.patch.object(self.helper, '_path', new=None):
+                self.assertRaises(NotImplementedError,
+                                  self.helper.install_helper)
 
 
 class HelperGenericTest(HelperUT):
@@ -201,7 +199,6 @@ class HelperGenericTest(HelperUT):
     def test_check_call_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist."""
         # pylint: disable=protected-access
-        Helper._check_call = self._check_call
         self.assertRaises(HelperNotFoundError,
                           Helper._check_call, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
@@ -211,7 +208,6 @@ class HelperGenericTest(HelperUT):
     def test_check_call_helpererror(self):
         """HelperError if executable fails and require_success is set."""
         # pylint: disable=protected-access
-        Helper._check_call = self._check_call
         with self.assertRaises(HelperError) as cm:
             Helper._check_call(["false"])
         self.assertEqual(cm.exception.errno, 1)
@@ -221,15 +217,14 @@ class HelperGenericTest(HelperUT):
     @mock.patch('subprocess.check_call')
     def test_check_call_permissions_needed(self, mock_check_call):
         """Test cases where sudo permission is needed."""
-        # pylint: disable=protected-access
-        Helper._check_call = self._check_call
-
         def raise_oserror(args, **_):
             """Raise an OSError unless using 'sudo'."""
             if args[0] != 'sudo':
                 raise OSError(13, 'permission denied')
             return
         mock_check_call.side_effect = raise_oserror
+
+        # pylint: disable=protected-access
 
         # Without retry_on_sudo, we reraise the permissions error
         with self.assertRaises(OSError) as cm:
@@ -294,9 +289,9 @@ class HelperGenericTest(HelperUT):
 
         Helper._check_output(["false"], require_success=False)
 
-    def test_helper_not_found(self):
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    def test_helper_not_found(self, *_):
         """Make sure helper.path is None if find_executable fails."""
-        Helper.find_executable = self.stub_find_executable
         self.assertEqual(self.helper.path, None)
 
     def test_install_helper_already_present(self):
@@ -310,18 +305,16 @@ class HelperGenericTest(HelperUT):
         self.assertRaises(NotImplementedError,
                           self.helper.call_helper, ["Hello!"])
 
-    def test_call_helper_no_install(self):
+    @mock.patch('COT.helpers.helper.Helper.confirm', return_value=False)
+    def test_call_helper_no_install(self, *_):
         """If not installed, and user declines, raise HelperNotFoundError."""
-        self.default_confirm_response = False
         self.assertRaises(HelperNotFoundError,
                           self.helper.call_helper, ["Hello!"])
 
     def test_download_and_expand(self):
         """Validate the download_and_expand() context_manager."""
-        # Remove our stub for this test only
-        Helper.download_and_expand = self._download_and_expand
         try:
-            with Helper.download_and_expand(
+            with COT.helpers.download_and_expand(
                 "https://github.com/glennmatthews/cot/archive/master.tar.gz"
             ) as directory:
                 self.assertTrue(os.path.exists(directory))

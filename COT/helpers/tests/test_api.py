@@ -23,11 +23,10 @@ from distutils.version import StrictVersion
 import mock
 
 from COT.tests.ut import COT_UT
-import COT.helpers.api
-from COT.helpers import get_checksum
-from COT.helpers import create_disk_image, convert_disk_image
-from COT.helpers import get_disk_format, get_disk_capacity
-from COT.helpers import create_install_dir, install_file
+from COT.helpers import (
+    get_checksum, create_disk_image, convert_disk_image, get_disk_format,
+    get_disk_capacity, create_install_dir, install_file,
+)
 from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -99,6 +98,15 @@ class TestGetDiskFormat(COT_UT):
         self.assertRaises(HelperError, get_disk_format, "")
         self.assertRaises(HelperError, get_disk_format, "/foo/bar/baz")
 
+    @mock.patch('COT.helpers.api.QEMUIMG.get_disk_format',
+                return_value='vmdk')
+    def test_bad_vmdk_header(self, _):
+        """Test corner case in VMDK subtype identification."""
+        with self.assertRaises(RuntimeError) as cm:
+            get_disk_format(self.input_ovf)
+        self.assertRegex(cm.exception.args[0],
+                         "Could not find VMDK 'createType' in the file header")
+
 
 class TestConvertDiskImage(COT_UT):
     """Test cases for convert_disk_image()."""
@@ -113,9 +121,8 @@ class TestConvertDiskImage(COT_UT):
         except HelperNotFoundError as e:
             self.fail(e.strerror)
 
-    def test_convert_to_vmdk_streamoptimized(self):
-        """Convert a disk to vmdk streamOptimized sub-format."""
-        # Raw to stream-optimized vmdk
+    def raw_to_vmdk_stream_optimized_test(self):
+        """Test conversion of raw to vmdk streamOptimized."""
         temp_disk = os.path.join(self.temp_dir, "foo.img")
         try:
             create_disk_image(temp_disk, capacity="16M")
@@ -131,7 +138,8 @@ class TestConvertDiskImage(COT_UT):
         self.assertEqual(f, 'vmdk')
         self.assertEqual(sf, 'streamOptimized')
 
-        # Non-stream-optimized to stream-optimized
+    def vmdk_to_vmdk_stream_optimized_test(self):
+        """Test conversion of unoptimized vmdk to streamOptimized."""
         temp_disk = os.path.join(self.temp_dir, "foo.vmdk")
         create_disk_image(temp_disk, capacity="16M")
         new_disk_path = convert_disk_image(temp_disk, self.temp_dir,
@@ -140,10 +148,8 @@ class TestConvertDiskImage(COT_UT):
         self.assertEqual(f, 'vmdk')
         self.assertEqual(sf, 'streamOptimized')
 
-    def test_convert_to_vmdk_streamoptimized_old_qemu(self):
-        """Code flow for old QEMU version."""
-        # pylint: disable=protected-access
-        COT.helpers.api.QEMUIMG._version = StrictVersion("1.0.0")
+    def qcow2_to_vmdk_stream_optimized_test(self):
+        """Test conversion of qcow2 to vmdk streamOptimized."""
         try:
             temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
             create_disk_image(temp_disk, capacity="16M")
@@ -156,27 +162,24 @@ class TestConvertDiskImage(COT_UT):
             self.assertEqual(sf, 'streamOptimized')
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        finally:
-            COT.helpers.api.QEMUIMG._version = None
 
-    def test_convert_to_vmdk_streamoptimized_new_qemu(self):
-        """Code flow for new QEMU version."""
-        # pylint: disable=protected-access
-        COT.helpers.api.QEMUIMG._version = StrictVersion("2.1.0")
-        try:
-            temp_disk = os.path.join(self.temp_dir, "foo.qcow2")
-            create_disk_image(temp_disk, capacity="16M")
-            new_disk_path = convert_disk_image(temp_disk, self.temp_dir,
-                                               'vmdk', 'streamOptimized')
-            self.assertEqual(new_disk_path,
-                             os.path.join(self.temp_dir, 'foo.vmdk'))
-            (f, sf) = get_disk_format(new_disk_path)
-            self.assertEqual(f, 'vmdk')
-            self.assertEqual(sf, 'streamOptimized')
-        except HelperNotFoundError as e:
-            self.fail(e.strerror)
-        finally:
-            COT.helpers.api.QEMUIMG._version = None
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
+                new_callable=mock.PropertyMock,
+                return_value=StrictVersion("1.0.0"))
+    def test_disk_conversion_old_qemu(self, _):
+        """Test disk conversion flows with older qemu-img version."""
+        self.raw_to_vmdk_stream_optimized_test()
+        self.vmdk_to_vmdk_stream_optimized_test()
+        self.qcow2_to_vmdk_stream_optimized_test()
+
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
+                new_callable=mock.PropertyMock,
+                return_value=StrictVersion("2.1.0"))
+    def test_disk_conversion_new_qemu(self, _):
+        """Test disk conversion flows with newer qemu-img version."""
+        self.raw_to_vmdk_stream_optimized_test()
+        self.vmdk_to_vmdk_stream_optimized_test()
+        self.qcow2_to_vmdk_stream_optimized_test()
 
     def test_convert_to_raw(self):
         """No support for converting VMDK to RAW at present."""

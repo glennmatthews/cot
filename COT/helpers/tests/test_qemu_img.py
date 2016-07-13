@@ -19,6 +19,7 @@
 import os
 
 from distutils.version import StrictVersion
+import mock
 
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers import HelperError
@@ -33,9 +34,10 @@ class TestQEMUImg(HelperUT):
         self.helper = QEMUImg()
         super(TestQEMUImg, self).setUp()
 
-    def test_older_version(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    def test_older_version(self, mock_check_output):
         """Test .version getter logic for older versions."""
-        self.fake_output = """
+        mock_check_output.return_value = """
 qemu-img version 1.4.2, Copyright (c) 2004-2008 Fabrice Bellard
 usage: qemu-img command [command options]
 QEMU disk image utility
@@ -43,33 +45,37 @@ QEMU disk image utility
 Command syntax:
 ..."""
         version = self.helper.version
-        self.assertEqual(self.last_argv[0], ['qemu-img', '--version'])
+        self.assertSubprocessCalls(mock_check_output,
+                                   [['qemu-img', '--version']])
         self.assertEqual(version, StrictVersion("1.4.2"))
 
         # Output should be cached rather than re-invoking qemu-img
-        self.last_argv = []
-        self.fake_output = "Gotcha!"
+        mock_check_output.reset_mock()
         version = self.helper.version
-        self.assertEqual(self.last_argv, [])
+        mock_check_output.assert_not_called()
         self.assertEqual(version, StrictVersion("1.4.2"))
 
-    def test_newer_version(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    def test_newer_version(self, mock_check_output):
         """Test .version getter logic for newer versions."""
-        self.fake_output = \
+        mock_check_output.return_value = \
             "qemu-img version 2.1.2, Copyright (c) 2004-2008 Fabrice Bellard"
         self.assertEqual(self.helper.version,
                          StrictVersion("2.1.2"))
 
-    def test_invalid_version(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    def test_invalid_version(self, mock_check_output):
         """Negative test for .version getter logic."""
-        self.fake_output = "qemu-img: error: unknown argument --version"
+        mock_check_output.return_value = \
+            "qemu-img: error: unknown argument --version"
         with self.assertRaises(RuntimeError):
             assert self.helper.version
 
-    def test_install_helper_already_present(self):
+    @mock.patch('subprocess.check_call')
+    def test_install_helper_already_present(self, mock_check_call):
         """Do nothing when trying to re-install."""
         self.helper.install_helper()
-        self.assertEqual([], self.last_argv)
+        mock_check_call.assert_not_called()
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_apt_get(self):
@@ -82,16 +88,7 @@ Command syntax:
 
     def test_install_helper_yum(self):
         """Test installation via 'yum'."""
-        self.enable_yum_install()
-        self.helper.install_helper()
-        self.assertEqual([['yum', '--quiet', 'install', 'qemu-img']],
-                         self.last_argv)
-
-    def test_install_helper_unsupported(self):
-        """Installation fails without a package manager."""
-        self.select_package_manager(None)
-        with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+        self.yum_install_test('qemu-img')
 
     def test_get_disk_format(self):
         """Get format of various disk images."""
@@ -111,12 +108,13 @@ Command syntax:
         self.assertRaises(HelperError, self.helper.get_disk_format,
                           "/foo/bar/baz")
 
-    def test_get_disk_format_not_available(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    def test_get_disk_format_not_available(self, mock_check_output):
         """Negative test for get_disk_format() - bad command output."""
         # Haven't found a way yet to make qemu-img actually fail here
         # without returning a non-zero RC and triggering a HelperError,
         # so we'll have to fake it
-        self.fake_output = "qemu-img info: unsupported command"
+        mock_check_output.return_value = "qemu-img info: unsupported command"
         self.assertRaises(RuntimeError, self.helper.get_disk_format,
                           "/foo/bar")
 
@@ -134,12 +132,13 @@ Command syntax:
         self.assertRaises(HelperError, self.helper.get_disk_capacity,
                           "/foo/bar/baz")
 
-    def test_get_disk_capacity_not_available(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    def test_get_disk_capacity_not_available(self, mock_check_output):
         """Negative test for get_disk_capacity() - bad command output."""
         # Haven't found a way yet to make qemu-img actually fail here
         # without returning a non-zero RC and triggering a HelperError,
         # so we'll have to fake it
-        self.fake_output = "qemu-img info: unsupported command"
+        mock_check_output.return_value = "qemu-img info: unsupported command"
         self.assertRaises(RuntimeError, self.helper.get_disk_capacity,
                           "/foo/bar")
 

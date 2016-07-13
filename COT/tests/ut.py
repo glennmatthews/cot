@@ -47,6 +47,7 @@ except ImportError:
     import io as StringIO
 
 from pkg_resources import resource_filename
+import mock
 
 try:
     import unittest2 as unittest
@@ -242,15 +243,12 @@ class COT_UT(unittest.TestCase):  # noqa: N801
     def check_cot_output(self, expected):
         """Grab the output from COT and check it against expected output."""
         # pylint: disable=redefined-variable-type
-        sys.stdout = StringIO.StringIO()
-        output = None
-        try:
-            self.instance.run()
-        except (TypeError, ValueError, SyntaxError, LookupError):
-            self.fail(traceback.format_exc())
-        finally:
-            output = sys.stdout.getvalue()
-            sys.stdout = sys.__stdout__
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as so:
+            try:
+                self.instance.run()
+            except (TypeError, ValueError, SyntaxError, LookupError):
+                self.fail(traceback.format_exc())
+            output = so.getvalue()
         self.maxDiff = None
         self.assertMultiLineEqual(expected.strip(), output.strip())
 
