@@ -235,10 +235,6 @@ class Helper(object):
         """Name of the helper program."""
         return self._name
 
-    @name.setter
-    def name(self, name):
-        self._name = name
-
     @property
     def path(self):
         """Discovered path to the helper."""
@@ -336,8 +332,9 @@ class Helper(object):
 
         :raise HelperNotFoundError: if the command doesn't exist
           (instead of a :class:`OSError`)
-        :raise HelperError: if the command returns a value other than 0 and
-          :attr:`require_success` is not ``False``
+        :raise HelperError: if :attr:`require_success` is not ``False`` and
+          the command returns a value other than 0 (instead of a
+          :class:`CalledProcessError`).
         :raise OSError: as :func:`subprocess.check_call`.
         """
         cmd = args[0]
@@ -386,8 +383,9 @@ class Helper(object):
 
         :raise HelperNotFoundError: if the command doesn't exist
           (instead of a :class:`OSError`)
-        :raise HelperError: if the command returns a value other than 0 and
-          :attr:`require_success` is not ``False``
+        :raise HelperError: if :attr:`require_success` is not ``False`` and
+          the command returns a value other than 0 (instead of a
+          :class:`CalledProcessError`).
         :raise OSError: as :func:`subprocess.check_call`.
         """
         cmd = args[0]

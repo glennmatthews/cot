@@ -67,6 +67,7 @@ class VmdkTool(Helper):
                 if not (Helper.apt_install('make') or
                         Helper.yum_install('make')):
                     raise NotImplementedError("Not sure how to install 'make'")
+                assert self.find_executable('make')
             logger.info("vmdktool requires 'zlib'... installing 'zlib'")
             if not (Helper.apt_install('zlib1g-dev') or
                     Helper.yum_install('zlib-devel')):

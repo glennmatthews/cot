@@ -55,6 +55,7 @@ class FatDisk(Helper):
             if not (Helper.apt_install('make') or
                     Helper.yum_install('make')):
                 raise NotImplementedError("Not sure how to install 'make'")
+            assert self.find_executable('make')
 
         # Fatdisk requires clang or gcc or g++
         if not (self.find_executable('clang') or
@@ -65,6 +66,9 @@ class FatDisk(Helper):
                     Helper.yum_install('gcc')):
                 raise NotImplementedError(
                     "Not sure how to install a C compiler")
+            assert (self.find_executable('clang') or
+                    self.find_executable('gcc') or
+                    self.find_executable('g++'))
 
     def install_helper(self):
         """Install ``fatdisk``."""

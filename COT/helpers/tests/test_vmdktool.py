@@ -55,13 +55,21 @@ class TestVmdkTool(HelperUT):
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
-    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable')
     @mock.patch('COT.helpers.helper.Helper._check_output', return_value="")
     @mock.patch('subprocess.check_call')
-    def test_install_helper_apt_get(self, mock_check_call, mock_check_output,
+    def test_install_helper_apt_get(self,
+                                    mock_check_call,
+                                    mock_check_output,
+                                    mock_find_executable,
                                     *_):
         """Test installation via 'apt-get'."""
         self.enable_apt_install()
+        mock_find_executable.side_effect = [
+            None,  # 'vmdktool',
+            None,  # 'make', pre-installation
+            '/bin/make',   # post-installation
+        ]
         self.helper.install_helper()
         self.assertSubprocessCalls(
             mock_check_output,
@@ -81,17 +89,22 @@ class TestVmdkTool(HelperUT):
                 ['make', 'install', 'PREFIX=/usr/local'],
             ])
         self.assertAptUpdated()
+
         # Make sure we don't 'apt-get update/install' again unnecessarily
         mock_check_call.reset_mock()
         mock_check_output.reset_mock()
+        mock_find_executable.reset_mock()
         mock_check_output.return_value = 'install ok installed'
+        mock_find_executable.side_effect = [
+            None,  # vmdktool
+            '/bin/make',
+        ]
         os.environ['PREFIX'] = '/opt/local'
         os.environ['DESTDIR'] = '/home/cot'
         self.helper.install_helper()
         self.assertSubprocessCalls(
             mock_check_output,
             [
-                ['dpkg', '-s', 'make'],
                 ['dpkg', '-s', 'zlib1g-dev'],
             ])
         self.assertSubprocessCalls(
@@ -113,11 +126,19 @@ class TestVmdkTool(HelperUT):
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
-    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    @mock.patch('distutils.spawn.find_executable')
     @mock.patch('subprocess.check_call')
-    def test_install_helper_yum(self, mock_check_call, *_):
+    def test_install_helper_yum(self,
+                                mock_check_call,
+                                mock_find_executable,
+                                *_):
         """Test installation via 'yum'."""
         self.enable_yum_install()
+        mock_find_executable.side_effect = [
+            None,  # 'vmdktool',
+            None,  # 'make', pre-installation
+            '/bin/make',   # post-installation
+        ]
         self.helper.install_helper()
         self.assertSubprocessCalls(
             mock_check_call,
@@ -129,6 +150,25 @@ class TestVmdkTool(HelperUT):
                 ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
                 ['make', 'install', 'PREFIX=/usr/local'],
             ])
+
+    @mock.patch('platform.system', return_value='Linux')
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    def test_install_helper_linux_need_make_no_package_manager(self, *_):
+        """Linux installation requires yum or apt-get if 'make' missing."""
+        self.select_package_manager(None)
+        with self.assertRaises(NotImplementedError):
+            self.helper.install_helper()
+
+    @mock.patch('platform.system', return_value='Linux')
+    @mock.patch('distutils.spawn.find_executable')
+    def test_install_linux_need_compiler_no_package_manager(self,
+                                                            mock_find_exec,
+                                                            *_):
+        """Linux installation needs some way to install 'zlib'."""
+        self.select_package_manager(None)
+        mock_find_exec.side_effect = [None, '/bin/make']
+        with self.assertRaises(NotImplementedError):
+            self.helper.install_helper()
 
     def test_convert_unsupported(self, *_):
         """Negative test - conversion to unsupported format/subformat."""
