@@ -370,9 +370,9 @@ class ValueUnsupportedError(InvalidInputError):
 class ValueTooLowError(ValueUnsupportedError):
     """A numerical input was less than the lowest supported value.
 
-    :ivar value_type: descriptive string
-    :ivar actual_value: invalid value that was provided
-    :ivar expected_value: minimum supported value
+    :param str value_type: descriptive string
+    :param int actual_value: invalid value that was provided
+    :param int expected_value: minimum supported value
     """
 
     def __str__(self):
@@ -385,9 +385,9 @@ class ValueTooLowError(ValueUnsupportedError):
 class ValueTooHighError(ValueUnsupportedError):
     """A numerical input was higher than the highest supported value.
 
-    :ivar value_type: descriptive string
-    :ivar actual_value: invalid value that was provided
-    :ivar expected_value: maximum supported value
+    :param str value_type: descriptive string
+    :param int actual_value: invalid value that was provided
+    :param int expected_value: maximum supported value
     """
 
     def __str__(self):

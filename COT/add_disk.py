@@ -54,8 +54,7 @@ def validate_controller_address(controller, address):
 
     :param str controller: ``'ide'`` or ``'scsi'``
     :param str address: A string like '0:0' or '2:10'
-    :raises: :exc:`.InvalidInputError` if the address/controller combo
-                                       is invalid.
+    :raise InvalidInputError: if the address/controller combo is invalid.
     """
     logger.info("validate_controller_address: %s, %s", controller, address)
     if controller is not None and address is not None:
@@ -116,7 +115,7 @@ class COTAddDisk(COTSubmodule):
     def disk_image(self):
         """Path to disk image file to add to the VM.
 
-        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        :raise InvalidInputError: if the file does not exist.
         """
         return self._disk_image
 
@@ -131,8 +130,7 @@ class COTAddDisk(COTSubmodule):
     def address(self):
         """Disk device address on controller (``1:0``, etc.).
 
-        :raises: :exc:`.InvalidInputError`,
-          see :meth:`validate_controller_address`
+        :raise InvalidInputError: see :meth:`validate_controller_address`
         """
         return self._address
 
@@ -146,8 +144,7 @@ class COTAddDisk(COTSubmodule):
     def controller(self):
         """Disk controller type (``ide``, ``scsi``).
 
-        :raises: :exc:`.InvalidInputError`,
-          see :meth:`validate_controller_address`
+        :raise InvalidInputError: see :meth:`validate_controller_address`
         """
         return self._controller
 
@@ -287,10 +284,10 @@ def search_for_elements(vm, disk_file, file_id, controller, address):
 
     A disk is defined by up to four different sections in the OVF:
 
-    File (references the actual disk image file)
-    Disk (references the File, only used for HD not CD-ROM)
-    Item (defines the SCSI/IDE controller)
-    Item (defines the disk drive, links to controller and File or Disk)
+    * File (references the actual disk image file)
+    * Disk (references the File, only used for HD not CD-ROM)
+    * Item (defines the SCSI/IDE controller)
+    * Item (defines the disk drive, links to controller and File or Disk)
 
     For each of these four sections, we need to know whether to add
     a new one or overwrite an existing one. Depending on the user

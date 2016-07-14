@@ -24,6 +24,10 @@ reports=no
 #   locally-disabled
 #   too-few-public-methods
 #
+# Disabled temporarily
+#   missing-returns-doc (https://github.com/PyCQA/pylint/pull/1008)
+#   missing-raises-doc (https://github.com/PyCQA/pylint/pull/1011)
+#
 disable=bad-continuation,
   duplicate-code,
   fixme,
@@ -66,6 +70,7 @@ max-public-methods=75
 [DOCS]
 
 accept-no-param-doc=no
+accept-no-return-type-doc=yes
 
 [FORMAT]
 

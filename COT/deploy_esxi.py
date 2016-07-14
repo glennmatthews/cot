@@ -76,6 +76,9 @@ class SmarterConnection(SmartConnection):
         Unlike SmartConnection, this lets the user override SSL certificate
         validation failures and connect anyway. It also produces slightly
         more meaningful error messages on failure.
+
+        :raise vim.fault.HostConnectFault:
+        :raise requests.exceptions.ConnectionError:
         """
         logger.verbose("Establishing connection to %s:%s...",
                        self.server, self.port)
@@ -157,7 +160,7 @@ def get_object_from_connection(conn, vimtype, name):
 
     :param conn: Connection to ESXi.
     :type conn: :class:`SmarterConnection`
-    :param object vimtype: currently only `vim.VirtualMachine``
+    :param object vimtype: currently only ``vim.VirtualMachine``
     :param str name: Name of the object to look up.
     :return: Located object
     """

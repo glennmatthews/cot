@@ -160,8 +160,11 @@ class SerialConnection(object):
                      "kind: %s, value: %s, options: %s",
                      kind, value, options)
         self.kind = self.validate_kind(kind)
+        """Connection type string"""
         self.value = self.validate_value(self.kind, value)
+        """Connection value such as '/dev/ttyS0' or '1.1.1.1:80'"""
         self.options = self.validate_options(self.kind, self.value, options)
+        """Dictionary of connection options."""
 
     def __str__(self):
         """Represent SerialConnection object as a string."""
