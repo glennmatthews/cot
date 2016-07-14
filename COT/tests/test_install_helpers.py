@@ -36,6 +36,7 @@ def stub_check_output(arg_list, *_args, **_kwargs):
 
     :param list arg_list: arg_list[0] is script being called,
       others are ignored.
+    :return: Canned output line, or ""
     """
     versions = {
         "fatdisk": "fatdisk, version 1.0.0-beta",

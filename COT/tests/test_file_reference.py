@@ -35,13 +35,13 @@ class TestFileOnDisk(COT_UT):
         self.assertRaises(IOError, FileOnDisk, "/foo", "bar.txt")
 
     def test_exists(self):
-        """Test the exists() API."""
-        self.assertTrue(FileOnDisk(self.input_ovf).exists())
+        """Test the exists property."""
+        self.assertTrue(FileOnDisk(self.input_ovf).exists)
         # false case is covered by test_nonexistent_file
 
     def test_size(self):
-        """Test the size() API."""
-        self.assertEqual(FileOnDisk(self.input_ovf).size(),
+        """Test the size property."""
+        self.assertEqual(FileOnDisk(self.input_ovf).size,
                          os.path.getsize(self.input_ovf))
 
     def test_open_close(self):
@@ -103,13 +103,13 @@ class TestFileInTAR(COT_UT):
         self.assertRaises(IOError, FileInTAR, self.input_ovf, self.input_ovf)
 
     def test_exists(self):
-        """Test the exists() API."""
-        self.assertTrue(self.valid_ref.exists())
+        """Test the exists property."""
+        self.assertTrue(self.valid_ref.exists)
         # false case is covered in test_nonexistent_entry
 
     def test_size(self):
-        """Test the size() API."""
-        self.assertEqual(self.valid_ref.size(),
+        """Test the size property."""
+        self.assertEqual(self.valid_ref.size,
                          os.path.getsize(resource_filename(__name__,
                                                            'sample_cfg.txt')))
 

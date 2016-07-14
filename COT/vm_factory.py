@@ -37,6 +37,7 @@ class VMFactory(object):
            ValueUnsupportedError while loading the file.
         :param str input_file: File to read VM description from
         :param str output_file: File to write to when finished (optional)
+        :return: Created object
         :rtype: instance of :class:`VMDescription` or appropriate subclass
         """
         vm_class = None

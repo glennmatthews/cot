@@ -391,6 +391,7 @@ class CLI(UI):
         :param str host: Host the password is associated with
         :raise InvalidInputError: if :attr:`force` is ``True``
           (as there is no "default" password value)
+        :return: Password string
         """
         if self.force:
             raise InvalidInputError("No password specified for {0}@{1}"
@@ -505,6 +506,7 @@ class CLI(UI):
         :param str lookup_prefix: String to prepend to ``title`` and
             each alias in ``aliases`` for lookup purposes.
         :param kwargs: Passed through to :meth:`parent.add_parser`
+        :return: Subparser object
         """
         # Subparser aliases are only supported by argparse in Python 3.2+
         if sys.hexversion >= 0x03020000 and aliases:
@@ -545,6 +547,7 @@ class CLI(UI):
 
         :param args: Namespace returned from :meth:`parse_args`.
         :type args: :class:`argparse.Namespace`
+        :return: Dictionary of arg to value
         :rtype: dict
         """
         arg_dict = vars(args)

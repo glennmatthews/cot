@@ -105,6 +105,7 @@ def download_and_expand(url):
       # d is automatically cleaned up.
 
     :param str url: URL of a .tgz or .tar.gz file to download.
+    :return: Path to temporary directory where file contents have been expanded
     """
     with TemporaryDirectory(prefix="cot_helper") as d:
         logger.debug("Temporary directory is %s", d)
@@ -132,7 +133,8 @@ def get_checksum(path_or_obj, checksum_type):
 
     :param str path_or_obj: File path to checksum OR an opened file object
     :param str checksum_type: Supported values are 'md5' and 'sha1'.
-    :return: String containing hexadecimal file checksum
+    :return: Hexadecimal file checksum
+    :rtype: str
     """
     # pylint: disable=redefined-variable-type
     if checksum_type == 'md5':
@@ -203,6 +205,7 @@ def get_disk_capacity(file_path):
 
     :param str file_path: Path to disk image file to inspect
     :return: Disk capacity, in bytes
+    :rtype: str
     """
     return QEMUIMG.get_disk_capacity(file_path)
 

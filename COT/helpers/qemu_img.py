@@ -91,6 +91,7 @@ class QEMUImg(Helper):
 
         :param str file_path: Path to disk image file to inspect
         :return: Disk capacity, in bytes
+        :rtype: str
         """
         output = self.call_helper(['info', file_path])
         match = re.search(r"(\d+) bytes", output)

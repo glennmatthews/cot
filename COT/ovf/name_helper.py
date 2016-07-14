@@ -258,6 +258,7 @@ class OVFNameHelper1(object):
         """Transparently pass attribute lookups to _raw and _cache.
 
         :param str name: Attribute name to look up.
+        :return: Value looked up from :attr:`_raw` and/or :attr:`_cache`.
         """
         if name in self._item_children:
             return self._item_children[name]
@@ -316,6 +317,7 @@ class OVFNameHelper1(object):
         """Get the XML namespace for the given item tag.
 
         :param str tag: Un-namespaced XML tag.
+        :return: XML namespace string, or None.
         """
         if tag == self.ITEM:
             return self.RASD
@@ -329,6 +331,7 @@ class OVFNameHelper1(object):
         """Get the XML namespace for the given ResourceType.
 
         :param str resource_type: ResourceType value string.
+        :return: XML namespace string, or None.
         """
         if resource_type == self.RES_MAP['ethernet']:
             return self.EPASD
@@ -342,6 +345,7 @@ class OVFNameHelper1(object):
         """Get the Item tag for the given XML namespace.
 
         :param str ns: XML namespace
+        :return: 'Item', 'StorageItem', or 'EthernetPortItem' as appropriate.
         """
         if ns == self.RASD:
             return self.ITEM

@@ -40,6 +40,8 @@ def guess_file_format_from_path(file_path):
     """Guess the preferred file format based on file path/extension.
 
     :param str file_path: Filename or file path.
+    :return: Guessed file format
+    :rtype: str
     """
     file_format = os.path.splitext(file_path)[1][1:]
     if not file_format:
@@ -125,6 +127,7 @@ class Helper(object):
         """Wrapper for :func:`distutils.spawn.find_executable`.
 
         :param str name: Executable name.
+        :return: Path to executable, or None if not found.
         """
         return distutils.spawn.find_executable(name)
 
@@ -136,6 +139,8 @@ class Helper(object):
         """Try to use ``apt-get`` to install a package.
 
         :param str package: Package name.
+        :return: Whether package was installed/updated successfully.
+        :rtype: bool
         """
         if not cls.PACKAGE_MANAGERS['apt-get']:
             return False
@@ -158,6 +163,8 @@ class Helper(object):
         """Try to use ``port`` to install a package.
 
         :param str package: Package name.
+        :return: Whether package was installed/updated successfully.
+        :rtype: bool
         """
         if not cls.PACKAGE_MANAGERS['port']:
             return False
@@ -172,6 +179,8 @@ class Helper(object):
         """Try to use ``yum`` to install a package.
 
         :param str package: Package name.
+        :return: Whether package was installed/updated successfully.
+        :rtype: bool
         """
         if not cls.PACKAGE_MANAGERS['yum']:
             return False
@@ -185,6 +194,7 @@ class Helper(object):
 
         :param str directory: Directory to check/create.
         :param int permissions: Permissions to set on the created directory.
+        :return: True
         """
         if os.path.isdir(directory):
             # TODO: permissions check, update permissions if needed

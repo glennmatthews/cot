@@ -50,7 +50,7 @@ class FileOnDisk(object):
         else:
             self.file_path = os.path.join(file_path, filename)
             self.filename = filename
-        if not self.exists():
+        if not self.exists:
             raise IOError("File {0} does not exist!".format(self.file_path))
         self.obj = None
 
@@ -60,6 +60,7 @@ class FileOnDisk(object):
         No attempt is made to check file equivalence, symlinks, etc.
 
         :param object other: Other object to compare against
+        :return: True if the paths are the same, else False
         """
         return type(other) is type(self) and self.file_path == other.file_path
 
@@ -67,21 +68,25 @@ class FileOnDisk(object):
         """FileOnDisk instances are not equal if they have different paths.
 
         :param object other: Other object to compare against
+        :return: False if the paths are the same, else True
         """
         return not self.__eq__(other)
 
+    @property
     def exists(self):
-        """Check whether the file exists on disk."""
+        """True if the file exists on disk, else False."""
         return os.path.exists(self.file_path)
 
+    @property
     def size(self):
-        """Get the size of this file, in bytes."""
+        """The size of this file, in bytes."""
         return os.path.getsize(self.file_path)
 
     def open(self, mode):
         """Open the file and return a reference to the file object.
 
         :param str mode: Mode such as 'r', 'w', 'a', 'w+', etc.
+        :return: File object
         """
         self.obj = open(self.file_path, mode)
         return self.obj
@@ -124,7 +129,7 @@ class FileInTAR(object):
             raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
         self.tarfile_path = tarfile_path
         self.filename = filename
-        if not self.exists():
+        if not self.exists:
             raise IOError("{0} does not exist in {1}"
                           .format(filename, tarfile_path))
         self.file_path = None
@@ -137,6 +142,7 @@ class FileInTAR(object):
         No attempt is made to check file equivalence, symlinks, etc.
 
         :param object other: Other object to compare against
+        :return: True if the filename and tarfile_path are the same, else False
         """
         if type(other) is type(self):
             return (self.tarfile_path == other.tarfile_path and
@@ -147,11 +153,13 @@ class FileInTAR(object):
         """FileInTar are not equal if they have different paths or names.
 
         :param object other: Other object to compare against
+        :return: False if the filename and tarfile_path are the same, else True
         """
         return not self.__eq__(other)
 
+    @property
     def exists(self):
-        """Check whether the file exists in the TAR archive."""
+        """True if the file exists in the TAR archive, else False."""
         with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
             try:
                 tarf.getmember(self.filename)
@@ -159,8 +167,9 @@ class FileInTAR(object):
             except KeyError:
                 return False
 
+    @property
     def size(self):
-        """Get the size of this file in bytes."""
+        """The size of this file in bytes."""
         with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
             return tarf.getmember(self.filename).size
 
@@ -168,6 +177,7 @@ class FileInTAR(object):
         """Open the TAR and return a reference to the relevant file object.
 
         :param str mode: Only 'r' and 'rb' modes are supported.
+        :return: File object
         """
         # We can only extract a file object from a TAR file in read mode.
         if mode != 'r' and mode != 'rb':

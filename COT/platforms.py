@@ -22,6 +22,7 @@
 .. autosummary::
   :nosignatures:
 
+  is_known_product_class
   platform_from_product_class
 
 **Classes**
@@ -46,9 +47,11 @@
 
 import logging
 
-from .data_validation import ValueUnsupportedError
-from .data_validation import ValueTooLowError, ValueTooHighError
-from .data_validation import NIC_TYPES
+from COT.data_validation import (
+    validate_int,
+    ValueUnsupportedError, ValueTooLowError, ValueTooHighError,
+    NIC_TYPES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +60,7 @@ def is_known_product_class(product_class):
     """Determine if the given product class string is a known one.
 
     :param str product_class: String like 'com.cisco.csr1000v'
+    :return: True if the class is in :data:`PRODUCT_PLATFORM_MAP`, else False
     """
     return product_class in PRODUCT_PLATFORM_MAP
 
@@ -65,7 +69,10 @@ def platform_from_product_class(product_class):
     """Get the class of Platform corresponding to a product class string.
 
     :param str product_class: String like 'com.cisco.csr1000v'
-    :rtype: Instance of :class:`GenericPlatform` or subclass thereof.
+    :return: Best guess of the appropriate platform based on
+      :data:`PRODUCT_PLATFORM_MAP`, defaulting to
+      :class:`GenericPlatform` if no better guess exists.
+    :rtype: class
     """
     if product_class is None:
         return GenericPlatform
@@ -75,21 +82,6 @@ def platform_from_product_class(product_class):
                    "are %s. Treating as a generic platform",
                    product_class, PRODUCT_PLATFORM_MAP.keys())
     return GenericPlatform
-
-
-def valid_range(label, value, min_val, max_val):
-    """Raise an exception if the value is not in the valid range.
-
-    :param str label: Label to include in any exception raised
-    :param int value: Value to validate
-    :param int min_val: Minimum valid value (or None if no minimum)
-    :param int max_val: Maximum valid value (or None if no maximum)
-    """
-    if min_val is not None and value < min_val:
-        raise ValueTooLowError(label, value, min_val)
-    elif max_val is not None and value > max_val:
-        raise ValueTooHighError(label, value, max_val)
-    return True
 
 
 class GenericPlatform(object):
@@ -123,11 +115,14 @@ class GenericPlatform(object):
     SER_MIN = 0
     SER_MAX = None
 
+    # Some of these methods are semi-abstract, so:
+    # pylint: disable=unused-argument
     @classmethod
-    def controller_type_for_device(cls, _device_type):
+    def controller_type_for_device(cls, device_type):
         """Get the default controller type for the given device type.
 
-        :param str _device_type: 'harddisk', 'cdrom', etc.
+        :param str device_type: 'harddisk', 'cdrom', etc.
+        :return: 'ide' unless overridden by subclass.
         """
         # For most platforms IDE is the correct default.
         return 'ide'
@@ -139,6 +134,7 @@ class GenericPlatform(object):
         .. note:: This method counts from 1, not from 0!
 
         :param int nic_number: Nth NIC to name.
+        :return: "Ethernet1", "Ethernet2", etc. unless overridden by subclass.
         """
         return "Ethernet" + str(nic_number)
 
@@ -148,7 +144,7 @@ class GenericPlatform(object):
 
         :param int cpus: Number of CPUs
         """
-        valid_range("CPUs", cpus, cls.CPU_MIN, cls.CPU_MAX)
+        validate_int(cpus, cls.CPU_MIN, cls.CPU_MAX, "CPUs")
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
@@ -177,7 +173,7 @@ class GenericPlatform(object):
 
         :param int count: Number of NICs.
         """
-        valid_range("NIC count", count, cls.NIC_MIN, cls.NIC_MAX)
+        validate_int(count, cls.NIC_MIN, cls.NIC_MAX, "NIC count")
 
     @classmethod
     def validate_nic_type(cls, type_string):
@@ -208,7 +204,7 @@ class GenericPlatform(object):
 
         :param int count: Number of serial ports.
         """
-        valid_range("serial port count", count, cls.SER_MIN, cls.SER_MAX)
+        validate_int(count, cls.SER_MIN, cls.SER_MAX, "serial port count")
 
 
 class IOSXRv(GenericPlatform):
@@ -237,6 +233,11 @@ class IOSXRv(GenericPlatform):
         """MgmtEth0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc.
 
         :param int nic_number: Nth NIC to name.
+        :return:
+          * "MgmtEth0/0/CPU0/0"
+          * "GigabitEthernet0/0/0/0"
+          * "GigabitEthernet0/0/0/1"
+          * etc.
         """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
@@ -257,10 +258,8 @@ class IOSXRvRP(IOSXRv):
     def guess_nic_name(cls, nic_number):
         """Fabric and management only.
 
-        * fabric
-        * MgmtEth0/{SLOT}/CPU0/0
-
         :param int nic_number: Nth NIC to name.
+        :return: "fabric" or "MgmtEth0/{SLOT}/CPU0/0" only
         """
         if nic_number == 1:
             return "fabric"
@@ -284,12 +283,12 @@ class IOSXRvLC(IOSXRv):
     def guess_nic_name(cls, nic_number):
         """Fabric interface plus slot-appropriate GigabitEthernet interfaces.
 
-        * fabric
-        * GigabitEthernet0/{SLOT}/0/0
-        * GigabitEthernet0/{SLOT}/0/1
-        * etc.
-
         :param int nic_number: Nth NIC to name.
+        :return:
+          * "fabric"
+          * "GigabitEthernet0/{SLOT}/0/0"
+          * "GigabitEthernet0/{SLOT}/0/1"
+          * etc.
         """
         if nic_number == 1:
             return "fabric"
@@ -316,6 +315,13 @@ class IOSXRv9000(IOSXRv):
         """MgmtEth0/0/CPU0/0, CtrlEth, DevEth, GigabitEthernet0/0/0/0, etc.
 
         :param int nic_number: Nth NIC to name.
+        :return:
+          * "MgmtEth0/0/CPU0/0"
+          * "CtrlEth"
+          * "DevEth"
+          * "GigabitEthernet0/0/0/0"
+          * "GigabitEthernet0/0/0/1"
+          * etc.
         """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
@@ -353,6 +359,7 @@ class CSR1000V(GenericPlatform):
         """CSR1000V uses SCSI for hard disks and IDE for CD-ROMs.
 
         :param str device_type: 'harddisk' or 'cdrom'
+        :return: 'ide' for CD-ROM, 'scsi' for hard disk
         """
         if device_type == 'harddisk':
             return 'scsi'
@@ -371,6 +378,10 @@ class CSR1000V(GenericPlatform):
           support that.
 
         :param int nic_number: Nth NIC to name.
+        :return:
+          * "GigabitEthernet1"
+          * "GigabitEthernet2"
+          * etc.
         """
         return "GigabitEthernet" + str(nic_number)
 
@@ -380,7 +391,7 @@ class CSR1000V(GenericPlatform):
 
         :param int cpus: Number of CPUs.
         """
-        valid_range("CPUs", cpus, 1, 8)
+        validate_int(cpus, 1, 8, "CPUs")
         if cpus not in [1, 2, 4, 8]:
             raise ValueUnsupportedError("CPUs", cpus, [1, 2, 4, 8])
 
@@ -409,6 +420,10 @@ class IOSv(GenericPlatform):
         """GigabitEthernet0/0, GigabitEthernet0/1, etc.
 
         :param int nic_number: Nth NIC to name.
+        :return:
+          * "GigabitEthernet0/0"
+          * "GigabitEthernet0/1"
+          * etc.
         """
         return "GigabitEthernet0/" + str(nic_number - 1)
 
@@ -450,16 +465,16 @@ class NXOSv(GenericPlatform):
     def guess_nic_name(cls, nic_number):
         """NX-OSv names its NICs a bit interestingly...
 
-        * mgmt0
-        * Ethernet2/1
-        * Ethernet2/2
-        * ...
-        * Ethernet2/48
-        * Ethernet3/1
-        * Ethernet3/2
-        * ...
-
         :param int nic_number: Nth NIC to name.
+        :return:
+          * "mgmt0"
+          * "Ethernet2/1"
+          * "Ethernet2/2"
+          * ...
+          * "Ethernet2/48"
+          * "Ethernet3/1"
+          * "Ethernet3/2"
+          * ...
         """
         if nic_number == 1:
             return "mgmt0"

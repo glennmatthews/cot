@@ -51,6 +51,8 @@ class SerialConnection(object):
           "<SerialConnection kind: tcp value: :22 options: {'server': True}>"
           >>> str(SerialConnection.from_cli_string('telnet://1.1.1.1:1111'))
           '<SerialConnection kind: telnet value: 1.1.1.1:1111 options: {}>'
+
+        :return: SerialConnection instance or None.
         """
         if cli_string is None:
             return None

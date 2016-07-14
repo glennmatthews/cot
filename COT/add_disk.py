@@ -352,6 +352,7 @@ def guess_controller_type(vm, ctrl_item, disk_type):
     :type vm: :class:`~COT.vm_description.VMDescription`
     :param object ctrl_item: Any known controller object
     :param str disk_type: "cdrom" or "harddisk"
+    :return: 'ide' or 'scsi'
     """
     if ctrl_item is None:
         # If the user didn't tell us which controller type they wanted,

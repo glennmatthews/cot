@@ -89,6 +89,7 @@ class UTLoggingHandler(BufferingHandler):
         """Return False - we only flush manually.
 
         :param LogRecord record: Record to ignore.
+        :return: False
         """
         return False
 
@@ -96,6 +97,7 @@ class UTLoggingHandler(BufferingHandler):
         """Look for log entries matching the given dict.
 
         :param kwargs: logging arguments to match against.
+        :return: List of record(s) that matched.
         """
         matches = []
         for record in self.buffer:
@@ -244,6 +246,7 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """Get the absolute path to a local resource file.
 
         :param str name: File name.
+        :return: Absolute file path.
         """
         return os.path.abspath(resource_filename(__name__, name))
 
@@ -254,6 +257,7 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         :param str profile: Config profile, or "".
         :param object value: Invalid value
         :param str kind: Label for this hardware kind.
+        :return: dict of kwargs suitable for passing into :meth:`assertLogged`
         """
         msg = ""
         if profile:
@@ -287,7 +291,6 @@ class COT_UT(unittest.TestCase):  # noqa: N801
 
         :param str expected: Expected output
         """
-        # pylint: disable=redefined-variable-type
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as so:
             try:
                 self.instance.run()

@@ -153,6 +153,7 @@ class XML(object):
         :param str tag: Child tag to match on
         :param dict attrib: Child attributes to match on
         :param boolean required: Whether to raise an error if no child exists
+        :return: Child element found, or None
         :rtype: :class:`xml.etree.ElementTree.Element`
         """
         matches = cls.find_all_children(parent, tag, attrib)
@@ -182,6 +183,7 @@ class XML(object):
         :param tag: Child tag (or list of tags) to match on
         :type tag: string or iterable
         :param dict attrib: Child attributes to match on
+        :return: (Possibly empty) list of matching child elements
         :rtype: list of :class:`xml.etree.ElementTree.Element` instances
         """
         assert parent is not None

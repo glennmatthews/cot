@@ -50,7 +50,17 @@ logger = logging.getLogger(__name__)
 def list_union(*lists):
     """Get union of lists.
 
+    ::
+
+      >>> list_union([1, 2, 3], [0, 4], [1, 5])
+      [1, 2, 3, 0, 4, 5]
+      >>> list_union(['foo'], ['bar'], ['bar', 'foo'])
+      ['foo', 'bar']
+      >>> list_union(['bar', 'foo'], ['foo'], ['bar'])
+      ['bar', 'foo']
+
     :param list lists: List of lists to unify.
+    :return: List of all distinct values across the given lists.
     """
     result = []
     for l in lists:
@@ -112,6 +122,7 @@ class OVFItem(object):
         """Transparently pass attribute lookups off to OVF/OVFNameHelper.
 
         :param str name: Attribute name.
+        :return: Value looked up from OVFNameHelper.
         """
         # Don't pass 'special' attributes through to the helper
         if re.match(r"^__", name):
@@ -129,6 +140,7 @@ class OVFItem(object):
         """Get list of values known for a given property name.
 
         :param str name: Property name.
+        :return: List of values
         """
         return list(self.properties[name].keys())
 
@@ -138,6 +150,7 @@ class OVFItem(object):
         :param str name: Property name.
         :param value: Property value of interest.
         :type value: str, tuple
+        :return: Set of profile strings
         """
         return self.properties[name][value]
 
@@ -146,6 +159,7 @@ class OVFItem(object):
 
         :param str name: Property name.
         :param object default: Default value to return if there are no matches
+        :return: Set of profile strings, or the given `default` if no matches.
         """
         value_dict = self.properties.get(name, None)
         if not value_dict:
@@ -232,6 +246,10 @@ class OVFItem(object):
         :param str name: Property name
         :param str value: Value to add wildcards to.
         :param list profiles: Profiles to which this (name, value) applies.
+        :return: The updated value string with wildcards added.
+
+        .. seealso::
+           :meth:`value_replace_wildcards`
         """
         if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, profiles)
@@ -258,6 +276,10 @@ class OVFItem(object):
         :param str name: Property name
         :param str value: Value to replace wildcards from.
         :param list profiles: Profiles to which this (name, value) applies.
+        :return: The updated value string, with wildcards replaced.
+
+        .. seealso::
+           :meth:`value_add_wildcards`
         """
         if not value:
             return value
@@ -478,7 +500,6 @@ class OVFItem(object):
         """Get the dict associated with the given XML tag, if any.
 
         :param str tag: XML tag to look up
-        :rtype: dict
         :return: Dictionary of values associated with this tag (TODO?)
         """
         return self.properties.get(tag, None)
@@ -546,7 +567,7 @@ class OVFItem(object):
         """Get the list of all value strings for the given tag.
 
         :param str tag: Tag to retrieve value for
-        :rtype: list
+        :return: List of value strings.
         """
         if tag == self.RESOURCE_SUB_TYPE:
             # ResourceSubType values may themselves be tuples
@@ -590,7 +611,7 @@ class OVFItem(object):
         """Check if this Item exists under the given profile.
 
         :param str profile: Profile name
-        :rtype: boolean
+        :return: True if the item exists in this profile, False if not.
         """
         profiles = self.all_profiles(self.INSTANCE_ID)
         if profiles is None:
@@ -647,6 +668,7 @@ class OVFItem(object):
     def generate_items(self):
         """Get a list of Item XML elements derived from this object's data.
 
+        :return: Generated list of XML Item elements
         :rtype: list[xml.etree.ElementTree.Element]
         """
         set_string_list = self.get_nonintersecting_set_list()

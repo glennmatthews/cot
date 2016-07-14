@@ -53,13 +53,6 @@ class TestOVFTool(HelperUT):
         mock_check_output.assert_not_called()
         self.assertLogged(**self.ALREADY_INSTALLED)
 
-    def test_install_helper_unsupported(self):
-        """No support for automated installation of ovftool."""
-        with mock.patch('COT.helpers.ovftool.OVFTool.path',
-                        new_callable=mock.PropertyMock, return_value=None):
-            with self.assertRaises(NotImplementedError):
-                self.helper.install_helper()
-
     @mock.patch('distutils.spawn.find_executable',
                 return_value="/fake/ovftool")
     @mock.patch('COT.helpers.helper.Helper._check_output', return_value="")

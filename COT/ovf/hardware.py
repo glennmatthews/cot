@@ -142,6 +142,7 @@ class OVFHardware(object):
     def find_unused_instance_id(self):
         """Find the first available ``InstanceID`` number.
 
+        :return: Instance ID not yet in use.
         :rtype: string
         """
         i = 1
@@ -211,6 +212,7 @@ class OVFHardware(object):
         :param properties: Property values to match
         :type properties: dict[property, value]
         :param list profile_list: List of profiles to filter on
+        :return: True if the item matches all filters, False if not.
         """
         if resource_type and (self.ovf.RES_MAP[resource_type] !=
                               item.get_value(self.ovf.RESOURCE_TYPE)):
@@ -252,7 +254,7 @@ class OVFHardware(object):
         :param properties: Property values to match
         :type properties: dict[property, value]
         :param str profile: Single profile ID to search within
-        :rtype: :class:`OVFItem` or ``None``
+        :return: Matching :class:`OVFItem` instance, or None
         :raise LookupError: if more than one such Item exists.
         """
         matches = self.find_all_items(resource_type, properties, [profile])
@@ -283,7 +285,8 @@ class OVFHardware(object):
         :param str resource_type:
         :param list profile_list: List of profiles to filter on
           (default: apply across all profiles)
-        :rtype: dict[profile, count]
+        :return: Dict mapping profile strings to the number of items under
+          each profile.
         """
         count_dict = {}
         if not profile_list:
@@ -358,6 +361,7 @@ class OVFHardware(object):
         :param int item_count: How many Items of this type (including this
           item) now exist. Used with
           :meth:`COT.platform.GenericPlatform.guess_nic_name`
+        :return: Updated :param:`new_item`
         """
         resource_type = self.ovf.get_type_from_device(new_item)
         address = new_item.get(self.ovf.ADDRESS)

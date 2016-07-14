@@ -159,6 +159,7 @@ def get_object_from_connection(conn, vimtype, name):
     :type conn: :class:`SmarterConnection`
     :param object vimtype: currently only `vim.VirtualMachine``
     :param str name: Name of the object to look up.
+    :return: Located object
     """
     obj = None
     content = conn.RetrieveContent()

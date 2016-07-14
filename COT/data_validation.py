@@ -61,6 +61,7 @@ def to_string(obj):
     """Get string representation of an object, special-case for XML Element.
 
     :param object obj: Object to represent as a string.
+    :return: string representation
     """
     if ET.iselement(obj):
         return ET.tostring(obj)
@@ -83,6 +84,7 @@ def natural_sort(l):
 
         :param text: Input to convert
         :type text: str, int
+        :return: Converted value
         :rtype: str, int
         """
         return int(text) if text.isdigit() else text
@@ -91,6 +93,7 @@ def natural_sort(l):
         """Split the key into a list of [text, int, text, int, ...].
 
         :param str key: String to split.
+        :return: List of tokens
         """
         return [convert(c) for c in re.split('([0-9]+)', key)]
 
@@ -312,6 +315,7 @@ def non_negative_int(string):
     Alias for :func:`validate_int` setting :attr:`minimum` to 0.
 
     :param str string: String to validate.
+    :return: Validated integer value
     """
     return validate_int(string, minimum=0)
 
@@ -322,6 +326,7 @@ def positive_int(string):
     Alias for :func:`validate_int` setting :attr:`minimum` to 1.
 
     :param str string: String to validate.
+    :return: Validated integer value
     """
     return validate_int(string, minimum=1)
 
