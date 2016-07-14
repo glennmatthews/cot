@@ -259,6 +259,7 @@ class OVFNameHelper1(object):
 
         :param str name: Attribute name to look up.
         :return: Value looked up from :attr:`_raw` and/or :attr:`_cache`.
+        :raise AttributeError: if the given ``name`` is not found.
         """
         if name in self._item_children:
             return self._item_children[name]
@@ -346,6 +347,7 @@ class OVFNameHelper1(object):
 
         :param str ns: XML namespace
         :return: 'Item', 'StorageItem', or 'EthernetPortItem' as appropriate.
+        :raise ValueUnsupportedError: if the namespace is unrecognized
         """
         if ns == self.RASD:
             return self.ITEM

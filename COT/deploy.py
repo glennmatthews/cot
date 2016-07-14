@@ -53,6 +53,7 @@ class SerialConnection(object):
           '<SerialConnection kind: telnet value: 1.1.1.1:1111 options: {}>'
 
         :return: SerialConnection instance or None.
+        :raise InvalidInputError: if ``cli_string`` cannot be parsed
         """
         if cli_string is None:
             return None
@@ -110,6 +111,7 @@ class SerialConnection(object):
         :param str value: Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
         :return: Munged value string.
         :raise InvalidInputError: if value string is not recognized as valid
+        :raise NotImplementedError: if ``kind`` is not valid
         """
         if kind == 'device' or kind == 'file' or kind == 'pipe':
             # TODO: Validate that device path exists on target?

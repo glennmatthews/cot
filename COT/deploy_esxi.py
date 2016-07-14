@@ -409,6 +409,10 @@ class COTDeployESXi(COTDeploy):
         """Use PyVmomi to create and configure serial ports for the new VM.
 
         :param int serial_count: Number of serial ports desired.
+        :raise NotImplementedError: If any
+          :class:`~COT.deploy.SerialConnection` in :attr:`serial_connection`
+          has a :attr:`~COT.deploy.SerialConnection.kind` other than
+          'tcp', 'telnet', or 'device'
         """
         if serial_count > len(self.serial_connection):
             logger.warning("No serial connectivity information is "

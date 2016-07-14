@@ -64,9 +64,10 @@ class VMDescription(object):
       version_long
     """
 
-    # Pylint wants to complain about returns documentation for functions that
-    # raise a NotImplementedError - shush it.
+    # Many of these methods are abstract interfaces, so quiet, Pylint!
+    # pylint: disable=missing-raises-doc
     # pylint: disable=redundant-returns-doc
+    # pylint: disable=no-self-use, unused-argument
 
     @classmethod
     def detect_type_from_name(cls, filename):
@@ -238,9 +239,7 @@ class VMDescription(object):
         raise NotImplementedError("version_long setter not implemented")
 
     # API methods needed for add-disk
-    def convert_disk_if_needed(self,   # pylint: disable=no-self-use
-                               file_path,
-                               kind):  # pylint: disable=unused-argument
+    def convert_disk_if_needed(self, file_path, kind):
         """Convert the disk to a more appropriate format if needed.
 
         :param str file_path: Image to inspect and possibly convert

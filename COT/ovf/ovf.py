@@ -262,6 +262,12 @@ class OVF(VMDescription, XML):
           (there will never be an output file) this value should be ``None``;
           if the output filename is not yet known, use ``""`` and subsequently
           set :attr:`output_file` when it is determined.
+        :raise VMInitError: if the OVF descriptor cannot be located
+        :raise VMInitError: if an XML parsing error occurs
+        :raise VMInitError: if the XML is not actually an OVF descriptor
+        :raise VMInitError: if the OVF hardware validation fails
+        :raise Exception: will call :meth:`destroy` to clean up before
+          reraising any exception encountered.
         """
         try:
             self.output_extension = None
@@ -726,6 +732,8 @@ class OVF(VMDescription, XML):
 
         :param str name: Attribute being looked up.
         :return: Attribute value
+        :raise AttributeError: Magic methods (``__foo``) will not be passed
+          through but will raise an AttributeError as usual.
         """
         # Don't pass 'special' attributes through to the helper
         if re.match(r"^__", name):
@@ -1456,6 +1464,7 @@ class OVF(VMDescription, XML):
         """Delete the profile with the given ID.
 
         :param str profile: Profile ID to delete.
+        :raise LookupError: if the profile does not exist.
         """
         cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
                               attrib={self.CONFIG_ID: profile})
@@ -1743,6 +1752,8 @@ class OVF(VMDescription, XML):
         :param str value: Value to set for this property
         :return: the (converted) value that was set.
         :rtype: str
+        :raise NotImplementedError: if :attr:`ovf_version` is less than 1.0;
+          OVF version 0.9 is not currently supported.
         """
         if self.ovf_version < 1.0:
             raise NotImplementedError("No support for setting environment "
@@ -1823,6 +1834,8 @@ class OVF(VMDescription, XML):
         :param str filename: Filename to search from
         :return: ``(file, disk, ctrl_item, disk_item)``, any or all of which
           may be ``None``
+        :raise LookupError: If the ``disk_item`` is found but no ``ctrl_item``
+          is found to be its parent.
         """
         file_obj = None
         disk = None
@@ -1864,6 +1877,10 @@ class OVF(VMDescription, XML):
         :param str file_id: File ID to search from
         :return: ``(file, disk, ctrl_item, disk_item)``, any or all of which
           may be ``None``
+        :raise LookupError: If the ``disk`` entry is found but no corresponding
+          ``file`` is found.
+        :raise LookupError: If the ``disk_item`` is found but no ``ctrl_item``
+          is found to be its parent.
         """
         if file_id is None:
             return (None, None, None, None)
@@ -2196,6 +2213,8 @@ class OVF(VMDescription, XML):
         :param disk: Disk object referencing :attr:`file`
         :type disk: xml.etree.ElementTree.Element
         :param OVFItem disk_drive: Disk drive mapping :attr:`file` to a device
+        :raise ValueUnsupportedError: If the ``disk_drive`` is a device type
+          other than 'cdrom' or 'harddisk'
         """
         self.references.remove(file_obj)
         del self._file_references[file_obj.get(self.FILE_HREF)]
@@ -2283,6 +2302,8 @@ class OVF(VMDescription, XML):
 
         :return: New or updated controller device object
         :rtype: OVFItem
+
+        :raise ValueTooHighError: if no more controllers can be created
         """
         if ctrl_item is None:
             logger.info("Controller not found, adding new Item")
@@ -2319,6 +2340,10 @@ class OVF(VMDescription, XML):
         :param str name: Device name string (optional)
         :param OVFItem ctrl_item: Controller object to serve as parent
         :return: (disk_item, disk_name)
+        :raise ValueTooHighError: if the requested address is out of range
+          for the given controller, or if the controller is already full.
+        :raise ValueUnsupportedError: if ``name`` is not specified and
+          ``disk_type`` is not 'harddisk' or 'cdrom'.
         """
         ctrl_instance = ctrl_item.get_value(self.INSTANCE_ID)
         if address is None:
@@ -2679,6 +2704,7 @@ class OVF(VMDescription, XML):
 
         :param str disk_type: Either 'cdrom' or 'harddisk'
         :return: :class:`OVFItem` representing this disk device, or None.
+        :raise ValueUnsupportedError: if ``disk_type`` is unrecognized.
         """
         if disk_type == 'cdrom':
             # Find a drive that has no HostResource property
@@ -2711,6 +2737,7 @@ class OVF(VMDescription, XML):
 
         :param OVFItem device: Hardware device object.
         :returns: ``(type, address)``, such as ``("ide", "1:0")``.
+        :raise LookupError: if the controller is not found.
         """
         controller = self.find_parent_from_item(device)
         if controller is None:

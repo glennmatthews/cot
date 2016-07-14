@@ -362,6 +362,10 @@ class OVFHardware(object):
           item) now exist. Used with
           :meth:`COT.platform.GenericPlatform.guess_nic_name`
         :return: Updated :param:`new_item`
+        :raise NotImplementedError: No support yet for updating ``Address``
+        :raise NotImplementedError: If updating ``AddressOnParent`` but the
+          prior value varies across config profiles.
+        :raise NotImplementedError: if ``AddressOnParent`` is not an integer.
         """
         resource_type = self.ovf.get_type_from_device(new_item)
         address = new_item.get(self.ovf.ADDRESS)

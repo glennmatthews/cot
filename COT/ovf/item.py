@@ -123,6 +123,8 @@ class OVFItem(object):
 
         :param str name: Attribute name.
         :return: Value looked up from OVFNameHelper.
+        :raise AttributeError: Magic methods (``__foo``) will not be passed
+          through but will raise an AttributeError as usual.
         """
         # Don't pass 'special' attributes through to the helper
         if re.match(r"^__", name):
@@ -171,6 +173,8 @@ class OVFItem(object):
 
         :param item: XML ``Item`` element
         :type item: :class:`xml.etree.ElementTree.Element`
+        :raise ValueUnsupportedError: if the ``item`` is not a recognized
+          Item variant.
         :raise OVFItemDataError: if the new Item conflicts with existing data
           already in the OVFItem.
         """
@@ -325,6 +329,8 @@ class OVFItem(object):
         :param str value: Value to store for this property.
         :param list profiles: Profiles to which this (name, value) applies.
         :param bool overwrite: Whether to permit overwriting existing values.
+        :raise OVFItemDataError: If ``overwrite`` is False and the value is
+          already set for one or more of the requested ``profiles``.
         """
         for (known_value, profile_set) in list(self.properties[name].items()):
             if not overwrite and profile_set.intersection(profiles):
@@ -424,6 +430,8 @@ class OVFItem(object):
         :param str new_profile: Profile name to add
         :param OVFItem from_item: Item to inherit properties from. If unset,
           this defaults to ``self``.
+        :raise RuntimeError: If unable to determine what value to inherit for
+          a particular property.
         """
         if self.has_profile(new_profile):
             logger.error("Profile %s already exists under %s!",
@@ -552,6 +560,8 @@ class OVFItem(object):
         :param profiles: set of profile names, or None
         :type profiles: set of strings
         :return: Value string or list, or ``None``
+        :raise OVFItemDataError: if :meth:`value_replace_wildcards` failed to
+          remove any wildcards from the internally stored value.
         """
         val = self._get_value(tag, profiles)
         val = self.value_replace_wildcards(tag, val, profiles)

@@ -42,6 +42,7 @@ def guess_file_format_from_path(file_path):
     :param str file_path: Filename or file path.
     :return: Guessed file format
     :rtype: str
+    :raise RuntimeError: if unable to guess
     """
     file_format = os.path.splitext(file_path)[1][1:]
     if not file_format:
@@ -195,6 +196,9 @@ class Helper(object):
         :param str directory: Directory to check/create.
         :param int permissions: Permissions to set on the created directory.
         :return: True
+        :raise RuntimeError: if something other than a directory already
+          exists at the path referenced by ``directory``.
+        :raise OSError: if directory creation failed
         """
         if os.path.isdir(directory):
             # TODO: permissions check, update permissions if needed
@@ -297,6 +301,8 @@ class Helper(object):
           raised if the helper exits with a non-zero status code.
         :return: Captured stdout/stderr (if :attr:`capture_output`),
           else ``None``.
+        :raise HelperNotFoundError: if the helper was not previously installed,
+          and the user declines to install it at this time.
         """
         if not self.path:
             if not self.confirm("{0} does not appear to be installed.\n"

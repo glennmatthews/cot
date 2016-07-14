@@ -115,6 +115,13 @@ class COTInjectConfig(COTSubmodule):
         """Do the actual work of this submodule.
 
         :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        :raise ValueUnsupportedError: if the
+          :const:`~COT.platforms.GenericPlatform.BOOTSTRAP_DISK_TYPE` of
+          the associated VM's
+          :attr:`~COT.vm_description.VMDescription.platform` is not
+          'cdrom' or 'harddisk'
+        :raise LookupError: if unable to find a disk drive device to inject
+          the configuration into.
         """
         super(COTInjectConfig, self).run()
 
