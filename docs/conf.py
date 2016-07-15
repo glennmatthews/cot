@@ -262,6 +262,13 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         return False
     return skip
 
+# -- Intersphinx configuration ----------------
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'requests': ('http://docs.python-requests.org/en/latest', None),
+}
+
 # -- General configuration, continued ---------
 
 # Add any paths that contain templates here, relative to this directory.
