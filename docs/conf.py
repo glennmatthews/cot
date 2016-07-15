@@ -244,6 +244,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
+    'sphinxcontrib.napoleon',
 ]
 
 # -- Autodoc configuration --------------------
@@ -271,6 +272,10 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'requests': ('http://docs.python-requests.org/en/latest', None),
 }
+
+# -- Napoleon configuration -------------------
+
+napoleon_use_rtype = True
 
 # -- General configuration, continued ---------
 
