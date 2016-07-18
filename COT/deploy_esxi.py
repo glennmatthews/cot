@@ -77,8 +77,8 @@ class SmarterConnection(SmartConnection):
         validation failures and connect anyway. It also produces slightly
         more meaningful error messages on failure.
 
-        :raise vim.fault.HostConnectFault:
-        :raise requests.exceptions.ConnectionError:
+        :raises vim.fault.HostConnectFault:
+        :raises requests.exceptions.ConnectionError:
         """
         logger.verbose("Establishing connection to %s:%s...",
                        self.server, self.port)
@@ -412,7 +412,7 @@ class COTDeployESXi(COTDeploy):
         """Use PyVmomi to create and configure serial ports for the new VM.
 
         :param int serial_count: Number of serial ports desired.
-        :raise NotImplementedError: If any
+        :raises NotImplementedError: If any
           :class:`~COT.deploy.SerialConnection` in :attr:`serial_connection`
           has a :attr:`~COT.deploy.SerialConnection.kind` other than
           'tcp', 'telnet', or 'device'

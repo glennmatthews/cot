@@ -79,9 +79,9 @@ class XML(object):
 
         :param str xml_file: File path to read.
 
-        :raise xml.etree.ElementTree.ParseError: if parsing fails under Python
+        :raises xml.etree.ElementTree.ParseError: if parsing fails under Python
           2.7 or later
-        :raise xml.parsers.expat.ExpatError: if parsing fails under Python 2.6
+        :raises xml.parsers.expat.ExpatError: if parsing fails under Python 2.6
         """
         # Parse the XML into memory
         self.tree = ET.parse(xml_file)

@@ -389,7 +389,7 @@ class CLI(UI):
 
         :param str username: Username the password is associated with
         :param str host: Host the password is associated with
-        :raise InvalidInputError: if :attr:`force` is ``True``
+        :raises InvalidInputError: if :attr:`force` is ``True``
           (as there is no "default" password value)
         :return: Password string
         """
@@ -570,7 +570,7 @@ class CLI(UI):
         """Set attributes of the :attr:`instance` based on the given arg_dict.
 
         :param dict arg_dict: Dictionary of (attribute, value).
-        :raise InvalidInputError: if attributes are not validly set.
+        :raises InvalidInputError: if attributes are not validly set.
         """
         # Set mandatory (CAPITALIZED) args first, then optional args
         for (arg, value) in arg_dict.items():

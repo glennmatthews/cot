@@ -55,8 +55,8 @@ class COTInjectConfig(COTSubmodule):
     def config_file(self):
         """Primary configuration file.
 
-        :raise InvalidInputError: if the file does not exist
-        :raise InvalidInputError: if the `platform described by
+        :raises InvalidInputError: if the file does not exist
+        :raises InvalidInputError: if the `platform described by
           :attr:`package` doesn't support configuration files.
         """
         return self._config_file
@@ -77,8 +77,8 @@ class COTInjectConfig(COTSubmodule):
     def secondary_config_file(self):
         """Secondary configuration file.
 
-        :raise InvalidInputError: if the file does not exist
-        :raise InvalidInputError: if the platform described by
+        :raises InvalidInputError: if the file does not exist
+        :raises InvalidInputError: if the platform described by
           :attr:`package` doesn't support secondary configuration files.
         """
         return self._secondary_config_file
@@ -115,12 +115,12 @@ class COTInjectConfig(COTSubmodule):
         """Do the actual work of this submodule.
 
         :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
-        :raise ValueUnsupportedError: if the
+        :raises ValueUnsupportedError: if the
           :const:`~COT.platforms.GenericPlatform.BOOTSTRAP_DISK_TYPE` of
           the associated VM's
           :attr:`~COT.vm_description.VMDescription.platform` is not
           'cdrom' or 'harddisk'
-        :raise LookupError: if unable to find a disk drive device to inject
+        :raises LookupError: if unable to find a disk drive device to inject
           the configuration into.
         """
         super(COTInjectConfig, self).run()

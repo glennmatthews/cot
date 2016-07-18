@@ -83,8 +83,8 @@ def _install_manpage(src_path, man_dir):
     :param str src_path: Path to manual page file.
     :param str man_dir: Base directory where page should be installed.
     :return: (page_previously_installed, page_updated)
-    :raise IOError: if installation fails under some circumstances
-    :raise OSError: if installation fails under other circumstances
+    :raises IOError: if installation fails under some circumstances
+    :raises OSError: if installation fails under other circumstances
     """
     # Which man section does this belong in?
     f = os.path.basename(src_path)

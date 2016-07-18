@@ -127,7 +127,7 @@ class VmdkTool(Helper):
           * :attr:`file_path`, if no conversion was required
           * or a file path in :attr:`output_dir` containing the converted image
 
-        :raise NotImplementedError: if the :attr:`new_format` and/or
+        :raises NotImplementedError: if the :attr:`new_format` and/or
           :attr:`new_subformat` are not supported conversion targets.
         """
         file_name = os.path.basename(file_path)

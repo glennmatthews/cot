@@ -48,7 +48,7 @@ class OVFTool(Helper):
     def install_helper(self):
         """Install ``ovftool``.
 
-        :raise: :exc:`NotImplementedError` as VMware does not currently provide
+        :raises NotImplementedError: as VMware does not currently provide
           any mechanism for automatic download of ovftool.
         """
         if self.should_not_be_installed_but_is():
@@ -66,7 +66,7 @@ class OVFTool(Helper):
 
         :param str ovf_file: File to validate
         :return: Output from ``ovftool``
-        :raise HelperNotFoundError: if ``ovftool`` is not found.
-        :raise HelperError: if ``ovftool`` regards the file as invalid
+        :raises HelperNotFoundError: if ``ovftool`` is not found.
+        :raises HelperError: if ``ovftool`` regards the file as invalid
         """
         return self.call_helper(['--schemaValidate', ovf_file])

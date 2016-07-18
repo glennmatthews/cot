@@ -63,7 +63,7 @@ class COTEditProperties(COTSubmodule):
     def config_file(self):
         """Path to plaintext file to read configuration lines from.
 
-        :raise: :exc:`InvalidInputError` if the file does not exist.
+        :raises InvalidInputError: if the file does not exist.
         """
         return self._config_file
 

@@ -77,7 +77,8 @@ class VMDescription(object):
 
         :param str filename: File name or path
         :return: A string representing a recognized and supported type of file
-        :raise ValueUnsupportedError: if we don't know how to handle this file.
+        :raises ValueUnsupportedError: if COT can't recognize the file type or
+          doesn't know how to handle this file type.
         """
         raise ValueUnsupportedError("filename", filename, ("none implemented"))
 
@@ -357,7 +358,7 @@ class VMDescription(object):
           this disk (optional)
         :param object ctrl_item: Controller device object which should link to
           the :attr:`disk_item`
-        :raise ValueMismatchError: if the given items are not linked properly.
+        :raises ValueMismatchError: if the given items are not linked properly.
         """
         raise NotImplementedError(
             "check_sanity_of_disk_device not implemented")

@@ -70,7 +70,7 @@ class UI(object):
         """Pretty-print a set of usage examples.
 
         :param list example_list: List of (example, description) tuples.
-        :raise NotImplementedError: Must be implemented by a subclass.
+        :raises NotImplementedError: Must be implemented by a subclass.
         """
         raise NotImplementedError("No implementation for fill_examples()")
 
@@ -169,6 +169,6 @@ class UI(object):
 
         :param str username: Username the password is associated with
         :param str host: Host the password is associated with
-        :raise NotImplementedError: Must be implemented by a subclass.
+        :raises NotImplementedError: Must be implemented by a subclass.
         """
         raise NotImplementedError("No implementation of get_password()")

@@ -123,7 +123,7 @@ class OVFItem(object):
 
         :param str name: Attribute name.
         :return: Value looked up from OVFNameHelper.
-        :raise AttributeError: Magic methods (``__foo``) will not be passed
+        :raises AttributeError: Magic methods (``__foo``) will not be passed
           through but will raise an AttributeError as usual.
         """
         # Don't pass 'special' attributes through to the helper
@@ -173,9 +173,9 @@ class OVFItem(object):
 
         :param item: XML ``Item`` element
         :type item: :class:`xml.etree.ElementTree.Element`
-        :raise ValueUnsupportedError: if the ``item`` is not a recognized
+        :raises ValueUnsupportedError: if the ``item`` is not a recognized
           Item variant.
-        :raise OVFItemDataError: if the new Item conflicts with existing data
+        :raises OVFItemDataError: if the new Item conflicts with existing data
           already in the OVFItem.
         """
         logger.debug("Adding new %s", item.tag)
@@ -329,7 +329,7 @@ class OVFItem(object):
         :param str value: Value to store for this property.
         :param list profiles: Profiles to which this (name, value) applies.
         :param bool overwrite: Whether to permit overwriting existing values.
-        :raise OVFItemDataError: If ``overwrite`` is False and the value is
+        :raises OVFItemDataError: If ``overwrite`` is False and the value is
           already set for one or more of the requested ``profiles``.
         """
         for (known_value, profile_set) in list(self.properties[name].items()):
@@ -381,7 +381,7 @@ class OVFItem(object):
         :param boolean overwrite: Whether to permit overwriting of existing
           value set in this item.
 
-        :raise OVFItemDataError: if a value is already defined and would be
+        :raises OVFItemDataError: if a value is already defined and would be
           overwritten, unless :attr:`overwrite` is ``True``
         """
         # A ResourceSubType in the XML can be a single value or a
@@ -430,7 +430,7 @@ class OVFItem(object):
         :param str new_profile: Profile name to add
         :param OVFItem from_item: Item to inherit properties from. If unset,
           this defaults to ``self``.
-        :raise RuntimeError: If unable to determine what value to inherit for
+        :raises RuntimeError: If unable to determine what value to inherit for
           a particular property.
         """
         if self.has_profile(new_profile):
@@ -560,7 +560,7 @@ class OVFItem(object):
         :param profiles: set of profile names, or None
         :type profiles: set of strings
         :return: Value string or list, or ``None``
-        :raise OVFItemDataError: if :meth:`value_replace_wildcards` failed to
+        :raises OVFItemDataError: if :meth:`value_replace_wildcards` failed to
           remove any wildcards from the internally stored value.
         """
         val = self._get_value(tag, profiles)
@@ -590,7 +590,8 @@ class OVFItem(object):
         Also clean up any oddities (like a property value assigned to
         'all profiles' and also redundantly to a specific profile).
 
-        :raise RuntimeError: if validation fails and self-repair is impossible.
+        :raises RuntimeError: if validation fails and COT doesn't know
+          how to automatically repair the error(s) identified.
         """
         # An OVFItem must describe only one InstanceID
         # All Items with a given InstanceID must have the same ResourceType

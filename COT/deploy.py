@@ -53,7 +53,7 @@ class SerialConnection(object):
           '<SerialConnection kind: telnet value: 1.1.1.1:1111 options: {}>'
 
         :return: SerialConnection instance or None.
-        :raise InvalidInputError: if ``cli_string`` cannot be parsed
+        :raises InvalidInputError: if ``cli_string`` cannot be parsed
         """
         if cli_string is None:
             return None
@@ -86,7 +86,7 @@ class SerialConnection(object):
 
         :param str kind: Connection type string, possibly in need of munging.
         :return: A valid type string
-        :raise ValueUnsupportedError: if type string is not recognized as valid
+        :raises ValueUnsupportedError: if ``kind`` is not recognized as valid
         """
         kind = kind.lower()
         if kind == '':
@@ -110,8 +110,8 @@ class SerialConnection(object):
         :param str kind: Connection type, valid per :func:`validate_kind`.
         :param str value: Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
         :return: Munged value string.
-        :raise InvalidInputError: if value string is not recognized as valid
-        :raise NotImplementedError: if ``kind`` is not valid
+        :raises InvalidInputError: if value string is not recognized as valid
+        :raises NotImplementedError: if ``kind`` is not valid
         """
         if kind == 'device' or kind == 'file' or kind == 'pipe':
             # TODO: Validate that device path exists on target?
@@ -141,7 +141,7 @@ class SerialConnection(object):
         :param str _value: Validated 'value' string. Currently unused.
         :param dict options: Input options dictionary.
         :return: validated options dict
-        :raise InvalidInputError: if options are not valid.
+        :raises InvalidInputError: if options are not valid.
         """
         if kind == 'file':
             if 'datastore' not in options:
@@ -234,7 +234,7 @@ class COTDeploy(COTReadOnlySubmodule):
     def hypervisor(self):
         """Hypervisor to deploy to.
 
-        :raise: :exc:`InvalidInputError` if not a recognized value.
+        :raises InvalidInputError: if not a recognized value.
         """
         return self._hypervisor
 
@@ -249,7 +249,7 @@ class COTDeploy(COTReadOnlySubmodule):
     def configuration(self):
         """VM configuration profile to use for deployment.
 
-        :raise: :exc:`InvalidInputError` if not a profile defined in the VM.
+        :raises InvalidInputError: if not a profile defined in the VM.
         """
         return self._configuration
 

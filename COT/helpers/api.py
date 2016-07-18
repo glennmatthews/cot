@@ -135,7 +135,7 @@ def get_checksum(path_or_obj, checksum_type):
     :param str checksum_type: Supported values are 'md5' and 'sha1'.
     :return: Hexadecimal file checksum
     :rtype: str
-    :raise NotImplementedError: if ``checksum_type`` is not a supported value.
+    :raises NotImplementedError: if ``checksum_type`` is not a supported value.
     """
     # pylint: disable=redefined-variable-type
     if checksum_type == 'md5':
@@ -179,7 +179,7 @@ def get_disk_format(file_path):
 
       * ``format`` may be ``'vmdk'``, ``'raw'``, or ``'qcow2'``
       * ``subformat`` may be ``None``, or various strings for ``'vmdk'`` files.
-    :raise RuntimeError: if unable to identify the sub-format of a VMDK file.
+    :raises RuntimeError: if unable to identify the sub-format of a VMDK file.
     """
     file_format = QEMUIMG.get_disk_format(file_path)
 
@@ -232,7 +232,7 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
       * :attr:`file_path`, if no conversion was required
       * or a file path in :attr:`output_dir` containing the converted image
 
-    :raise NotImplementedError: if the :attr:`new_format` and/or
+    :raises NotImplementedError: if the :attr:`new_format` and/or
       :attr:`new_subformat` are not supported conversion targets.
     """
     curr_format, curr_subformat = get_disk_format(file_path)
@@ -299,9 +299,9 @@ def create_disk_image(file_path, file_format=None,
     :param str capacity: Disk capacity. A string like '16M' or '1G'.
     :param list contents: List of file paths to package into the created image.
       If not specified, the image will be left blank and unformatted.
-    :raise RuntimeError: if neither :attr:`capacity` nor :attr:`contents` is
+    :raises RuntimeError: if neither :attr:`capacity` nor :attr:`contents` is
       specified
-    :raise NotImplementedError: if the :attr:`file_format` is not supported.
+    :raises NotImplementedError: if the :attr:`file_format` is not supported.
     """
     if not capacity and not contents:
         raise RuntimeError("Either capacity or contents must be specified!")

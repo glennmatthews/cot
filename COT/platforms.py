@@ -143,8 +143,8 @@ class GenericPlatform(object):
         """Throw an error if the number of CPUs is not a supported value.
 
         :param int cpus: Number of CPUs
-        :raise ValueTooLowError: if ``cpus`` is less than :const:`CPU_MIN`
-        :raise ValueTooHighError: if ``cpus`` is more than :const:`CPU_MAX`
+        :raises ValueTooLowError: if ``cpus`` is less than :const:`CPU_MIN`
+        :raises ValueTooHighError: if ``cpus`` is more than :const:`CPU_MAX`
         """
         validate_int(cpus, cls.CPU_MIN, cls.CPU_MAX, "CPUs")
 
@@ -153,9 +153,9 @@ class GenericPlatform(object):
         """Throw an error if the amount of RAM is not supported.
 
         :param int mebibytes: RAM, in MiB.
-        :raise ValueTooLowError: if :attr:`mebibytes` is less than
+        :raises ValueTooLowError: if :attr:`mebibytes` is less than
           :const:`RAM_MIN`
-        :raise ValueTooHighError: if :attr:`mebibytes` is more than
+        :raises ValueTooHighError: if :attr:`mebibytes` is more than
           :const:`RAM_MAX`
         """
         if cls.RAM_MIN is not None and mebibytes < cls.RAM_MIN:
@@ -178,8 +178,8 @@ class GenericPlatform(object):
         """Throw an error if the number of NICs is not supported.
 
         :param int count: Number of NICs.
-        :raise ValueTooLowError: if ``count`` is less than :const:`NIC_MIN`
-        :raise ValueTooHighError: if ``count`` is more than :const:`NIC_MAX`
+        :raises ValueTooLowError: if ``count`` is less than :const:`NIC_MIN`
+        :raises ValueTooHighError: if ``count`` is more than :const:`NIC_MAX`
         """
         validate_int(count, cls.NIC_MIN, cls.NIC_MAX, "NIC count")
 
@@ -192,7 +192,7 @@ class GenericPlatform(object):
            - :data:`COT.data_validation.NIC_TYPES`
 
         :param str type_string: See :data:`COT.data_validation.NIC_TYPES`
-        :raise ValueUnsupportedError: if ``type_string`` is not in
+        :raises ValueUnsupportedError: if ``type_string`` is not in
           :const:`SUPPORTED_NIC_TYPES`
         """
         if type_string not in cls.SUPPORTED_NIC_TYPES:
@@ -204,7 +204,7 @@ class GenericPlatform(object):
         """Throw an error if any NIC type string in the list is unsupported.
 
         :param list type_list: See :data:`COT.data_validation.NIC_TYPES`
-        :raise ValueUnsupportedError: if any value in ``type_list`` is not in
+        :raises ValueUnsupportedError: if any value in ``type_list`` is not in
           :const:`SUPPORTED_NIC_TYPES`
         """
         for type_string in type_list:
@@ -215,8 +215,8 @@ class GenericPlatform(object):
         """Throw an error if the number of serial ports is not supported.
 
         :param int count: Number of serial ports.
-        :raise ValueTooLowError: if ``count`` is less than :const:`SER_MIN`
-        :raise ValueTooHighError: if ``count`` is more than :const:`SER_MAX`
+        :raises ValueTooLowError: if ``count`` is less than :const:`SER_MIN`
+        :raises ValueTooHighError: if ``count`` is more than :const:`SER_MAX`
         """
         validate_int(count, cls.SER_MIN, cls.SER_MAX, "serial port count")
 
@@ -404,9 +404,9 @@ class CSR1000V(GenericPlatform):
         """CSR1000V supports 1, 2, 4, or 8 CPUs.
 
         :param int cpus: Number of CPUs.
-        :raise ValueTooLowError: if ``cpus`` is less than :const:`CPU_MIN`
-        :raise ValueTooHighError: if ``cpus`` is more than :const:`CPU_MAX`
-        :raise ValueUnsupportedError: if ``cpus`` is an unsupported value
+        :raises ValueTooLowError: if ``cpus`` is less than :const:`CPU_MIN`
+        :raises ValueTooHighError: if ``cpus`` is more than :const:`CPU_MAX`
+        :raises ValueUnsupportedError: if ``cpus`` is an unsupported value
           between :const:`CPU_MIN` and :const:`CPU_MAX`
         """
         validate_int(cpus, 1, 8, "CPUs")
@@ -450,9 +450,9 @@ class IOSv(GenericPlatform):
         """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB.
 
         :param int mebibytes: RAM amount, in MiB.
-        :raise ValueTooLowError: if :attr:`mebibytes` is less than
+        :raises ValueTooLowError: if :attr:`mebibytes` is less than
           :const:`RAM_MIN`
-        :raise ValueTooHighError: if :attr:`mebibytes` is more than
+        :raises ValueTooHighError: if :attr:`mebibytes` is more than
           :const:`RAM_MAX`
         """
         if mebibytes < 192:

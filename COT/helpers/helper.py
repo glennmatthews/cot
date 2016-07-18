@@ -42,7 +42,7 @@ def guess_file_format_from_path(file_path):
     :param str file_path: Filename or file path.
     :return: Guessed file format
     :rtype: str
-    :raise RuntimeError: if unable to guess
+    :raises RuntimeError: if unable to guess
     """
     file_format = os.path.splitext(file_path)[1][1:]
     if not file_format:
@@ -196,9 +196,9 @@ class Helper(object):
         :param str directory: Directory to check/create.
         :param int permissions: Permissions to set on the created directory.
         :return: True
-        :raise RuntimeError: if something other than a directory already
+        :raises RuntimeError: if something other than a directory already
           exists at the path referenced by ``directory``.
-        :raise OSError: if directory creation failed
+        :raises OSError: if directory creation failed
         """
         if os.path.isdir(directory):
             # TODO: permissions check, update permissions if needed
@@ -301,8 +301,8 @@ class Helper(object):
           raised if the helper exits with a non-zero status code.
         :return: Captured stdout/stderr (if :attr:`capture_output`),
           else ``None``.
-        :raise HelperNotFoundError: if the helper was not previously installed,
-          and the user declines to install it at this time.
+        :raises HelperNotFoundError: if the helper was not previously
+          installed, and the user declines to install it at this time.
         """
         if not self.path:
             if not self.confirm("{0} does not appear to be installed.\n"
@@ -338,7 +338,7 @@ class Helper(object):
     def install_helper(self):
         """Install the helper program (abstract method).
 
-        :raise: :exc:`NotImplementedError` as this method must be implemented
+        :raises NotImplementedError: as this method must be implemented
           by a concrete subclass.
         """
         if self.should_not_be_installed_but_is():
@@ -363,12 +363,12 @@ class Helper(object):
           an exception, prepend ``sudo`` to the command and try again.
         :param kwargs: Arguments passed to :func:`subprocess.check_call`.
 
-        :raise HelperNotFoundError: if the command doesn't exist
+        :raises HelperNotFoundError: if the command doesn't exist
           (instead of a :class:`OSError`)
-        :raise HelperError: if :attr:`require_success` is not ``False`` and
+        :raises HelperError: if :attr:`require_success` is not ``False`` and
           the command returns a value other than 0 (instead of a
           :class:`CalledProcessError`).
-        :raise OSError: as :func:`subprocess.check_call`.
+        :raises OSError: as :func:`subprocess.check_call`.
         """
         cmd = args[0]
         logger.info("Calling '%s'...", " ".join(args))
@@ -415,12 +415,12 @@ class Helper(object):
 
         :return: Captured stdout/stderr from the command
 
-        :raise HelperNotFoundError: if the command doesn't exist
+        :raises HelperNotFoundError: if the command doesn't exist
           (instead of a :class:`OSError`)
-        :raise HelperError: if :attr:`require_success` is not ``False`` and
+        :raises HelperError: if :attr:`require_success` is not ``False`` and
           the command returns a value other than 0 (instead of a
           :class:`CalledProcessError`).
-        :raise OSError: as :func:`subprocess.check_call`.
+        :raises OSError: as :func:`subprocess.check_call`.
         """
         cmd = args[0]
         logger.info("Calling '%s' and capturing its output...", " ".join(args))

@@ -32,8 +32,8 @@ class VMFactory(object):
     def create(cls, input_file, output_file):
         """Create an appropriate VMDescription subclass instance from a file.
 
-        :raise VMInitError: if no appropriate class is identified
-        :raise VMInitError: if the selected subclass raises a
+        :raises VMInitError: if no appropriate class is identified
+        :raises VMInitError: if the selected subclass raises a
            ValueUnsupportedError while loading the file.
         :param str input_file: File to read VM description from
         :param str output_file: File to write to when finished (optional)

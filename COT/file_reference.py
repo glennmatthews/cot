@@ -44,7 +44,7 @@ class FileOnDisk(object):
           >>> a == b
           True
 
-        :raise IOError: if no such file exists
+        :raises IOError: if no such file exists
         """
         if filename is None:
             self.file_path = file_path
@@ -126,7 +126,7 @@ class FileInTAR(object):
 
         :param str tarfile_path: Path to TAR archive to read
         :param str filename: File name in the TAR archive.
-        :raise IOError: if ``tarfile_path`` doesn't reference a TAR file,
+        :raises IOError: if ``tarfile_path`` doesn't reference a TAR file,
           or the TAR file does not contain ``filename``.
         """
         if not tarfile.is_tarfile(tarfile_path):
@@ -182,7 +182,7 @@ class FileInTAR(object):
 
         :param str mode: Only 'r' and 'rb' modes are supported.
         :return: File object
-        :raise ValueError: if ``mode`` is not valid.
+        :raises ValueError: if ``mode`` is not valid.
         """
         # We can only extract a file object from a TAR file in read mode.
         if mode != 'r' and mode != 'rb':

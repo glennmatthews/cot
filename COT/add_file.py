@@ -57,7 +57,7 @@ class COTAddFile(COTSubmodule):
     def file(self):
         """File to be added to the package.
 
-        :raises: :exc:`.InvalidInputError` if the file does not exist.
+        :raises InvalidInputError: if the file does not exist.
         """
         return self._file
 

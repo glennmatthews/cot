@@ -68,7 +68,7 @@ class COTGenericSubmodule(object):
     def run(self):
         """Do the actual work of this submodule.
 
-        :raise InvalidInputError: if :meth:`ready_to_run` reports ``False``
+        :raises InvalidInputError: if :meth:`ready_to_run` reports ``False``
         """
         (ready, reason) = self.ready_to_run()
         if not ready:
@@ -121,7 +121,7 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
         Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
         :attr:`self.vm` from the provided file.
 
-        :raise InvalidInputError: if the file does not exist.
+        :raises InvalidInputError: if the file does not exist.
         """
         return self._package
 
@@ -177,7 +177,7 @@ class COTSubmodule(COTGenericSubmodule):
         Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
         :attr:`self.vm` from the provided file.
 
-        :raise InvalidInputError: if the file does not exist.
+        :raises InvalidInputError: if the file does not exist.
         """
         return self._package
 
@@ -227,7 +227,7 @@ class COTSubmodule(COTGenericSubmodule):
         If :attr:`output` was not previously set, automatically
         sets it to the value of :attr:`PACKAGE`.
 
-        :raise InvalidInputError: if :meth:`ready_to_run` reports ``False``
+        :raises InvalidInputError: if :meth:`ready_to_run` reports ``False``
         """
         super(COTSubmodule, self).run()
 

@@ -54,7 +54,7 @@ class OVFHardware(object):
 
         :param ovf: OVF instance to extract hardware information from.
         :type ovf: :class:`~COT.ovf.ovf.OVF`
-        :raise OVFHardwareDataError: if any data errors are seen
+        :raises OVFHardwareDataError: if any data errors are seen
         """
         self.ovf = ovf
         self.item_dict = {}
@@ -255,7 +255,7 @@ class OVFHardware(object):
         :type properties: dict[property, value]
         :param str profile: Single profile ID to search within
         :return: Matching :class:`OVFItem` instance, or None
-        :raise LookupError: if more than one such Item exists.
+        :raises LookupError: if more than one such Item exists.
         """
         matches = self.find_all_items(resource_type, properties, [profile])
         if len(matches) > 1:
@@ -362,10 +362,10 @@ class OVFHardware(object):
           item) now exist. Used with
           :meth:`COT.platform.GenericPlatform.guess_nic_name`
         :return: Updated :param:`new_item`
-        :raise NotImplementedError: No support yet for updating ``Address``
-        :raise NotImplementedError: If updating ``AddressOnParent`` but the
+        :raises NotImplementedError: No support yet for updating ``Address``
+        :raises NotImplementedError: If updating ``AddressOnParent`` but the
           prior value varies across config profiles.
-        :raise NotImplementedError: if ``AddressOnParent`` is not an integer.
+        :raises NotImplementedError: if ``AddressOnParent`` is not an integer.
         """
         resource_type = self.ovf.get_type_from_device(new_item)
         address = new_item.get(self.ovf.ADDRESS)

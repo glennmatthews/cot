@@ -73,7 +73,7 @@ class QEMUImg(Helper):
 
         :param str file_path: Path to disk image file to inspect.
         :return: Disk image format (``'vmdk'``, ``'raw'``, ``'qcow2'``, etc.)
-        :raise RuntimeError: if unable to parse the qemu-img output.
+        :raises RuntimeError: if unable to parse the qemu-img output.
         """
         output = self.call_helper(['info', file_path])
         # Read the format from the output
@@ -93,7 +93,7 @@ class QEMUImg(Helper):
         :param str file_path: Path to disk image file to inspect
         :return: Disk capacity, in bytes
         :rtype: str
-        :raise RuntimeError: if unable to parse the qemu-img output.
+        :raises RuntimeError: if unable to parse the qemu-img output.
         """
         output = self.call_helper(['info', file_path])
         match = re.search(r"(\d+) bytes", output)
@@ -127,7 +127,7 @@ class QEMUImg(Helper):
           * :attr:`file_path`, if no conversion was required
           * or a file path in :attr:`output_dir` containing the converted image
 
-        :raise NotImplementedError: if the :attr:`new_format` and/or
+        :raises NotImplementedError: if the :attr:`new_format` and/or
           :attr:`new_subformat` are not supported conversion targets.
         """
         file_name = os.path.basename(file_path)

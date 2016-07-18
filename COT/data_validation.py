@@ -108,7 +108,7 @@ def match_or_die(first_label, first, second_label, second):
     :param object first: First object to compare
     :param str second_label: Descriptive label for :attr:`second`
     :param object second: Second object to compare
-    :raise ValueMismatchError: if ``first != second``
+    :raises ValueMismatchError: if ``first != second``
     """
     if first != second:
         raise ValueMismatchError("{0} {1} does not match {2} {3}"
@@ -126,7 +126,7 @@ def canonicalize_helper(label, user_input, mappings, re_flags=0):
     :param list mappings: List of ``(expr, canonical)`` pairs for mapping.
     :param int re_flags: ``re.IGNORECASE``, etc. if desired
     :returns: The canonical string
-    :raise ValueUnsupportedError: If no ``expr`` in ``mappings`` matches
+    :raises ValueUnsupportedError: If no ``expr`` in ``mappings`` matches
       ``input``.
     """
     if user_input is None or user_input == "":
@@ -146,7 +146,7 @@ def canonicalize_ide_subtype(subtype):
       - ``PIIX4``
       - ``virtio``
 
-    :raise ValueUnsupportedError: If the canonical string cannot be determined
+    :raises ValueUnsupportedError: If the canonical string cannot be determined
     """
     return canonicalize_helper("IDE controller subtype", subtype,
                                [
@@ -173,7 +173,7 @@ def canonicalize_nic_subtype(subtype):
     :param str subtype: User-provided string
     :returns: The canonical string, one of :data:`NIC_TYPES`
 
-    :raise ValueUnsupportedError: If the canonical string cannot be determined
+    :raises ValueUnsupportedError: If the canonical string cannot be determined
 
     .. seealso::
        :meth:`COT.platforms.GenericPlatform.validate_nic_type`
@@ -194,7 +194,7 @@ def canonicalize_scsi_subtype(subtype):
       - ``virtio``
       - ``VirtualSCSI``
 
-    :raise ValueUnsupportedError: If the canonical string cannot be determined
+    :raises ValueUnsupportedError: If the canonical string cannot be determined
     """
     return canonicalize_helper("SCSI controller subtype", subtype,
                                [
@@ -241,7 +241,7 @@ def mac_address(string):
     * xxxx.xxxx.xxxx
 
     :param str string: String to validate
-    :raise InvalidInputError: if string is not a valid MAC address
+    :raises InvalidInputError: if string is not a valid MAC address
     :return: Validated string(with leading/trailing whitespace stripped)
     """
     string = string.strip()
@@ -260,7 +260,7 @@ def device_address(string):
     Validate string is an appropriately formed device address such as '1:0'.
 
     :param str string: String to validate
-    :raise InvalidInputError: if string is not a well-formatted device address
+    :raises InvalidInputError: if string is not a well-formatted device address
     :return: Validated string (with leading/trailing whitespace stripped)
     """
     string = string.strip()
@@ -274,7 +274,7 @@ def no_whitespace(string):
     """Parser helper function for arguments not allowed to contain whitespace.
 
     :param str string: String to validate
-    :raise InvalidInputError: if string contains internal whitespace
+    :raises InvalidInputError: if string contains internal whitespace
     :return: Validated string (with leading/trailing whitespace stripped)
     """
     string = string.strip()
@@ -294,9 +294,9 @@ def validate_int(string,
     :param int maximum: Maximum valid value (optional)
     :param str label: Label to include in any errors raised
     :return: Validated integer value
-    :raise ValueUnsupportedError: if :attr:`string` can't be converted to int
-    :raise ValueTooLowError: if value is less than :attr:`minimum`
-    :raise ValueTooHighError: if value is more than :attr:`maximum`
+    :raises ValueUnsupportedError: if :attr:`string` can't be converted to int
+    :raises ValueTooLowError: if value is less than :attr:`minimum`
+    :raises ValueTooHighError: if value is more than :attr:`maximum`
     """
     try:
         i = int(string)

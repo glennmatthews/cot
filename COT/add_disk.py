@@ -54,7 +54,7 @@ def validate_controller_address(controller, address):
 
     :param str controller: ``'ide'`` or ``'scsi'``
     :param str address: A string like '0:0' or '2:10'
-    :raise InvalidInputError: if the address/controller combo is invalid.
+    :raises InvalidInputError: if the address/controller combo is invalid.
     """
     logger.info("validate_controller_address: %s, %s", controller, address)
     if controller is not None and address is not None:
@@ -115,7 +115,7 @@ class COTAddDisk(COTSubmodule):
     def disk_image(self):
         """Path to disk image file to add to the VM.
 
-        :raise InvalidInputError: if the file does not exist.
+        :raises InvalidInputError: if the file does not exist.
         """
         return self._disk_image
 
@@ -130,7 +130,7 @@ class COTAddDisk(COTSubmodule):
     def address(self):
         """Disk device address on controller (``1:0``, etc.).
 
-        :raise InvalidInputError: see :meth:`validate_controller_address`
+        :raises InvalidInputError: see :meth:`validate_controller_address`
         """
         return self._address
 
@@ -144,7 +144,7 @@ class COTAddDisk(COTSubmodule):
     def controller(self):
         """Disk controller type (``ide``, ``scsi``).
 
-        :raise InvalidInputError: see :meth:`validate_controller_address`
+        :raises InvalidInputError: see :meth:`validate_controller_address`
         """
         return self._controller
 
@@ -258,7 +258,8 @@ def guess_disk_type_from_extension(disk_file):
     """Guess the disk type (harddisk/cdrom) from the disk file name.
 
     :param str disk_file: File name or file path.
-    :return: "cdrom" or "harrdisk"
+    :return: "cdrom" or "harddisk"
+    :raises InvalidInputError: if the disk type cannot be guessed.
     """
     disk_extension = os.path.splitext(disk_file)[1]
     ext_type_map = {
@@ -350,6 +351,8 @@ def guess_controller_type(vm, ctrl_item, disk_type):
     :param object ctrl_item: Any known controller object
     :param str disk_type: "cdrom" or "harddisk"
     :return: 'ide' or 'scsi'
+    :raises ValueUnsupportedError: if ``ctrl_item`` is not an IDE or SCSI
+      controller device.
     """
     if ctrl_item is None:
         # If the user didn't tell us which controller type they wanted,
