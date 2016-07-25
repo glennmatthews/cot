@@ -75,7 +75,6 @@ There is NO WARRANTY, to the extent permitted by law.
     def test_find_mkisofs(self, mock_call_helper, mock_find_executable):
         """If mkisofs is found, use it."""
         def find_one(name):
-            # pylint: disable=missing-param-doc,missing-type-doc
             """Find mkisofs but no other."""
             if name == "mkisofs":
                 return "/mkisofs"
@@ -94,7 +93,6 @@ There is NO WARRANTY, to the extent permitted by law.
     def test_find_genisoimage(self, mock_call_helper, mock_find_executable):
         """If mkisofs is not found, but genisoimage is, use that."""
         def find_one(name):
-            # pylint: disable=missing-param-doc,missing-type-doc
             """Find genisoimage but no other."""
             if name == "genisoimage":
                 return "/genisoimage"

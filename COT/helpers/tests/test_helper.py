@@ -32,7 +32,7 @@ from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=missing-type-doc,missing-param-doc
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 class HelperUT(COT_UT):
@@ -65,13 +65,11 @@ class HelperUT(COT_UT):
                          [a[0][0] for a in mock_function.call_args_list])
 
     def set_helper_version(self, ver):
-        # pylint: disable=missing-param-doc,missing-type-doc
         """Override the version number of the helper class."""
-        self.helper._version = ver      # pylint: disable=protected-access
+        self.helper._version = ver
 
     @staticmethod
     def select_package_manager(name):
-        # pylint: disable=missing-param-doc,missing-type-doc
         """Select the specified installer program for Helper to use."""
         for pm in Helper.PACKAGE_MANAGERS:
             Helper.PACKAGE_MANAGERS[pm] = (pm == name)
@@ -79,7 +77,7 @@ class HelperUT(COT_UT):
     def enable_apt_install(self):
         """Set flags and values to force an apt-get update and apt install."""
         self.select_package_manager('apt-get')
-        Helper._apt_updated = False     # pylint: disable=protected-access
+        Helper._apt_updated = False
         os.environ['PREFIX'] = '/usr/local'
         if 'DESTDIR' in os.environ:
             del os.environ['DESTDIR']
@@ -93,7 +91,6 @@ class HelperUT(COT_UT):
 
     def assertAptUpdated(self):  # noqa: N802
         """Assert that the hidden _apt_updated flag is set."""
-        # pylint: disable=protected-access
         self.assertTrue(Helper._apt_updated)
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
@@ -139,7 +136,6 @@ class HelperUT(COT_UT):
 
         :param str portname: MacPorts package name to test.
         """
-        # pylint: disable=protected-access
         self.select_package_manager('port')
         Helper._port_updated = False
         # Python 2.6 doesn't let us use multiple contexts in one 'with'
@@ -180,7 +176,7 @@ class HelperUT(COT_UT):
         # subclass needs to set self.helper
         super(HelperUT, self).setUp()
         if self.helper:
-            self.helper._path = None   # pylint: disable=protected-access
+            self.helper._path = None
         # save some environment properties for sanity
         self._port = Helper.PACKAGE_MANAGERS['port']
         self._apt_get = Helper.PACKAGE_MANAGERS['apt-get']
@@ -214,7 +210,6 @@ class HelperGenericTest(HelperUT):
 
     def test_check_call_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist."""
-        # pylint: disable=protected-access
         self.assertRaises(HelperNotFoundError,
                           Helper._check_call, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
@@ -223,7 +218,6 @@ class HelperGenericTest(HelperUT):
 
     def test_check_call_helpererror(self):
         """HelperError if executable fails and require_success is set."""
-        # pylint: disable=protected-access
         with self.assertRaises(HelperError) as cm:
             Helper._check_call(["false"])
         self.assertEqual(cm.exception.errno, 1)
@@ -240,7 +234,6 @@ class HelperGenericTest(HelperUT):
             return
         mock_check_call.side_effect = raise_oserror
 
-        # pylint: disable=protected-access
 
         # Without retry_on_sudo, we reraise the permissions error
         with self.assertRaises(OSError) as cm:
@@ -282,7 +275,6 @@ class HelperGenericTest(HelperUT):
 
     def test_check_output_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist."""
-        # pylint: disable=protected-access
         self.assertRaises(HelperNotFoundError,
                           Helper._check_output, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
@@ -291,13 +283,11 @@ class HelperGenericTest(HelperUT):
 
     def test_check_output_oserror(self):
         """OSError if requested command isn't an executable."""
-        # pylint: disable=protected-access
         self.assertRaises(OSError,
                           Helper._check_output, self.input_ovf)
 
     def test_check_output_helpererror(self):
         """HelperError if executable fails and require_success is set."""
-        # pylint: disable=protected-access
         with self.assertRaises(HelperError) as cm:
             Helper._check_output(["false"])
 
@@ -312,7 +302,7 @@ class HelperGenericTest(HelperUT):
 
     def test_install_helper_already_present(self):
         """Make sure a warning is logged when attempting to re-install."""
-        self.helper._path = True        # pylint: disable=protected-access
+        self.helper._path = True
         self.helper.install_helper()
         self.assertLogged(**self.ALREADY_INSTALLED)
 

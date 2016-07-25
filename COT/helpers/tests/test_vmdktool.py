@@ -65,7 +65,6 @@ class TestVmdkTool(HelperUT):
                                     mock_check_output,
                                     mock_find_executable,
                                     *_):
-        # pylint: disable=missing-param-doc,missing-type-doc
         """Test installation via 'apt-get'."""
         self.enable_apt_install()
         mock_find_executable.side_effect = [
@@ -135,7 +134,6 @@ class TestVmdkTool(HelperUT):
                                 mock_check_call,
                                 mock_find_executable,
                                 *_):
-        # pylint: disable=missing-param-doc,missing-type-doc
         """Test installation via 'yum'."""
         self.enable_yum_install()
         mock_find_executable.side_effect = [
