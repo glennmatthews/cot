@@ -647,19 +647,25 @@ class VMDescription(object):
         """
         raise NotImplementedError("get_property_value not implemented")
 
-    def set_property_value(self, key, value):
+    def set_property_value(self, key, value,
+                           user_configurable=None, property_type=None):
         """Set the value of the given property (converting value if needed).
 
         :param str key: Property identifier
         :param value: Value to set for this property
+        :param bool user_configurable: Should this property be configurable at
+            deployment time by the user?
+        :param str property_type: Value type - 'string' or 'boolean'
         :return: the (converted) value that was set.
         """
         raise NotImplementedError("set_property_value not implemented")
 
-    def config_file_to_properties(self, file_path):
+    def config_file_to_properties(self, file_path, user_configurable=None):
         """Import each line of a text file into a configuration property.
 
         :param str file_path: File name to import.
+        :param bool user_configurable: Should the properties be configurable at
+            deployment time by the user?
         """
         raise NotImplementedError("config_file_to_properties not implemented")
 

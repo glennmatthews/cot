@@ -86,14 +86,18 @@ ovf:userConfigurable="true" ovf:value="true">
 """)
 
     def test_create_property(self):
-        """Create a new property but do not set its value yet."""
+        """Create new properties but do not set their values yet."""
         self.instance.package = self.input_ovf
-        self.instance.properties = ["new-property-2="]
+        self.instance.properties = [
+            "new-property-2=",    # default value is empty string
+            "new-property-3",     # no default value
+        ]
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
        </ovf:Property>
 +      <ovf:Property ovf:key="new-property-2" ovf:type="string" ovf:value="" />
++      <ovf:Property ovf:key="new-property-3" ovf:type="string" />
      </ovf:ProductSection>
 """)
 
@@ -107,6 +111,63 @@ ovf:userConfigurable="true" ovf:value="true">
        </ovf:Property>
 +      <ovf:Property ovf:key="new-property" ovf:type="string" \
 ovf:value="hello" />
+     </ovf:ProductSection>
+""")
+
+    def test_create_property_variants(self):
+        """Variant options for creating new properties."""
+        self.instance.package = self.input_ovf
+        self.instance.properties = [
+            "empty-property",
+            "property-with-value=value",
+            "prop-with-type+string",
+            "prop-with-value-and-type=yes+boolean",
+        ]
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       </ovf:Property>
++      <ovf:Property ovf:key="empty-property" ovf:type="string" />
++      <ovf:Property ovf:key="property-with-value" ovf:type="string" \
+ovf:value="value" />
++      <ovf:Property ovf:key="prop-with-type" ovf:type="string" />
++      <ovf:Property ovf:key="prop-with-value-and-type" ovf:type="boolean" \
+ovf:value="true" />
+     </ovf:ProductSection>
+""")
+
+    def test_create_edit_and_user_configurable(self):
+        """Create new props, edit existing, and set user-configable flag."""
+        self.instance.package = self.input_ovf
+        self.instance.properties = [
+            'new-property=false+boolean',
+            'domain-name=example.com',
+            'another-new=yep!',
+            'enable-https-server+string',
+        ]
+        self.instance.user_configurable = False
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       </ovf:Property>
+-      <ovf:Property ovf:key="enable-https-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="false">
++      <ovf:Property ovf:key="enable-https-server" ovf:type="string" \
+ovf:userConfigurable="false" ovf:value="false">
+         <ovf:Label>Enable HTTPS Server</ovf:Label>
+...
+       </ovf:Property>
+-      <ovf:Property ovf:key="domain-name" ovf:qualifiers="MaxLen(238)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="domain-name" ovf:qualifiers="MaxLen(238)" \
+ovf:type="string" ovf:userConfigurable="false" ovf:value="example.com">
+         <ovf:Label>Domain Name</ovf:Label>
+...
+       </ovf:Property>
++      <ovf:Property ovf:key="new-property" ovf:type="boolean" \
+ovf:userConfigurable="false" ovf:value="false" />
++      <ovf:Property ovf:key="another-new" ovf:type="string" \
+ovf:userConfigurable="false" ovf:value="yep!" />
      </ovf:ProductSection>
 """)
 
@@ -136,6 +197,7 @@ ovf:value="interface Loopback0" />
                                                       "sample_cfg.txt")
         self.instance.properties = ["login-password=cisco123",
                                     "enable-ssh-server=1"]
+        self.instance.user_configurable = True
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -157,12 +219,13 @@ ovf:userConfigurable="true" ovf:value="true">
 ...
        </ovf:Property>
 +      <ovf:Property ovf:key="config-0001" ovf:type="string" \
-ovf:value="interface GigabitEthernet0/0/0/0" />
+ovf:userConfigurable="true" ovf:value="interface GigabitEthernet0/0/0/0" />
 +      <ovf:Property ovf:key="config-0002" ovf:type="string" \
-ovf:value="no shutdown" />
+ovf:userConfigurable="true" ovf:value="no shutdown" />
 +      <ovf:Property ovf:key="config-0003" ovf:type="string" \
-ovf:value="interface Loopback0" />
-+      <ovf:Property ovf:key="config-0004" ovf:type="string" ovf:value="end" />
+ovf:userConfigurable="true" ovf:value="interface Loopback0" />
++      <ovf:Property ovf:key="config-0004" ovf:type="string" \
+ovf:userConfigurable="true" ovf:value="end" />
      </ovf:ProductSection>
 """)
 

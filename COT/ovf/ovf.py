@@ -548,7 +548,7 @@ class OVF(VMDescription, XML):
 
         :return: Array of dicts (one per property) with the keys
           ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
-          ``"label"``, and ``"description"``.
+          ``"user_configurable"``, ``"label"``, and ``"description"``.
         """
         result = []
         if self.ovf_version < 1.0 or self.product_section is None:
@@ -562,6 +562,7 @@ class OVF(VMDescription, XML):
                 'value': elem.get(self.PROP_VALUE),
                 'qualifiers': elem.get(self.PROP_QUAL, ""),
                 'type': elem.get(self.PROP_TYPE, ""),
+                'user_configurable': elem.get(self.PROP_USER_CONFIGABLE, ""),
                 'label': label,
                 'description': descr,
             })
@@ -1659,11 +1660,15 @@ class OVF(VMDescription, XML):
 
         return value
 
-    def set_property_value(self, key, value):
+    def set_property_value(self, key, value,
+                           user_configurable=None, property_type=None):
         """Set the value of the given property (converting value if needed).
 
         :param str key: Property identifier
-        :param str value: Value to set for this property
+        :param value: Value to set for this property
+        :param bool user_configurable: Should this property be configurable at
+            deployment time by the user?
+        :param str property_type: Value type - 'string' or 'boolean'
         :return: the (converted) value that was set.
         """
         if self.ovf_version < 1.0:
@@ -1679,25 +1684,33 @@ class OVF(VMDescription, XML):
         prop = self.find_child(self.product_section, self.PROPERTY,
                                attrib={self.PROP_KEY: key})
         if prop is None:
-            self.set_or_make_child(self.product_section, self.PROPERTY,
-                                   attrib={self.PROP_KEY: key,
-                                           self.PROP_VALUE: value,
-                                           self.PROP_TYPE: 'string'})
-            return value
+            prop = self.set_or_make_child(self.product_section, self.PROPERTY,
+                                          attrib={self.PROP_KEY: key})
+            # Properties *must* have a type to be valid
+            if property_type is None:
+                property_type = 'string'
 
-        # Else, make sure the requested value is valid
-        value = self._validate_value_for_property(prop, value)
+        if user_configurable is not None:
+            prop.set(self.PROP_USER_CONFIGABLE, str(user_configurable).lower())
+        if property_type is not None:
+            prop.set(self.PROP_TYPE, property_type)
 
-        prop.set(self.PROP_VALUE, value)
+        if value is not None:
+            # Make sure the requested value is valid
+            value = self._validate_value_for_property(prop, value)
+            prop.set(self.PROP_VALUE, value)
+
         return value
 
-    def config_file_to_properties(self, file_path):
+    def config_file_to_properties(self, file_path, user_configurable=None):
         """Import each line of a text file into a configuration property.
 
         :raise NotImplementedError: if the :attr:`platform` for this OVF
           does not define
           :const:`~COT.platforms.GenericPlatform.LITERAL_CLI_STRING`
         :param str file_path: File name to import.
+        :param bool user_configurable: Should the properties be configurable at
+            deployment time by the user?
         """
         i = 0
         if not self.platform.LITERAL_CLI_STRING:
@@ -1712,7 +1725,8 @@ class OVF(VMDescription, XML):
                 i += 1
                 self.set_property_value(
                     "{0}-{1:04d}".format(self.platform.LITERAL_CLI_STRING, i),
-                    line)
+                    line,
+                    user_configurable)
 
     def convert_disk_if_needed(self, file_path, kind):
         """Convert the disk to a more appropriate format if needed.
