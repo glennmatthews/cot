@@ -1661,7 +1661,8 @@ class OVF(VMDescription, XML):
         return value
 
     def set_property_value(self, key, value,
-                           user_configurable=None, property_type=None):
+                           user_configurable=None, property_type=None,
+                           label=None, description=None):
         """Set the value of the given property (converting value if needed).
 
         :param str key: Property identifier
@@ -1669,6 +1670,8 @@ class OVF(VMDescription, XML):
         :param bool user_configurable: Should this property be configurable at
             deployment time by the user?
         :param str property_type: Value type - 'string' or 'boolean'
+        :param str label: Brief explanatory label for this property
+        :param str description: Detailed description of this property
         :return: the (converted) value that was set.
         """
         if self.ovf_version < 1.0:
@@ -1699,6 +1702,11 @@ class OVF(VMDescription, XML):
             # Make sure the requested value is valid
             value = self._validate_value_for_property(prop, value)
             prop.set(self.PROP_VALUE, value)
+
+        if label is not None:
+            self.set_or_make_child(prop, self.PROPERTY_LABEL, label)
+        if description is not None:
+            self.set_or_make_child(prop, self.PROPERTY_DESC, description)
 
         return value
 

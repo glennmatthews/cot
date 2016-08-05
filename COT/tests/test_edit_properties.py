@@ -36,6 +36,36 @@ class TestCOTEditProperties(COT_UT):
         self.instance.output = self.temp_file
         self.counter = 0
 
+    def test_not_ready_to_run_labels(self):
+        """Test ready_to_run() failure scenarios involving the --label opt."""
+        self.instance.package = self.input_ovf
+        # --label requires --properties
+        self.instance.labels = ["label1", "label2"]
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+        self.assertRegexpMatches(reason, r"--label.*requires.*--properties")
+        # --label and --properties must have the same number of params
+        self.instance.properties = ["foo=bar"]
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+        self.assertRegexpMatches(reason, r"--label.*\(2\).*--properties \(1\)")
+
+    def test_not_ready_to_run_descriptions(self):
+        """Test ready_to_run() failure scenarios involving the --desc opt."""
+        self.instance.package = self.input_ovf
+        # --desc requires --properties
+        self.instance.descriptions = ["desc1", "desc2"]
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+        self.assertRegexpMatches(reason,
+                                 r"--description.*requires.*--properties")
+        # --desc and --properties must have the same number of params
+        self.instance.properties = ["foo=bar"]
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+        self.assertRegexpMatches(reason,
+                                 r"--description.*\(2\).*--properties \(1\)")
+
     def test_set_property_value(self):
         """Set the value of an existing property."""
         self.instance.package = self.input_ovf
@@ -234,6 +264,7 @@ ovf:userConfigurable="true" ovf:value="end" />
         self.instance.package = self.input_ovf
         vm = self.instance.vm
 
+        vm.set_property_value("login-password", "ababab")
         self.assertRaises(ValueUnsupportedError,
                           vm.set_property_value,
                           "login-password",
@@ -247,10 +278,41 @@ ovf:userConfigurable="true" ovf:value="end" />
         self.assertLogged(**self.NONEXISTENT_FILE)
         vm = self.instance.vm
 
+        vm.set_property_value("jabberwock", "super duper alley-ooper scooper")
         self.assertRaises(ValueUnsupportedError,
                           vm.set_property_value,
                           "jabberwock",
                           "short")
+
+    def test_update_label_and_description(self):
+        """Update label and description for existing properties."""
+        self.instance.package = self.input_ovf
+        self.instance.properties = ["hostname", "enable-ssh-server"]
+        self.instance.labels = ["Hostname", "Enable Remote SSH Access"]
+        self.instance.descriptions = ["Enter the router hostname",
+                                      "Enable <sshd>; disable <telnetd>"]
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       <ovf:Property ovf:key="hostname" ovf:qualifiers="MaxLen(63)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+-        <ovf:Label>Router Name</ovf:Label>
+-        <ovf:Description>Hostname of this router</ovf:Description>
++        <ovf:Label>Hostname</ovf:Label>
++        <ovf:Description>Enter the router hostname</ovf:Description>
+       </ovf:Property>
+...
+       <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="false">
+-        <ovf:Label>Enable SSH Login</ovf:Label>
+-        <ovf:Description>Enable remote login via SSH and disable remote \
+login via telnet. Requires login-username and login-password to be \
+set!</ovf:Description>
++        <ovf:Label>Enable Remote SSH Access</ovf:Label>
++        <ovf:Description>Enable &lt;sshd&gt;; disable \
+&lt;telnetd&gt;</ovf:Description>
+       </ovf:Property>
+""")
 
     def test_create_property_no_preexisting(self):
         """Set property values for an OVF that has none previously."""

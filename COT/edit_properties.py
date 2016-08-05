@@ -57,8 +57,12 @@ class COTEditProperties(COTSubmodule):
         """Instantiate this submodule with the given UI."""
         super(COTEditProperties, self).__init__(ui)
         self._config_file = None
-        self._properties = {}
-        self._transports = None
+        self._properties = []
+        self.labels = []
+        """List of label strings to set for the properties being updated."""
+        self.descriptions = []
+        """List of description strings to set for updated properties."""
+        self._transports = []
         self.user_configurable = None
         """Value to set the user_configurable flag on properties we edit."""
 
@@ -126,6 +130,29 @@ class COTEditProperties(COTSubmodule):
                                "to add this as a recognized value.", v)
             self._transports.append(v)
 
+    def ready_to_run(self):
+        """Check whether the module is ready to :meth:`run`.
+
+        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        """
+        if self.labels and not self.properties:
+            return False, ("The --label option requires also specifying "
+                           "a corresponding --properties option")
+        if self.descriptions and not self.properties:
+            return False, ("The --description option requires also specifying "
+                           "a corresponding --properties option")
+        if self.labels and len(self.labels) != len(self.properties):
+            return False, ("The number of --label entries ({0}) and "
+                           "--properties ({1}) must be equal"
+                           .format(len(self.labels), len(self.properties)))
+        if self.descriptions and (len(self.descriptions) !=
+                                  len(self.properties)):
+            return False, ("The number of --description entries ({0}) and "
+                           "--properties ({1}) must be equal"
+                           .format(len(self.descriptions),
+                                   len(self.properties)))
+        return super(COTEditProperties, self).ready_to_run()
+
     def run(self):
         """Do the actual work of this submodule.
 
@@ -138,11 +165,10 @@ class COTEditProperties(COTSubmodule):
                                               self.user_configurable)
 
         if self.properties:
-            for key, value, prop_type in self.properties:
-                if value == '':
-                    value = self.UI.get_input(
-                        "Enter value for property '{0}'",
-                        value)
+            for i in range(0, len(self.properties)):
+                key, value, prop_type = self.properties[i]
+                label = self.labels[i] if self.labels else None
+                desc = self.descriptions[i] if self.descriptions else None
                 curr_value = self.vm.get_property_value(key)
                 if curr_value is None:
                     self.UI.confirm_or_die(
@@ -151,7 +177,9 @@ class COTEditProperties(COTSubmodule):
                 self.vm.set_property_value(
                     key, value,
                     user_configurable=self.user_configurable,
-                    property_type=prop_type)
+                    property_type=prop_type,
+                    label=label,
+                    description=desc)
 
         if self.transports:
             self.vm.environment_transports = self.transports
@@ -230,10 +258,11 @@ class COTEditProperties(COTSubmodule):
             add_help=False,
             help="""Edit or create environment properties of an OVF""",
             usage=self.UI.fill_usage("edit-properties", [
-                "PACKAGE [-p KEY1=VALUE1 ] [-p KEY2=VALUE2 ...] "
+                "PACKAGE [-p KEY1=VALUE1 [-p KEY2=VALUE2 ...]] "
+                "[-l LABEL1 [-l LABEL2 ...]] [-d DESC1 [-d DESC2 ...]] "
                 "[-c CONFIG_FILE] [-u [USER_CONFIGURABLE]] "
                 "[-t TRANSPORT [TRANSPORT2 ...]] [-o OUTPUT]",
-                "PACKAGE [-o OUTPUT]",
+                "PACKAGE [-u [USER_CONFIGURABLE]] [-o OUTPUT]",
             ]),
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description="""
@@ -250,6 +279,10 @@ the program will run interactively.""",
                  " mark both properties as user-configurable.",
                  'cot edit-properties input.ovf -p string-property+string'
                  ' -p bool-property=true+boolean --user-configurable'),
+                ("Update the label and description of two existing properties",
+                 'cot edit-properties input.ovf -p hostname -l "Hostname"'
+                 ' -d "Hostname of this device" -p enable-ssh -l "Enable'
+                 ' remote SSH access" -d "Enable sshd and disable telnetd"'),
             ]),
         )
 
@@ -282,6 +315,17 @@ the program will run interactively.""",
                        "key. "
                        "This argument may be repeated as needed to specify "
                        "multiple properties to edit.")
+        g.add_argument('-l', '--labels', action='append', nargs='+',
+                       metavar=('LABEL1', 'LABEL2'),
+                       help="Set the label(s) for the property(s) being "
+                       "edited. If this option is specified, the number of "
+                       "properties and the number of labels *must* be equal.")
+        g.add_argument('-d', '--descriptions', action='append', nargs='+',
+                       metavar=('DESC1', 'DESC2'),
+                       help="Set the description(s) for the property(s) being "
+                       "edited. If this option is specified, the number of "
+                       "properties and the number of descriptions *must* be "
+                       "equal.")
         g.add_argument('-t', '--transports', action='append', nargs='+',
                        metavar=('TRANSPORT', 'TRANSPORT2'),
                        help="Set the transport method(s) for properties. "

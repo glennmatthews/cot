@@ -648,7 +648,8 @@ class VMDescription(object):
         raise NotImplementedError("get_property_value not implemented")
 
     def set_property_value(self, key, value,
-                           user_configurable=None, property_type=None):
+                           user_configurable=None, property_type=None,
+                           label=None, description=None):
         """Set the value of the given property (converting value if needed).
 
         :param str key: Property identifier
@@ -656,6 +657,8 @@ class VMDescription(object):
         :param bool user_configurable: Should this property be configurable at
             deployment time by the user?
         :param str property_type: Value type - 'string' or 'boolean'
+        :param str label: Brief explanatory label for this property
+        :param str description: Detailed description of this property
         :return: the (converted) value that was set.
         """
         raise NotImplementedError("set_property_value not implemented")

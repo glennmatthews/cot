@@ -13,6 +13,8 @@ This project adheres to `Semantic Versioning`_.
 
   - Added ``--user-configurable`` option to set whether created/updated
     properties are marked as user-configurable in the OVF.
+  - Added ``--labels`` and ``--descriptions`` options to set/update the
+    labels and descriptions associated with properties.
   - It's now valid to set no default value for a property by
     omitting the ``=value``, as in ``-p property-with-no-value``, as well as
     the existing ``-p property-with-empty-value=`` syntax to set
