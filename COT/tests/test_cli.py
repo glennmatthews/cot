@@ -326,7 +326,7 @@ class TestCLIGeneral(TestCOTCLI):
     edit-hardware   Edit virtual machine hardware properties of an OVF
     edit-product    Edit product info in an OVF
     edit-properties
-                    Edit environment properties of an OVF
+                    Edit or create environment properties of an OVF
     help            Print help for a command
     info            Generate a description of an OVF package
     inject-config   Inject a configuration file into an OVF package
@@ -358,7 +358,7 @@ class TestCLIGeneral(TestCOTCLI):
     edit-product (set-product, set-version)
                         Edit product info in an OVF
     edit-properties (set-properties, edit-environment, set-environment)
-                        Edit environment properties of an OVF
+                        Edit or create environment properties of an OVF
     help                Print help for a command
     info (describe)     Generate a description of an OVF package
     inject-config (add-bootstrap)
@@ -658,12 +658,18 @@ class TestCLIEditProperties(TestCOTCLI):
         self.call_cot(['edit-properties', self.input_ovf, '--config-file',
                        '/foo'], result=2)
         # Bad input format
-        self.call_cot(['edit-properties', self.input_ovf, '--properties', 'x'],
-                      result=2)
         self.call_cot(['edit-properties', self.input_ovf, '--properties', '='],
                       result=2)
         self.call_cot(['edit-properties', self.input_ovf, '--properties',
                        '=foo'], result=2)
+        self.call_cot(['edit-properties', self.input_ovf, '--properties', '+'],
+                      result=2)
+        self.call_cot(['edit-properties', self.input_ovf, '-p', '+string'],
+                      result=2)
+        self.call_cot(['edit-properties', self.input_ovf, '-p', '=foo+string'],
+                      result=2)
+        self.call_cot(['edit-properties', self.input_ovf,
+                       '--user-configurable', 'foobar'], result=2)
 
     def test_set_property_valid(self):
         """Variant property setting syntax, exercising CLI nargs/append."""

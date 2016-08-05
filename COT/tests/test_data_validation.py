@@ -23,13 +23,14 @@ try:
 except ImportError:
     import unittest
 
-from COT.data_validation import canonicalize_helper, match_or_die
-from COT.data_validation import canonicalize_nic_subtype, NIC_TYPES
-from COT.data_validation import mac_address, device_address, no_whitespace
-from COT.data_validation import validate_int, non_negative_int, positive_int
-from COT.data_validation import InvalidInputError
-from COT.data_validation import ValueMismatchError, ValueUnsupportedError
-from COT.data_validation import ValueTooLowError, ValueTooHighError
+from COT.data_validation import (
+    match_or_die,
+    canonicalize_helper, canonicalize_nic_subtype, NIC_TYPES,
+    mac_address, device_address, no_whitespace, truth_value,
+    validate_int, non_negative_int, positive_int,
+    InvalidInputError, ValueMismatchError, ValueUnsupportedError,
+    ValueTooLowError, ValueTooHighError,
+)
 
 
 class TestValidationFunctions(unittest.TestCase):
@@ -138,6 +139,12 @@ class TestValidationFunctions(unittest.TestCase):
         """Test the positive_int() validator."""
         self.assertEqual(positive_int("10"), 10)
         self.assertRaises(ValueTooLowError, positive_int, "0")
+
+    def test_truth_value(self):
+        """Test the truth_value() validator."""
+        self.assertTrue(truth_value('y'))
+        self.assertFalse(truth_value('n'))
+        self.assertRaises(ValueUnsupportedError, truth_value, "foo")
 
     def test_custom_error_attributes(self):
         """Test the properties of ValueUnsupportedError and its children."""

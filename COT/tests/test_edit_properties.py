@@ -36,6 +36,34 @@ class TestCOTEditProperties(COT_UT):
         self.instance.output = self.temp_file
         self.counter = 0
 
+    def test_not_ready_to_run_labels(self):
+        """Test ready_to_run() failure scenarios involving the --label opt."""
+        self.instance.package = self.input_ovf
+        # --label requires --properties
+        self.instance.labels = ["label1", "label2"]
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+        self.assertRegex(reason, r"--label.*requires.*--properties")
+        # --label and --properties must have the same number of params
+        self.instance.properties = ["foo=bar"]
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+        self.assertRegex(reason, r"--label.*\(2\).*--properties \(1\)")
+
+    def test_not_ready_to_run_descriptions(self):
+        """Test ready_to_run() failure scenarios involving the --desc opt."""
+        self.instance.package = self.input_ovf
+        # --desc requires --properties
+        self.instance.descriptions = ["desc1", "desc2"]
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+        self.assertRegex(reason, r"--description.*requires.*--properties")
+        # --desc and --properties must have the same number of params
+        self.instance.properties = ["foo=bar"]
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+        self.assertRegex(reason, r"--description.*\(2\).*--properties \(1\)")
+
     def test_set_property_value(self):
         """Set the value of an existing property."""
         self.instance.package = self.input_ovf
@@ -86,14 +114,18 @@ ovf:userConfigurable="true" ovf:value="true">
 """)
 
     def test_create_property(self):
-        """Create a new property but do not set its value yet."""
+        """Create new properties but do not set their values yet."""
         self.instance.package = self.input_ovf
-        self.instance.properties = ["new-property-2="]
+        self.instance.properties = [
+            "new-property-2=",    # default value is empty string
+            "new-property-3",     # no default value
+        ]
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
        </ovf:Property>
 +      <ovf:Property ovf:key="new-property-2" ovf:type="string" ovf:value="" />
++      <ovf:Property ovf:key="new-property-3" ovf:type="string" />
      </ovf:ProductSection>
 """)
 
@@ -107,6 +139,72 @@ ovf:userConfigurable="true" ovf:value="true">
        </ovf:Property>
 +      <ovf:Property ovf:key="new-property" ovf:type="string" \
 ovf:value="hello" />
+     </ovf:ProductSection>
+""")
+
+    def test_create_property_variants(self):
+        """Variant options for creating new properties."""
+        self.instance.package = self.input_ovf
+        self.instance.properties = [
+            "empty-property",
+            "property-with-value=value",
+            "prop-with-type+string",
+            "prop-with-value-and-type=yes+boolean",
+        ]
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       </ovf:Property>
++      <ovf:Property ovf:key="empty-property" ovf:type="string" />
++      <ovf:Property ovf:key="property-with-value" ovf:type="string" \
+ovf:value="value" />
++      <ovf:Property ovf:key="prop-with-type" ovf:type="string" />
++      <ovf:Property ovf:key="prop-with-value-and-type" ovf:type="boolean" \
+ovf:value="true" />
+     </ovf:ProductSection>
+""")
+
+    def test_change_type_existing_invalid(self):
+        """Change the type of an existing property so that value is invalid."""
+        self.instance.package = self.invalid_ovf
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
+        self.assertLogged(**self.NONEXISTENT_FILE)
+        self.instance.properties = ['jabberwock+boolean']
+        with self.assertRaises(ValueUnsupportedError):
+            self.instance.run()
+
+    def test_create_edit_and_user_configurable(self):
+        """Create new props, edit existing, and set user-configable flag."""
+        self.instance.package = self.input_ovf
+        self.instance.properties = [
+            'new-property=false+boolean',
+            'domain-name=example.com',
+            'another-new=yep!',
+            'enable-https-server+string',
+        ]
+        self.instance.user_configurable = False
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       </ovf:Property>
+-      <ovf:Property ovf:key="enable-https-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="false">
++      <ovf:Property ovf:key="enable-https-server" ovf:type="string" \
+ovf:userConfigurable="false" ovf:value="false">
+         <ovf:Label>Enable HTTPS Server</ovf:Label>
+...
+       </ovf:Property>
+-      <ovf:Property ovf:key="domain-name" ovf:qualifiers="MaxLen(238)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="">
++      <ovf:Property ovf:key="domain-name" ovf:qualifiers="MaxLen(238)" \
+ovf:type="string" ovf:userConfigurable="false" ovf:value="example.com">
+         <ovf:Label>Domain Name</ovf:Label>
+...
+       </ovf:Property>
++      <ovf:Property ovf:key="new-property" ovf:type="boolean" \
+ovf:userConfigurable="false" ovf:value="false" />
++      <ovf:Property ovf:key="another-new" ovf:type="string" \
+ovf:userConfigurable="false" ovf:value="yep!" />
      </ovf:ProductSection>
 """)
 
@@ -136,6 +234,7 @@ ovf:value="interface Loopback0" />
                                                       "sample_cfg.txt")
         self.instance.properties = ["login-password=cisco123",
                                     "enable-ssh-server=1"]
+        self.instance.user_configurable = True
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -157,12 +256,13 @@ ovf:userConfigurable="true" ovf:value="true">
 ...
        </ovf:Property>
 +      <ovf:Property ovf:key="config-0001" ovf:type="string" \
-ovf:value="interface GigabitEthernet0/0/0/0" />
+ovf:userConfigurable="true" ovf:value="interface GigabitEthernet0/0/0/0" />
 +      <ovf:Property ovf:key="config-0002" ovf:type="string" \
-ovf:value="no shutdown" />
+ovf:userConfigurable="true" ovf:value="no shutdown" />
 +      <ovf:Property ovf:key="config-0003" ovf:type="string" \
-ovf:value="interface Loopback0" />
-+      <ovf:Property ovf:key="config-0004" ovf:type="string" ovf:value="end" />
+ovf:userConfigurable="true" ovf:value="interface Loopback0" />
++      <ovf:Property ovf:key="config-0004" ovf:type="string" \
+ovf:userConfigurable="true" ovf:value="end" />
      </ovf:ProductSection>
 """)
 
@@ -171,6 +271,7 @@ ovf:value="interface Loopback0" />
         self.instance.package = self.input_ovf
         vm = self.instance.vm
 
+        vm.set_property_value("login-password", "ababab")
         self.assertRaises(ValueUnsupportedError,
                           vm.set_property_value,
                           "login-password",
@@ -184,10 +285,41 @@ ovf:value="interface Loopback0" />
         self.assertLogged(**self.NONEXISTENT_FILE)
         vm = self.instance.vm
 
+        vm.set_property_value("jabberwock", "super duper alley-ooper scooper")
         self.assertRaises(ValueUnsupportedError,
                           vm.set_property_value,
                           "jabberwock",
                           "short")
+
+    def test_update_label_and_description(self):
+        """Update label and description for existing properties."""
+        self.instance.package = self.input_ovf
+        self.instance.properties = ["hostname", "enable-ssh-server"]
+        self.instance.labels = ["Hostname", "Enable Remote SSH Access"]
+        self.instance.descriptions = ["Enter the router hostname",
+                                      "Enable <sshd>; disable <telnetd>"]
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       <ovf:Property ovf:key="hostname" ovf:qualifiers="MaxLen(63)" \
+ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+-        <ovf:Label>Router Name</ovf:Label>
+-        <ovf:Description>Hostname of this router</ovf:Description>
++        <ovf:Label>Hostname</ovf:Label>
++        <ovf:Description>Enter the router hostname</ovf:Description>
+       </ovf:Property>
+...
+       <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" \
+ovf:userConfigurable="true" ovf:value="false">
+-        <ovf:Label>Enable SSH Login</ovf:Label>
+-        <ovf:Description>Enable remote login via SSH and disable remote \
+login via telnet. Requires login-username and login-password to be \
+set!</ovf:Description>
++        <ovf:Label>Enable Remote SSH Access</ovf:Label>
++        <ovf:Description>Enable &lt;sshd&gt;; disable \
+&lt;telnetd&gt;</ovf:Description>
+       </ovf:Property>
+""")
 
     def test_create_property_no_preexisting(self):
         """Set property values for an OVF that has none previously."""

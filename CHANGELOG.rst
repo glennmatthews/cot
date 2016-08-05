@@ -9,6 +9,18 @@ This project adheres to `Semantic Versioning`_.
 **Added**
 
 - Support for Python 3.5
+- Enhancements to ``cot edit-properties`` (`#50`_):
+
+  - Added ``--user-configurable`` option to set whether created/updated
+    properties are marked as user-configurable in the OVF.
+  - Added ``--labels`` and ``--descriptions`` options to set/update the
+    labels and descriptions associated with properties.
+  - It's now valid to set no default value for a property by
+    omitting the ``=value``, as in ``-p property-with-no-value``, as well as
+    the existing ``-p property-with-empty-value=`` syntax to set
+    an empty string as the value.
+  - Users can now optionally specify the property type to enforce for each
+    property by using the delimiter ``+type``, as in ``-p key=1+boolean``.
 
 **Changed**
 
@@ -468,6 +480,7 @@ Initial public release.
 .. _#47: https://github.com/glennmatthews/cot/issues/47
 .. _#48: https://github.com/glennmatthews/cot/issues/48
 .. _#49: https://github.com/glennmatthews/cot/issues/49
+.. _#50: https://github.com/glennmatthews/cot/issues/50
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

@@ -167,6 +167,9 @@ def help_text_to_rst(help, dirpath):
             # --type {e1000,virtio}   ---->   --type <e1000,virtio>
             line = re.sub(r"(-+\S+) {([^}]+)}", r"\1 <\2>", line)
 
+            # -u [USER_CONFIGURABLE] ----> -u <USER_CONFIGURABLE>
+            line = re.sub(r"(-+\S+) \[([^,]+)\]", r"\1 <\2>", line)
+
             # --names NAME1 [NAME2 ...] ---->  --names <NAME1...>
             line = re.sub(r"(-+\S+) ([^,]+) \[[^,]+\]",
                           r"\1 <\2...>", line)

@@ -46,6 +46,7 @@
   positive_int
   to_string
   validate_int
+  truth_value
 
 **Constants**
 
@@ -55,6 +56,7 @@
 
 import xml.etree.ElementTree as ET
 import re
+from distutils.util import strtobool
 
 
 def to_string(obj):
@@ -309,6 +311,21 @@ def positive_int(string):
     Alias for :func:`validate_int` setting :attr:`minimum` to 1.
     """
     return validate_int(string, minimum=1)
+
+
+def truth_value(value):
+    """Parser helper function for truth values like '0', 'y', or 'false'."""
+    if isinstance(value, bool):
+        return value
+    try:
+        return strtobool(value)
+    except ValueError:
+        raise ValueUnsupportedError(
+            "truth value",
+            value,
+            ['y', 'yes', 't', 'true', 'on', 1,
+             'n', 'no', 'f', 'false', 'off', 0]
+        )
 
 
 # Some handy exception and error types we can throw
