@@ -430,13 +430,11 @@ class OVF(VMDescription, XML):
     def product_class(self, product_class):
         if product_class == self.product_class:
             return
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION,
-                attrib=self.PRODUCT_SECTION_ATTRIB)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
+        self.product_section = self._ensure_section(
+            self.PRODUCT_SECTION,
+            "Product Information",
+            attrib=self.PRODUCT_SECTION_ATTRIB,
+            parent=self.virtual_system)
         if self.product_class:
             logger.info("Changing product class from '%s' to '%s'",
                         self.product_class, product_class)
@@ -645,7 +643,7 @@ class OVF(VMDescription, XML):
     @product.setter
     def product(self, product_string):
         logger.info("Updating Product element in OVF")
-        self.set_product_section_child(self.PRODUCT, product_string)
+        self._set_product_section_child(self.PRODUCT, product_string)
 
     @property
     def vendor(self):
@@ -657,7 +655,7 @@ class OVF(VMDescription, XML):
     @vendor.setter
     def vendor(self, vendor_string):
         logger.info("Updating Vendor element in OVF")
-        self.set_product_section_child(self.VENDOR, vendor_string)
+        self._set_product_section_child(self.VENDOR, vendor_string)
 
     @property
     def version_short(self):
@@ -669,7 +667,7 @@ class OVF(VMDescription, XML):
     @version_short.setter
     def version_short(self, version_string):
         logger.info("Updating Version element in OVF")
-        self.set_product_section_child(self.VERSION, version_string)
+        self._set_product_section_child(self.VERSION, version_string)
 
     @property
     def version_long(self):
@@ -681,7 +679,7 @@ class OVF(VMDescription, XML):
     @version_long.setter
     def version_long(self, version_string):
         logger.info("Updating FullVersion element in OVF")
-        self.set_product_section_child(self.FULL_VERSION, version_string)
+        self._set_product_section_child(self.FULL_VERSION, version_string)
 
     @property
     def product_url(self):
@@ -693,7 +691,7 @@ class OVF(VMDescription, XML):
     @product_url.setter
     def product_url(self, product_url_string):
         logger.info("Updating ProductUrl element in OVF")
-        self.set_product_section_child(self.PRODUCT_URL, product_url_string)
+        self._set_product_section_child(self.PRODUCT_URL, product_url_string)
 
     @property
     def vendor_url(self):
@@ -705,7 +703,7 @@ class OVF(VMDescription, XML):
     @vendor_url.setter
     def vendor_url(self, vendor_url_string):
         logger.info("Updating VendorUrl element in OVF")
-        self.set_product_section_child(self.VENDOR_URL, vendor_url_string)
+        self._set_product_section_child(self.VENDOR_URL, vendor_url_string)
 
     @property
     def application_url(self):
@@ -717,7 +715,7 @@ class OVF(VMDescription, XML):
     @application_url.setter
     def application_url(self, app_url_string):
         logger.info("Updating AppUrl element in OVF")
-        self.set_product_section_child(self.APPLICATION_URL, app_url_string)
+        self._set_product_section_child(self.APPLICATION_URL, app_url_string)
 
     def __getattr__(self, name):
         """Transparently pass attribute lookups off to name_helper."""
@@ -1365,7 +1363,7 @@ class OVF(VMDescription, XML):
         :param str label: Brief descriptive label for the profile
         :param str description: Verbose description of the profile
         """
-        self.deploy_opt_section = self._create_envelope_section_if_absent(
+        self.deploy_opt_section = self._ensure_section(
             self.DEPLOY_OPT_SECTION, "Configuration Profiles")
 
         cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
@@ -1487,7 +1485,7 @@ class OVF(VMDescription, XML):
         :param str label: Brief label for the network
         :param str description: Verbose description of the network
         """
-        self.network_section = self._create_envelope_section_if_absent(
+        self.network_section = self._ensure_section(
             self.NETWORK_SECTION,
             "Logical networks",
             attrib=self.NETWORK_SECTION_ATTRIB)
@@ -1677,13 +1675,11 @@ class OVF(VMDescription, XML):
         if self.ovf_version < 1.0:
             raise NotImplementedError("No support for setting environment "
                                       "properties under OVF v0.9")
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION,
-                attrib=self.PRODUCT_SECTION_ATTRIB)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
+        self.product_section = self._ensure_section(
+            self.PRODUCT_SECTION,
+            "Product Information",
+            attrib=self.PRODUCT_SECTION_ATTRIB,
+            parent=self.virtual_system)
         prop = self.find_child(self.product_section, self.PROPERTY,
                                attrib={self.PROP_KEY: key})
         if prop is None:
@@ -1697,6 +1693,9 @@ class OVF(VMDescription, XML):
             prop.set(self.PROP_USER_CONFIGABLE, str(user_configurable).lower())
         if property_type is not None:
             prop.set(self.PROP_TYPE, property_type)
+            # Revalidate any existing value if not setting a new value
+            if value is None:
+                value = prop.get(self.PROP_VALUE)
 
         if value is not None:
             # Make sure the requested value is valid
@@ -2181,7 +2180,7 @@ class OVF(VMDescription, XML):
                              "do not require a Disk")
             return disk
 
-        self.disk_section = self._create_envelope_section_if_absent(
+        self.disk_section = self._ensure_section(
             self.DISK_SECTION,
             "Virtual disk information",
             attrib=self.DISK_SECTION_ATTRIB)
@@ -2470,17 +2469,21 @@ class OVF(VMDescription, XML):
                 file_ref.add_to_archive(tarf)
                 logger.verbose("Added %s to %s", file_name, tar_file)
 
-    def _create_envelope_section_if_absent(self, section_tag, info_string,
-                                           attrib=None):
+    def _ensure_section(self, section_tag, info_string,
+                        attrib=None, parent=None):
         """If the OVF doesn't already have the given Section, create it.
 
         :param str section_tag: XML tag of the desired section.
         :param str info_string: Info string to set if a new Section is created.
         :param dict attrib: Attributes to filter by when looking for any
-          existing section (optional).
+            existing section (optional).
+        :param xml.etree.ElementTree.Element parent: Parent element (optional).
+            If not specified, :attr:`envelope` will be the parent.
         :return: Section element that was found or created
         """
-        section = self.find_child(self.envelope, section_tag, attrib=attrib)
+        if parent is None:
+            parent = self.envelope
+        section = self.find_child(parent, section_tag, attrib=attrib)
         if section is not None:
             return section
 
@@ -2493,34 +2496,33 @@ class OVF(VMDescription, XML):
         # but they MUST come after the References and before the VirtualSystem.
         # We'll construct them immediately before the VirtualSystem.
         i = 0
-        for child in list(self.envelope):
+        for child in list(parent):
             if child.tag == self.VIRTUAL_SYSTEM:
                 break
             i += 1
-        self.envelope.insert(i, section)
+        parent.insert(i, section)
 
         # All Sections must have an Info child
         self.set_or_make_child(section, self.INFO, info_string)
 
         return section
 
-    def set_product_section_child(self, child_tag, child_text):
-        """If the OVF doesn't already have the given Section, create it.
+    def _set_product_section_child(self, child_tag, child_text):
+        """Update or create the given child of the ProductSection.
+
+        Creates the ProductSection itself if necessary.
 
         :param str child_tag: XML tag of the product section child element.
         :param str child_text: Text to set for the child element.
-        :return: The product section element that was updated or created
+        :return: The child element that was updated or created
         """
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION,
-                attrib=self.PRODUCT_SECTION_ATTRIB)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
-        self.set_or_make_child(self.product_section, child_tag, child_text)
-
-        return self.product_section
+        self.product_section = self._ensure_section(
+            self.PRODUCT_SECTION,
+            "Product Information",
+            attrib=self.PRODUCT_SECTION_ATTRIB,
+            parent=self.virtual_system)
+        return self.set_or_make_child(self.product_section, child_tag,
+                                      child_text)
 
     def find_parent_from_item(self, item):
         """Find the parent Item of the given Item.

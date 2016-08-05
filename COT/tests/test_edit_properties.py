@@ -166,6 +166,15 @@ ovf:value="true" />
      </ovf:ProductSection>
 """)
 
+    def test_change_type_existing_invalid(self):
+        """Change the type of an existing property so that value is invalid."""
+        self.instance.package = self.invalid_ovf
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
+        self.assertLogged(**self.NONEXISTENT_FILE)
+        self.instance.properties = ['jabberwock+boolean']
+        with self.assertRaises(ValueUnsupportedError):
+            self.instance.run()
+
     def test_create_edit_and_user_configurable(self):
         """Create new props, edit existing, and set user-configable flag."""
         self.instance.package = self.input_ovf
