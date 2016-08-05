@@ -43,12 +43,12 @@ class TestCOTEditProperties(COT_UT):
         self.instance.labels = ["label1", "label2"]
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertRegexpMatches(reason, r"--label.*requires.*--properties")
+        self.assertRegex(reason, r"--label.*requires.*--properties")
         # --label and --properties must have the same number of params
         self.instance.properties = ["foo=bar"]
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertRegexpMatches(reason, r"--label.*\(2\).*--properties \(1\)")
+        self.assertRegex(reason, r"--label.*\(2\).*--properties \(1\)")
 
     def test_not_ready_to_run_descriptions(self):
         """Test ready_to_run() failure scenarios involving the --desc opt."""
@@ -57,14 +57,12 @@ class TestCOTEditProperties(COT_UT):
         self.instance.descriptions = ["desc1", "desc2"]
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertRegexpMatches(reason,
-                                 r"--description.*requires.*--properties")
+        self.assertRegex(reason, r"--description.*requires.*--properties")
         # --desc and --properties must have the same number of params
         self.instance.properties = ["foo=bar"]
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertRegexpMatches(reason,
-                                 r"--description.*\(2\).*--properties \(1\)")
+        self.assertRegex(reason, r"--description.*\(2\).*--properties \(1\)")
 
     def test_set_property_value(self):
         """Set the value of an existing property."""
