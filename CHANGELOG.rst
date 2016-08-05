@@ -3,6 +3,38 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.7.0`_ - 2016-08-05
+---------------------
+
+**Added**
+
+- Support for Python 3.5
+- Enhancements to ``cot edit-properties`` (`#50`_):
+
+  - Added ``--user-configurable`` option to set whether created/updated
+    properties are marked as user-configurable in the OVF.
+  - Added ``--labels`` and ``--descriptions`` options to set/update the
+    labels and descriptions associated with properties.
+  - It's now valid to set no default value for a property by
+    omitting the ``=value``, as in ``-p property-with-no-value``, as well as
+    the existing ``-p property-with-empty-value=`` syntax to set
+    an empty string as the value.
+  - Users can now optionally specify the property type to enforce for each
+    property by using the delimiter ``+type``, as in ``-p key=1+boolean``.
+
+**Changed**
+
+- Switched from statement coverage to branch coverage for better test analysis.
+- Moved from `Coveralls`_ to `Codecov`_ for test coverage tracking, since
+  Coveralls does not support branch coverage reporting.
+
+**Fixed**
+
+- When ``cot edit-hardware`` is used to create new NICs in an OVF that
+  previously had none, and the user does not specify any corresponding Network
+  entries, automatically create a 'VM Network' entry, because all NICs must
+  be mapped to Networks for a valid OVF descriptor.
+
 `1.6.1`_ - 2016-07-07
 ---------------------
 
@@ -448,6 +480,7 @@ Initial public release.
 .. _#47: https://github.com/glennmatthews/cot/issues/47
 .. _#48: https://github.com/glennmatthews/cot/issues/48
 .. _#49: https://github.com/glennmatthews/cot/issues/49
+.. _#50: https://github.com/glennmatthews/cot/issues/50
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -473,8 +506,10 @@ Initial public release.
 .. _Pylint: https://www.pylint.org/
 .. _`pep8-naming`: https://pypi.python.org/pypi/pep8-naming
 .. _mccabe: https://pypi.python.org/pypi/mccabe
+.. _Codecov: https://codecov.io
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.7.0: https://github.com/glennmatthews/cot/compare/v1.6.1...v1.7.0
 .. _1.6.1: https://github.com/glennmatthews/cot/compare/v1.6.0...v1.6.1
 .. _1.6.0: https://github.com/glennmatthews/cot/compare/v1.5.2...v1.6.0
 .. _1.5.2: https://github.com/glennmatthews/cot/compare/v1.5.1...v1.5.2

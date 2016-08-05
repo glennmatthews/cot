@@ -47,6 +47,7 @@ except ImportError:
     import io as StringIO
 
 from pkg_resources import resource_filename
+import mock
 
 try:
     import unittest2 as unittest
@@ -101,21 +102,21 @@ class UTLoggingHandler(BufferingHandler):
                 matches.append(record)
         return matches
 
-    def assertLogged(self, **kwargs):  # noqa: N802
+    def assertLogged(self, info='', **kwargs):  # noqa: N802
         """Fail unless the given log messages were each seen exactly once."""
         matches = self.logs(**kwargs)
         if not matches:
             self.testcase.fail(
-                "Expected logs matching {0} but none were logged!"
+                info + "Expected logs matching {0} but none were logged!"
                 .format(kwargs))
         if len(matches) > 1:
             self.testcase.fail(
-                "Message {0} was logged {1} times instead of once!"
+                info + "Message {0} was logged {1} times instead of once!"
                 .format(kwargs, len(matches)))
         for r in matches:
             self.buffer.remove(r)
 
-    def assertNoLogsOver(self, max_level):  # noqa: N802
+    def assertNoLogsOver(self, max_level, info=''):  # noqa: N802
         """Fail if any logs are logged higher than the given level."""
         for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
                       logging.INFO, logging.VERBOSE, logging.DEBUG):
@@ -124,17 +125,13 @@ class UTLoggingHandler(BufferingHandler):
             matches = self.logs(levelno=level)
             if matches:
                 self.testcase.fail(
-                    "Found {length} unexpected {level} message(s):\n{messages}"
-                    .format(length=len(matches),
-                            level=logging.getLevelName(level),
-                            messages="\n".join(["msg: {0}, args: {1}"
-                                                .format(r['msg'], r['args'])
-                                               for r in matches])))
-
-
-def localfile(name):
-    """Get the absolute path to a local resource file."""
-    return os.path.abspath(resource_filename(__name__, name))
+                    "{info}Found {len} unexpected {lvl} message(s):\n{msgs}"
+                    .format(info=info,
+                            len=len(matches),
+                            lvl=logging.getLevelName(level),
+                            msgs="\n".join(["msg: {0}, args: {1}"
+                                            .format(r['msg'], r['args'])
+                                            for r in matches])))
 
 
 class COT_UT(unittest.TestCase):  # noqa: N801
@@ -215,8 +212,13 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         'msg': "Overwriting existing disk Item in OVF",
     }
 
-    def invalid_hardware_warning(self,  # pylint: disable=no-self-use
-                                 profile, value, kind):
+    @staticmethod
+    def localfile(name):
+        """Get the absolute path to a local resource file."""
+        return os.path.abspath(resource_filename(__name__, name))
+
+    @staticmethod
+    def invalid_hardware_warning(profile, value, kind):
         """Warning log message for invalid hardware."""
         msg = ""
         if profile:
@@ -241,15 +243,12 @@ class COT_UT(unittest.TestCase):  # noqa: N801
     def check_cot_output(self, expected):
         """Grab the output from COT and check it against expected output."""
         # pylint: disable=redefined-variable-type
-        sys.stdout = StringIO.StringIO()
-        output = None
-        try:
-            self.instance.run()
-        except (TypeError, ValueError, SyntaxError, LookupError):
-            self.fail(traceback.format_exc())
-        finally:
-            output = sys.stdout.getvalue()
-            sys.stdout = sys.__stdout__
+        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as so:
+            try:
+                self.instance.run()
+            except (TypeError, ValueError, SyntaxError, LookupError):
+                self.fail(traceback.format_exc())
+            output = so.getvalue()
         self.maxDiff = None
         self.assertMultiLineEqual(expected.strip(), output.strip())
 
@@ -308,29 +307,29 @@ class COT_UT(unittest.TestCase):  # noqa: N801
 
         self.start_time = time.time()
         # Set default OVF file. Individual test cases can use others
-        self.input_ovf = localfile("input.ovf")
+        self.input_ovf = self.localfile("input.ovf")
         # Alternative OVF files:
         #
         # Absolute minimal OVF descriptor needed to satisfy ovftool.
         # Please verify any changes made to this file by running
         # "ovftool --schemaValidate minimal.ovf"
-        self.minimal_ovf = localfile("minimal.ovf")
+        self.minimal_ovf = self.localfile("minimal.ovf")
         # IOSv OVF
-        self.iosv_ovf = localfile("iosv.ovf")
+        self.iosv_ovf = self.localfile("iosv.ovf")
         # v0.9 OVF
-        self.v09_ovf = localfile("v0.9.ovf")
+        self.v09_ovf = self.localfile("v0.9.ovf")
         # v2.0 OVF from VirtualBox
-        self.v20_vbox_ovf = localfile("ubuntu.2.0.ovf")
+        self.v20_vbox_ovf = self.localfile("ubuntu.2.0.ovf")
         # OVF with lots of custom VMware extensions
-        self.vmware_ovf = localfile("vmware.ovf")
+        self.vmware_ovf = self.localfile("vmware.ovf")
         # OVF with various odd/invalid contents
-        self.invalid_ovf = localfile("invalid.ovf")
+        self.invalid_ovf = self.localfile("invalid.ovf")
 
         # Some canned disk images and other files too
-        self.input_iso = os.path.abspath(localfile("input.iso"))
-        self.input_vmdk = localfile("input.vmdk")
-        self.blank_vmdk = localfile("blank.vmdk")
-        self.sample_cfg = localfile("sample_cfg.txt")
+        self.input_iso = os.path.abspath(self.localfile("input.iso"))
+        self.input_vmdk = self.localfile("input.vmdk")
+        self.blank_vmdk = self.localfile("blank.vmdk")
+        self.sample_cfg = self.localfile("sample_cfg.txt")
 
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
@@ -388,13 +387,13 @@ class COT_UT(unittest.TestCase):  # noqa: N801
                 self.fail("OVF not valid according to ovftool:\n{0}"
                           .format(e.strerror))
 
-    def assertLogged(self, **kwargs):  # noqa: N802
+    def assertLogged(self, info='', **kwargs):  # noqa: N802
         """Fail unless the given logs were generated.
 
         See :meth:`UTLoggingHandler.assertLogged`.
         """
-        self.logging_handler.assertLogged(**kwargs)
+        self.logging_handler.assertLogged(info=info, **kwargs)
 
-    def assertNoLogsOver(self, max_level):  # noqa: N802
+    def assertNoLogsOver(self, max_level, info=''):  # noqa: N802
         """Fail if any logs were logged higher than the given level."""
-        self.logging_handler.assertNoLogsOver(max_level)
+        self.logging_handler.assertNoLogsOver(max_level, info=info)

@@ -75,7 +75,7 @@
     <ovf:ProductSection ovf:class="net.e-dad">
       <ovf:Info>ProductSection</ovf:Info>
       <ovf:FullVersion>Full version string goes here</ovf:FullVersion>
-      <ovf:Property ovf:key="jabberwock" ovf:qualifiers="MaxLen(27)" ovf:type="string" ovf:value="supercalifragilisticexpialidocious">
+      <ovf:Property ovf:key="jabberwock" ovf:qualifiers="MinLen(27)" ovf:type="string" ovf:value="supercalifragilisticexpialidocious">
         <ovf:Label>Antidisestablishmentarianism</ovf:Label>
         <ovf:Description>Anti-
 dis-

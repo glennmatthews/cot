@@ -2,4 +2,5 @@
 ===========================
 
 .. automodule:: COT.helpers.api
+  :exclude-members: TemporaryDirectory
 

@@ -37,11 +37,6 @@ from COT.data_validation import InvalidInputError
 logger = logging.getLogger(__name__)
 
 
-def stub_get_password(_username, _host):
-    """Stub for get_password method, returns a hard-coded string."""
-    return "passwd"
-
-
 class TestCOTDeployESXi(COT_UT):
     """Test cases for COTDeployESXi class."""
 
@@ -67,15 +62,6 @@ class TestCOTDeployESXi(COT_UT):
         'msg': "Session failed",
     }
 
-    def stub_check_call(self, argv, require_success=True):
-        """Stub for check_call - capture calls to ovftool."""
-        logger.info("stub_check_call(%s, %s)", argv, require_success)
-        if argv[0] == 'ovftool':
-            self.last_argv = argv
-            logger.info("Caught ovftool invocation")
-            return
-        return self._check_call(argv, require_success)
-
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTDeployESXi, self).setUp()
@@ -85,22 +71,15 @@ class TestCOTDeployESXi(COT_UT):
         # Stub out all ovftool dependencies
         # pylint: disable=protected-access
         self._ovftool_path = self.instance.ovftool._path
-        self._check_call = self.instance.ovftool._check_call
         self._ovftool_version = self.instance.ovftool._version
         self.instance.ovftool._path = "/fake/ovftool"
-        self.instance.ovftool._check_call = self.stub_check_call
         self.instance.ovftool._version = StrictVersion("4.0.0")
-        # Stub out get_password function
-        self.instance.UI.get_password = stub_get_password
-
-        self.last_argv = []
 
     def tearDown(self):
         """Test case cleanup function called automatically."""
         # Remove our stub
         # pylint: disable=protected-access
         self.instance.ovftool._path = self._ovftool_path
-        self.instance.ovftool._check_call = self._check_call
         self.instance.ovftool._version = self._ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
@@ -127,21 +106,24 @@ class TestCOTDeployESXi(COT_UT):
         with self.assertRaises(InvalidInputError):
             self.instance.power_on = "frobozz"
 
-    def test_ovftool_args_basic(self):
+    @mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
+    @mock.patch('subprocess.check_call')
+    def test_ovftool_args_basic(self, mock_check_call, *_):
         """Test that ovftool is called with the basic arguments."""
         self.instance.locator = "localhost"
         self.instance.run()
-        self.assertEqual([
+        mock_check_call.assert_called_once_with([
             'ovftool',
             '--deploymentOption=4CPU-4GB-3NIC',    # default configuration
             '--name=input',
             self.input_ovf,
             'vi://{user}:passwd@localhost'.format(user=getpass.getuser())
-        ], self.last_argv)
+        ])
         self.assertLogged(**self.VSPHERE_ENV_WARNING)
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
 
-    def test_ovftool_args_advanced(self):
+    @mock.patch('subprocess.check_call')
+    def test_ovftool_args_advanced(self, mock_check_call):
         """Test that ovftool is called with more involved arguments."""
         self.instance.locator = "localhost/host/foo"
         self.instance.datastore = "datastore1"
@@ -154,7 +136,7 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.network_map = ["VM Network=VM Network"]
 
         self.instance.run()
-        self.assertEqual([
+        mock_check_call.assert_called_once_with([
             'ovftool',
             '--overwrite',
             '--vService:A B=C D',
@@ -165,10 +147,12 @@ class TestCOTDeployESXi(COT_UT):
             '--datastore=datastore1',
             self.input_ovf,
             'vi://u:p@localhost/host/foo',
-        ], self.last_argv)
+        ])
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
 
-    def test_ovftool_vsphere_env_fixup(self):
+    @mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
+    @mock.patch('subprocess.check_call')
+    def test_ovftool_vsphere_env_fixup(self, mock_check_call, *_):
         """Test fixup of environment when deploying directly to vSphere."""
         # With 4.0.0 (our default) and no power_on, there's no fixup.
         # This is tested by test_ovftool_args_basic() above.
@@ -177,7 +161,7 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.locator = "vsphere"
         self.instance.power_on = True
         self.instance.run()
-        self.assertEqual([
+        mock_check_call.assert_called_once_with([
             'ovftool',
             '--X:injectOvfEnv',
             '--deploymentOption=4CPU-4GB-3NIC',     # default configuration
@@ -185,7 +169,7 @@ class TestCOTDeployESXi(COT_UT):
             '--powerOn',
             self.input_ovf,
             'vi://{user}:passwd@vsphere'.format(user=getpass.getuser()),
-        ], self.last_argv)
+        ])
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
         # Make sure we DON'T see the ENV_WARNING message
         self.logging_handler.assertNoLogsOver(logging.INFO)
@@ -196,9 +180,10 @@ class TestCOTDeployESXi(COT_UT):
         # With <4.0.0, we don't (can't) fixup, regardless.
         # Discard cached information and update the info that will be returned
         # pylint: disable=protected-access
+        mock_check_call.reset_mock()
         self.instance.ovftool._version = StrictVersion("3.5.0")
         self.instance.run()
-        self.assertEqual([
+        mock_check_call.assert_called_once_with([
             'ovftool',
             # Nope! #'--X:injectOvfEnv',
             '--deploymentOption=4CPU-4GB-3NIC',     # default configuration
@@ -206,7 +191,7 @@ class TestCOTDeployESXi(COT_UT):
             '--powerOn',
             self.input_ovf,
             'vi://{user}:passwd@vsphere'.format(user=getpass.getuser()),
-        ], self.last_argv)
+        ])
         self.assertLogged(**self.OVFTOOL_VER_TOO_LOW)
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
 
@@ -221,7 +206,7 @@ class TestCOTDeployESXi(COT_UT):
         # while in requests 2.8+, it's munged into a string only
         if cm.exception.errno is not None:
             self.assertEqual(cm.exception.errno, errno.ECONNREFUSED)
-        self.assertRegexpMatches(
+        self.assertRegex(
             cm.exception.strerror,
             "(Error connecting to localhost:443: )?.*Connection refused")
 

@@ -23,13 +23,14 @@ try:
 except ImportError:
     import unittest
 
-from COT.data_validation import canonicalize_helper, match_or_die
-from COT.data_validation import canonicalize_nic_subtype, NIC_TYPES
-from COT.data_validation import mac_address, device_address, no_whitespace
-from COT.data_validation import validate_int, non_negative_int, positive_int
-from COT.data_validation import InvalidInputError
-from COT.data_validation import ValueMismatchError, ValueUnsupportedError
-from COT.data_validation import ValueTooLowError, ValueTooHighError
+from COT.data_validation import (
+    match_or_die,
+    canonicalize_helper, canonicalize_nic_subtype, NIC_TYPES,
+    mac_address, device_address, no_whitespace, truth_value,
+    validate_int, non_negative_int, positive_int,
+    InvalidInputError, ValueMismatchError, ValueUnsupportedError,
+    ValueTooLowError, ValueTooHighError,
+)
 
 
 class TestValidationFunctions(unittest.TestCase):
@@ -119,14 +120,14 @@ class TestValidationFunctions(unittest.TestCase):
         for valid_string in ["1", "08", "123", " 256 ", "-10"]:
             self.assertEqual(validate_int(valid_string), int(valid_string))
 
-        self.assertEqual(256, validate_int("256", min=128, max=512))
-        self.assertEqual(256, validate_int("256", min=256))
-        self.assertEqual(256, validate_int("256", max=256))
+        self.assertEqual(256, validate_int("256", minimum=128, maximum=512))
+        self.assertEqual(256, validate_int("256", minimum=256))
+        self.assertEqual(256, validate_int("256", maximum=256))
         self.assertRaises(ValueUnsupportedError, validate_int, "a")
-        self.assertRaises(ValueTooLowError, validate_int, "10", min=11)
-        self.assertRaises(ValueTooLowError, validate_int, "-1", min=0)
-        self.assertRaises(ValueTooHighError, validate_int, "10", max=9)
-        self.assertRaises(ValueTooHighError, validate_int, "1", max=0)
+        self.assertRaises(ValueTooLowError, validate_int, "10", minimum=11)
+        self.assertRaises(ValueTooLowError, validate_int, "-1", minimum=0)
+        self.assertRaises(ValueTooHighError, validate_int, "10", maximum=9)
+        self.assertRaises(ValueTooHighError, validate_int, "1", maximum=0)
 
     def test_non_negative_int(self):
         """Test the non_negative_int() validator."""
@@ -138,6 +139,12 @@ class TestValidationFunctions(unittest.TestCase):
         """Test the positive_int() validator."""
         self.assertEqual(positive_int("10"), 10)
         self.assertRaises(ValueTooLowError, positive_int, "0")
+
+    def test_truth_value(self):
+        """Test the truth_value() validator."""
+        self.assertTrue(truth_value('y'))
+        self.assertFalse(truth_value('n'))
+        self.assertRaises(ValueUnsupportedError, truth_value, "foo")
 
     def test_custom_error_attributes(self):
         """Test the properties of ValueUnsupportedError and its children."""
@@ -159,7 +166,7 @@ class TestValidationFunctions(unittest.TestCase):
             "Value '-1' for input is too low - must be at least 0")
 
         with self.assertRaises(ValueTooHighError) as cm:
-            validate_int("100", max=10, label="score")
+            validate_int("100", maximum=10, label="score")
         self.assertEqual(cm.exception.value_type, "score")
         self.assertEqual(cm.exception.actual_value, 100)
         self.assertEqual(cm.exception.expected_value, 10)

@@ -84,7 +84,8 @@ class SmarterConnection(SmartConnection):
                                    "otherwise not recognized as valid. "
                                    "Accept certificate anyway?"
                                    .format(self.server))
-            # pylint: disable=protected-access
+            # pylint: disable=protected-access, no-member
+            # ssl._create_unverified_context doesn't exist in Python 3.3.
             _create_unverified_context = ssl._create_unverified_context
             ssl._create_default_https_context = _create_unverified_context
             return super(SmarterConnection, self).__enter__()
@@ -105,7 +106,8 @@ class SmarterConnection(SmartConnection):
             logger.error("Session failed - %s", exc_value)
         # TODO - re-enable SSL certificate validation?
 
-    def unwrap_connection_error(self, outer_e):  # pylint: disable=no-self-use
+    @staticmethod
+    def unwrap_connection_error(outer_e):
         """Extract inner attributes from a ConnectionError.
 
         ConnectionError often wraps another exception with more context;

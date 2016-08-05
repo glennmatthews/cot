@@ -4,14 +4,17 @@ COT: the Common OVF Tool
 .. image:: https://img.shields.io/pypi/v/cot.svg
     :target: https://pypi.python.org/pypi/cot/
     :alt: Latest Version
+.. image:: https://img.shields.io/pypi/pyversions/cot.svg
+    :target: https://pypi.python.org/pypi/cot
+    :alt: Python Versions Supported
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
     :target: https://pypi.python.org/pypi/cot/
     :alt: License
 .. image:: https://travis-ci.org/glennmatthews/cot.svg?branch=master
     :target: https://travis-ci.org/glennmatthews/cot
     :alt: Build Status
-.. image:: https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master
-    :target: https://coveralls.io/r/glennmatthews/cot?branch=master
+.. image:: https://codecov.io/gh/glennmatthews/cot/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/glennmatthews/cot
     :alt: Coverage Status
 .. image:: https://readthedocs.org/projects/cot/badge/?version=latest
     :target: https://readthedocs.org/projects/cot/?badge=latest

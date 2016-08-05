@@ -17,10 +17,12 @@
 
 """Unit test cases for the COT.helpers.mkisofs submodule."""
 
+import subprocess
+
 from distutils.version import StrictVersion
+import mock
 
 from COT.helpers.tests.test_helper import HelperUT
-from COT.helpers.helper import Helper
 from COT.helpers.mkisofs import MkIsoFS
 
 
@@ -32,43 +34,102 @@ class TestMkIsoFS(HelperUT):
         self.helper = MkIsoFS()
         super(TestMkIsoFS, self).setUp()
 
-    def test_get_version_mkisofs(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output',
+                return_value=("mkisofs 3.00 (--) Copyright (C) 1993-1997 "
+                              "Eric Youngdale (C) 1997-2010 Jörg Schilling"))
+    def test_get_version_mkisofs(self, _):
         """Test .version getter logic for mkisofs."""
-        self.fake_output = ("mkisofs 3.00 (--) Copyright (C) 1993-1997 "
-                            "Eric Youngdale (C) 1997-2010 Jörg Schilling")
         self.assertEqual(StrictVersion("3.0"), self.helper.version)
 
-    def test_get_version_genisoimage(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output',
+                return_value="genisoimage 1.1.11 (Linux)")
+    def test_get_version_genisoimage(self, _):
         """Test .version getter logic for genisoimage."""
-        self.fake_output = "genisoimage 1.1.11 (Linux)"
         self.assertEqual(StrictVersion("1.1.11"), self.helper.version)
 
-    def test_find_mkisofs(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output', return_value="""
+xorriso 1.3.2 : RockRidge filesystem manipulator, libburnia project.
+
+xorriso 1.3.2
+ISO 9660 Rock Ridge filesystem manipulator and CD/DVD/BD burn program
+Copyright (C) 2013, Thomas Schmitt <scdbackup@gmx.net>, libburnia project.
+xorriso version   :  1.3.2
+Version timestamp :  2013.08.07.110001
+Build timestamp   :  -none-given-
+libisofs   in use :  1.3.4  (min. 1.3.2)
+libjte     in use :  1.0.0  (min. 1.0.0)
+libburn    in use :  1.3.4  (min. 1.3.4)
+libburn OS adapter:  internal GNU/Linux SG_IO adapter sg-linux
+libisoburn in use :  1.3.2  (min. 1.3.2)
+Provided under GNU GPL version 2 or later.
+There is NO WARRANTY, to the extent permitted by law.
+""")
+    def test_get_version_xorriso(self, _):
+        """Test .version getter logic for xorriso."""
+        self.assertEqual(StrictVersion("1.3.2"), self.helper.version)
+
+    @mock.patch('distutils.spawn.find_executable')
+    @mock.patch("COT.helpers.mkisofs.MkIsoFS.call_helper")
+    def test_find_mkisofs(self, mock_call_helper, mock_find_executable):
         """If mkisofs is found, use it."""
-        def find_one(_self, name):
+        def find_one(name):
             """Find mkisofs but no other."""
             if name == "mkisofs":
                 return "/mkisofs"
             return None
-        Helper.find_executable = find_one
+        mock_find_executable.side_effect = find_one
         self.assertEqual("mkisofs", self.helper.name)
         self.assertEqual(self.helper.path, "/mkisofs")
 
-    def test_find_genisoimage(self):
+        self.helper.create_iso('foo.iso', [self.input_ovf])
+        mock_call_helper.assert_called_with(
+            ['-output', 'foo.iso', '-full-iso9660-filenames',
+             '-iso-level', '2', self.input_ovf])
+
+    @mock.patch('distutils.spawn.find_executable')
+    @mock.patch("COT.helpers.mkisofs.MkIsoFS.call_helper")
+    def test_find_genisoimage(self, mock_call_helper, mock_find_executable):
         """If mkisofs is not found, but genisoimage is, use that."""
-        def find_one(_self, name):
+        def find_one(name):
             """Find genisoimage but no other."""
             if name == "genisoimage":
                 return "/genisoimage"
             return None
-        Helper.find_executable = find_one
+        mock_find_executable.side_effect = find_one
         self.assertEqual("genisoimage", self.helper.name)
         self.assertEqual(self.helper.path, "/genisoimage")
 
-    def test_install_helper_already_present(self):
+        self.helper.create_iso('foo.iso', [self.input_ovf])
+        mock_call_helper.assert_called_with(
+            ['-output', 'foo.iso', '-full-iso9660-filenames',
+             '-iso-level', '2', self.input_ovf])
+
+    @mock.patch('distutils.spawn.find_executable')
+    @mock.patch("COT.helpers.mkisofs.MkIsoFS.call_helper")
+    def test_find_xorriso(self, mock_call_helper, mock_find_executable):
+        """If mkisofs and genisoimage are not found, but xorriso is, use it."""
+        def find_one(name):
+            """Find xorriso but no other."""
+            if name == "xorriso":
+                return "/xorriso"
+            return None
+        mock_find_executable.side_effect = find_one
+        self.assertEqual("xorriso", self.helper.name)
+        self.assertEqual(self.helper.path, "/xorriso")
+
+        self.helper.create_iso('foo.iso', [self.input_ovf])
+        mock_call_helper.assert_called_with(
+            ['-as', 'mkisofs', '-output', 'foo.iso', '-full-iso9660-filenames',
+             '-iso-level', '2', self.input_ovf])
+
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    @mock.patch('subprocess.check_call')
+    def test_install_helper_already_present(self, mock_check_call,
+                                            mock_check_output):
         """Don't re-install if already installed."""
         self.helper.install_helper()
-        self.assertEqual([], self.last_argv)
+        mock_check_output.assert_not_called()
+        mock_check_call.assert_not_called()
         self.assertLogged(**self.ALREADY_INSTALLED)
 
     def test_install_helper_port(self):
@@ -76,12 +137,38 @@ class TestMkIsoFS(HelperUT):
         self.port_install_test('cdrtools')
 
     def test_install_helper_apt_get(self):
-        """Test installation via 'apt-get'."""
-        self.apt_install_test('genisoimage')
+        """Test installation via 'apt-get' of genisoimage."""
+        self.apt_install_test('genisoimage', 'genisoimage')
 
-    def test_install_helper_unsupported(self):
-        """Installation fails with neither apt-get nor port nor yum."""
-        self.select_package_manager(None)
-        self.system = "Windows"
-        with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    @mock.patch('subprocess.check_call')
+    @mock.patch(
+        'COT.helpers.helper.Helper._check_output',
+        return_value="is not installed and no information is available"
+    )
+    def test_install_helper_apt_get_xorriso(self,
+                                            mock_check_output,
+                                            mock_check_call,
+                                            *_):
+        """Test installation via 'apt-get' of xorriso."""
+        self.enable_apt_install()
+        mock_check_call.side_effect = [
+            None,  # apt-get update
+            subprocess.CalledProcessError(
+                100, "Unable to locate package"),  # install genisoimage
+            subprocess.CalledProcessError(
+                100, "Unable to locate package"),  # sudo install genisoimage
+            None,  # install xorriso
+        ]
+
+        self.helper.install_helper()
+        self.assertSubprocessCalls(mock_check_output,
+                                   [['dpkg', '-s', 'genisoimage'],
+                                    ['dpkg', '-s', 'xorriso']])
+        self.assertSubprocessCalls(
+            mock_check_call,
+            [['apt-get', '-q', 'update'],
+             ['apt-get', '-q', 'install', 'genisoimage'],
+             ['sudo', 'apt-get', '-q', 'install', 'genisoimage'],
+             ['apt-get', '-q', 'install', 'xorriso']])
+        self.assertEqual(self.helper.name, 'xorriso')

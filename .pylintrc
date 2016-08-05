@@ -49,7 +49,7 @@ disable=bad-continuation,
 max-args=10
 # default: max-attributes=7
 # current worst offender: OVF
-max-attributes=98
+max-attributes=29
 # default: max-bool-expr=5
 # default: max-branches=12
 # default: max-locals=15
@@ -57,7 +57,7 @@ max-attributes=98
 max-locals=29
 # default: max-public-methods=20
 # current worst offender: OVF
-max-public-methods=76
+max-public-methods=74
 # default: max-returns=6
 # default: max-statements=50
 

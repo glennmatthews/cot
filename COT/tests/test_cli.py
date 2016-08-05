@@ -28,6 +28,8 @@ try:
 except ImportError:
     import io as StringIO
 
+import mock
+
 from COT import __version_long__
 from COT.tests.ut import COT_UT
 from COT.cli import CLI
@@ -69,26 +71,21 @@ class TestCOTCLI(COT_UT):
         rc = -1
         if fixup_args:
             argv = ['--quiet'] + argv
-        _si = sys.stdin
-        _so = sys.stdout
-        _se = sys.stderr
-        try:
-            with open(os.devnull, 'w') as devnull:
-                sys.stdin = devnull
-                sys.stdout = StringIO.StringIO()
-                sys.stderr = sys.stdout
-                rc = self.cli.run(argv)
-        except SystemExit as se:
-            try:
-                rc = int(se.code)
-            except (TypeError, ValueError):
-                print(se.code, file=sys.stderr)
-                rc = 1
-        finally:
-            sys.stdin = _si
-            stdout = sys.stdout.getvalue()
-            sys.stdout = _so
-            sys.stderr = _se
+
+        # Python 2.6 doesn't let us mock multiple times in one 'with'
+        with mock.patch('sys.stdin'):
+            with mock.patch('sys.stdout',
+                            new_callable=StringIO.StringIO) as _so:
+                with mock.patch('sys.stderr'):
+                    try:
+                        rc = self.cli.run(argv)
+                    except SystemExit as se:
+                        try:
+                            rc = int(se.code)
+                        except (TypeError, ValueError):
+                            print(se.code, file=sys.stderr)
+                            rc = 1
+                    stdout = _so.getvalue()
 
         self.assertEqual(rc, result,
                          "\nargv: \n{0}\nstdout:\n{1}"
@@ -329,7 +326,7 @@ class TestCLIGeneral(TestCOTCLI):
     edit-hardware   Edit virtual machine hardware properties of an OVF
     edit-product    Edit product info in an OVF
     edit-properties
-                    Edit environment properties of an OVF
+                    Edit or create environment properties of an OVF
     help            Print help for a command
     info            Generate a description of an OVF package
     inject-config   Inject a configuration file into an OVF package
@@ -361,7 +358,7 @@ class TestCLIGeneral(TestCOTCLI):
     edit-product (set-product, set-version)
                         Edit product info in an OVF
     edit-properties (set-properties, edit-environment, set-environment)
-                        Edit environment properties of an OVF
+                        Edit or create environment properties of an OVF
     help                Print help for a command
     info (describe)     Generate a description of an OVF package
     inject-config (add-bootstrap)
@@ -661,12 +658,18 @@ class TestCLIEditProperties(TestCOTCLI):
         self.call_cot(['edit-properties', self.input_ovf, '--config-file',
                        '/foo'], result=2)
         # Bad input format
-        self.call_cot(['edit-properties', self.input_ovf, '--properties', 'x'],
-                      result=2)
         self.call_cot(['edit-properties', self.input_ovf, '--properties', '='],
                       result=2)
         self.call_cot(['edit-properties', self.input_ovf, '--properties',
                        '=foo'], result=2)
+        self.call_cot(['edit-properties', self.input_ovf, '--properties', '+'],
+                      result=2)
+        self.call_cot(['edit-properties', self.input_ovf, '-p', '+string'],
+                      result=2)
+        self.call_cot(['edit-properties', self.input_ovf, '-p', '=foo+string'],
+                      result=2)
+        self.call_cot(['edit-properties', self.input_ovf,
+                       '--user-configurable', 'foobar'], result=2)
 
     def test_set_property_valid(self):
         """Variant property setting syntax, exercising CLI nargs/append."""

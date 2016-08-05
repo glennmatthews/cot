@@ -199,8 +199,8 @@ class OVF(VMDescription, XML):
 
     # API methods to be called by clients
 
-    @classmethod
-    def detect_type_from_name(cls, filename):
+    @staticmethod
+    def detect_type_from_name(filename):
         """Check the given filename to see if it looks like a type we support.
 
         For our purposes, the file needs to match ".ov[af]" to appear to be
@@ -269,25 +269,26 @@ class OVF(VMDescription, XML):
                 # We should never get here, but be safe...
                 raise VMInitError(
                     2,
-                    "File {0} does not appear to be an OVA or OVF"
-                    .format(input_file))
+                    "File does not appear to be an OVA or OVF",
+                    input_file)
 
             # Open the provided OVF
             try:
                 XML.__init__(self, self.ovf_descriptor)
             except ParseError as e:
-                raise VMInitError(2, "XML parser error in reading {0}: {1}"
-                                  .format(self.ovf_descriptor, str(e)))
+                raise VMInitError(2,
+                                  "XML error in parsing file: " + str(e),
+                                  self.ovf_descriptor)
 
             # Quick sanity check before we go any further:
             if ((not re.search(r"Envelope", self.root.tag)) or
                     (XML.strip_ns(self.root.tag) != 'Envelope')):
                 raise VMInitError(
                     2,
-                    "File {0} does not appear to be an OVF descriptor - "
-                    "expected top-level element {1} but found {2} "
-                    "instead!".format(self.ovf_descriptor, 'Envelope',
-                                      self.root.tag))
+                    "File does not appear to be an OVF descriptor - "
+                    "expected top-level element {0} but found {1} instead"
+                    .format('Envelope', self.root.tag),
+                    self.ovf_descriptor)
 
             self._ovf_version = None
             self.name_helper = name_helper(self.ovf_version)
@@ -345,7 +346,8 @@ class OVF(VMDescription, XML):
                 self.hardware = OVFHardware(self)
             except OVFHardwareDataError as e:
                 raise VMInitError(1,
-                                  "OVF descriptor is invalid: {0}".format(e))
+                                  "OVF descriptor is invalid: {0}".format(e),
+                                  self.ovf_descriptor)
 
             assert self.platform
 
@@ -412,9 +414,9 @@ class OVF(VMDescription, XML):
             else:
                 raise VMInitError(
                     2,
-                    "File {0} has an Envelope but it is in "
-                    "unknown namespace {1}"
-                    .format(self.ovf_descriptor, root_namespace))
+                    "File has an Envelope but it is in unknown namespace {0}"
+                    .format(root_namespace),
+                    self.ovf_descriptor)
         return self._ovf_version
 
     @property
@@ -428,13 +430,11 @@ class OVF(VMDescription, XML):
     def product_class(self, product_class):
         if product_class == self.product_class:
             return
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION,
-                attrib=self.PRODUCT_SECTION_ATTRIB)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
+        self.product_section = self._ensure_section(
+            self.PRODUCT_SECTION,
+            "Product Information",
+            attrib=self.PRODUCT_SECTION_ATTRIB,
+            parent=self.virtual_system)
         if self.product_class:
             logger.info("Changing product class from '%s' to '%s'",
                         self.product_class, product_class)
@@ -546,7 +546,7 @@ class OVF(VMDescription, XML):
 
         :return: Array of dicts (one per property) with the keys
           ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
-          ``"label"``, and ``"description"``.
+          ``"user_configurable"``, ``"label"``, and ``"description"``.
         """
         result = []
         if self.ovf_version < 1.0 or self.product_section is None:
@@ -560,6 +560,7 @@ class OVF(VMDescription, XML):
                 'value': elem.get(self.PROP_VALUE),
                 'qualifiers': elem.get(self.PROP_QUAL, ""),
                 'type': elem.get(self.PROP_TYPE, ""),
+                'user_configurable': elem.get(self.PROP_USER_CONFIGABLE, ""),
                 'label': label,
                 'description': descr,
             })
@@ -642,7 +643,7 @@ class OVF(VMDescription, XML):
     @product.setter
     def product(self, product_string):
         logger.info("Updating Product element in OVF")
-        self.set_product_section_child(self.PRODUCT, product_string)
+        self._set_product_section_child(self.PRODUCT, product_string)
 
     @property
     def vendor(self):
@@ -654,7 +655,7 @@ class OVF(VMDescription, XML):
     @vendor.setter
     def vendor(self, vendor_string):
         logger.info("Updating Vendor element in OVF")
-        self.set_product_section_child(self.VENDOR, vendor_string)
+        self._set_product_section_child(self.VENDOR, vendor_string)
 
     @property
     def version_short(self):
@@ -666,7 +667,7 @@ class OVF(VMDescription, XML):
     @version_short.setter
     def version_short(self, version_string):
         logger.info("Updating Version element in OVF")
-        self.set_product_section_child(self.VERSION, version_string)
+        self._set_product_section_child(self.VERSION, version_string)
 
     @property
     def version_long(self):
@@ -678,7 +679,7 @@ class OVF(VMDescription, XML):
     @version_long.setter
     def version_long(self, version_string):
         logger.info("Updating FullVersion element in OVF")
-        self.set_product_section_child(self.FULL_VERSION, version_string)
+        self._set_product_section_child(self.FULL_VERSION, version_string)
 
     @property
     def product_url(self):
@@ -690,7 +691,7 @@ class OVF(VMDescription, XML):
     @product_url.setter
     def product_url(self, product_url_string):
         logger.info("Updating ProductUrl element in OVF")
-        self.set_product_section_child(self.PRODUCT_URL, product_url_string)
+        self._set_product_section_child(self.PRODUCT_URL, product_url_string)
 
     @property
     def vendor_url(self):
@@ -702,7 +703,7 @@ class OVF(VMDescription, XML):
     @vendor_url.setter
     def vendor_url(self, vendor_url_string):
         logger.info("Updating VendorUrl element in OVF")
-        self.set_product_section_child(self.VENDOR_URL, vendor_url_string)
+        self._set_product_section_child(self.VENDOR_URL, vendor_url_string)
 
     @property
     def application_url(self):
@@ -714,7 +715,7 @@ class OVF(VMDescription, XML):
     @application_url.setter
     def application_url(self, app_url_string):
         logger.info("Updating AppUrl element in OVF")
-        self.set_product_section_child(self.APPLICATION_URL, app_url_string)
+        self._set_product_section_child(self.APPLICATION_URL, app_url_string)
 
     def __getattr__(self, name):
         """Transparently pass attribute lookups off to name_helper."""
@@ -757,8 +758,6 @@ class OVF(VMDescription, XML):
             self.write_xml(self.output_file)
             # Copy all files from working directory to destination
             dest_dir = os.path.dirname(os.path.abspath(self.output_file))
-            if not dest_dir:
-                dest_dir = os.getcwd()
 
             for file_obj in self.references.findall(self.FILE):
                 file_name = file_obj.get(self.FILE_HREF)
@@ -1146,7 +1145,7 @@ class OVF(VMDescription, XML):
             return None
         str_list = ["Environment:"]
         wrapper.initial_indent = '  '
-        wrapper.subsequent_indent = '                   '
+        wrapper.subsequent_indent = '    '
         str_list.extend(wrapper.wrap(
             "Transport types: {0}"
             .format(" ".join(self.environment_transports))))
@@ -1211,7 +1210,13 @@ class OVF(VMDescription, XML):
         # them all together with 'join()' rather than it is to repeatedly
         # append to an existing string with '+'.
         # I haven't profiled this to verify - it's fast enough for now.
-        wrapper = textwrap.TextWrapper(width=width)
+
+        # Don't break in mid-word or on hyphens, as the usual case where
+        # we may exceed the available width is URI literals, and there's
+        # no ideal way to wrap these.
+        wrapper = textwrap.TextWrapper(width=width,
+                                       break_long_words=False,
+                                       break_on_hyphens=False)
 
         # File description
         header = self._info_string_header(width)
@@ -1358,7 +1363,7 @@ class OVF(VMDescription, XML):
         :param str label: Brief descriptive label for the profile
         :param str description: Verbose description of the profile
         """
-        self.deploy_opt_section = self.create_envelope_section_if_absent(
+        self.deploy_opt_section = self._ensure_section(
             self.DEPLOY_OPT_SECTION, "Configuration Profiles")
 
         cfg = self.find_child(self.deploy_opt_section, self.CONFIG,
@@ -1480,7 +1485,7 @@ class OVF(VMDescription, XML):
         :param str label: Brief label for the network
         :param str description: Verbose description of the network
         """
-        self.network_section = self.create_envelope_section_if_absent(
+        self.network_section = self._ensure_section(
             self.NETWORK_SECTION,
             "Logical networks",
             attrib=self.NETWORK_SECTION_ATTRIB)
@@ -1653,45 +1658,66 @@ class OVF(VMDescription, XML):
 
         return value
 
-    def set_property_value(self, key, value):
+    def set_property_value(self, key, value,
+                           user_configurable=None, property_type=None,
+                           label=None, description=None):
         """Set the value of the given property (converting value if needed).
 
         :param str key: Property identifier
-        :param str value: Value to set for this property
+        :param value: Value to set for this property
+        :param bool user_configurable: Should this property be configurable at
+            deployment time by the user?
+        :param str property_type: Value type - 'string' or 'boolean'
+        :param str label: Brief explanatory label for this property
+        :param str description: Detailed description of this property
         :return: the (converted) value that was set.
         """
         if self.ovf_version < 1.0:
             raise NotImplementedError("No support for setting environment "
                                       "properties under OVF v0.9")
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION,
-                attrib=self.PRODUCT_SECTION_ATTRIB)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
+        self.product_section = self._ensure_section(
+            self.PRODUCT_SECTION,
+            "Product Information",
+            attrib=self.PRODUCT_SECTION_ATTRIB,
+            parent=self.virtual_system)
         prop = self.find_child(self.product_section, self.PROPERTY,
                                attrib={self.PROP_KEY: key})
         if prop is None:
-            self.set_or_make_child(self.product_section, self.PROPERTY,
-                                   attrib={self.PROP_KEY: key,
-                                           self.PROP_VALUE: value,
-                                           self.PROP_TYPE: 'string'})
-            return value
+            prop = self.set_or_make_child(self.product_section, self.PROPERTY,
+                                          attrib={self.PROP_KEY: key})
+            # Properties *must* have a type to be valid
+            if property_type is None:
+                property_type = 'string'
 
-        # Else, make sure the requested value is valid
-        value = self._validate_value_for_property(prop, value)
+        if user_configurable is not None:
+            prop.set(self.PROP_USER_CONFIGABLE, str(user_configurable).lower())
+        if property_type is not None:
+            prop.set(self.PROP_TYPE, property_type)
+            # Revalidate any existing value if not setting a new value
+            if value is None:
+                value = prop.get(self.PROP_VALUE)
 
-        prop.set(self.PROP_VALUE, value)
+        if value is not None:
+            # Make sure the requested value is valid
+            value = self._validate_value_for_property(prop, value)
+            prop.set(self.PROP_VALUE, value)
+
+        if label is not None:
+            self.set_or_make_child(prop, self.PROPERTY_LABEL, label)
+        if description is not None:
+            self.set_or_make_child(prop, self.PROPERTY_DESC, description)
+
         return value
 
-    def config_file_to_properties(self, file_path):
+    def config_file_to_properties(self, file_path, user_configurable=None):
         """Import each line of a text file into a configuration property.
 
         :raise NotImplementedError: if the :attr:`platform` for this OVF
           does not define
           :const:`~COT.platforms.GenericPlatform.LITERAL_CLI_STRING`
         :param str file_path: File name to import.
+        :param bool user_configurable: Should the properties be configurable at
+            deployment time by the user?
         """
         i = 0
         if not self.platform.LITERAL_CLI_STRING:
@@ -1706,7 +1732,8 @@ class OVF(VMDescription, XML):
                 i += 1
                 self.set_property_value(
                     "{0}-{1:04d}".format(self.platform.LITERAL_CLI_STRING, i),
-                    line)
+                    line,
+                    user_configurable)
 
     def convert_disk_if_needed(self, file_path, kind):
         """Convert the disk to a more appropriate format if needed.
@@ -1960,7 +1987,7 @@ class OVF(VMDescription, XML):
         :return: string such as 'ide' or 'memory'
         """
         device_type = device.get_value(self.RESOURCE_TYPE)
-        for key in self.RES_MAP.keys():
+        for key in self.RES_MAP:
             if device_type == self.RES_MAP[key]:
                 return key
         return "unknown ({0})".format(device_type)
@@ -2153,7 +2180,7 @@ class OVF(VMDescription, XML):
                              "do not require a Disk")
             return disk
 
-        self.disk_section = self.create_envelope_section_if_absent(
+        self.disk_section = self._ensure_section(
             self.DISK_SECTION,
             "Virtual disk information",
             attrib=self.DISK_SECTION_ATTRIB)
@@ -2319,8 +2346,8 @@ class OVF(VMDescription, XML):
         try:
             tarf = tarfile.open(file_path, 'r')
         except (EOFError, tarfile.TarError) as e:
-            raise VMInitError(1, "Could not untar {0}: {1}"
-                              .format(file_path, e.args))
+            raise VMInitError(1, "Could not untar file: {0}".format(e.args),
+                              file_path)
 
         try:
             # The OVF standard says, with regard to OVAs:
@@ -2335,14 +2362,14 @@ class OVF(VMDescription, XML):
             #
             # For now we just validate #1.
             if not tarf.getmembers():
-                raise VMInitError(1, "No files to untar from {0}!"
-                                  .format(file_path))
+                raise VMInitError(1, "No files to untar", file_path)
             ovf_descriptor = tarf.getmembers()[0]
             if os.path.splitext(ovf_descriptor.name)[1] != '.ovf':
                 raise VMInitError(1,
-                                  "First file in {0} is '{1}' but it should "
+                                  "First file in TAR is '{0}' but it should "
                                   "have been an OVF file - OVA is invalid!"
-                                  .format(file_path, ovf_descriptor.name))
+                                  .format(ovf_descriptor.name),
+                                  file_path)
             # Make sure the provided file doesn't contain any malicious paths
             # http://stackoverflow.com/questions/8112742/
             for n in tarf.getnames():
@@ -2350,7 +2377,7 @@ class OVF(VMDescription, XML):
                 if not (os.path.abspath(os.path.join(self.working_dir, n))
                         .startswith(self.working_dir)):
                     raise VMInitError(1, "Tar file contains malicious/unsafe "
-                                      "file path '{0}'!".format(n))
+                                      "file path '{0}'!".format(n), file_path)
 
             # TODO: In theory we could read the ovf descriptor XML directly
             # from the TAR and not need to even extract this file to disk...
@@ -2414,7 +2441,7 @@ class OVF(VMDescription, XML):
             # Any files that we need to carry over need to be extracted NOW!
             logger.verbose("Extracting files from %s before overwriting it.",
                            self.input_file)
-            for filename in self._file_references.keys():
+            for filename in self._file_references:
                 file_ref = self._file_references[filename]
                 if file_ref.file_path is None:
                     file_ref.copy_to(self.working_dir)
@@ -2442,17 +2469,21 @@ class OVF(VMDescription, XML):
                 file_ref.add_to_archive(tarf)
                 logger.verbose("Added %s to %s", file_name, tar_file)
 
-    def create_envelope_section_if_absent(self, section_tag, info_string,
-                                          attrib=None):
+    def _ensure_section(self, section_tag, info_string,
+                        attrib=None, parent=None):
         """If the OVF doesn't already have the given Section, create it.
 
         :param str section_tag: XML tag of the desired section.
         :param str info_string: Info string to set if a new Section is created.
         :param dict attrib: Attributes to filter by when looking for any
-          existing section (optional).
+            existing section (optional).
+        :param xml.etree.ElementTree.Element parent: Parent element (optional).
+            If not specified, :attr:`envelope` will be the parent.
         :return: Section element that was found or created
         """
-        section = self.find_child(self.envelope, section_tag, attrib=attrib)
+        if parent is None:
+            parent = self.envelope
+        section = self.find_child(parent, section_tag, attrib=attrib)
         if section is not None:
             return section
 
@@ -2465,34 +2496,33 @@ class OVF(VMDescription, XML):
         # but they MUST come after the References and before the VirtualSystem.
         # We'll construct them immediately before the VirtualSystem.
         i = 0
-        for child in list(self.envelope):
+        for child in list(parent):
             if child.tag == self.VIRTUAL_SYSTEM:
                 break
             i += 1
-        self.envelope.insert(i, section)
+        parent.insert(i, section)
 
         # All Sections must have an Info child
         self.set_or_make_child(section, self.INFO, info_string)
 
         return section
 
-    def set_product_section_child(self, child_tag, child_text):
-        """If the OVF doesn't already have the given Section, create it.
+    def _set_product_section_child(self, child_tag, child_text):
+        """Update or create the given child of the ProductSection.
+
+        Creates the ProductSection itself if necessary.
 
         :param str child_tag: XML tag of the product section child element.
         :param str child_text: Text to set for the child element.
-        :return: The product section element that was updated or created
+        :return: The child element that was updated or created
         """
-        if self.product_section is None:
-            self.product_section = self.set_or_make_child(
-                self.virtual_system, self.PRODUCT_SECTION,
-                attrib=self.PRODUCT_SECTION_ATTRIB)
-            # Any Section must have an Info as child
-            self.set_or_make_child(self.product_section, self.INFO,
-                                   "Product Information")
-        self.set_or_make_child(self.product_section, child_tag, child_text)
-
-        return self.product_section
+        self.product_section = self._ensure_section(
+            self.PRODUCT_SECTION,
+            "Product Information",
+            attrib=self.PRODUCT_SECTION_ATTRIB,
+            parent=self.virtual_system)
+        return self.set_or_make_child(self.product_section, child_tag,
+                                      child_text)
 
     def find_parent_from_item(self, item):
         """Find the parent Item of the given Item.
@@ -2648,8 +2678,3 @@ class OVF(VMDescription, XML):
             (capacity, cap_units) = factor_bytes(capacity_bytes)
             disk.set(self.DISK_CAPACITY, capacity)
             disk.set(self.DISK_CAP_UNITS, cap_units)
-
-
-if __name__ == "__main__":
-    import doctest   # pylint: disable=wrong-import-position,wrong-import-order
-    doctest.testmod()

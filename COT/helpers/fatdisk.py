@@ -24,7 +24,8 @@ import os
 import os.path
 import platform
 
-from .helper import Helper
+import COT.helpers
+from COT.helpers.helper import Helper
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ class FatDisk(Helper):
             if not (Helper.apt_install('make') or
                     Helper.yum_install('make')):
                 raise NotImplementedError("Not sure how to install 'make'")
+            assert self.find_executable('make')
 
         # Fatdisk requires clang or gcc or g++
         if not (self.find_executable('clang') or
@@ -64,6 +66,9 @@ class FatDisk(Helper):
                     Helper.yum_install('gcc')):
                 raise NotImplementedError(
                     "Not sure how to install a C compiler")
+            assert (self.find_executable('clang') or
+                    self.find_executable('gcc') or
+                    self.find_executable('g++'))
 
     def install_helper(self):
         """Install ``fatdisk``."""
@@ -74,7 +79,7 @@ class FatDisk(Helper):
             pass
         elif platform.system() == 'Linux':
             self._install_linux_prereqs()
-            with self.download_and_expand(
+            with COT.helpers.download_and_expand(
                     'https://github.com/goblinhack/'
                     'fatdisk/archive/v1.0.0-beta.tar.gz') as d:
                 new_d = os.path.join(d, 'fatdisk-1.0.0-beta')

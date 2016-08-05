@@ -32,6 +32,7 @@ API
   ~COT.helpers.api.get_disk_format
   ~COT.helpers.api.install_file
   ~COT.helpers.api.create_install_dir
+  ~COT.helpers.api.download_and_expand
 
 Exceptions
 ----------
@@ -56,14 +57,27 @@ Helper modules
   COT.helpers.vmdktool
 """
 
-from .api import convert_disk_image, create_disk_image
-from .api import get_checksum, get_disk_capacity, get_disk_format
-from .api import create_install_dir, install_file
+from .api import (
+    convert_disk_image,
+    create_disk_image,
+    create_install_dir,
+    download_and_expand,
+    get_checksum,
+    get_disk_capacity,
+    get_disk_format,
+    install_file,
+)
 from .helper import HelperError, HelperNotFoundError
 
 __all__ = (
-    'HelperError', 'HelperNotFoundError',
-    'convert_disk_image', 'create_disk_image',
-    'get_checksum', 'get_disk_capacity', 'get_disk_format',
-    'create_install_dir', 'install_file',
+    'HelperError',
+    'HelperNotFoundError',
+    'convert_disk_image',
+    'create_disk_image',
+    'create_install_dir',
+    'download_and_expand',
+    'get_checksum',
+    'get_disk_capacity',
+    'get_disk_format',
+    'install_file',
 )

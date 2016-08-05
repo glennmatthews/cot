@@ -628,8 +628,9 @@ Networks:
   name-but-no-description
 
 Environment:
-  Transport types: http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-
-                   transport iso com.vmware.guestInfo
+  Transport types:
+    http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-transport iso
+    com.vmware.guestInfo
 
 Properties:
   Antidisestablishmentarianism       "supercalifragilisticexpialidocious"
@@ -676,8 +677,9 @@ NICs and Associated Networks:
   <instance 27> : This is a rather verbose network name, eh what?
 
 Environment:
-  Transport types: http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-
-                   transport iso com.vmware.guestInfo
+  Transport types:
+    http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-transport iso
+    com.vmware.guestInfo
 
 Properties:
   Antidisestablishmentarianism       "supercalifragilisticexpialidocious"
@@ -735,9 +737,8 @@ NICs and Associated Networks:
 
 Environment:
   Transport types:
-                   http://www.ibm.com/xmlns/ovf/transport/f
-                   ilesystem/etc/ovf-transport iso
-                   com.vmware.guestInfo
+    http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-transport
+    iso com.vmware.guestInfo
 
 Properties:
   Antidisestablishmentarianism       "supercalifragilisticexpialidocious"
@@ -787,9 +788,8 @@ NICs and Associated Networks:
 
 Environment:
   Transport types:
-                   http://www.ibm.com/xmlns/ovf/transport/f
-                   ilesystem/etc/ovf-transport iso
-                   com.vmware.guestInfo
+    http://www.ibm.com/xmlns/ovf/transport/filesystem/etc/ovf-transport
+    iso com.vmware.guestInfo
 
 Properties:
   Antidisestablishmentarianism       "supercalifragilisticexpialidocious"

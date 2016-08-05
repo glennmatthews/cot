@@ -26,7 +26,7 @@
 import logging
 import re
 
-from .submodule import COTReadOnlySubmodule
+from COT.submodule import COTReadOnlySubmodule
 from COT.data_validation import InvalidInputError, ValueUnsupportedError
 
 logger = logging.getLogger(__name__)

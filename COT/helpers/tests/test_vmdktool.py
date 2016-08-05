@@ -25,6 +25,8 @@ from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.vmdktool import VmdkTool
 
 
+@mock.patch('COT.helpers.download_and_expand',
+            side_effect=HelperUT.stub_download_and_expand)
 class TestVmdkTool(HelperUT):
     """Test cases for VmdkTool helper class."""
 
@@ -33,91 +35,142 @@ class TestVmdkTool(HelperUT):
         self.helper = VmdkTool()
         super(TestVmdkTool, self).setUp()
 
-    def test_get_version(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output',
+                return_value="vmdktool version 1.4")
+    def test_get_version(self, *_):
         """Test .version getter logic."""
-        self.fake_output = "vmdktool version 1.4"
         self.assertEqual(StrictVersion("1.4"), self.helper.version)
 
-    def test_install_helper_already_present(self):
+    @mock.patch('COT.helpers.helper.Helper._check_output')
+    @mock.patch('subprocess.check_call')
+    def test_install_helper_already_present(self, mock_check_call,
+                                            mock_check_output, *_):
         """Do nothing instead of re-installing."""
         self.helper.install_helper()
-        self.assertEqual([], self.last_argv)
+        mock_check_output.assert_not_called()
+        mock_check_call.assert_not_called()
         self.assertLogged(**self.ALREADY_INSTALLED)
 
-    @mock.patch('os.path.isdir')
-    @mock.patch('os.path.exists')
-    @mock.patch('os.makedirs')
+    @mock.patch('platform.system', return_value='Linux')
+    @mock.patch('os.path.isdir', return_value=False)
+    @mock.patch('os.path.exists', return_value=False)
+    @mock.patch('os.makedirs', side_effect=OSError)
+    @mock.patch('distutils.spawn.find_executable')
+    @mock.patch('COT.helpers.helper.Helper._check_output', return_value="")
+    @mock.patch('subprocess.check_call')
     def test_install_helper_apt_get(self,
-                                    mock_makedirs,
-                                    mock_exists,
-                                    mock_isdir):
+                                    mock_check_call,
+                                    mock_check_output,
+                                    mock_find_executable,
+                                    *_):
         """Test installation via 'apt-get'."""
-        mock_isdir.return_value = False
-        mock_exists.return_value = False
-        mock_makedirs.side_effect = OSError
         self.enable_apt_install()
+        mock_find_executable.side_effect = [
+            None,  # 'vmdktool',
+            None,  # 'make', pre-installation
+            '/bin/make',   # post-installation
+        ]
         self.helper.install_helper()
-        self.assertEqual([
-            ['dpkg', '-s', 'make'],
-            ['apt-get', '-q', 'update'],
-            ['apt-get', '-q', 'install', 'make'],
-            ['dpkg', '-s', 'zlib1g-dev'],
-            ['apt-get', '-q', 'install', 'zlib1g-dev'],
-            ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
-            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
-            ['make', 'install', 'PREFIX=/usr/local'],
-        ], self.last_argv)
+        self.assertSubprocessCalls(
+            mock_check_output,
+            [
+                ['dpkg', '-s', 'make'],
+                ['dpkg', '-s', 'zlib1g-dev'],
+            ])
+        self.assertSubprocessCalls(
+            mock_check_call,
+            [
+                ['apt-get', '-q', 'update'],
+                ['apt-get', '-q', 'install', 'make'],
+                ['apt-get', '-q', 'install', 'zlib1g-dev'],
+                ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
+                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
+                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+                ['make', 'install', 'PREFIX=/usr/local'],
+            ])
         self.assertAptUpdated()
+
         # Make sure we don't 'apt-get update/install' again unnecessarily
-        self.fake_output = 'install ok installed'
+        mock_check_call.reset_mock()
+        mock_check_output.reset_mock()
+        mock_find_executable.reset_mock()
+        mock_check_output.return_value = 'install ok installed'
+        mock_find_executable.side_effect = [
+            None,  # vmdktool
+            '/bin/make',
+        ]
         os.environ['PREFIX'] = '/opt/local'
         os.environ['DESTDIR'] = '/home/cot'
-        self.last_argv = []
         self.helper.install_helper()
-        self.assertEqual([
-            ['dpkg', '-s', 'make'],
-            ['dpkg', '-s', 'zlib1g-dev'],
-            ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
-            ['sudo', 'mkdir', '-p', '--mode=755',
-             '/home/cot/opt/local/man/man8'],
-            ['sudo', 'mkdir', '-p', '--mode=755', '/home/cot/opt/local/bin'],
-            ['make', 'install', 'PREFIX=/opt/local', 'DESTDIR=/home/cot'],
-        ], self.last_argv)
+        self.assertSubprocessCalls(
+            mock_check_output,
+            [
+                ['dpkg', '-s', 'zlib1g-dev'],
+            ])
+        self.assertSubprocessCalls(
+            mock_check_call,
+            [
+                ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
+                ['sudo', 'mkdir', '-p', '--mode=755',
+                 '/home/cot/opt/local/man/man8'],
+                ['sudo', 'mkdir', '-p', '--mode=755',
+                 '/home/cot/opt/local/bin'],
+                ['make', 'install', 'PREFIX=/opt/local', 'DESTDIR=/home/cot'],
+            ])
 
-    def test_install_helper_port(self):
+    def test_install_helper_port(self, *_):
         """Test installation via 'port'."""
         self.port_install_test('vmdktool')
 
-    @mock.patch('os.path.isdir')
-    @mock.patch('os.path.exists')
-    @mock.patch('os.makedirs')
+    @mock.patch('platform.system', return_value='Linux')
+    @mock.patch('os.path.isdir', return_value=False)
+    @mock.patch('os.path.exists', return_value=False)
+    @mock.patch('os.makedirs', side_effect=OSError)
+    @mock.patch('distutils.spawn.find_executable')
+    @mock.patch('subprocess.check_call')
     def test_install_helper_yum(self,
-                                mock_makedirs,
-                                mock_exists,
-                                mock_isdir):
+                                mock_check_call,
+                                mock_find_executable,
+                                *_):
         """Test installation via 'yum'."""
-        mock_isdir.return_value = False
-        mock_exists.return_value = False
-        mock_makedirs.side_effect = OSError
         self.enable_yum_install()
+        mock_find_executable.side_effect = [
+            None,  # 'vmdktool',
+            None,  # 'make', pre-installation
+            '/bin/make',   # post-installation
+        ]
         self.helper.install_helper()
-        self.assertEqual([
-            ['yum', '--quiet', 'install', 'make'],
-            ['yum', '--quiet', 'install', 'zlib-devel'],
-            ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
-            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-            ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
-            ['make', 'install', 'PREFIX=/usr/local'],
-        ], self.last_argv)
+        self.assertSubprocessCalls(
+            mock_check_call,
+            [
+                ['yum', '--quiet', 'install', 'make'],
+                ['yum', '--quiet', 'install', 'zlib-devel'],
+                ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
+                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
+                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+                ['make', 'install', 'PREFIX=/usr/local'],
+            ])
 
-    def test_install_helper_unsupported(self):
-        """Unable to install without a package manager."""
+    @mock.patch('platform.system', return_value='Linux')
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    def test_install_helper_linux_need_make_no_package_manager(self, *_):
+        """Linux installation requires yum or apt-get if 'make' missing."""
         self.select_package_manager(None)
         with self.assertRaises(NotImplementedError):
             self.helper.install_helper()
 
-    def test_convert_unsupported(self):
+    @mock.patch('platform.system', return_value='Linux')
+    @mock.patch('distutils.spawn.find_executable')
+    def test_install_linux_need_compiler_no_package_manager(self,
+                                                            mock_find_exec,
+                                                            *_):
+        """Linux installation needs some way to install 'zlib'."""
+        self.select_package_manager(None)
+        mock_find_exec.side_effect = [None, '/bin/make']
+        with self.assertRaises(NotImplementedError):
+            self.helper.install_helper()
+
+    def test_convert_unsupported(self, *_):
         """Negative test - conversion to unsupported format/subformat."""
         with self.assertRaises(NotImplementedError):
             self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,

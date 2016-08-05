@@ -9,6 +9,10 @@ Introduction
         alt="Latest Version">
    </a>
    <a href="https://pypi.python.org/pypi/cot/">
+   <img src="https://img.shields.io/pypi/pyversions/cot.svg"
+        alt="Python Versions Supported">
+   </a>
+   <a href="https://pypi.python.org/pypi/cot/">
    <img src="https://img.shields.io/badge/license-MIT-blue.svg"
         alt="License">
    </a>
@@ -16,10 +20,10 @@ Introduction
    <img src="https://travis-ci.org/glennmatthews/cot.svg?branch=master"
         alt="Build Status">
    </a>
-   <a href="https://coveralls.io/r/glennmatthews/cot?branch=master">
+   <a href="https://codecov.io/gh/glennmatthews/cot">
    <img
-    src="https://coveralls.io/repos/glennmatthews/cot/badge.svg?branch=master"
-    alt="Coverage Status">
+    src="https://codecov.io/gh/glennmatthews/cot/branch/master/graph/badge.svg"
+    alt="Codecov" />
    </a>
    <a href="https://readthedocs.org/projects/cot/?badge=latest">
    <img src="https://readthedocs.org/projects/cot/badge/?version=latest"
