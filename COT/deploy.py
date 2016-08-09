@@ -322,16 +322,21 @@ class COTDeploy(COTReadOnlySubmodule):
             # Get default serial connection information from VM definition.
             self.serial_connection = self.vm.get_serial_connectivity(
                 self.configuration)
-        else:
-            serial_count = self.vm.get_serial_count(
-                [self.configuration])[self.configuration]
-            if len(self.serial_connection) > serial_count:
-                self.UI.confirm_or_die(
-                    "{0} configuration '{1}' defines only {2} serial ports, "
-                    "but you have given connection information for {3} ports."
-                    "\nContinue to create additional ports?"
-                    .format(self.package, self.configuration, serial_count,
-                            len(self.serial_connection)))
+
+        serial_count = self.vm.get_serial_count(
+            [self.configuration])[self.configuration]
+        if len(self.serial_connection) > serial_count:
+            self.UI.confirm_or_die(
+                "{0} configuration '{1}' defines only {2} serial ports, "
+                "but you have given connection information for {3} ports."
+                "\nContinue to create additional ports?"
+                .format(self.package, self.configuration, serial_count,
+                        len(self.serial_connection)))
+        elif serial_count > len(self.serial_connection):
+            logger.warning("No serial connectivity information is "
+                           "available for %d serial port(s) - "
+                           "they will not be created or configured.",
+                           serial_count - len(self.serial_connection))
 
     def create_subparser(self):
         """Create 'deploy' CLI subparser if it doesn't already exist.
