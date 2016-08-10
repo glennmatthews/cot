@@ -37,6 +37,8 @@ from COT.data_validation import InvalidInputError
 logger = logging.getLogger(__name__)
 
 
+@mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
+@mock.patch('subprocess.check_call')
 class TestCOTDeployESXi(COT_UT):
     """Test cases for COTDeployESXi class."""
 
@@ -83,7 +85,7 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.ovftool._version = self._ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
-    def test_not_ready_with_no_args(self):
+    def test_not_ready_with_no_args(self, *_):
         """Verify ready_to_run() is False without all mandatory args."""
         ready, reason = self.instance.ready_to_run()
         self.assertEqual(ready, False)
@@ -97,7 +99,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertTrue(re.search("PACKAGE.*mandatory", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
-    def test_invalid_args(self):
+    def test_invalid_args(self, *_):
         """Negative tests for various arguments."""
         with self.assertRaises(InvalidInputError):
             self.instance.configuration = ""
@@ -106,8 +108,6 @@ class TestCOTDeployESXi(COT_UT):
         with self.assertRaises(InvalidInputError):
             self.instance.power_on = "frobozz"
 
-    @mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
-    @mock.patch('subprocess.check_call')
     def test_ovftool_args_basic(self, mock_check_call, *_):
         """Test that ovftool is called with the basic arguments."""
         self.instance.locator = "localhost"
@@ -122,8 +122,7 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.VSPHERE_ENV_WARNING)
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
 
-    @mock.patch('subprocess.check_call')
-    def test_ovftool_args_advanced(self, mock_check_call):
+    def test_ovftool_args_advanced(self, mock_check_call, *_):
         """Test that ovftool is called with more involved arguments."""
         self.instance.locator = "localhost/host/foo"
         self.instance.datastore = "datastore1"
@@ -150,8 +149,6 @@ class TestCOTDeployESXi(COT_UT):
         ])
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
 
-    @mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
-    @mock.patch('subprocess.check_call')
     def test_ovftool_vsphere_env_fixup(self, mock_check_call, *_):
         """Test fixup of environment when deploying directly to vSphere."""
         # With 4.0.0 (our default) and no power_on, there's no fixup.
@@ -195,8 +192,6 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.OVFTOOL_VER_TOO_LOW)
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
 
-    @mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
-    @mock.patch('subprocess.check_call')
     def test_serial_fixup_connection_error(self, *_):
         """Failure in fixup_serial_ports() connecting to an invalid host."""
         self.instance.locator = "localhost"
@@ -213,33 +208,29 @@ class TestCOTDeployESXi(COT_UT):
             "(Error connecting to localhost:443: )?.*Connection refused")
         self.assertLogged(**self.VSPHERE_ENV_WARNING)
 
-    @mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
-    @mock.patch('subprocess.check_call')
-    @mock.patch('pyVim.connect.__Login')
-    @mock.patch('pyVim.connect.__FindSupportedVersion')
-    def test_serial_fixup_stubbed(self, mock_fsv, mock_login, *_):
+    mock_si = mock.create_autospec(COT.deploy_esxi.vim.ServiceInstance)
+    mock_sic = mock.create_autospec(
+        COT.deploy_esxi.vim.ServiceInstanceContent)
+    mock_si.RetrieveContent.return_value = mock_sic
+    mock_sic.rootFolder = 'vim.Folder:group-d1'
+
+    mock_v = mock.create_autospec(COT.deploy_esxi.vim.ViewManager)
+    mock_sic.viewManager = mock_v
+
+    mock_cv = mock.create_autospec(COT.deploy_esxi.vim.view.ContainerView)
+    mock_v.CreateContainerView.return_value = mock_cv
+
+
+    @mock.patch('pyVim.connect.__FindSupportedVersion', return_value=['vim25'])
+    @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
+    def test_serial_fixup_stubbed(self, *_):
         """Test fixup_serial_ports by mocking pyVmomi library."""
         self.instance.locator = "localhost"
         self.instance.vm_name = "mockery"
 
-        mock_fsv.return_value = ['vim25']
-        mock_si = mock.create_autospec(COT.deploy_esxi.vim.ServiceInstance)
-        mock_login.return_value = (mock_si, None)
-
-        mock_sic = mock.create_autospec(
-            COT.deploy_esxi.vim.ServiceInstanceContent)
-        mock_si.RetrieveContent.return_value = mock_sic
-        mock_sic.rootFolder = 'vim.Folder:group-d1'
-
-        mock_v = mock.create_autospec(COT.deploy_esxi.vim.ViewManager)
-        mock_sic.viewManager = mock_v
-
-        mock_cv = mock.create_autospec(COT.deploy_esxi.vim.view.ContainerView)
-        mock_v.CreateContainerView.return_value = mock_cv
-
         mock_vm = mock.create_autospec(COT.deploy_esxi.vim.VirtualMachine)
         mock_vm.name = self.instance.vm_name
-        mock_cv.view = [mock_vm]
+        self.mock_cv.view = [mock_vm]
 
         self.instance.serial_connection = ['tcp:localhost:2222',
                                            'tcp::2223,server',
@@ -271,40 +262,20 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
         self.assertLogged(**self.SESSION_FAILED)
 
-    @mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
-    @mock.patch('subprocess.check_call')
+    @mock.patch('pyVim.connect.__FindSupportedVersion', return_value=['vim25'])
+    @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
     @mock.patch('COT.ui_shared.UI.confirm_or_die', return_value=True)
-    @mock.patch('pyVim.connect.__Login')
-    @mock.patch('pyVim.connect.__FindSupportedVersion')
-    def test_serial_fixup_stubbed_create(self,
-                                         mock_fsv, mock_login, mock_cod, *_):
+    def test_serial_fixup_stubbed_create(self, mock_cod, *_):
         """Test fixup_serial_ports by mocking pyVmomi library."""
         self.instance.package = self.minimal_ovf
         self.instance.locator = "localhost"
         self.instance.vm_name = "mockery"
 
-        mock_fsv.return_value = ['vim25']
-        mock_si = mock.create_autospec(COT.deploy_esxi.vim.ServiceInstance)
-        mock_login.return_value = (mock_si, None)
-
-        mock_sic = mock.create_autospec(
-            COT.deploy_esxi.vim.ServiceInstanceContent)
-        mock_si.RetrieveContent.return_value = mock_sic
-        mock_sic.rootFolder = 'vim.Folder:group-d1'
-
-        mock_v = mock.create_autospec(COT.deploy_esxi.vim.ViewManager)
-        mock_sic.viewManager = mock_v
-
-        mock_cv = mock.create_autospec(COT.deploy_esxi.vim.view.ContainerView)
-        mock_v.CreateContainerView.return_value = mock_cv
-
         mock_vm = mock.create_autospec(COT.deploy_esxi.vim.VirtualMachine)
         mock_vm.name = self.instance.vm_name
-        mock_cv.view = [mock_vm]
+        self.mock_cv.view = [mock_vm]
 
-        self.instance.serial_connection = ['tcp:localhost:2222',
-                                           'tcp::2223,server',
-                                           '/dev/ttyS0']
+        self.instance.serial_connection = ['tcp:localhost:2222']
         self.instance.run()
 
         self.assertTrue(mock_vm.ReconfigVM_Task.called)
@@ -312,21 +283,16 @@ class TestCOTDeployESXi(COT_UT):
         # TODO: any other validation of args or kwargs?
         _args, kwargs = mock_vm.ReconfigVM_Task.call_args
         spec = kwargs['spec']
-        self.assertEqual(3, len(spec.deviceChange))
-        s1, s2, s3 = spec.deviceChange
+        self.assertEqual(1, len(spec.deviceChange))
+        s1 = spec.deviceChange[0]
         self.assertEqual('add', s1.operation)
-        self.assertEqual('add', s2.operation)
-        self.assertEqual('add', s3.operation)
         self.assertEqual('tcp://localhost:2222', s1.device.backing.serviceURI)
         self.assertEqual('client', s1.device.backing.direction)
-        self.assertEqual('tcp://:2223', s2.device.backing.serviceURI)
-        self.assertEqual('server', s2.device.backing.direction)
-        self.assertEqual('/dev/ttyS0', s3.device.backing.deviceName)
 
     @mock.patch('COT.deploy_esxi.SmartConnection.__enter__')
     @unittest.skipUnless(hasattr(ssl, '_create_unverified_context'),
                          "Only applicable to Python 2.7+ and 3.4+")
-    def test_serial_fixup_ssl_failure(self, mock_parent):
+    def test_serial_fixup_ssl_failure(self, mock_parent, *_):
         """Test SSL failure in pyVmomi."""
         mock_parent.side_effect = vim.fault.HostConnectFault(
             msg="certificate verify failed")
