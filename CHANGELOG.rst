@@ -3,6 +3,15 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Fixed**
+
+- ``cot deploy ... --serial-connection`` will create additional serial ports
+  beyond those defined in the OVF, if requested. Previously it would ask the
+  user for confirmation but not actually do anything about it. (`#51`_)
+
 `1.7.0`_ - 2016-08-05
 ---------------------
 
@@ -481,6 +490,7 @@ Initial public release.
 .. _#48: https://github.com/glennmatthews/cot/issues/48
 .. _#49: https://github.com/glennmatthews/cot/issues/49
 .. _#50: https://github.com/glennmatthews/cot/issues/50
+.. _#51: https://github.com/glennmatthews/cot/issues/51
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

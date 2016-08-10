@@ -77,7 +77,7 @@ class SmarterConnection(SmartConnection):
             return super(SmarterConnection, self).__enter__()
         except vim.fault.HostConnectFault as e:
             if not re.search("certificate verify failed", e.msg):
-                raise e
+                raise
             # Self-signed certificates are pretty common for ESXi servers
             logger.warning(e.msg)
             self.UI.confirm_or_die("SSL certificate for {0} is self-signed or "
@@ -118,7 +118,7 @@ class SmarterConnection(SmartConnection):
         """
         errno = None
         inner_message = None
-        while errno is None:
+        while errno is None and outer_e is not None:
             inner_e = None
             if hasattr(outer_e, 'reason'):
                 inner_e = outer_e.reason  # pylint: disable=no-member
@@ -127,18 +127,16 @@ class SmarterConnection(SmartConnection):
                     if isinstance(arg, Exception):
                         inner_e = arg
                         break
-            if inner_e is None:
-                break
-            if hasattr(inner_e, 'strerror'):
-                inner_message = inner_e.strerror
-            elif hasattr(inner_e, 'message'):
-                inner_message = inner_e.message
-            else:
-                inner_message = inner_e.args[0]
-            logger.debug("\nInner exception: %s", inner_e)
-            if hasattr(inner_e, 'errno') and inner_e.errno is not None:
-                errno = inner_e.errno
-                break
+            if inner_e is not None:
+                if hasattr(inner_e, 'strerror'):
+                    inner_message = inner_e.strerror
+                elif hasattr(inner_e, 'message'):
+                    inner_message = inner_e.message
+                else:
+                    inner_message = inner_e.args[0]
+                logger.debug("\nInner exception: %s", inner_e)
+                if hasattr(inner_e, 'errno') and inner_e.errno is not None:
+                    errno = inner_e.errno
             outer_e = inner_e
         return errno, inner_message
 
@@ -162,7 +160,8 @@ class PyVmomiVMReconfigSpec(object):
     def __init__(self, conn, vm_name):
         """Use the given name to look up a VM using the given connection."""
         self.vm = get_object_from_connection(conn, vim.VirtualMachine, vm_name)
-        assert self.vm
+        if not self.vm:
+            raise LookupError("No VM '{0}' was found!".format(vm_name))
         self.spec = vim.vm.ConfigSpec()
 
     def __enter__(self):
@@ -359,32 +358,19 @@ class COTDeployESXi(COTDeploy):
 
         ovftool_args = self.fixup_ovftool_args(ovftool_args, target)
 
-        # Get the number of serial ports in the OVA.
-        # ovftool does not create serial ports when deploying to a VM,
-        # so we'll have to fix this up manually later.
-        serial_count = vm.get_serial_count([self.configuration])
-        serial_count = serial_count[self.configuration]
-
         logger.info("Deploying VM...")
         self.ovftool.call_helper(ovftool_args, capture_output=False)
 
-        # Post-fix of serial ports (ovftool will not implement)
-        if serial_count > 0:
-            # add serial ports as requested
-            self.fixup_serial_ports(serial_count)
+        # VMWare has confirmed that they have no plan to implement serial port
+        # orchestration in ovftool, so we have to do it ourselves now that
+        # the VM has been created.
+        if len(self.serial_connection) > 0:
+            self.fixup_serial_ports()
+
         # TODO: only now power on VM if power_on was requested
 
-    def fixup_serial_ports(self, serial_count):
+    def fixup_serial_ports(self):
         """Use PyVmomi to create and configure serial ports for the new VM."""
-        if serial_count > len(self.serial_connection):
-            logger.warning("No serial connectivity information is "
-                           "available for %d serial port(s) - "
-                           "they will not be created or configured.",
-                           serial_count - len(self.serial_connection))
-
-        if len(self.serial_connection) == 0:
-            return
-
         logger.info("Fixing up serial ports...")
         with SmarterConnection(self.UI, self.server,
                                self.username, self.password) as conn:
@@ -392,43 +378,49 @@ class COTDeployESXi(COTDeploy):
             with PyVmomiVMReconfigSpec(conn, self.vm_name) as spec:
                 logger.verbose("Spec created")
                 spec.deviceChange = []
-                # TODO - import backing info from OVF environment
-                # TODO - prompt user for values if not in OVF and not specified
                 for s in self.serial_connection:
-                    logger.verbose(s)
-                    serial_spec = vim.vm.device.VirtualDeviceSpec()
-                    serial_spec.operation = 'add'
-                    serial_port = vim.vm.device.VirtualSerialPort()
-                    serial_port.yieldOnPoll = True
-
-                    if s.kind == 'device':
-                        backing = serial_port.DeviceBackingInfo()
-                        logger.info("Serial port will use host device %s",
-                                    s.value)
-                        backing.deviceName = s.value
-                    elif s.kind == 'telnet' or s.kind == 'tcp':
-                        backing = serial_port.URIBackingInfo()
-                        backing.serviceURI = s.kind + '://' + s.value
-                        if 'server' in s.options:
-                            logger.info("Serial port will be a %s server "
-                                        "at %s", s.kind, s.value)
-                            backing.direction = 'server'
-                        else:
-                            logger.info("Serial port will connect via %s "
-                                        "to %s. Use ',server' option if a "
-                                        "server is desired instead of client.",
-                                        s.kind, s.value)
-                            backing.direction = 'client'
-                    else:
-                        # TODO - support other backing types
-                        raise NotImplementedError("no support yet for '{0}'"
-                                                  .format(s.kind))
-
-                    serial_port.backing = backing
-                    serial_spec.device = serial_port
-                    spec.deviceChange.append(serial_spec)
+                    self._create_serial_port(s, spec)
 
         logger.info("Done with serial port fixup")
+
+    @staticmethod
+    def _create_serial_port(s, spec):
+        """Use PyVmomi to create a serial connection on a VM.
+
+        :param PyVmomiVMReconfigSpec spec: PyVmomi VM spec object
+        :param SerialConnection s: Serial connection to create
+        """
+        logger.verbose(s)
+        serial_spec = vim.vm.device.VirtualDeviceSpec()
+        serial_spec.operation = 'add'
+        serial_port = vim.vm.device.VirtualSerialPort()
+        serial_port.yieldOnPoll = True
+
+        if s.kind == 'device':
+            backing = serial_port.DeviceBackingInfo()
+            logger.info("Serial port will use host device %s", s.value)
+            backing.deviceName = s.value
+        elif s.kind == 'telnet' or s.kind == 'tcp':
+            backing = serial_port.URIBackingInfo()
+            backing.serviceURI = s.kind + '://' + s.value
+            if 'server' in s.options:
+                logger.info("Serial port will be a %s server at %s",
+                            s.kind, s.value)
+                backing.direction = 'server'
+            else:
+                logger.info(
+                    "Serial port will connect via %s to %s. Use ',server' "
+                    "option if a server is desired instead of client.",
+                    s.kind, s.value)
+                backing.direction = 'client'
+        else:
+            # TODO - support other backing types
+            raise NotImplementedError("no support yet for backing type '{0}'"
+                                      .format(s.kind))
+
+        serial_port.backing = backing
+        serial_spec.device = serial_port
+        spec.deviceChange.append(serial_spec)
 
     def create_subparser(self):
         """Add subparser for the CLI of this submodule.
