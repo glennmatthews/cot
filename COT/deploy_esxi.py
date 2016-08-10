@@ -77,7 +77,7 @@ class SmarterConnection(SmartConnection):
             return super(SmarterConnection, self).__enter__()
         except vim.fault.HostConnectFault as e:
             if not re.search("certificate verify failed", e.msg):
-                raise e
+                raise
             # Self-signed certificates are pretty common for ESXi servers
             logger.warning(e.msg)
             self.UI.confirm_or_die("SSL certificate for {0} is self-signed or "
@@ -118,7 +118,7 @@ class SmarterConnection(SmartConnection):
         """
         errno = None
         inner_message = None
-        while errno is None:
+        while errno is None and outer_e is not None:
             inner_e = None
             if hasattr(outer_e, 'reason'):
                 inner_e = outer_e.reason  # pylint: disable=no-member
@@ -127,18 +127,16 @@ class SmarterConnection(SmartConnection):
                     if isinstance(arg, Exception):
                         inner_e = arg
                         break
-            if inner_e is None:
-                break
-            if hasattr(inner_e, 'strerror'):
-                inner_message = inner_e.strerror
-            elif hasattr(inner_e, 'message'):
-                inner_message = inner_e.message
-            else:
-                inner_message = inner_e.args[0]
-            logger.debug("\nInner exception: %s", inner_e)
-            if hasattr(inner_e, 'errno') and inner_e.errno is not None:
-                errno = inner_e.errno
-                break
+            if inner_e is not None:
+                if hasattr(inner_e, 'strerror'):
+                    inner_message = inner_e.strerror
+                elif hasattr(inner_e, 'message'):
+                    inner_message = inner_e.message
+                else:
+                    inner_message = inner_e.args[0]
+                logger.debug("\nInner exception: %s", inner_e)
+                if hasattr(inner_e, 'errno') and inner_e.errno is not None:
+                    errno = inner_e.errno
             outer_e = inner_e
         return errno, inner_message
 
@@ -162,7 +160,8 @@ class PyVmomiVMReconfigSpec(object):
     def __init__(self, conn, vm_name):
         """Use the given name to look up a VM using the given connection."""
         self.vm = get_object_from_connection(conn, vim.VirtualMachine, vm_name)
-        assert self.vm
+        if not self.vm:
+            raise LookupError("No VM '{0}' was found!".format(vm_name))
         self.spec = vim.vm.ConfigSpec()
 
     def __enter__(self):

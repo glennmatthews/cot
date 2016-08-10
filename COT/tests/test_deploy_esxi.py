@@ -31,7 +31,7 @@ from pyVmomi import vim
 from COT.tests.ut import COT_UT, unittest
 from COT.ui_shared import UI
 import COT.deploy_esxi
-from COT.deploy_esxi import COTDeployESXi
+from COT.deploy_esxi import COTDeployESXi, SmarterConnection
 from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
@@ -192,10 +192,12 @@ class TestCOTDeployESXi(COT_UT):
         self.assertLogged(**self.OVFTOOL_VER_TOO_LOW)
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
 
-    def test_serial_fixup_connection_error(self, *_):
+    def test_serial_fixup_invalid_host(self, *_):
         """Failure in fixup_serial_ports() connecting to an invalid host."""
         self.instance.locator = "localhost"
         self.instance.serial_connection = ['tcp::2222', 'tcp::2223']
+        # pyvmomi 6.0.0.2016 and earlier raises ConnectionError,
+        # pyvmomi 6.0.0.2016.4 and later raises socket.error
         with self.assertRaises((requests.exceptions.ConnectionError,
                                 socket.error)) as cm:
             self.instance.run()
@@ -220,7 +222,6 @@ class TestCOTDeployESXi(COT_UT):
     mock_cv = mock.create_autospec(COT.deploy_esxi.vim.view.ContainerView)
     mock_v.CreateContainerView.return_value = mock_cv
 
-
     @mock.patch('pyVim.connect.__FindSupportedVersion', return_value=['vim25'])
     @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
     def test_serial_fixup_stubbed(self, *_):
@@ -228,9 +229,11 @@ class TestCOTDeployESXi(COT_UT):
         self.instance.locator = "localhost"
         self.instance.vm_name = "mockery"
 
+        mock_vm0 = mock.create_autospec(COT.deploy_esxi.vim.VirtualMachine)
+        mock_vm0.name = "wrong_vm"
         mock_vm = mock.create_autospec(COT.deploy_esxi.vim.VirtualMachine)
         mock_vm.name = self.instance.vm_name
-        self.mock_cv.view = [mock_vm]
+        self.mock_cv.view = [mock_vm0, mock_vm]
 
         self.instance.serial_connection = ['tcp:localhost:2222',
                                            'tcp::2223,server',
@@ -266,7 +269,7 @@ class TestCOTDeployESXi(COT_UT):
     @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
     @mock.patch('COT.ui_shared.UI.confirm_or_die', return_value=True)
     def test_serial_fixup_stubbed_create(self, mock_cod, *_):
-        """Test fixup_serial_ports by mocking pyVmomi library."""
+        """Test fixup_serial_ports creation of serial ports not in the OVF."""
         self.instance.package = self.minimal_ovf
         self.instance.locator = "localhost"
         self.instance.vm_name = "mockery"
@@ -289,6 +292,26 @@ class TestCOTDeployESXi(COT_UT):
         self.assertEqual('tcp://localhost:2222', s1.device.backing.serviceURI)
         self.assertEqual('client', s1.device.backing.direction)
 
+    @mock.patch('pyVim.connect.__FindSupportedVersion', return_value=['vim25'])
+    @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
+    def test_serial_fixup_stubbed_vm_not_found(self, *_):
+        """Test fixup_serial_ports error case where the VM isn't found."""
+        self.instance.locator = "localhost"
+        self.instance.vm_name = "mockery"
+
+        mock_vm0 = mock.create_autospec(COT.deploy_esxi.vim.VirtualMachine)
+        mock_vm0.name = "wrong_vm"
+        mock_vm1 = mock.create_autospec(COT.deploy_esxi.vim.VirtualMachine)
+        mock_vm1.name = "also_wrong"
+        self.mock_cv.view = [mock_vm0, mock_vm1]
+
+        self.instance.serial_connection = ['tcp:localhost:2222',
+                                           'tcp::2223,server',
+                                           '/dev/ttyS0']
+        self.assertRaises(LookupError, self.instance.run)
+        self.assertLogged(**self.VSPHERE_ENV_WARNING)
+        self.assertLogged(**self.SESSION_FAILED)
+
     @mock.patch('COT.deploy_esxi.SmartConnection.__enter__')
     @unittest.skipUnless(hasattr(ssl, '_create_unverified_context'),
                          "Only applicable to Python 2.7+ and 3.4+")
@@ -298,6 +321,90 @@ class TestCOTDeployESXi(COT_UT):
             msg="certificate verify failed")
         self.instance.locator = "localhost"
         self.instance.serial_connection = ['tcp://localhost:2222']
+        # Try twice - first time with default behavior encounters certificate
+        # failure, second time (with self-signed certificates accepted)
+        # encounters the same error again and raises it
         self.assertRaises(vim.fault.HostConnectFault,
                           self.instance.fixup_serial_ports)
+        self.assertEqual(mock_parent.call_count, 2)
         self.assertLogged(**self.BAD_CERTIFICATE)
+
+    @mock.patch('COT.deploy_esxi.SmartConnection.__enter__')
+    def test_serial_fixup_other_hostconnectfault(self, mock_parent, *_):
+        """Test HostConnectFault other than SSL failure."""
+        mock_parent.side_effect = vim.fault.HostConnectFault(
+            msg="Malformed response while querying for local ticket: foo")
+        self.instance.locator = "localhost"
+        self.instance.serial_connection = ['tcp://localhost:2222']
+        # Try once and fail immediately
+        self.assertRaises(vim.fault.HostConnectFault,
+                          self.instance.fixup_serial_ports)
+        self.assertEqual(mock_parent.call_count, 1)
+
+    @mock.patch('COT.deploy_esxi.SmartConnection.__enter__')
+    def test_serial_fixup_connectionerror(self, mock_parent, *_):
+        """Test generic ConnectionError handling."""
+        mock_parent.side_effect = requests.exceptions.ConnectionError
+        self.instance.locator = "localhost"
+        self.instance.serial_connection = ['tcp://localhost:2222']
+        with self.assertRaises(requests.exceptions.ConnectionError) as cm:
+            self.instance.fixup_serial_ports()
+        self.assertEqual(cm.exception.errno, None)
+        self.assertEqual(cm.exception.strerror,
+                         "Error connecting to localhost:443: None")
+
+
+class TestSmarterConnection(COT_UT):
+    """Test cases for SmarterConnection class methods."""
+
+    def test_unwrap_connection_error_27(self):
+        """Unwrap an error like a ConnectionError raised by requests 2.7."""
+        errnum, inner_message = SmarterConnection.unwrap_connection_error(
+            IOError(
+                Exception(
+                    'Connection aborted.',
+                    IOError(61, 'Connection refused')
+                )
+            )
+        )
+        self.assertEqual(errnum, 61)
+        self.assertEqual(inner_message, "Connection refused")
+
+    class MaxRetryError28(Exception):
+        """Mock of requests 2.8 MaxRetryError exception class."""
+
+        def __init__(self, pool, url, reason):
+            """Create fake exception."""
+            self.pool = pool
+            self.url = url
+            self.reason = reason
+            self.message = ("Max retries exceeded with url: %s (Caused by %r)"
+                            % (url, reason))
+            super(self.__class__, self).__init__("%s: %s" %
+                                                 (pool, self.message))
+
+    class NewConnectionError28(Exception):
+        """Mock of requests 2.8 NewConnectionError exception class."""
+
+        def __init__(self, pool, message):
+            """Create fake exception."""
+            self.pool = pool
+            self.message = message
+            super(self.__class__, self).__init__("%s: %s" % (pool, message))
+
+    def test_unwrap_connection_error_28(self):
+        """Unwrap an error like a ConnectionError raised by requests 2.8."""
+        errnum, inner_message = SmarterConnection.unwrap_connection_error(
+            self.MaxRetryError28(
+                pool="HTTPSConnectionPool(host='localhost', port=443)",
+                url="//sdk/vimServiceVersions.xml",
+                reason=self.NewConnectionError28(
+                    pool="VerifiedHTTPSConnection",
+                    message="Failed to establish a new connection: "
+                    "[Errno 61] Connection refused")
+            )
+        )
+        self.assertEqual(errnum, None)
+        self.assertEqual(inner_message,
+                         "Failed to establish a new connection: "
+                         "[Errno 61] Connection refused")
