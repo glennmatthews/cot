@@ -171,7 +171,7 @@ def help_text_to_rst(help, dirpath):
             line = re.sub(r"(-+\S+) \[([^,]+)\]", r"\1 <\2>", line)
 
             # --names NAME1 [NAME2 ...] ---->  --names <NAME1...>
-            line = re.sub(r"(-+\S+) ([^,]+) \[[^,]+\]",
+            line = re.sub(r"(-+\S+) (\S+) \[\S+ \.\.\.\]",
                           r"\1 <\2...>", line)
 
             # foobar (foo, bar) ----> foobar, foo, bar
