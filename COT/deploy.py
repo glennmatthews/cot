@@ -414,7 +414,8 @@ class COTDeploy(COTReadOnlySubmodule):
 
         self.generic_parser.add_argument(
             '-S', '--serial-connection', action='append', nargs='+',
-            metavar=('CONN1', 'CONN2'),
+            metavar=('K1:V1[,O1]', 'K2:V2[,O2]'),
             help="Set connectivity for a serial port defined in the OVF. "
             "This argument may be repeated to specify more port connections. "
-            "Each entry should be structured as 'kind:value[,options]'.")
+            "Each entry should be structured as 'kind:value' or "
+            "'kind:value,options'.")
