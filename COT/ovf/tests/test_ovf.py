@@ -16,9 +16,8 @@
 
 """Unit test cases for COT.ovf.OVF class."""
 
-from __future__ import print_function
-
 import filecmp
+import logging
 import os
 import os.path
 import platform
@@ -37,6 +36,8 @@ from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
 from COT.helpers import HelperError
 from COT.vm_context_manager import VMContextManager
+
+logger = logging.getLogger(__name__)
 
 
 class TestByteString(COT_UT):
@@ -295,10 +296,9 @@ ovf:size="{cfg_size}" />
                 if sys.hexversion < 0x02070000:
                     # OVF changes due to 2.6 XML handling, and MF changes due
                     # to checksum difference for the OVF
-                    # TODO: can we log this as a warning or such instead?
-                    print("'{0}' file comparison skipped due to "
-                          "old Python version ({1})"
-                          .format(ext, platform.python_version()))
+                    logger.info("'%s' file comparison skipped due to "
+                                "old Python version (%s)",
+                                ext, platform.python_version())
                     continue
                 self.check_diff("", os.path.join(input_dir, "input" + ext),
                                 os.path.join(self.temp_dir, "input" + ext))
