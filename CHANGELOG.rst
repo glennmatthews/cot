@@ -500,6 +500,7 @@ Initial public release.
 .. _#49: https://github.com/glennmatthews/cot/issues/49
 .. _#50: https://github.com/glennmatthews/cot/issues/50
 .. _#51: https://github.com/glennmatthews/cot/issues/51
+.. _#52: https://github.com/glennmatthews/cot/issues/52
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
