@@ -25,6 +25,7 @@
   OVFHardwareDataError
 """
 
+import copy
 import logging
 
 from COT.data_validation import natural_sort
@@ -186,9 +187,7 @@ class OVFHardware(object):
         :return: ``(instance, ovfitem)``
         """
         instance = self.find_unused_instance_id()
-        ovfitem = OVFItem(self.ovf)
-        for profile in profile_list:
-            ovfitem.add_profile(profile, from_item=parent_item)
+        ovfitem = copy.deepcopy(parent_item)
         ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profile_list)
         ovfitem.modified = True
         self.item_dict[instance] = ovfitem

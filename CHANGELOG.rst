@@ -3,6 +3,15 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Fixed**
+
+- Issue `#52`_ - OVFItemDataError raised when adding NICs to CSR1000V OVA,
+  or more generally when cloning an OVFItem whose ElementName references
+  its Connection.
+
 `1.7.1`_ - 2016-08-12
 ---------------------
 

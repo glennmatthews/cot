@@ -1,0 +1,318 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData">
+  <ovf:References>
+    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="152576" />
+    <ovf:File ovf:href="input.iso" ovf:id="csr1000v.iso" ovf:size="360448" />
+  </ovf:References>
+  <ovf:DiskSection>
+    <ovf:Info>Virtual disk information</ovf:Info>
+    <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:populatedSize="293011456" />
+  </ovf:DiskSection>
+  <ovf:NetworkSection>
+    <ovf:Info>The list of logical networks</ovf:Info>
+    <ovf:Network ovf:name="GigabitEthernet1">
+      <ovf:Description>Data network 1</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet2">
+      <ovf:Description>Data network 2</ovf:Description>
+    </ovf:Network>
+    <ovf:Network ovf:name="GigabitEthernet3">
+      <ovf:Description>Data network 3</ovf:Description>
+    </ovf:Network>
+  </ovf:NetworkSection>
+  <ovf:DeploymentOptionSection>
+    <ovf:Info>Configuration Profiles</ovf:Info>
+    <ovf:Configuration ovf:default="true" ovf:id="1CPU-4GB">
+      <ovf:Label>Small</ovf:Label>
+      <ovf:Description>Minimal hardware profile - 1 vCPU, 4 GB RAM</ovf:Description>
+    </ovf:Configuration>
+    <ovf:Configuration ovf:id="2CPU-4GB">
+      <ovf:Label>Medium</ovf:Label>
+      <ovf:Description>Medium hardware profile - 2 vCPUs, 4 GB RAM</ovf:Description>
+    </ovf:Configuration>
+    <ovf:Configuration ovf:id="4CPU-4GB">
+      <ovf:Label>Large</ovf:Label>
+      <ovf:Description>Large hardware profile - 4 vCPUs, 4 GB RAM</ovf:Description>
+    </ovf:Configuration>
+    <ovf:Configuration ovf:id="4CPU-8GB">
+      <ovf:Label>Large + DRAM Upgrade</ovf:Label>
+      <ovf:Description>Large hardware profile (requires purchase of DRAM upgrade SKU) - 4 vCPUs, 8 GB RAM</ovf:Description>
+    </ovf:Configuration>
+  </ovf:DeploymentOptionSection>
+  <ovf:VirtualSystem ovf:id="com.cisco.csr1000v">
+    <ovf:Info>A virtual machine</ovf:Info>
+    <ovf:Name>Cisco CSR 1000V Cloud Services Router</ovf:Name>
+    <ovf:OperatingSystemSection ovf:id="100" vmw:osType="other26xLinux64Guest">
+      <ovf:Info>The kind of installed guest operating system</ovf:Info>
+      <ovf:Description>Cisco IOS-XE Software</ovf:Description>
+    </ovf:OperatingSystemSection>
+    <ovf:VirtualHardwareSection ovf:transport="iso">
+      <ovf:Info>Virtual hardware requirements</ovf:Info>
+      <ovf:System>
+        <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
+        <vssd:InstanceID>0</vssd:InstanceID>
+        <vssd:VirtualSystemType>vmx-08 vmx-09 vmx-10 vmx-11 Cisco:Internal:VMCloud-01</vssd:VirtualSystemType>
+      </ovf:System>
+      <ovf:Item>
+        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+        <rasd:ElementName>1 virtual CPU(s)</rasd:ElementName>
+        <rasd:InstanceID>1</rasd:InstanceID>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:VirtualQuantity>1</rasd:VirtualQuantity>
+        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="2CPU-4GB">
+        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
+        <rasd:InstanceID>1</rasd:InstanceID>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="4CPU-4GB 4CPU-8GB">
+        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+        <rasd:ElementName>4 virtual CPU(s)</rasd:ElementName>
+        <rasd:InstanceID>1</rasd:InstanceID>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:VirtualQuantity>4</rasd:VirtualQuantity>
+        <vmw:CoresPerSocket ovf:required="false">1</vmw:CoresPerSocket>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:ElementName>4096MB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>4096</rasd:VirtualQuantity>
+      </ovf:Item>
+      <ovf:Item ovf:configuration="4CPU-8GB">
+        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:ElementName>8192MB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>8192</rasd:VirtualQuantity>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Address>0</rasd:Address>
+        <rasd:Description>SCSI Controller</rasd:Description>
+        <rasd:ElementName>SCSI Controller 0</rasd:ElementName>
+        <rasd:InstanceID>3</rasd:InstanceID>
+        <rasd:ResourceSubType>virtio lsilogic</rasd:ResourceSubType>
+        <rasd:ResourceType>6</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Address>1</rasd:Address>
+        <rasd:Description>IDE Controller</rasd:Description>
+        <rasd:ElementName>VirtualIDEController 1</rasd:ElementName>
+        <rasd:InstanceID>4</rasd:InstanceID>
+        <rasd:ResourceType>5</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:Address>0</rasd:Address>
+        <rasd:Description>IDE Controller</rasd:Description>
+        <rasd:ElementName>VirtualIDEController 0</rasd:ElementName>
+        <rasd:InstanceID>5</rasd:InstanceID>
+        <rasd:ResourceType>5</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:ElementName>Hard Drive</rasd:ElementName>
+        <rasd:HostResource>ovf:/disk/vmdisk1</rasd:HostResource>
+        <rasd:InstanceID>6</rasd:InstanceID>
+        <rasd:Parent>3</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:ElementName>CD-ROM 1</rasd:ElementName>
+        <rasd:HostResource>ovf:/file/csr1000v.iso</rasd:HostResource>
+        <rasd:InstanceID>7</rasd:InstanceID>
+        <rasd:Parent>4</rasd:Parent>
+        <rasd:ResourceType>15</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:required="false">
+        <rasd:AddressOnParent>1</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
+        <rasd:ElementName>CD-ROM 2</rasd:ElementName>
+        <rasd:InstanceID>8</rasd:InstanceID>
+        <rasd:Parent>4</rasd:Parent>
+        <rasd:ResourceType>15</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:required="false">
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Description>Serial Port acting as IOSd Console Port</rasd:Description>
+        <rasd:ElementName>Serial 1</rasd:ElementName>
+        <rasd:InstanceID>9</rasd:InstanceID>
+        <rasd:ResourceType>21</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item ovf:required="false">
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Description>Serial Port acting as IOSd Aux Port</rasd:Description>
+        <rasd:ElementName>Serial 2</rasd:ElementName>
+        <rasd:InstanceID>10</rasd:InstanceID>
+        <rasd:ResourceType>21</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AddressOnParent>11</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet1</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet1</rasd:Description>
+        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
+        <rasd:InstanceID>11</rasd:InstanceID>
+        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AddressOnParent>12</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet2</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet2</rasd:Description>
+        <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
+        <rasd:InstanceID>12</rasd:InstanceID>
+        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+      <ovf:Item>
+        <rasd:AddressOnParent>13</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>GigabitEthernet3</rasd:Connection>
+        <rasd:Description>NIC representing GigabitEthernet3</rasd:Description>
+        <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
+        <rasd:InstanceID>13</rasd:InstanceID>
+        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </ovf:Item>
+    </ovf:VirtualHardwareSection>
+    <ovf:ProductSection ovf:class="com.cisco.csr1000v" ovf:instance="1" ovf:required="false">
+      <ovf:Info>Information about the installed software</ovf:Info>
+      <ovf:Product>Cisco CSR 1000V Cloud Services Router</ovf:Product>
+      <ovf:Vendor>Cisco Systems, Inc.</ovf:Vendor>
+      <ovf:Version>03.17.01.S.156-1.S1-std</ovf:Version>
+      <ovf:FullVersion>Cisco IOS-XE Software, version 03.17.01.S.156-1.S1-std</ovf:FullVersion>
+      <ovf:ProductUrl>http://www.cisco.com/en/US/products/ps12559/index.html</ovf:ProductUrl>
+      <ovf:VendorUrl>http://www.cisco.com</ovf:VendorUrl>
+      <ovf:Property ovf:key="config-version" ovf:type="string" ovf:userConfigurable="false" ovf:value="1.0">
+        <ovf:Description>DO NOT CHANGE THIS VALUE</ovf:Description>
+      </ovf:Property>
+      <ovf:Category>1. Bootstrap Properties</ovf:Category>
+      <ovf:Property ovf:key="hostname" ovf:qualifiers="MaxLen(63)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Router Name</ovf:Label>
+        <ovf:Description>Hostname of this router</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Login Username</ovf:Label>
+        <ovf:Description>Username for remote login</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="login-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Login Password</ovf:Label>
+        <ovf:Description>Password for remote login.
+WARNING: While this password will be stored securely within IOS, the plain-text password will be recoverable from the OVF descriptor file.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="mgmt-interface" ovf:type="string" ovf:userConfigurable="true" ovf:value="GigabitEthernet1">
+        <ovf:Label>Management Interface</ovf:Label>
+        <ovf:Description>Management interface (such as "GigabitEthernet1" or "GigabitEthernet1.100")</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="mgmt-vlan" ovf:qualifiers="MaxLen(5)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Management VLAN</ovf:Label>
+        <ovf:Description>Management dot1Q VLAN (requires specifying a subinterface such as "GigabitEthernet1.100" for the Management Interface)</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="mgmt-ipv4-addr" ovf:qualifiers="MaxLen(33)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Management Interface IPv4 Address/Mask</ovf:Label>
+        <ovf:Description>IPv4 address and mask for management interface (such as "192.0.2.100/24" or "192.0.2.100 255.255.255.0"), or "dhcp" to configure via DHCP</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="mgmt-ipv4-gateway" ovf:qualifiers="MaxLen(16)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Management IPv4 Gateway</ovf:Label>
+        <ovf:Description>IPv4 gateway address (such as "192.0.2.1") for management interface, or "dhcp" to configure via DHCP</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="mgmt-ipv4-network" ovf:qualifiers="MaxLen(33)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Management IPv4 Network</ovf:Label>
+        <ovf:Description>IPv4 Network (such as "192.168.2.0/24" or "192.168.2.0 255.255.255.0") that the management gateway should route to.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="pnsc-ipv4-addr" ovf:qualifiers="MaxLen(15)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>PNSC IPv4 Address</ovf:Label>
+        <ovf:Description>IPv4 address without mask (such as "192.0.2.110") of PNSC service controller</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="pnsc-agent-local-port" ovf:qualifiers="MaxLen(5)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>PNSC Agent Local Port</ovf:Label>
+        <ovf:Description>PNSC service agent SSL port (on local CSR) to receive policies from service manager.
+The port shall be in the range of [55001, 61000] if shared IP is used, i.e., Remote Management IPv4 Address is not configured.
+</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="pnsc-shared-secret-key" ovf:password="true" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>PNSC Shared Secret Key</ovf:Label>
+        <ovf:Description>PNSC service controller shared secret key (8-64 characters) for PNSC agent to get SSL certificate from the controller.
+WARNING: While this password will be stored securely within IOS, the plain-text password will be recoverable from the OVF descriptor file.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="remote-mgmt-ipv4-addr" ovf:qualifiers="MaxLen(15)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Remote Management IPv4 Address (optional, deprecated) </ovf:Label>
+        <ovf:Description>Secondary IPv4 address without mask (such as "192.0.2.101") for access to remote management features (REST API, etc.). This should be in the same IP subnet as the Management Interface IPv4 Address entered above. 
+Warning: THIS IS A DEPRECATED OPTION IN THIS RELEASE.</ovf:Description>
+      </ovf:Property>
+      <ovf:Category>2. Features</ovf:Category>
+      <ovf:Property ovf:key="enable-scp-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
+        <ovf:Label>Enable SCP Server</ovf:Label>
+        <ovf:Description>Enable IOS SCP server feature</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="enable-ssh-server" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
+        <ovf:Label>Enable SSH Login and Disable Telnet Login</ovf:Label>
+        <ovf:Description>Enable remote login via SSH and disable remote login via telnet. Requires login-username and login-password to be set!</ovf:Description>
+      </ovf:Property>
+      <ovf:Category>3. Additional Configuration Properties</ovf:Category>
+      <ovf:Property ovf:key="privilege-password" ovf:password="true" ovf:qualifiers="MaxLen(25)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Enable Password</ovf:Label>
+        <ovf:Description>Password for privileged (enable) access.
+WARNING: While this password will be stored securely within IOS, the plain-text password will be recoverable from the OVF descriptor file.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="domain-name" ovf:qualifiers="MaxLen(238)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Domain Name</ovf:Label>
+        <ovf:Description>Network domain name (such as "cisco.com")</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="license" ovf:qualifiers="MaxLen(30)" ovf:type="string" ovf:userConfigurable="true" ovf:value="ax">
+        <ovf:Label>License boot level</ovf:Label>
+        <ovf:Description>Configure license boot level(such as ax, security, appx, ipbase, lite, vacs)</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="console" ovf:qualifiers="MaxLen(30)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Console</ovf:Label>
+        <ovf:Description>Configure console mode(such as virtual, auto, serial)</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="resource-template" ovf:qualifiers="MaxLen(30)" ovf:type="string" ovf:userConfigurable="true" ovf:value="default">
+        <ovf:Label>Resource template</ovf:Label>
+        <ovf:Description>Configure Resource template(service_plane_medium, service_plane_heavy or default)</ovf:Description>
+      </ovf:Property>
+      <ovf:Category>4. Intercloud Configuration Properties</ovf:Category>
+      <ovf:Property ovf:key="Mode" ovf:qualifiers="MaxLen(32)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Intercloud Mode</ovf:Label>
+        <ovf:Description>Set to "intercloud" to enable intercloud mode. If intercloud mode is not enabled, all the following properties will be ignored.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="MGMT_KEY" ovf:password="true" ovf:qualifiers="MaxLen(64)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Intercloud Mode Management Key</ovf:Label>
+        <ovf:Description>Set the intercloud mode management-key (max 64 chars).</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="CONTROL_PORT" ovf:qualifiers="MaxLen(5)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Intercloud Control Port</ovf:Label>
+        <ovf:Description>Port in range of 1-65535.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="TUNNEL_PORT" ovf:qualifiers="MaxLen(5)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Intercloud Tunnel Port</ovf:Label>
+        <ovf:Description>Port in range of 1-65535.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="ic-tunnel-header-size" ovf:qualifiers="MaxLen(3)" ovf:type="string" ovf:userConfigurable="true" ovf:value="148">
+        <ovf:Label>Intercloud Tunnel Header Size</ovf:Label>
+        <ovf:Description>Specify the tunnel header size to calculate management interface MTU setting. Maximum size is limited to 512 bytes.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="ic-tunnel-ipv4-addr" ovf:qualifiers="MaxLen(33)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Intercloud Tunnel Interface IPv4 Address</ovf:Label>
+        <ovf:Description>IPv4 address and mask for intercloud tunnel interface (such as "192.0.2.100/24" or "192.0.2.100 255.255.255.0"), or "dhcp" to configure via DHCP.</ovf:Description>
+      </ovf:Property>
+      <ovf:Property ovf:key="ic-tunnel-ipv4-gateway" ovf:qualifiers="MaxLen(15)" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <ovf:Label>Intercloud Tunnel Interface Gateway IPv4 Address</ovf:Label>
+        <ovf:Description>IPv4 gateway address such as 192.168.0.2; ignored if "dhcp" is configured for Intercloud Tunnel Interface IPv4 Address.</ovf:Description>
+      </ovf:Property>
+    </ovf:ProductSection>
+  </ovf:VirtualSystem>
+</ovf:Envelope>
