@@ -316,6 +316,8 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         self.minimal_ovf = self.localfile("minimal.ovf")
         # IOSv OVF
         self.iosv_ovf = self.localfile("iosv.ovf")
+        # CSR1000V OVF
+        self.csr_ovf = self.localfile("csr1000v.ovf")
         # v0.9 OVF
         self.v09_ovf = self.localfile("v0.9.ovf")
         # v2.0 OVF from VirtualBox

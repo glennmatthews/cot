@@ -459,6 +459,46 @@ CIM_ResourceAllocationSettingData">
         self.instance.finished()
         self.check_diff("", file1=self.minimal_ovf)
 
+    def test_set_nic_count_add(self):
+        """Add additional NICs across all profiles."""
+        self.instance.package = self.csr_ovf
+        self.instance.nics = 6
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>14</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>GigabitEthernet3</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet3</rasd:Description>
++        <rasd:ElementName>GigabitEthernet4</rasd:ElementName>
++        <rasd:InstanceID>14</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>15</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>GigabitEthernet3</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet3</rasd:Description>
++        <rasd:ElementName>GigabitEthernet5</rasd:ElementName>
++        <rasd:InstanceID>15</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>16</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>GigabitEthernet3</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet3</rasd:Description>
++        <rasd:ElementName>GigabitEthernet6</rasd:ElementName>
++        <rasd:InstanceID>16</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>""", file1=self.csr_ovf)
+
     def test_set_nic_count_merge_profiles(self):
         """Add NICs that already exist under one profile to another."""
         self.instance.package = self.input_ovf
