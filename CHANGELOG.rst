@@ -13,6 +13,10 @@ This project adheres to `Semantic Versioning`_.
   Network elements and if successful, offer to create additional Networks
   as appropriate. (`#18`_)
 
+**Removed**
+
+- Discontinued support for Python 2.6 as it has been retired since 2013.
+
 `1.7.2`_ - 2016-08-17
 ---------------------
 

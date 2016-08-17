@@ -91,34 +91,32 @@ class HelperUT(COT_UT):
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def apt_install_test(self, pkgname, helpername, *_):
         """Test installation with 'dpkg' and 'apt-get'."""
-        # Python 2.6 doesn't let us do multiple mocks in one 'with'
-        with mock.patch.object(self.helper, '_path', new=None):
-            with mock.patch('subprocess.check_call') as mock_check_call:
-                with mock.patch(
-                        'COT.helpers.helper.Helper._check_output',
-                        return_value="is not installed and no"
-                        "information is available") as mock_check_output:
-                    self.enable_apt_install()
-                    self.helper.install_helper()
-                    self.assertSubprocessCalls(mock_check_output,
-                                               [['dpkg', '-s', pkgname]])
-                    self.assertSubprocessCalls(
-                        mock_check_call,
-                        [
-                            ['apt-get', '-q', 'update'],
-                            ['apt-get', '-q', 'install', pkgname],
-                        ])
-                    self.assertEqual(helpername, self.helper.name)
-                    self.assertAptUpdated()
-                    # Make sure we don't 'apt-get update' again unnecessarily
-                    mock_check_call.reset_mock()
-                    mock_check_output.reset_mock()
-                    self.helper.install_helper()
-                    self.assertSubprocessCalls(mock_check_output,
-                                               [['dpkg', '-s', pkgname]])
-                    self.assertSubprocessCalls(
-                        mock_check_call,
-                        [['apt-get', '-q', 'install', pkgname]])
+        with mock.patch.object(self.helper, '_path', new=None), \
+            mock.patch('subprocess.check_call') as mock_check_call, \
+            mock.patch('COT.helpers.helper.Helper._check_output',
+                       return_value="is not installed and no"
+                       "information is available") as mock_check_output:
+            self.enable_apt_install()
+            self.helper.install_helper()
+            self.assertSubprocessCalls(mock_check_output,
+                                       [['dpkg', '-s', pkgname]])
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [
+                    ['apt-get', '-q', 'update'],
+                    ['apt-get', '-q', 'install', pkgname],
+                ])
+            self.assertEqual(helpername, self.helper.name)
+            self.assertAptUpdated()
+            # Make sure we don't 'apt-get update' again unnecessarily
+            mock_check_call.reset_mock()
+            mock_check_output.reset_mock()
+            self.helper.install_helper()
+            self.assertSubprocessCalls(mock_check_output,
+                                       [['dpkg', '-s', pkgname]])
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['apt-get', '-q', 'install', pkgname]])
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
@@ -126,31 +124,30 @@ class HelperUT(COT_UT):
         # pylint: disable=protected-access
         self.select_package_manager('port')
         Helper._port_updated = False
-        # Python 2.6 doesn't let us use multiple contexts in one 'with'
-        with mock.patch('subprocess.check_call') as mock_check_call:
-            with mock.patch.object(self.helper, '_path', new=None):
-                self.helper.install_helper()
-                self.assertSubprocessCalls(
-                    mock_check_call,
-                    [['port', 'selfupdate'],
-                     ['port', 'install', portname]])
-                self.assertTrue(Helper._port_updated)
-                # Make sure we don't call port selfupdate again unnecessarily
-                mock_check_call.reset_mock()
-                self.helper.install_helper()
-                self.assertSubprocessCalls(
-                    mock_check_call,
-                    [['port', 'install', portname]])
+        with mock.patch('subprocess.check_call') as mock_check_call, \
+                mock.patch.object(self.helper, '_path', new=None):
+            self.helper.install_helper()
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['port', 'selfupdate'],
+                 ['port', 'install', portname]])
+            self.assertTrue(Helper._port_updated)
+            # Make sure we don't call port selfupdate again unnecessarily
+            mock_check_call.reset_mock()
+            self.helper.install_helper()
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['port', 'install', portname]])
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def yum_install_test(self, pkgname, *_):
         """Test installation with yum."""
         self.enable_yum_install()
-        with mock.patch('subprocess.check_call') as mock_check_call:
-            with mock.patch.object(self.helper, '_path', new=None):
-                self.helper.install_helper()
-                mock_check_call.assert_called_with(
-                    ['yum', '--quiet', 'install', pkgname])
+        with mock.patch('subprocess.check_call') as mock_check_call, \
+                mock.patch.object(self.helper, '_path', new=None):
+            self.helper.install_helper()
+            mock_check_call.assert_called_with(
+                ['yum', '--quiet', 'install', pkgname])
 
     @staticmethod
     @contextlib.contextmanager

@@ -114,12 +114,8 @@ def download_and_expand(url):
             shutil.copyfileobj(response.raw, f)
         del response
         logger.debug("Extracting %s", tgz)
-        # the "with tarfile.open()..." construct isn't supported in 2.6
-        tarf = tarfile.open(tgz, "r:gz")
-        try:
+        with tarfile.open(tgz, "r:gz") as tarf:
             tarf.extractall(path=d)
-        finally:
-            tarf.close()
         try:
             yield d
         finally:

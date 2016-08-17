@@ -24,8 +24,6 @@ import glob
 import tempfile
 import shutil
 import re
-import sys
-import platform
 import time
 import logging
 from logging.handlers import BufferingHandler
@@ -257,27 +255,16 @@ class COT_UT(unittest.TestCase):  # noqa: N801
 
         If the files are unspecified, defaults to comparing the input OVF file
         and the temporary output OVF file.
-
-        Note that comparison of OVF files is currently skipped when
-        running under Python 2.6, as it produces different XML output than
-        later Python versions.
         """
         if file1 is None:
             file1 = self.input_ovf
         if file2 is None:
             file2 = self.temp_file
 
-        if re.search("ovf", file1) and sys.hexversion < 0x02070000:
-            logger.info("OVF file diff comparison skipped "
-                        "due to old Python version (%s)",
-                        platform.python_version())
-            return
-
-        with open(file1) as f1:
-            with open(file2) as f2:
-                diff = unified_diff(f1.readlines(), f2.readlines(),
-                                    fromfile=file1, tofile=file2,
-                                    n=1)   # number of context lines
+        with open(file1) as f1, open(file2) as f2:
+            diff = unified_diff(f1.readlines(), f2.readlines(),
+                                fromfile=file1, tofile=file2,
+                                n=1)   # number of context lines
         # Strip line numbers and file names from the diff
         # to keep the UT more maintainable
         clean_diff = ""

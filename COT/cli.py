@@ -129,9 +129,7 @@ class CLI(UI):
         self._terminal_width = terminal_width
         self.wrapper = textwrap.TextWrapper(width=self.terminal_width - 1)
 
-        if sys.hexversion >= 0x02070000:
-            # not available in 2.6, oh well.
-            logging.captureWarnings(True)
+        logging.captureWarnings(True)
 
         self.create_parser()
         self.create_subparsers()

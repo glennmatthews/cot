@@ -40,12 +40,7 @@ import os.path
 import re
 import tarfile
 import xml.etree.ElementTree as ET
-# In 2.7+, ET raises a ParseError if XML parsing fails,
-# but in 2.6 it raises an ExpatError. Hide this variation.
-try:
-    from xml.etree.ElementTree import ParseError
-except ImportError:
-    from xml.parsers.expat import ExpatError as ParseError
+from xml.etree.ElementTree import ParseError
 import textwrap
 from contextlib import closing
 

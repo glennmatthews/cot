@@ -390,24 +390,11 @@ class Helper(object):
         """
         cmd = args[0]
         logger.info("Calling '%s' and capturing its output...", " ".join(args))
-        # In 2.7+ we can use subprocess.check_output(), but in 2.6,
-        # we have to work around its absence.
         try:
-            if "check_output" not in dir(subprocess):
-                process = subprocess.Popen(args,
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.STDOUT,
-                                           **kwargs)
-                stdout, _ = process.communicate()
-                retcode = process.poll()
-                if retcode and require_success:
-                    raise subprocess.CalledProcessError(retcode,
-                                                        " ".join(args))
-            else:
-                stdout = (subprocess.check_output(args,
-                                                  stderr=subprocess.STDOUT,
-                                                  **kwargs)
-                          .decode('ascii', 'ignore'))
+            stdout = (subprocess.check_output(args,
+                                              stderr=subprocess.STDOUT,
+                                              **kwargs)
+                      .decode('ascii', 'ignore'))
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
@@ -415,11 +402,7 @@ class Helper(object):
                                       "Unable to locate helper program '{0}'. "
                                       "Please check your $PATH.".format(cmd))
         except subprocess.CalledProcessError as e:
-            try:
-                stdout = e.output.decode()
-            except AttributeError:
-                # CalledProcessError doesn't have 'output' in 2.6
-                stdout = u"(output unavailable)"
+            stdout = e.output.decode()
             if require_success:
                 raise HelperError(e.returncode,
                                   "Helper program '{0}' exited with error {1}:"

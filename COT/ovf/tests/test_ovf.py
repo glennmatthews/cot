@@ -20,11 +20,9 @@ import filecmp
 import logging
 import os
 import os.path
-import platform
 import tempfile
 import shutil
 import subprocess
-import sys
 import tarfile
 from contextlib import closing
 import mock
@@ -293,13 +291,6 @@ ovf:size="{cfg_size}" />
         input_dir = os.path.dirname(self.input_ovf)
         for ext in ['.ovf', '.mf', '.iso', '.vmdk']:
             if ext == '.mf' or ext == '.ovf':
-                if sys.hexversion < 0x02070000:
-                    # OVF changes due to 2.6 XML handling, and MF changes due
-                    # to checksum difference for the OVF
-                    logger.info("'%s' file comparison skipped due to "
-                                "old Python version (%s)",
-                                ext, platform.python_version())
-                    continue
                 self.check_diff("", os.path.join(input_dir, "input" + ext),
                                 os.path.join(self.temp_dir, "input" + ext))
             else:
@@ -383,10 +374,10 @@ ovf:size="{cfg_size}" />
 
         # unsupported output file type
         mock_type.return_value = ".ovf"
-        with self.assertRaises(NotImplementedError) as cm:
-            with VMContextManager(self.input_ovf, None) as vm:
-                mock_type.return_value = ".qcow2"
-                vm.output_file = os.path.join(self.temp_dir, "foo.qcow2")
+        with self.assertRaises(NotImplementedError) as cm, \
+                VMContextManager(self.input_ovf, None) as vm:
+            mock_type.return_value = ".qcow2"
+            vm.output_file = os.path.join(self.temp_dir, "foo.qcow2")
 
         self.assertEqual(cm.exception.args[0],
                          "Not sure how to write a '.qcow2' file")
@@ -410,10 +401,7 @@ ovf:size="{cfg_size}" />
         with self.assertRaises(VMInitError) as cm:
             OVF(fake_file, None)
         self.assertEqual(cm.exception.errno, 1)
-        if sys.hexversion < 0x02070000:
-            self.assertRegex(cm.exception.strerror, "Could not untar file:")
-        else:
-            self.assertEqual(cm.exception.strerror, "No files to untar")
+        self.assertEqual(cm.exception.strerror, "No files to untar")
         self.assertEqual(cm.exception.filename, fake_file)
 
         # .ova that is a TAR file but does not contain an OVF descriptor

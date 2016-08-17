@@ -72,20 +72,19 @@ class TestCOTCLI(COT_UT):
         if fixup_args:
             argv = ['--quiet'] + argv
 
-        # Python 2.6 doesn't let us mock multiple times in one 'with'
-        with mock.patch('sys.stdin'):
-            with mock.patch('sys.stdout',
-                            new_callable=StringIO.StringIO) as _so:
-                with mock.patch('sys.stderr'):
-                    try:
-                        rc = self.cli.run(argv)
-                    except SystemExit as se:
-                        try:
-                            rc = int(se.code)
-                        except (TypeError, ValueError):
-                            print(se.code, file=sys.stderr)
-                            rc = 1
-                    stdout = _so.getvalue()
+        with mock.patch('sys.stdin'), \
+                mock.patch('sys.stdout',
+                           new_callable=StringIO.StringIO) as _so, \
+                mock.patch('sys.stderr'):
+            try:
+                rc = self.cli.run(argv)
+            except SystemExit as se:
+                try:
+                    rc = int(se.code)
+                except (TypeError, ValueError):
+                    print(se.code, file=sys.stderr)
+                    rc = 1
+            stdout = _so.getvalue()
 
         self.assertEqual(rc, result,
                          "\nargv: \n{0}\nstdout:\n{1}"
