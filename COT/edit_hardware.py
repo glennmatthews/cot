@@ -22,6 +22,7 @@
   :nosignatures:
 
   expand_list_wildcard
+  guess_list_wildcard
 
 **Classes**
 
@@ -38,6 +39,7 @@ import textwrap
 import warnings
 
 from COT.data_validation import (
+    alphanum_split,
     canonicalize_ide_subtype,
     canonicalize_nic_subtype,
     canonicalize_scsi_subtype,
@@ -389,7 +391,30 @@ class COTEditHardware(COTSubmodule):
         vm = self.vm
 
         nics_dict = vm.get_nic_count(self.profiles)
+        max_nics = max(nics_dict.values())
         if self.nics is not None:
+            # Special case:
+            # If...
+            # 1) We are creating at least one new NIC, AND
+            # 2) We didn't specify the network(s) to map the new NIC(s) to, AND
+            # 3) We have at least two NICs already, AND
+            # 4) Each existing NIC has a unique network
+            # ...then we will see if we can identify a pattern in the networks,
+            # and if so, we will create new network(s) following this pattern.
+            if (max_nics < self.nics and self.nic_networks is None and
+                    max_nics >= 2 and max_nics == len(vm.networks)):
+                logger.info("Given that all existing NICs are mapped to "
+                            "unique networks, trying to guess an implicit "
+                            "pattern for creating new networks.")
+                # Can we guess a pattern from vm.networks?
+                self.nic_networks = guess_list_wildcard(vm.networks)
+                if self.nic_networks:
+                    logger.info("Identified a pattern: --nic-networks %s",
+                                " ".join(self.nic_networks))
+                else:
+                    logger.info("No pattern could be identified from %s",
+                                vm.networks)
+
             for (profile, count) in nics_dict.items():
                 if self.nics < count:
                     self.UI.confirm_or_die(
@@ -697,3 +722,52 @@ def expand_list_wildcard(name_list, length):
         logger.info("New list is %s", name_list)
 
     return name_list
+
+
+def guess_list_wildcard(known_values):
+    """Inverse of :func:`expand_list_wildcard`. Guess the wildcard for a list.
+
+    Examples::
+
+      >>> guess_list_wildcard(['foo', 'bar', 'baz'])
+      >>> guess_list_wildcard(['foo1', 'foo2', 'foo3'])
+      ['foo{1}']
+      >>> guess_list_wildcard(['foo', 'bar', 'baz3', 'baz4', 'baz5'])
+      ['foo', 'bar', 'baz{3}']
+      >>> guess_list_wildcard(['Eth0/1', 'Eth0/2', 'Eth0/3'])
+      ['Eth0/{1}']
+      >>> guess_list_wildcard(['Eth0/0', 'Eth1/0', 'Eth2/0'])
+      ['Eth{0}/0']
+      >>> guess_list_wildcard(['fake1', 'fake2', 'real4', 'real5'])
+      ['fake1', 'fake2', 'real{4}']
+
+    :param list known_values: Values to guess from
+    :return: Guessed wildcard list, or None if unable to guess
+    """
+    logger.debug("Attempting to infer a pattern from %s", known_values)
+    # Guess sequences ending with simple N, N+1, N+2
+    for i in range(0, len(known_values)-1):
+        val = known_values[i]
+        split_val = alphanum_split(val)
+        for j in range(0, len(split_val)):
+            candidate = split_val[j]
+            if not isinstance(candidate, int):
+                continue
+            prefix = "".join([str(k) for k in split_val[:j]])
+            suffix = "".join([str(k) for k in split_val[j+1:]])
+            logger.debug("Possible next value for %s is %s%i%s",
+                         val, prefix, candidate+1, suffix)
+            possible_next = prefix + str(candidate + 1) + suffix
+            if known_values[i+1] == possible_next:
+                match_pattern = prefix + "{" + str(candidate) + "}" + suffix
+                logger.debug("Match pattern is %s", match_pattern)
+                possible_name_list = known_values[:i] + [match_pattern]
+                logger.debug("Checking possible name list %s",
+                             possible_name_list)
+                if (expand_list_wildcard(possible_name_list,
+                                         len(known_values)) == known_values):
+                    return possible_name_list
+                logger.debug("No joy")
+
+    logger.debug("Unable to guess a pattern")
+    return None

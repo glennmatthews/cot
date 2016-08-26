@@ -461,17 +461,75 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_count_add(self):
         """Add additional NICs across all profiles."""
+        self.instance.package = self.input_ovf
+        self.instance.nics = 5
+        self.instance.run()
+        self.instance.finished()
+        self.check_diff("""
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
++      <ovf:Item>
+         <rasd:AddressOnParent>12</rasd:AddressOnParent>
+...
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
++      <ovf:Item>
+         <rasd:AddressOnParent>13</rasd:AddressOnParent>
+...
+         <rasd:InstanceID>13</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>14</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>VM Network</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
++        <rasd:ElementName>Ethernet4</rasd:ElementName>
++        <rasd:InstanceID>14</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>15</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>VM Network</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
++        <rasd:ElementName>Ethernet5</rasd:ElementName>
++        <rasd:InstanceID>15</rasd:InstanceID>
+         <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>""")
+
+    def test_set_nic_count_add_smart_networks(self):
+        """Add additional NICs (and implicitly networks) across all profiles.
+
+        In this OVF, each NIC is mapped to a unique network, so COT must be
+        smart enough to create additional networks as well.
+        """
         self.instance.package = self.csr_ovf
         self.instance.nics = 6
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
+       <ovf:Description>Data network 3</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="GigabitEthernet4">
++      <ovf:Description>GigabitEthernet4</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="GigabitEthernet5">
++      <ovf:Description>GigabitEthernet5</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="GigabitEthernet6">
++      <ovf:Description>GigabitEthernet6</ovf:Description>
+     </ovf:Network>
+...
        </ovf:Item>
 +      <ovf:Item>
 +        <rasd:AddressOnParent>14</rasd:AddressOnParent>
 +        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
-+        <rasd:Connection>GigabitEthernet3</rasd:Connection>
-+        <rasd:Description>NIC representing GigabitEthernet3</rasd:Description>
++        <rasd:Connection>GigabitEthernet4</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet4</rasd:Description>
 +        <rasd:ElementName>GigabitEthernet4</rasd:ElementName>
 +        <rasd:InstanceID>14</rasd:InstanceID>
 +        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
@@ -480,8 +538,8 @@ CIM_ResourceAllocationSettingData">
 +      <ovf:Item>
 +        <rasd:AddressOnParent>15</rasd:AddressOnParent>
 +        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
-+        <rasd:Connection>GigabitEthernet3</rasd:Connection>
-+        <rasd:Description>NIC representing GigabitEthernet3</rasd:Description>
++        <rasd:Connection>GigabitEthernet5</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet5</rasd:Description>
 +        <rasd:ElementName>GigabitEthernet5</rasd:ElementName>
 +        <rasd:InstanceID>15</rasd:InstanceID>
 +        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
@@ -490,8 +548,8 @@ CIM_ResourceAllocationSettingData">
 +      <ovf:Item>
 +        <rasd:AddressOnParent>16</rasd:AddressOnParent>
 +        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
-+        <rasd:Connection>GigabitEthernet3</rasd:Connection>
-+        <rasd:Description>NIC representing GigabitEthernet3</rasd:Description>
++        <rasd:Connection>GigabitEthernet6</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet6</rasd:Description>
 +        <rasd:ElementName>GigabitEthernet6</rasd:ElementName>
 +        <rasd:InstanceID>16</rasd:InstanceID>
 +        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
