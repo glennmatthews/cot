@@ -515,13 +515,13 @@ CIM_ResourceAllocationSettingData">
        <ovf:Description>Data network 3</ovf:Description>
 +    </ovf:Network>
 +    <ovf:Network ovf:name="GigabitEthernet4">
-+      <ovf:Description>GigabitEthernet4</ovf:Description>
++      <ovf:Description>Data network 4</ovf:Description>
 +    </ovf:Network>
 +    <ovf:Network ovf:name="GigabitEthernet5">
-+      <ovf:Description>GigabitEthernet5</ovf:Description>
++      <ovf:Description>Data network 5</ovf:Description>
 +    </ovf:Network>
 +    <ovf:Network ovf:name="GigabitEthernet6">
-+      <ovf:Description>GigabitEthernet6</ovf:Description>
++      <ovf:Description>Data network 6</ovf:Description>
      </ovf:Network>
 ...
        </ovf:Item>

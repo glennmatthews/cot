@@ -386,6 +386,57 @@ class COTEditHardware(COTSubmodule):
         if self.delete_all_other_profiles:
             self._run_delete_other_profiles()
 
+    def _run_infer_networks_from_nics(self):
+        """Infer network information if needed when creating NICs.
+
+        Helper for :meth:`run`.
+        """
+        if self.nics is None or self.nic_networks is not None:
+            return
+
+        # If we're not creating new NICs, nothing needed
+        # If we don't have at least 2 existing NICs, not enough info to infer
+        current_nic_count = max(self.vm.get_nic_count(self.profiles).values())
+        if self.nics <= current_nic_count or current_nic_count < 2:
+            return
+
+        # Only try to infer if there are the same number of NICs and networks
+        # TODO: this is a bit overly conservative - if we had an API for
+        #       retrieving the NIC-to-network mapping list, we could dispense
+        #       with this check and work on the mapping list instead.
+        current_network_count = len(self.vm.networks)
+        if current_nic_count != current_network_count:
+            return
+
+        # TODO: the below relies on the assumption that the networks list
+        #       is in the same order as the NICs list, which is not a given.
+
+        logger.info("Given that all existing NICs are mapped to unique "
+                    "networks, trying to guess an implicit pattern for "
+                    "creating new networks.")
+        # Can we guess a pattern from vm.networks?
+        self.nic_networks = guess_list_wildcard(self.vm.networks)
+        if self.nic_networks:
+            logger.info('Identified a pattern: --nic-networks "%s"',
+                        '" "'.join(self.nic_networks))
+        else:
+            logger.info("No pattern could be identified from existing "
+                        "network names %s", self.vm.networks)
+
+        # If the user didn't specify the network descriptions, let's
+        # see if we can guess that too...
+        if self.network_descriptions is None:
+            self.network_descriptions = guess_list_wildcard(
+                self.vm.network_descriptions)
+            if self.network_descriptions:
+                logger.info("Identified a pattern: "
+                            '--network-descriptions "%s"',
+                            '" "'.join(self.network_descriptions))
+            else:
+                logger.info("No pattern could be identified from "
+                            "existing network descriptions %s",
+                            self.vm.network_descriptions)
+
     def _run_update_nics(self):
         """Handle NIC changes. Helper for :meth:`run`."""
         vm = self.vm
@@ -393,28 +444,6 @@ class COTEditHardware(COTSubmodule):
         nics_dict = vm.get_nic_count(self.profiles)
         max_nics = max(nics_dict.values())
         if self.nics is not None:
-            # Special case:
-            # If...
-            # 1) We are creating at least one new NIC, AND
-            # 2) We didn't specify the network(s) to map the new NIC(s) to, AND
-            # 3) We have at least two NICs already, AND
-            # 4) Each existing NIC has a unique network
-            # ...then we will see if we can identify a pattern in the networks,
-            # and if so, we will create new network(s) following this pattern.
-            if (max_nics < self.nics and self.nic_networks is None and
-                    max_nics >= 2 and max_nics == len(vm.networks)):
-                logger.info("Given that all existing NICs are mapped to "
-                            "unique networks, trying to guess an implicit "
-                            "pattern for creating new networks.")
-                # Can we guess a pattern from vm.networks?
-                self.nic_networks = guess_list_wildcard(vm.networks)
-                if self.nic_networks:
-                    logger.info("Identified a pattern: --nic-networks %s",
-                                " ".join(self.nic_networks))
-                else:
-                    logger.info("No pattern could be identified from %s",
-                                vm.networks)
-
             for (profile, count) in nics_dict.items():
                 if self.nics < count:
                     self.UI.confirm_or_die(
@@ -531,6 +560,8 @@ class COTEditHardware(COTSubmodule):
 
         if self.memory is not None:
             vm.set_memory(self.memory, self.profiles)
+
+        self._run_infer_networks_from_nics()
 
         self._run_update_nics()
 
