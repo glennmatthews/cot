@@ -23,16 +23,6 @@ import re
 logger = logging.getLogger(__name__)
 
 
-def register_namespace(prefix, uri):
-    """Record a particular mapping between a namespace prefix and URI.
-
-    :param str prefix: Namespace prefix such as "ovf"
-    :param str uri: Namespace URI such as
-        "http://schemas.dmtf.org/ovf/envelope/1"
-    """
-    ET.register_namespace(prefix, uri)
-
-
 class XML(object):
     """Class capable of reading, editing, and writing XML files."""
 
