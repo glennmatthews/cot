@@ -3,6 +3,16 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.7.3`_ - 2016-09-06
+---------------------
+
+**Added**
+
+- When adding NICs to an OVF, if no ``-nic-networks`` are specified,
+  ``cot edit-hardware`` will now try to infer sequential naming of the
+  Network elements and if successful, offer to create additional Networks
+  as appropriate. (`#18`_)
+
 `1.7.2`_ - 2016-08-17
 ---------------------
 
@@ -476,6 +486,7 @@ Initial public release.
 .. _#12: https://github.com/glennmatthews/cot/issues/12
 .. _#15: https://github.com/glennmatthews/cot/issues/15
 .. _#17: https://github.com/glennmatthews/cot/issues/17
+.. _#18: https://github.com/glennmatthews/cot/issues/18
 .. _#19: https://github.com/glennmatthews/cot/issues/19
 .. _#20: https://github.com/glennmatthews/cot/issues/20
 .. _#21: https://github.com/glennmatthews/cot/issues/21
@@ -529,6 +540,7 @@ Initial public release.
 .. _Codecov: https://codecov.io
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.7.3: https://github.com/glennmatthews/cot/compare/v1.7.2...v1.7.3
 .. _1.7.2: https://github.com/glennmatthews/cot/compare/v1.7.1...v1.7.2
 .. _1.7.1: https://github.com/glennmatthews/cot/compare/v1.7.0...v1.7.1
 .. _1.7.0: https://github.com/glennmatthews/cot/compare/v1.6.1...v1.7.0

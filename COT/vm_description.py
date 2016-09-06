@@ -59,6 +59,7 @@ class VMDescription(object):
       environment_properties
       environment_transports
       networks
+      network_descriptions
       system_types
       version_short
       version_long
@@ -204,6 +205,15 @@ class VMDescription(object):
         :rtype: list[str]
         """
         raise NotImplementedError("networks property not implemented!")
+
+    @property
+    def network_descriptions(self):
+        """The list of network descriptions currently defined in this VM.
+
+        :rtype: list[str]
+        """
+        raise NotImplementedError(
+            "network_descriptions property not implemented!")
 
     @property
     def system_types(self):

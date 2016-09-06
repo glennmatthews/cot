@@ -192,6 +192,7 @@ class OVF(VMDescription, XML):
       environment_properties
       environment_transports
       networks
+      network_descriptions
       system_types
       version_short
       version_long
@@ -601,6 +602,17 @@ class OVF(VMDescription, XML):
         if self.network_section is None:
             return []
         return [network.get(self.NETWORK_NAME) for
+                network in self.network_section.findall(self.NETWORK)]
+
+    @property
+    def network_descriptions(self):
+        """The list of network descriptions currently defined in this VM.
+
+        :rtype: list[str]
+        """
+        if self.network_section is None:
+            return []
+        return [network.findtext(self.NWK_DESC, "") for
                 network in self.network_section.findall(self.NETWORK)]
 
     @property

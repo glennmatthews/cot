@@ -32,6 +32,7 @@
 .. autosummary::
   :nosignatures:
 
+  alphanum_split
   canonicalize_helper
   canonicalize_ide_subtype
   canonicalize_nic_subtype
@@ -67,6 +68,15 @@ def to_string(obj):
         return str(obj)
 
 
+def alphanum_split(key):
+    """Split the key into a list of [text, int, text, int, ...]."""
+    def text_to_int(text):
+        """Convert number strings to ints, leave other strings as text."""
+        return int(text) if text.isdigit() else text
+
+    return [text_to_int(c) for c in re.split('([0-9]+)', key)]
+
+
 def natural_sort(l):
     """Sort the given list "naturally" rather than in ASCII order.
 
@@ -77,16 +87,8 @@ def natural_sort(l):
     :param list l: List to sort
     :return: Sorted list
     """
-    def convert(text):
-        """Convert number strings to ints, leave other strings as text."""
-        return int(text) if text.isdigit() else text
-
-    def alphanum_key(key):
-        """Split the key into a list of [text, int, text, int, ...]."""
-        return [convert(c) for c in re.split('([0-9]+)', key)]
-
-    # Sort based on alphanum_key
-    return sorted(l, key=alphanum_key)
+    # Sort based on alphanum_split return value
+    return sorted(l, key=alphanum_split)
 
 
 def match_or_die(first_label, first, second_label, second):
