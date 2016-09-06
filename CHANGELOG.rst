@@ -3,8 +3,8 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
-`Unreleased`_
--------------
+`1.7.3`_ - 2016-09-06
+---------------------
 
 **Added**
 
@@ -540,6 +540,7 @@ Initial public release.
 .. _Codecov: https://codecov.io
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.7.3: https://github.com/glennmatthews/cot/compare/v1.7.2...v1.7.3
 .. _1.7.2: https://github.com/glennmatthews/cot/compare/v1.7.1...v1.7.2
 .. _1.7.1: https://github.com/glennmatthews/cot/compare/v1.7.0...v1.7.1
 .. _1.7.0: https://github.com/glennmatthews/cot/compare/v1.6.1...v1.7.0
