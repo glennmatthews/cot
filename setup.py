@@ -122,7 +122,7 @@ setup(
 
     # Package contents
     cmdclass=cmdclass,
-    packages=['COT', 'COT.helpers', 'COT.ovf'],
+    packages=['COT', 'COT.helpers', 'COT.ovf', 'COT.platforms'],
     package_data={
         'COT': ['docs/man/*'],
     },
