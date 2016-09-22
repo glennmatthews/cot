@@ -12,15 +12,16 @@
 
 """Package for identifying guest platforms and handling platform differences.
 
-The :class:`COT.platforms.GenericPlatform` class describes the API and provides
-a generic API implementation that can be overridden by subclasses to provide
-platform-specific logic.
+The :class:`~COT.platforms.generic.GenericPlatform` class describes the API
+and provides a generic implementation that can be overridden by subclasses
+to provide platform-specific logic.
 
 In general, other modules should not instantiate subclasses directly but should
-instead use the :func:`platform_from_product_class` API to derive the
-appropriate subclass instance.
+instead use the :func:`~COT.platforms.platform_from_product_class` API to
+derive the appropriate subclass instance.
 
-**Functions**
+API
+---
 
 .. autosummary::
   :nosignatures:
@@ -28,24 +29,18 @@ appropriate subclass instance.
   is_known_product_class
   platform_from_product_class
 
-**Classes**
+Platform modules
+----------------
 
 .. autosummary::
-  :nosignatures:
+  :toctree:
 
-  GenericPlatform
-  CSR1000V
-  IOSv
-  IOSXRv
-  IOSXRvRP
-  IOSXRvLC
-  IOSXRv9000
-  NXOSv
-
-**Constants**
-
-.. autosummary::
-  PRODUCT_PLATFORM_MAP
+  COT.platforms.generic
+  COT.platforms.cisco_csr1000v
+  COT.platforms.cisco_iosv
+  COT.platforms.cisco_iosxrv
+  COT.platforms.cisco_iosxrv_9000
+  COT.platforms.cisco_nxosv
 """
 
 import logging
@@ -76,12 +71,20 @@ PRODUCT_PLATFORM_MAP = {
 
 
 def is_known_product_class(product_class):
-    """Determine if the given product class string is a known one."""
+    """Determine if the given product class string is a known one.
+
+    :param str product_class: String such as 'com.cisco.iosv'
+    :rtype: boolean
+    """
     return product_class in PRODUCT_PLATFORM_MAP
 
 
 def platform_from_product_class(product_class):
-    """Get the class of Platform corresponding to a product class string."""
+    """Get the class of Platform corresponding to a product class string.
+
+    :param str product_class: String such as 'com.cisco.iosv'
+    :return: Class object - GenericPlatform or a subclass of it
+    """
     if product_class is None:
         return GenericPlatform
     if is_known_product_class(product_class):

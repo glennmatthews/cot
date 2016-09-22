@@ -10,7 +10,17 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Package describing the Cisco IOS XRv virtual router platform."""
+"""Platform logic for the Cisco IOS XRv virtual router and its variants.
+
+**Classes**
+
+.. autosummary::
+   :nosignatures:
+
+   IOSXRv
+   IOSXRvLC
+   IOSXRvRP
+"""
 
 import logging
 

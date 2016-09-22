@@ -10,7 +10,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Package describing the Cisco IOSv virtual router platform."""
+"""Platform logic for the Cisco IOSv virtual router."""
 
 import logging
 

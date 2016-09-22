@@ -14,6 +14,7 @@ Common OVF Tool (COT)
    COT
    COT.helpers
    COT.ovf
+   COT.platforms
 
 
 Indices and tables
