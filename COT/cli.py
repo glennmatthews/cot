@@ -640,7 +640,7 @@ class CLI(UI):
             else:
                 print(e.args[0])
                 sys.exit(1)
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, EOFError):
             sys.exit("\nAborted by user.")
         finally:
             if self.master_logger:

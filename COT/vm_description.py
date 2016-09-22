@@ -59,6 +59,7 @@ class VMDescription(object):
       environment_properties
       environment_transports
       networks
+      network_descriptions
       system_types
       version_short
       version_long
@@ -211,6 +212,15 @@ class VMDescription(object):
         :rtype: list[str]
         """
         raise NotImplementedError("networks property not implemented!")
+
+    @property
+    def network_descriptions(self):
+        """The list of network descriptions currently defined in this VM.
+
+        :rtype: list[str]
+        """
+        raise NotImplementedError(
+            "network_descriptions property not implemented!")
 
     @property
     def system_types(self):
@@ -657,19 +667,28 @@ class VMDescription(object):
         """
         raise NotImplementedError("get_property_value not implemented")
 
-    def set_property_value(self, key, value):
+    def set_property_value(self, key, value,
+                           user_configurable=None, property_type=None,
+                           label=None, description=None):
         """Set the value of the given property (converting value if needed).
 
         :param str key: Property identifier
         :param object value: Value to set for this property
+        :param bool user_configurable: Should this property be configurable at
+            deployment time by the user?
+        :param str property_type: Value type - 'string' or 'boolean'
+        :param str label: Brief explanatory label for this property
+        :param str description: Detailed description of this property
         :return: the (converted) value that was set.
         """
         raise NotImplementedError("set_property_value not implemented")
 
-    def config_file_to_properties(self, file_path):
+    def config_file_to_properties(self, file_path, user_configurable=None):
         """Import each line of a text file into a configuration property.
 
         :param str file_path: File name to import.
+        :param bool user_configurable: Should the properties be configurable at
+            deployment time by the user?
         """
         raise NotImplementedError("config_file_to_properties not implemented")
 

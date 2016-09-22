@@ -195,6 +195,7 @@ class OVFNameHelper1(object):
         PROP_VALUE=_Tag('ovf', 'value'),
         PROP_QUAL=_Tag('ovf', 'qualifiers'),
         PROP_TYPE=_Tag('ovf', 'type'),
+        PROP_USER_CONFIGABLE=_Tag('ovf', 'userConfigurable'),
 
         # Property sub-elements
         PROPERTY_LABEL=_Tag('ovf', 'Label'),
@@ -381,6 +382,7 @@ class OVFNameHelper0(OVFNameHelper1):
         VIRTUAL_SYSTEM=_Tag('ovf', 'Content'),
         PRODUCT_SECTION=_Tag('ovf', 'Section'),
         PROP_VALUE=_Tag('ovf', 'defaultValue'),
+        PROP_USER_CONFIGABLE=_Tag('ovf', 'configurableByUser'),
         EULA_SECTION=_Tag('ovf', 'Section'),
         VIRTUAL_HW_SECTION=_Tag('ovf', 'Section'),
     )

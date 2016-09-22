@@ -33,4 +33,8 @@ cache:
 script: tox
 
 after_success:
-  - codecov
+  if [ -z "$TRAVIS_TAG" ]; then
+    codecov;
+  else
+    echo "Tag build ($TRAVIS_TAG). Not uploading coverage.";
+  fi

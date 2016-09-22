@@ -234,7 +234,6 @@ class HelperGenericTest(HelperUT):
             return
         mock_check_call.side_effect = raise_oserror
 
-
         # Without retry_on_sudo, we reraise the permissions error
         with self.assertRaises(OSError) as cm:
             Helper._check_call(["false"])

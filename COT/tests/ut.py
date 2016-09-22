@@ -320,10 +320,9 @@ class COT_UT(unittest.TestCase):  # noqa: N801
             file2 = self.temp_file
 
         if re.search("ovf", file1) and sys.hexversion < 0x02070000:
-            # TODO: logging or something, this is noisy!
-            print("OVF file diff comparison skipped "
-                  "due to old Python version ({0})"
-                  .format(platform.python_version()))
+            logger.info("OVF file diff comparison skipped "
+                        "due to old Python version (%s)",
+                        platform.python_version())
             return
 
         with open(file1) as f1:
@@ -369,6 +368,8 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         self.minimal_ovf = self.localfile("minimal.ovf")
         # IOSv OVF
         self.iosv_ovf = self.localfile("iosv.ovf")
+        # CSR1000V OVF
+        self.csr_ovf = self.localfile("csr1000v.ovf")
         # v0.9 OVF
         self.v09_ovf = self.localfile("v0.9.ovf")
         # v2.0 OVF from VirtualBox

@@ -32,6 +32,7 @@
 .. autosummary::
   :nosignatures:
 
+  alphanum_split
   canonicalize_helper
   canonicalize_ide_subtype
   canonicalize_nic_subtype
@@ -46,6 +47,7 @@
   positive_int
   to_string
   validate_int
+  truth_value
 
 **Constants**
 
@@ -55,6 +57,7 @@
 
 import xml.etree.ElementTree as ET
 import re
+from distutils.util import strtobool
 
 
 def to_string(obj):
@@ -69,6 +72,25 @@ def to_string(obj):
         return str(obj)
 
 
+def alphanum_split(key):
+    """Split the key into a list of [text, int, text, int, ...].
+
+    :param str key: String to split.
+    :return: List of tokens
+    """
+    def text_to_int(text):
+        """Convert number strings to ints, leave other strings as text.
+
+        :param text: Input to convert
+        :type text: str, int
+        :return: Converted value
+        :rtype: str, int
+        """
+        return int(text) if text.isdigit() else text
+
+    return [text_to_int(c) for c in re.split('([0-9]+)', key)]
+
+
 def natural_sort(l):
     """Sort the given list "naturally" rather than in ASCII order.
 
@@ -79,26 +101,8 @@ def natural_sort(l):
     :param list l: List to sort
     :return: Sorted list
     """
-    def convert(text):
-        """Convert number strings to ints, leave other strings as text.
-
-        :param text: Input to convert
-        :type text: str, int
-        :return: Converted value
-        :rtype: str, int
-        """
-        return int(text) if text.isdigit() else text
-
-    def alphanum_key(key):
-        """Split the key into a list of [text, int, text, int, ...].
-
-        :param str key: String to split.
-        :return: List of tokens
-        """
-        return [convert(c) for c in re.split('([0-9]+)', key)]
-
-    # Sort based on alphanum_key
-    return sorted(l, key=alphanum_key)
+    # Sort based on alphanum_split return value
+    return sorted(l, key=alphanum_split)
 
 
 def match_or_die(first_label, first, second_label, second):
@@ -329,6 +333,28 @@ def positive_int(string):
     :return: Validated integer value
     """
     return validate_int(string, minimum=1)
+
+
+def truth_value(value):
+    """Parser helper function for truth values like '0', 'y', or 'false'.
+
+    Wrapper for :func:`distutils.util.strtobool`
+
+    :param str value: String to parse/validate
+    :return: True or False
+    :raises ValueUnsupportedError: if the value can't be parsed to a boolean.
+    """
+    if isinstance(value, bool):
+        return value
+    try:
+        return strtobool(value)
+    except ValueError:
+        raise ValueUnsupportedError(
+            "truth value",
+            value,
+            ['y', 'yes', 't', 'true', 'on', 1,
+             'n', 'no', 'f', 'false', 'off', 0]
+        )
 
 
 # Some handy exception and error types we can throw

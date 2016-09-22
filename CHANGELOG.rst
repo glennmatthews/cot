@@ -3,12 +3,59 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
-`Unreleased`_
--------------
+`1.7.4`_ - 2016-09-21
+---------------------
+
+Newer versions of Sphinx have dropped support for Python 2.6 and 3.3, so
+I have updated COT's installation requirements to use older Sphinx versions
+under these Python versions.
+
+`1.7.3`_ - 2016-09-06
+---------------------
+
+**Added**
+
+- When adding NICs to an OVF, if no ``-nic-networks`` are specified,
+  ``cot edit-hardware`` will now try to infer sequential naming of the
+  Network elements and if successful, offer to create additional Networks
+  as appropriate. (`#18`_)
+
+`1.7.2`_ - 2016-08-17
+---------------------
+
+**Fixed**
+
+- Issue `#52`_ - OVFItemDataError raised when adding NICs to CSR1000V OVA,
+  or more generally when cloning an OVFItem whose ElementName references
+  its Connection.
+
+`1.7.1`_ - 2016-08-12
+---------------------
+
+**Fixed**
+
+- ``cot deploy ... --serial-connection`` will create additional serial ports
+  beyond those defined in the OVF, if requested. Previously it would ask the
+  user for confirmation but not actually do anything about it. (`#51`_)
+
+`1.7.0`_ - 2016-08-05
+---------------------
 
 **Added**
 
 - Support for Python 3.5
+- Enhancements to ``cot edit-properties`` (`#50`_):
+
+  - Added ``--user-configurable`` option to set whether created/updated
+    properties are marked as user-configurable in the OVF.
+  - Added ``--labels`` and ``--descriptions`` options to set/update the
+    labels and descriptions associated with properties.
+  - It's now valid to set no default value for a property by
+    omitting the ``=value``, as in ``-p property-with-no-value``, as well as
+    the existing ``-p property-with-empty-value=`` syntax to set
+    an empty string as the value.
+  - Users can now optionally specify the property type to enforce for each
+    property by using the delimiter ``+type``, as in ``-p key=1+boolean``.
 
 **Changed**
 
@@ -446,6 +493,7 @@ Initial public release.
 .. _#12: https://github.com/glennmatthews/cot/issues/12
 .. _#15: https://github.com/glennmatthews/cot/issues/15
 .. _#17: https://github.com/glennmatthews/cot/issues/17
+.. _#18: https://github.com/glennmatthews/cot/issues/18
 .. _#19: https://github.com/glennmatthews/cot/issues/19
 .. _#20: https://github.com/glennmatthews/cot/issues/20
 .. _#21: https://github.com/glennmatthews/cot/issues/21
@@ -468,6 +516,9 @@ Initial public release.
 .. _#47: https://github.com/glennmatthews/cot/issues/47
 .. _#48: https://github.com/glennmatthews/cot/issues/48
 .. _#49: https://github.com/glennmatthews/cot/issues/49
+.. _#50: https://github.com/glennmatthews/cot/issues/50
+.. _#51: https://github.com/glennmatthews/cot/issues/51
+.. _#52: https://github.com/glennmatthews/cot/issues/52
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -496,6 +547,11 @@ Initial public release.
 .. _Codecov: https://codecov.io
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.7.4: https://github.com/glennmatthews/cot/compare/v1.7.3...v1.7.4
+.. _1.7.3: https://github.com/glennmatthews/cot/compare/v1.7.2...v1.7.3
+.. _1.7.2: https://github.com/glennmatthews/cot/compare/v1.7.1...v1.7.2
+.. _1.7.1: https://github.com/glennmatthews/cot/compare/v1.7.0...v1.7.1
+.. _1.7.0: https://github.com/glennmatthews/cot/compare/v1.6.1...v1.7.0
 .. _1.6.1: https://github.com/glennmatthews/cot/compare/v1.6.0...v1.6.1
 .. _1.6.0: https://github.com/glennmatthews/cot/compare/v1.5.2...v1.6.0
 .. _1.5.2: https://github.com/glennmatthews/cot/compare/v1.5.1...v1.5.2

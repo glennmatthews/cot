@@ -141,6 +141,8 @@ class TestVMDescription(unittest.TestCase):
                           ins.set_nic_count, 0, None)
         with self.assertRaises(NotImplementedError):
             assert ins.networks
+        with self.assertRaises(NotImplementedError):
+            assert ins.network_descriptions
         self.assertRaises(NotImplementedError,
                           ins.create_network, None, None)
         self.assertRaises(NotImplementedError,

@@ -267,6 +267,7 @@ class OVFItem(object):
             conn_val = self.get_value(self.CONNECTION, profiles)
             if conn_val is not None:
                 value = re.sub(conn_val, "_CONN_", value)
+
         # Similarly, if the Description references the ElementName...
         if name == self.ITEM_DESCRIPTION:
             en_val = self.get_value(self.ELEMENT_NAME, profiles)

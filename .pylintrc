@@ -55,7 +55,7 @@ disable=bad-continuation,
 max-args=10
 # default: max-attributes=7
 # current worst offender: OVF
-max-attributes=98
+max-attributes=29
 # default: max-bool-expr=5
 # default: max-branches=12
 # default: max-locals=15
@@ -76,7 +76,7 @@ accept-no-return-type-doc=yes
 
 # default: max-module-lines: 1000
 # current worst offender: OVF
-max-module-lines=2800
+max-module-lines=2900
 
 [LOGGING]
 
