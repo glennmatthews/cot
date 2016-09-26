@@ -38,25 +38,16 @@ class IsoInfo(Helper):
     .. autosummary::
       :nosignatures:
 
-      install
       get_disk_format
       get_disk_file_listing
     """
 
     def __init__(self):
-        """Initializer"""
+        """Initializer."""
         super(IsoInfo, self).__init__("isoinfo",
                                       version_regexp=r"isoinfo ([0-9.]+)")
 
-    def install(self):
-        """Install isoinfo."""
-        if self.should_not_be_installed_but_is():
-            return True
-        logger.info("Installing 'isoinfo'...")
-        # Same providers as mkisofs/genisoimage as it's in the same package.
-        return (Helper.port_install('cdrtools') or
-                Helper.yum_install('genisoimage') or
-                Helper.apt_install('genisoimage'))
+    # No install support as this is provided by MkIsoFS class.
 
     def get_disk_format(self, file_path):
         """Get the major disk image format of the given file.
@@ -65,10 +56,8 @@ class IsoInfo(Helper):
         :return: ``(format, subformat)``, such as:
 
           * ``(None, None)`` - file is not an ISO
-          * ``("iso", "")`` - ISO without Rock Ridge or Joliet extensions
-          * ``("iso", "J")`` - ISO with Joliet extensions
-          * ``("iso", "R")`` - ISO with Rock Ridge extensions
-          * ``("iso", "JR")`` - ISO with Joliet + Rock Ridge
+          * ``("iso", None)`` - ISO without Rock Ridge or Joliet extensions
+          * ``("iso", "Rock Ridge")`` - ISO with Rock Ridge extensions
         """
         try:
             output = self.call_helper(['-i', file_path, '-d'])
@@ -77,11 +66,10 @@ class IsoInfo(Helper):
             return (None, None)
 
         # If no exception, isoinfo recognized it as an ISO file.
-        subformat = ""
-        if re.search(r"Joliet.*found", output):
-            subformat += "J"
+        subformat = None
         if re.search(r"Rock Ridge.*found", output):
-            subformat += "R"
+            subformat = "Rock Ridge"
+        # At this time we don't care about Joliet extensions
         return ('iso', subformat)
 
     def get_disk_file_listing(self, file_path):
@@ -94,21 +82,20 @@ class IsoInfo(Helper):
         if iso != "iso":
             return None
         args = ["-i", file_path, "-f"]
-        if "J" in subformat:
-            args.append("-J")
-        if "R" in subformat:
+        if subformat == "Rock Ridge":
             args.append("-R")
+        # At this time we don't support Joliet extensions
         output = self.call_helper(args)
         result = []
         for line in output.split("\n"):
             # discard non-file output lines
             if not line or line[0] != "/":
                 continue
-            # Non-Rock-Ridge, Non-Joliet filenames look like this in isoinfo:
+            # Non-Rock-Ridge filenames look like this in isoinfo:
             # /IOSXR_CONFIG.TXT;1
             # but the actual filename thus is:
             # /iosxr_config.txt
-            if "J" not in subformat and "R" not in subformat and ";1" in line:
+            if subformat != "Rock Ridge" and ";1" in line:
                 line = line.lower()[:-2]
             # Strip the leading '/'
             result.append(line[1:])

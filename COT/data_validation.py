@@ -246,11 +246,11 @@ def file_checksum(path_or_obj, checksum_type):
     except AttributeError:
         file_obj = open(path_or_obj, 'rb')
 
-    BLOCKSIZE = 65536
+    blocksize = 65536
 
     try:
         while True:
-            buf = file_obj.read(BLOCKSIZE)
+            buf = file_obj.read(blocksize)
             if len(buf) == 0:
                 break
             h.update(buf)

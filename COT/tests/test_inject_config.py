@@ -47,12 +47,32 @@ class TestCOTInjectConfig(COT_UT):
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
         self.instance.package = self.input_ovf
+        # IOSXRv is the only platform that supports both primary and secondary
+        # config, so fake out our platform type appropriately.
+        self.set_vm_platform(IOSXRv)
+
         ready, reason = self.instance.ready_to_run()
         self.assertFalse(ready)
-        self.assertTrue(re.search("No configuration files", reason))
+        self.assertTrue(re.search("No files specified", reason))
         self.assertRaises(InvalidInputError, self.instance.run)
 
         self.instance.config_file = self.config_file
+        ready, reason = self.instance.ready_to_run()
+        self.assertTrue(ready)
+
+        self.instance.config_file = None
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+
+        self.instance.secondary_config_file = self.config_file
+        ready, reason = self.instance.ready_to_run()
+        self.assertTrue(ready)
+
+        self.instance.secondary_config_file = None
+        ready, reason = self.instance.ready_to_run()
+        self.assertFalse(ready)
+
+        self.instance.extra_files = [self.config_file]
         ready, reason = self.instance.ready_to_run()
         self.assertTrue(ready)
 
@@ -63,6 +83,8 @@ class TestCOTInjectConfig(COT_UT):
             self.instance.config_file = 0
         with self.assertRaises(InvalidInputError):
             self.instance.secondary_config_file = 0
+        with self.assertRaises(InvalidInputError):
+            self.instance.extra_files = [self.input_ovf, '/foo/bar']
 
     def test_valid_by_platform(self):
         """Test input values whose validity depends on the platform."""
@@ -257,3 +279,49 @@ ovf:size="{config_size}" />
                           self.instance.vm.find_device_location, cpu_item)
         self.assertLogged(levelname="ERROR",
                           msg="Item has no .*Parent element")
+
+    def test_inject_config_primary_secondary_extra(self):
+        """Test injection of primary and secondary files and extras."""
+        self.instance.package = self.input_ovf
+        # IOSXRv supports secondary config
+        self.set_vm_platform(IOSXRv)
+        self.instance.config_file = self.config_file
+        self.instance.secondary_config_file = self.config_file
+        self.instance.extra_files = [self.minimal_ovf, self.vmware_ovf]
+        self.instance.run()
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
+        self.instance.finished()
+        self.assertLogged(**self.invalid_hardware_warning(
+            '4CPU-4GB-3NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-1GB-1NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '1CPU-1GB-1NIC', '1024 MiB', 'RAM'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '2CPU-2GB-1NIC', 'VMXNET3', 'NIC type'))
+        self.assertLogged(**self.invalid_hardware_warning(
+            '2CPU-2GB-1NIC', '2048 MiB', 'RAM'))
+        config_iso = os.path.join(self.temp_dir, 'config.iso')
+        self.check_diff("""
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
++    <ovf:File ovf:href="config.iso" ovf:id="config.iso" \
+ovf:size="{config_size}" />
+   </ovf:References>
+...
+         <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
++        <rasd:Description>Configuration disk</rasd:Description>
+         <rasd:ElementName>CD-ROM 2</rasd:ElementName>
++        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
+         <rasd:InstanceID>8</rasd:InstanceID>"""
+                        .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
+                                config_size=os.path.getsize(config_iso)))
+        self.assertEqual(
+            get_disk_file_listing(config_iso),
+            [
+                "iosxr_config.txt",
+                "iosxr_config_admin.txt",
+                "minimal.ovf",
+                "vmware.ovf",
+            ]
+        )

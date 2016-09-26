@@ -97,18 +97,24 @@ class MkIsoFS(Helper):
                     "See http://cdrecord.org/")
         logger.info("Successfully installed '%s'", self.name)
 
-    def create_iso(self, file_path, contents):
+    def create_iso(self, file_path, contents, rock_ridge=True):
         """Create a new ISO image at the requested location.
 
         :param str file_path: Desired location of new disk image
         :param list contents: List of file paths to package into the created
           image.
+        :param bool rock_ridge: Set to False to skip inclusion of Rock Ridge
+          extensions in the ISO.
         """
         logger.info("Calling %s to create an ISO image", self.name)
         # mkisofs and genisoimage take the same parameters, conveniently,
         # while xorriso needs to be asked to pretend to be mkisofs
-        args = ['-output', file_path, '-full-iso9660-filenames',
-                '-iso-level', '2'] + contents
+        args = []
         if self.name == 'xorriso':
-            args = ['-as', 'mkisofs'] + args
+            args += ['-as', 'mkisofs']
+        args += ['-output', file_path, '-full-iso9660-filenames',
+                 '-iso-level', '2', '-allow-lowercase']
+        if rock_ridge:
+            args.append('-r')
+        args += contents
         self.call_helper(args)

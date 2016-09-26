@@ -20,10 +20,12 @@
 import subprocess
 
 from distutils.version import StrictVersion
+import os
 import mock
 
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.mkisofs import MkIsoFS
+from COT.helpers.isoinfo import IsoInfo
 
 
 class TestMkIsoFS(HelperUT):
@@ -84,7 +86,7 @@ There is NO WARRANTY, to the extent permitted by law.
         self.helper.create_iso('foo.iso', [self.input_ovf])
         mock_call_helper.assert_called_with(
             ['-output', 'foo.iso', '-full-iso9660-filenames',
-             '-iso-level', '2', self.input_ovf])
+             '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
 
     @mock.patch('distutils.spawn.find_executable')
     @mock.patch("COT.helpers.mkisofs.MkIsoFS.call_helper")
@@ -102,7 +104,7 @@ There is NO WARRANTY, to the extent permitted by law.
         self.helper.create_iso('foo.iso', [self.input_ovf])
         mock_call_helper.assert_called_with(
             ['-output', 'foo.iso', '-full-iso9660-filenames',
-             '-iso-level', '2', self.input_ovf])
+             '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
 
     @mock.patch('distutils.spawn.find_executable')
     @mock.patch("COT.helpers.mkisofs.MkIsoFS.call_helper")
@@ -120,7 +122,7 @@ There is NO WARRANTY, to the extent permitted by law.
         self.helper.create_iso('foo.iso', [self.input_ovf])
         mock_call_helper.assert_called_with(
             ['-as', 'mkisofs', '-output', 'foo.iso', '-full-iso9660-filenames',
-             '-iso-level', '2', self.input_ovf])
+             '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
 
     @mock.patch('COT.helpers.helper.Helper._check_output')
     @mock.patch('subprocess.check_call')
@@ -172,3 +174,13 @@ There is NO WARRANTY, to the extent permitted by law.
              ['sudo', 'apt-get', '-q', 'install', 'genisoimage'],
              ['apt-get', '-q', 'install', 'xorriso']])
         self.assertEqual(self.helper.name, 'xorriso')
+
+    def test_create_iso_non_rockridge(self):
+        """Create a non-Rock-Ridge ISO."""
+        dest_file = os.path.join(self.temp_dir, "test.iso")
+        self.helper.create_iso(dest_file, [self.input_ovf], rock_ridge=False)
+        (file_format, subformat) = IsoInfo().get_disk_format(dest_file)
+        self.assertEqual(file_format, "iso")
+        self.assertEqual(subformat, None)
+        self.assertEqual(IsoInfo().get_disk_file_listing(dest_file),
+                         [os.path.basename(self.input_ovf)])
