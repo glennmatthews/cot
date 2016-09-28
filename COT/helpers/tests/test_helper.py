@@ -25,9 +25,7 @@ import requests
 import mock
 
 from COT.tests.ut import COT_UT
-from COT.helpers.api import TemporaryDirectory
-from COT.helpers.helper import Helper
-import COT.helpers
+from COT.helpers.helper import Helper, TemporaryDirectory
 from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -154,8 +152,8 @@ class HelperUT(COT_UT):
 
     @staticmethod
     @contextlib.contextmanager
-    def stub_download_and_expand(_url):
-        """Stub for Helper.download_and_expand - create a fake directory."""
+    def stub_download_and_expand_tgz(_url):
+        """Stub for Helper.download_and_expand_tgz - make a fake directory."""
         with TemporaryDirectory(prefix="cot_ut_helper") as d:
             yield d
 
@@ -311,10 +309,10 @@ class HelperGenericTest(HelperUT):
         self.assertRaises(HelperNotFoundError,
                           self.helper.call_helper, ["Hello!"])
 
-    def test_download_and_expand(self):
-        """Validate the download_and_expand() context_manager."""
+    def test_download_and_expand_tgz(self):
+        """Validate the download_and_expand_tgz() context_manager."""
         try:
-            with COT.helpers.download_and_expand(
+            with self.helper.download_and_expand_tgz(
                 "https://github.com/glennmatthews/cot/archive/master.tar.gz"
             ) as directory:
                 self.assertTrue(os.path.exists(directory))

@@ -25,8 +25,8 @@ from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.vmdktool import VmdkTool
 
 
-@mock.patch('COT.helpers.download_and_expand',
-            side_effect=HelperUT.stub_download_and_expand)
+@mock.patch('COT.helpers.vmdktool.VmdkTool.download_and_expand_tgz',
+            side_effect=HelperUT.stub_download_and_expand_tgz)
 class TestVmdkTool(HelperUT):
     """Test cases for VmdkTool helper class."""
 

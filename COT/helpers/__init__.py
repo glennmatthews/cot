@@ -31,7 +31,6 @@ API
   ~COT.helpers.api.get_disk_format
   ~COT.helpers.api.install_file
   ~COT.helpers.api.create_install_dir
-  ~COT.helpers.api.download_and_expand
 
 Exceptions
 ----------
@@ -60,7 +59,6 @@ from .api import (
     convert_disk_image,
     create_disk_image,
     create_install_dir,
-    download_and_expand,
     get_disk_capacity,
     get_disk_format,
     install_file,
@@ -73,7 +71,6 @@ __all__ = (
     'convert_disk_image',
     'create_disk_image',
     'create_install_dir',
-    'download_and_expand',
     'get_disk_capacity',
     'get_disk_format',
     'install_file',

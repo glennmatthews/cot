@@ -29,8 +29,8 @@ from COT.helpers.fatdisk import FatDisk
 logger = logging.getLogger(__name__)
 
 
-@mock.patch('COT.helpers.download_and_expand',
-            side_effect=HelperUT.stub_download_and_expand)
+@mock.patch('COT.helpers.fatdisk.FatDisk.download_and_expand_tgz',
+            side_effect=HelperUT.stub_download_and_expand_tgz)
 class TestFatDisk(HelperUT):
     """Test cases for FatDisk helper class."""
 

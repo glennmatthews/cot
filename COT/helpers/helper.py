@@ -23,17 +23,41 @@ and the ability to run the program as well.
 import logging
 import os
 import os.path
+import contextlib
 import errno
 import re
 import shutil
 import subprocess
+import tarfile
 import distutils.spawn
 from distutils.version import StrictVersion
+import requests
 
 from verboselogs import VerboseLogger
 
 logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
+
+try:
+    # Python 3.x
+    from tempfile import TemporaryDirectory
+except ImportError:
+    # Python 2.x
+    import tempfile
+
+    @contextlib.contextmanager
+    def TemporaryDirectory(suffix='',   # noqa: N802
+                           prefix='tmp',
+                           dirpath=None):
+        """Create a temporary directory and make sure it's deleted later.
+
+        Reimplementation of Python 3's ``tempfile.TemporaryDirectory``.
+        """
+        tempdir = tempfile.mkdtemp(suffix, prefix, dirpath)
+        try:
+            yield tempdir
+        finally:
+            shutil.rmtree(tempdir)
 
 
 def guess_file_format_from_path(file_path):
@@ -73,6 +97,7 @@ class Helper(object):
       :nosignatures:
 
       confirm
+      download_and_expand_tgz
       apt_install
       port_install
       yum_install
@@ -116,6 +141,45 @@ class Helper(object):
         "yum":     distutils.spawn.find_executable('yum'),
     }
     """Class-level lookup for package manager executables."""
+
+    @staticmethod
+    @contextlib.contextmanager
+    def download_and_expand_tgz(url):
+        """Context manager for downloading and expanding a .tar.gz file.
+
+        Creates a temporary directory, downloads the specified URL into
+        the directory, unzips and untars the file into this directory,
+        then yields to the given block. When the block exits, the temporary
+        directory and its contents are deleted.
+
+        ::
+
+          with download_and_expand_tgz("http://example.com/foo.tgz") as d:
+              # archive contents have been extracted to 'd'
+              ...
+          # d is automatically cleaned up.
+
+        :param str url: URL of a .tgz or .tar.gz file to download.
+        """
+        with TemporaryDirectory(prefix="cot_helper") as d:
+            logger.debug("Temporary directory is %s", d)
+            logger.verbose("Downloading and extracting %s", url)
+            response = requests.get(url, stream=True)
+            tgz = os.path.join(d, 'helper.tgz')
+            with open(tgz, 'wb') as f:
+                shutil.copyfileobj(response.raw, f)
+            del response
+            logger.debug("Extracting %s", tgz)
+            # the "with tarfile.open()..." construct isn't supported in 2.6
+            tarf = tarfile.open(tgz, "r:gz")
+            try:
+                tarf.extractall(path=d)
+            finally:
+                tarf.close()
+            try:
+                yield d
+            finally:
+                logger.debug("Cleaning up temporary directory %s", d)
 
     @staticmethod
     def find_executable(name):
