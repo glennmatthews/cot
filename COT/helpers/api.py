@@ -31,14 +31,12 @@ The actual helper programs are provided by individual classes in this package.
   create_disk_image
   create_install_dir
   download_and_expand
-  get_checksum
   get_disk_capacity
   get_disk_format
   install_file
 """
 
 import contextlib
-import hashlib
 import logging
 import os
 import re
@@ -62,8 +60,6 @@ MKISOFS = MkIsoFS()
 OVFTOOL = OVFTool()
 QEMUIMG = QEMUImg()
 VMDKTOOL = VmdkTool()
-
-BLOCKSIZE = 65536
 
 try:
     # Python 3.x
@@ -124,43 +120,6 @@ def download_and_expand(url):
             yield d
         finally:
             logger.debug("Cleaning up temporary directory %s", d)
-
-
-def get_checksum(path_or_obj, checksum_type):
-    """Get the checksum of the given file.
-
-    :param str path_or_obj: File path to checksum OR an opened file object
-    :param str checksum_type: Supported values are 'md5' and 'sha1'.
-    :return: String containing hexadecimal file checksum
-    """
-    # pylint: disable=redefined-variable-type
-    if checksum_type == 'md5':
-        h = hashlib.md5()
-    elif checksum_type == 'sha1':
-        h = hashlib.sha1()
-    else:
-        raise NotImplementedError(
-            "No support for generating checksum type {0}"
-            .format(checksum_type))
-
-    # Is it a file or do we need to open it?
-    try:
-        path_or_obj.read(0)
-        file_obj = path_or_obj
-    except AttributeError:
-        file_obj = open(path_or_obj, 'rb')
-
-    try:
-        while True:
-            buf = file_obj.read(BLOCKSIZE)
-            if len(buf) == 0:
-                break
-            h.update(buf)
-    finally:
-        if file_obj != path_or_obj:
-            file_obj.close()
-
-    return h.hexdigest()
 
 
 def get_disk_format(file_path):

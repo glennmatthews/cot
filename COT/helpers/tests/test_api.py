@@ -24,44 +24,12 @@ import mock
 
 from COT.tests.ut import COT_UT
 from COT.helpers import (
-    get_checksum, create_disk_image, convert_disk_image, get_disk_format,
+    create_disk_image, convert_disk_image, get_disk_format,
     get_disk_capacity, create_install_dir, install_file,
 )
 from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
-
-
-class TestGetChecksum(COT_UT):
-    """Test cases for get_checksum() function."""
-
-    def test_get_checksum_md5(self):
-        """Test case for get_checksum() with md5 sum."""
-        checksum = get_checksum(self.input_ovf, 'md5')
-        self.assertEqual(checksum, "4e7a3ba0b70f6784a3a91b18336296c7")
-
-        checksum = get_checksum(self.minimal_ovf, 'md5')
-        self.assertEqual(checksum, "288e1e3fcb05265cd9b8c7578e173fef")
-
-    def test_get_checksum_sha1(self):
-        """Test case for get_checksum() with sha1 sum."""
-        checksum = get_checksum(self.input_ovf, 'sha1')
-        self.assertEqual(checksum, "c3bd2579c2edc76ea35b5bde7d4f4e41eab08963")
-
-        checksum = get_checksum(self.minimal_ovf, 'sha1')
-        self.assertEqual(checksum,
-                         "5d0635163f6a580442f01466245e122f8412e8d6")
-
-    def test_get_checksum_unsupported(self):
-        """Test invalid options to get_checksum()."""
-        self.assertRaises(NotImplementedError,
-                          get_checksum,
-                          self.input_ovf,
-                          'sha256')
-        self.assertRaises(NotImplementedError,
-                          get_checksum,
-                          self.input_ovf,
-                          'crc')
 
 
 class TestGetDiskFormat(COT_UT):

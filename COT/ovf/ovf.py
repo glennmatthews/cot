@@ -51,11 +51,12 @@ from contextlib import closing
 
 from COT.xml_file import XML, register_namespace
 from COT.vm_description import VMDescription, VMInitError
-from COT.data_validation import match_or_die, check_for_conflict
-from COT.data_validation import ValueTooHighError, ValueUnsupportedError
-from COT.data_validation import canonicalize_nic_subtype
+from COT.data_validation import (
+    match_or_die, check_for_conflict, file_checksum,
+    ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
+)
 from COT.file_reference import FileOnDisk, FileInTAR
-from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
+from COT.helpers import get_disk_capacity, convert_disk_image
 from COT.platforms import platform_from_product_class, GenericPlatform
 
 from COT.ovf.name_helper import name_helper
@@ -2415,7 +2416,7 @@ class OVF(VMDescription, XML):
         logger.verbose("Generating manifest for %s", ovf_file)
         manifest = prefix + '.mf'
         # TODO: OVF 2.0 uses SHA256 instead of SHA1.
-        sha1sum = get_checksum(ovf_file, 'sha1')
+        sha1sum = file_checksum(ovf_file, 'sha1')
         with open(manifest, 'wb') as f:
             f.write("SHA1({file})= {sum}\n"
                     .format(file=os.path.basename(ovf_file), sum=sha1sum)
@@ -2426,7 +2427,7 @@ class OVF(VMDescription, XML):
                 file_ref = self._file_references[file_name]
                 try:
                     file_obj = file_ref.open('rb')
-                    sha1sum = get_checksum(file_obj, 'sha1')
+                    sha1sum = file_checksum(file_obj, 'sha1')
                 finally:
                     file_ref.close()
 

@@ -27,7 +27,6 @@ API
 
   ~COT.helpers.api.convert_disk_image
   ~COT.helpers.api.create_disk_image
-  ~COT.helpers.api.get_checksum
   ~COT.helpers.api.get_disk_capacity
   ~COT.helpers.api.get_disk_format
   ~COT.helpers.api.install_file
@@ -62,7 +61,6 @@ from .api import (
     create_disk_image,
     create_install_dir,
     download_and_expand,
-    get_checksum,
     get_disk_capacity,
     get_disk_format,
     install_file,
@@ -76,7 +74,6 @@ __all__ = (
     'create_disk_image',
     'create_install_dir',
     'download_and_expand',
-    'get_checksum',
     'get_disk_capacity',
     'get_disk_format',
     'install_file',
