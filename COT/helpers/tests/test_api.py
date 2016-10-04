@@ -25,9 +25,9 @@ import mock
 from COT.tests.ut import COT_UT
 from COT.helpers import (
     create_disk_image, convert_disk_image, get_disk_format,
-    get_disk_capacity, create_install_dir, install_file,
+    get_disk_capacity, get_disk_file_listing, create_install_dir, install_file,
+    HelperError, HelperNotFoundError,
 )
-from COT.helpers import HelperError, HelperNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +194,9 @@ class TestCreateDiskImage(COT_UT):
             create_disk_image(disk_path, contents=[self.input_ovf])
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        # TODO check ISO contents
+        # Check contents
+        self.assertEqual(get_disk_file_listing(disk_path),
+                         [os.path.basename(self.input_ovf)])
 
     # Creation of empty disks is tested implicitly in other test classes
     # above - no need to repeat that here
@@ -214,7 +216,8 @@ class TestCreateDiskImage(COT_UT):
             self.assertEqual(capacity, "8388608")
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        # TODO check raw file contents
+        self.assertEqual(get_disk_file_listing(disk_path),
+                         [os.path.basename(self.input_ovf)])
 
         # Again, but now force the disk size
         try:
@@ -230,7 +233,8 @@ class TestCreateDiskImage(COT_UT):
             self.assertEqual(capacity, "67108864")
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        # TODO check raw file contents
+        self.assertEqual(get_disk_file_listing(disk_path),
+                         [os.path.basename(self.input_ovf)])
 
 
 @mock.patch('COT.helpers.helper.Helper._check_call')

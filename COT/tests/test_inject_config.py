@@ -25,6 +25,7 @@ from COT.ui_shared import UI
 from COT.inject_config import COTInjectConfig
 from COT.data_validation import InvalidInputError
 from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
+from COT.helpers import get_disk_file_listing
 
 
 class TestCOTInjectConfig(COT_UT):
@@ -89,6 +90,7 @@ class TestCOTInjectConfig(COT_UT):
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
         self.instance.finished()
+        config_iso = os.path.join(self.temp_dir, 'config.iso')
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
 ovf:size="{cfg_size}" />
@@ -102,8 +104,11 @@ ovf:size="{config_size}" />
 +        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
          <rasd:InstanceID>8</rasd:InstanceID>"""
                         .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
-                                config_size=os.path.getsize(os.path.join(
-                                    self.temp_dir, 'config.iso'))))
+                                config_size=os.path.getsize(config_iso)))
+        # The sample_cfg.text should be renamed to the platform-specific
+        # file name for bootstrap config - in this case, config.txt
+        self.assertEqual(get_disk_file_listing(config_iso),
+                         ["config.txt"])
 
     def test_inject_config_iso_secondary(self):
         """Inject secondary config file on an ISO."""
@@ -123,6 +128,7 @@ ovf:size="{config_size}" />
             '2CPU-2GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
             '2CPU-2GB-1NIC', '2048 MiB', 'RAM'))
+        config_iso = os.path.join(self.temp_dir, 'config.iso')
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
 ovf:size="{cfg_size}" />
@@ -136,8 +142,11 @@ ovf:size="{config_size}" />
 +        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
          <rasd:InstanceID>8</rasd:InstanceID>"""
                         .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
-                                config_size=os.path.getsize(os.path.join(
-                                    self.temp_dir, 'config.iso'))))
+                                config_size=os.path.getsize(config_iso)))
+        # The sample_cfg.text should be renamed to the platform-specific
+        # file name for secondary bootstrap config
+        self.assertEqual(get_disk_file_listing(config_iso),
+                         ["iosxr_config_admin.txt"])
 
     def test_inject_config_vmdk(self):
         """Inject config file on a VMDK."""
@@ -151,6 +160,7 @@ ovf:size="{config_size}" />
         # to be OVF standard compliant, the new File must be created in the
         # same order relative to the other Files as the existing Disk is
         # to the other Disks.
+        config_vmdk = os.path.join(self.temp_dir, 'config.vmdk')
         self.check_diff(file1=self.iosv_ovf,
                         expected="""
    <ovf:References>
@@ -177,8 +187,10 @@ for bootstrap configuration.</rasd:Description>
 +        <rasd:Description>Configuration disk</rasd:Description>
          <rasd:ElementName>flash2</rasd:ElementName>"""
                         .format(input_size=self.FILE_SIZE['input.vmdk'],
-                                config_size=os.path.getsize(os.path.join(
-                                    self.temp_dir, 'config.vmdk'))))
+                                config_size=os.path.getsize(config_vmdk)))
+        # TODO - we don't currently have a way to check VMDK file listing
+        # self.assertEqual(get_disk_file_listing(config_vmdk),
+        #                 ["ios_config.txt"])
 
     def test_inject_config_repeatedly(self):
         """inject-config repeatedly."""

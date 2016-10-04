@@ -31,6 +31,7 @@ The actual helper programs are provided by individual classes in this package.
   create_disk_image
   create_install_dir
   get_disk_capacity
+  get_disk_file_listing
   get_disk_format
   install_file
 """
@@ -43,6 +44,7 @@ from distutils.version import StrictVersion
 
 from .helper import Helper, guess_file_format_from_path
 from .fatdisk import FatDisk
+from .isoinfo import IsoInfo
 from .mkisofs import MkIsoFS
 from .ovftool import OVFTool
 from .qemu_img import QEMUImg
@@ -51,6 +53,7 @@ from .vmdktool import VmdkTool
 logger = logging.getLogger(__name__)
 
 FATDISK = FatDisk()
+ISOINFO = IsoInfo()
 MKISOFS = MkIsoFS()
 OVFTOOL = OVFTool()
 QEMUIMG = QEMUImg()
@@ -67,9 +70,17 @@ def get_disk_format(file_path):
     :param str file_path: Path to disk image file to inspect.
     :return: ``(format, subformat)``
 
-      * ``format`` may be ``'vmdk'``, ``'raw'``, or ``'qcow2'``
-      * ``subformat`` may be ``None``, or various strings for ``'vmdk'`` files.
+      * ``format`` may be "iso", "vmdk", "raw", or "qcow2"
+      * ``subformat`` may be ``None``, or various strings for "vmdk" files.
     """
+    # isoinfo can identify ISO files, otherwise returning None
+    (file_format, subformat) = ISOINFO.get_disk_format(file_path)
+    if file_format:
+        return (file_format, subformat)
+
+    # QEMUIMG can identify various disk image formats, but guesses 'raw'
+    # for any arbitrary file it doesn't identify. Thus, 'raw' results should be
+    # considered suspect, as warned in the docstring above.
     file_format = QEMUIMG.get_disk_format(file_path)
 
     if file_format == 'vmdk':
@@ -100,6 +111,24 @@ def get_disk_capacity(file_path):
     return QEMUIMG.get_disk_capacity(file_path)
 
 
+def get_disk_file_listing(file_path):
+    """Get the list of files on the given disk.
+
+    :param str file_path: Path to disk image file to inspect.
+    :return: List of file paths, or None on failure
+    :raise NotImplementedError: if getting a file listing from the
+      given file type is not yet supported.
+    """
+    (file_format, _) = get_disk_format(file_path)
+    if file_format == "iso":
+        return ISOINFO.get_disk_file_listing(file_path)
+    elif file_format == "raw":
+        return FATDISK.get_disk_file_listing(file_path)
+    else:
+        raise NotImplementedError("No support for getting a file listing from "
+                                  "a %s image (%s)", file_format, file_path)
+
+
 def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
     """Convert the given disk image to the requested format/subformat.
 
@@ -120,8 +149,8 @@ def convert_disk_image(file_path, output_dir, new_format, new_subformat=None):
       * :attr:`file_path`, if no conversion was required
       * or a file path in :attr:`output_dir` containing the converted image
 
-    :raise ValueUnsupportedError: if the :attr:`new_format` and/or
-      :attr:`new_subformat` are not supported conversion targets.
+    :raise NotImplementedError: if the requested conversion is not
+      yet supported.
     """
     curr_format, curr_subformat = get_disk_format(file_path)
 
@@ -188,6 +217,9 @@ def create_disk_image(file_path, file_format=None,
     :param capacity: Disk capacity. A string like '16M' or '1G'.
     :param list contents: List of file paths to package into the created image.
       If not specified, the image will be left blank and unformatted.
+
+    :raise NotImplementedError: if creation of the given image type is not
+      yet supported.
     """
     if not capacity and not contents:
         raise RuntimeError("Either capacity or contents must be specified!")

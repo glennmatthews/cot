@@ -23,6 +23,7 @@ import logging
 import os
 import os.path
 import platform
+import re
 
 from COT.helpers.helper import Helper
 
@@ -39,6 +40,7 @@ class FatDisk(Helper):
 
       install_helper
       create_raw_image
+      get_disk_file_listing
     """
 
     def __init__(self):
@@ -127,3 +129,31 @@ class FatDisk(Helper):
             self.call_helper([file_path, 'fileadd', content_file,
                               os.path.basename(content_file)])
         logger.info("All requested files successfully added to %s", file_path)
+
+    def get_disk_file_listing(self, file_path):
+        """Get the list of files on the given raw disk image.
+
+        :param str file_path: Path to disk image file to inspect.
+        :return: List of file paths, or None on failure
+        """
+        output = self.call_helper([file_path, "ls"])
+        # Output looks like:
+        #
+        # -----aD        13706       2016 Aug 04 input.ovf
+        # Listed 1 entry
+        #
+        # where all we really want is the 'input.ovf'
+        result = []
+        for line in output.split("\n"):
+            if not output:
+                continue
+            if re.match(r"^Listed", line):
+                continue
+            fields = line.split()
+            if not fields:
+                continue
+            if len(fields) < 6:
+                logger.warning("Unexpected line: %s", line)
+                continue
+            result.append(fields[5])
+        return result

@@ -28,6 +28,7 @@ API
   ~COT.helpers.api.convert_disk_image
   ~COT.helpers.api.create_disk_image
   ~COT.helpers.api.get_disk_capacity
+  ~COT.helpers.api.get_disk_file_listing
   ~COT.helpers.api.get_disk_format
   ~COT.helpers.api.install_file
   ~COT.helpers.api.create_install_dir
@@ -49,6 +50,7 @@ Helper modules
   COT.helpers.api
   COT.helpers.helper
   COT.helpers.fatdisk
+  COT.helpers.isoinfo
   COT.helpers.mkisofs
   COT.helpers.ovftool
   COT.helpers.qemu_img
@@ -60,6 +62,7 @@ from .api import (
     create_disk_image,
     create_install_dir,
     get_disk_capacity,
+    get_disk_file_listing,
     get_disk_format,
     install_file,
 )
@@ -72,6 +75,7 @@ __all__ = (
     'create_disk_image',
     'create_install_dir',
     'get_disk_capacity',
+    'get_disk_file_listing',
     'get_disk_format',
     'install_file',
 )

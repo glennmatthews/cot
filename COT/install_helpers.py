@@ -181,6 +181,7 @@ class COTInstallHelpers(COTGenericSubmodule):
         """Verify all helper tools and install any that are missing."""
         from COT.helpers.fatdisk import FatDisk
         from COT.helpers.mkisofs import MkIsoFS
+        # isoinfo comes with mkisofs so we skip it here
         from COT.helpers.ovftool import OVFTool
         from COT.helpers.qemu_img import QEMUImg
         from COT.helpers.vmdktool import VmdkTool
