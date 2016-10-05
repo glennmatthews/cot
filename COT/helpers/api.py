@@ -42,7 +42,7 @@ import re
 
 from distutils.version import StrictVersion
 
-from .helper import Helper, guess_file_format_from_path
+from .helper import Helper, HelperError, guess_file_format_from_path
 from .fatdisk import FatDisk
 from .isoinfo import IsoInfo
 from .mkisofs import MkIsoFS
@@ -72,11 +72,26 @@ def get_disk_format(file_path):
 
       * ``format`` may be "iso", "vmdk", "raw", or "qcow2"
       * ``subformat`` may be ``None``, or various strings for "vmdk" files.
+
+    :raises HelperError: if the file doesn't exist or is otherwise unreadable
     """
-    # isoinfo can identify ISO files, otherwise returning None
-    (file_format, subformat) = ISOINFO.get_disk_format(file_path)
-    if file_format:
-        return (file_format, subformat)
+    if not os.path.exists(file_path):
+        raise HelperError(2, "No such file or directory: '{0}'"
+                          .format(file_path))
+    # IsoInfo is not available if we only have xorriso (as seen in Travis-CI)
+    if ISOINFO.path:
+        # isoinfo can identify ISO files, otherwise returning None
+        (file_format, subformat) = ISOINFO.get_disk_format(file_path)
+        if file_format:
+            return (file_format, subformat)
+    else:
+        # Try to at least detect ISO files by file magic number
+        with open(file_path, 'rb') as f:
+            for offset in (0x8001, 0x8801, 0x9001):
+                f.seek(offset)
+                magic = f.read(5).decode('ascii', 'ignore')
+                if magic == "CD001":
+                    return ("iso", None)
 
     # QEMUIMG can identify various disk image formats, but guesses 'raw'
     # for any arbitrary file it doesn't identify. Thus, 'raw' results should be

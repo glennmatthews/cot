@@ -17,6 +17,7 @@
 
 """Unit test cases for the COT.helpers.mkisofs submodule."""
 
+import logging
 import subprocess
 
 from distutils.version import StrictVersion
@@ -25,7 +26,9 @@ import mock
 
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.mkisofs import MkIsoFS
-from COT.helpers.isoinfo import IsoInfo
+from COT.helpers.api import get_disk_format, get_disk_file_listing, ISOINFO
+
+logger = logging.getLogger(__name__)
 
 
 class TestMkIsoFS(HelperUT):
@@ -179,8 +182,11 @@ There is NO WARRANTY, to the extent permitted by law.
         """Create a non-Rock-Ridge ISO."""
         dest_file = os.path.join(self.temp_dir, "test.iso")
         self.helper.create_iso(dest_file, [self.input_ovf], rock_ridge=False)
-        (file_format, subformat) = IsoInfo().get_disk_format(dest_file)
+        (file_format, subformat) = get_disk_format(dest_file)
         self.assertEqual(file_format, "iso")
         self.assertEqual(subformat, None)
-        self.assertEqual(IsoInfo().get_disk_file_listing(dest_file),
-                         [os.path.basename(self.input_ovf)])
+        if ISOINFO.path:
+            self.assertEqual(get_disk_file_listing(dest_file),
+                             [os.path.basename(self.input_ovf)])
+        else:
+            logger.info("isoinfo not available, not checking disk contents")

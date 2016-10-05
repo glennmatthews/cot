@@ -47,7 +47,7 @@ class IsoInfo(Helper):
         super(IsoInfo, self).__init__("isoinfo",
                                       version_regexp=r"isoinfo ([0-9.]+)")
 
-    # No install support as this is provided by MkIsoFS class.
+    # No install support as this is provided by MkIsoFS class or not at all.
 
     def get_disk_format(self, file_path):
         """Get the major disk image format of the given file.

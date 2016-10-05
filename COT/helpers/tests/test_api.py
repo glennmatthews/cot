@@ -28,6 +28,7 @@ from COT.helpers import (
     get_disk_capacity, get_disk_file_listing, create_install_dir, install_file,
     HelperError, HelperNotFoundError,
 )
+from COT.helpers.api import ISOINFO
 
 logger = logging.getLogger(__name__)
 
@@ -194,9 +195,12 @@ class TestCreateDiskImage(COT_UT):
             create_disk_image(disk_path, contents=[self.input_ovf])
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        # Check contents
-        self.assertEqual(get_disk_file_listing(disk_path),
-                         [os.path.basename(self.input_ovf)])
+        if ISOINFO.path:
+            # Check contents
+            self.assertEqual(get_disk_file_listing(disk_path),
+                             [os.path.basename(self.input_ovf)])
+        else:
+            logger.info("isoinfo not available, not checking disk contents")
 
     # Creation of empty disks is tested implicitly in other test classes
     # above - no need to repeat that here
@@ -216,10 +220,15 @@ class TestCreateDiskImage(COT_UT):
             self.assertEqual(capacity, "8388608")
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        self.assertEqual(get_disk_file_listing(disk_path),
-                         [os.path.basename(self.input_ovf)])
+        if ISOINFO.path:
+            self.assertEqual(get_disk_file_listing(disk_path),
+                             [os.path.basename(self.input_ovf)])
+        else:
+            logger.info("isoinfo not available, not checking disk contents")
 
-        # Again, but now force the disk size
+    def test_create_raw_with_contents_and_size(self):
+        """Creation of raw disk image of a specified size with files."""
+        disk_path = os.path.join(self.temp_dir, "out.img")
         try:
             create_disk_image(disk_path, contents=[self.input_ovf],
                               capacity="64M")
@@ -233,8 +242,11 @@ class TestCreateDiskImage(COT_UT):
             self.assertEqual(capacity, "67108864")
         except HelperNotFoundError as e:
             self.fail(e.strerror)
-        self.assertEqual(get_disk_file_listing(disk_path),
-                         [os.path.basename(self.input_ovf)])
+        if ISOINFO.path:
+            self.assertEqual(get_disk_file_listing(disk_path),
+                             [os.path.basename(self.input_ovf)])
+        else:
+            logger.info("isoinfo not available, not checking disk contents")
 
 
 @mock.patch('COT.helpers.helper.Helper._check_call')
