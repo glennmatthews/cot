@@ -49,6 +49,8 @@ except ImportError:
 from pkg_resources import resource_filename
 import mock
 
+from COT.helpers import helpers, HelperError
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -136,10 +138,6 @@ class UTLoggingHandler(BufferingHandler):
 
 class COT_UT(unittest.TestCase):  # noqa: N801
     """Subclass of unittest.TestCase adding some additional behaviors."""
-
-    from COT.helpers.ovftool import OVFTool
-
-    OVFTOOL = OVFTool()
 
     FILE_SIZE = {}
     for filename in [
@@ -379,12 +377,11 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """Use OVFtool to validate the given OVF/OVA file."""
         if filename is None:
             filename = self.temp_file
-        if (self.OVFTOOL.path and self.validate_output_with_ovftool and
-                os.path.exists(filename)):
-            # Ask OVFtool to validate that the output file is sane
-            from COT.helpers import HelperError
+        if (self.validate_output_with_ovftool and
+                os.path.exists(filename) and
+                helpers['ovftool']):
             try:
-                self.OVFTOOL.validate_ovf(filename)
+                helpers['ovftool'].call(['--schemaValidate', filename])
             except HelperError as e:
                 self.fail("OVF not valid according to ovftool:\n{0}"
                           .format(e.strerror))

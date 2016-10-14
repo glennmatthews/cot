@@ -56,8 +56,8 @@ from COT.data_validation import (
     ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
 )
 from COT.file_reference import FileOnDisk, FileInTAR
-from COT.helpers import get_disk_capacity, convert_disk_image
 from COT.platforms import platform_from_product_class, GenericPlatform
+from COT.disks import convert_disk, disk_representation_from_file
 
 from COT.ovf.name_helper import name_helper
 from COT.ovf.hardware import OVFHardware, OVFHardwareDataError
@@ -812,7 +812,8 @@ class OVF(VMDescription, XML):
             # It seems wasteful to extract the disk file (could be
             # quite large) from the TAR just to check, so we don't.
             if file_ref.file_path is not None:
-                real_capacity = get_disk_capacity(file_ref.file_path)
+                dr = disk_representation_from_file(file_ref.file_path)
+                real_capacity = dr.capacity
 
             disk_item = self.find_disk_from_file_id(
                 file_elem.get(self.FILE_ID))
@@ -1748,26 +1749,33 @@ class OVF(VMDescription, XML):
                     line,
                     user_configurable)
 
-    def convert_disk_if_needed(self, file_path, kind):
+    def convert_disk_if_needed(self, disk_image, kind):
         """Convert the disk to a more appropriate format if needed.
 
         * All hard disk files are converted to stream-optimized VMDK as it
           is the only format that VMware supports in OVA packages.
         * CD-ROM iso images are accepted without change.
 
-        :param str file_path: Image to inspect and possibly convert
-        :param str kind: Image type (harddisk/cdrom)
+        :param disk_image: Image to inspect and possibly convert
+        :type disk_image: :class:`~COT.disks.Disk` or subclass
+        :param str kind: Image type (harddisk/cdrom).
         :return:
-          * :attr:`file_path`, if no conversion was required
-          * or a file path in :attr:`output_dir` containing the converted image
+          * :attr:`disk_image`, if no conversion was required
+          * or a new :class:`~COT.disks.Disk` instance representing a converted
+            image that has been created in :attr:`output_dir`.
         """
         if kind != 'harddisk':
             logger.debug("No disk conversion needed")
-            return file_path
+            return disk_image
 
         # Convert hard disk to VMDK format, streamOptimized subformat
-        return convert_disk_image(file_path, self.working_dir,
-                                  'vmdk', 'streamOptimized')
+        if (disk_image.disk_format == 'vmdk' and
+                disk_image.disk_subformat == 'streamOptimized'):
+            logger.debug("No disk conversion needed")
+            return disk_image
+
+        return convert_disk(disk_image, self.working_dir,
+                            'vmdk', 'streamOptimized')
 
     def search_from_filename(self, filename):
         """From the given filename, try to find any existing objects.
@@ -2166,10 +2174,11 @@ class OVF(VMDescription, XML):
                                             .format(self.RES_MAP['cdrom'],
                                                     self.RES_MAP['harddisk']))
 
-    def add_disk(self, file_path, file_id, disk_type, disk=None):
+    def add_disk(self, disk_repr, file_id, disk_type, disk=None):
         """Add a new disk object to the VM or overwrite the provided one.
 
-        :param str file_path: Path to disk image file
+        :param str disk_repr: Disk file representation
+        :type disk_repr: COT.disks.DiskRepresentation or subclass
         :param str file_id: Identifier string for the file/disk mapping
         :param str disk_type: 'harddisk' or 'cdrom'
         :param disk: Existing disk object to overwrite
@@ -2193,6 +2202,7 @@ class OVF(VMDescription, XML):
                              "do not require a Disk")
             return disk
 
+        # Else, adding a hard disk:
         self.disk_section = self._ensure_section(
             self.DISK_SECTION,
             "Virtual disk information",
@@ -2207,8 +2217,7 @@ class OVF(VMDescription, XML):
             disk_id = file_id
             disk = ET.SubElement(self.disk_section, self.DISK)
 
-        capacity = get_disk_capacity(file_path)
-        self.set_capacity_of_disk(disk, capacity)
+        self.set_capacity_of_disk(disk, disk_repr.capacity)
 
         disk.set(self.DISK_ID, disk_id)
         disk.set(self.DISK_FILE_REF, file_id)

@@ -22,7 +22,7 @@ import shutil
 
 from COT.add_disk import add_disk_worker
 from COT.data_validation import ValueUnsupportedError, InvalidInputError
-from COT.helpers import create_disk_image
+from COT.disks import create_disk
 from COT.submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
@@ -175,13 +175,17 @@ class COTInjectConfig(COTSubmodule):
         config_files += self.extra_files
 
         # Package the config files into a disk image
+        # pylint:disable=redefined-variable-type
         if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
             bootstrap_file = os.path.join(vm.working_dir, 'config.iso')
-            create_disk_image(bootstrap_file, contents=config_files)
+            disk_image = create_disk(disk_format='iso',
+                                     path=bootstrap_file,
+                                     files=config_files)
         elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
             bootstrap_file = os.path.join(vm.working_dir, 'config.img')
-            create_disk_image(bootstrap_file, file_format='raw',
-                              contents=config_files)
+            disk_image = create_disk(disk_format='raw',
+                                     path=bootstrap_file,
+                                     files=config_files)
         else:
             raise ValueUnsupportedError("bootstrap disk type",
                                         platform.BOOTSTRAP_DISK_TYPE,
@@ -191,7 +195,7 @@ class COTInjectConfig(COTSubmodule):
         add_disk_worker(
             ui=self.UI,
             vm=vm,
-            disk_image=bootstrap_file,
+            disk_image=disk_image,
             disk_type=platform.BOOTSTRAP_DISK_TYPE,
             file_id=file_id,
             controller=cont_type,

@@ -244,18 +244,20 @@ class VMDescription(object):
 
     # API methods needed for add-disk
     def convert_disk_if_needed(self,   # pylint: disable=no-self-use
-                               file_path,
+                               disk_image,
                                kind):  # pylint: disable=unused-argument
         """Convert the disk to a more appropriate format if needed.
 
-        :param str file_path: Image to inspect and possibly convert
+        :param disk_image: Image to inspect and possibly convert
+        :type disk_image: :class:`~COT.disks.Disk` or subclass
         :param str kind: Image type (harddisk/cdrom).
         :return:
-          * :attr:`file_path`, if no conversion was required
-          * or a file path in :attr:`output_dir` containing the converted image
+          * :attr:`disk_image`, if no conversion was required
+          * or a new :class:`~COT.disks.Disk` instance representing a converted
+            image that has been created in :attr:`output_dir`.
         """
         # Some VMs may not need this, so default to do nothing, not error
-        return file_path
+        return disk_image
 
     def search_from_filename(self, filename):
         """From the given filename, try to find any existing objects.
@@ -389,10 +391,11 @@ class VMDescription(object):
         """
         raise NotImplementedError("remove_file not implemented")
 
-    def add_disk(self, file_path, file_id, disk_type, disk=None):
+    def add_disk(self, disk_repr, file_id, disk_type, disk=None):
         """Add a new disk object to the VM or overwrite the provided one.
 
-        :param str file_path: Path to disk image file
+        :param str disk_repr: Disk file representation
+        :type disk_repr: COT.disks.DiskRepresentation or subclass
         :param str file_id: Identifier string for the file/disk mapping
         :param str disk_type: 'harddisk' or 'cdrom'
         :param disk: Existing disk object to overwrite

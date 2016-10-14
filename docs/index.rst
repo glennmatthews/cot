@@ -12,6 +12,7 @@ Common OVF Tool (COT)
    contributing
    thanks
    COT
+   COT.disks
    COT.helpers
    COT.ovf
    COT.platforms

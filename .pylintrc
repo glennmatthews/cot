@@ -65,7 +65,7 @@ max-public-methods=75
 
 # default: max-module-lines: 1000
 # current worst offender: OVF
-max-module-lines=2700
+max-module-lines=2750
 
 [LOGGING]
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# isoinfo.py - Helper for 'isoinfo'
+# make.py - Helper for 'make'
 #
-# September 2016, Glenn F. Matthews
-# Copyright (c) 2016 the COT project developers.
+# October 2016, Glenn F. Matthews
+# Copyright (c) 2013-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,28 +14,19 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Give COT access to isoinfo for inspecting ISO images.
+"""Give COT access to ``make`` command for building other helpers."""
 
-http://cdrecord.org/
-"""
-
-from .helper import Helper
+from COT.helpers.helper import Helper
 
 
-class ISOInfo(Helper):
-    """Helper provider for ``isoinfo``.
-
-    http://cdrecord.org/
-    """
+class Make(Helper):
+    """Helper provider for ``make`` command."""
 
     _provider_packages = {
-        'apt-get': 'genisoimage',
-        'port': 'cdrtools',
+        'apt-get': 'make',
+        'yum': 'make',
     }
 
     def __init__(self):
         """Initializer."""
-        super(ISOInfo, self).__init__(
-            "isoinfo",
-            info_uri="http://cdrecord.org",
-            version_regexp=r"isoinfo ([0-9.]+)")
+        super(Make, self).__init__("make")

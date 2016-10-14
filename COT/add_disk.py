@@ -40,6 +40,7 @@
 import logging
 import os.path
 
+from COT.disks import disk_representation_from_file
 from .data_validation import InvalidInputError, ValueUnsupportedError
 from .data_validation import check_for_conflict, device_address, match_or_die
 from .submodule import COTSubmodule
@@ -110,7 +111,7 @@ class COTAddDisk(COTSubmodule):
 
     @property
     def disk_image(self):
-        """Path to disk image file to add to the VM.
+        """Disk image file to add to the VM.
 
         :raises: :exc:`.InvalidInputError` if the file does not exist.
         """
@@ -118,10 +119,7 @@ class COTAddDisk(COTSubmodule):
 
     @disk_image.setter
     def disk_image(self, value):
-        if not os.path.exists(value):
-            raise InvalidInputError("Specified disk '{0}' does not exist!"
-                                    .format(value))
-        self._disk_image = value
+        self._disk_image = disk_representation_from_file(value)
 
     @property
     def address(self):
@@ -453,7 +451,11 @@ def add_disk_worker(vm,
 
     :param ui: User interface in effect.
     :type ui: instance of :class:`~COT.ui_shared.UI` or subclass.
-    :param str disk_image: path to disk image to add to the VM.
+
+    :param disk_image: Disk image to add to the VM.
+    :type disk_image: instance of :class:`~COT.disks.DiskRepresentation` or
+        subclass.
+
     :param str disk_type: Disk type: ``'cdrom'`` or ``'harddisk'``.
         If not specified, will be derived automatically from the
         disk_image file name extension.
@@ -475,15 +477,17 @@ def add_disk_worker(vm,
     :param str diskname: Name for disk device
     :param str description: Description of disk device
     """
+    disk_path = disk_image.path
     if disk_type is None:
-        disk_type = guess_disk_type_from_extension(disk_image)
+        disk_type = guess_disk_type_from_extension(disk_path)
         logger.warning("New disk type not specified, guessing it should "
                        "be '%s' based on file extension", disk_type)
 
     # Convert the disk to a new format if needed...
     disk_image = vm.convert_disk_if_needed(disk_image, disk_type)
+    disk_path = disk_image.path
 
-    disk_file = os.path.basename(disk_image)
+    disk_file = os.path.basename(disk_path)
 
     (file_obj, disk, ctrl_item, disk_item) = \
         search_for_elements(vm, disk_file, file_id, controller, address)
@@ -500,7 +504,7 @@ def add_disk_worker(vm,
     validate_elements(vm, file_obj, disk, disk_item, ctrl_item,
                       file_id, controller)
 
-    confirm_elements(vm, ui, file_obj, disk_image, disk, disk_item, disk_type,
+    confirm_elements(vm, ui, file_obj, disk_path, disk, disk_item, disk_type,
                      controller, ctrl_item, subtype)
 
     # OK - let's add things!
@@ -512,7 +516,7 @@ def add_disk_worker(vm,
         file_id = disk_file
 
     # First, the File
-    file_obj = vm.add_file(disk_image, file_id, file_obj, disk)
+    file_obj = vm.add_file(disk_path, file_id, file_obj, disk)
 
     # Next, the Disk
     disk = vm.add_disk(disk_image, file_id, disk_type, disk)

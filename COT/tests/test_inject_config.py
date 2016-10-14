@@ -26,8 +26,8 @@ from COT.ui_shared import UI
 from COT.inject_config import COTInjectConfig
 from COT.data_validation import InvalidInputError
 from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
-from COT.helpers import get_disk_file_listing
-from COT.helpers.api import ISOINFO
+from COT.helpers import helpers
+from COT.disks import disk_representation_from_file
 
 logger = logging.getLogger(__name__)
 
@@ -131,10 +131,10 @@ ovf:size="{config_size}" />
          <rasd:InstanceID>8</rasd:InstanceID>"""
                         .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
                                 config_size=os.path.getsize(config_iso)))
-        if ISOINFO.path:
+        if helpers['isoinfo']:
             # The sample_cfg.text should be renamed to the platform-specific
             # file name for bootstrap config - in this case, config.txt
-            self.assertEqual(get_disk_file_listing(config_iso),
+            self.assertEqual(disk_representation_from_file(config_iso).files,
                              ["config.txt"])
         else:
             logger.info("isoinfo not available, not checking disk contents")
@@ -172,10 +172,10 @@ ovf:size="{config_size}" />
          <rasd:InstanceID>8</rasd:InstanceID>"""
                         .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
                                 config_size=os.path.getsize(config_iso)))
-        if ISOINFO.path:
+        if helpers['isoinfo']:
             # The sample_cfg.text should be renamed to the platform-specific
             # file name for secondary bootstrap config
-            self.assertEqual(get_disk_file_listing(config_iso),
+            self.assertEqual(disk_representation_from_file(config_iso).files,
                              ["iosxr_config_admin.txt"])
         else:
             logger.info("isoinfo not available, not checking disk contents")
@@ -221,7 +221,7 @@ for bootstrap configuration.</rasd:Description>
                         .format(input_size=self.FILE_SIZE['input.vmdk'],
                                 config_size=os.path.getsize(config_vmdk)))
         # TODO - we don't currently have a way to check VMDK file listing
-        # self.assertEqual(get_disk_file_listing(config_vmdk),
+        # self.assertEqual(disk_representation_from_file(config_vmdk).files,
         #                 ["ios_config.txt"])
 
     def test_inject_config_repeatedly(self):
@@ -326,9 +326,9 @@ ovf:size="{config_size}" />
          <rasd:InstanceID>8</rasd:InstanceID>"""
                         .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
                                 config_size=os.path.getsize(config_iso)))
-        if ISOINFO.path:
+        if helpers['isoinfo']:
             self.assertEqual(
-                get_disk_file_listing(config_iso),
+                disk_representation_from_file(config_iso).files,
                 [
                     "iosxr_config.txt",
                     "iosxr_config_admin.txt",
