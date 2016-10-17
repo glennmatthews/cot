@@ -24,6 +24,7 @@ API
   convert_disk
   create_disk
   disk_representation_from_file
+  ~COT.disks.disk.DiskRepresentation
 
 Disk modules
 ------------
@@ -31,6 +32,7 @@ Disk modules
 .. autosummary::
   :toctree:
 
+  COT.disks.disk
   COT.disks.iso
   COT.disks.qcow2
   COT.disks.raw
@@ -57,11 +59,11 @@ def convert_disk(disk_image, new_directory, new_format, new_subformat=None):
     """Convert a disk representation into a new format.
 
     :param disk_image: Existing disk image as input.
-    :type disk_image: :class:`~COT.disks.DiskRepresentation` or subclass.
+    :type disk_image: :class:`~COT.disks.disk.DiskRepresentation` or subclass.
     :param str new_directory: Directory to create new image under
     :param str new_format: Format to convert to.
     :param str new_subformat: (optional) Sub-format to convert to.
-    :return: new instance of :class:`~COT.disks.DiskRepresentation` subclass.
+    :return: instance of :class:`~COT.disks.disk.DiskRepresentation` subclass.
     """
     if new_format not in _class_for_format:
         raise NotImplementedError("No support for converting to type '{0}'"
@@ -75,9 +77,10 @@ def create_disk(disk_format, *args, **kwargs):
     """Create a disk of the requested format.
 
     :param str disk_format: Disk format such as 'iso' or 'vmdk'.
-    For the other parameters, see :class:`~COT.disks.DiskRepresentation`.
 
-    :return: new instance of :class:`~COT.disks.DiskRepresentation` subclass.
+    For the other parameters, see :class:`~COT.disks.disk.DiskRepresentation`.
+
+    :return: instance of :class:`~COT.disks.disk.DiskRepresentation` subclass.
     """
     if disk_format in _class_for_format:
         return _class_for_format[disk_format](*args, **kwargs)
@@ -90,7 +93,7 @@ def disk_representation_from_file(file_path):
 
     :param str file_path: Path of existing file to represent.
 
-    :return: new instance of :class:`~COT.disks.DiskRepresentation` subclass.
+    :return: instance of :class:`~COT.disks.disk.DiskRepresentation` subclass.
     """
     if not os.path.exists(file_path):
         raise IOError(2, "No such file or directory: {0}".format(file_path))

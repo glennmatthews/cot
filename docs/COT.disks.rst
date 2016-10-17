@@ -2,4 +2,3 @@
 ===============================
 
 .. automodule:: COT.disks
-  :no-members:

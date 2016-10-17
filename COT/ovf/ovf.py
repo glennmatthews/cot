@@ -1757,12 +1757,14 @@ class OVF(VMDescription, XML):
         * CD-ROM iso images are accepted without change.
 
         :param disk_image: Image to inspect and possibly convert
-        :type disk_image: :class:`~COT.disks.Disk` or subclass
+        :type disk_image: instance of :class:`~COT.disks.DiskRepresentation`
+          or subclass
         :param str kind: Image type (harddisk/cdrom).
         :return:
           * :attr:`disk_image`, if no conversion was required
-          * or a new :class:`~COT.disks.Disk` instance representing a converted
-            image that has been created in :attr:`output_dir`.
+          * or a new :class:`~COT.disks.DiskRepresentation` instance
+            representing a converted image that has been created in
+            :attr:`output_dir`.
         """
         if kind != 'harddisk':
             logger.debug("No disk conversion needed")

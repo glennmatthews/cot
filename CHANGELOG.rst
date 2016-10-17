@@ -9,7 +9,6 @@ This project adheres to `Semantic Versioning`_.
 **Added**
 
 - ``cot inject-config --extra-files`` parameter (`#53`_).
-- :func:`COT.helpers.get_disk_file_listing`, currently used only in UT scripts.
 - Helper class for ``isoinfo`` (a companion to ``mkisofs``).
 
 **Changed**
@@ -17,14 +16,18 @@ This project adheres to `Semantic Versioning`_.
 - Refactored the monolithic ``COT/platforms.py`` file into a proper submodule.
 - :func:`~COT.helpers.mkisofs.MkIsoFs.create_iso` now adds Rock Ridge extensions
   by default.
+- Refactored :mod:`COT.helpers` into two modules - :mod:`COT.helpers`
+  (now just for handling helper programs such as ``apt-get`` and ``mkisofs``)
+  and :mod:`COT.disks` (which uses the helpers to handle ISO/VMDK/QCOW2/RAW
+  image files).
 
 **Removed**
 
-- :func:`get_checksum` is no longer part of the ``COT.helpers`` public API.
+- :func:`get_checksum` is no longer part of the :mod:`COT.helpers` API.
   (It's now the method :func:`~COT.data_validation.file_checksum` in
   ``COT.data_validation``, where it really belonged from the start).
-- :func:`download_and_expand` is no longer part of the ``COT.helpers`` public
-  API. (It's now the static method
+- :func:`download_and_expand` is no longer part of the :mod:`COT.helpers`
+  public API. (It's now the static method
   :func:`~COT.helpers.helper.Helper.download_and_expand_tgz`
   on class :class:`~COT.helpers.helper.Helper`.)
 
