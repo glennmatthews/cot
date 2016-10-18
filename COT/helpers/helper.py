@@ -526,3 +526,41 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
     logger.info("...done")
     logger.verbose("%s output:\n%s", cmd, stdout)
     return stdout
+
+
+def helper_select(choices):
+    """Select the first helper that is available from the given list.
+
+    :param list choices: List of helpers, in order from most preferred to
+        least preferred. Each choice in this list can be a string (the helper
+        name, such as "mkisofs") or a tuple of (name, minimum version) such as
+        ("qemu-img", "2.1.0").
+    :return: The selected helper class instance.
+    """
+    for choice in choices:
+        if isinstance(choice, str):
+            # Helper name only, no version constraints
+            name = choice
+            min_version = None
+        else:
+            # Tuple of (name, version)
+            (name, vers) = choice
+            min_version = StrictVersion(vers)
+        if helpers[name]:
+            if min_version is None or helpers[name].version >= min_version:
+                return helpers[name]
+
+    # OK, nothing yet installed. So what can we install?
+    for choice in choices:
+        if isinstance(choice, str):
+            name = choice
+            min_version = None
+        else:
+            (name, vers) = choice
+            min_version = StrictVersion(vers)
+        if helpers[name].installable:
+            helpers[name].install()
+            if min_version is None or helpers[name].version >= min_version:
+                return helpers[name]
+
+    raise HelperNotFoundError("No helper available or installable!")

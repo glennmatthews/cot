@@ -16,10 +16,8 @@ import logging
 import os
 import re
 
-from distutils.version import StrictVersion
-
 from COT.disks.disk import DiskRepresentation
-from COT.helpers import helpers, HelperNotFoundError
+from COT.helpers import helpers, helper_select
 
 logger = logging.getLogger(__name__)
 
@@ -62,33 +60,32 @@ class VMDK(DiskRepresentation):
         (file_prefix, _) = os.path.splitext(file_name)
         output_path = os.path.join(output_dir, file_prefix + ".vmdk")
         if output_subformat == "streamOptimized":
-            # TODO
-            if (helpers['qemu-img'] and
-                    helpers['qemu-img'].version >= StrictVersion("2.1.0")):
-                helpers['qemu-img'].call(['convert',
-                                          '-O', 'vmdk',
-                                          '-o', 'subformat=streamOptimized',
-                                          input_image.path,
-                                          output_path])
-            elif helpers['vmdktool']:
+            helper = helper_select([('qemu-img', '2.1.0'), 'vmdktool'])
+            if helper.name == 'qemu-img':
+                helper.call(['convert',
+                             '-O', 'vmdk',
+                             '-o', 'subformat=streamOptimized',
+                             input_image.path,
+                             output_path])
+            elif helper.name == 'vmdktool':
                 if input_image.disk_format != 'raw':
                     # vmdktool needs a raw image as input
                     from COT.disks import RAW
-                    temp_image = RAW.from_other_image(input_image, output_dir)
-                    output_image = cls.from_other_image(temp_image,
-                                                        output_dir,
-                                                        output_subformat)
-                    os.remove(temp_image.path)
+                    try:
+                        temp_image = RAW.from_other_image(input_image,
+                                                          output_dir)
+                        output_image = cls.from_other_image(temp_image,
+                                                            output_dir,
+                                                            output_subformat)
+                    finally:
+                        os.remove(temp_image.path)
                     return output_image
 
                 # Note that vmdktool takes its arguments in unusual order -
                 # output file comes before input file
-                helpers['vmdktool'].call(['-z9',
-                                          '-v', output_path,
-                                          input_image.path])
-            else:
-                raise HelperNotFoundError("No helper program available.")
+                helper.call(['-z9', '-v', output_path, input_image.path])
         else:
+            # TODO: support at least monolithicSparse!
             raise NotImplementedError("No support for subformat '%s'",
                                       output_subformat)
         return cls(output_path)

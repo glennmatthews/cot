@@ -24,7 +24,9 @@ import os
 import os.path
 import platform
 
-from COT.helpers.helper import Helper, helpers, package_managers, check_call
+from COT.helpers.helper import (
+    Helper, helpers, package_managers, check_call, helper_select,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +58,9 @@ class FatDisk(Helper):
             # Fatdisk installation requires make
             helpers['make'].install()
 
-            # Fatdisk requires clang or gcc or g++
-            # TODO
-            if not (helpers['clang'] or helpers['gcc'] or helpers['g++']):
-                helpers['gcc'].install()
+            # Fatdisk build requires clang or gcc or g++,
+            # but COT doesn't care which one we have.
+            helper_select(['clang', 'gcc', 'g++'])
 
             with self.download_and_expand_tgz(
                     'https://github.com/goblinhack/'

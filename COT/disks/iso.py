@@ -16,7 +16,7 @@ import os
 import re
 
 from COT.disks.disk import DiskRepresentation
-from COT.helpers import helpers, HelperError
+from COT.helpers import helpers, HelperError, helper_select
 
 
 class ISO(DiskRepresentation):
@@ -83,14 +83,10 @@ class ISO(DiskRepresentation):
         if self._disk_subformat == 'rockridge':
             args.append('-r')
         args += self.files
-        # TODO require_any_of
-        if helpers['mkisofs']:
-            helpers['mkisofs'].call(args)
-        elif helpers['genisoimage']:
-            helpers['genisoimage'].call(args)
-        elif helpers['xorriso']:
+        helper = helper_select(['mkisofs', 'genisoimage', 'xorriso'])
+        if helper.name == "xorriso":
             args = ['-as', 'mkisofs'] + args
-            helpers['xorriso'].call(args)
+        helper.call(args)
 
         self._files = None
 

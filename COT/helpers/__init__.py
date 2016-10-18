@@ -21,6 +21,7 @@ API
 
   helpers
   package_managers
+  helper_select
 
 Exceptions
 ----------
@@ -52,7 +53,7 @@ Helper modules
 
 from .helper import (
     Helper, PackageManager, helpers, package_managers,
-    HelperError, HelperNotFoundError,
+    HelperError, HelperNotFoundError, helper_select,
 )
 from .apt_get import AptGet       # noqa
 from .fatdisk import FatDisk      # noqa
@@ -72,6 +73,7 @@ from .yum import Yum              # noqa
 # pylint:disable=no-member
 
 
+# Populate helpers and package_managers
 for cls in Helper.__subclasses__():
     if cls is PackageManager:
         continue
@@ -89,4 +91,5 @@ __all__ = (
     'HelperNotFoundError',
     'helpers',
     'package_managers',
+    'helper_select',
 )

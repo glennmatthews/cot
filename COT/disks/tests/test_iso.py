@@ -22,7 +22,9 @@ import mock
 
 from COT.tests.ut import COT_UT
 from COT.disks import ISO
-from COT.helpers import helpers, HelperError
+from COT.helpers import (
+    helpers, package_managers, HelperError, HelperNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,15 @@ logger = logging.getLogger(__name__)
 
 class TestISO(COT_UT):
     """Test cases for ISO class."""
+
+    def tearDown(self):
+        """Test case cleanup function called automatically after each test."""
+        for name in ['mkisofs', 'genisoimage', 'xorriso', 'isoinfo']:
+            helper = helpers[name]
+            helper._installed = None
+            helper._path = None
+            helper._version = None
+        super(TestISO, self).tearDown()
 
     def test_create_with_files(self):
         """Creation of a ISO with specific file contents."""
@@ -93,6 +104,19 @@ class TestISO(COT_UT):
         mock_call.assert_called_with(
             ['-as', 'mkisofs', '-output', 'foo.iso', '-full-iso9660-filenames',
              '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
+
+    def test_create_no_helpers_available(self):
+        """Creation of ISO should fail if no helpers are install[ed|able]."""
+        helpers['mkisofs']._installed = False
+        helpers['genisoimage']._installed = False
+        helpers['xorriso']._installed = False
+        package_managers['apt-get']._installed = False
+        package_managers['port']._installed = False
+        package_managers['yum']._installed = False
+        self.assertRaises(HelperNotFoundError,
+                          ISO,
+                          path='foo.iso',
+                          files=[self.input_ovf])
 
     @mock.patch("COT.helpers.mkisofs.MkISOFS.call")
     def test_create_with_mkisofs_non_rockridge(self, mock_call):
