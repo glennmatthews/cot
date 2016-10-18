@@ -20,6 +20,7 @@ import contextlib
 import os
 import logging
 import subprocess
+from distutils.version import StrictVersion
 
 import requests
 import mock
@@ -28,9 +29,9 @@ from COT.ui_shared import UI
 from COT.tests.ut import COT_UT
 from COT.helpers.helper import TemporaryDirectory, check_call, check_output
 from COT.helpers import (
-    Helper,
+    Helper, PackageManager,
     HelperError, HelperNotFoundError,
-    helpers, package_managers,
+    helpers, package_managers, helper_select
 )
 from COT.helpers.port import Port
 from COT.helpers.apt_get import AptGet
@@ -297,6 +298,19 @@ class HelperGenericTest(HelperUT):
         self.helper.install()
         mock_install.assert_not_called()
 
+    @mock.patch('COT.helpers.Helper.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    def test_install_no_package_managers(self, *_):
+        """If installable lies, default _install should fail cleanly."""
+        self.assertRaises(NotImplementedError, self.helper.install)
+
+    @mock.patch('COT.helpers.Helper._install')
+    @mock.patch('COT.helpers.Helper.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    def test_install_bad_implementation(self, *_):
+        """If custom _install() doesn't do its job, install() catches it."""
+        self.assertRaises(HelperNotFoundError, self.helper.install)
+
     def test_call_install(self):
         """call will call install, which raises an error."""
         self.assertRaises(NotImplementedError,
@@ -334,6 +348,20 @@ class HelperGenericTest(HelperUT):
             self.fail("ConnectionError when trying to download from GitHub")
         # Temporary directory should be cleaned up when done
         self.assertFalse(os.path.exists(directory))
+
+
+class PackageManagerGenericTest(HelperUT):
+    """Unit test for abstract PackageManager class."""
+
+    def setUp(self):
+        """Test case setup function called automatically prior to each test."""
+        self.helper = PackageManager("generic")
+        super(PackageManagerGenericTest, self).setUp()
+
+    def test_install_package_abstract(self):
+        """The install_package API is abstract."""
+        self.assertRaises(NotImplementedError,
+                          self.helper.install_package, "COT")
 
 
 @mock.patch('COT.helpers.helper.check_call')
@@ -419,3 +447,71 @@ class TestHelperCp(COT_UT):
         self.assertTrue(Helper.cp('/foo', '/bar'))
         mock_copy.assert_called_with('/foo', '/bar')
         mock_check_call.assert_called_with(['sudo', 'cp', '/foo', '/bar'])
+
+
+class TestHelperSelect(COT_UT):
+    """Test cases for helper_select() API."""
+
+    def setUp(self):
+        """Fake out helper availability."""
+        super(TestHelperSelect, self).setUp()
+        helpers['qemu-img']._installed = True
+        helpers['qemu-img']._version = StrictVersion("2.1.0")
+        helpers['vmdktool']._installed = True
+        helpers['vmdktool']._version = StrictVersion("1.4")
+        helpers['fatdisk']._installed = False
+
+    def tearDown(self):
+        """Test case cleanup function called automatically after each test."""
+        for helper in helpers.values():
+            helper._installed = None
+            helper._path = None
+            helper._version = None
+        super(TestHelperSelect, self).tearDown()
+
+    def test_select_name_only(self):
+        """Select a helper from a list of names only."""
+        helper = helper_select(['fatdisk', 'vmdktool', 'qemu-img'])
+        self.assertEqual(helper, helpers['vmdktool'])
+
+    def test_select_name_version(self):
+        """Select a helper from a list of names and versions."""
+        helper = helper_select([('fatdisk', '1.4'),       # not installed
+                                ('vmdktool', '2.0'),      # version too low
+                                ('qemu-img', '2.1.0'),    # just right
+                                ])
+        self.assertEqual(helper, helpers['qemu-img'])
+
+    @mock.patch('COT.helpers.fatdisk.FatDisk.installable',
+                new_callable=mock.PropertyMock, return_value=False)
+    @mock.patch('COT.helpers.vmdktool.VMDKTool.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    @mock.patch('COT.helpers.vmdktool.VMDKTool.install')
+    def test_select_install_name_only(self, mock_install, *_):
+        """Select and install a helper from a list of names only."""
+        helpers['vmdktool']._installed = False
+        helpers['qemu-img']._installed = False
+        helper = helper_select(['fatdisk', 'vmdktool', 'qemu-img'])
+        self.assertEqual(helper, helpers['vmdktool'])
+        mock_install.assert_called_once_with()
+
+    @mock.patch('COT.helpers.fatdisk.FatDisk.installable',
+                new_callable=mock.PropertyMock, return_value=False)
+    @mock.patch('COT.helpers.vmdktool.VMDKTool.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.install')
+    @mock.patch('COT.helpers.vmdktool.VMDKTool.install')
+    def test_select_install_name_version(self,
+                                         mock_install_v, mock_install_q, *_):
+        """Select and install a helper from a list of names and versions."""
+        helpers['vmdktool']._installed = False
+        helpers['qemu-img']._installed = False
+        helper = helper_select([('fatdisk', '1.4'),       # not installable
+                                ('vmdktool', '2.0'),      # version too low
+                                ('qemu-img', '2.1.0'),    # just right
+                                ])
+        self.assertEqual(helper, helpers['qemu-img'])
+        mock_install_v.assert_called_once_with()
+        mock_install_q.assert_called_once_with()

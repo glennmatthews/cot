@@ -46,50 +46,53 @@ class VMDKTool(Helper):
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
-        return (package_managers['apt-get'] or
-                package_managers['port'] or
-                package_managers['yum'])
+        return bool(package_managers['apt-get'] or
+                    package_managers['port'] or
+                    package_managers['yum'])
 
     def _install(self):
         """Install ``vmdktool``."""
         if package_managers['port']:
             package_managers['port'].install_package('vmdktool')
-        elif platform.system() == 'Linux':
-            # We don't have vmdktool in apt or yum yet,
-            # but we can build it manually:
-            # vmdktool requires make and zlib
-            helpers['make'].install()
-            # TODO: check for installed zlib?
-            logger.info("vmdktool requires 'zlib'... installing 'zlib'")
-            if package_managers['apt-get']:
-                package_managers['apt-get'].install_package('zlib1g-dev')
-            elif package_managers['yum']:
-                package_managers['yum'].install_package('zlib-devel')
-            else:
-                raise NotImplementedError("Not sure how to install 'zlib'")
-            with self.download_and_expand_tgz(
-                    'http://people.freebsd.org/~brian/'
-                    'vmdktool/vmdktool-1.4.tar.gz') as d:
-                new_d = os.path.join(d, "vmdktool-1.4")
-                logger.info("Compiling 'vmdktool'")
-                # vmdktool is originally a BSD tool so it has some build
-                # assumptions that aren't necessarily correct under Linux.
-                # The easiest workaround is to override the CFLAGS to:
-                # 1) add -D_GNU_SOURCE
-                # 2) not treat all warnings as errors
-                check_call(['make',
-                            'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
-                           cwd=new_d)
-                destdir = os.getenv('DESTDIR', '')
-                prefix = os.getenv('PREFIX', '/usr/local')
-                args = ['make', 'install', 'PREFIX=' + prefix]
-                if destdir != '':
-                    args.append('DESTDIR=' + destdir)
-                    # os.path.join doesn't like absolute paths in the middle
-                    prefix = prefix.lstrip(os.sep)
-                logger.info("Compilation complete, installing to " +
-                            os.path.join(destdir, prefix))
-                # Make sure the relevant man and bin directories exist
-                self.mkdir(os.path.join(destdir, prefix, 'man', 'man8'))
-                self.mkdir(os.path.join(destdir, prefix, 'bin'))
-                check_call(args, retry_with_sudo=True, cwd=new_d)
+            return
+        elif platform.system() != 'Linux':
+            self.unsure_how_to_install()
+
+        # We don't have vmdktool in apt or yum yet,
+        # but we can build it manually:
+        # vmdktool requires make and zlib
+        helpers['make'].install()
+        # TODO: check for installed zlib?
+        logger.info("vmdktool requires 'zlib'... installing 'zlib'")
+        if package_managers['apt-get']:
+            package_managers['apt-get'].install_package('zlib1g-dev')
+        elif package_managers['yum']:
+            package_managers['yum'].install_package('zlib-devel')
+        else:
+            raise NotImplementedError("Not sure how to install 'zlib'")
+        with self.download_and_expand_tgz(
+            'http://people.freebsd.org/~brian/vmdktool/vmdktool-1.4.tar.gz'
+        ) as d:
+            new_d = os.path.join(d, "vmdktool-1.4")
+            logger.info("Compiling 'vmdktool'")
+            # vmdktool is originally a BSD tool so it has some build
+            # assumptions that aren't necessarily correct under Linux.
+            # The easiest workaround is to override the CFLAGS to:
+            # 1) add -D_GNU_SOURCE
+            # 2) not treat all warnings as errors
+            check_call(['make',
+                        'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
+                       cwd=new_d)
+            destdir = os.getenv('DESTDIR', '')
+            prefix = os.getenv('PREFIX', '/usr/local')
+            args = ['make', 'install', 'PREFIX=' + prefix]
+            if destdir != '':
+                args.append('DESTDIR=' + destdir)
+                # os.path.join doesn't like absolute paths in the middle
+                prefix = prefix.lstrip(os.sep)
+            logger.info("Compilation complete, installing to " +
+                        os.path.join(destdir, prefix))
+            # Make sure the relevant man and bin directories exist
+            self.mkdir(os.path.join(destdir, prefix, 'man', 'man8'))
+            self.mkdir(os.path.join(destdir, prefix, 'bin'))
+            check_call(args, retry_with_sudo=True, cwd=new_d)

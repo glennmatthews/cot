@@ -22,7 +22,7 @@ from COT.helpers.helper import Helper
 class GCC(Helper):
     """Helper provider for ``gcc`` command."""
 
-    _provider_packages = {
+    _provider_package = {
         'apt-get': 'gcc',
         'yum': 'gcc',
     }

@@ -22,7 +22,7 @@ from COT.helpers.helper import Helper
 class Make(Helper):
     """Helper provider for ``make`` command."""
 
-    _provider_packages = {
+    _provider_package = {
         'apt-get': 'make',
         'yum': 'make',
     }

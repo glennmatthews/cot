@@ -40,17 +40,14 @@ class OVFTool(Helper):
         """COT can't install ovftool because of VMware site restrictions."""
         return False
 
-    def install(self):
-        """Install the helper program.
-
-        :raise: :exc:`NotImplementedError` if not ``installable``
+    def unsure_how_to_install(self):
+        """Raise a NotImplementedError about missing install logic.
 
         We override the default install implementation to raise a more
         detailed error message for ovftool.
         """
-        if not self.installed:
-            raise NotImplementedError(
-                "No support for automated installation of ovftool, as VMware "
-                "requires a site login to download it. See "
-                "https://www.vmware.com/support/developer/ovf/"
-            )
+        raise NotImplementedError(
+            "No support for automated installation of ovftool, as VMware "
+            "requires a site login to download it. See "
+            "https://www.vmware.com/support/developer/ovf/"
+        )

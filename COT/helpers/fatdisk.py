@@ -54,27 +54,30 @@ class FatDisk(Helper):
         """Install ``fatdisk``."""
         if package_managers['port']:
             package_managers['port'].install_package('fatdisk')
-        elif platform.system() == 'Linux':
-            # Fatdisk installation requires make
-            helpers['make'].install()
+            return
+        elif platform.system() != 'Linux':
+            self.unsure_how_to_install()
 
-            # Fatdisk build requires clang or gcc or g++,
-            # but COT doesn't care which one we have.
-            helper_select(['clang', 'gcc', 'g++'])
+        # Fatdisk installation requires make
+        helpers['make'].install()
 
-            with self.download_and_expand_tgz(
-                    'https://github.com/goblinhack/'
-                    'fatdisk/archive/v1.0.0-beta.tar.gz') as d:
-                new_d = os.path.join(d, 'fatdisk-1.0.0-beta')
-                logger.info("Compiling 'fatdisk'")
-                check_call(['./RUNME'], cwd=new_d)
-                destdir = os.getenv('DESTDIR', '')
-                prefix = os.getenv('PREFIX', '/usr/local')
-                # os.path.join doesn't like absolute paths in the middle
-                if destdir != '':
-                    prefix = prefix.lstrip(os.sep)
-                destination = os.path.join(destdir, prefix, 'bin')
-                logger.info("Compilation complete, installing to " +
-                            destination)
-                self.mkdir(destination)
-                self.cp(os.path.join(new_d, 'fatdisk'), destination)
+        # Fatdisk build requires clang or gcc or g++,
+        # but COT doesn't care which one we have.
+        helper_select(['clang', 'gcc', 'g++'])
+
+        with self.download_and_expand_tgz(
+                'https://github.com/goblinhack/'
+                'fatdisk/archive/v1.0.0-beta.tar.gz') as d:
+            new_d = os.path.join(d, 'fatdisk-1.0.0-beta')
+            logger.info("Compiling 'fatdisk'")
+            check_call(['./RUNME'], cwd=new_d)
+            destdir = os.getenv('DESTDIR', '')
+            prefix = os.getenv('PREFIX', '/usr/local')
+            # os.path.join doesn't like absolute paths in the middle
+            if destdir != '':
+                prefix = prefix.lstrip(os.sep)
+            destination = os.path.join(destdir, prefix, 'bin')
+            logger.info("Compilation complete, installing to " +
+                        destination)
+            self.mkdir(destination)
+            self.cp(os.path.join(new_d, 'fatdisk'), destination)

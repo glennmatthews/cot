@@ -163,6 +163,7 @@ class Helper(object):
 
       call
       install
+      unsure_how_to_install
     """
 
     def __init__(self, name,
@@ -194,7 +195,8 @@ class Helper(object):
     # For Python 2.x compatibility:
     __nonzero__ = __bool__
 
-    _provider_packages = {}
+    _provider_package = {}
+    """Mapping of package_manager to package name."""
 
     UI = None
     """User interface (if any) available to helpers."""
@@ -232,7 +234,7 @@ class Helper(object):
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
-        for pm_name in self._provider_packages:
+        for pm_name in self._provider_package:
             if package_managers[pm_name]:
                 return True
         return False
@@ -293,28 +295,35 @@ class Helper(object):
         if self.installed:
             return
         if not self.installable:
-            msg = "Unsure how to install {0}.".format(self.name)
-            if self.info_uri:
-                msg += "\nRefer to {0} for information".format(self.info_uri)
-            raise NotImplementedError(msg)
+            self.unsure_how_to_install()
         logger.info("Installing '%s'...", self.name)
         # Call the subclass implementation
         self._install()
         # Make sure it actually performed as promised
-        assert self.path, "after installing, path is {0}".format(self.path)
+        if not self.path:
+            raise HelperNotFoundError(
+                1,
+                "Installation did not raise an exception, but afterward, "
+                "unable to locate {0}!".format(self.name))
 
         logger.info("Successfully installed '%s'", self.name)
+
+    def unsure_how_to_install(self):
+        """Raise a NotImplementedError about missing install logic."""
+        msg = "Unsure how to install {0}.".format(self.name)
+        if self.info_uri:
+            msg += "\nRefer to {0} for information".format(self.info_uri)
+        raise NotImplementedError(msg)
 
     def _install(self):
         """Subclass-specific implementation of installation logic."""
         # Default implementation
-        for pm_name, packages in self._provider_packages.items():
-            if not package_managers[pm_name]:
-                continue
-            if isinstance(packages, str):
-                packages = [packages]
-            for pkg in packages:
-                package_managers[pm_name].install_package(pkg)
+        for pm_name, package in self._provider_package.items():
+            if package_managers[pm_name]:
+                package_managers[pm_name].install_package(package)
+                return
+        # We shouldn't get here under normal call flow and logic.
+        self.unsure_how_to_install()
 
     @staticmethod
     @contextlib.contextmanager

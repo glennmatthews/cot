@@ -165,6 +165,8 @@ class TestVMDKTool(HelperUT):
         self.assertRaises(NotImplementedError, self.helper.install)
 
     @mock.patch('platform.system', return_value='Darwin')
+    @mock.patch('COT.helpers.vmdktool.VMDKTool.installable',
+                new_callable=mock.PropertyMock, return_value=True)
     def test_install_helper_mac_no_package_manager(self, *_):
         """Mac installation requires port."""
         self.select_package_manager(None)

@@ -28,7 +28,7 @@ class ISOInfo(Helper):
     http://cdrecord.org/
     """
 
-    _provider_packages = {
+    _provider_package = {
         'apt-get': 'genisoimage',
         'port': 'cdrtools',
     }

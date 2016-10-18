@@ -25,7 +25,7 @@ from .helper import Helper
 class QEMUImg(Helper):
     """Helper provider for ``qemu-img`` (http://www.qemu.org)."""
 
-    _provider_packages = {
+    _provider_package = {
         'apt-get': 'qemu-utils',
         'port': 'qemu',
         'yum': 'qemu-img',

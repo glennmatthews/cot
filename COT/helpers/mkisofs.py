@@ -38,7 +38,7 @@ class MkISOFS(Helper):
     http://cdrecord.org/
     """
 
-    _provider_packages = {
+    _provider_package = {
         'port': 'cdrtools',
     }
 
@@ -51,7 +51,7 @@ class MkISOFS(Helper):
 class GenISOImage(Helper):
     """Helper provider for ``genisoimage``, a fork of mkisofs."""
 
-    _provider_packages = {
+    _provider_package = {
         'apt-get': 'genisoimage',
         'yum': 'genisoimage',
     }
@@ -69,7 +69,7 @@ class XorrISO(Helper):
     https://www.gnu.org/software/xorriso/
     """
 
-    _provider_packages = {
+    _provider_package = {
         'apt-get': 'xorriso',
     }
 
