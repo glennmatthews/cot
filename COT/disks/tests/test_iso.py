@@ -23,7 +23,7 @@ import mock
 from COT.tests.ut import COT_UT
 from COT.disks import ISO
 from COT.helpers import (
-    helpers, package_managers, HelperError, HelperNotFoundError,
+    helpers, HelperError, HelperNotFoundError,
 )
 
 logger = logging.getLogger(__name__)
@@ -110,9 +110,9 @@ class TestISO(COT_UT):
         helpers['mkisofs']._installed = False
         helpers['genisoimage']._installed = False
         helpers['xorriso']._installed = False
-        package_managers['apt-get']._installed = False
-        package_managers['port']._installed = False
-        package_managers['yum']._installed = False
+        helpers['apt-get']._installed = False
+        helpers['port']._installed = False
+        helpers['yum']._installed = False
         self.assertRaises(HelperNotFoundError,
                           ISO,
                           path='foo.iso',

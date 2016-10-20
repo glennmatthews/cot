@@ -24,9 +24,7 @@ import os
 import os.path
 import platform
 
-from COT.helpers.helper import (
-    Helper, helpers, package_managers, check_call, helper_select,
-)
+from COT.helpers.helper import Helper, helpers, check_call, helper_select
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +42,16 @@ class FatDisk(Helper):
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
-        return (package_managers['port'] or
-                (platform.system() == 'Linux' and
-                 (helpers['make'] or helpers['make'].installable) and
-                 (helpers['clang'] or helpers['gcc'] or
-                  helpers['g++'] or helpers['gcc'].installable)))
+        return bool(helpers['port'] or
+                    (platform.system() == 'Linux' and
+                     (helpers['make'] or helpers['make'].installable) and
+                     (helpers['clang'] or helpers['gcc'] or
+                      helpers['g++'] or helpers['gcc'].installable)))
 
     def _install(self):
         """Install ``fatdisk``."""
-        if package_managers['port']:
-            package_managers['port'].install_package('fatdisk')
+        if helpers['port']:
+            helpers['port'].install_package('fatdisk')
             return
         elif platform.system() != 'Linux':
             self.unsure_how_to_install()

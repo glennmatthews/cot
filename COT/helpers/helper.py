@@ -35,7 +35,6 @@ and the ability to run the program as well.
   :nosignatures:
 
   helpers
-  package_managers
 
 **Functions**
 
@@ -196,7 +195,7 @@ class Helper(object):
     __nonzero__ = __bool__
 
     _provider_package = {}
-    """Mapping of package_manager to package name."""
+    """Mapping of package manager name to package name to install with it."""
 
     UI = None
     """User interface (if any) available to helpers."""
@@ -235,7 +234,7 @@ class Helper(object):
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
         for pm_name in self._provider_package:
-            if package_managers[pm_name]:
+            if helpers[pm_name]:
                 return True
         return False
 
@@ -319,8 +318,8 @@ class Helper(object):
         """Subclass-specific implementation of installation logic."""
         # Default implementation
         for pm_name, package in self._provider_package.items():
-            if package_managers[pm_name]:
-                package_managers[pm_name].install_package(package)
+            if helpers[pm_name]:
+                helpers[pm_name].install_package(package)
                 return
         # We shouldn't get here under normal call flow and logic.
         self.unsure_how_to_install()
@@ -430,10 +429,6 @@ class PackageManager(Helper):
         raise NotImplementedError("install_package not implemented!")
 
 
-package_managers = HelperDict(PackageManager)
-"""Dictionary of concrete PackageManager subclasses, populated at load time."""
-
-
 def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
     """Wrapper for :func:`subprocess.check_call`.
 
@@ -539,6 +534,11 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
 
 def helper_select(choices):
     """Select the first helper that is available from the given list.
+
+    If no helper in the list is currently installed, will install the
+    first installable helper from the list.
+
+    :raise HelperNotFoundError: if no valid helper is available or installable.
 
     :param list choices: List of helpers, in order from most preferred to
         least preferred. Each choice in this list can be a string (the helper

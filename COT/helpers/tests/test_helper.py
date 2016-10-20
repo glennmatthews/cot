@@ -31,7 +31,7 @@ from COT.helpers.helper import TemporaryDirectory, check_call, check_output
 from COT.helpers import (
     Helper, PackageManager,
     HelperError, HelperNotFoundError,
-    helpers, package_managers, helper_select
+    helpers, helper_select
 )
 from COT.helpers.port import Port
 from COT.helpers.apt_get import AptGet
@@ -71,8 +71,8 @@ class HelperUT(COT_UT):
     @staticmethod
     def select_package_manager(name):
         """Select the specified installer program for Helper to use."""
-        for pm_name in package_managers:
-            package_managers[pm_name]._installed = (pm_name == name)
+        for pm_name in ['apt-get', 'port', 'yum']:
+            helpers[pm_name]._installed = (pm_name == name)
 
     def enable_apt_install(self):
         """Set flags and values to force an apt-get update and apt install."""

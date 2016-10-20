@@ -20,7 +20,6 @@ API
   :nosignatures:
 
   helpers
-  package_managers
   helper_select
 
 Exceptions
@@ -52,7 +51,7 @@ Helper modules
 """
 
 from .helper import (
-    Helper, PackageManager, helpers, package_managers,
+    Helper, PackageManager, helpers,
     HelperError, HelperNotFoundError, helper_select,
 )
 from .apt_get import AptGet       # noqa
@@ -73,9 +72,10 @@ from .yum import Yum              # noqa
 # pylint:disable=no-member
 
 
-# Populate helpers and package_managers
+# Populate helpers dictionary
 for cls in Helper.__subclasses__():
     if cls is PackageManager:
+        # Don't record the abstract class!
         continue
     ins = cls()
     helpers[ins.name] = ins
@@ -83,13 +83,12 @@ for cls in Helper.__subclasses__():
 
 for cls in PackageManager.__subclasses__():
     ins = cls()
-    package_managers[ins.name] = ins
+    helpers[ins.name] = ins
 
 
 __all__ = (
     'HelperError',
     'HelperNotFoundError',
     'helpers',
-    'package_managers',
     'helper_select',
 )

@@ -25,7 +25,7 @@ import mock
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.install_helpers import COTInstallHelpers
-from COT.helpers import HelperError, helpers, package_managers
+from COT.helpers import HelperError, helpers
 from COT.helpers.apt_get import AptGet
 from COT.helpers.port import Port
 
@@ -147,11 +147,11 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
             raise HelperError(1, "not really installing!")
 
         mock_find_executable.side_effect = stub_find_executable
-        package_managers['apt-get']._installed = True
+        helpers['apt-get']._installed = True
         mock_apt_install.side_effect = stub_install
-        package_managers['port']._installed = True
+        helpers['port']._installed = True
         mock_port_install.side_effect = stub_install
-        package_managers['yum']._installed = True
+        helpers['yum']._installed = True
         mock_yum_install.side_effect = stub_install
         AptGet._updated = False
         Port._updated = False

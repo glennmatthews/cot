@@ -24,7 +24,7 @@ import os
 import os.path
 import platform
 
-from COT.helpers.helper import Helper, helpers, package_managers, check_call
+from COT.helpers.helper import Helper, helpers, check_call
 
 logger = logging.getLogger(__name__)
 
@@ -46,14 +46,12 @@ class VMDKTool(Helper):
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
-        return bool(package_managers['apt-get'] or
-                    package_managers['port'] or
-                    package_managers['yum'])
+        return bool(helpers['apt-get'] or helpers['port'] or helpers['yum'])
 
     def _install(self):
         """Install ``vmdktool``."""
-        if package_managers['port']:
-            package_managers['port'].install_package('vmdktool')
+        if helpers['port']:
+            helpers['port'].install_package('vmdktool')
             return
         elif platform.system() != 'Linux':
             self.unsure_how_to_install()
@@ -64,10 +62,10 @@ class VMDKTool(Helper):
         helpers['make'].install()
         # TODO: check for installed zlib?
         logger.info("vmdktool requires 'zlib'... installing 'zlib'")
-        if package_managers['apt-get']:
-            package_managers['apt-get'].install_package('zlib1g-dev')
-        elif package_managers['yum']:
-            package_managers['yum'].install_package('zlib-devel')
+        if helpers['apt-get']:
+            helpers['apt-get'].install_package('zlib1g-dev')
+        elif helpers['yum']:
+            helpers['yum'].install_package('zlib-devel')
         else:
             raise NotImplementedError("Not sure how to install 'zlib'")
         with self.download_and_expand_tgz(
