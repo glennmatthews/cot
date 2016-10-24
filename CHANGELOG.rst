@@ -10,6 +10,7 @@ This project adheres to `Semantic Versioning`_.
 
 - ``cot inject-config --extra-files`` parameter (`#53`_).
 - Helper class for ``isoinfo`` (a companion to ``mkisofs``).
+- Added glossary of terms to COT documentation.
 
 **Changed**
 
