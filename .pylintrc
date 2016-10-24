@@ -57,7 +57,7 @@ max-attributes=29
 max-locals=29
 # default: max-public-methods=20
 # current worst offender: OVF
-max-public-methods=75
+max-public-methods=73
 # default: max-returns=6
 # default: max-statements=50
 

@@ -333,7 +333,7 @@ class OVFHardware(object):
 
         Helper method for :meth:`set_item_count_per_profile`.
         """
-        resource_type = self.ovf.get_type_from_device(new_item)
+        resource_type = new_item.hardware_type
         address = new_item.get(self.ovf.ADDRESS)
         if address:
             raise NotImplementedError("Don't know how to ensure a unique "

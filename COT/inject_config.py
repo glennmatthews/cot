@@ -139,7 +139,7 @@ class COTInjectConfig(COTSubmodule):
         elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
             (f, _, _, drive_device) = vm.search_from_filename('config.vmdk')
         else:
-            raise ValueUnsupportedError("bootstrap disk type",
+            raise ValueUnsupportedError("bootstrap disk drive type",
                                         platform.BOOTSTRAP_DISK_TYPE,
                                         "'cdrom' or 'harddisk'")
         if f is not None:
@@ -187,7 +187,7 @@ class COTInjectConfig(COTSubmodule):
                                      path=bootstrap_file,
                                      files=config_files)
         else:
-            raise ValueUnsupportedError("bootstrap disk type",
+            raise ValueUnsupportedError("bootstrap disk drive type",
                                         platform.BOOTSTRAP_DISK_TYPE,
                                         "'cdrom' or 'harddisk'")
 
@@ -196,7 +196,7 @@ class COTInjectConfig(COTSubmodule):
             ui=self.UI,
             vm=vm,
             disk_image=disk_image,
-            disk_type=platform.BOOTSTRAP_DISK_TYPE,
+            drive_type=platform.BOOTSTRAP_DISK_TYPE,
             file_id=file_id,
             controller=cont_type,
             address=drive_address,

@@ -376,7 +376,7 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
         """Replace a hard disk with a cd-rom."""
         self.instance.package = self.v09_ovf
         self.instance.disk_image = self.input_iso
-        self.instance.disk_type = 'cdrom'
+        self.instance.drive_type = 'cdrom'
         self.instance.controller = 'scsi'
         self.instance.address = "0:0"
         self.instance.run()
@@ -420,7 +420,7 @@ ovf:fileRef="file1" ovf:format=\
         """Replace a cd-rom with a hard disk."""
         self.instance.package = self.input_ovf
         self.instance.disk_image = self.blank_vmdk
-        self.instance.disk_type = 'harddisk'
+        self.instance.drive_type = 'harddisk'
         self.instance.controller = 'ide'
         self.instance.address = "1:0"
         self.instance.run()
@@ -597,7 +597,7 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         """Add a CDROM drive to an existing controller."""
         self.instance.package = self.input_ovf
         self.instance.disk_image = self.blank_vmdk
-        self.instance.disk_type = "cdrom"
+        self.instance.drive_type = "cdrom"
         self.instance.controller = "scsi"
         self.instance.address = "0:1"
         self.instance.run()

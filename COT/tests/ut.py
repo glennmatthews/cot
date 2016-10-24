@@ -163,17 +163,17 @@ class COT_UT(unittest.TestCase):  # noqa: N801
     # Standard WARNING logger messages we may expect at various points:
     TYPE_NOT_SPECIFIED_GUESS_HARDDISK = {
         'levelname': 'WARNING',
-        'msg': "disk type not specified.*guessing.*based on file extension",
+        'msg': "drive type not specified.*guessing.*based on file extension",
         'args': ('harddisk', ),
     }
     TYPE_NOT_SPECIFIED_GUESS_CDROM = {
         'levelname': 'WARNING',
-        'msg': "disk type not specified.*guessing.*based on file extension",
+        'msg': "drive type not specified.*guessing.*based on file extension",
         'args': ('cdrom', ),
     }
     CONTROLLER_NOT_SPECIFIED_GUESS_IDE = {
         'levelname': 'WARNING',
-        'msg': "Guessing controller type.*based on disk type",
+        'msg': "Guessing controller type.*based on disk drive type",
         'args': ('ide', r'.*', r'.*'),
     }
     UNRECOGNIZED_PRODUCT_CLASS = {
