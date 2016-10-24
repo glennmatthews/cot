@@ -251,9 +251,9 @@ otherwise, will create a new disk entry.""")
         p.set_defaults(instance=self)
 
 
-def guess_disk_type_from_extension(disk_file):
+def guess_disk_type_from_extension(disk_file_name):
     """Guess the disk type (harddisk/cdrom) from the disk file name."""
-    disk_extension = os.path.splitext(disk_file)[1]
+    disk_extension = os.path.splitext(disk_file_name)[1]
     ext_type_map = {
         '.iso':   'cdrom',
         '.vmdk':  'harddisk',
@@ -268,7 +268,7 @@ def guess_disk_type_from_extension(disk_file):
             "Unable to guess disk type for file '{0}' from its extension "
             "'{1}'.\nKnown extensions are {2}\n"
             "Please specify '--type harddisk' or '--type cdrom'."
-            .format(disk_file, disk_extension, ext_type_map.keys()))
+            .format(disk_file_name, disk_extension, ext_type_map.keys()))
     return disk_type
 
 
@@ -477,20 +477,18 @@ def add_disk_worker(vm,
     :param str diskname: Name for disk device
     :param str description: Description of disk device
     """
-    disk_path = disk_image.path
     if disk_type is None:
-        disk_type = guess_disk_type_from_extension(disk_path)
+        disk_type = guess_disk_type_from_extension(disk_image.path)
         logger.warning("New disk type not specified, guessing it should "
                        "be '%s' based on file extension", disk_type)
 
     # Convert the disk to a new format if needed...
     disk_image = vm.convert_disk_if_needed(disk_image, disk_type)
-    disk_path = disk_image.path
 
-    disk_file = os.path.basename(disk_path)
+    disk_filename = os.path.basename(disk_image.path)
 
     (file_obj, disk, ctrl_item, disk_item) = \
-        search_for_elements(vm, disk_file, file_id, controller, address)
+        search_for_elements(vm, disk_filename, file_id, controller, address)
 
     if controller is None:
         controller = guess_controller_type(vm, ctrl_item, disk_type)
@@ -504,8 +502,8 @@ def add_disk_worker(vm,
     validate_elements(vm, file_obj, disk, disk_item, ctrl_item,
                       file_id, controller)
 
-    confirm_elements(vm, ui, file_obj, disk_path, disk, disk_item, disk_type,
-                     controller, ctrl_item, subtype)
+    confirm_elements(vm, ui, file_obj, disk_image.path, disk, disk_item,
+                     disk_type, controller, ctrl_item, subtype)
 
     # OK - let's add things!
     if file_id is None and file_obj is not None:
@@ -513,10 +511,10 @@ def add_disk_worker(vm,
     if file_id is None and disk is not None:
         file_id = vm.get_file_ref_from_disk(disk)
     if file_id is None:
-        file_id = disk_file
+        file_id = disk_filename
 
     # First, the File
-    file_obj = vm.add_file(disk_path, file_id, file_obj, disk)
+    file_obj = vm.add_file(disk_image.path, file_id, file_obj, disk)
 
     # Next, the Disk
     disk = vm.add_disk(disk_image, file_id, disk_type, disk)
