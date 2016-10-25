@@ -33,7 +33,7 @@ class TestVMDK(COT_UT):
     """Test cases for VMDK class."""
 
     def other_format_to_vmdk_stream_optimized_test(self, disk_format):
-        """Test conversion of raw to vmdk streamOptimized."""
+        """Test conversion of various formats to vmdk streamOptimized."""
         temp_disk = os.path.join(self.temp_dir, "foo.{0}".format(disk_format))
         helpers['qemu-img'].call(['create', '-f', disk_format,
                                   temp_disk, "16M"])

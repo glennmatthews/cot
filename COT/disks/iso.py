@@ -47,9 +47,8 @@ class ISO(DiskRepresentation):
         """The list of files contained in this ISO."""
         if self._files is None:
             if helpers['isoinfo']:    # TODO
-                args = ["-i", self.path, "-f"]
-                if self.disk_subformat == "rockridge":
-                    args.append("-R")
+                # It's safe to specify -R even for non-rockridge ISOs
+                args = ["-i", self.path, "-f", "-R"]
                 # At this time we don't support Joliet extensions
                 output = helpers['isoinfo'].call(args)
                 result = []

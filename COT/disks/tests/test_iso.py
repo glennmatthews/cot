@@ -48,12 +48,24 @@ class TestISO(COT_UT):
         iso = ISO(path=os.path.join(self.temp_dir, "out.iso"),
                   files=[self.input_ovf])
         if helpers['isoinfo']:
-            self.assertEqual(iso.files,
-                             [os.path.basename(self.input_ovf)])
             # Our default create format is rockridge
             self.assertEqual(iso.disk_subformat, "rockridge")
+            self.assertEqual(iso.files,
+                             [os.path.basename(self.input_ovf)])
         else:
-            logger.info("isoinfo not available, not checking disk contents")
+            helpers['isoinfo']._installed = True
+
+            with mock.patch.object(helpers['isoinfo'], "call",
+                                   return_value="Rock Ridge extensions found"):
+                self.assertEqual(iso.disk_subformat, "rockridge")
+
+            with mock.patch.object(helpers['isoinfo'], "call",
+                                   return_value="""
+Setting input-charset to 'UTF-8' from locale.
+/{0}
+""".format(os.path.basename(self.input_ovf))):
+                self.assertEqual(iso.files,
+                                 [os.path.basename(self.input_ovf)])
 
     def test_create_with_files_non_rockridge(self):
         """Creation of a non-rock-ridge ISO with specific file contents."""
@@ -61,12 +73,22 @@ class TestISO(COT_UT):
                   files=[self.input_ovf],
                   disk_subformat="")
         if helpers['isoinfo']:
+            self.assertEqual(iso.disk_subformat, "")
             self.assertEqual(iso.files,
                              [os.path.basename(self.input_ovf)])
-            # Our default create format is rockridge
-            self.assertEqual(iso.disk_subformat, "")
         else:
-            logger.info("isoinfo not available, not checking disk contents")
+            helpers['isoinfo']._installed = True
+            with mock.patch.object(helpers['isoinfo'], "call",
+                                   return_value="No SUSP/Rock Ridge present"):
+                self.assertEqual(iso.disk_subformat, "")
+
+            with mock.patch.object(helpers['isoinfo'], "call",
+                                   return_value="""
+Setting input-charset to 'UTF-8' from locale.
+/{0};1
+""".format(os.path.basename(self.input_ovf).upper())):
+                self.assertEqual(iso.files,
+                                 [os.path.basename(self.input_ovf)])
 
     def test_create_without_files(self):
         """Can't create an empty ISO."""
@@ -137,7 +159,14 @@ class TestISO(COT_UT):
         if helpers['isoinfo']:
             self.assertTrue(ISO.file_is_this_type(self.input_iso))
             self.assertFalse(ISO.file_is_this_type(self.blank_vmdk))
-        # TODO - check call at least.
+        else:
+            # Fake it til you make it
+            helpers['isoinfo']._installed = True
+            with mock.patch.object(helpers['isoinfo'], "call"):
+                self.assertTrue(ISO.file_is_this_type(self.input_iso))
+            with mock.patch.object(helpers['isoinfo'], "call",
+                                   side_effect=HelperError):
+                self.assertFalse(ISO.file_is_this_type(self.blank_vmdk))
 
     def test_file_is_this_type_noisoinfo(self):
         """The file_is_this_type API should work if isoinfo isn't available."""

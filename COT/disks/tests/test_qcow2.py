@@ -20,7 +20,8 @@ import logging
 import os
 
 from COT.tests.ut import COT_UT
-from COT.disks import QCOW2
+from COT.disks import QCOW2, disk_representation_from_file
+from COT.helpers import helpers
 
 logger = logging.getLogger(__name__)
 
@@ -34,3 +35,13 @@ class TestQCOW2(COT_UT):
                           QCOW2,
                           path=os.path.join(self.temp_dir, "out.qcow2"),
                           files=[self.input_ovf])
+
+    def test_from_other_image(self):
+        """Test conversion of various formats to qcow2."""
+        temp_disk = os.path.join(self.temp_dir, "foo.raw")
+        helpers['qemu-img'].call(['create', '-f', 'raw', temp_disk, "16M"])
+        old = disk_representation_from_file(temp_disk)
+        qcow2 = QCOW2.from_other_image(old, self.temp_dir)
+
+        self.assertEqual(qcow2.disk_format, 'qcow2')
+        self.assertEqual(qcow2.disk_subformat, None)
