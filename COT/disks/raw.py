@@ -67,7 +67,7 @@ class RAW(DiskRepresentation):
                     capacity_val += os.path.getsize(content_file)
                     # Round capacity to the next larger multiple of 8 MB
                     # just to be safe...
-                capacity_val = 8 * ((capacity_val / 1024 / 1024 / 8) + 1)
+                capacity_val = int(8 * ((capacity_val / 1024 / 1024 / 8) + 1))
                 capacity_str = "{0}M".format(capacity_val)
                 self._capacity = capacity_str
                 logger.verbose(
