@@ -59,10 +59,13 @@ class TestDiskAPI(COT_UT):
         self.assertEqual(dr.disk_subformat, "streamOptimized")
 
     def test_disk_representation_from_file_iso(self):
-        """Test if disk_representation_from_file() works for vmdk images."""
+        """Test if disk_representation_from_file() works for iso images."""
         dr = COT.disks.disk_representation_from_file(self.input_iso)
         self.assertEqual(dr.disk_format, "iso")
-        self.assertEqual(dr.disk_subformat, "")
+        # In Travis CI we can't currently install isoinfo (via genisoimage).
+        # https://github.com/travis-ci/apt-package-whitelist/issues/588
+        if helpers['isoinfo']:
+            self.assertEqual(dr.disk_subformat, "")
 
     def test_disk_representation_from_file_errors(self):
         """Check disk_representation_from_file() error handling."""

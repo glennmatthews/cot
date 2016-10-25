@@ -17,7 +17,7 @@ import os
 import re
 
 from COT.disks.disk import DiskRepresentation
-from COT.helpers import helpers
+from COT.helpers import helpers, helper_select
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +99,16 @@ class RAW(DiskRepresentation):
         file_name = os.path.basename(input_image.path)
         file_prefix, _ = os.path.splitext(file_name)
         output_path = os.path.join(output_dir, file_prefix + ".img")
+        if (input_image.disk_format == 'vmdk' and
+                input_image.disk_subformat == 'streamOptimized'):
+            helper = helper_select([('qemu-img', '2.1.0'), 'vmdktool'])
+            # Special case: qemu-img < 2.1.0 can't handle streamOptimized VMDKs
+            if helper.name == 'vmdktool':
+                # Note that vmdktool takes its arguments in unusual order -
+                # output file comes before input file
+                helper.call(['-s', output_path, input_image.path])
+                return cls(output_path)
+
         helpers['qemu-img'].call(['convert',
                                   '-O', 'raw',
                                   input_image.path,
