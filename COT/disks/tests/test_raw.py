@@ -21,12 +21,19 @@ import os
 
 from COT.tests.ut import COT_UT
 from COT.disks import RAW, disk_representation_from_file
+from COT.helpers import HelperError
 
 logger = logging.getLogger(__name__)
 
 
 class TestRAW(COT_UT):
     """Test cases for RAW disk image representation."""
+
+    def test_representation_invalid(self):
+        """Representation of a file that isn't really a raw disk."""
+        fake_raw = RAW(self.input_iso)
+        with self.assertRaises(HelperError):
+            assert fake_raw.files
 
     def test_convert_from_vmdk(self):
         """Test conversion of a RAW image from a VMDK."""
