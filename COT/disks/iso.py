@@ -87,6 +87,7 @@ class ISO(DiskRepresentation):
             args = ['-as', 'mkisofs'] + args
         helper.call(args)
 
+        self._disk_subformat = None
         self._files = None
 
     @classmethod

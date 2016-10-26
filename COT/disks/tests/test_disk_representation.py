@@ -53,6 +53,10 @@ class TestDisk(COT_UT):
         self.assertRaises(HelperError,
                           DiskRepresentation.file_is_this_type, "/foo/bar")
 
+    def test_create_file_path_mandatory(self):
+        """Can't create a file without specifying a path."""
+        self.assertRaises(ValueError, DiskRepresentation, path=None)
+
     def test_create_file_already_extant(self):
         """Can't call create_file if the file already exists."""
         self.assertRaises(RuntimeError,

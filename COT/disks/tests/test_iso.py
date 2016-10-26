@@ -43,6 +43,17 @@ class TestISO(COT_UT):
             helper._version = None
         super(TestISO, self).tearDown()
 
+    def test_representation(self):
+        """Representing an existing ISO."""
+        iso = ISO(self.input_iso)
+        self.assertEqual(iso.path, self.input_iso)
+        self.assertEqual(iso.disk_format, 'iso')
+        self.assertEqual(iso.capacity, str(self.FILE_SIZE['input.iso']))
+        if helpers['isoinfo']:
+            self.assertEqual(iso.disk_subformat, "")
+            self.assertEqual(iso.files,
+                             ['iosxr_config.txt', 'iosxr_config_admin.txt'])
+
     def test_create_with_files(self):
         """Creation of a ISO with specific file contents."""
         iso = ISO(path=os.path.join(self.temp_dir, "out.iso"),

@@ -80,3 +80,15 @@ class TestDiskAPI(COT_UT):
             self.assertRaises(RuntimeError,
                               COT.disks.disk_representation_from_file,
                               self.input_vmdk)
+        # We support QCOW2 but not QCOW at present
+        temp_path = os.path.join(self.temp_dir, "foo.qcow")
+        helpers['qemu-img'].call(['create', '-f', 'qcow', temp_path, '8M'])
+        self.assertRaises(NotImplementedError,
+                          COT.disks.disk_representation_from_file, temp_path)
+
+    def test_convert_disk_errors(self):
+        """Invalid inputs to convert_disk()."""
+        self.assertRaises(
+            NotImplementedError, COT.disks.convert_disk,
+            COT.disks.disk_representation_from_file(self.blank_vmdk),
+            self.temp_dir, "frobozz")
