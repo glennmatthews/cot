@@ -494,3 +494,9 @@ ovf:size="{cfg_size}" />
                               "1CPU-1GB-1NIC",
                               "2CPU-2GB-1NIC"])
             self.assertEqual(ovf.default_config_profile, "4CPU-4GB-3NIC")
+
+    def test_find_empty_drive_unsupported(self):
+        """Negative test for find_empty_drive()."""
+        with VMContextManager(self.input_ovf, None) as ovf:
+            self.assertRaises(ValueUnsupportedError,
+                              ovf.find_empty_drive, 'floppy')

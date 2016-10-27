@@ -21,12 +21,14 @@ import os.path
 import re
 import shutil
 import tempfile
+
+import mock
 from pkg_resources import resource_filename
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.inject_config import COTInjectConfig
-from COT.data_validation import InvalidInputError
+from COT.data_validation import InvalidInputError, ValueUnsupportedError
 from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
 from COT.helpers import helpers
 from COT.disks import disk_representation_from_file
@@ -225,6 +227,31 @@ for bootstrap configuration.</rasd:Description>
         # TODO - we don't currently have a way to check VMDK file listing
         # self.assertEqual(disk_representation_from_file(config_vmdk).files,
         #                 ["ios_config.txt"])
+
+    def test_inject_config_unsupported_format_existing(self):
+        """Only 'harddisk' and 'cdrom' config drives are supported."""
+        self.instance.package = self.input_ovf
+        self.instance.config_file = self.config_file
+        # Failure during initial lookup of existing drive
+        # pylint: disable=protected-access
+        with mock.patch.object(self.instance.vm._platform,
+                               'BOOTSTRAP_DISK_TYPE',
+                               new_callable=mock.PropertyMock,
+                               return_value='floppy'):
+            self.assertRaises(ValueUnsupportedError, self.instance.run)
+
+    def test_inject_config_unsupported_format_new_disk(self):
+        """Only 'harddisk' and 'cdrom' config drives are supported."""
+        self.instance.package = self.input_ovf
+        self.instance.config_file = self.config_file
+        # Drive lookup passes, but failure to create new disk
+        # pylint: disable=protected-access
+        with mock.patch.object(self.instance.vm._platform,
+                               'BOOTSTRAP_DISK_TYPE',
+                               new_callable=mock.PropertyMock,
+                               side_effect=('cdrom', 'cdrom',
+                                            'floppy', 'floppy', 'floppy')):
+            self.assertRaises(ValueUnsupportedError, self.instance.run)
 
     def test_inject_config_repeatedly(self):
         """inject-config repeatedly."""
