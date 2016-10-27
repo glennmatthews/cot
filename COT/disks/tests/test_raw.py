@@ -19,8 +19,11 @@
 import logging
 import os
 
+from distutils.version import StrictVersion
+import mock
+
 from COT.tests.ut import COT_UT
-from COT.disks import RAW, disk_representation_from_file
+from COT.disks import RAW, VMDK, disk_representation_from_file
 from COT.helpers import HelperError
 
 logger = logging.getLogger(__name__)
@@ -42,6 +45,35 @@ class TestRAW(COT_UT):
 
         self.assertEqual(raw.disk_format, 'raw')
         self.assertEqual(raw.disk_subformat, None)
+
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
+                new_callable=mock.PropertyMock,
+                return_value=StrictVersion("1.0.0"))
+    @mock.patch('COT.disks.raw.RAW.create_file')
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.call')
+    @mock.patch('COT.helpers.vmdktool.VMDKTool.call')
+    def test_convert_from_vmdk_old_qemu(self, mock_vmdktool, mock_qemuimg, *_):
+        """Test conversion from streamOptimized VMDK with old QEMU."""
+        RAW.from_other_image(VMDK(self.blank_vmdk), self.temp_dir)
+
+        mock_vmdktool.assert_called_with([
+            '-s', os.path.join(self.temp_dir, "blank.img"), self.blank_vmdk])
+        mock_qemuimg.assert_not_called()
+
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
+                new_callable=mock.PropertyMock,
+                return_value=StrictVersion("1.2.0"))
+    @mock.patch('COT.disks.raw.RAW.create_file')
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.call')
+    @mock.patch('COT.helpers.vmdktool.VMDKTool.call')
+    def test_convert_from_vmdk_new_qemu(self, mock_vmdktool, mock_qemuimg, *_):
+        """Test conversion from streamOptimized VMDK with new QEMU."""
+        RAW.from_other_image(VMDK(self.blank_vmdk), self.temp_dir)
+
+        mock_vmdktool.assert_not_called()
+        mock_qemuimg.assert_called_with([
+            'convert', '-O', 'raw', self.blank_vmdk,
+            os.path.join(self.temp_dir, "blank.img")])
 
     def test_create_with_capacity(self):
         """Creation of a raw image of a particular size."""

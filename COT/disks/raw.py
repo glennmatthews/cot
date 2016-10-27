@@ -101,8 +101,8 @@ class RAW(DiskRepresentation):
         output_path = os.path.join(output_dir, file_prefix + ".img")
         if (input_image.disk_format == 'vmdk' and
                 input_image.disk_subformat == 'streamOptimized'):
-            helper = helper_select([('qemu-img', '2.1.0'), 'vmdktool'])
-            # Special case: qemu-img < 2.1.0 can't handle streamOptimized VMDKs
+            helper = helper_select([('qemu-img', '1.2.0'), 'vmdktool'])
+            # Special case: qemu-img < 1.2.0 can't read streamOptimized VMDKs
             if helper.name == 'vmdktool':
                 # Note that vmdktool takes its arguments in unusual order -
                 # output file comes before input file

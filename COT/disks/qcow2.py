@@ -15,7 +15,7 @@
 import os
 
 from COT.disks.disk import DiskRepresentation
-from COT.helpers import helpers
+from COT.helpers import helpers, helper_select
 
 
 class QCOW2(DiskRepresentation):
@@ -35,6 +35,23 @@ class QCOW2(DiskRepresentation):
         file_name = os.path.basename(input_image.path)
         (file_prefix, _) = os.path.splitext(file_name)
         output_path = os.path.join(output_dir, file_prefix + ".qcow2")
+        if (input_image.disk_format == 'vmdk' and
+                input_image.disk_subformat == 'streamOptimized'):
+            helper = helper_select([('qemu-img', '1.2.0'), 'vmdktool'])
+            # Special case: qemu-img < 1.2.0 can't read streamOptimized VMDKs
+            if helper.name == 'vmdktool':
+                # vmdktool can convert streamOptimized VMDK to raw
+                # Convert vmdk to raw, then raw to qcow2
+                # Note that vmdktool takes its arguments in unusual order -
+                # output file comes before input file
+                from COT.disks import RAW
+                try:
+                    temp_image = RAW.from_other_image(input_image, output_dir)
+                    return cls.from_other_image(temp_image, output_dir,
+                                                output_subformat)
+                finally:
+                    os.remove(temp_image.path)
+
         helpers['qemu-img'].call(['convert',
                                   '-O', 'qcow2',
                                   input_image.path,
