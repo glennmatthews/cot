@@ -26,7 +26,7 @@ from COT.ui_shared import UI
 from COT.add_disk import COTAddDisk
 from COT.data_validation import InvalidInputError, ValueMismatchError
 from COT.data_validation import ValueUnsupportedError, ValueTooHighError
-from COT.helpers import create_disk_image, get_disk_format
+from COT.disks import create_disk, disk_representation_from_file
 
 
 class TestCOTAddDisk(COT_UT):
@@ -376,7 +376,7 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
         """Replace a hard disk with a cd-rom."""
         self.instance.package = self.v09_ovf
         self.instance.disk_image = self.input_iso
-        self.instance.disk_type = 'cdrom'
+        self.instance.drive_type = 'cdrom'
         self.instance.controller = 'scsi'
         self.instance.address = "0:0"
         self.instance.run()
@@ -420,7 +420,7 @@ ovf:fileRef="file1" ovf:format=\
         """Replace a cd-rom with a hard disk."""
         self.instance.package = self.input_ovf
         self.instance.disk_image = self.blank_vmdk
-        self.instance.disk_type = 'harddisk'
+        self.instance.drive_type = 'harddisk'
         self.instance.controller = 'ide'
         self.instance.address = "1:0"
         self.instance.run()
@@ -468,7 +468,7 @@ ovf:diskId="file2" ovf:fileRef="file2" ovf:format=\
         # Create a qcow2 image and add it as a new disk
         new_qcow2 = os.path.join(self.temp_dir, "new.qcow2")
         # Make it a small file to keep the test fast
-        create_disk_image(new_qcow2, capacity="16M")
+        create_disk('qcow2', path=new_qcow2, capacity="16M")
         self.instance.package = self.input_ovf
         self.instance.disk_image = new_qcow2
         self.instance.controller = 'scsi'
@@ -503,17 +503,17 @@ ovf:diskId="new.vmdk" ovf:fileRef="new.vmdk" ovf:format=\
 """.format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            new_size=os.path.getsize(os.path.join(self.temp_dir, "new.vmdk"))))
         # Make sure the disk was actually converted to the right format
-        format_str, subformat = get_disk_format(os.path.join(self.temp_dir,
-                                                             "new.vmdk"))
-        self.assertEqual(format_str, 'vmdk')
-        self.assertEqual(subformat, "streamOptimized")
+        dr = disk_representation_from_file(os.path.join(self.temp_dir,
+                                                        "new.vmdk"))
+        self.assertEqual(dr.disk_format, 'vmdk')
+        self.assertEqual(dr.disk_subformat, "streamOptimized")
 
     def test_disk_conversion_and_replacement(self):
         """Convert a disk to implicitly replace an existing disk."""
         # Create a qcow2 image and add it as replacement for the existing vmdk
         new_qcow2 = os.path.join(self.temp_dir, "input.qcow2")
         # Keep it small!
-        create_disk_image(new_qcow2, capacity="16M")
+        create_disk('qcow2', path=new_qcow2, capacity="16M")
         self.instance.package = self.input_ovf
         self.instance.disk_image = new_qcow2
         self.instance.run()
@@ -597,7 +597,7 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         """Add a CDROM drive to an existing controller."""
         self.instance.package = self.input_ovf
         self.instance.disk_image = self.blank_vmdk
-        self.instance.disk_type = "cdrom"
+        self.instance.drive_type = "cdrom"
         self.instance.controller = "scsi"
         self.instance.address = "0:1"
         self.instance.run()
@@ -727,7 +727,7 @@ vmdk.html#streamOptimized" />
         # Create a qcow2 image
         new_qcow2 = os.path.join(self.temp_dir, "foozle.qcow2")
         # Keep it small!
-        create_disk_image(new_qcow2, capacity="16M")
+        create_disk('qcow2', path=new_qcow2, capacity="16M")
         # Try to add a fifth disk - IDE controllers are full!
         self.instance.package = self.temp_file
         self.instance.disk_image = new_qcow2

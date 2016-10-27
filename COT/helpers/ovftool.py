@@ -19,54 +19,35 @@
 https://www.vmware.com/support/developer/ovf/
 """
 
-import logging
-
 from .helper import Helper
-
-logger = logging.getLogger(__name__)
 
 
 class OVFTool(Helper):
     """Helper provider for ``ovftool`` from VMware.
 
     https://www.vmware.com/support/developer/ovf/
-
-    **Methods**
-
-    .. autosummary::
-      :nosignatures:
-
-      install_helper
-      validate_ovf
     """
 
     def __init__(self):
         """Initializer."""
-        super(OVFTool, self).__init__("ovftool",
-                                      version_regexp="ovftool ([0-9.]+)")
+        super(OVFTool, self).__init__(
+            "ovftool",
+            info_uri="https://www.vmware.com/support/developer/ovf/",
+            version_regexp="ovftool ([0-9.]+)")
 
-    def install_helper(self):
-        """Install ``ovftool``.
+    @property
+    def installable(self):
+        """COT can't install ovftool because of VMware site restrictions."""
+        return False
 
-        :raise: :exc:`NotImplementedError` as VMware does not currently provide
-          any mechanism for automatic download of ovftool.
+    def unsure_how_to_install(self):
+        """Raise a NotImplementedError about missing install logic.
+
+        We override the default install implementation to raise a more
+        detailed error message for ovftool.
         """
-        if self.should_not_be_installed_but_is():
-            return
         raise NotImplementedError(
-            "No support for automated installation of ovftool, "
-            "as VMware requires a site login to download it.\n"
-            "See https://www.vmware.com/support/developer/ovf/")
-
-    def validate_ovf(self, ovf_file):
-        """Use VMware's ``ovftool`` program to validate an OVF or OVA.
-
-        This checks the file against the OVF standard and any VMware-specific
-        requirements.
-
-        :param str ovf_file: File to validate
-        :return: Output from ``ovftool``
-        :raise HelperNotFoundError: if ``ovftool`` is not found.
-        :raise HelperError: if ``ovftool`` regards the file as invalid
-        """
-        return self.call_helper(['--schemaValidate', ovf_file])
+            "No support for automated installation of ovftool, as VMware "
+            "requires a site login to download it. See "
+            "https://www.vmware.com/support/developer/ovf/"
+        )

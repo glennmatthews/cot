@@ -44,9 +44,9 @@ import requests
 from pyVmomi import vim
 from pyVim.connect import SmartConnection
 
-from .data_validation import ValueUnsupportedError
-from .deploy import COTDeploy
-from .helpers.ovftool import OVFTool
+from COT.data_validation import ValueUnsupportedError
+from COT.deploy import COTDeploy
+from COT.helpers import helpers
 
 logger = logging.getLogger(__name__)
 
@@ -212,7 +212,7 @@ class COTDeployESXi(COTDeploy):
         self._locator = None
         self._ovftool_args = []
 
-        self.ovftool = OVFTool()
+        self.ovftool = helpers['ovftool']
 
     @property
     def ovftool_args(self):
@@ -359,7 +359,7 @@ class COTDeployESXi(COTDeploy):
         ovftool_args = self.fixup_ovftool_args(ovftool_args, target)
 
         logger.info("Deploying VM...")
-        self.ovftool.call_helper(ovftool_args, capture_output=False)
+        self.ovftool.call(ovftool_args, capture_output=False)
 
         # VMWare has confirmed that they have no plan to implement serial port
         # orchestration in ovftool, so we have to do it ourselves now that

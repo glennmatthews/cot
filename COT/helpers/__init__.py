@@ -1,5 +1,5 @@
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015-2016 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -11,13 +11,7 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 """
-Provide various non-Python helper programs that COT makes use of.
-
-In general, COT submodules should work through the APIs provided in
-:mod:`COT.helpers.api` rather than accessing individual helper program classes.
-This gives us the flexibility to change the specific set of helper programs
-that are used to provide any given functionality with minimal impact to COT
-as a whole.
+Provides a common interface for interacting with various non-Python programs.
 
 API
 ---
@@ -25,14 +19,8 @@ API
 .. autosummary::
   :nosignatures:
 
-  ~COT.helpers.api.convert_disk_image
-  ~COT.helpers.api.create_disk_image
-  ~COT.helpers.api.get_checksum
-  ~COT.helpers.api.get_disk_capacity
-  ~COT.helpers.api.get_disk_format
-  ~COT.helpers.api.install_file
-  ~COT.helpers.api.create_install_dir
-  ~COT.helpers.api.download_and_expand
+  helpers
+  helper_select
 
 Exceptions
 ----------
@@ -48,36 +36,59 @@ Helper modules
 .. autosummary::
   :toctree:
 
-  COT.helpers.api
   COT.helpers.helper
+  COT.helpers.apt_get
   COT.helpers.fatdisk
+  COT.helpers.gcc
+  COT.helpers.isoinfo
+  COT.helpers.make
   COT.helpers.mkisofs
   COT.helpers.ovftool
+  COT.helpers.port
   COT.helpers.qemu_img
   COT.helpers.vmdktool
+  COT.helpers.yum
 """
 
-from .api import (
-    convert_disk_image,
-    create_disk_image,
-    create_install_dir,
-    download_and_expand,
-    get_checksum,
-    get_disk_capacity,
-    get_disk_format,
-    install_file,
+from .helper import (
+    Helper, PackageManager, helpers,
+    HelperError, HelperNotFoundError, helper_select,
 )
-from .helper import HelperError, HelperNotFoundError
+from .apt_get import AptGet       # noqa
+from .fatdisk import FatDisk      # noqa
+from .gcc import GCC              # noqa
+from .isoinfo import ISOInfo      # noqa
+from .make import Make            # noqa
+from .mkisofs import MkISOFS, GenISOImage, XorrISO   # noqa
+from .ovftool import OVFTool      # noqa
+from .port import Port            # noqa
+from .qemu_img import QEMUImg     # noqa
+from .vmdktool import VMDKTool    # noqa
+from .yum import Yum              # noqa
+
+# pylint doesn't know about __subclasses__
+# https://github.com/PyCQA/pylint/issues/555
+# TODO: this should be fixed when pylint 2.0 is released
+# pylint:disable=no-member
+
+
+# Populate helpers dictionary
+for cls in Helper.__subclasses__():
+    if cls is PackageManager:
+        # Don't record the abstract class!
+        continue
+    ins = cls()
+    helpers[ins.name] = ins
+
+
+for cls in PackageManager.__subclasses__():
+    ins = cls()
+    helpers[ins.name] = ins
+
 
 __all__ = (
     'HelperError',
     'HelperNotFoundError',
-    'convert_disk_image',
-    'create_disk_image',
-    'create_install_dir',
-    'download_and_expand',
-    'get_checksum',
-    'get_disk_capacity',
-    'get_disk_format',
-    'install_file',
+    'helpers',
+    'helper_select',
 )

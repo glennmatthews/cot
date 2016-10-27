@@ -17,6 +17,7 @@
 """Unit test cases for COT.data_validation module."""
 
 import re
+import logging
 
 try:
     import unittest2 as unittest
@@ -24,13 +25,48 @@ except ImportError:
     import unittest
 
 from COT.data_validation import (
-    match_or_die,
+    match_or_die, file_checksum,
     canonicalize_helper, canonicalize_nic_subtype, NIC_TYPES,
     mac_address, device_address, no_whitespace, truth_value,
     validate_int, non_negative_int, positive_int,
     InvalidInputError, ValueMismatchError, ValueUnsupportedError,
     ValueTooLowError, ValueTooHighError,
 )
+from COT.tests.ut import COT_UT
+
+logger = logging.getLogger(__name__)
+
+
+class TestFileChecksum(COT_UT):
+    """Test cases for file_checksum() function."""
+
+    def test_file_checksum_md5(self):
+        """Test case for file_checksum() with md5 sum."""
+        checksum = file_checksum(self.input_ovf, 'md5')
+        self.assertEqual(checksum, "4e7a3ba0b70f6784a3a91b18336296c7")
+
+        checksum = file_checksum(self.minimal_ovf, 'md5')
+        self.assertEqual(checksum, "288e1e3fcb05265cd9b8c7578e173fef")
+
+    def test_file_checksum_sha1(self):
+        """Test case for file_checksum() with sha1 sum."""
+        checksum = file_checksum(self.input_ovf, 'sha1')
+        self.assertEqual(checksum, "c3bd2579c2edc76ea35b5bde7d4f4e41eab08963")
+
+        checksum = file_checksum(self.minimal_ovf, 'sha1')
+        self.assertEqual(checksum,
+                         "5d0635163f6a580442f01466245e122f8412e8d6")
+
+    def test_file_checksum_unsupported(self):
+        """Test invalid options to file_checksum()."""
+        self.assertRaises(NotImplementedError,
+                          file_checksum,
+                          self.input_ovf,
+                          'sha256')
+        self.assertRaises(NotImplementedError,
+                          file_checksum,
+                          self.input_ovf,
+                          'crc')
 
 
 class TestValidationFunctions(unittest.TestCase):

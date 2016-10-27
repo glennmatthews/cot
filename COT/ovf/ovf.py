@@ -51,12 +51,13 @@ from contextlib import closing
 
 from COT.xml_file import XML, register_namespace
 from COT.vm_description import VMDescription, VMInitError
-from COT.data_validation import match_or_die, check_for_conflict
-from COT.data_validation import ValueTooHighError, ValueUnsupportedError
-from COT.data_validation import canonicalize_nic_subtype
+from COT.data_validation import (
+    match_or_die, check_for_conflict, file_checksum,
+    ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
+)
 from COT.file_reference import FileOnDisk, FileInTAR
-from COT.helpers import get_checksum, get_disk_capacity, convert_disk_image
 from COT.platforms import platform_from_product_class, GenericPlatform
+from COT.disks import convert_disk, disk_representation_from_file
 
 from COT.ovf.name_helper import name_helper
 from COT.ovf.hardware import OVFHardware, OVFHardwareDataError
@@ -811,7 +812,8 @@ class OVF(VMDescription, XML):
             # It seems wasteful to extract the disk file (could be
             # quite large) from the TAR just to check, so we don't.
             if file_ref.file_path is not None:
-                real_capacity = get_disk_capacity(file_ref.file_path)
+                dr = disk_representation_from_file(file_ref.file_path)
+                real_capacity = dr.capacity
 
             disk_item = self.find_disk_from_file_id(
                 file_elem.get(self.FILE_ID))
@@ -1263,11 +1265,10 @@ class OVF(VMDescription, XML):
             ctrl_type = "(?)"
             ctrl_addr = "?"
         else:
-            ctrl_type = self.get_type_from_device(
-                controller_item).upper()
+            ctrl_type = controller_item.hardware_type.upper()
             ctrl_addr = controller_item.get_value(self.ADDRESS)
         return "{0} @ {1} {2}:{3}".format(
-            self.get_type_from_device(device_item),
+            device_item.hardware_type,
             ctrl_type,
             ctrl_addr,
             device_item.get_value(self.ADDRESS_ON_PARENT))
@@ -1747,26 +1748,35 @@ class OVF(VMDescription, XML):
                     line,
                     user_configurable)
 
-    def convert_disk_if_needed(self, file_path, kind):
+    def convert_disk_if_needed(self, disk_image, kind):
         """Convert the disk to a more appropriate format if needed.
 
         * All hard disk files are converted to stream-optimized VMDK as it
           is the only format that VMware supports in OVA packages.
         * CD-ROM iso images are accepted without change.
 
-        :param str file_path: Image to inspect and possibly convert
-        :param str kind: Image type (harddisk/cdrom)
+        :param disk_image: Image to inspect and possibly convert
+        :type disk_image: instance of :class:`~COT.disks.DiskRepresentation`
+          or subclass
+        :param str kind: Image type (harddisk/cdrom).
         :return:
-          * :attr:`file_path`, if no conversion was required
-          * or a file path in :attr:`output_dir` containing the converted image
+          * :attr:`disk_image`, if no conversion was required
+          * or a new :class:`~COT.disks.DiskRepresentation` instance
+            representing a converted image that has been created in
+            :attr:`output_dir`.
         """
         if kind != 'harddisk':
             logger.debug("No disk conversion needed")
-            return file_path
+            return disk_image
 
         # Convert hard disk to VMDK format, streamOptimized subformat
-        return convert_disk_image(file_path, self.working_dir,
-                                  'vmdk', 'streamOptimized')
+        if (disk_image.disk_format == 'vmdk' and
+                disk_image.disk_subformat == 'streamOptimized'):
+            logger.debug("No disk conversion needed")
+            return disk_image
+
+        return convert_disk(disk_image, self.working_dir,
+                            'vmdk', 'streamOptimized')
 
     def search_from_filename(self, filename):
         """From the given filename, try to find any existing objects.
@@ -1992,27 +2002,6 @@ class OVF(VMDescription, XML):
         """
         return disk.get(self.DISK_FILE_REF)
 
-    def get_type_from_device(self, device):
-        """Get the type of the given device.
-
-        :param OVFItem device: Device object to query
-        :return: string such as 'ide' or 'memory'
-        """
-        device_type = device.get_value(self.RESOURCE_TYPE)
-        for key in self.RES_MAP:
-            if device_type == self.RES_MAP[key]:
-                return key
-        return "unknown ({0})".format(device_type)
-
-    def get_subtype_from_device(self, device):
-        """Get the sub-type of the given opaque device object.
-
-        :param OVFItem device: Device object to query
-        :return: ``None``, or string such as 'virtio' or 'lsilogic', or
-          list of strings
-        """
-        return device.get_value(self.RESOURCE_SUB_TYPE)
-
     def get_common_subtype(self, device_type):
         """Get the sub-type common to all devices of the given type.
 
@@ -2165,18 +2154,19 @@ class OVF(VMDescription, XML):
                                             .format(self.RES_MAP['cdrom'],
                                                     self.RES_MAP['harddisk']))
 
-    def add_disk(self, file_path, file_id, disk_type, disk=None):
+    def add_disk(self, disk_repr, file_id, drive_type, disk=None):
         """Add a new disk object to the VM or overwrite the provided one.
 
-        :param str file_path: Path to disk image file
+        :param str disk_repr: Disk file representation
+        :type disk_repr: COT.disks.DiskRepresentation or subclass
         :param str file_id: Identifier string for the file/disk mapping
-        :param str disk_type: 'harddisk' or 'cdrom'
+        :param str drive_type: 'harddisk' or 'cdrom'
         :param disk: Existing disk object to overwrite
         :type disk: xml.etree.ElementTree.Element
 
         :return: New or updated disk object
         """
-        if disk_type != 'harddisk':
+        if drive_type != 'harddisk':
             if disk is not None:
                 logger.warning("CD-ROMs do not require a Disk element. "
                                "Existing element will be deleted.")
@@ -2192,6 +2182,7 @@ class OVF(VMDescription, XML):
                              "do not require a Disk")
             return disk
 
+        # Else, adding a hard disk:
         self.disk_section = self._ensure_section(
             self.DISK_SECTION,
             "Virtual disk information",
@@ -2206,8 +2197,7 @@ class OVF(VMDescription, XML):
             disk_id = file_id
             disk = ET.SubElement(self.disk_section, self.DISK)
 
-        capacity = get_disk_capacity(file_path)
-        self.set_capacity_of_disk(disk, capacity)
+        self.set_capacity_of_disk(disk, disk_repr.capacity)
 
         disk.set(self.DISK_ID, disk_id)
         disk.set(self.DISK_FILE_REF, file_id)
@@ -2256,7 +2246,7 @@ class OVF(VMDescription, XML):
             ctrl_item.set_property(self.RESOURCE_SUB_TYPE, subtype)
         return ctrl_item
 
-    def _create_new_disk_device(self, disk_type, address, name, ctrl_item):
+    def _create_new_disk_device(self, drive_type, address, name, ctrl_item):
         """Helper for :meth:`add_disk_device`, in the case of no prior Item."""
         ctrl_instance = ctrl_item.get_value(self.INSTANCE_ID)
         if address is None:
@@ -2272,7 +2262,7 @@ class OVF(VMDescription, XML):
             logger.warning("New disk address on parent not specified, "
                            "guessing it should be %s", address)
 
-        ctrl_type = self.get_type_from_device(ctrl_item)
+        ctrl_type = ctrl_item.hardware_type
         # Make sure the address is valid!
         if ctrl_type == "scsi" and int(address) > 15:
             raise ValueTooHighError("disk address on SCSI controller",
@@ -2282,26 +2272,26 @@ class OVF(VMDescription, XML):
                                     address, 1)
 
         if name is None:
-            if disk_type == 'cdrom':
+            if drive_type == 'cdrom':
                 name = "CD-ROM Drive"
-            elif disk_type == 'harddisk':
+            elif drive_type == 'harddisk':
                 name = "Hard Disk Drive"
             else:
                 # Should never get here!
-                raise ValueUnsupportedError("disk type", disk_type,
+                raise ValueUnsupportedError("disk drive type", drive_type,
                                             "'cdrom' or 'harddisk'")
 
-        (_, disk_item) = self.hardware.new_item(disk_type)
+        (_, disk_item) = self.hardware.new_item(drive_type)
         disk_item.set_property(self.ADDRESS_ON_PARENT, address)
         disk_item.set_property(self.PARENT, ctrl_instance)
 
         return disk_item, name
 
-    def add_disk_device(self, disk_type, address, name, description,
+    def add_disk_device(self, drive_type, address, name, description,
                         disk, file_obj, ctrl_item, disk_item=None):
         """Create a new disk hardware device or overwrite an existing one.
 
-        :param str disk_type: ``'harddisk'`` or ``'cdrom'``
+        :param str drive_type: ``'harddisk'`` or ``'cdrom'``
         :param str address: Address on controller, such as "1:0" (optional)
         :param str name: Device name string (optional)
         :param str description: Description string (optional)
@@ -2318,13 +2308,13 @@ class OVF(VMDescription, XML):
         if disk_item is None:
             logger.info("Disk Item not found, adding new Item")
             disk_item, name = self._create_new_disk_device(
-                disk_type, address, name, ctrl_item)
+                drive_type, address, name, ctrl_item)
         else:
             logger.debug("Updating existing disk Item")
 
         # Make these changes to the disk Item regardless of new/existing
-        disk_item.set_property(self.RESOURCE_TYPE, self.RES_MAP[disk_type])
-        if disk_type == 'harddisk':
+        disk_item.set_property(self.RESOURCE_TYPE, self.RES_MAP[drive_type])
+        if drive_type == 'harddisk':
             # Link to the Disk we created
             disk_item.set_property(self.HOST_RESOURCE,
                                    (self.HOST_RSRC_DISK_REF +
@@ -2415,7 +2405,7 @@ class OVF(VMDescription, XML):
         logger.verbose("Generating manifest for %s", ovf_file)
         manifest = prefix + '.mf'
         # TODO: OVF 2.0 uses SHA256 instead of SHA1.
-        sha1sum = get_checksum(ovf_file, 'sha1')
+        sha1sum = file_checksum(ovf_file, 'sha1')
         with open(manifest, 'wb') as f:
             f.write("SHA1({file})= {sum}\n"
                     .format(file=os.path.basename(ovf_file), sum=sha1sum)
@@ -2426,7 +2416,7 @@ class OVF(VMDescription, XML):
                 file_ref = self._file_references[file_name]
                 try:
                     file_obj = file_ref.open('rb')
-                    sha1sum = get_checksum(file_obj, 'sha1')
+                    sha1sum = file_checksum(file_obj, 'sha1')
                 finally:
                     file_ref.close()
 
@@ -2608,18 +2598,18 @@ class OVF(VMDescription, XML):
         return self.find_child(self.disk_section, self.DISK,
                                attrib={self.DISK_FILE_REF: file_id})
 
-    def find_empty_drive(self, disk_type):
+    def find_empty_drive(self, drive_type):
         """Find a disk device that exists but contains no data.
 
-        :param str disk_type: Either 'cdrom' or 'harddisk'
+        :param str drive_type: Either 'cdrom' or 'harddisk'
         :return: Hardware device object, or None.
         """
-        if disk_type == 'cdrom':
+        if drive_type == 'cdrom':
             # Find a drive that has no HostResource property
             return self.hardware.find_item(
-                resource_type=disk_type,
+                resource_type=drive_type,
                 properties={self.HOST_RESOURCE: None})
-        elif disk_type == 'harddisk':
+        elif drive_type == 'harddisk':
             # All harddisk items must have a HostResource, so we need a
             # different way to indicate an empty drive. By convention,
             # we do this with a small placeholder disk (one with a Disk entry
@@ -2637,7 +2627,7 @@ class OVF(VMDescription, XML):
             return None
         else:
             raise ValueUnsupportedError("drive type",
-                                        disk_type,
+                                        drive_type,
                                         "'cdrom' or 'harddisk'")
 
     def find_device_location(self, device):
@@ -2649,7 +2639,7 @@ class OVF(VMDescription, XML):
         controller = self.find_parent_from_item(device)
         if controller is None:
             raise LookupError("No parent controller for device?")
-        return (self.get_type_from_device(controller),
+        return (controller.hardware_type,
                 (controller.get_value(self.ADDRESS) + ':' +
                  device.get_value(self.ADDRESS_ON_PARENT)))
 

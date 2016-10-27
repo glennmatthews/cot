@@ -3,4 +3,4 @@
 
 .. automodule:: COT.helpers.helper
   :special-members: __init__
-  :exclude-members: confirm
+  :exclude-members: TemporaryDirectory
