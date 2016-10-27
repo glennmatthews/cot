@@ -48,46 +48,48 @@ class VMDK(DiskRepresentation):
         return self._disk_subformat
 
     @classmethod
-    def from_other_image(cls, input_image, output_dir, output_subformat=None):
+    def from_other_image(cls, input_image, output_dir,
+                         output_subformat="streamOptimized"):
         """Convert the other disk image into an image of this type.
 
         :param DiskRepresentation input_image: Existing image representation.
         :param str output_dir: Output directory to store the new image in.
-        :param str output_subformat: Any relevant subformat information.
-        :rtype: instance of DiskRepresentation or subclass
+        :param str output_subformat: VMDK subformat string.
+          Defaults to "streamOptimized" if unset.
+        :rtype: :class:`~COT.disks.vmdk.VMDK`
         """
         file_name = os.path.basename(input_image.path)
         (file_prefix, _) = os.path.splitext(file_name)
         output_path = os.path.join(output_dir, file_prefix + ".vmdk")
         if output_subformat == "streamOptimized":
+            # Special case - qemu-img prior to 2.1.0 can't do streamOptimized
             helper = helper_select([('qemu-img', '2.1.0'), 'vmdktool'])
-            if helper.name == 'qemu-img':
-                helper.call(['convert',
-                             '-O', 'vmdk',
-                             '-o', 'subformat=streamOptimized',
-                             input_image.path,
-                             output_path])
-            elif helper.name == 'vmdktool':
+            if helper.name == 'vmdktool':
                 if input_image.disk_format != 'raw':
                     # vmdktool needs a raw image as input
                     from COT.disks import RAW
                     try:
                         temp_image = RAW.from_other_image(input_image,
                                                           output_dir)
-                        output_image = cls.from_other_image(temp_image,
-                                                            output_dir,
-                                                            output_subformat)
+                        return cls.from_other_image(temp_image,
+                                                    output_dir,
+                                                    output_subformat)
                     finally:
                         os.remove(temp_image.path)
-                    return output_image
 
                 # Note that vmdktool takes its arguments in unusual order -
                 # output file comes before input file
                 helper.call(['-z9', '-v', output_path, input_image.path])
-        else:
-            # TODO: support at least monolithicSparse!
-            raise NotImplementedError("No support for subformat '%s'",
-                                      output_subformat)
+                return cls(output_path)
+
+            # else, fall through to default:
+
+        helpers['qemu-img'].call([
+            'convert',
+            '-O', 'vmdk',
+            '-o', 'subformat={0}'.format(output_subformat),
+            input_image.path,
+            output_path])
         return cls(output_path)
 
     def _create_file(self):
@@ -96,7 +98,7 @@ class VMDK(DiskRepresentation):
             raise NotImplementedError("Don't know how to create a disk of "
                                       "this format containing a filesystem")
         if self._disk_subformat is None:
-            self._disk_subformat = "monolithicSparse"
+            self._disk_subformat = "streamOptimized"
 
         helpers['qemu-img'].call(['create', '-f', self.disk_format,
                                   '-o', 'subformat=' + self._disk_subformat,
