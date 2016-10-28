@@ -25,8 +25,9 @@ import mock
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
 from COT.install_helpers import COTInstallHelpers
-from COT.helpers import HelperError
-from COT.helpers.helper import Helper
+from COT.helpers import HelperError, helpers
+from COT.helpers.apt_get import AptGet
+from COT.helpers.port import Port
 
 
 def stub_check_output(arg_list, *_args, **_kwargs):
@@ -49,6 +50,8 @@ def stub_dir_exists_but_not_file(path):
     return os.path.basename(path) != "cot.1"
 
 
+# pylint: disable=protected-access
+
 class TestCOTInstallHelpers(COT_UT):
     """Test the COTInstallHelpers class."""
 
@@ -63,14 +66,27 @@ class TestCOTInstallHelpers(COT_UT):
         self.manpath = os.path.join(
             os.path.dirname(os.path.dirname(sys.argv[0])), "man")
 
-    @mock.patch('COT.helpers.helper.Helper._check_output',
+        # Fake out installation status
+        for helper in helpers.values():
+            helper._installed = None
+            helper._path = None
+            helper._version = None
+
+    def tearDown(self):
+        """Restore baseline behavior after each test case."""
+        for helper in helpers.values():
+            helper._installed = None
+            helper._path = None
+            helper._version = None
+        super(TestCOTInstallHelpers, self).tearDown()
+
+    @mock.patch('COT.helpers.helper.check_output',
                 side_effect=stub_check_output)
     @mock.patch('os.path.exists', return_value=True)
     @mock.patch('filecmp.cmp', return_value=True)
     @mock.patch('distutils.spawn.find_executable')
     def test_verify_only(self, mock_find_executable, *_):
         """Make sure expected results are seen with --verify-only option."""
-        # pylint: disable=protected-access
         def stub_find_executable(name):
             """Pretend to find every executable except ovftool."""
             if name == 'ovftool':
@@ -92,14 +108,14 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
 """
         self.check_cot_output(expected_output)
 
-    @mock.patch('COT.helpers.helper.Helper._check_output',
+    @mock.patch('COT.helpers.helper.check_output',
                 side_effect=stub_check_output)
     @mock.patch('os.path.isdir', return_value=True)
     @mock.patch('os.path.exists', return_value=True)
     @mock.patch('filecmp.cmp', return_value=True)
-    @mock.patch('COT.helpers.helper.Helper.apt_install')
-    @mock.patch('COT.helpers.helper.Helper.yum_install')
-    @mock.patch('COT.helpers.helper.Helper.port_install')
+    @mock.patch('COT.helpers.apt_get.AptGet.install_package')
+    @mock.patch('COT.helpers.yum.Yum.install_package')
+    @mock.patch('COT.helpers.port.Port.install_package')
     @mock.patch('distutils.spawn.find_executable')
     def test_install(self,
                      mock_find_executable,
@@ -108,41 +124,44 @@ vmdktool:     version 1.4, present at /usr/local/bin/vmdktool
                      mock_apt_install,
                      *_):
         """Show results when pretending to install helpers."""
-        # pylint: disable=protected-access
         paths = {
             "fatdisk": "/opt/local/bin/fatdisk",
-            "mkisofs": None,
-            "genisoimage": None,
-            "ovftool": None,
-            "qemu-img": None,
-            "vmdktool": None
         }
 
+        for helper_name in helpers:
+            helpers[helper_name]._installed = False
+
+        helpers['fatdisk']._installed = True
+        helpers['fatdisk']._path = "/opt/local/bin/fatdisk"
+
         def stub_find_executable(name):
-            """Get canned paths for various executables."""
+            """Pretend to find every executable except ovftool."""
             return paths.get(name, None)
 
         def stub_install(package):
             """Fake successful or unsuccessful installation of tools."""
             if package == "genisoimage":
-                paths["genisoimage"] = "/usr/bin/genisoimage"
-                return True
-            elif package == "cdrtools":
-                return False
+                helpers['genisoimage']._path = "/usr/bin/genisoimage"
+                helpers['genisoimage']._installed = True
+                return
             raise HelperError(1, "not really installing!")
 
         mock_find_executable.side_effect = stub_find_executable
+        helpers['apt-get']._installed = True
         mock_apt_install.side_effect = stub_install
+        helpers['port']._installed = True
         mock_port_install.side_effect = stub_install
+        helpers['yum']._installed = True
         mock_yum_install.side_effect = stub_install
-        Helper._apt_updated = False
-        Helper._port_updated = False
+        AptGet._updated = False
+        Port._updated = False
         expected_output = """
 Results:
 -------------
 COT manpages: already installed, no updates needed
 fatdisk:      version 1.0, present at /opt/local/bin/fatdisk
 genisoimage:  successfully installed to /usr/bin/genisoimage, version 1.1.11
+mkisofs:      INSTALLATION FAILED: [Errno 1] not really installing!
 ovftool:      INSTALLATION FAILED: No support for automated installation of
               ovftool, as VMware requires a site login to download it. See
               https://www.vmware.com/support/developer/ovf/
@@ -155,7 +174,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         # ...but we can set ignore_errors to suppress this behavior
         self.instance.ignore_errors = True
         # revert to initial state
-        paths["genisoimage"] = None
+        helpers["genisoimage"]._installed = False
         self.check_cot_output(expected_output)
 
     @mock.patch('os.path.exists', return_value=False)
@@ -186,7 +205,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         self.assertEqual("NEEDS UPDATE", message)
 
     @mock.patch('os.path.exists', return_value=False)
-    @mock.patch('COT.helpers.helper.Helper._check_call',
+    @mock.patch('COT.helpers.helper.check_call',
                 side_effect=HelperError)
     @mock.patch('os.makedirs')
     def test_manpages_helper_create_dir_fail(self, mock_makedirs, *_):
@@ -204,7 +223,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
     @mock.patch('os.path.exists', return_value=True)
     @mock.patch('os.path.isdir', return_value=True)
     @mock.patch('filecmp.cmp', return_value=False)
-    @mock.patch('COT.helpers.helper.Helper._check_call',
+    @mock.patch('COT.helpers.helper.check_call',
                 side_effect=HelperError)
     @mock.patch('shutil.copy')
     def test_manpages_helper_create_file_fail(self, mock_copy, *_):

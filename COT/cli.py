@@ -136,8 +136,8 @@ class CLI(UI):
         if _argcomplete:
             argcomplete.autocomplete(self.parser)
 
-        import COT.helpers.helper
-        COT.helpers.helper.confirm = self.confirm
+        from COT.helpers import Helper
+        Helper.UI = self
 
     @property
     def terminal_width(self):
