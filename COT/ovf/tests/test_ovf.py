@@ -34,7 +34,7 @@ from COT.ovf import OVF
 from COT.ovf.ovf import byte_count, byte_string, factor_bytes
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
-from COT.helpers import HelperError
+from COT.helpers import helpers, HelperError
 from COT.vm_context_manager import VMContextManager
 
 logger = logging.getLogger(__name__)
@@ -458,10 +458,11 @@ ovf:size="{cfg_size}" />
             subprocess.check_call(['sed', 's/InstanceID>11</InstanceID>10</',
                                    self.input_ovf],
                                   stdout=f)
-        if self.OVFTOOL.path:
+        if helpers['ovftool']:
             # Make sure ovftool also sees this as invalid
             self.assertRaises(HelperError,
-                              self.OVFTOOL.validate_ovf, fake_file)
+                              helpers['ovftool'].call,
+                              ['--schemaValidate', fake_file])
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # Item referencing a nonexistent Configuration
@@ -469,10 +470,11 @@ ovf:size="{cfg_size}" />
             subprocess.check_call(['sed', 's/on="2CPU-2GB-1NIC"/on="foo"/',
                                    self.input_ovf],
                                   stdout=f)
-        if self.OVFTOOL.path:
+        if helpers['ovftool']:
             # Make sure ovftool also sees this as invalid
             self.assertRaises(HelperError,
-                              self.OVFTOOL.validate_ovf, fake_file)
+                              helpers['ovftool'].call,
+                              ['--schemaValidate', fake_file])
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # TODO - inconsistent order of File versus Disk?
@@ -493,3 +495,9 @@ ovf:size="{cfg_size}" />
                               "1CPU-1GB-1NIC",
                               "2CPU-2GB-1NIC"])
             self.assertEqual(ovf.default_config_profile, "4CPU-4GB-3NIC")
+
+    def test_find_empty_drive_unsupported(self):
+        """Negative test for find_empty_drive()."""
+        with VMContextManager(self.input_ovf, None) as ovf:
+            self.assertRaises(ValueUnsupportedError,
+                              ovf.find_empty_drive, 'floppy')

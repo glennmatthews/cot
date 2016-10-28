@@ -138,6 +138,20 @@ class OVFItem(object):
         """List of names of all properties known to this OVFItem."""
         return list(self.properties.keys())
 
+    @property
+    def hardware_type(self):
+        """Device hardware type such as 'ide' or 'memory'."""
+        value = self.get_value(self.RESOURCE_TYPE)
+        for key in self.RES_MAP:
+            if value == self.RES_MAP[key]:
+                return key
+        return "unknown ({0})".format(value)
+
+    @property
+    def hardware_subtype(self):
+        """Device hardware subtype such as 'virtio' or 'lsilogic'."""
+        return self.get_value(self.RESOURCE_SUB_TYPE)
+
     def property_values(self, name):
         """Get list of values known for a given property name.
 

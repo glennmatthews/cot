@@ -25,14 +25,15 @@ import mock
 
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.fatdisk import FatDisk
+from COT.helpers import helpers
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=missing-type-doc,missing-param-doc
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
-@mock.patch('COT.helpers.download_and_expand',
-            side_effect=HelperUT.stub_download_and_expand)
+@mock.patch('COT.helpers.fatdisk.FatDisk.download_and_expand_tgz',
+            side_effect=HelperUT.stub_download_and_expand_tgz)
 class TestFatDisk(HelperUT):
     """Test cases for FatDisk helper class."""
 
@@ -42,49 +43,45 @@ class TestFatDisk(HelperUT):
         self.maxDiff = None
         super(TestFatDisk, self).setUp()
 
-    @mock.patch('COT.helpers.helper.Helper._check_output',
+    @mock.patch('COT.helpers.helper.check_output',
                 return_value="fatdisk, version 1.0.0-beta")
     def test_get_version(self, *_):
         """Validate .version getter."""
+        self.helper._installed = True
         self.assertEqual(StrictVersion("1.0.0"), self.helper.version)
 
-    @mock.patch('COT.helpers.helper.Helper._check_output')
+    @mock.patch('COT.helpers.helper.check_output')
     @mock.patch('subprocess.check_call')
-    def test_install_helper_already_present(self, mock_check_call,
-                                            mock_check_output, *_):
+    def test_install_already_present(self,
+                                     mock_check_call,
+                                     mock_check_output,
+                                     *_):
         """Trying to re-install is a no-op."""
-        self.helper.install_helper()
+        self.helper._installed = True
+        self.helper.install()
         mock_check_output.assert_not_called()
         mock_check_call.assert_not_called()
-        self.assertLogged(**self.ALREADY_INSTALLED)
 
     @mock.patch('platform.system', return_value='Linux')
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
-    @mock.patch('distutils.spawn.find_executable')
+    @mock.patch('distutils.spawn.find_executable', return_value="/foo")
     @mock.patch('shutil.copy', return_value=True)
-    @mock.patch('COT.helpers.helper.Helper._check_output', return_value="")
+    @mock.patch('COT.helpers.helper.check_output', return_value="")
     @mock.patch('subprocess.check_call')
-    def test_install_helper_apt_get(self,
-                                    mock_check_call,
-                                    mock_check_output,
-                                    mock_copy,
-                                    mock_find_executable,
-                                    *_):
+    def test_install_apt_get(self,
+                             mock_check_call,
+                             mock_check_output,
+                             mock_copy,
+                             *_):
         """Test installation via 'apt-get'."""
         self.enable_apt_install()
-        mock_find_executable.side_effect = [
-            None,  # 'fatdisk',
-            None,  # 'make', pre-installation
-            '/bin/make',   # post-installation
-            None,  # 'clang'
-            None,  # 'gcc', pre-installation
-            None,  # 'g++'
-            '/bin/gcc',   # post-installation
-        ]
+        helpers['dpkg']._installed = True
+        for name in ['make', 'clang', 'gcc', 'g++']:
+            helpers[name]._installed = False
 
-        self.helper.install_helper()
+        self.helper.install()
         self.assertSubprocessCalls(
             mock_check_output,
             [
@@ -108,17 +105,14 @@ class TestFatDisk(HelperUT):
         mock_check_output.reset_mock()
         mock_check_call.reset_mock()
         mock_check_output.return_value = 'install ok installed'
-        mock_find_executable.reset_mock()
-        mock_find_executable.side_effect = [
-            None,  # fatdisk
-            None,  # fakeout make not here
-            '/bin/make',   # actually it is here!
-            '/bin/clang',
-        ]
+        # fakeout!
+        helpers['make']._installed = False
+        self.helper._installed = False
+
         os.environ['PREFIX'] = '/opt/local'
         os.environ['DESTDIR'] = '/home/cot'
 
-        self.helper.install_helper()
+        self.helper.install()
         self.assertSubprocessCalls(
             mock_check_output,
             [
@@ -134,7 +128,7 @@ class TestFatDisk(HelperUT):
         self.assertTrue(re.search("/fatdisk$", mock_copy.call_args[0][0]))
         self.assertEqual('/home/cot/opt/local/bin', mock_copy.call_args[0][1])
 
-    def test_install_helper_port(self, *_):
+    def test_install_port(self, *_):
         """Test installation via 'port'."""
         self.port_install_test('fatdisk')
 
@@ -142,27 +136,19 @@ class TestFatDisk(HelperUT):
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
-    @mock.patch('distutils.spawn.find_executable')
+    @mock.patch('distutils.spawn.find_executable', return_value='/foo')
     @mock.patch('shutil.copy', return_value=True)
     @mock.patch('subprocess.check_call')
-    def test_install_helper_yum(self,
-                                mock_check_call,
-                                mock_copy,
-                                mock_find_executable,
-                                *_):
+    def test_install_yum(self,
+                         mock_check_call,
+                         mock_copy,
+                         *_):
         """Test installation via 'yum'."""
         self.enable_yum_install()
-        mock_find_executable.side_effect = [
-            None,  # vmdktool
-            None,  # make, pre-installation
-            '/bin/make',  # post-installation
-            None,  # 'clang'
-            None,  # 'gcc', pre-installation
-            None,  # 'g++'
-            '/bin/gcc',   # post-installation
-        ]
+        for name in ['make', 'clang', 'gcc', 'g++']:
+            helpers[name]._installed = False
 
-        self.helper.install_helper()
+        self.helper.install()
         self.assertSubprocessCalls(
             mock_check_call,
             [
@@ -176,11 +162,13 @@ class TestFatDisk(HelperUT):
 
     @mock.patch('platform.system', return_value='Linux')
     @mock.patch('distutils.spawn.find_executable', return_value=None)
-    def test_install_helper_linux_need_make_no_package_manager(self, *_):
+    def test_install_linux_need_make_no_package_manager(self, *_):
         """Linux installation requires yum or apt-get if 'make' missing."""
         self.select_package_manager(None)
+        for name in ['make', 'clang', 'gcc', 'g++']:
+            helpers[name]._installed = False
         with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+            self.helper.install()
 
     @staticmethod
     def _find_make_only(name):
@@ -199,6 +187,16 @@ class TestFatDisk(HelperUT):
                                                             *_):
         """Linux installation requires yum or apt-get if 'gcc' missing."""
         self.select_package_manager(None)
+        for name in ['clang', 'gcc', 'g++']:
+            helpers[name]._installed = False
         mock_find_exec.side_effect = self._find_make_only
         with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+            self.helper.install()
+
+    @mock.patch('platform.system', return_value='Darwin')
+    @mock.patch('COT.helpers.fatdisk.FatDisk.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    def test_install_helper_mac_no_package_manager(self, *_):
+        """Mac installation requires port."""
+        self.select_package_manager(None)
+        self.assertRaises(NotImplementedError, self.helper.install)

@@ -366,7 +366,7 @@ class OVFHardware(object):
           prior value varies across config profiles.
         :raises NotImplementedError: if ``AddressOnParent`` is not an integer.
         """
-        resource_type = self.ovf.get_type_from_device(new_item)
+        resource_type = new_item.hardware_type
         address = new_item.get(self.ovf.ADDRESS)
         if address:
             raise NotImplementedError("Don't know how to ensure a unique "

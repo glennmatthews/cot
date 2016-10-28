@@ -3,6 +3,35 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Added**
+
+- ``cot inject-config --extra-files`` parameter (`#53`_).
+- Helper class for ``isoinfo`` (a companion to ``mkisofs``).
+- Added glossary of terms to COT documentation.
+
+**Changed**
+
+- Refactored the monolithic ``COT/platforms.py`` file into a proper submodule.
+- :func:`~COT.helpers.mkisofs.MkIsoFs.create_iso` now adds Rock Ridge extensions
+  by default.
+- Refactored :mod:`COT.helpers` into two modules - :mod:`COT.helpers`
+  (now just for handling helper programs such as ``apt-get`` and ``mkisofs``)
+  and :mod:`COT.disks` (which uses the helpers to handle ISO/VMDK/QCOW2/RAW
+  image files).
+
+**Removed**
+
+- :func:`get_checksum` is no longer part of the :mod:`COT.helpers` API.
+  (It's now the method :func:`~COT.data_validation.file_checksum` in
+  ``COT.data_validation``, where it really belonged from the start).
+- :func:`download_and_expand` is no longer part of the :mod:`COT.helpers`
+  public API. (It's now the static method
+  :func:`~COT.helpers.helper.Helper.download_and_expand_tgz`
+  on class :class:`~COT.helpers.helper.Helper`.)
+
 `1.7.4`_ - 2016-09-21
 ---------------------
 
@@ -519,6 +548,7 @@ Initial public release.
 .. _#50: https://github.com/glennmatthews/cot/issues/50
 .. _#51: https://github.com/glennmatthews/cot/issues/51
 .. _#52: https://github.com/glennmatthews/cot/issues/52
+.. _#53: https://github.com/glennmatthews/cot/issues/53
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

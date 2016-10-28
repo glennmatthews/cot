@@ -27,8 +27,7 @@ import textwrap
 from pkg_resources import resource_listdir, resource_filename
 
 from COT.submodule import COTGenericSubmodule
-from COT.helpers import HelperError, HelperNotFoundError
-from COT.helpers import create_install_dir, install_file
+from COT.helpers import Helper, HelperError, HelperNotFoundError, helpers
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +89,7 @@ def _install_manpage(src_path, man_dir):
     f = os.path.basename(src_path)
     section = os.path.splitext(f)[1][1:]
     dest = os.path.join(man_dir, "man{0}".format(section))
-    create_install_dir(dest)
+    Helper.mkdir(dest)
 
     previously_installed = False
     dest_path = os.path.join(dest, f)
@@ -100,7 +99,7 @@ def _install_manpage(src_path, man_dir):
             logger.verbose("File %s does not need to be updated", dest_path)
             return previously_installed, False
 
-    install_file(src_path, dest_path)
+    Helper.cp(src_path, dest_path)
     return previously_installed, True
 
 
@@ -159,7 +158,7 @@ class COTInstallHelpers(COTGenericSubmodule):
         :type helper: :class:`~COT.helpers.helper.Helper`
         :return: (result, message)
         """
-        if helper.path:
+        if helper.installed:
             return (True,
                     "version {0}, present at {1}"
                     .format(helper.version, str(helper.path)))
@@ -167,7 +166,7 @@ class COTInstallHelpers(COTGenericSubmodule):
             return (True, "NOT FOUND")
         else:
             try:
-                helper.install_helper()
+                helper.install()
                 return (True,
                         "successfully installed to {0}, version {1}"
                         .format(str(helper.path), helper.version))
@@ -195,18 +194,21 @@ class COTInstallHelpers(COTGenericSubmodule):
 
     def run(self):
         """Verify all helper tools and install any that are missing."""
-        from COT.helpers.fatdisk import FatDisk
-        from COT.helpers.mkisofs import MkIsoFS
-        from COT.helpers.ovftool import OVFTool
-        from COT.helpers.qemu_img import QEMUImg
-        from COT.helpers.vmdktool import VmdkTool
         result = True
         results = {}
-        for cls in [FatDisk, MkIsoFS, OVFTool, QEMUImg, VmdkTool]:
-            helper = cls()
+        for name in ['fatdisk', 'ovftool', 'qemu-img', 'vmdktool']:
+            helper = helpers[name]
             rc, results[helper.name] = self.install_helper(helper)
             if not rc:
                 result = False
+
+        # We only need one of these three tools so stop as soon as one succeeds
+        for name in ['mkisofs', 'genisoimage', 'xorriso']:
+            isorc, results[name] = self.install_helper(helpers[name])
+            if isorc:
+                break
+        if not isorc:
+            result = False
 
         rc, results["COT manpages"] = self.manpages_helper()
         if not rc:

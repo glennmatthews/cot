@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# test_vmdktool.py - Unit test cases for COT.helpers.vmdktoolsubmodule.
+# test_vmdktool.py - Unit test cases for COT.helpers.vmdktool submodule.
 #
 # March 2015, Glenn F. Matthews
 # Copyright (c) 2014-2016 the COT project developers.
@@ -22,57 +22,55 @@ from distutils.version import StrictVersion
 import mock
 
 from COT.helpers.tests.test_helper import HelperUT
-from COT.helpers.vmdktool import VmdkTool
+from COT.helpers.vmdktool import VMDKTool
+from COT.helpers import helpers
+
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
-# pylint: disable=missing-type-doc,missing-param-doc
-
-@mock.patch('COT.helpers.download_and_expand',
-            side_effect=HelperUT.stub_download_and_expand)
-class TestVmdkTool(HelperUT):
-    """Test cases for VmdkTool helper class."""
+@mock.patch('COT.helpers.Helper.download_and_expand_tgz',
+            side_effect=HelperUT.stub_download_and_expand_tgz)
+class TestVMDKTool(HelperUT):
+    """Test cases for VMDKTool helper class."""
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
-        self.helper = VmdkTool()
-        super(TestVmdkTool, self).setUp()
+        self.helper = VMDKTool()
+        super(TestVMDKTool, self).setUp()
 
-    @mock.patch('COT.helpers.helper.Helper._check_output',
-                return_value="vmdktool version 1.4")
+    @mock.patch('COT.helpers.helper.check_output',
+                return_value="vmdktool version 1.3")
     def test_get_version(self, *_):
         """Test .version getter logic."""
-        self.assertEqual(StrictVersion("1.4"), self.helper.version)
+        self.helper._installed = True
+        self.assertEqual(self.helper.version, StrictVersion("1.3"))
 
-    @mock.patch('COT.helpers.helper.Helper._check_output')
+    @mock.patch('COT.helpers.helper.check_output')
     @mock.patch('subprocess.check_call')
-    def test_install_helper_already_present(self, mock_check_call,
-                                            mock_check_output, *_):
+    def test_install_already_present(self, mock_check_call,
+                                     mock_check_output, *_):
         """Do nothing instead of re-installing."""
-        self.helper.install_helper()
+        self.helper._installed = True
+        self.helper.install()
         mock_check_output.assert_not_called()
         mock_check_call.assert_not_called()
-        self.assertLogged(**self.ALREADY_INSTALLED)
 
     @mock.patch('platform.system', return_value='Linux')
     @mock.patch('os.path.isdir', return_value=False)
     @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.makedirs', side_effect=OSError)
     @mock.patch('distutils.spawn.find_executable')
-    @mock.patch('COT.helpers.helper.Helper._check_output', return_value="")
+    @mock.patch('COT.helpers.helper.check_output', return_value="")
     @mock.patch('subprocess.check_call')
     def test_install_helper_apt_get(self,
                                     mock_check_call,
                                     mock_check_output,
-                                    mock_find_executable,
                                     *_):
         """Test installation via 'apt-get'."""
         self.enable_apt_install()
-        mock_find_executable.side_effect = [
-            None,  # 'vmdktool',
-            None,  # 'make', pre-installation
-            '/bin/make',   # post-installation
-        ]
-        self.helper.install_helper()
+        helpers['dpkg']._installed = True
+        helpers['make']._installed = False
+        self.helper.install()
         self.assertSubprocessCalls(
             mock_check_output,
             [
@@ -95,15 +93,15 @@ class TestVmdkTool(HelperUT):
         # Make sure we don't 'apt-get update/install' again unnecessarily
         mock_check_call.reset_mock()
         mock_check_output.reset_mock()
-        mock_find_executable.reset_mock()
         mock_check_output.return_value = 'install ok installed'
-        mock_find_executable.side_effect = [
-            None,  # vmdktool
-            '/bin/make',
-        ]
+        # fakeout!
+        self.helper._installed = False
+        helpers['make']._installed = True
+
         os.environ['PREFIX'] = '/opt/local'
         os.environ['DESTDIR'] = '/home/cot'
-        self.helper.install_helper()
+
+        self.helper.install()
         self.assertSubprocessCalls(
             mock_check_output,
             [
@@ -132,16 +130,12 @@ class TestVmdkTool(HelperUT):
     @mock.patch('subprocess.check_call')
     def test_install_helper_yum(self,
                                 mock_check_call,
-                                mock_find_executable,
                                 *_):
         """Test installation via 'yum'."""
         self.enable_yum_install()
-        mock_find_executable.side_effect = [
-            None,  # 'vmdktool',
-            None,  # 'make', pre-installation
-            '/bin/make',   # post-installation
-        ]
-        self.helper.install_helper()
+        self.helper._installed = False
+        helpers['make']._installed = False
+        self.helper.install()
         self.assertSubprocessCalls(
             mock_check_call,
             [
@@ -158,8 +152,7 @@ class TestVmdkTool(HelperUT):
     def test_install_helper_linux_need_make_no_package_manager(self, *_):
         """Linux installation requires yum or apt-get if 'make' missing."""
         self.select_package_manager(None)
-        with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+        self.assertRaises(NotImplementedError, self.helper.install)
 
     @mock.patch('platform.system', return_value='Linux')
     @mock.patch('distutils.spawn.find_executable')
@@ -169,14 +162,12 @@ class TestVmdkTool(HelperUT):
         """Linux installation needs some way to install 'zlib'."""
         self.select_package_manager(None)
         mock_find_exec.side_effect = [None, '/bin/make']
-        with self.assertRaises(NotImplementedError):
-            self.helper.install_helper()
+        self.assertRaises(NotImplementedError, self.helper.install)
 
-    def test_convert_unsupported(self, *_):
-        """Negative test - conversion to unsupported format/subformat."""
-        with self.assertRaises(NotImplementedError):
-            self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
-                                           'qcow2')
-        with self.assertRaises(NotImplementedError):
-            self.helper.convert_disk_image(self.blank_vmdk, self.temp_dir,
-                                           'vmdk', 'monolithicSparse')
+    @mock.patch('platform.system', return_value='Darwin')
+    @mock.patch('COT.helpers.vmdktool.VMDKTool.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    def test_install_helper_mac_no_package_manager(self, *_):
+        """Mac installation requires port."""
+        self.select_package_manager(None)
+        self.assertRaises(NotImplementedError, self.helper.install)

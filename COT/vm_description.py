@@ -250,17 +250,23 @@ class VMDescription(object):
         raise NotImplementedError("version_long setter not implemented")
 
     # API methods needed for add-disk
-    def convert_disk_if_needed(self, file_path, kind):
+    def convert_disk_if_needed(self,   # pylint: disable=no-self-use
+                               disk_image,
+                               kind):  # pylint: disable=unused-argument
         """Convert the disk to a more appropriate format if needed.
 
-        :param str file_path: Image to inspect and possibly convert
+        :param disk_image: Image to inspect and possibly convert
+        :type disk_image: instance of :class:`~COT.disks.DiskRepresentation`
+          or subclass
         :param str kind: Image type (harddisk/cdrom).
         :return:
-          * :attr:`file_path`, if no conversion was required
-          * or a file path in :attr:`output_dir` containing the converted image
+          * :attr:`disk_image`, if no conversion was required
+          * or a new :class:`~COT.disks.DiskRepresentation` instance
+            representing a converted image that has been created in
+            :attr:`output_dir`.
         """
         # Some VMs may not need this, so default to do nothing, not error
-        return file_path
+        return disk_image
 
     def search_from_filename(self, filename):
         """From the given filename, try to find any existing objects.
@@ -331,22 +337,6 @@ class VMDescription(object):
         """
         raise NotImplementedError("get_id_from_disk not implemented")
 
-    def get_type_from_device(self, device):
-        """Get the type of the given opaque device object.
-
-        :param object device: Device object to query
-        :return: string such as 'ide' or 'memory'
-        """
-        raise NotImplementedError("get_type_from_device not implemented")
-
-    def get_subtype_from_device(self, device):
-        """Get the sub-type of the given opaque device object.
-
-        :param object device: Device object to query
-        :return: ``None``, or string such as 'virtio' or 'lsilogic'
-        """
-        raise NotImplementedError("get_subtype_from_device not implemented")
-
     def get_common_subtype(self, device_type):
         """Get the sub-type common to all devices of the given type.
 
@@ -394,12 +384,13 @@ class VMDescription(object):
         """
         raise NotImplementedError("remove_file not implemented")
 
-    def add_disk(self, file_path, file_id, disk_type, disk=None):
+    def add_disk(self, disk_repr, file_id, drive_type, disk=None):
         """Add a new disk object to the VM or overwrite the provided one.
 
-        :param str file_path: Path to disk image file
+        :param str disk_repr: Disk file representation
+        :type disk_repr: COT.disks.DiskRepresentation or subclass
         :param str file_id: Identifier string for the file/disk mapping
-        :param str disk_type: 'harddisk' or 'cdrom'
+        :param str drive_type: 'harddisk' or 'cdrom'
         :param object disk: Existing disk object to overwrite
 
         :return: New or updated disk object
@@ -420,11 +411,11 @@ class VMDescription(object):
         """
         raise NotImplementedError("add_controller_device not implemented")
 
-    def add_disk_device(self, disk_type, address, name, description,
+    def add_disk_device(self, drive_type, address, name, description,
                         disk, file_obj, ctrl_item, disk_item=None):
         """Add a new disk device to the VM or update the provided one.
 
-        :param str disk_type: ``'harddisk'`` or ``'cdrom'``
+        :param str drive_type: ``'harddisk'`` or ``'cdrom'``
         :param str address: Address on controller, such as "1:0" (optional)
         :param str name: Device name string (optional)
         :param str description: Description string (optional)
@@ -722,10 +713,10 @@ class VMDescription(object):
         raise NotImplementedError("profile_info_string not implemented")
 
     # API methods needed for inject-config
-    def find_empty_drive(self, disk_type):
+    def find_empty_drive(self, drive_type):
         """Find a disk device that exists but contains no data.
 
-        :param str disk_type: Disk type, such as 'cdrom' or 'harddisk'
+        :param str drive_type: Disk drive type, such as 'cdrom' or 'harddisk'
         :return: Hardware device object, or None.
         """
         raise NotImplementedError("find_empty_drive not implemented")

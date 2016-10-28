@@ -46,8 +46,8 @@ class UI(object):
         self.default_confirm_response = True
         """Knob for API testing, sets the default response to confirm()."""
         self._terminal_width = 80
-        import COT.helpers.helper
-        COT.helpers.helper.confirm = self.confirm
+        from COT.helpers import Helper
+        Helper.UI = self
 
     @property
     def terminal_width(self):

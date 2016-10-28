@@ -1,5 +1,4 @@
-``COT.platforms`` module
-========================
+``COT.platforms`` package reference
+===================================
 
 .. automodule:: COT.platforms
-

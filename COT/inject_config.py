@@ -22,7 +22,7 @@ import shutil
 
 from COT.add_disk import add_disk_worker
 from COT.data_validation import ValueUnsupportedError, InvalidInputError
-from COT.helpers import create_disk_image
+from COT.disks import create_disk
 from COT.submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,8 @@ class COTInjectConfig(COTSubmodule):
 
     Attributes:
     :attr:`config_file`,
-    :attr:`secondary_config_file`
+    :attr:`secondary_config_file`,
+    :attr:`extra_files`
     """
 
     def __init__(self, ui):
@@ -50,6 +51,7 @@ class COTInjectConfig(COTSubmodule):
         super(COTInjectConfig, self).__init__(ui)
         self._config_file = None
         self._secondary_config_file = None
+        self._extra_files = []
 
     @property
     def config_file(self):
@@ -63,14 +65,15 @@ class COTInjectConfig(COTSubmodule):
 
     @config_file.setter
     def config_file(self, value):
-        value = str(value)
-        if not os.path.exists(value):
-            raise InvalidInputError("Primary config file {0} does not exist!"
-                                    .format(value))
-        if not self.vm.platform.CONFIG_TEXT_FILE:
-            raise InvalidInputError(
-                "Configuration file not supported for platform {0}"
-                .format(self.vm.platform.__name__))
+        if value is not None:
+            value = str(value)
+            if not os.path.exists(value):
+                raise InvalidInputError("Primary config file {0} not found!"
+                                        .format(value))
+            if not self.vm.platform.CONFIG_TEXT_FILE:
+                raise InvalidInputError(
+                    "Configuration file not supported for platform {0}"
+                    .format(self.vm.platform.__name__))
         self._config_file = value
 
     @property
@@ -85,30 +88,41 @@ class COTInjectConfig(COTSubmodule):
 
     @secondary_config_file.setter
     def secondary_config_file(self, value):
-        value = str(value)
-        if not os.path.exists(value):
-            raise InvalidInputError("Secondary config file {0} does not exist!"
-                                    .format(value))
-        if not self.vm.platform.SECONDARY_CONFIG_TEXT_FILE:
-            raise InvalidInputError(
-                "Secondary configuration file not supported for platform {0}"
-                .format(self.vm.platform.__name__))
+        if value is not None:
+            value = str(value)
+            if not os.path.exists(value):
+                raise InvalidInputError("Secondary config file {0} not found!"
+                                        .format(value))
+            if not self.vm.platform.SECONDARY_CONFIG_TEXT_FILE:
+                raise InvalidInputError(
+                    "Secondary configuration file not supported "
+                    "for platform {0}".format(self.vm.platform.__name__))
         self._secondary_config_file = value
+
+    @property
+    def extra_files(self):
+        """Additional files to be embedded as-is.
+
+        :raise InvalidInputError: if any file in the list does not exist
+        """
+        return self._extra_files
+
+    @extra_files.setter
+    def extra_files(self, values):
+        for path in values:
+            if not os.path.exists(path):
+                raise InvalidInputError("File {0} not found!".format(path))
+        self._extra_files = values
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
         :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
-        # Need some work to do!
-        work_to_do = False
-        if self.config_file is not None:
-            work_to_do = True
-        elif self.secondary_config_file is not None:
-            work_to_do = True
-
-        if not work_to_do:
-            return False, "No configuration files specified - nothing to do!"
+        if not (self.config_file or
+                self.secondary_config_file or
+                self.extra_files):
+            return False, "No files specified - nothing to do!"
         return super(COTInjectConfig, self).ready_to_run()
 
     def run(self):
@@ -136,7 +150,7 @@ class COTInjectConfig(COTSubmodule):
         elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
             (f, _, _, drive_device) = vm.search_from_filename('config.vmdk')
         else:
-            raise ValueUnsupportedError("bootstrap disk type",
+            raise ValueUnsupportedError("bootstrap disk drive type",
                                         platform.BOOTSTRAP_DISK_TYPE,
                                         "'cdrom' or 'harddisk'")
         if f is not None:
@@ -168,16 +182,23 @@ class COTInjectConfig(COTSubmodule):
             shutil.copy(self.secondary_config_file, dest)
             config_files.append(dest)
 
+        # Extra files are packaged as-is
+        config_files += self.extra_files
+
         # Package the config files into a disk image
+        # pylint:disable=redefined-variable-type
         if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
             bootstrap_file = os.path.join(vm.working_dir, 'config.iso')
-            create_disk_image(bootstrap_file, contents=config_files)
+            disk_image = create_disk(disk_format='iso',
+                                     path=bootstrap_file,
+                                     files=config_files)
         elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
             bootstrap_file = os.path.join(vm.working_dir, 'config.img')
-            create_disk_image(bootstrap_file, file_format='raw',
-                              contents=config_files)
+            disk_image = create_disk(disk_format='raw',
+                                     path=bootstrap_file,
+                                     files=config_files)
         else:
-            raise ValueUnsupportedError("bootstrap disk type",
+            raise ValueUnsupportedError("bootstrap disk drive type",
                                         platform.BOOTSTRAP_DISK_TYPE,
                                         "'cdrom' or 'harddisk'")
 
@@ -185,8 +206,8 @@ class COTInjectConfig(COTSubmodule):
         add_disk_worker(
             ui=self.UI,
             vm=vm,
-            disk_image=bootstrap_file,
-            disk_type=platform.BOOTSTRAP_DISK_TYPE,
+            disk_image=disk_image,
+            drive_type=platform.BOOTSTRAP_DISK_TYPE,
             file_id=file_id,
             controller=cont_type,
             address=drive_address,
@@ -202,23 +223,29 @@ class COTInjectConfig(COTSubmodule):
             aliases=['add-bootstrap'],
             help="Inject a configuration file into an OVF package",
             usage=self.UI.fill_usage("inject-config", [
-                "PACKAGE -c CONFIG_FILE [-o OUTPUT]",
-                "PACKAGE -s SECONDARY_CONFIG_FILE [-o OUTPUT]",
-                "PACKAGE -c CONFIG_FILE -s SECONDARY_CONFIG_FILE [-o OUTPUT]",
+                "PACKAGE [-o OUTPUT] [-c CONFIG_FILE] "
+                "[-s SECONDARY_CONFIG_FILE] [-e EXTRA_FILE [EXTRA_FILE2 ...]]",
             ]),
-            description="""Add one or more "bootstrap" configuration """
-            """file(s) to the given OVF or OVA.""")
+            description="""
+Add one or more "bootstrap" configuration file(s) to the given OVF or OVA.
+These files will be packaged into a virtual hard disk, or virtual CD-ROM,
+as appropriate to the target platform. Any specified primary and secondary
+config files will be renamed if necessary to meet expectations of the target
+platform, while any files provided with the --extra-files option will
+be included as-is and will not be renamed.""")
 
         p.add_argument('-o', '--output',
-                       help="""Name/path of new VM package to create """
-                       """instead of updating the existing package""")
+                       help="Name/path of new VM package to create "
+                       "instead of updating the existing package")
 
         p.add_argument('-c', '--config-file',
-                       help="""Primary configuration text file to embed""")
+                       help="Text file to embed as primary configuration")
         p.add_argument('-s', '--secondary-config-file',
-                       help="""Secondary configuration text file to embed """
-                       """(currently only supported in IOS XRv for """
-                       """admin config)""")
+                       help="Text file to embed as secondary configuration"
+                       " (currently only used for IOS XR admin config)")
+        p.add_argument('-e', '--extra-files', nargs='+',
+                       metavar=('EXTRA_FILE', 'EXTRA_FILE2'),
+                       help="Additional file(s) to include as-is")
         p.add_argument('PACKAGE',
-                       help="""Package, OVF descriptor or OVA file to edit""")
+                       help="Package, OVF descriptor or OVA file to edit")
         p.set_defaults(instance=self)
