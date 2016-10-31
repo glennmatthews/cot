@@ -35,16 +35,19 @@ class NXOSv(GenericPlatform):
     def guess_nic_name(cls, nic_number):
         """NX-OSv names its NICs a bit interestingly...
 
-        :param int nic_number: Nth NIC to name.
-        :return:
-          * mgmt0
-          * Ethernet2/1
-          * Ethernet2/2
-          * ...
-          * Ethernet2/48
-          * Ethernet3/1
-          * Ethernet3/2
-          * ...
+        Args:
+            nic_number (int): Nth NIC to name.
+
+        Returns:
+            str:
+                * mgmt0
+                * Ethernet2/1
+                * Ethernet2/2
+                * ...
+                * Ethernet2/48
+                * Ethernet3/1
+                * Ethernet3/2
+                * ...
         """
         if nic_number == 1:
             return "mgmt0"
@@ -56,9 +59,12 @@ class NXOSv(GenericPlatform):
     def validate_cpu_count(cls, cpus):
         """NX-OSv requires 1-8 CPUs.
 
-        :param int cpus: Number of CPUs
-        :raises ValueTooLowError: if ``cpus`` is less than 1
-        :raises ValueTooHighError: if ``cpus`` is more than 8
+        Args:
+            cpus (int): Number of CPUs
+
+        Raises:
+            ValueTooLowError: if ``cpus`` is less than 1
+            ValueTooHighError: if ``cpus`` is more than 8
         """
         validate_int(cpus, 1, 8, "CPUs")
 
@@ -66,9 +72,12 @@ class NXOSv(GenericPlatform):
     def validate_memory_amount(cls, mebibytes):
         """NX-OSv requires 2-8 GiB of RAM.
 
-        :param int mebibytes: RAM, in MiB.
-        :raises ValueTooLowError: if``mebibytes`` is less than 2048
-        :raises ValueTooHighError: if ``mebibytes`` is more than 8192
+        Args:
+            mebibytes (int): RAM, in MiB.
+
+        Raises:
+            ValueTooLowError: if ``mebibytes`` is less than 2048
+            ValueTooHighError: if ``mebibytes`` is more than 8192
         """
         if mebibytes < 2048:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "2 GiB")
@@ -79,8 +88,11 @@ class NXOSv(GenericPlatform):
     def validate_serial_count(cls, count):
         """NX-OSv requires 1-2 serial ports.
 
-        :param int count: Number of serial ports.
-        :raises ValueTooLowError: if ``count`` is less than 1
-        :raises ValueTooHighError: if ``count`` is more than 2
+        Args:
+            count (int): Number of serial ports.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 1
+            ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 1, 2, "serial ports")

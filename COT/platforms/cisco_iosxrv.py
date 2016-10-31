@@ -46,12 +46,15 @@ class IOSXRv(GenericPlatform):
     def guess_nic_name(cls, nic_number):
         """MgmtEth0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc.
 
-        :param int nic_number: Nth NIC to name.
-        :return:
-          * "MgmtEth0/0/CPU0/0"
-          * "GigabitEthernet0/0/0/0"
-          * "GigabitEthernet0/0/0/1"
-          * etc.
+        Args:
+            nic_number (int): Nth NIC to name.
+
+        Returns:
+            str:
+                * "MgmtEth0/0/CPU0/0"
+                * "GigabitEthernet0/0/0/0"
+                * "GigabitEthernet0/0/0/1"
+                * etc.
         """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
@@ -62,9 +65,12 @@ class IOSXRv(GenericPlatform):
     def validate_cpu_count(cls, cpus):
         """IOS XRv supports 1-8 CPUs.
 
-        :param int cpus: Number of CPUs
-        :raises ValueTooLowError: if ``cpus`` is less than 1
-        :raises ValueTooHighError: if ``cpus`` is more than 8
+        Args:
+            cpus (int): Number of CPUs
+
+        Raises:
+            ValueTooLowError: if ``cpus`` is less than 1
+            ValueTooHighError: if ``cpus`` is more than 8
         """
         validate_int(cpus, 1, 8, "CPUs")
 
@@ -72,9 +78,12 @@ class IOSXRv(GenericPlatform):
     def validate_memory_amount(cls, mebibytes):
         """Minimum 3 GiB, max 8 GiB of RAM.
 
-        :param int mebibytes: RAM, in MiB.
-        :raises ValueTooLowError: if``mebibytes`` is less than 3072
-        :raises ValueTooHighError: if ``mebibytes`` is more than 8192
+        Args:
+            mebibytes (int): RAM, in MiB.
+
+        Raises:
+            ValueTooLowError: if ``mebibytes`` is less than 3072
+            ValueTooHighError: if ``mebibytes`` is more than 8192
         """
         if mebibytes < 3072:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "3 GiB")
@@ -85,8 +94,11 @@ class IOSXRv(GenericPlatform):
     def validate_nic_count(cls, count):
         """IOS XRv requires at least one NIC.
 
-        :param int count: Number of NICs.
-        :raises ValueTooLowError: if ``count`` is less than 1
+        Args:
+            count (int): Number of NICs.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 1
         """
         validate_int(count, 1, None, "NIC count")
 
@@ -94,9 +106,12 @@ class IOSXRv(GenericPlatform):
     def validate_serial_count(cls, count):
         """IOS XRv supports 1-4 serial ports.
 
-        :param int count: Number of serial ports.
-        :raises ValueTooLowError: if ``count`` is less than 1
-        :raises ValueTooHighError: if ``count`` is more than 4
+        Args:
+            count (int): Number of serial ports.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 1
+            ValueTooHighError: if ``count`` is more than 4
         """
         validate_int(count, 1, 4, "serial ports")
 
@@ -110,8 +125,11 @@ class IOSXRvRP(IOSXRv):
     def guess_nic_name(cls, nic_number):
         """Fabric and management only.
 
-        :param int nic_number: Nth NIC to name.
-        :return: "fabric" or "MgmtEth0/{SLOT}/CPU0/0" only
+        Args:
+            nic_number (int): Nth NIC to name.
+
+        Returns:
+            str: "fabric" or "MgmtEth0/{SLOT}/CPU0/0" only
         """
         if nic_number == 1:
             return "fabric"
@@ -122,9 +140,12 @@ class IOSXRvRP(IOSXRv):
     def validate_nic_count(cls, count):
         """Fabric plus an optional management NIC.
 
-        :param int count: Number of NICs.
-        :raises ValueTooLowError: if ``count`` is less than 1
-        :raises ValueTooHighError: if ``count`` is more than 2
+        Args:
+            count (int): Number of NICs.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 1
+            ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 1, 2, "NIC count")
 
@@ -142,12 +163,15 @@ class IOSXRvLC(IOSXRv):
     def guess_nic_name(cls, nic_number):
         """Fabric interface plus slot-appropriate GigabitEthernet interfaces.
 
-        :param int nic_number: Nth NIC to name.
-        :return:
-          * "fabric"
-          * "GigabitEthernet0/{SLOT}/0/0"
-          * "GigabitEthernet0/{SLOT}/0/1"
-          * etc.
+        Args:
+            nic_number (int): Nth NIC to name.
+
+        Returns:
+            str:
+                * "fabric"
+                * "GigabitEthernet0/{SLOT}/0/0"
+                * "GigabitEthernet0/{SLOT}/0/1"
+                * etc.
         """
         if nic_number == 1:
             return "fabric"
@@ -158,8 +182,11 @@ class IOSXRvLC(IOSXRv):
     def validate_serial_count(cls, count):
         """No serial ports are needed but up to 4 can be used for debugging.
 
-        :param int count: Number of serial ports.
-        :raises ValueTooLowError: if ``count`` is less than 0
-        :raises ValueTooHighError: if ``count`` is more than 4
+        Args:
+            count (int): Number of serial ports.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 0
+            ValueTooHighError: if ``count`` is more than 4
         """
         validate_int(count, 0, 4, "serial ports")

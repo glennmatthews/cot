@@ -37,11 +37,13 @@ class IOSv(GenericPlatform):
     def guess_nic_name(cls, nic_number):
         """GigabitEthernet0/0, GigabitEthernet0/1, etc.
 
-        :param int nic_number: Nth NIC to name.
-        :return:
-          * "GigabitEthernet0/0"
-          * "GigabitEthernet0/1"
-          * etc.
+        Args:
+            nic_number (int): Nth NIC to name.
+        Returns:
+            str:
+                * "GigabitEthernet0/0"
+                * "GigabitEthernet0/1"
+                * etc.
         """
         return "GigabitEthernet0/" + str(nic_number - 1)
 
@@ -49,9 +51,12 @@ class IOSv(GenericPlatform):
     def validate_cpu_count(cls, cpus):
         """IOSv only supports a single CPU.
 
-        :param int cpus: Number of CPUs.
-        :raises ValueTooLowError: if ``cpus`` is less than 1
-        :raises ValueTooHighError: if ``cpus`` is more than 1
+        Args:
+            cpus (int): Number of CPUs.
+
+        Raises:
+            ValueTooLowError: if ``cpus`` is less than 1
+            ValueTooHighError: if ``cpus`` is more than 1
         """
         validate_int(cpus, 1, 1, "CPUs")
 
@@ -59,9 +64,12 @@ class IOSv(GenericPlatform):
     def validate_memory_amount(cls, mebibytes):
         """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB.
 
-        :param int mebibytes: RAM, in MiB.
-        :raises ValueTooLowError: if``mebibytes`` is less than 192
-        :raises ValueTooHighError: if ``mebibytes`` is more than 3072
+        Args:
+            mebibytes (int): RAM, in MiB.
+
+        Raises:
+            ValueTooLowError: if ``mebibytes`` is less than 192
+            ValueTooHighError: if ``mebibytes`` is more than 3072
         """
         if mebibytes < 192:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "192 MiB")
@@ -76,9 +84,12 @@ class IOSv(GenericPlatform):
     def validate_nic_count(cls, count):
         """IOSv supports up to 16 NICs.
 
-        :param int count: Number of NICs.
-        :raises ValueTooLowError: if ``count`` is less than 0
-        :raises ValueTooHighError: if ``count`` is more than 16
+        Args:
+            count (int): Number of NICs.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 0
+            ValueTooHighError: if ``count`` is more than 16
         """
         validate_int(count, 0, 16, "NICs")
 
@@ -86,8 +97,11 @@ class IOSv(GenericPlatform):
     def validate_serial_count(cls, count):
         """IOSv requires 1-2 serial ports.
 
-        :param int count: Number of serial ports.
-        :raises ValueTooLowError: if ``count`` is less than 1
-        :raises ValueTooHighError: if ``count`` is more than 2
+        Args:
+            count (int): Number of serial ports.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 1
+            ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 1, 2, "serial ports")

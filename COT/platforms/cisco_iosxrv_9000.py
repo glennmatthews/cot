@@ -32,14 +32,17 @@ class IOSXRv9000(IOSXRv):
     def guess_nic_name(cls, nic_number):
         """MgmtEth0/0/CPU0/0, CtrlEth, DevEth, GigabitEthernet0/0/0/0, etc.
 
-        :param int nic_number: Nth NIC to name.
-        :return:
-          * "MgmtEth0/0/CPU0/0"
-          * "CtrlEth"
-          * "DevEth"
-          * "GigabitEthernet0/0/0/0"
-          * "GigabitEthernet0/0/0/1"
-          * etc.
+        Args:
+            nic_number (int): Nth NIC to name.
+
+        Returns:
+            str:
+                * "MgmtEth0/0/CPU0/0"
+                * "CtrlEth"
+                * "DevEth"
+                * "GigabitEthernet0/0/0/0"
+                * "GigabitEthernet0/0/0/1"
+                * etc.
         """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
@@ -54,9 +57,12 @@ class IOSXRv9000(IOSXRv):
     def validate_cpu_count(cls, cpus):
         """Minimum 1, maximum 32 CPUs.
 
-        :param int cpus: Number of CPUs
-        :raises ValueTooLowError: if ``cpus`` is less than 1
-        :raises ValueTooHighError: if ``cpus`` is more than 32
+        Args:
+            cpus (int): Number of CPUs
+
+        Raises:
+            ValueTooLowError: if ``cpus`` is less than 1
+            ValueTooHighError: if ``cpus`` is more than 32
         """
         validate_int(cpus, 1, 32, "CPUs")
 
@@ -64,9 +70,12 @@ class IOSXRv9000(IOSXRv):
     def validate_memory_amount(cls, mebibytes):
         """Minimum 8 GiB, maximum 32 GiB.
 
-        :param int mebibytes: RAM, in MiB.
-        :raises ValueTooLowError: if``mebibytes`` is less than 8192
-        :raises ValueTooHighError: if ``mebibytes`` is more than 32768
+        Args:
+            mebibytes (int): RAM, in MiB.
+
+        Raises:
+            ValueTooLowError: if ``mebibytes`` is less than 8192
+            ValueTooHighError: if ``mebibytes`` is more than 32768
         """
         if mebibytes < 8192:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "8 GiB")
@@ -77,7 +86,10 @@ class IOSXRv9000(IOSXRv):
     def validate_nic_count(cls, count):
         """IOS XRv 9000 requires at least 4 NICs.
 
-        :param int count: Number of NICs.
-        :raises ValueTooLowError: if ``count`` is less than 4
+        Args:
+            count (int): Number of NICs.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 4
         """
         validate_int(count, 4, None, "NIC count")
