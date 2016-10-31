@@ -32,10 +32,11 @@ class FileOnDisk(object):
     def __init__(self, file_path, filename=None):
         """Create a reference to a file on disk.
 
-        :param str file_path: File path or directory path
-        :param str filename: If specified, file_path is considered to be
-          a directory containing this filename. If not specified, the
-          final element in file_path is considered the filename.
+        Args:
+            file_path (str): File path or directory path
+            filename (str): If specified, file_path is considered to be
+                a directory containing this filename. If not specified, the
+                final element in file_path is considered the filename.
 
         ::
 
@@ -44,7 +45,8 @@ class FileOnDisk(object):
           >>> a == b
           True
 
-        :raises IOError: if no such file exists
+        Raises:
+            IOError: if no such file exists
         """
         if filename is None:
             self.file_path = file_path
@@ -61,16 +63,20 @@ class FileOnDisk(object):
 
         No attempt is made to check file equivalence, symlinks, etc.
 
-        :param object other: Other object to compare against
-        :return: True if the paths are the same, else False
+        Args:
+            other (object): Other object to compare against
+        Returns:
+            bool: True if the paths are the same, else False
         """
         return type(other) is type(self) and self.file_path == other.file_path
 
     def __ne__(self, other):
         """FileOnDisk instances are not equal if they have different paths.
 
-        :param object other: Other object to compare against
-        :return: False if the paths are the same, else True
+        Args:
+            other (object): Other object to compare against
+        Returns:
+            bool: False if the paths are the same, else True
         """
         return not self.__eq__(other)
 
@@ -87,8 +93,10 @@ class FileOnDisk(object):
     def open(self, mode):
         """Open the file and return a reference to the file object.
 
-        :param str mode: Mode such as 'r', 'w', 'a', 'w+', etc.
-        :return: File object
+        Args:
+            mode (str): Mode such as 'r', 'w', 'a', 'w+', etc.
+        Returns:
+            file: File object
         """
         self.obj = open(self.file_path, mode)
         return self.obj
@@ -100,7 +108,8 @@ class FileOnDisk(object):
     def copy_to(self, dest_dir):
         """Copy this file to the given destination directory.
 
-        :param str dest_dir: Destination directory or filename.
+        Args:
+            dest_dir (str): Destination directory or filename.
         """
         if self.file_path == os.path.join(dest_dir, self.filename):
             return
@@ -110,8 +119,8 @@ class FileOnDisk(object):
     def add_to_archive(self, tarf):
         """Copy this file into the given tarfile object.
 
-        :param tarf: Add this file to that archive.
-        :type tarf: :class:`tarfile.TarFile`
+        Args:
+            tarf (tarfile.TarFile): Add this file to that archive.
         """
         logger.info("Adding %s to TAR file as %s",
                     self.file_path, self.filename)
@@ -124,10 +133,13 @@ class FileInTAR(object):
     def __init__(self, tarfile_path, filename):
         """Create a reference to a file contained in a TAR archive.
 
-        :param str tarfile_path: Path to TAR archive to read
-        :param str filename: File name in the TAR archive.
-        :raises IOError: if ``tarfile_path`` doesn't reference a TAR file,
-          or the TAR file does not contain ``filename``.
+        Args:
+            tarfile_path (str): Path to TAR archive to read
+            filename (str): File name in the TAR archive.
+
+        Raises:
+            IOError: if ``tarfile_path`` doesn't reference a TAR file,
+                or the TAR file does not contain ``filename``.
         """
         if not tarfile.is_tarfile(tarfile_path):
             raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
@@ -145,8 +157,10 @@ class FileInTAR(object):
 
         No attempt is made to check file equivalence, symlinks, etc.
 
-        :param object other: Other object to compare against
-        :return: True if the filename and tarfile_path are the same, else False
+        Args:
+            other (object): Other object to compare against
+        Returns:
+            bool: True if filename and tarfile_path are the same, else False
         """
         if type(other) is type(self):
             return (self.tarfile_path == other.tarfile_path and
@@ -156,8 +170,10 @@ class FileInTAR(object):
     def __ne__(self, other):
         """FileInTar are not equal if they have different paths or names.
 
-        :param object other: Other object to compare against
-        :return: False if the filename and tarfile_path are the same, else True
+        Args:
+            other (object): Other object to compare against
+        Returns:
+            bool: False if filename and tarfile_path are the same, else True
         """
         return not self.__eq__(other)
 
@@ -180,9 +196,12 @@ class FileInTAR(object):
     def open(self, mode):
         """Open the TAR and return a reference to the relevant file object.
 
-        :param str mode: Only 'r' and 'rb' modes are supported.
-        :return: File object
-        :raises ValueError: if ``mode`` is not valid.
+        Args:
+            mode (str): Only 'r' and 'rb' modes are supported.
+        Returns:
+            file: File object
+        Raises:
+            ValueError: if ``mode`` is not valid.
         """
         # We can only extract a file object from a TAR file in read mode.
         if mode != 'r' and mode != 'rb':
@@ -203,7 +222,8 @@ class FileInTAR(object):
     def copy_to(self, dest_dir):
         """Extract this file to the given destination directory.
 
-        :param str dest_dir: Destination directory or filename.
+        Args:
+            dest_dir (str): Destination directory or filename.
         """
         with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
             logger.info("Extracting %s from %s to %s",
@@ -213,8 +233,8 @@ class FileInTAR(object):
     def add_to_archive(self, tarf):
         """Copy this file into the given tarfile object.
 
-        :param tarf: Add this file to that archive.
-        :type tarf: :class:`tarfile.TarFile`
+        Args:
+            tarf (tarfile.TarFile): Add this file to that archive.
         """
         self.open('r')
         try:

@@ -28,7 +28,7 @@ class COTHelp(COTGenericSubmodule):
     """Provide 'help <subcommand>' syntax.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`
+    :attr:`~COTGenericSubmodule.ui`
 
     Attributes:
     :attr:`subcommand`
@@ -37,8 +37,8 @@ class COTHelp(COTGenericSubmodule):
     def __init__(self, ui):
         """Instantiate this submodule with the given UI.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
         """
         super(COTHelp, self).__init__(ui)
         self._subcommand = None
@@ -53,7 +53,7 @@ class COTHelp(COTGenericSubmodule):
 
     @subcommand.setter
     def subcommand(self, value):
-        valid_cmds = sorted(self.UI.subparser_lookup.keys())
+        valid_cmds = sorted(self.ui.subparser_lookup.keys())
         if value is not None and value not in valid_cmds:
             raise InvalidInputError("Invalid command '{0}' (choose from '{1}')"
                                     .format(value, "', '".join(valid_cmds)))
@@ -64,14 +64,14 @@ class COTHelp(COTGenericSubmodule):
         super(COTHelp, self).run()
 
         if self.subcommand:
-            subp = self.UI.subparser_lookup[self.subcommand]
+            subp = self.ui.subparser_lookup[self.subcommand]
             subp.print_help()
         else:
-            self.UI.parser.print_help()
+            self.ui.parser.print_help()
 
     def create_subparser(self):
         """Create 'help' CLI subparser."""
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'help',
             help="""Print help for a command""",
             usage="""

@@ -330,14 +330,14 @@ class HelperGenericTest(HelperUT):
 
     def test_call_no_install(self):
         """If not installed, and user declines, raise HelperNotFoundError."""
-        _ui = Helper.UI
-        Helper.UI = UI()
-        Helper.UI.default_confirm_response = False
+        _ui = Helper.USER_INTERFACE
+        Helper.USER_INTERFACE = UI()
+        Helper.USER_INTERFACE.default_confirm_response = False
         try:
             self.assertRaises(HelperNotFoundError,
                               self.helper.call, ["Hello!"])
         finally:
-            Helper.UI = _ui
+            Helper.USER_INTERFACE = _ui
 
     def test_download_and_expand_tgz(self):
         """Validate the download_and_expand_tgz() context_manager."""

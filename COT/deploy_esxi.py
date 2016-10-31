@@ -57,12 +57,12 @@ class SmarterConnection(SmartConnection):
     def __init__(self, ui, host, user, pwd, port=443):
         """Create a connection to the given server.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
 
         For the other parameters, see :class:`pyVim.connect.SmartConnection`
         """
-        self.UI = ui
+        self.ui = ui
         self.server = host
         self.username = user
         self.password = pwd
@@ -77,8 +77,9 @@ class SmarterConnection(SmartConnection):
         validation failures and connect anyway. It also produces slightly
         more meaningful error messages on failure.
 
-        :raises vim.fault.HostConnectFault:
-        :raises requests.exceptions.ConnectionError:
+        Raises:
+            vim.fault.HostConnectFault: TODO
+            requests.exceptions.ConnectionError: TODO
         """
         logger.verbose("Establishing connection to %s:%s...",
                        self.server, self.port)
@@ -89,7 +90,7 @@ class SmarterConnection(SmartConnection):
                 raise
             # Self-signed certificates are pretty common for ESXi servers
             logger.warning(e.msg)
-            self.UI.confirm_or_die("SSL certificate for {0} is self-signed or "
+            self.ui.confirm_or_die("SSL certificate for {0} is self-signed or "
                                    "otherwise not recognized as valid. "
                                    "Accept certificate anyway?"
                                    .format(self.server))
@@ -111,7 +112,7 @@ class SmarterConnection(SmartConnection):
                  exc_type, exc_value, trace):
         """Disconnect from the server.
 
-        For the parameters, see :module:`contextlib`.
+        For the parameters, see :mod:`contextlib`.
         """
         super(SmarterConnection, self).__exit__()
         if exc_type is not None:
@@ -125,8 +126,10 @@ class SmarterConnection(SmartConnection):
         ConnectionError often wraps another exception with more context;
         this function dives inside the ConnectionError to find that context.
 
-        :param ConnectionError outer_e: ConnectionError to unwrap
-        :return: extracted (errno, inner_message)
+        Args:
+            outer_e (ConnectionError): ConnectionError to unwrap
+        Returns:
+            tuple: extracted (errno, inner_message)
         """
         errno = None
         inner_message = None
@@ -156,11 +159,12 @@ class SmarterConnection(SmartConnection):
 def get_object_from_connection(conn, vimtype, name):
     """Look up an object by name.
 
-    :param conn: Connection to ESXi.
-    :type conn: :class:`SmarterConnection`
-    :param object vimtype: currently only ``vim.VirtualMachine``
-    :param str name: Name of the object to look up.
-    :return: Located object
+    Args:
+        conn (SmarterConnection): Connection to ESXi.
+        vimtype (object): currently only ``vim.VirtualMachine``
+        name (str): Name of the object to look up.
+    Returns:
+        object: Located object
     """
     obj = None
     content = conn.RetrieveContent()
@@ -179,9 +183,9 @@ class PyVmomiVMReconfigSpec(object):
     def __init__(self, conn, vm_name):
         """Use the given name to look up a VM using the given connection.
 
-        :param conn: Connection to ESXi.
-        :type conn: :class:`SmarterConnection`
-        :param str vm_name: Virtual machine name.
+        Args:
+            conn (SmarterConnection): Connection to ESXi.
+            vm_name (str): Virtual machine name.
         """
         self.vm = get_object_from_connection(conn, vim.VirtualMachine, vm_name)
         if not self.vm:
@@ -195,7 +199,7 @@ class PyVmomiVMReconfigSpec(object):
     def __exit__(self, exc_type, exc_value, trace):
         """If the block exited cleanly, apply the ConfigSpec to the VM.
 
-        For the parameters, see :module:`contextlib`.
+        For the parameters, see :mod:`contextlib`.
         """
         # Did we exit cleanly?
         if exc_type is None:
@@ -207,7 +211,7 @@ class COTDeployESXi(COTDeploy):
     """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
 
     Inherited attributes:
-    :attr:`~COT.submodule.COTGenericSubmodule.UI`,
+    :attr:`~COT.submodule.COTGenericSubmodule.ui`,
     :attr:`~COT.submodule.COTReadOnlySubmodule.package`,
     :attr:`~COT.deploy.COTDeploy.generic_parser`,
     :attr:`~COT.deploy.COTDeploy.parser`,
@@ -230,8 +234,8 @@ class COTDeployESXi(COTDeploy):
     def __init__(self, ui):
         """Instantiate this submodule with the given UI.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
         """
         super(COTDeployESXi, self).__init__(ui)
         self.datastore = None
@@ -285,7 +289,8 @@ class COTDeployESXi(COTDeploy):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.locator is None:
             return False, "LOCATOR is a mandatory argument"
@@ -294,9 +299,11 @@ class COTDeployESXi(COTDeploy):
     def fixup_ovftool_args(self, ovftool_args, target):
         """Make any needed modifications to the ovftool arguments.
 
-        :param list ovftool_args: Any existing ovftool arguments to begin with.
-        :param str target: deployment target URI
-        :return: Updated ovftool arguments
+        Args:
+            ovftool_args (list): Any existing ovftool arguments to begin with.
+            target (str): deployment target URI
+        Returns:
+            list: Updated ovftool arguments
         """
         # pass selected configuration profile to ovftool
         if self.configuration is not None:
@@ -333,7 +340,8 @@ class COTDeployESXi(COTDeploy):
     def run(self):
         """Do the actual work of this submodule - deploying to ESXi.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        Raises:
+            InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTDeployESXi, self).run()
 
@@ -341,7 +349,7 @@ class COTDeployESXi(COTDeploy):
         if self.username is None:
             self.username = getpass.getuser()
         if self.password is None:
-            self.password = self.UI.get_password(self.username, self.server)
+            self.password = self.ui.get_password(self.username, self.server)
 
         target = ("vi://" + self.username + ":" + self.password +
                   "@" + self.locator)
@@ -355,7 +363,7 @@ class COTDeployESXi(COTDeploy):
         # Otherwise we may need to help and/or warn the user:
         if vm.environment_properties and not re.search("/host/", self.locator):
             if self.ovftool.version < StrictVersion("4.0.0"):
-                self.UI.confirm_or_die(
+                self.ui.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target "
                     "using ovftool prior to version 4.0.0, any OVF "
                     "environment properties will not be made available "
@@ -370,7 +378,7 @@ class COTDeployESXi(COTDeploy):
                                "option. OVF environment properties will "
                                "be ignored.")
             elif not self.power_on:
-                self.UI.confirm_or_die(
+                self.ui.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target, "
                     "OVF environment properties can only be made available to "
                     "the new guest if the guest is to be powered on "
@@ -406,13 +414,14 @@ class COTDeployESXi(COTDeploy):
     def fixup_serial_ports(self):
         """Use PyVmomi to create and configure serial ports for the new VM.
 
-        :raises NotImplementedError: If any
-          :class:`~COT.deploy.SerialConnection` in :attr:`serial_connection`
-          has a :attr:`~COT.deploy.SerialConnection.kind` other than
-          'tcp', 'telnet', or 'device'
+        Raises:
+            NotImplementedError: If any :class:`~COT.deploy.SerialConnection`
+                in :attr:`serial_connection` has a
+                :attr:`~COT.deploy.SerialConnection.kind` other than
+                'tcp', 'telnet', or 'device'
         """
         logger.info("Fixing up serial ports...")
-        with SmarterConnection(self.UI, self.server,
+        with SmarterConnection(self.ui, self.server,
                                self.username, self.password) as conn:
             logger.verbose("Connection established")
             with PyVmomiVMReconfigSpec(conn, self.vm_name) as spec:
@@ -427,8 +436,9 @@ class COTDeployESXi(COTDeploy):
     def _create_serial_port(s, spec):
         """Use PyVmomi to create a serial connection on a VM.
 
-        :param PyVmomiVMReconfigSpec spec: PyVmomi VM spec object
-        :param SerialConnection s: Serial connection to create
+        Args:
+            s (SerialConnection): Serial connection to create
+            spec (PyVmomiVMReconfigSpec): PyVmomi VM spec object
         """
         logger.verbose(s)
         serial_spec = vim.vm.device.VirtualDeviceSpec()
@@ -472,13 +482,13 @@ class COTDeployESXi(COTDeploy):
 
         import argparse
         # Create 'cot deploy ... esxi' parser
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'esxi',
             aliases=['vcenter', 'vmware', 'vsphere'],
             parent=self.subparsers,
             lookup_prefix="deploy-",
             parents=[self.generic_parser],
-            usage=self.UI.fill_usage("deploy PACKAGE esxi", [
+            usage=self.ui.fill_usage("deploy PACKAGE esxi", [
                 "LOCATOR [-u USERNAME] [-p PASSWORD] [-c CONFIGURATION] "
                 "[-n VM_NAME] [-P] [-N OVF1=HOST1 [-N OVF2=HOST2 ...]] "
                 "[-S KIND1:VAL1[,OPTS1] [-S KIND2:VAL2[,OPTS2] ...]] "
@@ -487,7 +497,7 @@ class COTDeployESXi(COTDeploy):
             formatter_class=argparse.RawDescriptionHelpFormatter,
             help="Deploy to ESXi, vSphere, or vCenter",
             description="Deploy OVF/OVA to ESXi/vCenter/vSphere hypervisor",
-            epilog=self.UI.fill_examples([
+            epilog=self.ui.fill_examples([
                 ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
                  " admin/admin, creating a VM named 'test_vm' from foo.ova.",
                  'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'

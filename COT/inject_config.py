@@ -32,7 +32,7 @@ class COTInjectConfig(COTSubmodule):
     """Wrap configuration file(s) into a disk image embedded into the VM.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTGenericSubmodule.ui`,
     :attr:`~COTSubmodule.package`,
     :attr:`~COTSubmodule.output`
 
@@ -45,8 +45,8 @@ class COTInjectConfig(COTSubmodule):
     def __init__(self, ui):
         """Instantiate this submodule with the given UI.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
         """
         super(COTInjectConfig, self).__init__(ui)
         self._config_file = None
@@ -57,9 +57,10 @@ class COTInjectConfig(COTSubmodule):
     def config_file(self):
         """Primary configuration file.
 
-        :raises InvalidInputError: if the file does not exist
-        :raises InvalidInputError: if the `platform described by
-          :attr:`package` doesn't support configuration files.
+        Raises:
+            InvalidInputError: if the file does not exist
+            InvalidInputError: if the `platform described by
+                :attr:`package` doesn't support configuration files.
         """
         return self._config_file
 
@@ -80,9 +81,10 @@ class COTInjectConfig(COTSubmodule):
     def secondary_config_file(self):
         """Secondary configuration file.
 
-        :raises InvalidInputError: if the file does not exist
-        :raises InvalidInputError: if the platform described by
-          :attr:`package` doesn't support secondary configuration files.
+        Raises:
+            InvalidInputError: if the file does not exist
+            InvalidInputError: if the platform described by
+                :attr:`package` doesn't support secondary configuration files.
         """
         return self._secondary_config_file
 
@@ -103,7 +105,8 @@ class COTInjectConfig(COTSubmodule):
     def extra_files(self):
         """Additional files to be embedded as-is.
 
-        :raise InvalidInputError: if any file in the list does not exist
+        Raises:
+            InvalidInputError: if any file in the list does not exist
         """
         return self._extra_files
 
@@ -117,7 +120,8 @@ class COTInjectConfig(COTSubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if not (self.config_file or
                 self.secondary_config_file or
@@ -128,14 +132,15 @@ class COTInjectConfig(COTSubmodule):
     def run(self):
         """Do the actual work of this submodule.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
-        :raises ValueUnsupportedError: if the
-          :const:`~COT.platforms.GenericPlatform.BOOTSTRAP_DISK_TYPE` of
-          the associated VM's
-          :attr:`~COT.vm_description.VMDescription.platform` is not
-          'cdrom' or 'harddisk'
-        :raises LookupError: if unable to find a disk drive device to inject
-          the configuration into.
+        Raises:
+            InvalidInputError: if :func:`ready_to_run` reports ``False``
+            ValueUnsupportedError: if the
+                :const:`~COT.platforms.GenericPlatform.BOOTSTRAP_DISK_TYPE` of
+                the associated VM's
+                :attr:`~COT.vm_description.VMDescription.platform` is not
+                'cdrom' or 'harddisk'
+            LookupError: if unable to find a disk drive device to inject
+                the configuration into.
         """
         super(COTInjectConfig, self).run()
 
@@ -155,7 +160,7 @@ class COTInjectConfig(COTSubmodule):
                                         "'cdrom' or 'harddisk'")
         if f is not None:
             file_id = vm.get_id_from_file(f)
-            self.UI.confirm_or_die(
+            self.ui.confirm_or_die(
                 "Existing configuration disk '{0}' found.\n"
                 "Continue and overwrite it?".format(file_id))
             logger.warning("Overwriting existing config disk '%s'", file_id)
@@ -204,7 +209,7 @@ class COTInjectConfig(COTSubmodule):
 
         # Inject the disk image into the OVA, using "add-disk" functionality
         add_disk_worker(
-            ui=self.UI,
+            ui=self.ui,
             vm=vm,
             disk_image=disk_image,
             drive_type=platform.BOOTSTRAP_DISK_TYPE,
@@ -218,11 +223,11 @@ class COTInjectConfig(COTSubmodule):
 
     def create_subparser(self):
         """Create 'inject-config' CLI subparser."""
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'inject-config',
             aliases=['add-bootstrap'],
             help="Inject a configuration file into an OVF package",
-            usage=self.UI.fill_usage("inject-config", [
+            usage=self.ui.fill_usage("inject-config", [
                 "PACKAGE [-o OUTPUT] [-c CONFIG_FILE] "
                 "[-s SECONDARY_CONFIG_FILE] [-e EXTRA_FILE [EXTRA_FILE2 ...]]",
             ]),

@@ -208,7 +208,7 @@ class Helper(object):
     _provider_package = {}
     """Mapping of package manager name to package name to install with it."""
 
-    UI = None
+    USER_INTERFACE = None
     """User interface (if any) available to helpers."""
 
     @property
@@ -282,7 +282,7 @@ class Helper(object):
           installed, and the user declines to install it at this time.
         """
         if not self.path:
-            if self.UI and not self.UI.confirm(
+            if self.USER_INTERFACE and not self.USER_INTERFACE.confirm(
                     "{0} does not appear to be installed.\nTry to install it?"
                     .format(self.name)):
                 raise HelperNotFoundError(

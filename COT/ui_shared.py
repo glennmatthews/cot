@@ -36,7 +36,8 @@ class UI(object):
     def __init__(self, force=False):
         """Constructor.
 
-        :param bool force: See :attr:`force`.
+        Args:
+            force (bool): See :attr:`force`.
         """
         self.force = force
         """Whether to automatically select the default value in all cases.
@@ -47,7 +48,7 @@ class UI(object):
         """Knob for API testing, sets the default response to confirm()."""
         self._terminal_width = 80
         from COT.helpers import Helper
-        Helper.UI = self
+        Helper.USER_INTERFACE = self
 
     @property
     def terminal_width(self):
@@ -58,10 +59,12 @@ class UI(object):
                    subcommand, usage_list):
         """Pretty-print a list of usage strings.
 
-        :param str subcommand: Subcommand name/keyword
-        :param list usage_list: List of usage strings for this subcommand.
-        :returns: String containing all usage strings, each appropriately
-            wrapped to the :attr:`terminal_width` value.
+        Args:
+            subcommand (str): Subcommand name/keyword
+            usage_list (list): List of usage strings for this subcommand.
+        Returns:
+            str: Concatenation of all usage strings, each appropriately
+                wrapped to the :attr:`terminal_width` value.
         """
         return "\n".join(["{0} {1}".format(subcommand, usage)
                           for usage in usage_list])
@@ -69,8 +72,10 @@ class UI(object):
     def fill_examples(self, example_list):
         """Pretty-print a set of usage examples.
 
-        :param list example_list: List of (example, description) tuples.
-        :raises NotImplementedError: Must be implemented by a subclass.
+        Args:
+            example_list (list): List of (example, description) tuples.
+        Raises:
+            NotImplementedError: Must be implemented by a subclass.
         """
         raise NotImplementedError("No implementation for fill_examples()")
 
@@ -84,9 +89,11 @@ class UI(object):
           but instead returns :attr:`default_confirm_response`. Subclasses
           should override this method.
 
-        :param str prompt: Message to prompt the user with
-        :return: ``True`` (user confirms acceptance) or ``False``
-            (user declines)
+        Args:
+            prompt (str): Message to prompt the user with
+        Returns:
+            bool: ``True`` (user confirms acceptance) or ``False``
+                (user declines)
         """
         if self.force:
             logger.warning("Automatically agreeing to '%s'", prompt)
@@ -99,7 +106,10 @@ class UI(object):
         A simple wrapper for :meth:`confirm` that calls :func:`sys.exit` if
         :meth:`confirm` returns ``False``.
 
-        :param str prompt: Message to prompt the user with
+        Args:
+            prompt (str): Message to prompt the user with
+        Raises:
+            SystemExit: if user declines
         """
         if not self.confirm(prompt):
             sys.exit("Aborting.")
@@ -108,13 +118,16 @@ class UI(object):
                          header="", info_list=None):
         """Prompt the user to choose from a list.
 
-        :param str footer: Prompt string to display following the list
-        :param list option_list: List of strings to choose amongst
-        :param str default_value: Default value to select if user declines
-        :param str header: String to display prior to the list
-        :param list info_list: Verbose strings to display in place of
-           :attr:`option_list`
-        :return: :attr:`default_value` or an item from :attr:`option_list`.
+        Args:
+            footer (str): Prompt string to display following the list
+            option_list (list): List of strings to choose amongst
+            default_value (str): Default value to select if user declines
+            header (str): String to display prior to the list
+            info_list (list): Verbose strings to display in place of
+                :attr:`option_list`
+
+        Returns:
+            str: :attr:`default_value` or an item from :attr:`option_list`.
         """
         if not info_list:
             info_list = option_list
@@ -151,12 +164,13 @@ class UI(object):
           but instead always returns :attr:`default_value`. Subclasses should
           override this method.
 
-        :param str prompt: Message to prompt the user with
-        :param str default_value: Default value to input if the user simply
-            hits Enter without entering a value, or if :attr:`force`.
+        Args:
+            prompt (str): Message to prompt the user with
+            default_value (str): Default value to input if the user simply
+                hits Enter without entering a value, or if :attr:`force`.
 
-        :return: Input value
-        :rtype: str
+        Returns:
+            str: Input value
         """
         if self.force:
             logger.warning("Automatically entering %s in response to '%s'",
@@ -167,8 +181,10 @@ class UI(object):
     def get_password(self, username, host):
         """Get password string from the user.
 
-        :param str username: Username the password is associated with
-        :param str host: Host the password is associated with
-        :raises NotImplementedError: Must be implemented by a subclass.
+        Args:
+            username (str): Username the password is associated with
+            host (str): Host the password is associated with
+        Raises:
+            NotImplementedError: Must be implemented by a subclass.
         """
         raise NotImplementedError("No implementation of get_password()")

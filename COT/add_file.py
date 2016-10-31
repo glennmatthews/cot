@@ -33,7 +33,7 @@ class COTAddFile(COTSubmodule):
     """Add a file (such as a README) to the package.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTGenericSubmodule.ui`,
     :attr:`~COTSubmodule.package`,
     :attr:`~COTSubmodule.output`
 
@@ -45,8 +45,8 @@ class COTAddFile(COTSubmodule):
     def __init__(self, ui):
         """Instantiate this submodule with the given UI.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
         """
         super(COTAddFile, self).__init__(ui)
         self._file = None
@@ -57,7 +57,8 @@ class COTAddFile(COTSubmodule):
     def file(self):
         """File to be added to the package.
 
-        :raises InvalidInputError: if the file does not exist.
+        Raises:
+            InvalidInputError: if the file does not exist.
         """
         return self._file
 
@@ -71,7 +72,8 @@ class COTAddFile(COTSubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.file is None:
             return False, "FILE is a mandatory argument!"
@@ -80,7 +82,8 @@ class COTAddFile(COTSubmodule):
     def run(self):
         """Do the actual work of this submodule.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        Raises:
+            InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTAddFile, self).run()
 
@@ -98,7 +101,7 @@ class COTAddFile(COTSubmodule):
                 self.file_id = filename
 
         if file_obj is not None:
-            self.UI.confirm_or_die("Replace existing file {0} with {1}?"
+            self.ui.confirm_or_die("Replace existing file {0} with {1}?"
                                    .format(vm.get_path_from_file(file_obj),
                                            self.file))
             logger.warning("Overwriting existing File in OVF")
@@ -107,9 +110,9 @@ class COTAddFile(COTSubmodule):
 
     def create_subparser(self):
         """Create 'add-file' CLI subparser."""
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'add-file',
-            usage=self.UI.fill_usage("add-file", [
+            usage=self.ui.fill_usage("add-file", [
                 "FILE PACKAGE [-o OUTPUT] [-f FILE_ID]",
             ]),
             help="Add a file to an OVF package",

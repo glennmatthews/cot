@@ -55,7 +55,7 @@ class VMContextManager(object):
         """If the block exited cleanly, write the VM out to disk.
 
         In any case, destroy the VM.
-        For the parameters, see :module:`contextlib`.
+        For the parameters, see :mod:`contextlib`.
         """
         # Did we exit cleanly?
         try:

@@ -40,7 +40,7 @@ class COTGenericSubmodule(object):
 
     Attributes:
     :attr:`vm`,
-    :attr:`UI`
+    :attr:`ui`
 
     .. note :: Generally a command should not inherit directly from this class,
       but should instead subclass :class:`COTReadOnlySubmodule` or
@@ -50,25 +50,27 @@ class COTGenericSubmodule(object):
     def __init__(self, ui):
         """Instantiate this submodule with the given UI.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
         """
         self.vm = None
         """Virtual machine description (:class:`VMDescription`)."""
-        self.UI = ui
+        self.ui = ui
         """User interface instance (:class:`~ui_shared.UI` or subclass)."""
 
     def ready_to_run(self):  # pylint: disable=no-self-use
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         return True, "Ready to go!"
 
     def run(self):
         """Do the actual work of this submodule.
 
-        :raises InvalidInputError: if :meth:`ready_to_run` reports ``False``
+        Raises:
+            InvalidInputError: if :meth:`ready_to_run` reports ``False``
         """
         (ready, reason) = self.ready_to_run()
         if not ready:
@@ -99,7 +101,7 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
 
     Inherited attributes:
     :attr:`vm`,
-    :attr:`UI`
+    :attr:`ui`
 
     Attributes:
     :attr:`package`
@@ -108,8 +110,8 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
     def __init__(self, ui):
         """Instantiate this submodule with the given UI.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
         """
         super(COTReadOnlySubmodule, self).__init__(ui)
         self._package = None
@@ -121,7 +123,8 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
         Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
         :attr:`self.vm` from the provided file.
 
-        :raises InvalidInputError: if the file does not exist.
+        Raises:
+            InvalidInputError: if the file does not exist.
         """
         return self._package
 
@@ -140,7 +143,8 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.package is None:
             return False, "PACKAGE is a mandatory argument!"
@@ -152,7 +156,7 @@ class COTSubmodule(COTGenericSubmodule):
 
     Inherited attributes:
     :attr:`vm`,
-    :attr:`UI`
+    :attr:`ui`
 
     Attributes:
     :attr:`package`,
@@ -162,8 +166,8 @@ class COTSubmodule(COTGenericSubmodule):
     def __init__(self, ui):
         """Instantiate this submodule with the given UI.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
         """
         super(COTSubmodule, self).__init__(ui)
         self._package = None
@@ -177,7 +181,8 @@ class COTSubmodule(COTGenericSubmodule):
         Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
         :attr:`self.vm` from the provided file.
 
-        :raises InvalidInputError: if the file does not exist.
+        Raises:
+            InvalidInputError: if the file does not exist.
         """
         return self._package
 
@@ -206,7 +211,7 @@ class COTSubmodule(COTGenericSubmodule):
     @output.setter
     def output(self, value):
         if value and value != self._output and os.path.exists(value):
-            self.UI.confirm_or_die("Overwrite existing file {0}?"
+            self.ui.confirm_or_die("Overwrite existing file {0}?"
                                    .format(value))
         self._output = value
         if self.vm is not None:
@@ -215,7 +220,8 @@ class COTSubmodule(COTGenericSubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.package is None:
             return False, "PACKAGE is a mandatory argument!"
@@ -227,7 +233,8 @@ class COTSubmodule(COTGenericSubmodule):
         If :attr:`output` was not previously set, automatically
         sets it to the value of :attr:`PACKAGE`.
 
-        :raises InvalidInputError: if :meth:`ready_to_run` reports ``False``
+        Raises:
+            InvalidInputError: if :meth:`ready_to_run` reports ``False``
         """
         super(COTSubmodule, self).run()
 

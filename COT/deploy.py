@@ -41,7 +41,8 @@ class SerialConnection(object):
 
         Based on the QEMU CLI for serial ports.
 
-        :param str cli_string: String of the form 'kind:value[,opts]'
+        Args:
+            cli_string (str): String of the form 'kind:value[,opts]'
 
         ::
 
@@ -52,8 +53,10 @@ class SerialConnection(object):
           >>> str(SerialConnection.from_cli_string('telnet://1.1.1.1:1111'))
           '<SerialConnection kind: telnet value: 1.1.1.1:1111 options: {}>'
 
-        :return: SerialConnection instance or None.
-        :raises InvalidInputError: if ``cli_string`` cannot be parsed
+        Returns:
+            SerialConnection: Created instance or None.
+        Raises:
+            InvalidInputError: if ``cli_string`` cannot be parsed
         """
         if cli_string is None:
             return None
@@ -84,9 +87,12 @@ class SerialConnection(object):
     def validate_kind(cls, kind):
         """Validate the connection type string and munge it as needed.
 
-        :param str kind: Connection type string, possibly in need of munging.
-        :return: A valid type string
-        :raises ValueUnsupportedError: if ``kind`` is not recognized as valid
+        Args:
+            kind (str): Connection type string, possibly in need of munging.
+        Returns:
+            str: A valid type string
+        Raises:
+            ValueUnsupportedError: if ``kind`` is not recognized as valid
         """
         kind = kind.lower()
         if kind == '':
@@ -107,11 +113,14 @@ class SerialConnection(object):
     def validate_value(cls, kind, value):
         """Check that the given value is valid for the given connection kind.
 
-        :param str kind: Connection type, valid per :func:`validate_kind`.
-        :param str value: Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
-        :return: Munged value string.
-        :raises InvalidInputError: if value string is not recognized as valid
-        :raises NotImplementedError: if ``kind`` is not valid
+        Args:
+            kind (str): Connection type, valid per :func:`validate_kind`.
+            value (str): Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
+        Returns:
+            str: Munged value string.
+        Raises:
+            InvalidInputError: if value string is not recognized as valid
+            NotImplementedError: if ``kind`` is not valid
         """
         if kind == 'device' or kind == 'file' or kind == 'pipe':
             # TODO: Validate that device path exists on target?
@@ -137,11 +146,14 @@ class SerialConnection(object):
     def validate_options(cls, kind, _value, options):
         """Check that the given set of options are valid for this connection.
 
-        :param str kind: Validated 'kind' string.
-        :param str _value: Validated 'value' string. Currently unused.
-        :param dict options: Input options dictionary.
-        :return: validated options dict
-        :raises InvalidInputError: if options are not valid.
+        Args:
+            kind (str): Validated 'kind' string.
+            _value (str): Validated 'value' string. Currently unused.
+            options (dict): Input options dictionary.
+        Returns:
+            dict: Validated options
+        Raises:
+            InvalidInputError: if options are not valid.
         """
         if kind == 'file':
             if 'datastore' not in options:
@@ -152,9 +164,10 @@ class SerialConnection(object):
     def __init__(self, kind, value, options):
         """Construct a SerialConnection object of the given kind and value.
 
-        :param str kind: Connection type string, possibly in need of munging.
-        :param str value: Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
-        :param dict options: Input options dictionary.
+        Args:
+            kind (str): Connection type string, possibly in need of munging.
+            value (str): Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
+            options (dict): Input options dictionary.
         """
         logger.debug("Creating SerialConnection: "
                      "kind: %s, value: %s, options: %s",
@@ -179,7 +192,7 @@ class COTDeploy(COTReadOnlySubmodule):
     to be common across all concrete subclasses.
 
     Inherited attributes:
-    :attr:`~COT.submodule.COTGenericSubmodule.UI`,
+    :attr:`~COT.submodule.COTGenericSubmodule.ui`,
     :attr:`~COT.submodule.COTReadOnlySubmodule.package`,
 
     Attributes:
@@ -198,8 +211,8 @@ class COTDeploy(COTReadOnlySubmodule):
     def __init__(self, ui):
         """Instantiate this submodule with the given UI.
 
-        :param ui: User interface instance.
-        :type ui: :class:`~COT.ui_shared.UI`
+        Args:
+            ui (UI): User interface instance.
         """
         super(COTDeploy, self).__init__(ui)
         # User inputs
@@ -234,7 +247,8 @@ class COTDeploy(COTReadOnlySubmodule):
     def hypervisor(self):
         """Hypervisor to deploy to.
 
-        :raises InvalidInputError: if not a recognized value.
+        Raises:
+            InvalidInputError: if not a recognized value.
         """
         return self._hypervisor
 
@@ -249,7 +263,8 @@ class COTDeploy(COTReadOnlySubmodule):
     def configuration(self):
         """VM configuration profile to use for deployment.
 
-        :raises InvalidInputError: if not a profile defined in the VM.
+        Raises:
+            InvalidInputError: if not a profile defined in the VM.
         """
         return self._configuration
 
@@ -313,7 +328,8 @@ class COTDeploy(COTReadOnlySubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.hypervisor is None:
             return False, "HYPERVISOR is a mandatory argument"
@@ -335,10 +351,10 @@ class COTDeploy(COTReadOnlySubmodule):
                              self.configuration)
             else:
                 header, profile_info_list = self.vm.profile_info_list(
-                    self.UI.terminal_width - 1)
+                    self.ui.terminal_width - 1)
                 # Correct for the indentation of the list:
                 header = "\n".join(["  " + h for h in header.split("\n")])
-                self.configuration = self.UI.choose_from_list(
+                self.configuration = self.ui.choose_from_list(
                     header=header,
                     option_list=profile_list,
                     info_list=profile_info_list,
@@ -353,7 +369,7 @@ class COTDeploy(COTReadOnlySubmodule):
         serial_count = self.vm.get_serial_count(
             [self.configuration])[self.configuration]
         if len(self.serial_connection) > serial_count:
-            self.UI.confirm_or_die(
+            self.ui.confirm_or_die(
                 "{0} configuration '{1}' defines only {2} serial ports, "
                 "but you have given connection information for {3} ports."
                 "\nContinue to create additional ports?"
@@ -373,16 +389,16 @@ class COTDeploy(COTReadOnlySubmodule):
           ``'cot deploy PACKAGE <hypervisor>'`` so subclasses of this module
           should call ``super().create_subparser()`` (to create the main
           'deploy' subparser if it doesn't already exist) then call
-          ``self.UI.add_parser(..., parent=self.subparsers, ...)`` to add
+          ``self.ui.add_parser(..., parent=self.subparsers, ...)`` to add
           their own sub-subparser.
         """
         import argparse
 
-        if self.UI.subparser_lookup.get('deploy', None) is None:
+        if self.ui.subparser_lookup.get('deploy', None) is None:
             # Create 'cot deploy' parser
-            p = self.UI.add_subparser(
+            p = self.ui.add_subparser(
                 'deploy',
-                usage=self.UI.fill_usage("deploy", [
+                usage=self.ui.fill_usage("deploy", [
                     "PACKAGE esxi ...",
                 ]),
                 help="Create a new VM on the target hypervisor from the "
@@ -405,7 +421,7 @@ class COTDeploy(COTReadOnlySubmodule):
             self.subparsers = next(
                 # pylint: disable=protected-access
                 action for
-                action in self.UI.subparser_lookup['deploy']._actions if
+                action in self.ui.subparser_lookup['deploy']._actions if
                 type(action).name == '_SubParsersAction')
 
         # Create a generic parser with arguments to be shared by all
