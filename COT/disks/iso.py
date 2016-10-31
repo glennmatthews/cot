@@ -94,9 +94,14 @@ class ISO(DiskRepresentation):
     def file_is_this_type(cls, path):
         """Detect whether the given file is an ISO image.
 
-        :param str path: Path to file
-        :return: True (file is an ISO) or False (file is not an ISO)
-        :raises HelperError: if ``path`` is not a file at all.
+        Args:
+            path (str): Path to file
+
+        Returns:
+            bool: True (file is an ISO) or False (file is not an ISO)
+
+        Raises:
+            HelperError: if ``path`` is not a file at all.
         """
         if not os.path.exists(path):
             raise HelperError(2, "No such file or directory: '{0}'"
@@ -122,9 +127,12 @@ class ISO(DiskRepresentation):
     def from_other_image(cls, input_image, output_dir, output_subformat=None):
         """Convert the other disk image into an image of this type.
 
-        :param DiskRepresentation input_image: Existing image representation.
-        :param str output_dir: Output directory to store the new image in.
-        :param str output_subformat: Any relevant subformat information.
-        :rtype: instance of DiskRepresentation or subclass
+        Args:
+            input_image (DiskRepresentation): Existing image representation.
+            output_dir (str): Output directory to store the new image in.
+            output_subformat (str): Any relevant subformat information.
+
+        Raises:
+            NotImplementedError: non-trivial to convert other types to ISO
         """
         raise NotImplementedError("Not a valid target for conversion")

@@ -52,11 +52,14 @@ class VMDK(DiskRepresentation):
                          output_subformat="streamOptimized"):
         """Convert the other disk image into an image of this type.
 
-        :param DiskRepresentation input_image: Existing image representation.
-        :param str output_dir: Output directory to store the new image in.
-        :param str output_subformat: VMDK subformat string.
-          Defaults to "streamOptimized" if unset.
-        :rtype: :class:`~COT.disks.vmdk.VMDK`
+        Args:
+            input_image (DiskRepresentation): Existing image representation.
+            output_dir (str): Output directory to store the new image in.
+            output_subformat (str): VMDK subformat string.
+                Defaults to "streamOptimized" if unset.
+
+        Returns:
+            VMDK: representation of newly created VMDK file.
         """
         file_name = os.path.basename(input_image.path)
         (file_prefix, _) = os.path.splitext(file_name)
