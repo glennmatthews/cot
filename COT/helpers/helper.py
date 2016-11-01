@@ -97,6 +97,9 @@ except ImportError:
 
         Reimplementation of Python 3's ``tempfile.TemporaryDirectory``.
         For the parameters, see :class:`tempfile.TemporaryDirectory`.
+
+        Yields:
+            str: Path to temporary directory
         """
         tempdir = tempfile.mkdtemp(suffix, prefix, dirpath)
         try:

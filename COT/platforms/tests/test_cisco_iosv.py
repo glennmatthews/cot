@@ -26,7 +26,8 @@ except ImportError:
         def emit(self, record):
             """Do nothing.
 
-            :param object record: Ignored.
+            Args:
+                record (object): Ignored.
             """
             pass
 
