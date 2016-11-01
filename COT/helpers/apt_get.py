@@ -36,7 +36,8 @@ class AptGet(PackageManager):
     def install_package(self, package):
         """Install the requested package if needed.
 
-        :param str package: Name of the package to install.
+        Args:
+            package (str): Name of the package to install.
         """
         # Check whether it's already installed
         if re.search(r"install ok installed",
