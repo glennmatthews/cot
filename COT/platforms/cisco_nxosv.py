@@ -36,18 +36,17 @@ class NXOSv(GenericPlatform):
         """NX-OSv names its NICs a bit interestingly...
 
         Args:
-            nic_number (int): Nth NIC to name.
+          nic_number (int): Nth NIC to name.
 
         Returns:
-            str:
-                * mgmt0
-                * Ethernet2/1
-                * Ethernet2/2
-                * ...
-                * Ethernet2/48
-                * Ethernet3/1
-                * Ethernet3/2
-                * ...
+          * mgmt0
+          * Ethernet2/1
+          * Ethernet2/2
+          * ...
+          * Ethernet2/48
+          * Ethernet3/1
+          * Ethernet3/2
+          * ...
         """
         if nic_number == 1:
             return "mgmt0"
@@ -60,11 +59,11 @@ class NXOSv(GenericPlatform):
         """NX-OSv requires 1-8 CPUs.
 
         Args:
-            cpus (int): Number of CPUs
+          cpus (int): Number of CPUs
 
         Raises:
-            ValueTooLowError: if ``cpus`` is less than 1
-            ValueTooHighError: if ``cpus`` is more than 8
+          ValueTooLowError: if ``cpus`` is less than 1
+          ValueTooHighError: if ``cpus`` is more than 8
         """
         validate_int(cpus, 1, 8, "CPUs")
 
@@ -73,10 +72,10 @@ class NXOSv(GenericPlatform):
         """NX-OSv requires 2-8 GiB of RAM.
 
         Args:
-            mebibytes (int): RAM, in MiB.
+          mebibytes (int): RAM, in MiB.
 
         Raises:
-            ValueTooLowError: if ``mebibytes`` is less than 2048
+          ValueTooLowError: if ``mebibytes`` is less than 2048
             ValueTooHighError: if ``mebibytes`` is more than 8192
         """
         if mebibytes < 2048:
@@ -89,10 +88,10 @@ class NXOSv(GenericPlatform):
         """NX-OSv requires 1-2 serial ports.
 
         Args:
-            count (int): Number of serial ports.
+          count (int): Number of serial ports.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 1
-            ValueTooHighError: if ``count`` is more than 2
+          ValueTooLowError: if ``count`` is less than 1
+          ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 1, 2, "serial ports")

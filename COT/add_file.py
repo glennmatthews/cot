@@ -46,7 +46,7 @@ class COTAddFile(COTSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTAddFile, self).__init__(ui)
         self._file = None
@@ -58,7 +58,7 @@ class COTAddFile(COTSubmodule):
         """File to be added to the package.
 
         Raises:
-            InvalidInputError: if the file does not exist.
+          InvalidInputError: if the file does not exist.
         """
         return self._file
 
@@ -73,7 +73,7 @@ class COTAddFile(COTSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.file is None:
             return False, "FILE is a mandatory argument!"
@@ -83,7 +83,7 @@ class COTAddFile(COTSubmodule):
         """Do the actual work of this submodule.
 
         Raises:
-            InvalidInputError: if :func:`ready_to_run` reports ``False``
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTAddFile, self).run()
 

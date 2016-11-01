@@ -47,7 +47,7 @@ class COTRemoveFile(COTSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTRemoveFile, self).__init__(ui)
         self.file_path = None
@@ -59,7 +59,7 @@ class COTRemoveFile(COTSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.file_path is None and self.file_id is None:
             return False, "No file information provided!"
@@ -69,7 +69,7 @@ class COTRemoveFile(COTSubmodule):
         """Do the actual work of this submodule.
 
         Raises:
-            InvalidInputError: if :func:`ready_to_run` reports ``False``
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTRemoveFile, self).run()
 

@@ -38,12 +38,11 @@ class IOSv(GenericPlatform):
         """GigabitEthernet0/0, GigabitEthernet0/1, etc.
 
         Args:
-            nic_number (int): Nth NIC to name.
+          nic_number (int): Nth NIC to name.
         Returns:
-            str:
-                * "GigabitEthernet0/0"
-                * "GigabitEthernet0/1"
-                * etc.
+          * "GigabitEthernet0/0"
+          * "GigabitEthernet0/1"
+          * etc.
         """
         return "GigabitEthernet0/" + str(nic_number - 1)
 
@@ -52,11 +51,11 @@ class IOSv(GenericPlatform):
         """IOSv only supports a single CPU.
 
         Args:
-            cpus (int): Number of CPUs.
+          cpus (int): Number of CPUs.
 
         Raises:
-            ValueTooLowError: if ``cpus`` is less than 1
-            ValueTooHighError: if ``cpus`` is more than 1
+          ValueTooLowError: if ``cpus`` is less than 1
+          ValueTooHighError: if ``cpus`` is more than 1
         """
         validate_int(cpus, 1, 1, "CPUs")
 
@@ -65,11 +64,11 @@ class IOSv(GenericPlatform):
         """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB.
 
         Args:
-            mebibytes (int): RAM, in MiB.
+          mebibytes (int): RAM, in MiB.
 
         Raises:
-            ValueTooLowError: if ``mebibytes`` is less than 192
-            ValueTooHighError: if ``mebibytes`` is more than 3072
+          ValueTooLowError: if ``mebibytes`` is less than 192
+          ValueTooHighError: if ``mebibytes`` is more than 3072
         """
         if mebibytes < 192:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "192 MiB")
@@ -85,11 +84,11 @@ class IOSv(GenericPlatform):
         """IOSv supports up to 16 NICs.
 
         Args:
-            count (int): Number of NICs.
+          count (int): Number of NICs.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 0
-            ValueTooHighError: if ``count`` is more than 16
+          ValueTooLowError: if ``count`` is less than 0
+          ValueTooHighError: if ``count`` is more than 16
         """
         validate_int(count, 0, 16, "NICs")
 
@@ -98,10 +97,10 @@ class IOSv(GenericPlatform):
         """IOSv requires 1-2 serial ports.
 
         Args:
-            count (int): Number of serial ports.
+          count (int): Number of serial ports.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 1
-            ValueTooHighError: if ``count`` is more than 2
+          ValueTooLowError: if ``count`` is less than 1
+          ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 1, 2, "serial ports")

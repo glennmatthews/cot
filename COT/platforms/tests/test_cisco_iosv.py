@@ -27,7 +27,7 @@ except ImportError:
             """Do nothing.
 
             Args:
-                record (object): Ignored.
+              record (object): Ignored.
             """
             pass
 

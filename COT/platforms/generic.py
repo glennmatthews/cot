@@ -46,10 +46,10 @@ class GenericPlatform(object):
         """Get the default controller type for the given device type.
 
         Args:
-            device_type (str): 'harddisk', 'cdrom', etc.
+          device_type (str): 'harddisk', 'cdrom', etc.
 
         Returns:
-            str: 'ide' unless overridden by subclass.
+          str: 'ide' unless overridden by subclass.
         """
         # For most platforms IDE is the correct default.
         return 'ide'
@@ -61,10 +61,10 @@ class GenericPlatform(object):
         .. note:: This method counts from 1, not from 0!
 
         Args:
-            nic_number (int): Nth NIC to name.
+          nic_number (int): Nth NIC to name.
 
         Returns:
-            str: "Ethernet1", "Ethernet2", etc. unless overridden by subclass.
+          str: "Ethernet1", "Ethernet2", etc. unless overridden by subclass.
         """
         return "Ethernet" + str(nic_number)
 
@@ -73,13 +73,13 @@ class GenericPlatform(object):
         """Throw an error if the number of CPUs is not a supported value.
 
         Args:
-            cpus (int): Number of CPUs
+          cpus (int): Number of CPUs
 
         Raises:
-            ValueTooLowError: if ``cpus`` is less than the minimum required
-                by this platform
-            ValueTooHighError: if ``cpus`` exceeds the maximum supported
-                by this platform
+          ValueTooLowError: if ``cpus`` is less than the minimum required
+              by this platform
+          ValueTooHighError: if ``cpus`` exceeds the maximum supported
+              by this platform
         """
         validate_int(cpus, 1, None, "CPUs")
 
@@ -88,11 +88,11 @@ class GenericPlatform(object):
         """Throw an error if the amount of RAM is not supported.
 
         Args:
-            mebibytes (int): RAM, in MiB.
+          mebibytes (int): RAM, in MiB.
 
         Raises:
-            ValueTooLowError: if ``mebibytes`` is less than the minimum
-                required by this platform
+          ValueTooLowError: if ``mebibytes`` is less than the minimum
+              required by this platform
             ValueTooHighError: if ``mebibytes`` is more than the maximum
                 supported by this platform
         """
@@ -104,13 +104,13 @@ class GenericPlatform(object):
         """Throw an error if the number of NICs is not supported.
 
         Args:
-            count (int): Number of NICs.
+          count (int): Number of NICs.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than the minimum
-                required by this platform
-            ValueTooHighError: if ``count`` is more than the maximum
-                supported by this platform
+          ValueTooLowError: if ``count`` is less than the minimum
+              required by this platform
+          ValueTooHighError: if ``count`` is more than the maximum
+              supported by this platform
         """
         validate_int(count, 0, None, "NIC count")
 
@@ -123,11 +123,11 @@ class GenericPlatform(object):
            - :data:`COT.data_validation.NIC_TYPES`
 
         Args:
-            type_string (str): See :data:`COT.data_validation.NIC_TYPES`
+          type_string (str): See :data:`COT.data_validation.NIC_TYPES`
 
         Raises:
-            ValueUnsupportedError: if ``type_string`` is not in
-                :const:`SUPPORTED_NIC_TYPES`
+          ValueUnsupportedError: if ``type_string`` is not in
+              :const:`SUPPORTED_NIC_TYPES`
         """
         if type_string not in cls.SUPPORTED_NIC_TYPES:
             raise ValueUnsupportedError("NIC type", type_string,
@@ -138,11 +138,11 @@ class GenericPlatform(object):
         """Throw an error if any NIC type string in the list is unsupported.
 
         Args:
-            type_list (list): See :data:`COT.data_validation.NIC_TYPES`
+          type_list (list): See :data:`COT.data_validation.NIC_TYPES`
 
         Raises:
-            ValueUnsupportedError: if any value in ``type_list`` is not in
-                :const:`SUPPORTED_NIC_TYPES`
+          ValueUnsupportedError: if any value in ``type_list`` is not in
+              :const:`SUPPORTED_NIC_TYPES`
         """
         for type_string in type_list:
             cls.validate_nic_type(type_string)
@@ -152,12 +152,12 @@ class GenericPlatform(object):
         """Throw an error if the number of serial ports is not supported.
 
         Args:
-            count (int): Number of serial ports.
+          count (int): Number of serial ports.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than the minimum
-                required by this platform
-            ValueTooHighError: if ``count`` is more than the maximum
-                supported by this platform
+          ValueTooLowError: if ``count`` is less than the minimum
+              required by this platform
+          ValueTooHighError: if ``count`` is more than the maximum
+              supported by this platform
         """
         validate_int(count, 0, None, "serial port count")

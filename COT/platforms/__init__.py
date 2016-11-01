@@ -74,10 +74,10 @@ def is_known_product_class(product_class):
     """Determine if the given product class string is a known one.
 
     Args:
-        product_class (str): String such as 'com.cisco.iosv'
+      product_class (str): String such as 'com.cisco.iosv'
 
     Returns:
-        bool: Whether product_class is known.
+      bool: Whether product_class is known.
     """
     return product_class in PRODUCT_PLATFORM_MAP
 
@@ -86,10 +86,10 @@ def platform_from_product_class(product_class):
     """Get the class of Platform corresponding to a product class string.
 
     Args:
-        product_class (str): String such as 'com.cisco.iosv'
+      product_class (str): String such as 'com.cisco.iosv'
 
     Returns:
-        class: GenericPlatform or a subclass of it
+      class: GenericPlatform or a subclass of it
     """
     if product_class is None:
         return GenericPlatform

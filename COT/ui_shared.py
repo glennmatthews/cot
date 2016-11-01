@@ -37,7 +37,7 @@ class UI(object):
         """Constructor.
 
         Args:
-            force (bool): See :attr:`force`.
+          force (bool): See :attr:`force`.
         """
         self.force = force
         """Whether to automatically select the default value in all cases.
@@ -60,11 +60,11 @@ class UI(object):
         """Pretty-print a list of usage strings.
 
         Args:
-            subcommand (str): Subcommand name/keyword
-            usage_list (list): List of usage strings for this subcommand.
+          subcommand (str): Subcommand name/keyword
+          usage_list (list): List of usage strings for this subcommand.
         Returns:
-            str: Concatenation of all usage strings, each appropriately
-                wrapped to the :attr:`terminal_width` value.
+          str: Concatenation of all usage strings, each appropriately wrapped
+          to the :attr:`terminal_width` value.
         """
         return "\n".join(["{0} {1}".format(subcommand, usage)
                           for usage in usage_list])
@@ -73,9 +73,9 @@ class UI(object):
         """Pretty-print a set of usage examples.
 
         Args:
-            example_list (list): List of (example, description) tuples.
+          example_list (list): List of (example, description) tuples.
         Raises:
-            NotImplementedError: Must be implemented by a subclass.
+          NotImplementedError: Must be implemented by a subclass.
         """
         raise NotImplementedError("No implementation for fill_examples()")
 
@@ -90,10 +90,10 @@ class UI(object):
           should override this method.
 
         Args:
-            prompt (str): Message to prompt the user with
+          prompt (str): Message to prompt the user with
         Returns:
-            bool: ``True`` (user confirms acceptance) or ``False``
-                (user declines)
+          bool: ``True`` (user confirms acceptance) or ``False``
+          (user declines)
         """
         if self.force:
             logger.warning("Automatically agreeing to '%s'", prompt)
@@ -107,9 +107,9 @@ class UI(object):
         :meth:`confirm` returns ``False``.
 
         Args:
-            prompt (str): Message to prompt the user with
+          prompt (str): Message to prompt the user with
         Raises:
-            SystemExit: if user declines
+          SystemExit: if user declines
         """
         if not self.confirm(prompt):
             sys.exit("Aborting.")
@@ -119,15 +119,15 @@ class UI(object):
         """Prompt the user to choose from a list.
 
         Args:
-            footer (str): Prompt string to display following the list
-            option_list (list): List of strings to choose amongst
-            default_value (str): Default value to select if user declines
-            header (str): String to display prior to the list
-            info_list (list): Verbose strings to display in place of
-                :attr:`option_list`
+          footer (str): Prompt string to display following the list
+          option_list (list): List of strings to choose amongst
+          default_value (str): Default value to select if user declines
+          header (str): String to display prior to the list
+          info_list (list): Verbose strings to display in place of
+              :attr:`option_list`
 
         Returns:
-            str: :attr:`default_value` or an item from :attr:`option_list`.
+          str: :attr:`default_value` or an item from :attr:`option_list`.
         """
         if not info_list:
             info_list = option_list
@@ -165,12 +165,12 @@ class UI(object):
           override this method.
 
         Args:
-            prompt (str): Message to prompt the user with
-            default_value (str): Default value to input if the user simply
-                hits Enter without entering a value, or if :attr:`force`.
+          prompt (str): Message to prompt the user with
+          default_value (str): Default value to input if the user simply
+              hits Enter without entering a value, or if :attr:`force`.
 
         Returns:
-            str: Input value
+          str: Input value
         """
         if self.force:
             logger.warning("Automatically entering %s in response to '%s'",
@@ -182,9 +182,9 @@ class UI(object):
         """Get password string from the user.
 
         Args:
-            username (str): Username the password is associated with
-            host (str): Host the password is associated with
+          username (str): Username the password is associated with
+          host (str): Host the password is associated with
         Raises:
-            NotImplementedError: Must be implemented by a subclass.
+          NotImplementedError: Must be implemented by a subclass.
         """
         raise NotImplementedError("No implementation of get_password()")

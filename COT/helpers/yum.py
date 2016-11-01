@@ -34,7 +34,7 @@ class Yum(PackageManager):
         """Install the requested package if needed.
 
         Args:
-            package (str): Name of the package to install.
+          package (str): Name of the package to install.
         """
         self.call(['--quiet', 'install', package],
                   capture_output=False, retry_with_sudo=True)

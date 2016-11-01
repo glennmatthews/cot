@@ -43,7 +43,7 @@ class COTInfo(COTGenericSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTInfo, self).__init__(ui)
         self._package_list = None
@@ -78,7 +78,7 @@ class COTInfo(COTGenericSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if not self.package_list:
             return False, "At least one package must be specified"
@@ -88,7 +88,7 @@ class COTInfo(COTGenericSubmodule):
         """Do the actual work of this submodule.
 
         Raises:
-            InvalidInputError: if :func:`ready_to_run` reports ``False``
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTInfo, self).run()
 

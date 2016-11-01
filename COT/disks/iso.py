@@ -95,13 +95,13 @@ class ISO(DiskRepresentation):
         """Detect whether the given file is an ISO image.
 
         Args:
-            path (str): Path to file
+          path (str): Path to file
 
         Returns:
-            bool: True (file is an ISO) or False (file is not an ISO)
+          bool: True (file is an ISO) or False (file is not an ISO)
 
         Raises:
-            HelperError: if ``path`` is not a file at all.
+          HelperError: if ``path`` is not a file at all.
         """
         if not os.path.exists(path):
             raise HelperError(2, "No such file or directory: '{0}'"
@@ -128,11 +128,11 @@ class ISO(DiskRepresentation):
         """Convert the other disk image into an image of this type.
 
         Args:
-            input_image (DiskRepresentation): Existing image representation.
-            output_dir (str): Output directory to store the new image in.
-            output_subformat (str): Any relevant subformat information.
+          input_image (DiskRepresentation): Existing image representation.
+          output_dir (str): Output directory to store the new image in.
+          output_subformat (str): Any relevant subformat information.
 
         Raises:
-            NotImplementedError: non-trivial to convert other types to ISO
+          NotImplementedError: non-trivial to convert other types to ISO
         """
         raise NotImplementedError("Not a valid target for conversion")

@@ -46,7 +46,7 @@ class COTInjectConfig(COTSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTInjectConfig, self).__init__(ui)
         self._config_file = None
@@ -58,9 +58,9 @@ class COTInjectConfig(COTSubmodule):
         """Primary configuration file.
 
         Raises:
-            InvalidInputError: if the file does not exist
-            InvalidInputError: if the `platform described by
-                :attr:`package` doesn't support configuration files.
+          InvalidInputError: if the file does not exist
+          InvalidInputError: if the platform described by :attr:`package`
+              doesn't support configuration files.
         """
         return self._config_file
 
@@ -82,9 +82,9 @@ class COTInjectConfig(COTSubmodule):
         """Secondary configuration file.
 
         Raises:
-            InvalidInputError: if the file does not exist
-            InvalidInputError: if the platform described by
-                :attr:`package` doesn't support secondary configuration files.
+          InvalidInputError: if the file does not exist
+          InvalidInputError: if the platform described by :attr:`package`
+              doesn't support secondary configuration files.
         """
         return self._secondary_config_file
 
@@ -106,7 +106,7 @@ class COTInjectConfig(COTSubmodule):
         """Additional files to be embedded as-is.
 
         Raises:
-            InvalidInputError: if any file in the list does not exist
+          InvalidInputError: if any file in the list does not exist
         """
         return self._extra_files
 
@@ -121,7 +121,7 @@ class COTInjectConfig(COTSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if not (self.config_file or
                 self.secondary_config_file or
@@ -133,14 +133,14 @@ class COTInjectConfig(COTSubmodule):
         """Do the actual work of this submodule.
 
         Raises:
-            InvalidInputError: if :func:`ready_to_run` reports ``False``
-            ValueUnsupportedError: if the
-                :const:`~COT.platforms.GenericPlatform.BOOTSTRAP_DISK_TYPE` of
-                the associated VM's
-                :attr:`~COT.vm_description.VMDescription.platform` is not
-                'cdrom' or 'harddisk'
-            LookupError: if unable to find a disk drive device to inject
-                the configuration into.
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
+          ValueUnsupportedError: if the
+              :const:`~COT.platforms.GenericPlatform.BOOTSTRAP_DISK_TYPE` of
+              the associated VM's
+              :attr:`~COT.vm_description.VMDescription.platform` is not
+              'cdrom' or 'harddisk'
+          LookupError: if unable to find a disk drive device to inject
+              the configuration into.
         """
         super(COTInjectConfig, self).run()
 

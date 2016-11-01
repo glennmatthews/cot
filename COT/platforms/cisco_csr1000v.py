@@ -38,9 +38,9 @@ class CSR1000V(GenericPlatform):
         """CSR1000V uses SCSI for hard disks and IDE for CD-ROMs.
 
         Args:
-            device_type (str): 'harddisk' or 'cdrom'
+          device_type (str): 'harddisk' or 'cdrom'
         Returns:
-            str: 'ide' for CD-ROM, 'scsi' for hard disk
+          str: 'ide' for CD-ROM, 'scsi' for hard disk
         """
         if device_type == 'harddisk':
             return 'scsi'
@@ -59,12 +59,11 @@ class CSR1000V(GenericPlatform):
           support that.
 
         Args:
-            nic_number (int): Nth NIC to name.
+          nic_number (int): Nth NIC to name.
         Returns:
-            str:
-              * "GigabitEthernet1"
-              * "GigabitEthernet2"
-              * etc.
+          * "GigabitEthernet1"
+          * "GigabitEthernet2"
+          * etc.
         """
         return "GigabitEthernet" + str(nic_number)
 
@@ -73,13 +72,13 @@ class CSR1000V(GenericPlatform):
         """CSR1000V supports 1, 2, 4, or 8 CPUs.
 
         Args:
-            cpus (int): Number of CPUs.
+          cpus (int): Number of CPUs.
 
         Raises:
-            ValueTooLowError: if ``cpus`` is less than 1
-            ValueTooHighError: if ``cpus`` is more than 8
-            ValueUnsupportedError: if ``cpus`` is an unsupported value
-                between 1 and 8
+          ValueTooLowError: if ``cpus`` is less than 1
+          ValueTooHighError: if ``cpus`` is more than 8
+          ValueUnsupportedError: if ``cpus`` is an unsupported value
+              between 1 and 8
         """
         validate_int(cpus, 1, 8, "CPUs")
         if cpus not in [1, 2, 4, 8]:
@@ -90,11 +89,11 @@ class CSR1000V(GenericPlatform):
         """Minimum 2.5 GiB, max 8 GiB.
 
         Args:
-            mebibytes (int): RAM, in MiB.
+          mebibytes (int): RAM, in MiB.
 
         Raises:
-            ValueTooLowError: if ``mebibytes`` is less than 2560
-            ValueTooHighError: if ``mebibytes`` is more than 8192
+          ValueTooLowError: if ``mebibytes`` is less than 2560
+          ValueTooHighError: if ``mebibytes`` is more than 8192
         """
         if mebibytes < 2560:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "2.5 GiB")
@@ -106,11 +105,11 @@ class CSR1000V(GenericPlatform):
         """CSR1000V requires 3 NICs and supports up to 26.
 
         Args:
-            count (int): Number of NICs.
+          count (int): Number of NICs.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 3
-            ValueTooHighError: if ``count`` is more than 26
+          ValueTooLowError: if ``count`` is less than 3
+          ValueTooHighError: if ``count`` is more than 26
         """
         validate_int(count, 3, 26, "NIC count")
 
@@ -119,10 +118,10 @@ class CSR1000V(GenericPlatform):
         """CSR1000V supports 0-2 serial ports.
 
         Args:
-            count (int): Number of serial ports.
+          count (int): Number of serial ports.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 0
-            ValueTooHighError: if ``count`` is more than 2
+          ValueTooLowError: if ``count`` is less than 0
+          ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 0, 2, "serial ports")

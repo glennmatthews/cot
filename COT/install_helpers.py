@@ -53,9 +53,9 @@ def verify_manpages(man_dir):
     """Verify installation of COT's manual pages.
 
     Args:
-        man_dir (str): Base directory where manpages should be found.
+      man_dir (str): Base directory where manpages should be found.
     Returns:
-        tuple: (result, message)
+      tuple: (result, message)
     """
     for f in resource_listdir("COT", "docs/man"):
         src_path = resource_filename("COT", os.path.join("docs/man", f))
@@ -82,13 +82,13 @@ def _install_manpage(src_path, man_dir):
     """Install the given manual page for COT.
 
     Args:
-        src_path (str): Path to manual page file.
-        man_dir (str): Base directory where page should be installed.
+      src_path (str): Path to manual page file.
+      man_dir (str): Base directory where page should be installed.
     Returns:
-        tuple: (page_previously_installed, page_updated)
+      tuple: (page_previously_installed, page_updated)
     Raises:
-        IOError: if installation fails under some circumstances
-        OSError: if installation fails under other circumstances
+      IOError: if installation fails under some circumstances
+      OSError: if installation fails under other circumstances
     """
     # Which man section does this belong in?
     f = os.path.basename(src_path)
@@ -112,9 +112,9 @@ def install_manpages(man_dir):
     """Install COT's manual pages.
 
     Args:
-        man_dir (str): Base directory where manpages should be installed.
+      man_dir (str): Base directory where manpages should be installed.
     Returns:
-        tuple: (result, message)
+      tuple: (result, message)
     """
     installed_any = False
     some_preinstalled = False
@@ -152,7 +152,7 @@ class COTInstallHelpers(COTGenericSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTInstallHelpers, self).__init__(ui)
         self.ignore_errors = False
@@ -162,10 +162,10 @@ class COTInstallHelpers(COTGenericSubmodule):
         """Install the given helper module.
 
         Args:
-            helper (Helper): Helper module to install.
+          helper (Helper): Helper module to install.
 
         Returns:
-            tuple: (result, message)
+          tuple: (result, message)
         """
         if helper.installed:
             return (True,
@@ -188,7 +188,7 @@ class COTInstallHelpers(COTGenericSubmodule):
         """Verify or install COT's manual pages.
 
         Returns:
-            tuple: (result, message)
+          tuple: (result, message)
         """
         try:
             resource_listdir("COT", "docs/man")

@@ -77,12 +77,12 @@ class VMDescription(object):
         Does not check file contents, as the given filename may not yet exist.
 
         Args:
-            filename (str): File name or path
+          filename (str): File name or path
         Returns:
-            str: A string representing a recognized and supported type of file
+          str: A string representing a recognized and supported type of file
         Raises:
-            ValueUnsupportedError: if COT can't recognize the file type or
-                doesn't know how to handle this file type.
+          ValueUnsupportedError: if COT can't recognize the file type or
+              doesn't know how to handle this file type.
         """
         raise ValueUnsupportedError("filename", filename, ("none implemented"))
 
@@ -92,13 +92,13 @@ class VMDescription(object):
         Also creates a temporary directory as a working directory.
 
         Args:
-            input_file (str): Data file to read in.
-            output_file (str): File name to write to.
+          input_file (str): Data file to read in.
+          output_file (str): File name to write to.
 
-                * If this VM is read-only, (there will never be an output file)
-                  this value should be ``None``
-                * If the output filename is not yet known, use ``""`` and
-                  subsequently set :attr:`output` when it is determined.
+              * If this VM is read-only, (there will never be an output file)
+                this value should be ``None``
+              * If the output filename is not yet known, use ``""`` and
+                subsequently set :attr:`output` when it is determined.
         """
         self._input_file = input_file
         self._product_class = None
@@ -167,7 +167,7 @@ class VMDescription(object):
         """Check sanity of hardware properties for this VM/product/platform.
 
         Returns:
-            bool: ``True`` if hardware is sane, ``False`` if not.
+          bool: ``True`` if hardware is sane, ``False`` if not.
         """
         raise NotImplementedError("validate_hardware not implemented!")
 
@@ -185,7 +185,7 @@ class VMDescription(object):
         """The name of the default configuration profile.
 
         Returns:
-            str: Profile name or ``None`` if none are defined.
+          str: Profile name or ``None`` if none are defined.
         """
         if self.config_profiles:
             return self.config_profiles[0]
@@ -196,9 +196,9 @@ class VMDescription(object):
         """The array of environment properties.
 
         Returns:
-            list: Array of dicts (one per property) with the keys
-                ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
-                ``"label"``, and ``"description"``.
+          list: Array of dicts (one per property) with the keys
+          ``"key"``, ``"value"``, ``"qualifiers"``, ``"type"``,
+          ``"label"``, and ``"description"``.
         """
         raise NotImplementedError("environment_properties not implemented")
 
@@ -259,15 +259,13 @@ class VMDescription(object):
         """Convert the disk to a more appropriate format if needed.
 
         Args:
-            disk_image (DiskRepresentation): Image to inspect and possibly
-                convert
-            kind (str): Image type (harddisk/cdrom).
+          disk_image (DiskRepresentation): Disk to inspect and possibly convert
+          kind (str): Image type (harddisk/cdrom).
         Returns:
-            DiskRepresentation:
-              * :attr:`disk_image`, if no conversion was required
-              * or a new :class:`~COT.disks.disk.DiskRepresentation` instance
-                representing a converted image that has been created in
-                :attr:`output_dir`.
+          DiskRepresentation: :attr:`disk_image`, if no conversion was
+          required, or a new :class:`~COT.disks.disk.DiskRepresentation`
+          instance representing a converted image that has been created in
+          :attr:`output_dir`.
         """
         # Some VMs may not need this, so default to do nothing, not error
         return disk_image
@@ -276,10 +274,10 @@ class VMDescription(object):
         """From the given filename, try to find any existing objects.
 
         Args:
-            filename (str): Filename to search from
+          filename (str): Filename to search from
         Returns:
-            tuple: ``(file, disk, controller_device, disk_device)``,
-                opaque objects of which any or all may be ``None``
+          tuple: ``(file, disk, controller_device, disk_device)``, opaque
+          objects of which any or all may be ``None``
         """
         raise NotImplementedError("search_from_filename not implemented")
 
@@ -287,10 +285,10 @@ class VMDescription(object):
         """From the given file ID, try to find any existing objects.
 
         Args:
-            file_id (str): File ID to search from
+          file_id (str): File ID to search from
         Returns:
-            tuple: ``(file, disk, controller_device, disk_device)``,
-                opaque objects of which any or all may be ``None``
+          tuple: ``(file, disk, controller_device, disk_device)``, opaque
+          objects of which any or all may be ``None``
         """
         raise NotImplementedError("search_from_file_id not implemented")
 
@@ -298,11 +296,11 @@ class VMDescription(object):
         """From the controller type and device address, look for existing disk.
 
         Args:
-            controller (str): ``'ide'`` or ``'scsi'``
-            address (str): Device address such as ``'1:0'``
+          controller (str): ``'ide'`` or ``'scsi'``
+          address (str): Device address such as ``'1:0'``
         Returns:
-            tuple: ``(file, disk, controller_device, disk_device)``,
-                opaque objects of which any or all may be ``None``
+          tuple: ``(file, disk, controller_device, disk_device)``, opaque
+          objects of which any or all may be ``None``
         """
         raise NotImplementedError("search_from_controller not implemented")
 
@@ -310,9 +308,9 @@ class VMDescription(object):
         """Find the first open slot on a controller of the given type.
 
         Args:
-            controller_type (str): ``'ide'`` or ``'scsi'``
+          controller_type (str): ``'ide'`` or ``'scsi'``
         Returns:
-            tuple: ``(controller_device, address_string)`` or ``(None, None)``
+          tuple: ``(controller_device, address_string)`` or ``(None, None)``
         """
         raise NotImplementedError("find_open_controller not implemented")
 
@@ -320,9 +318,9 @@ class VMDescription(object):
         """Get the file ID from the given opaque file object.
 
         Args:
-            file_obj (object): File object to query
+          file_obj (object): File object to query
         Returns:
-            str: Identifier string associated with this object
+          str: Identifier string associated with this object
         """
         raise NotImplementedError("get_id_from_file not implemented")
 
@@ -330,9 +328,9 @@ class VMDescription(object):
         """Get the file path from the given opaque file object.
 
         Args:
-            file_obj (object): File object to query
+          file_obj (object): File object to query
         Returns:
-            str: Relative path to the file associated with this object
+          str: Relative path to the file associated with this object
         """
         raise NotImplementedError("get_path_from_file not implemented")
 
@@ -340,10 +338,10 @@ class VMDescription(object):
         """Get the file reference from the given opaque disk object.
 
         Args:
-            disk (object): Disk object to query
+          disk (object): Disk object to query
         Returns:
-            str: String that can be used to identify the file associated
-                with this disk
+          str: String that can be used to identify the file associated with
+          this disk
         """
         raise NotImplementedError("get_file_ref_from_disk not implemented")
 
@@ -351,9 +349,9 @@ class VMDescription(object):
         """Get the identifier string associated with the given Disk object.
 
         Args:
-            disk (object): Disk object
+          disk (object): Disk object
         Returns:
-            str: Identifier string associated with this object
+          str: Identifier string associated with this object
         """
         raise NotImplementedError("get_id_from_disk not implemented")
 
@@ -361,11 +359,11 @@ class VMDescription(object):
         """Get the sub-type common to all devices of the given type.
 
         Args:
-            device_type (str): Device type such as ``'ide'`` or ``'memory'``.
+          device_type (str): Device type such as ``'ide'`` or ``'memory'``.
         Returns:
           str: Subtype string common to all devices of this type, or ``None``,
-              if multiple such devices exist and they do not all
-              have the same sub-type.
+          if multiple such devices exist and they do not all have the same
+          sub-type.
         """
         raise NotImplementedError("get_common_subtype not implemented")
 
@@ -374,15 +372,15 @@ class VMDescription(object):
         """Check if the given disk is linked properly to the other objects.
 
         Args:
-            disk (object): Disk object to validate
-            file_obj (object): File object which this disk should be linked to
-                (optional)
-            disk_item (object): Disk device object which should link to
-                this disk (optional)
-            ctrl_item (object): Controller device object which should link to
-                the :attr:`disk_item`
+          disk (object): Disk object to validate
+          file_obj (object): File object which this disk should be linked to
+              (optional)
+          disk_item (object): Disk device object which should link to
+              this disk (optional)
+          ctrl_item (object): Controller device object which should link to
+              the :attr:`disk_item`
         Raises:
-            ValueMismatchError: if the given items are not linked properly.
+          ValueMismatchError: if the given items are not linked properly.
         """
         raise NotImplementedError(
             "check_sanity_of_disk_device not implemented")
@@ -391,13 +389,13 @@ class VMDescription(object):
         """Add a new file object to the VM or overwrite the provided one.
 
         Args:
-            file_path (str): Path to file to add
-            file_id (str): Identifier string for the file in the VM
-            file_obj (object): Existing file object to overwrite
-            disk (object): Existing disk object referencing :attr:`file`.
+          file_path (str): Path to file to add
+          file_id (str): Identifier string for the file in the VM
+          file_obj (object): Existing file object to overwrite
+          disk (object): Existing disk object referencing :attr:`file`.
 
         Returns:
-            object: New or updated file object
+          object: New or updated file object
         """
         raise NotImplementedError("add_file not implemented")
 
@@ -405,9 +403,9 @@ class VMDescription(object):
         """Remove the given file object from the VM.
 
         Args:
-            file_obj (object): File object to remove
-            disk (object): Disk object referencing :attr:`file`
-            disk_drive (object): Disk drive mapping :attr:`file` to a device
+          file_obj (object): File object to remove
+          disk (object): Disk object referencing :attr:`file`
+          disk_drive (object): Disk drive mapping :attr:`file` to a device
         """
         raise NotImplementedError("remove_file not implemented")
 
@@ -415,13 +413,13 @@ class VMDescription(object):
         """Add a new disk object to the VM or overwrite the provided one.
 
         Args:
-            disk_repr (DiskRepresentation): Disk file representation
-            file_id (str): Identifier string for the file/disk mapping
-            drive_type (str): 'harddisk' or 'cdrom'
-            disk (object): Existing disk object to overwrite
+          disk_repr (DiskRepresentation): Disk file representation
+          file_id (str): Identifier string for the file/disk mapping
+          drive_type (str): 'harddisk' or 'cdrom'
+          disk (object): Existing disk object to overwrite
 
         Returns:
-            object: New or updated disk object
+          object: New or updated disk object
         """
         raise NotImplementedError("add_disk not implemented")
 
@@ -430,13 +428,13 @@ class VMDescription(object):
         """Create a new IDE or SCSI controller, or update existing one.
 
         Args:
-            device_type (str): ``'ide'`` or ``'scsi'``
-            subtype (str): Subtype such as ``'virtio'`` (optional)
-            address (int): Controller address such as 0 or 1 (optional)
-            ctrl_item (object): Existing controller device to update (optional)
+          device_type (str): ``'ide'`` or ``'scsi'``
+          subtype (str): Subtype such as ``'virtio'`` (optional)
+          address (int): Controller address such as 0 or 1 (optional)
+          ctrl_item (object): Existing controller device to update (optional)
 
         Returns:
-            object: New or updated controller device object
+          object: New or updated controller device object
         """
         raise NotImplementedError("add_controller_device not implemented")
 
@@ -445,18 +443,18 @@ class VMDescription(object):
         """Add a new disk device to the VM or update the provided one.
 
         Args:
-            drive_type (str): ``'harddisk'`` or ``'cdrom'``
-            address (str): Address on controller, such as "1:0" (optional)
-            name (str): Device name string (optional)
-            description (str): Description string (optional)
-            disk (object): Disk object to map to this device
-            file_obj (object): File object to map to this device
-            ctrl_item (object): Controller object to serve as parent
-            disk_item (object): Existing disk device to update instead of
-                making a new device.
+          drive_type (str): ``'harddisk'`` or ``'cdrom'``
+          address (str): Address on controller, such as "1:0" (optional)
+          name (str): Device name string (optional)
+          description (str): Description string (optional)
+          disk (object): Disk object to map to this device
+          file_obj (object): File object to map to this device
+          ctrl_item (object): Controller object to serve as parent
+          disk_item (object): Existing disk device to update instead of
+              making a new device.
 
         Returns:
-            object: New or updated disk device object.
+          object: New or updated disk device object.
         """
         raise NotImplementedError("add_disk_device not implemented")
 
@@ -465,9 +463,9 @@ class VMDescription(object):
         """Create/update a configuration profile with the given ID.
 
         Args:
-            pid (str): Profile identifier
-            label (str): Brief descriptive label for the profile
-            description (str): Verbose description of the profile
+          pid (str): Profile identifier
+          label (str): Brief descriptive label for the profile
+          description (str): Verbose description of the profile
         """
         raise NotImplementedError("create_configuration_profile "
                                   "not implemented!")
@@ -476,7 +474,7 @@ class VMDescription(object):
         """Delete the configuration profile with the given ID.
 
         Args:
-            profile (str): Profile identifier
+          profile (str): Profile identifier
         """
         raise NotImplementedError("delete_configuration_profile "
                                   "not implemented")
@@ -505,8 +503,8 @@ class VMDescription(object):
         """Set the number of CPUs.
 
         Args:
-            cpus (int): Number of CPUs
-            profile_list (list): Change only the given profiles
+          cpus (int): Number of CPUs
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_cpu_count not implemented!")
 
@@ -514,8 +512,8 @@ class VMDescription(object):
         """Set the amount of RAM, in megabytes.
 
         Args:
-            megabytes (int): Memory value, in megabytes
-            profile_list (list): Change only the given profiles
+          megabytes (int): Memory value, in megabytes
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_memory not implemented!")
 
@@ -526,8 +524,8 @@ class VMDescription(object):
            Use :func:`set_nic_types` instead.
 
         Args:
-            nic_type (str): NIC hardware type
-            profile_list (list): Change only the given profiles.
+          nic_type (str): NIC hardware type
+          profile_list (list): Change only the given profiles.
         """
         warnings.warn("Use set_nic_types() instead", DeprecationWarning)
         self.set_nic_types([nic_type], profile_list)
@@ -536,8 +534,8 @@ class VMDescription(object):
         """Set the hardware type(s) for NICs.
 
         Args:
-            type_list (list): NIC hardware type(s)
-            profile_list (list): Change only the given profiles.
+          type_list (list): NIC hardware type(s)
+          profile_list (list): Change only the given profiles.
         """
         raise NotImplementedError("set_nic_types not implemented!")
 
@@ -545,9 +543,9 @@ class VMDescription(object):
         """Get the number of NICs under the given profile(s).
 
         Args:
-            profile_list (list): Profile(s) of interest.
+          profile_list (list): Profile(s) of interest.
         Returns:
-            dict: ``{ profile_name : nic_count }``
+          dict: ``{ profile_name : nic_count }``
         """
         raise NotImplementedError("get_nic_count not implemented!")
 
@@ -555,8 +553,8 @@ class VMDescription(object):
         """Set the given profile(s) to have the given number of NICs.
 
         Args:
-            count (int): number of NICs
-            profile_list (list): Change only the given profiles
+          count (int): number of NICs
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_nic_count not implemented!")
 
@@ -566,8 +564,8 @@ class VMDescription(object):
         Also serves to update the description of an existing network label.
 
         Args:
-            label (str): Brief label for the network
-            description (str): Verbose description of the network
+          label (str): Brief label for the network
+          description (str): Verbose description of the network
         """
         raise NotImplementedError("create_network not implemented!")
 
@@ -579,8 +577,8 @@ class VMDescription(object):
           NICs, will use the last entry in the list for all remaining NICs.
 
         Args:
-            network_list (list): List of networks to map NICs to
-            profile_list (list): Change only the given profiles
+          network_list (list): List of networks to map NICs to
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_nic_networks not implemented!")
 
@@ -592,8 +590,8 @@ class VMDescription(object):
           will use the last entry in the list for all remaining NICs.
 
         Args:
-            mac_list (list): List of MAC addresses to assign to NICs
-            profile_list (list): Change only the given profiles
+          mac_list (list): List of MAC addresses to assign to NICs
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_nic_mac_addresses not implemented!")
 
@@ -613,8 +611,8 @@ class VMDescription(object):
           Expands to ``["mgmt0", "eth10", "eth11", "eth12", ...]``
 
         Args:
-            name_list (list): List of names to assign.
-            profile_list (list): Change only the given profiles
+          name_list (list): List of names to assign.
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_nic_names not implemented!")
 
@@ -622,9 +620,9 @@ class VMDescription(object):
         """Get the number of serial ports under the given profile(s).
 
         Args:
-            profile_list (list): Change only the given profiles
+          profile_list (list): Change only the given profiles
         Returns:
-            dict: ``{ profile_name : serial_count }``
+          dict: ``{ profile_name : serial_count }``
         """
         raise NotImplementedError("get_serial_count not implemented!")
 
@@ -632,8 +630,8 @@ class VMDescription(object):
         """Set the given profile(s) to have the given number of NICs.
 
         Args:
-            count (int): Number of serial ports
-            profile_list (list): Change only the given profiles
+          count (int): Number of serial ports
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_serial_count not implemented!")
 
@@ -641,8 +639,8 @@ class VMDescription(object):
         """Set the serial port connectivity under the given profile(s).
 
         Args:
-            conn_list (list): List of connectivity strings
-            profile_list (list): Change only the given profiles
+          conn_list (list): List of connectivity strings
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_serial_connectivity not implemented!")
 
@@ -650,9 +648,9 @@ class VMDescription(object):
         """Get the serial port connectivity strings under the given profile.
 
         Args:
-            profile (str): Profile of interest.
+          profile (str): Profile of interest.
         Returns:
-            list: List of connectivity strings
+          list: List of connectivity strings
         """
         raise NotImplementedError("get_serial_connectivity not implemented!")
 
@@ -663,8 +661,8 @@ class VMDescription(object):
            Use :func:`set_scsi_subtypes` instead.
 
         Args:
-            subtype (str): SCSI subtype string
-            profile_list (list): Change only the given profiles
+          subtype (str): SCSI subtype string
+          profile_list (list): Change only the given profiles
         """
         warnings.warn("Use set_scsi_subtypes() instead", DeprecationWarning)
         self.set_scsi_subtypes([subtype], profile_list)
@@ -673,8 +671,8 @@ class VMDescription(object):
         """Set the device subtype list for the SCSI controller(s).
 
         Args:
-            type_list (list): SCSI subtype string list
-            profile_list (list): Change only the given profiles
+          type_list (list): SCSI subtype string list
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_scsi_subtypes not implemented!")
 
@@ -685,8 +683,8 @@ class VMDescription(object):
            Use :func:`set_ide_subtypes` instead.
 
         Args:
-            subtype (str): IDE subtype string
-            profile_list (list): Change only the given profiles
+          subtype (str): IDE subtype string
+          profile_list (list): Change only the given profiles
         """
         warnings.warn("Use set_ide_subtypes() instead", DeprecationWarning)
         self.set_ide_subtypes([subtype], profile_list)
@@ -695,8 +693,8 @@ class VMDescription(object):
         """Set the device subtype list for the IDE controller(s).
 
         Args:
-            type_list (list): IDE subtype string list
-            profile_list (list): Change only the given profiles
+          type_list (list): IDE subtype string list
+          profile_list (list): Change only the given profiles
         """
         raise NotImplementedError("set_ide_subtypes not implemented!")
 
@@ -706,9 +704,9 @@ class VMDescription(object):
         """Get the value of the given property.
 
         Args:
-            key (str): Property identifier
+          key (str): Property identifier
         Returns:
-            str: Value of this property, or ``None``
+          str: Value of this property, or ``None``
         """
         raise NotImplementedError("get_property_value not implemented")
 
@@ -718,16 +716,16 @@ class VMDescription(object):
         """Set the value of the given property (converting value if needed).
 
         Args:
-            key (str): Property identifier
-            value (object): Value to set for this property
-            user_configurable (bool): Should this property be configurable at
-                deployment time by the user?
-            property_type (str): Value type - 'string' or 'boolean'
-            label (str): Brief explanatory label for this property
-            description (str): Detailed description of this property
+          key (str): Property identifier
+          value (object): Value to set for this property
+          user_configurable (bool): Should this property be configurable at
+              deployment time by the user?
+          property_type (str): Value type - 'string' or 'boolean'
+          label (str): Brief explanatory label for this property
+          description (str): Detailed description of this property
 
         Returns:
-            str: the (converted) value that was set.
+          str: the (converted) value that was set.
         """
         raise NotImplementedError("set_property_value not implemented")
 
@@ -735,9 +733,9 @@ class VMDescription(object):
         """Import each line of a text file into a configuration property.
 
         Args:
-            file_path (str): File name to import.
-            user_configurable (bool): Should the properties be configurable at
-                deployment time by the user?
+          file_path (str): File name to import.
+          user_configurable (bool): Should the properties be configurable at
+              deployment time by the user?
         """
         raise NotImplementedError("config_file_to_properties not implemented")
 
@@ -752,12 +750,11 @@ class VMDescription(object):
         """Get a descriptive string summarizing the contents of this VM.
 
         Args:
-            width (int): Line length to wrap to where possible.
-            verbosity_option (str): ``'brief'``, ``None`` (default),
-                or ``'verbose'``
+          width (int): Line length to wrap to where possible.
+          verbosity_option (str): 'brief', None (default), or 'verbose'
 
         Returns:
-            str: Wrapped, appropriately verbose string.
+          str: Wrapped, appropriately verbose string.
         """
         raise NotImplementedError("info_string not implemented")
 
@@ -765,12 +762,11 @@ class VMDescription(object):
         """Get a string summarizing available configuration profiles.
 
         Args:
-            width (int): Line length to wrap to if possible
-            verbosity_option (str): ``'brief'``, ``None`` (default),
-                or ``'verbose'``
+          width (int): Line length to wrap to if possible
+          verbosity_option (str): 'brief', None (default), or 'verbose'
 
         Returns:
-            str: Appropriately formatted and verbose string.
+          str: Appropriately formatted and verbose string.
         """
         raise NotImplementedError("profile_info_string not implemented")
 
@@ -779,9 +775,9 @@ class VMDescription(object):
         """Find a disk device that exists but contains no data.
 
         Args:
-            drive_type (str): Disk drive type, such as 'cdrom' or 'harddisk'
+          drive_type (str): Disk drive type, such as 'cdrom' or 'harddisk'
         Returns:
-            object: Hardware device object, or None.
+          object: Hardware device object, or None.
         """
         raise NotImplementedError("find_empty_drive not implemented")
 
@@ -789,8 +785,8 @@ class VMDescription(object):
         """Find the controller type and address of a given device object.
 
         Args:
-            device (object): Hardware device object.
+          device (object): Hardware device object.
         Returns:
-            tuple: ``(type, address)``, such as ``("ide", "1:0")``.
+          tuple: ``(type, address)``, such as ``("ide", "1:0")``.
         """
         raise NotImplementedError("find_device_location not implemented")

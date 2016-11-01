@@ -39,10 +39,10 @@ def name_helper(version):
     """Generate an instance of the correct OVFNameHelper variant class.
 
     Args:
-        version (float): OVF specification version to use, such as 0.9,
-            1.0, or 2.0
+      version (float): OVF specification version to use, such as 0.9, 1.0,
+          or 2.0
     Returns:
-        Instance of OVFNameHelper[012] as appropriate.
+      Instance of OVFNameHelper[012] as appropriate.
     """
     if version < 1.0:
         return OVFNameHelper0()
@@ -59,8 +59,8 @@ class _Tag(object):
         """Store namespace name and tag.
 
         Args:
-            namespace_name (str): XML namespace name
-            tag (str): XML tag
+          namespace_name (str): XML namespace name
+          tag (str): XML tag
         """
         self.namespace_name = namespace_name.upper()
         self.tag = tag
@@ -269,11 +269,11 @@ class OVFNameHelper1(object):
         """Transparently pass attribute lookups to _raw and _cache.
 
         Args:
-            name (str): Attribute name to look up.
+          name (str): Attribute name to look up.
         Returns:
-            Value looked up from :attr:`_raw` and/or :attr:`_cache`.
+          Value looked up from :attr:`_raw` and/or :attr:`_cache`.
         Raises:
-            AttributeError: if the given ``name`` is not found.
+          AttributeError: if the given ``name`` is not found.
         """
         if name in self._item_children:
             return self._item_children[name]
@@ -332,9 +332,9 @@ class OVFNameHelper1(object):
         """Get the XML namespace for the given item tag.
 
         Args:
-            tag (str): Un-namespaced XML tag.
+          tag (str): Un-namespaced XML tag.
         Returns:
-            str: XML namespace string, or None.
+          str: XML namespace string, or None.
         """
         if tag == self.ITEM:
             return self.RASD
@@ -348,9 +348,9 @@ class OVFNameHelper1(object):
         """Get the XML namespace for the given ResourceType.
 
         Args:
-            resource_type (str): ResourceType value string.
+          resource_type (str): ResourceType value string.
         Returns:
-            str: XML namespace string, or None.
+          str: XML namespace string, or None.
         """
         if resource_type == self.RES_MAP['ethernet']:
             return self.EPASD
@@ -364,11 +364,11 @@ class OVFNameHelper1(object):
         """Get the Item tag for the given XML namespace.
 
         Args:
-            ns (str): XML namespace
+          ns (str): XML namespace
         Returns:
-            str: 'Item', 'StorageItem', or 'EthernetPortItem' as appropriate.
+          str: 'Item', 'StorageItem', or 'EthernetPortItem' as appropriate.
         Raises:
-            ValueUnsupportedError: if the namespace is unrecognized
+          ValueUnsupportedError: if the namespace is unrecognized
         """
         if ns == self.RASD:
             return self.ITEM

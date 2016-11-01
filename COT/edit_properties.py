@@ -57,7 +57,7 @@ class COTEditProperties(COTSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTEditProperties, self).__init__(ui)
         self._config_file = None
@@ -75,7 +75,7 @@ class COTEditProperties(COTSubmodule):
         """Path to plaintext file to read configuration lines from.
 
         Raises:
-            InvalidInputError: if the file does not exist.
+          InvalidInputError: if the file does not exist.
         """
         return self._config_file
 
@@ -139,7 +139,7 @@ class COTEditProperties(COTSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.labels and not self.properties:
             return False, ("The --label option requires also specifying "
@@ -163,7 +163,7 @@ class COTEditProperties(COTSubmodule):
         """Do the actual work of this submodule.
 
         Raises:
-            InvalidInputError: if :func:`ready_to_run` reports ``False``
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTEditProperties, self).run()
 

@@ -58,7 +58,7 @@ class SmarterConnection(SmartConnection):
         """Create a connection to the given server.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
 
         For the other parameters, see :class:`pyVim.connect.SmartConnection`
         """
@@ -78,8 +78,8 @@ class SmarterConnection(SmartConnection):
         more meaningful error messages on failure.
 
         Raises:
-            vim.fault.HostConnectFault: TODO
-            requests.exceptions.ConnectionError: TODO
+          vim.fault.HostConnectFault: TODO
+          requests.exceptions.ConnectionError: TODO
         """
         logger.verbose("Establishing connection to %s:%s...",
                        self.server, self.port)
@@ -127,9 +127,9 @@ class SmarterConnection(SmartConnection):
         this function dives inside the ConnectionError to find that context.
 
         Args:
-            outer_e (ConnectionError): ConnectionError to unwrap
+          outer_e (ConnectionError): ConnectionError to unwrap
         Returns:
-            tuple: extracted (errno, inner_message)
+          tuple: extracted (errno, inner_message)
         """
         errno = None
         inner_message = None
@@ -160,11 +160,11 @@ def get_object_from_connection(conn, vimtype, name):
     """Look up an object by name.
 
     Args:
-        conn (SmarterConnection): Connection to ESXi.
-        vimtype (object): currently only ``vim.VirtualMachine``
-        name (str): Name of the object to look up.
+      conn (SmarterConnection): Connection to ESXi.
+      vimtype (object): currently only ``vim.VirtualMachine``
+      name (str): Name of the object to look up.
     Returns:
-        object: Located object
+      object: Located object
     """
     obj = None
     content = conn.RetrieveContent()
@@ -184,8 +184,8 @@ class PyVmomiVMReconfigSpec(object):
         """Use the given name to look up a VM using the given connection.
 
         Args:
-            conn (SmarterConnection): Connection to ESXi.
-            vm_name (str): Virtual machine name.
+          conn (SmarterConnection): Connection to ESXi.
+          vm_name (str): Virtual machine name.
         """
         self.vm = get_object_from_connection(conn, vim.VirtualMachine, vm_name)
         if not self.vm:
@@ -235,7 +235,7 @@ class COTDeployESXi(COTDeploy):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTDeployESXi, self).__init__(ui)
         self.datastore = None
@@ -290,7 +290,7 @@ class COTDeployESXi(COTDeploy):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.locator is None:
             return False, "LOCATOR is a mandatory argument"
@@ -300,10 +300,10 @@ class COTDeployESXi(COTDeploy):
         """Make any needed modifications to the ovftool arguments.
 
         Args:
-            ovftool_args (list): Any existing ovftool arguments to begin with.
-            target (str): deployment target URI
+          ovftool_args (list): Any existing ovftool arguments to begin with.
+          target (str): deployment target URI
         Returns:
-            list: Updated ovftool arguments
+          list: Updated ovftool arguments
         """
         # pass selected configuration profile to ovftool
         if self.configuration is not None:
@@ -341,7 +341,7 @@ class COTDeployESXi(COTDeploy):
         """Do the actual work of this submodule - deploying to ESXi.
 
         Raises:
-            InvalidInputError: if :func:`ready_to_run` reports ``False``
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTDeployESXi, self).run()
 
@@ -415,10 +415,10 @@ class COTDeployESXi(COTDeploy):
         """Use PyVmomi to create and configure serial ports for the new VM.
 
         Raises:
-            NotImplementedError: If any :class:`~COT.deploy.SerialConnection`
-                in :attr:`serial_connection` has a
-                :attr:`~COT.deploy.SerialConnection.kind` other than
-                'tcp', 'telnet', or 'device'
+          NotImplementedError: If any :class:`~COT.deploy.SerialConnection`
+              in :attr:`serial_connection` has a
+              :attr:`~COT.deploy.SerialConnection.kind` other than
+              'tcp', 'telnet', or 'device'
         """
         logger.info("Fixing up serial ports...")
         with SmarterConnection(self.ui, self.server,
@@ -437,8 +437,8 @@ class COTDeployESXi(COTDeploy):
         """Use PyVmomi to create a serial connection on a VM.
 
         Args:
-            s (SerialConnection): Serial connection to create
-            spec (PyVmomiVMReconfigSpec): PyVmomi VM spec object
+          s (SerialConnection): Serial connection to create
+          spec (PyVmomiVMReconfigSpec): PyVmomi VM spec object
         """
         logger.verbose(s)
         serial_spec = vim.vm.device.VirtualDeviceSpec()

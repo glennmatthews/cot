@@ -54,11 +54,11 @@ def validate_controller_address(controller, address):
     Helper method for the :attr:`controller`/:attr:`address` setters.
 
     Args:
-        controller (str): ``'ide'`` or ``'scsi'``
-        address (str): A string like '0:0' or '2:10'
+      controller (str): ``'ide'`` or ``'scsi'``
+      address (str): A string like '0:0' or '2:10'
 
     Raises:
-        InvalidInputError: if the address/controller combo is invalid.
+      InvalidInputError: if the address/controller combo is invalid.
     """
     logger.info("validate_controller_address: %s, %s", controller, address)
     if controller is not None and address is not None:
@@ -98,7 +98,7 @@ class COTAddDisk(COTSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTAddDisk, self).__init__(ui)
         self._disk_image = None
@@ -120,7 +120,7 @@ class COTAddDisk(COTSubmodule):
         """Disk image file to add to the VM.
 
         Raises:
-            InvalidInputError: if the file does not exist.
+          InvalidInputError: if the file does not exist.
         """
         return self._disk_image
 
@@ -133,7 +133,7 @@ class COTAddDisk(COTSubmodule):
         """Disk device address on controller (``1:0``, etc.).
 
         Raises:
-            InvalidInputError: see :meth:`validate_controller_address`
+          InvalidInputError: see :meth:`validate_controller_address`
         """
         return self._address
 
@@ -148,7 +148,7 @@ class COTAddDisk(COTSubmodule):
         """Disk controller type (``ide``, ``scsi``).
 
         Raises:
-            InvalidInputError: see :meth:`validate_controller_address`
+          InvalidInputError: see :meth:`validate_controller_address`
         """
         return self._controller
 
@@ -162,7 +162,7 @@ class COTAddDisk(COTSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.disk_image is None:
             return False, "DISK_IMAGE is a mandatory argument!"
@@ -175,7 +175,7 @@ class COTAddDisk(COTSubmodule):
         """Do the actual work of this submodule.
 
         Raises:
-            InvalidInputError: if :meth:`ready_to_run` reports ``False``
+          InvalidInputError: if :meth:`ready_to_run` reports ``False``
         """
         super(COTAddDisk, self).run()
 
@@ -264,11 +264,11 @@ def guess_drive_type_from_extension(disk_file_name):
     """Guess the disk type (harddisk/cdrom) from the disk file name.
 
     Args:
-        disk_file_name (str): File name or file path.
+      disk_file_name (str): File name or file path.
     Returns:
-        str: "cdrom" or "harddisk"
+      str: "cdrom" or "harddisk"
     Raises:
-        InvalidInputError: if the disk type cannot be guessed.
+      InvalidInputError: if the disk type cannot be guessed.
     """
     disk_extension = os.path.splitext(disk_file_name)[1]
     ext_type_map = {
@@ -315,17 +315,17 @@ def search_for_elements(vm, disk_file, file_id, controller, address):
     all relevant approaches agree on what sections we're talking about...
 
     Args:
-        vm (VMDescription): Virtual machine object
-        disk_file (str): Disk file name or path
-        file_id (str): File identifier
-        controller (str): controller type, "ide" or "scsi"
-        address (str): device address, such as "1:0"
+      vm (VMDescription): Virtual machine object
+      disk_file (str): Disk file name or path
+      file_id (str): File identifier
+      controller (str): controller type, "ide" or "scsi"
+      address (str): device address, such as "1:0"
 
     Raises:
-        ValueMismatchError: if the criteria select a non-unique set.
+      ValueMismatchError: if the criteria select a non-unique set.
 
     Returns:
-        tuple: (file_object, disk_object, controller_item, disk_item)
+      tuple: (file_object, disk_object, controller_item, disk_item)
     """
     # 1) Check whether the DISK_IMAGE file name matches an existing File
     #    in the OVF (and from there, find the associated Disk and Items)
@@ -359,14 +359,14 @@ def guess_controller_type(vm, ctrl_item, drive_type):
     """If a controller type wasn't specified, try to guess from context.
 
     Args:
-        vm (VMDescription): Virtual machine object
-        ctrl_item (object): Any known controller object
-        drive_type (str): "cdrom" or "harddisk"
+      vm (VMDescription): Virtual machine object
+      ctrl_item (object): Any known controller object
+      drive_type (str): "cdrom" or "harddisk"
     Returns:
-        str: 'ide' or 'scsi'
+      str: 'ide' or 'scsi'
     Raises:
-        ValueUnsupportedError: if ``ctrl_item`` is not an IDE or SCSI
-            controller device.
+      ValueUnsupportedError: if ``ctrl_item`` is not an IDE or SCSI
+          controller device.
     """
     if ctrl_item is None:
         # If the user didn't tell us which controller type they wanted,
@@ -393,16 +393,16 @@ def validate_elements(vm, file_obj, disk_obj, disk_item, ctrl_item,
     """Validate any existing file, disk, controller item, and disk item.
 
     Raises:
-        ValueMismatchError: if the search criteria select a non-unique set.
+      ValueMismatchError: if the search criteria select a non-unique set.
 
     Args:
-        vm (VMDescription): Virtual machine object
-        file_obj (object): Known file object
-        disk_obj (object): Known disk object
-        disk_item (object): Known disk device object
-        ctrl_item (object): Known controller device object
-        file_id (str): File identifier string
-        ctrl_type (str): Controller type ("ide" or "scsi")
+      vm (VMDescription): Virtual machine object
+      file_obj (object): Known file object
+      disk_obj (object): Known disk object
+      disk_item (object): Known disk device object
+      ctrl_item (object): Known controller device object
+      file_id (str): File identifier string
+      ctrl_type (str): Controller type ("ide" or "scsi")
     """
     # Ok, we now have confirmed that we have at most one of each of these
     # four objects. Now it's time for some sanity checking...
@@ -443,16 +443,16 @@ def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
     """Get user confirmation of any risky or unusual operations.
 
     Args:
-        vm (VMDescription): Virtual machine object
-        ui (UI): User interface object
-        file_obj (object): Known file object
-        disk_image (str): Filename or path for disk file
-        disk_obj (object): Known disk object
-        disk_item (object): Known disk device object
-        drive_type (str): "harddisk" or "cdrom"
-        controller (str): Controller type ("ide" or "scsi")
-        ctrl_item (object): Known controller device object
-        subtype (str): Controller subtype (such as "virtio")
+      vm (VMDescription): Virtual machine object
+      ui (UI): User interface object
+      file_obj (object): Known file object
+      disk_image (str): Filename or path for disk file
+      disk_obj (object): Known disk object
+      disk_item (object): Known disk device object
+      drive_type (str): "harddisk" or "cdrom"
+      controller (str): Controller type ("ide" or "scsi")
+      ctrl_item (object): Known controller device object
+      subtype (str): Controller subtype (such as "virtio")
     """
     # TODO: more refactoring!
     if file_obj is not None:
@@ -507,25 +507,25 @@ def add_disk_worker(vm,
     and will be automatically determined by COT if unspecified.
 
     Args:
-        vm (VMDescription): The virtual machine being edited.
-        ui (UI): User interface in effect.
-        disk_image (DiskRepresentation): Disk image to add to the VM.
-        drive_type (str): Disk drive type: ``'cdrom'`` or ``'harddisk'``.
-            If not specified, will be derived automatically from the
-            disk_image file name extension.
-        file_id (str): Identifier of the disk file in the VM. If not
-            specified, the VM will automatically derive an appropriate value.
-        controller (str): Disk controller type: ``'ide'`` or ``'scsi'``.
-            If not specified, will be derived from the `type` and the
-            `platform` of the given `vm`.
-        subtype (str): Controller subtype ('virtio', 'lsilogic', etc.)
-        address (str): Disk device address on its controller
-            (such as ``'1:0'``). If this matches an existing disk device,
-            that device will be overwritten. If not specified, the first
-            available address not already occupied by an existing device
-            will be selected.
-        diskname (str): Name for disk device
-        description (str): Description of disk device
+      vm (VMDescription): The virtual machine being edited.
+      ui (UI): User interface in effect.
+      disk_image (DiskRepresentation): Disk image to add to the VM.
+      drive_type (str): Disk drive type: ``'cdrom'`` or ``'harddisk'``.
+          If not specified, will be derived automatically from the
+          disk_image file name extension.
+      file_id (str): Identifier of the disk file in the VM. If not
+          specified, the VM will automatically derive an appropriate value.
+      controller (str): Disk controller type: ``'ide'`` or ``'scsi'``.
+          If not specified, will be derived from the `type` and the
+          `platform` of the given `vm`.
+      subtype (str): Controller subtype ('virtio', 'lsilogic', etc.)
+      address (str): Disk device address on its controller
+          (such as ``'1:0'``). If this matches an existing disk device,
+          that device will be overwritten. If not specified, the first
+          available address not already occupied by an existing device
+          will be selected.
+      diskname (str): Name for disk device
+      description (str): Description of disk device
     """
     if drive_type is None:
         drive_type = guess_drive_type_from_extension(disk_image.path)

@@ -53,13 +53,13 @@ class VMDK(DiskRepresentation):
         """Convert the other disk image into an image of this type.
 
         Args:
-            input_image (DiskRepresentation): Existing image representation.
-            output_dir (str): Output directory to store the new image in.
-            output_subformat (str): VMDK subformat string.
-                Defaults to "streamOptimized" if unset.
+          input_image (DiskRepresentation): Existing image representation.
+          output_dir (str): Output directory to store the new image in.
+          output_subformat (str): VMDK subformat string.
+              Defaults to "streamOptimized" if unset.
 
         Returns:
-            VMDK: representation of newly created VMDK file.
+          VMDK: representation of newly created VMDK file.
         """
         file_name = os.path.basename(input_image.path)
         (file_prefix, _) = os.path.splitext(file_name)

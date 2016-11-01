@@ -38,7 +38,7 @@ class COTHelp(COTGenericSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTHelp, self).__init__(ui)
         self._subcommand = None

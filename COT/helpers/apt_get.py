@@ -37,7 +37,7 @@ class AptGet(PackageManager):
         """Install the requested package if needed.
 
         Args:
-            package (str): Name of the package to install.
+          package (str): Name of the package to install.
         """
         # Check whether it's already installed
         if re.search(r"install ok installed",

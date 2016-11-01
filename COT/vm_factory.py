@@ -33,16 +33,16 @@ class VMFactory(object):
         """Create an appropriate VMDescription subclass instance from a file.
 
         Args:
-            input_file (str): File to read VM description from
-            output_file (str): File to write to when finished (optional)
+          input_file (str): File to read VM description from
+          output_file (str): File to write to when finished (optional)
 
         Raises:
-            VMInitError: if no appropriate class is identified
-            VMInitError: if the selected subclass raises a
-                ValueUnsupportedError while loading the file.
+          VMInitError: if no appropriate class is identified
+          VMInitError: if the selected subclass raises a
+              ValueUnsupportedError while loading the file.
 
         Returns:
-            VMDescription: Created object
+          VMDescription: Created object
         """
         vm_class = None
 

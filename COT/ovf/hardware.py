@@ -54,10 +54,10 @@ class OVFHardware(object):
         """Construct an OVFHardware object describing all Items in the OVF.
 
         Args:
-            ovf (OVF): OVF instance to extract hardware information from.
+          ovf (OVF): OVF instance to extract hardware information from.
 
         Raises:
-            OVFHardwareDataError: if any data errors are seen
+          OVFHardwareDataError: if any data errors are seen
         """
         self.ovf = ovf
         self.item_dict = {}
@@ -146,7 +146,7 @@ class OVFHardware(object):
         """Find the first available ``InstanceID`` number.
 
         Returns:
-            str: An instance ID that is not yet in use.
+          str: An instance ID that is not yet in use.
         """
         i = 1
         while str(i) in self.item_dict.keys():
@@ -158,12 +158,12 @@ class OVFHardware(object):
         """Create a new :class:`~COT.ovf.item.OVFItem` of the given type.
 
         Args:
-            resource_type (str): String such as 'cpu' or 'harddisk' - used as
-                a key to :data:`~COT.ovf.name_helper.OVFNameHelper1.RES_MAP`
-            profile_list (list): Profiles the new item should belong to
+          resource_type (str): String such as 'cpu' or 'harddisk' - used as
+              a key to :data:`~COT.ovf.name_helper.OVFNameHelper1.RES_MAP`
+          profile_list (list): Profiles the new item should belong to
 
         Returns:
-            tuple: ``(instance_id, ovfitem)``
+          tuple: ``(instance_id, ovfitem)``
         """
         instance = self.find_unused_instance_id()
         ovfitem = OVFItem(self.ovf)
@@ -185,7 +185,7 @@ class OVFHardware(object):
         """Delete the given Item from the hardware.
 
         Args:
-            item (OVFItem): Item to delete
+          item (OVFItem): Item to delete
         """
         instance = item.get_value(self.ovf.INSTANCE_ID)
         if self.item_dict[instance] == item:
@@ -196,11 +196,11 @@ class OVFHardware(object):
         """Clone an :class:`OVFItem` to create a new instance.
 
         Args:
-            parent_item (OVFItem): Instance to clone from
-            profile_list (list): List of profiles to clone into
+          parent_item (OVFItem): Instance to clone from
+          profile_list (list): List of profiles to clone into
 
         Returns:
-            tuple: ``(instance_id, ovfitem)``
+          tuple: ``(instance_id, ovfitem)``
         """
         instance = self.find_unused_instance_id()
         ovfitem = copy.deepcopy(parent_item)
@@ -215,13 +215,13 @@ class OVFHardware(object):
         """Check whether the given item matches the given filters.
 
         Args:
-            item (OVFItem): Item to validate
-            resource_type (str): Resource type string like 'scsi' or 'serial'
-            properties (dict): Properties and their values to match
-            profile_list (list): List of profiles to filter on
+          item (OVFItem): Item to validate
+          resource_type (str): Resource type string like 'scsi' or 'serial'
+          properties (dict): Properties and their values to match
+          profile_list (list): List of profiles to filter on
 
         Returns:
-            bool: True if the item matches all filters, False if not.
+          bool: True if the item matches all filters, False if not.
         """
         if resource_type and (self.ovf.RES_MAP[resource_type] !=
                               item.get_value(self.ovf.RESOURCE_TYPE)):
@@ -240,12 +240,12 @@ class OVFHardware(object):
         """Find all items matching the given type, properties, and profiles.
 
         Args:
-            resource_type (str): Resource type string like 'scsi' or 'serial'
-            properties (dict): Properties and their values to match
-            profile_list (list): List of profiles to filter on
+          resource_type (str): Resource type string like 'scsi' or 'serial'
+          properties (dict): Properties and their values to match
+          profile_list (list): List of profiles to filter on
 
         Returns:
-            list: Matching :class:`~COT.ovf.item.OVFItem` instances
+          list: Matching :class:`~COT.ovf.item.OVFItem` instances
         """
         items = [self.item_dict[instance] for instance in
                  natural_sort(self.item_dict)]
@@ -262,15 +262,15 @@ class OVFHardware(object):
         """Find the only :class:`OVFItem` of the given :attr:`resource_type`.
 
         Args:
-            resource_type (str): Resource type string like 'scsi' or 'serial'
-            properties (dict): Properties and their values to match
-            profile (str): Single profile ID to search within
+          resource_type (str): Resource type string like 'scsi' or 'serial'
+          properties (dict): Properties and their values to match
+          profile (str): Single profile ID to search within
 
         Returns:
-            OVFItem: Matching instance, or None
+          OVFItem: Matching instance, or None
 
         Raises:
-            LookupError: if more than one such Item exists.
+          LookupError: if more than one such Item exists.
         """
         matches = self.find_all_items(resource_type, properties, [profile])
         if len(matches) > 1:
@@ -285,11 +285,11 @@ class OVFHardware(object):
         """Wrapper for :meth:`get_item_count_per_profile`.
 
         Args:
-            resource_type (str): Resource type string like 'scsi' or 'serial'
-            profile (str): Single profile identifier string to look up.
+          resource_type (str): Resource type string like 'scsi' or 'serial'
+          profile (str): Single profile identifier string to look up.
 
         Returns:
-            int: Number of items of this type in this profile.
+          int: Number of items of this type in this profile.
         """
         return (self.get_item_count_per_profile(resource_type, [profile])
                 [profile])
@@ -301,13 +301,13 @@ class OVFHardware(object):
         the total for each profile.
 
         Args:
-            resource_type (str): Resource type string like 'scsi' or 'serial'
-            profile_list (list): List of profiles to filter on
-                (default: apply across all profiles)
+          resource_type (str): Resource type string like 'scsi' or 'serial'
+          profile_list (list): List of profiles to filter on
+              (default: apply across all profiles)
 
         Returns:
-            dict: mapping profile strings to the number of items under
-                each profile.
+          dict: mapping profile strings to the number of items under each
+          profile.
         """
         count_dict = {}
         if not profile_list:
@@ -331,13 +331,13 @@ class OVFHardware(object):
         Helper method for :meth:`set_item_count_per_profile`.
 
         Args:
-            resource_type (str): 'cpu', 'harddisk', etc.
-            count (int): Desired number of items
-            profile_list (list): List of profiles to filter on
-                (default: apply across all profiles)
+          resource_type (str): 'cpu', 'harddisk', etc.
+          count (int): Desired number of items
+          profile_list (list): List of profiles to filter on
+              (default: apply across all profiles)
 
         Returns:
-            tuple: (count_dict, items_to_add, last_item)
+          tuple: (count_dict, items_to_add, last_item)
         """
         count_dict = self.get_item_count_per_profile(resource_type,
                                                      profile_list)
@@ -380,20 +380,20 @@ class OVFHardware(object):
         Helper method for :meth:`set_item_count_per_profile`.
 
         Args:
-            new_item (OVFItem): Newly cloned Item
-            new_item_profiles (list): Profiles new_item should belong to
-            item_count (int): How many Items of this type (including this
-                item) now exist. Used with
-                :meth:`COT.platform.GenericPlatform.guess_nic_name`
+          new_item (OVFItem): Newly cloned Item
+          new_item_profiles (list): Profiles new_item should belong to
+          item_count (int): How many Items of this type (including this
+              item) now exist. Used with
+              :meth:`COT.platform.GenericPlatform.guess_nic_name`
 
         Returns:
-            OVFItem: Updated :param:`new_item`
+          OVFItem: Updated :param:`new_item`
 
         Raises:
-            NotImplementedError: No support yet for updating ``Address``
-            NotImplementedError: If updating ``AddressOnParent`` but the
-                prior value varies across config profiles.
-            NotImplementedError: if ``AddressOnParent`` is not an integer.
+          NotImplementedError: No support yet for updating ``Address``
+          NotImplementedError: If updating ``AddressOnParent`` but the
+              prior value varies across config profiles.
+          NotImplementedError: if ``AddressOnParent`` is not an integer.
         """
         resource_type = new_item.hardware_type
         address = new_item.get(self.ovf.ADDRESS)
@@ -446,10 +446,10 @@ class OVFHardware(object):
         then the highest-numbered instances will be removed preferentially.
 
         Args:
-            resource_type (str): 'cpu', 'harddisk', etc.
-            count (int): Desired number of items
-            profile_list (list): List of profiles to filter on
-                (default: apply across all profiles)
+          resource_type (str): 'cpu', 'harddisk', etc.
+          count (int): Desired number of items
+          profile_list (list): List of profiles to filter on
+              (default: apply across all profiles)
         """
         if not profile_list:
             # Set the profile list for all profiles, including the default
@@ -491,13 +491,13 @@ class OVFHardware(object):
         and do nothing.
 
         Args:
-            resource_type (str): Resource type such as 'cpu' or 'harddisk'
-            prop_name (str): Property name to update
-            new_value (str): New value to set the property to
-            profile_list (list): List of profiles to filter on
-                (default: apply across all profiles)
-            create_new (bool): Whether to create a new entry if no items
-                of this :attr:`resource_type` presently exist.
+          resource_type (str): Resource type such as 'cpu' or 'harddisk'
+          prop_name (str): Property name to update
+          new_value (str): New value to set the property to
+          profile_list (list): List of profiles to filter on
+              (default: apply across all profiles)
+          create_new (bool): Whether to create a new entry if no items
+              of this :attr:`resource_type` presently exist.
         """
         ovfitem_list = self.find_all_items(resource_type)
         if not ovfitem_list:
@@ -520,14 +520,14 @@ class OVFHardware(object):
         """Set value(s) for a property of multiple items of a type.
 
         Args:
-            resource_type (str): Device type such as 'harddisk' or 'cpu'
-            prop_name (str): Property name to update
-            value_list (list): List of values to set (one value per item
-                of the given :attr:`resource_type`)
-            profile_list (list): List of profiles to filter on
-                (default: apply across all profiles)
-            default (str): If there are more matching items than entries in
-                :attr:`value_list`, set extra items to this value
+          resource_type (str): Device type such as 'harddisk' or 'cpu'
+          prop_name (str): Property name to update
+          value_list (list): List of values to set (one value per item of the
+              given :attr:`resource_type`)
+          profile_list (list): List of profiles to filter on
+              (default: apply across all profiles)
+          default (str): If there are more matching items than entries in
+              :attr:`value_list`, set extra items to this value
         """
         if profile_list is None:
             profile_list = self.ovf.config_profiles + [None]

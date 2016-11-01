@@ -33,16 +33,15 @@ class IOSXRv9000(IOSXRv):
         """MgmtEth0/0/CPU0/0, CtrlEth, DevEth, GigabitEthernet0/0/0/0, etc.
 
         Args:
-            nic_number (int): Nth NIC to name.
+          nic_number (int): Nth NIC to name.
 
         Returns:
-            str:
-                * "MgmtEth0/0/CPU0/0"
-                * "CtrlEth"
-                * "DevEth"
-                * "GigabitEthernet0/0/0/0"
-                * "GigabitEthernet0/0/0/1"
-                * etc.
+          * "MgmtEth0/0/CPU0/0"
+          * "CtrlEth"
+          * "DevEth"
+          * "GigabitEthernet0/0/0/0"
+          * "GigabitEthernet0/0/0/1"
+          * etc.
         """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
@@ -58,11 +57,11 @@ class IOSXRv9000(IOSXRv):
         """Minimum 1, maximum 32 CPUs.
 
         Args:
-            cpus (int): Number of CPUs
+          cpus (int): Number of CPUs
 
         Raises:
-            ValueTooLowError: if ``cpus`` is less than 1
-            ValueTooHighError: if ``cpus`` is more than 32
+          ValueTooLowError: if ``cpus`` is less than 1
+          ValueTooHighError: if ``cpus`` is more than 32
         """
         validate_int(cpus, 1, 32, "CPUs")
 
@@ -71,11 +70,11 @@ class IOSXRv9000(IOSXRv):
         """Minimum 8 GiB, maximum 32 GiB.
 
         Args:
-            mebibytes (int): RAM, in MiB.
+          mebibytes (int): RAM, in MiB.
 
         Raises:
-            ValueTooLowError: if ``mebibytes`` is less than 8192
-            ValueTooHighError: if ``mebibytes`` is more than 32768
+          ValueTooLowError: if ``mebibytes`` is less than 8192
+          ValueTooHighError: if ``mebibytes`` is more than 32768
         """
         if mebibytes < 8192:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "8 GiB")
@@ -87,9 +86,9 @@ class IOSXRv9000(IOSXRv):
         """IOS XRv 9000 requires at least 4 NICs.
 
         Args:
-            count (int): Number of NICs.
+          count (int): Number of NICs.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 4
+          ValueTooLowError: if ``count`` is less than 4
         """
         validate_int(count, 4, None, "NIC count")

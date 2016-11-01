@@ -99,7 +99,7 @@ except ImportError:
         For the parameters, see :class:`tempfile.TemporaryDirectory`.
 
         Yields:
-            str: Path to temporary directory
+          str: Path to temporary directory
         """
         tempdir = tempfile.mkdtemp(suffix, prefix, dirpath)
         try:
@@ -127,8 +127,8 @@ class HelperDict(dict):
         """Create the given dictionary with the given factory class/method.
 
         Args:
-            factory (object): Factory class or method to be called to populate
-                a new entry in response to :meth:`__missing__`.
+          factory (object): Factory class or method to be called to populate
+              a new entry in response to :meth:`__missing__`.
 
         For the other parameters, see :class:`dict`.
         """
@@ -141,10 +141,10 @@ class HelperDict(dict):
         Automatically populate the given key with an instance of the factory.
 
         Args:
-            key (object): Key that was not yet defined in this dictionary.
+          key (object): Key that was not yet defined in this dictionary.
 
         Returns:
-            object: Result of calling ``self.factory(key)``
+          object: Result of calling ``self.factory(key)``
         """
         self[key] = self.factory(key)
         return self[key]
@@ -189,12 +189,12 @@ class Helper(object):
         """Initializer.
 
         Args:
-            name (str): Name of helper executable
-            info_uri (str): URI to refer to for more info about this helper.
-            version_args (list): Args to pass to the helper to
-                get its version. Defaults to ``['--version']`` if unset.
-            version_regexp (str): Regexp to get the version number from
-                the output of the command.
+          name (str): Name of helper executable
+          info_uri (str): URI to refer to for more info about this helper.
+          version_args (list): Args to pass to the helper to
+              get its version. Defaults to ``['--version']`` if unset.
+          version_regexp (str): Regexp to get the version number from
+              the output of the command.
         """
         self._name = name
         self._info_uri = info_uri
@@ -274,22 +274,22 @@ class Helper(object):
         """Call the helper program with the given arguments.
 
         Args:
-            args (list): List of arguments to the helper program.
-            capture_output (boolean): If ``True``, stdout/stderr will be
-                redirected to a buffer and returned, instead of being displayed
-                to the user. (I.e., :func:`check_output` will be invoked
-                instead of :func:`check_call`)
+          args (list): List of arguments to the helper program.
+          capture_output (boolean): If ``True``, stdout/stderr will be
+              redirected to a buffer and returned, instead of being displayed
+              to the user. (I.e., :func:`check_output` will be invoked
+              instead of :func:`check_call`)
 
         Returns:
-            str: Captured stdout/stderr if :attr:`capture_output` is True,
-                else ``None``.
+          str: Captured stdout/stderr if :attr:`capture_output` is True,
+          else ``None``.
 
         For the other parameters, see :func:`check_call` and
         :func:`check_output`.
 
         Raises:
-            HelperNotFoundError: if the helper was not previously
-                installed, and the user declines to install it at this time.
+          HelperNotFoundError: if the helper was not previously
+              installed, and the user declines to install it at this time.
         """
         if not self.path:
             if self.USER_INTERFACE and not self.USER_INTERFACE.confirm(
@@ -312,8 +312,8 @@ class Helper(object):
         """Install the helper program.
 
         Raises:
-            NotImplementedError: if not :attr:`installable`
-            HelperError: if installation is attempted but fails.
+          NotImplementedError: if not :attr:`installable`
+          HelperError: if installation is attempted but fails.
 
         Subclasses should not override this method but instead should provide
         an appropriate implementation of the :meth:`_install` method.
@@ -369,10 +369,10 @@ class Helper(object):
           # d is automatically cleaned up.
 
         Args:
-            url (str): URL of a .tgz or .tar.gz file to download.
+          url (str): URL of a .tgz or .tar.gz file to download.
 
         Yields:
-            str: Temporary directory path where the archive has been extracted.
+          str: Temporary directory path where the archive has been extracted.
         """
         with TemporaryDirectory(prefix="cot_helper") as d:
             logger.debug("Temporary directory is %s", d)
@@ -399,9 +399,9 @@ class Helper(object):
         """Check whether the given target directory exists, and create if not.
 
         Args:
-            directory (str): Directory to check/create.
-            permissions (int): Permission mask to set when creating a
-                directory. Default is ``0o755``.
+          directory (str): Directory to check/create.
+          permissions (int): Permission mask to set when creating a directory.
+              Default is ``0o755``.
         """
         if os.path.isdir(directory):
             # TODO: permissions check, update permissions if needed
@@ -430,14 +430,14 @@ class Helper(object):
         """Copy the given src to the given dest, using sudo if needed.
 
         Args:
-            src (str): Source path.
-            dest (str): Destination path.
+          src (str): Source path.
+          dest (str): Destination path.
 
         Returns:
-            bool: True
+          bool: True
 
         Raises:
-            HelperError: if file copying fails
+          HelperError: if file copying fails
         """
         logger.verbose("Copying %s to %s", src, dest)
         try:
@@ -463,7 +463,7 @@ class PackageManager(Helper):
         """Install the requested package if needed.
 
         Args:
-            package (str): Name of the package to install.
+          package (str): Name of the package to install.
         """
         raise NotImplementedError("install_package not implemented!")
 
@@ -476,21 +476,21 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
     stdout/stderr as normal.
 
     Args:
-        args (list): Command to invoke and its associated args
-        require_success (boolean): If ``False``, do not raise an error
-            when the command exits with a return code other than 0
-        retry_with_sudo (boolean): If ``True``, if the command gets
-            an exception, prepend ``sudo`` to the command and try again.
+      args (list): Command to invoke and its associated args
+      require_success (boolean): If ``False``, do not raise an error when the
+          command exits with a return code other than 0
+      retry_with_sudo (boolean): If ``True``, if the command gets
+          an exception, prepend ``sudo`` to the command and try again.
 
     For the other parameters, see :func:`subprocess.check_call`.
 
     Raises:
-        HelperNotFoundError: if the command doesn't exist (instead of a
-            :class:`OSError`)
-        HelperError: if :attr:`require_success` is not ``False`` and
-            the command returns a value other than 0 (instead of a
-            :class:`subprocess.CalledProcessError`).
-        OSError: as :func:`subprocess.check_call`.
+      HelperNotFoundError: if the command doesn't exist (instead of a
+          :class:`OSError`)
+      HelperError: if :attr:`require_success` is not ``False`` and the command
+          returns a value other than 0 (instead of a
+          :class:`subprocess.CalledProcessError`).
+      OSError: as :func:`subprocess.check_call`.
     """
     cmd = args[0]
     logger.info("Calling '%s'...", " ".join(args))
@@ -531,24 +531,24 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
     and generates a debug message with the stdout contents.
 
     Args:
-        args (list): Command to invoke and its associated args
-        require_success (boolean): If ``False``, do not raise an error
-            when the command exits with a return code other than 0
-        retry_with_sudo (boolean): If ``True``, if the command gets
-            an exception, prepend ``sudo`` to the command and try again.
+      args (list): Command to invoke and its associated args
+      require_success (boolean): If ``False``, do not raise an error when the
+          command exits with a return code other than 0
+      retry_with_sudo (boolean): If ``True``, if the command gets an
+          exception, prepend ``sudo`` to the command and try again.
 
     For the other parameters, see :func:`subprocess.check_output`.
 
     Returns:
-        str: Captured stdout/stderr from the command
+      str: Captured stdout/stderr from the command
 
     Raises:
-        HelperNotFoundError: if the command doesn't exist (instead of a
-            :class:`OSError`)
-        HelperError: if :attr:`require_success` is not ``False`` and
-            the command returns a value other than 0 (instead of a
-            :class:`subprocess.CalledProcessError`).
-        OSError: as :func:`subprocess.check_output`.
+      HelperNotFoundError: if the command doesn't exist (instead of a
+          :class:`OSError`)
+      HelperError: if :attr:`require_success` is not ``False`` and the command
+          returns a value other than 0 (instead of a
+          :class:`subprocess.CalledProcessError`).
+      OSError: as :func:`subprocess.check_output`.
     """
     cmd = args[0]
     logger.info("Calling '%s' and capturing its output...", " ".join(args))
@@ -587,17 +587,17 @@ def helper_select(choices):
     first installable helper from the list.
 
     Raises:
-        HelperNotFoundError: if no valid helper is available or installable.
+      HelperNotFoundError: if no valid helper is available or installable.
 
     Args:
-        choices (list): List of helpers, in order from most preferred to
-            least preferred. Each choice in this list can be either:
+      choices (list): List of helpers, in order from most preferred to
+          least preferred. Each choice in this list can be either:
 
-            * a string (the helper name, such as "mkisofs")
-            * a tuple of (name, minimum version) such as ("qemu-img", "2.1.0").
+          * a string (the helper name, such as "mkisofs")
+          * a tuple of (name, minimum version) such as ("qemu-img", "2.1.0").
 
     Returns:
-        Helper: The selected helper class instance.
+      Helper: The selected helper class instance.
     """
     for choice in choices:
         if isinstance(choice, str):

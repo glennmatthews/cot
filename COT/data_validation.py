@@ -66,9 +66,9 @@ def to_string(obj):
     """Get string representation of an object, special-case for XML Element.
 
     Args:
-        obj (object): Object to represent as a string.
+      obj (object): Object to represent as a string.
     Returns:
-        str: string representation
+      str: string representation
     """
     if ET.iselement(obj):
         return ET.tostring(obj)
@@ -80,17 +80,17 @@ def alphanum_split(key):
     """Split the key into a list of [text, int, text, int, ...].
 
     Args:
-        key (str): String to split.
+      key (str): String to split.
     Returns:
-        List of tokens
+      list: List of tokens
     """
     def text_to_int(text):
         """Convert number strings to ints, leave other strings as text.
 
         Args:
-            text (object): Input to convert (str or int)
+          text (object): Input to convert (str or int)
         Returns:
-            object: Converted value (str or int)
+          object: Converted value (str or int)
         """
         return int(text) if text.isdigit() else text
 
@@ -105,9 +105,9 @@ def natural_sort(l):
     See also http://nedbatchelder.com/blog/200712/human_sorting.html
 
     Args:
-        l (list): List to sort
+      l (list): List to sort
     Returns:
-        list: Sorted list
+      list: Sorted list
     """
     # Sort based on alphanum_split return value
     return sorted(l, key=alphanum_split)
@@ -117,12 +117,12 @@ def match_or_die(first_label, first, second_label, second):
     """Make sure "first" and "second" are equal or raise an error.
 
     Args:
-        first_label (str): Descriptive label for :attr:`first`
-        first (object): First object to compare
-        second_label (str): Descriptive label for :attr:`second`
-        second (object): Second object to compare
+      first_label (str): Descriptive label for :attr:`first`
+      first (object): First object to compare
+      second_label (str): Descriptive label for :attr:`second`
+      second (object): Second object to compare
     Raises:
-        ValueMismatchError: if ``first != second``
+      ValueMismatchError: if ``first != second``
     """
     if first != second:
         raise ValueMismatchError("{0} {1} does not match {2} {3}"
@@ -136,15 +136,15 @@ def canonicalize_helper(label, user_input, mappings, re_flags=0):
     """Try to find a mapping of input to output.
 
     Args:
-        label (str): Label to use in any error raised
-        user_input (str): User-provided string
-        mappings (list): List of ``(expr, canonical)`` pairs for mapping.
-        re_flags (int): ``re.IGNORECASE``, etc. if desired
+      label (str): Label to use in any error raised
+      user_input (str): User-provided string
+      mappings (list): List of ``(expr, canonical)`` pairs for mapping.
+      re_flags (int): ``re.IGNORECASE``, etc. if desired
     Returns:
-        str: The canonical string
+      str: The canonical string
     Raises:
-        ValueUnsupportedError: If no ``expr`` in ``mappings`` matches the given
-            ``user_input``.
+      ValueUnsupportedError: If no ``expr`` in ``mappings`` matches the given
+          ``user_input``.
     """
     if user_input is None or user_input == "":
         return None
@@ -158,15 +158,15 @@ def canonicalize_ide_subtype(subtype):
     """Try to convert the given IDE controller string to a canonical form.
 
     Args:
-        subtype (str): User-provided string
+      subtype (str): User-provided string
     Returns:
-        str: The canonical string, one of:
+      str: The canonical string, one of:
 
-            - ``PIIX4``
-            - ``virtio``
+      - ``PIIX4``
+      - ``virtio``
 
     Raises:
-        ValueUnsupportedError: If the canonical string cannot be determined
+      ValueUnsupportedError: If the canonical string cannot be determined
     """
     return canonicalize_helper("IDE controller subtype", subtype,
                                [
@@ -191,11 +191,11 @@ def canonicalize_nic_subtype(subtype):
     """Try to convert the given NIC subtype string to a canonical form.
 
     Args:
-        subtype (str): User-provided string
+      subtype (str): User-provided string
     Returns:
-        str: The canonical string, one of :data:`NIC_TYPES`
+      str: The canonical string, one of :data:`NIC_TYPES`
     Raises:
-        ValueUnsupportedError: If the canonical string cannot be determined
+      ValueUnsupportedError: If the canonical string cannot be determined
 
     .. seealso::
        :meth:`COT.platforms.GenericPlatform.validate_nic_type`
@@ -208,18 +208,18 @@ def canonicalize_scsi_subtype(subtype):
     """Try to convert the given SCSI controller string to a canonical form.
 
     Args:
-        subtype (str): User-provided string
+      subtype (str): User-provided string
     Returns:
-        str: The canonical string, one of:
+      str: The canonical string, one of:
 
-            - ``buslogic``
-            - ``lsilogic``
-            - ``lsilogicsas``
-            - ``virtio``
-            - ``VirtualSCSI``
+      - ``buslogic``
+      - ``lsilogic``
+      - ``lsilogicsas``
+      - ``virtio``
+      - ``VirtualSCSI``
 
     Raises:
-        ValueUnsupportedError: If the canonical string cannot be determined
+      ValueUnsupportedError: If the canonical string cannot be determined
     """
     return canonicalize_helper("SCSI controller subtype", subtype,
                                [
@@ -236,12 +236,12 @@ def check_for_conflict(label, li):
     """Make sure the list does not contain references to more than one object.
 
     Args:
-        label (str): Descriptive label to be used if an error is raised
-        li (list): List of object references (which may include ``None``)
+      label (str): Descriptive label to be used if an error is raised
+      li (list): List of object references (which may include ``None``)
     Raises:
-        ValueMismatchError: if references differ
+      ValueMismatchError: if references differ
     Returns:
-        object: the object or ``None``
+      object: the object or ``None``
     """
     obj = None
     for i, obj1 in enumerate(li):
@@ -262,10 +262,10 @@ def file_checksum(path_or_obj, checksum_type):
     """Get the checksum of the given file.
 
     Args:
-        path_or_obj (str): File path to checksum OR an opened file object
-        checksum_type (str): Supported values are 'md5' and 'sha1'.
+      path_or_obj (str): File path to checksum OR an opened file object
+      checksum_type (str): Supported values are 'md5' and 'sha1'.
     Returns:
-        str: Hexadecimal file checksum
+      str: Hexadecimal file checksum
     """
     # pylint: disable=redefined-variable-type
     if checksum_type == 'md5':
@@ -310,11 +310,11 @@ def mac_address(string):
     * xxxx.xxxx.xxxx
 
     Args:
-        string (str): String to validate
+      string (str): String to validate
     Raises:
-        InvalidInputError: if string is not a valid MAC address
+      InvalidInputError: if string is not a valid MAC address
     Returns:
-        str: Validated string(with leading/trailing whitespace stripped)
+      str: Validated string(with leading/trailing whitespace stripped)
     """
     string = string.strip()
     if not (re.match(r"([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$", string) or
@@ -332,11 +332,11 @@ def device_address(string):
     Validate string is an appropriately formed device address such as '1:0'.
 
     Args:
-        string (str): String to validate
+      string (str): String to validate
     Raises:
-        InvalidInputError: if string is not a well-formatted device address
+      InvalidInputError: if string is not a well-formatted device address
     Returns:
-        str: Validated string (with leading/trailing whitespace stripped)
+      str: Validated string (with leading/trailing whitespace stripped)
     """
     string = string.strip()
     if not re.match(r"\d+:\d+$", string):
@@ -349,11 +349,11 @@ def no_whitespace(string):
     """Parser helper function for arguments not allowed to contain whitespace.
 
     Args:
-        string (str): String to validate
+      string (str): String to validate
     Raises:
-        InvalidInputError: if string contains internal whitespace
+      InvalidInputError: if string contains internal whitespace
     Returns:
-        str: Validated string (with leading/trailing whitespace stripped)
+      str: Validated string (with leading/trailing whitespace stripped)
     """
     string = string.strip()
     if len(string.split()) > 1:
@@ -368,18 +368,18 @@ def validate_int(string,
     """Parser helper function for validating integer arguments in a range.
 
     Args:
-        string (str): String to convert to an integer and validate
-        minimum (int): Minimum valid value (optional)
-        maximum (int): Maximum valid value (optional)
-        label (str): Label to include in any errors raised
+      string (str): String to convert to an integer and validate
+      minimum (int): Minimum valid value (optional)
+      maximum (int): Maximum valid value (optional)
+      label (str): Label to include in any errors raised
 
     Returns:
-        int: Validated integer value
+      int: Validated integer value
 
     Raises:
-        ValueUnsupportedError: if :attr:`string` can't be converted to int
-        ValueTooLowError: if value is less than :attr:`minimum`
-        ValueTooHighError: if value is more than :attr:`maximum`
+      ValueUnsupportedError: if :attr:`string` can't be converted to int
+      ValueTooLowError: if value is less than :attr:`minimum`
+      ValueTooHighError: if value is more than :attr:`maximum`
     """
     try:
         i = int(string)
@@ -398,12 +398,12 @@ def non_negative_int(string):
     Alias for :func:`validate_int` setting :attr:`minimum` to 0.
 
     Args:
-        string (str): String to validate.
+      string (str): String to validate.
     Returns:
-        int: Validated integer value
+      int: Validated integer value
     Raises:
-        ValueUnsupportedError: if :attr:`string` can't be converted to int
-        ValueTooLowError: if value is less than 0
+      ValueUnsupportedError: if :attr:`string` can't be converted to int
+      ValueTooLowError: if value is less than 0
     """
     return validate_int(string, minimum=0)
 
@@ -414,12 +414,12 @@ def positive_int(string):
     Alias for :func:`validate_int` setting :attr:`minimum` to 1.
 
     Args:
-        string (str): String to validate.
+      string (str): String to validate.
     Returns:
-        int: Validated integer value
+      int: Validated integer value
     Raises:
-        ValueUnsupportedError: if :attr:`string` can't be converted to int
-        ValueTooLowError: if value is less than 1
+      ValueUnsupportedError: if :attr:`string` can't be converted to int
+      ValueTooLowError: if value is less than 1
     """
     return validate_int(string, minimum=1)
 
@@ -430,11 +430,11 @@ def truth_value(value):
     Wrapper for :func:`distutils.util.strtobool`
 
     Args:
-        value (str): String to parse/validate
+      value (str): String to parse/validate
     Returns:
-        bool: True or False
+      bool: True or False
     Raises:
-        ValueUnsupportedError: if the value can't be parsed to a boolean.
+      ValueUnsupportedError: if the value can't be parsed to a boolean.
     """
     if isinstance(value, bool):
         return value
@@ -466,9 +466,9 @@ class ValueUnsupportedError(InvalidInputError):
     """An unsupported value was provided.
 
     Args:
-        value_type (str): descriptive string
-        actual_value (str): invalid value that was provided
-        expected_value (object): expected/valid value(s) (item or list)
+      value_type (str): descriptive string
+      actual_value (str): invalid value that was provided
+      expected_value (object): expected/valid value(s) (item or list)
     """
 
     def __init__(self, value_type, actual_value, expected_value):
@@ -489,9 +489,9 @@ class ValueTooLowError(ValueUnsupportedError):
     """A numerical input was less than the lowest supported value.
 
     Args:
-        value_type (str): descriptive string
-        actual_value (int): invalid value that was provided
-        expected_value (int): minimum supported value
+      value_type (str): descriptive string
+      actual_value (int): invalid value that was provided
+      expected_value (int): minimum supported value
     """
 
     def __str__(self):
@@ -505,9 +505,9 @@ class ValueTooHighError(ValueUnsupportedError):
     """A numerical input was higher than the highest supported value.
 
     Args:
-        value_type (str): descriptive string
-        actual_value (int): invalid value that was provided
-        expected_value (int): maximum supported value
+      value_type (str): descriptive string
+      actual_value (int): invalid value that was provided
+      expected_value (int): maximum supported value
     """
 
     def __str__(self):

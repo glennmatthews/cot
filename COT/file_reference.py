@@ -33,10 +33,10 @@ class FileOnDisk(object):
         """Create a reference to a file on disk.
 
         Args:
-            file_path (str): File path or directory path
-            filename (str): If specified, file_path is considered to be
-                a directory containing this filename. If not specified, the
-                final element in file_path is considered the filename.
+          file_path (str): File path or directory path
+          filename (str): If specified, file_path is considered to be a
+              directory containing this filename. If not specified, the
+              final element in file_path is considered the filename.
 
         ::
 
@@ -46,7 +46,7 @@ class FileOnDisk(object):
           True
 
         Raises:
-            IOError: if no such file exists
+          IOError: if no such file exists
         """
         if filename is None:
             self.file_path = file_path
@@ -64,9 +64,9 @@ class FileOnDisk(object):
         No attempt is made to check file equivalence, symlinks, etc.
 
         Args:
-            other (object): Other object to compare against
+          other (object): Other object to compare against
         Returns:
-            bool: True if the paths are the same, else False
+          bool: True if the paths are the same, else False
         """
         return type(other) is type(self) and self.file_path == other.file_path
 
@@ -74,9 +74,9 @@ class FileOnDisk(object):
         """FileOnDisk instances are not equal if they have different paths.
 
         Args:
-            other (object): Other object to compare against
+          other (object): Other object to compare against
         Returns:
-            bool: False if the paths are the same, else True
+          bool: False if the paths are the same, else True
         """
         return not self.__eq__(other)
 
@@ -94,9 +94,9 @@ class FileOnDisk(object):
         """Open the file and return a reference to the file object.
 
         Args:
-            mode (str): Mode such as 'r', 'w', 'a', 'w+', etc.
+          mode (str): Mode such as 'r', 'w', 'a', 'w+', etc.
         Returns:
-            file: File object
+          file: File object
         """
         self.obj = open(self.file_path, mode)
         return self.obj
@@ -109,7 +109,7 @@ class FileOnDisk(object):
         """Copy this file to the given destination directory.
 
         Args:
-            dest_dir (str): Destination directory or filename.
+          dest_dir (str): Destination directory or filename.
         """
         if self.file_path == os.path.join(dest_dir, self.filename):
             return
@@ -120,7 +120,7 @@ class FileOnDisk(object):
         """Copy this file into the given tarfile object.
 
         Args:
-            tarf (tarfile.TarFile): Add this file to that archive.
+          tarf (tarfile.TarFile): Add this file to that archive.
         """
         logger.info("Adding %s to TAR file as %s",
                     self.file_path, self.filename)
@@ -134,12 +134,12 @@ class FileInTAR(object):
         """Create a reference to a file contained in a TAR archive.
 
         Args:
-            tarfile_path (str): Path to TAR archive to read
-            filename (str): File name in the TAR archive.
+          tarfile_path (str): Path to TAR archive to read
+          filename (str): File name in the TAR archive.
 
         Raises:
-            IOError: if ``tarfile_path`` doesn't reference a TAR file,
-                or the TAR file does not contain ``filename``.
+          IOError: if ``tarfile_path`` doesn't reference a TAR file,
+              or the TAR file does not contain ``filename``.
         """
         if not tarfile.is_tarfile(tarfile_path):
             raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
@@ -158,9 +158,9 @@ class FileInTAR(object):
         No attempt is made to check file equivalence, symlinks, etc.
 
         Args:
-            other (object): Other object to compare against
+          other (object): Other object to compare against
         Returns:
-            bool: True if filename and tarfile_path are the same, else False
+          bool: True if filename and tarfile_path are the same, else False
         """
         if type(other) is type(self):
             return (self.tarfile_path == other.tarfile_path and
@@ -171,9 +171,9 @@ class FileInTAR(object):
         """FileInTar are not equal if they have different paths or names.
 
         Args:
-            other (object): Other object to compare against
+          other (object): Other object to compare against
         Returns:
-            bool: False if filename and tarfile_path are the same, else True
+          bool: False if filename and tarfile_path are the same, else True
         """
         return not self.__eq__(other)
 
@@ -197,11 +197,11 @@ class FileInTAR(object):
         """Open the TAR and return a reference to the relevant file object.
 
         Args:
-            mode (str): Only 'r' and 'rb' modes are supported.
+          mode (str): Only 'r' and 'rb' modes are supported.
         Returns:
-            file: File object
+          file: File object
         Raises:
-            ValueError: if ``mode`` is not valid.
+          ValueError: if ``mode`` is not valid.
         """
         # We can only extract a file object from a TAR file in read mode.
         if mode != 'r' and mode != 'rb':
@@ -223,7 +223,7 @@ class FileInTAR(object):
         """Extract this file to the given destination directory.
 
         Args:
-            dest_dir (str): Destination directory or filename.
+          dest_dir (str): Destination directory or filename.
         """
         with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
             logger.info("Extracting %s from %s to %s",
@@ -234,7 +234,7 @@ class FileInTAR(object):
         """Copy this file into the given tarfile object.
 
         Args:
-            tarf (tarfile.TarFile): Add this file to that archive.
+          tarf (tarfile.TarFile): Add this file to that archive.
         """
         self.open('r')
         try:

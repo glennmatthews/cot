@@ -42,7 +42,7 @@ class SerialConnection(object):
         Based on the QEMU CLI for serial ports.
 
         Args:
-            cli_string (str): String of the form 'kind:value[,opts]'
+          cli_string (str): String of the form 'kind:value[,opts]'
 
         ::
 
@@ -54,9 +54,9 @@ class SerialConnection(object):
           '<SerialConnection kind: telnet value: 1.1.1.1:1111 options: {}>'
 
         Returns:
-            SerialConnection: Created instance or None.
+          SerialConnection: Created instance or None.
         Raises:
-            InvalidInputError: if ``cli_string`` cannot be parsed
+          InvalidInputError: if ``cli_string`` cannot be parsed
         """
         if cli_string is None:
             return None
@@ -88,11 +88,11 @@ class SerialConnection(object):
         """Validate the connection type string and munge it as needed.
 
         Args:
-            kind (str): Connection type string, possibly in need of munging.
+          kind (str): Connection type string, possibly in need of munging.
         Returns:
-            str: A valid type string
+          str: A valid type string
         Raises:
-            ValueUnsupportedError: if ``kind`` is not recognized as valid
+          ValueUnsupportedError: if ``kind`` is not recognized as valid
         """
         kind = kind.lower()
         if kind == '':
@@ -114,13 +114,13 @@ class SerialConnection(object):
         """Check that the given value is valid for the given connection kind.
 
         Args:
-            kind (str): Connection type, valid per :func:`validate_kind`.
-            value (str): Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
+          kind (str): Connection type, valid per :func:`validate_kind`.
+          value (str): Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
         Returns:
-            str: Munged value string.
+          str: Munged value string.
         Raises:
-            InvalidInputError: if value string is not recognized as valid
-            NotImplementedError: if ``kind`` is not valid
+          InvalidInputError: if value string is not recognized as valid
+          NotImplementedError: if ``kind`` is not valid
         """
         if kind == 'device' or kind == 'file' or kind == 'pipe':
             # TODO: Validate that device path exists on target?
@@ -143,17 +143,20 @@ class SerialConnection(object):
                                       .format(kind))
 
     @classmethod
-    def validate_options(cls, kind, _value, options):
+    def validate_options(cls,
+                         kind,
+                         value,     # pylint: disable=unused-argument
+                         options):
         """Check that the given set of options are valid for this connection.
 
         Args:
-            kind (str): Validated 'kind' string.
-            _value (str): Validated 'value' string. Currently unused.
-            options (dict): Input options dictionary.
+          kind (str): Validated 'kind' string.
+          value (str): Validated 'value' string. Currently unused.
+          options (dict): Input options dictionary.
         Returns:
-            dict: Validated options
+          dict: Validated options
         Raises:
-            InvalidInputError: if options are not valid.
+          InvalidInputError: if options are not valid.
         """
         if kind == 'file':
             if 'datastore' not in options:
@@ -165,9 +168,9 @@ class SerialConnection(object):
         """Construct a SerialConnection object of the given kind and value.
 
         Args:
-            kind (str): Connection type string, possibly in need of munging.
-            value (str): Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
-            options (dict): Input options dictionary.
+          kind (str): Connection type string, possibly in need of munging.
+          value (str): Connection value such as '/dev/ttyS0' or '1.1.1.1:80'
+          options (dict): Input options dictionary.
         """
         logger.debug("Creating SerialConnection: "
                      "kind: %s, value: %s, options: %s",
@@ -212,7 +215,7 @@ class COTDeploy(COTReadOnlySubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTDeploy, self).__init__(ui)
         # User inputs
@@ -248,7 +251,7 @@ class COTDeploy(COTReadOnlySubmodule):
         """Hypervisor to deploy to.
 
         Raises:
-            InvalidInputError: if not a recognized value.
+          InvalidInputError: if not a recognized value.
         """
         return self._hypervisor
 
@@ -264,7 +267,7 @@ class COTDeploy(COTReadOnlySubmodule):
         """VM configuration profile to use for deployment.
 
         Raises:
-            InvalidInputError: if not a profile defined in the VM.
+          InvalidInputError: if not a profile defined in the VM.
         """
         return self._configuration
 
@@ -329,7 +332,7 @@ class COTDeploy(COTReadOnlySubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.hypervisor is None:
             return False, "HYPERVISOR is a mandatory argument"

@@ -59,13 +59,13 @@ def convert_disk(disk_image, new_directory, new_format, new_subformat=None):
     """Convert a disk representation into a new format.
 
     Args:
-        disk_image (DiskRepresentation): Existing disk image as input.
-        new_directory (str): Directory to create new image under
-        new_format (str): Format to convert to.
-        new_subformat (str): (optional) Sub-format to convert to.
+      disk_image (DiskRepresentation): Existing disk image as input.
+      new_directory (str): Directory to create new image under
+      new_format (str): Format to convert to.
+      new_subformat (str): (optional) Sub-format to convert to.
 
     Returns:
-        DiskRepresentation: Converted disk.
+      DiskRepresentation: Converted disk.
     """
     if new_format not in _class_for_format:
         raise NotImplementedError("No support for converting to type '{0}'"
@@ -79,12 +79,12 @@ def create_disk(disk_format, *args, **kwargs):
     """Create a disk of the requested format.
 
     Args:
-        disk_format (str): Disk format such as 'iso' or 'vmdk'.
+      disk_format (str): Disk format such as 'iso' or 'vmdk'.
 
     For the other parameters, see :class:`~COT.disks.disk.DiskRepresentation`.
 
     Returns:
-        DiskRepresentation: Created disk
+      DiskRepresentation: Created disk
     """
     if disk_format in _class_for_format:
         return _class_for_format[disk_format](*args, **kwargs)
@@ -96,10 +96,10 @@ def disk_representation_from_file(file_path):
     """Get a DiskRepresentation appropriate to the given file.
 
     Args:
-        file_path (str): Path of existing file to represent.
+      file_path (str): Path of existing file to represent.
 
     Returns:
-        DiskRepresentation: Representation of this file.
+      DiskRepresentation: Representation of this file.
     """
     if not os.path.exists(file_path):
         raise IOError(2, "No such file or directory: {0}".format(file_path))

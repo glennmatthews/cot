@@ -54,7 +54,7 @@ class COTEditProduct(COTSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTEditProduct, self).__init__(ui)
         self.product_class = None
@@ -78,7 +78,7 @@ class COTEditProduct(COTSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if not any([
                 self.product_class,
@@ -98,7 +98,7 @@ class COTEditProduct(COTSubmodule):
         """Do the actual work of this submodule.
 
         Raises:
-            InvalidInputError: if :func:`ready_to_run` reports ``False``
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTEditProduct, self).run()
 

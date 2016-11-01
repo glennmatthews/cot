@@ -51,7 +51,7 @@ class COTGenericSubmodule(object):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         self.vm = None
         """Virtual machine description (:class:`VMDescription`)."""
@@ -62,7 +62,7 @@ class COTGenericSubmodule(object):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         return True, "Ready to go!"
 
@@ -70,7 +70,7 @@ class COTGenericSubmodule(object):
         """Do the actual work of this submodule.
 
         Raises:
-            InvalidInputError: if :meth:`ready_to_run` reports ``False``
+          InvalidInputError: if :meth:`ready_to_run` reports ``False``
         """
         (ready, reason) = self.ready_to_run()
         if not ready:
@@ -111,7 +111,7 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTReadOnlySubmodule, self).__init__(ui)
         self._package = None
@@ -124,7 +124,7 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
         :attr:`self.vm` from the provided file.
 
         Raises:
-            InvalidInputError: if the file does not exist.
+          InvalidInputError: if the file does not exist.
         """
         return self._package
 
@@ -144,7 +144,7 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.package is None:
             return False, "PACKAGE is a mandatory argument!"
@@ -167,7 +167,7 @@ class COTSubmodule(COTGenericSubmodule):
         """Instantiate this submodule with the given UI.
 
         Args:
-            ui (UI): User interface instance.
+          ui (UI): User interface instance.
         """
         super(COTSubmodule, self).__init__(ui)
         self._package = None
@@ -182,7 +182,7 @@ class COTSubmodule(COTGenericSubmodule):
         :attr:`self.vm` from the provided file.
 
         Raises:
-            InvalidInputError: if the file does not exist.
+          InvalidInputError: if the file does not exist.
         """
         return self._package
 
@@ -221,7 +221,7 @@ class COTSubmodule(COTGenericSubmodule):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
-            tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.package is None:
             return False, "PACKAGE is a mandatory argument!"
@@ -234,7 +234,7 @@ class COTSubmodule(COTGenericSubmodule):
         sets it to the value of :attr:`PACKAGE`.
 
         Raises:
-            InvalidInputError: if :meth:`ready_to_run` reports ``False``
+          InvalidInputError: if :meth:`ready_to_run` reports ``False``
         """
         super(COTSubmodule, self).run()
 

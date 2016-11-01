@@ -101,10 +101,10 @@ class HelperUT(COT_UT):
         """Test installation with 'dpkg' and 'apt-get'.
 
         Args:
-            pkgname (str): Apt package to test installation for.
-            helpername (str): Expected value of
-                :attr:`~COT.helpers.helper.Helper.name`, if different from
-                ``pkgname``.
+          pkgname (str): Apt package to test installation for.
+          helpername (str): Expected value of
+              :attr:`~COT.helpers.helper.Helper.name`, if different from
+              ``pkgname``.
         """
         helpers['dpkg']._installed = True
         # Python 2.6 doesn't let us do multiple mocks in one 'with'
@@ -142,7 +142,7 @@ class HelperUT(COT_UT):
         """Test installation with 'port'.
 
         Args:
-            portname (str): MacPorts package name to test.
+          portname (str): MacPorts package name to test.
         """
         self.select_package_manager('port')
         Port._updated = False

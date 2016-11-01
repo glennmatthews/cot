@@ -40,7 +40,7 @@ except ImportError:
             """Do nothing.
 
             Args:
-                record (LogRecord): Record to ignore.
+              record (LogRecord): Record to ignore.
             """
             pass
 
@@ -75,7 +75,7 @@ class UTLoggingHandler(BufferingHandler):
         """Create a logging handler for the given test case.
 
         Args:
-            testcase (unittest.TestCase): Owner of this logging handler.
+          testcase (unittest.TestCase): Owner of this logging handler.
         """
         BufferingHandler.__init__(self, capacity=0)
         self.setLevel(logging.DEBUG)
@@ -85,7 +85,7 @@ class UTLoggingHandler(BufferingHandler):
         """Add the given log record to our internal buffer.
 
         Args:
-            record (LogRecord): Record to store.
+          record (LogRecord): Record to store.
         """
         self.buffer.append(record.__dict__)
 
@@ -93,9 +93,9 @@ class UTLoggingHandler(BufferingHandler):
         """Return False - we only flush manually.
 
         Args:
-            record (LogRecord): Record to ignore.
+          record (LogRecord): Record to ignore.
         Returns:
-            bool: always False
+          bool: always False
         """
         return False
 
@@ -103,9 +103,9 @@ class UTLoggingHandler(BufferingHandler):
         """Look for log entries matching the given dict.
 
         Args:
-            kwargs (dict): logging arguments to match against.
+          kwargs (dict): logging arguments to match against.
         Returns:
-            list: List of record(s) that matched.
+          list: List of record(s) that matched.
         """
         matches = []
         for record in self.buffer:
@@ -132,12 +132,12 @@ class UTLoggingHandler(BufferingHandler):
         """Fail unless the given log messages were each seen exactly once.
 
         Args:
-            info (str): Optional string to prepend to any failure messages.
-            kwargs (dict): logging arguments to match against.
+          info (str): Optional string to prepend to any failure messages.
+          kwargs (dict): logging arguments to match against.
 
         Raises:
-            AssertionError: if an expected log message was not seen
-            AssertionError: if an expected log message was seen more than once
+          AssertionError: if an expected log message was not seen
+          AssertionError: if an expected log message was seen more than once
         """
         matches = self.logs(**kwargs)
         if not matches:
@@ -155,10 +155,10 @@ class UTLoggingHandler(BufferingHandler):
         """Fail if any logs are logged higher than the given level.
 
         Args:
-            max_level (int): Highest logging level to permit.
-            info (str): Optional string to prepend to any failure messages.
+          max_level (int): Highest logging level to permit.
+          info (str): Optional string to prepend to any failure messages.
         Raises:
-            AssertionError: if any messages higher than max_level were seen
+          AssertionError: if any messages higher than max_level were seen
         """
         for level in (logging.CRITICAL, logging.ERROR, logging.WARNING,
                       logging.INFO, logging.VERBOSE, logging.DEBUG):
@@ -258,9 +258,9 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """Get the absolute path to a local resource file.
 
         Args:
-            name (str): File name.
+          name (str): File name.
         Returns:
-            str: Absolute file path.
+          str: Absolute file path.
         """
         return os.path.abspath(resource_filename(__name__, name))
 
@@ -269,11 +269,11 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """Warning log message for invalid hardware.
 
         Args:
-            profile (str): Config profile, or "".
-            value (object): Invalid value
-            kind (str): Label for this hardware kind.
+          profile (str): Config profile, or "".
+          value (object): Invalid value
+          kind (str): Label for this hardware kind.
         Returns:
-            dict: kwargs suitable for passing into :meth:`assertLogged`
+          dict: kwargs suitable for passing into :meth:`assertLogged`
         """
         msg = ""
         if profile:
@@ -297,7 +297,7 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """Force the VM under test to use a particular Platform class.
 
         Args:
-             plat (COT.platforms.GenericPlatform): Platform class to use
+           plat (COT.platforms.GenericPlatform): Platform class to use
         """
         # pylint: disable=protected-access
         self.instance.vm._platform = plat
@@ -306,10 +306,10 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """Grab the output from COT and check it against expected output.
 
         Args:
-            expected (str): Expected output
+          expected (str): Expected output
         Raises:
-            AssertionError: if an error is raised by COT when run
-            AssertionError: if the output returned does not match expected.
+          AssertionError: if an error is raised by COT when run
+          AssertionError: if the output returned does not match expected.
         """
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as so:
             try:
@@ -331,12 +331,12 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         later Python versions.
 
         Args:
-            expected (str): Expected diff output
-            file1 (str): File path to compare (default: input.ovf file)
-            file2 (str): File path to compare (default: output.ovf file)
+          expected (str): Expected diff output
+          file1 (str): File path to compare (default: input.ovf file)
+          file2 (str): File path to compare (default: output.ovf file)
 
         Raises:
-            AssertionError: if the two files do not have identical contents.
+          AssertionError: if the two files do not have identical contents.
         """
         if file1 is None:
             file1 = self.input_ovf
@@ -455,8 +455,8 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """Use OVFtool to validate the given OVF/OVA file.
 
         Args:
-            filename (str): File name to validate (optional, default is
-                :attr:`temp_file`).
+          filename (str): File name to validate (optional, default is
+              :attr:`temp_file`).
         """
         if filename is None:
             filename = self.temp_file

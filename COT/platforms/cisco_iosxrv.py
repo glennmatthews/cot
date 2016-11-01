@@ -47,14 +47,13 @@ class IOSXRv(GenericPlatform):
         """MgmtEth0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc.
 
         Args:
-            nic_number (int): Nth NIC to name.
+          nic_number (int): Nth NIC to name.
 
         Returns:
-            str:
-                * "MgmtEth0/0/CPU0/0"
-                * "GigabitEthernet0/0/0/0"
-                * "GigabitEthernet0/0/0/1"
-                * etc.
+          * "MgmtEth0/0/CPU0/0"
+          * "GigabitEthernet0/0/0/0"
+          * "GigabitEthernet0/0/0/1"
+          * etc.
         """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
@@ -66,11 +65,11 @@ class IOSXRv(GenericPlatform):
         """IOS XRv supports 1-8 CPUs.
 
         Args:
-            cpus (int): Number of CPUs
+          cpus (int): Number of CPUs
 
         Raises:
-            ValueTooLowError: if ``cpus`` is less than 1
-            ValueTooHighError: if ``cpus`` is more than 8
+          ValueTooLowError: if ``cpus`` is less than 1
+          ValueTooHighError: if ``cpus`` is more than 8
         """
         validate_int(cpus, 1, 8, "CPUs")
 
@@ -79,11 +78,11 @@ class IOSXRv(GenericPlatform):
         """Minimum 3 GiB, max 8 GiB of RAM.
 
         Args:
-            mebibytes (int): RAM, in MiB.
+          mebibytes (int): RAM, in MiB.
 
         Raises:
-            ValueTooLowError: if ``mebibytes`` is less than 3072
-            ValueTooHighError: if ``mebibytes`` is more than 8192
+          ValueTooLowError: if ``mebibytes`` is less than 3072
+          ValueTooHighError: if ``mebibytes`` is more than 8192
         """
         if mebibytes < 3072:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "3 GiB")
@@ -95,10 +94,10 @@ class IOSXRv(GenericPlatform):
         """IOS XRv requires at least one NIC.
 
         Args:
-            count (int): Number of NICs.
+          count (int): Number of NICs.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 1
+          ValueTooLowError: if ``count`` is less than 1
         """
         validate_int(count, 1, None, "NIC count")
 
@@ -107,11 +106,11 @@ class IOSXRv(GenericPlatform):
         """IOS XRv supports 1-4 serial ports.
 
         Args:
-            count (int): Number of serial ports.
+          count (int): Number of serial ports.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 1
-            ValueTooHighError: if ``count`` is more than 4
+          ValueTooLowError: if ``count`` is less than 1
+          ValueTooHighError: if ``count`` is more than 4
         """
         validate_int(count, 1, 4, "serial ports")
 
@@ -126,10 +125,10 @@ class IOSXRvRP(IOSXRv):
         """Fabric and management only.
 
         Args:
-            nic_number (int): Nth NIC to name.
+          nic_number (int): Nth NIC to name.
 
         Returns:
-            str: "fabric" or "MgmtEth0/{SLOT}/CPU0/0" only
+          str: "fabric" or "MgmtEth0/{SLOT}/CPU0/0" only
         """
         if nic_number == 1:
             return "fabric"
@@ -141,11 +140,11 @@ class IOSXRvRP(IOSXRv):
         """Fabric plus an optional management NIC.
 
         Args:
-            count (int): Number of NICs.
+          count (int): Number of NICs.
 
         Raises:
-            ValueTooLowError: if ``count`` is less than 1
-            ValueTooHighError: if ``count`` is more than 2
+          ValueTooLowError: if ``count`` is less than 1
+          ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 1, 2, "NIC count")
 

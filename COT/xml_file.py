@@ -28,9 +28,8 @@ def register_namespace(prefix, uri):
     """Record a particular mapping between a namespace prefix and URI.
 
     Args:
-        prefix (str): Namespace prefix such as "ovf"
-        uri (str): Namespace URI such as
-            "http://schemas.dmtf.org/ovf/envelope/1"
+      prefix (str): Namespace prefix such as "ovf"
+      uri (str): Namespace URI such as "http://schemas.dmtf.org/ovf/envelope/1"
     """
     try:
         ET.register_namespace(prefix, uri)
@@ -42,17 +41,16 @@ def register_namespace(prefix, uri):
 class XML(object):
     """Class capable of reading, editing, and writing XML files."""
 
-    @classmethod
-    def get_ns(cls, text):
+    @staticmethod
+    def get_ns(text):
         """Get the namespace prefix from an XML element or attribute name.
 
         Args:
-            text (str): Element name or attribute name, such as
-                "{http://schemas.dmtf.org/ovf/envelope/1}Element".
+          text (str): Element name or attribute name, such as
+              "{http://schemas.dmtf.org/ovf/envelope/1}Element".
         Returns:
-            str: Namespace prefix, such as
-                "http://schemas.dmtf.org/ovf/envelope/1", or "" if no prefix
-                is present.
+          str: "" if no prefix is present, or a namespace prefix, such as
+          "http://schemas.dmtf.org/ovf/envelope/1".
         """
         match = re.match(r"\{(.*)\}", str(text))
         if not match:
@@ -60,15 +58,15 @@ class XML(object):
             return ""
         return match.group(1)
 
-    @classmethod
-    def strip_ns(cls, text):
+    @staticmethod
+    def strip_ns(text):
         """Remove a namespace prefix from an XML element or attribute name.
 
         Args:
-            text (str): Element name or attribute name, such as
-                "{http://schemas.dmtf.org/ovf/envelope/1}Element".
+          text (str): Element name or attribute name, such as
+              "{http://schemas.dmtf.org/ovf/envelope/1}Element".
         Returns:
-            str: Bare name, such as "Element".
+          str: Bare name, such as "Element".
         """
         match = re.match(r"\{.*\}(.*)", str(text))
         if match is None:
@@ -84,12 +82,12 @@ class XML(object):
         :attr:`root`.
 
         Args:
-            xml_file (str): File path to read.
+          xml_file (str): File path to read.
 
         Raises:
-            xml.etree.ElementTree.ParseError: if parsing fails under Python
-                2.7 or later
-            xml.parsers.expat.ExpatError: if parsing fails under Python 2.6
+          xml.etree.ElementTree.ParseError: if parsing fails under Python
+              2.7 or later
+          xml.parsers.expat.ExpatError: if parsing fails under Python 2.6
         """
         # Parse the XML into memory
         self.tree = ET.parse(xml_file)
@@ -101,7 +99,7 @@ class XML(object):
         """Write pretty XML out to the given file.
 
         Args:
-            xml_file (str): Filename to write to
+          xml_file (str): Filename to write to
         """
         logger.debug("Writing XML to %s", xml_file)
 
@@ -128,9 +126,9 @@ class XML(object):
         """Recursively add indentation to XML to make it look nice.
 
         Args:
-            parent (xml.etree.ElementTree.Element): Current parent element
-            depth (int): How far down the rabbit hole we have recursed.
-                Increments by 2 for each successive level of nesting.
+          parent (xml.etree.ElementTree.Element): Current parent element
+          depth (int): How far down the rabbit hole we have recursed.
+              Increments by 2 for each successive level of nesting.
         """
         depth += 2
         last = None
@@ -155,18 +153,17 @@ class XML(object):
         """Find the unique child element under the specified parent element.
 
         Args:
-            parent (xml.etree.ElementTree.Element): Parent element
-            tag (str): Child tag to match on
-            attrib (dict): Child attributes to match on
-            required (boolean): Whether to raise an error if no child exists
+          parent (xml.etree.ElementTree.Element): Parent element
+          tag (str): Child tag to match on
+          attrib (dict): Child attributes to match on
+          required (boolean): Whether to raise an error if no child exists
 
         Raises:
-            LookupError: if more than one matching child is found
-            KeyError: if no matching child is found and :attr:`required`
-                is True
+          LookupError: if more than one matching child is found
+          KeyError: if no matching child is found and :attr:`required` is True
 
         Returns:
-            xml.etree.ElementTree.Element: Child element found, or None
+          xml.etree.ElementTree.Element: Child element found, or None
         """
         matches = cls.find_all_children(parent, tag, attrib)
         if len(matches) > 1:
@@ -191,12 +188,12 @@ class XML(object):
         """Find all matching child elements under the specified parent element.
 
         Args:
-            parent (xml.etree.ElementTree.Element): Parent element
-            tag (iterable): Child tag string (or list of tags) to match on
-            attrib (dict): Child attributes to match on
+          parent (xml.etree.ElementTree.Element): Parent element
+          tag (iterable): Child tag string (or list of tags) to match on
+          attrib (dict): Child attributes to match on
 
         Returns:
-            list: (Possibly empty) list of matching child Elements
+          list: (Possibly empty) list of matching child Elements
         """
         assert parent is not None
         if isinstance(tag, str):
@@ -234,18 +231,17 @@ class XML(object):
         """Add the given child element under the given parent element.
 
         Args:
-            parent (xml.etree.ElementTree.Element): Parent element
-            new_child (xml.etree.ElementTree.Element): Child element to attach
-            ordering (list): (Optional) List describing the expected ordering
-                of child tags under the parent; if a new child element is
-                created, its placement under the parent will respect this
-                sequence.
-            known_namespaces (list): (Optional) List of well-understood XML
-                namespaces. If a new child is created, and ``ordering`` is
-                given, any tag (new or existing) that is encountered but not
-                accounted for in ``ordering`` will result in COT logging a
-                warning **if and only if** the unaccounted-for tag is in a
-                known namespace.
+          parent (xml.etree.ElementTree.Element): Parent element
+          new_child (xml.etree.ElementTree.Element): Child element to attach
+          ordering (list): (Optional) List describing the expected ordering of
+              child tags under the parent; if a new child element is created,
+              its placement under the parent will respect this sequence.
+          known_namespaces (list): (Optional) List of well-understood XML
+              namespaces. If a new child is created, and ``ordering`` is
+              given, any tag (new or existing) that is encountered but not
+              accounted for in ``ordering`` will result in COT logging a
+              warning **if and only if** the unaccounted-for tag is in a
+              known namespace.
         """
         if ordering and new_child.tag not in ordering:
             if (known_namespaces and
@@ -293,16 +289,16 @@ class XML(object):
         """Update or create a child element under the specified parent element.
 
         Args:
-            parent (xml.etree.ElementTree.Element): Parent element
-            tag (str): Child element text tag to find or create
-            text (str): Value to set the child's text attribute to
-            attrib (dict): Dict of child attributes to match on while
-                searching and set in the final child element
-            ordering (list): See :meth:`add_child`
-            known_namespaces (list): See :meth:`add_child`
+          parent (xml.etree.ElementTree.Element): Parent element
+          tag (str): Child element text tag to find or create
+          text (str): Value to set the child's text attribute to
+          attrib (dict): Dict of child attributes to match on while
+              searching and set in the final child element
+          ordering (list): See :meth:`add_child`
+          known_namespaces (list): See :meth:`add_child`
 
         Returns:
-            xml.etree.ElementTree.Element: New or updated child Element.
+          xml.etree.ElementTree.Element: New or updated child Element.
         """
         assert parent is not None
         if attrib is None:
