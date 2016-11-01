@@ -643,7 +643,8 @@ class OVF(VMDescription, XML):
     def network_descriptions(self):
         """The list of network descriptions currently defined in this VM.
 
-        :rtype: list[str]
+        Returns:
+            list: List of network description strings
         """
         if self.network_section is None:
             return []
@@ -2035,15 +2036,14 @@ class OVF(VMDescription, XML):
             file_id (str): File ID to search from
 
         Returns:
-            ``(file, disk, ctrl_item, disk_item)``, any or all of which
-             may be ``None``
+            tuple: ``(file, disk, ctrl_item, disk_item)``, any or all of which
+                may be ``None``
 
         Raises:
-            LookupError:
-                * If the ``disk`` entry is found but no corresponding
-                  ``file`` is found.
-                * If the ``disk_item`` is found but no ``ctrl_item``
-                  is found to be its parent.
+            LookupError: If the ``disk`` entry is found but no corresponding
+                ``file`` is found.
+            LookupError: If the ``disk_item`` is found but no ``ctrl_item``
+                is found to be its parent.
         """
         if file_id is None:
             return (None, None, None, None)
