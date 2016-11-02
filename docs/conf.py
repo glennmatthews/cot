@@ -275,7 +275,7 @@ intersphinx_mapping = {
 
 # -- Napoleon configuration -------------------
 
-napoleon_use_rtype = True
+napoleon_use_rtype = False
 
 # -- General configuration, continued ---------
 
