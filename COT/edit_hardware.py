@@ -721,21 +721,6 @@ class COTEditHardware(COTSubmodule):
 def expand_list_wildcard(name_list, length, quiet=False):
     """Expand a list containing a wildcard to the desired length.
 
-    Since various items (NIC names, network names, etc.) are often
-    named or numbered sequentially, we provide this API to allow the
-    user to specify a wildcard value to permit automatically
-    expanding a list of input strings to the desired length.
-    The syntax for the wildcard option is ``{`` followed by a number
-    (indicating the starting index for the name) followed by ``}``.
-    Examples::
-
-      >>> expand_list_wildcard(None, 3)
-      []
-      >>> expand_list_wildcard(["eth{0}"], 3)
-      ['eth0', 'eth1', 'eth2']
-      >>> expand_list_wildcard(["mgmt0", "eth{10}"], 4)
-      ['mgmt0', 'eth10', 'eth11', 'eth12']
-
     Args:
       name_list (list): List of names to assign, or None
       length (list): Length to expand to
@@ -743,6 +728,23 @@ def expand_list_wildcard(name_list, length, quiet=False):
 
     Returns:
       list: Expanded list, or empty list if ``name_list`` is None or empty.
+
+    Since various items (NIC names, network names, etc.) are often
+    named or numbered sequentially, we provide this API to allow the
+    user to specify a wildcard value to permit automatically
+    expanding a list of input strings to the desired length.
+    The syntax for the wildcard option is ``{`` followed by a number
+    (indicating the starting index for the name) followed by ``}``.
+
+    Examples:
+      ::
+
+        >>> expand_list_wildcard(None, 3)
+        []
+        >>> expand_list_wildcard(["eth{0}"], 3)
+        ['eth0', 'eth1', 'eth2']
+        >>> expand_list_wildcard(["mgmt0", "eth{10}"], 4)
+        ['mgmt0', 'eth10', 'eth11', 'eth12']
     """
     if not name_list:
         return []
@@ -770,25 +772,26 @@ def expand_list_wildcard(name_list, length, quiet=False):
 def guess_list_wildcard(known_values):
     """Inverse of :func:`expand_list_wildcard`. Guess the wildcard for a list.
 
-    Examples::
-
-      >>> guess_list_wildcard(['foo', 'bar', 'baz'])
-      >>> guess_list_wildcard(['foo1', 'foo2', 'foo3'])
-      ['foo{1}']
-      >>> guess_list_wildcard(['foo', 'bar', 'baz3', 'baz4', 'baz5'])
-      ['foo', 'bar', 'baz{3}']
-      >>> guess_list_wildcard(['Eth0/1', 'Eth0/2', 'Eth0/3'])
-      ['Eth0/{1}']
-      >>> guess_list_wildcard(['Eth0/0', 'Eth1/0', 'Eth2/0'])
-      ['Eth{0}/0']
-      >>> guess_list_wildcard(['fake1', 'fake2', 'real4', 'real5'])
-      ['fake1', 'fake2', 'real{4}']
-
     Args:
       known_values (list): Values to guess from
 
     Returns:
       list: Guessed wildcard list, or None if unable to guess
+
+    Examples:
+      ::
+
+        >>> guess_list_wildcard(['foo', 'bar', 'baz'])
+        >>> guess_list_wildcard(['foo1', 'foo2', 'foo3'])
+        ['foo{1}']
+        >>> guess_list_wildcard(['foo', 'bar', 'baz3', 'baz4', 'baz5'])
+        ['foo', 'bar', 'baz{3}']
+        >>> guess_list_wildcard(['Eth0/1', 'Eth0/2', 'Eth0/3'])
+        ['Eth0/{1}']
+        >>> guess_list_wildcard(['Eth0/0', 'Eth1/0', 'Eth2/0'])
+        ['Eth{0}/0']
+        >>> guess_list_wildcard(['fake1', 'fake2', 'real4', 'real5'])
+        ['fake1', 'fake2', 'real{4}']
     """
     logger.debug("Attempting to infer a pattern from %s", known_values)
     # Guess sequences ending with simple N, N+1, N+2

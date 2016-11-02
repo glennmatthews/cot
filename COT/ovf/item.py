@@ -50,20 +50,21 @@ logger = logging.getLogger(__name__)
 def list_union(*lists):
     """Get union of lists.
 
-    ::
-
-      >>> list_union([1, 2, 3], [0, 4], [1, 5])
-      [1, 2, 3, 0, 4, 5]
-      >>> list_union(['foo'], ['bar'], ['bar', 'foo'])
-      ['foo', 'bar']
-      >>> list_union(['bar', 'foo'], ['foo'], ['bar'])
-      ['bar', 'foo']
-
     Args:
       lists (list): List of lists to unify.
 
     Returns:
       list: All distinct values across the given lists.
+
+    Examples:
+      ::
+
+        >>> list_union([1, 2, 3], [0, 4], [1, 5])
+        [1, 2, 3, 0, 4, 5]
+        >>> list_union(['foo'], ['bar'], ['bar', 'foo'])
+        ['foo', 'bar']
+        >>> list_union(['bar', 'foo'], ['foo'], ['bar'])
+        ['bar', 'foo']
     """
     result = []
     for l in lists:

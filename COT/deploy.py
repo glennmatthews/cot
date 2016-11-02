@@ -43,20 +43,21 @@ class SerialConnection(object):
 
         Args:
           cli_string (str): String of the form 'kind:value[,opts]'
-
-        ::
-
-          >>> str(SerialConnection.from_cli_string('/dev/ttyS0'))
-          '<SerialConnection kind: device value: /dev/ttyS0 options: {}>'
-          >>> str(SerialConnection.from_cli_string('tcp::22,server'))
-          "<SerialConnection kind: tcp value: :22 options: {'server': True}>"
-          >>> str(SerialConnection.from_cli_string('telnet://1.1.1.1:1111'))
-          '<SerialConnection kind: telnet value: 1.1.1.1:1111 options: {}>'
-
         Returns:
           SerialConnection: Created instance or None.
         Raises:
           InvalidInputError: if ``cli_string`` cannot be parsed
+
+        Examples:
+          ::
+
+            >>> str(SerialConnection.from_cli_string('/dev/ttyS0'))
+            '<SerialConnection kind: device value: /dev/ttyS0 options: {}>'
+            >>> str(SerialConnection.from_cli_string('tcp::22,server'))
+            "<SerialConnection kind: tcp value: :22 options: {'server': True}>"
+            >>> str(SerialConnection.from_cli_string('telnet://1.1.1.1:1111'))
+            '<SerialConnection kind: telnet value: 1.1.1.1:1111 options: {}>'
+
         """
         if cli_string is None:
             return None

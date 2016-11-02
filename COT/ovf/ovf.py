@@ -70,13 +70,6 @@ def byte_count(base_val, multiplier):
 
     Inverse operation of :func:`factor_bytes`.
 
-    ::
-
-      >>> byte_count("128", "byte * 2^20")
-      134217728
-      >>> byte_count("512", "MegaBytes")
-      536870912
-
     Args:
       base_val (str): Base value string (value of ``ovf:capacity``, etc.)
       multiplier (str): Multiplier string (value of
@@ -84,6 +77,14 @@ def byte_count(base_val, multiplier):
 
     Returns:
       int: Number of bytes
+
+    Examples:
+      ::
+
+        >>> byte_count("128", "byte * 2^20")
+        134217728
+        >>> byte_count("512", "MegaBytes")
+        536870912
     """
     if not multiplier:
         return int(base_val)
@@ -114,18 +115,19 @@ def factor_bytes(byte_value):
 
     Inverse operation of :func:`byte_count`
 
-    ::
-
-      >>> factor_bytes(134217728)
-      ('128', 'byte * 2^20')
-      >>> factor_bytes(134217729)
-      ('134217729', 'byte')
-
     Args:
       byte_value (int): Number of bytes
 
     Returns:
       tuple: ``(base_val, multiplier)``
+
+    Examples:
+      ::
+
+        >>> factor_bytes(134217728)
+        ('128', 'byte * 2^20')
+        >>> factor_bytes(134217729)
+        ('134217729', 'byte')
     """
     shift = 0
     byte_value = int(byte_value)
@@ -141,29 +143,6 @@ def factor_bytes(byte_value):
 def byte_string(byte_value, base_shift=0):
     """Pretty-print the given bytes value.
 
-    ::
-
-      >>> byte_string(512)
-      '512 B'
-      >>> byte_string(512, 2)
-      '512 MiB'
-      >>> byte_string(65536, 2)
-      '64 GiB'
-      >>> byte_string(65547)
-      '64.01 KiB'
-      >>> byte_string(65530, 3)
-      '63.99 TiB'
-      >>> byte_string(1023850)
-      '999.9 KiB'
-      >>> byte_string(1024000)
-      '1000 KiB'
-      >>> byte_string(1048575)
-      '1024 KiB'
-      >>> byte_string(1049200)
-      '1.001 MiB'
-      >>> byte_string(2560)
-      '2.5 KiB'
-
     Args:
       byte_value (float): Value
       base_shift (int): Base value of byte_value
@@ -171,6 +150,30 @@ def byte_string(byte_value, base_shift=0):
 
     Returns:
       str: Pretty-printed byte string such as "1.00 GiB"
+
+    Examples:
+      ::
+
+        >>> byte_string(512)
+        '512 B'
+        >>> byte_string(512, 2)
+        '512 MiB'
+        >>> byte_string(65536, 2)
+        '64 GiB'
+        >>> byte_string(65547)
+        '64.01 KiB'
+        >>> byte_string(65530, 3)
+        '63.99 TiB'
+        >>> byte_string(1023850)
+        '999.9 KiB'
+        >>> byte_string(1024000)
+        '1000 KiB'
+        >>> byte_string(1048575)
+        '1024 KiB'
+        >>> byte_string(1049200)
+        '1.001 MiB'
+        >>> byte_string(2560)
+        '2.5 KiB'
     """
     tags = ["B", "KiB", "MiB", "GiB", "TiB"]
     byte_value = float(byte_value)

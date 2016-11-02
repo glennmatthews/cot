@@ -38,15 +38,17 @@ class FileOnDisk(object):
               directory containing this filename. If not specified, the
               final element in file_path is considered the filename.
 
-        ::
-
-          >>> a = FileOnDisk('/etc/resolv.conf')
-          >>> b = FileOnDisk('/etc', 'resolv.conf')
-          >>> a == b
-          True
-
         Raises:
           IOError: if no such file exists
+
+        Examples:
+          ::
+
+            >>> a = FileOnDisk('/etc/resolv.conf')
+            >>> b = FileOnDisk('/etc', 'resolv.conf')
+            >>> a == b
+            True
+
         """
         if filename is None:
             self.file_path = file_path
