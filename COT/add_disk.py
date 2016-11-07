@@ -409,9 +409,11 @@ def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
         logger.warning("Overwriting existing Disk in OVF")
 
     if disk_item is not None:
-        ui.confirm_or_die("Existing disk Item is a {0}. Change it to a {1}?"
-                          .format(disk_item.hardware_type,
-                                  drive_type))
+        if disk_item.hardware_type != drive_type:
+            ui.confirm_or_die(
+                "Existing disk Item is a {0}. Change it to a {1}?"
+                .format(disk_item.hardware_type,
+                        drive_type))
         # We'll overwrite the existing disk Item instead of deleting
         # and recreating it, in order to preserve things like Description
         logger.warning("Overwriting existing disk Item in OVF")
