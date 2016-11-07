@@ -9,6 +9,8 @@ This project adheres to `Semantic Versioning`_.
 **Fixed**
 
 - TypeError in ``find_item`` method (`#54`_).
+- ``cot inject-config`` correctly handles OVAs with multiple empty CD-ROM
+  drives to choose amongst (`#54`_ also).
 
 **Added**
 

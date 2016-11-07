@@ -26,7 +26,7 @@ class TestOVFHardware(COT_UT):
         """Check find_item raises LookupError if multiple matches are found."""
         with VMContextManager(self.input_ovf) as ovf:
             hw = ovf.hardware
-            self.assertRaisesRegexp(
+            self.assertRaisesRegex(
                 LookupError,
                 r"multiple matching 'ide' Items",
                 hw.find_item, resource_type='ide')

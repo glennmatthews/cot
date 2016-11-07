@@ -2606,9 +2606,12 @@ class OVF(VMDescription, XML):
         """
         if drive_type == 'cdrom':
             # Find a drive that has no HostResource property
-            return self.hardware.find_item(
+            drives = self.hardware.find_all_items(
                 resource_type=drive_type,
                 properties={self.HOST_RESOURCE: None})
+            if drives:
+                return drives[0]
+            return None
         elif drive_type == 'harddisk':
             # All harddisk items must have a HostResource, so we need a
             # different way to indicate an empty drive. By convention,
