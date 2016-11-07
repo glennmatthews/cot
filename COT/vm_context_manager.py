@@ -38,7 +38,7 @@ class VMContextManager(object):
           vm.bar()
     """
 
-    def __init__(self, input_file, output_file):
+    def __init__(self, input_file, output_file=None):
         """Create a VM instance."""
         self.obj = VMFactory.create(input_file, output_file)
 

@@ -132,6 +132,11 @@ class OVFItem(object):
         """Device hardware subtype such as 'virtio' or 'lsilogic'."""
         return self.get_value(self.RESOURCE_SUB_TYPE)
 
+    @property
+    def instance_id(self):
+        """Device instance ID."""
+        return self.get_value(self.INSTANCE_ID)
+
     def property_values(self, name):
         """Get list of values known for a given property name."""
         return list(self.properties[name].keys())

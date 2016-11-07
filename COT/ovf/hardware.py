@@ -242,8 +242,9 @@ class OVFHardware(object):
         """
         matches = self.find_all_items(resource_type, properties, [profile])
         if len(matches) > 1:
-            raise LookupError("Found multiple matching {0} Items:\n{2}"
-                              .format(resource_type, "\n".join(matches)))
+            raise LookupError(
+                "Found multiple matching '{0}' Items (instances {1})"
+                .format(resource_type, [m.instance_id for m in matches]))
         elif len(matches) == 0:
             return None
         else:

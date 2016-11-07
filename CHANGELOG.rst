@@ -6,6 +6,10 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Fixed**
+
+- TypeError in ``find_item`` method (`#54`_).
+
 **Added**
 
 - ``cot inject-config --extra-files`` parameter (`#53`_).
@@ -549,6 +553,7 @@ Initial public release.
 .. _#51: https://github.com/glennmatthews/cot/issues/51
 .. _#52: https://github.com/glennmatthews/cot/issues/52
 .. _#53: https://github.com/glennmatthews/cot/issues/53
+.. _#54: https://github.com/glennmatthews/cot/issues/54
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
