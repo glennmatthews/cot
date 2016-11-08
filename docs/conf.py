@@ -233,7 +233,7 @@ regenerate_usage_contents(force=True)
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -244,6 +244,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
+    'sphinx.ext.napoleon',
 ]
 
 # -- Autodoc configuration --------------------
@@ -258,6 +259,23 @@ autodoc_member_order = 'groupwise'
 # members, undoc-members, private-members, special-members, inherited-members,
 # show-inheritance
 autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    """Always document __init__ method."""
+    if name == "__init__":
+        return False
+    return skip
+
+# -- Intersphinx configuration ----------------
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'requests': ('http://docs.python-requests.org/en/latest', None),
+}
+
+# -- Napoleon configuration -------------------
+
+napoleon_use_rtype = False
 
 # -- General configuration, continued ---------
 
@@ -561,3 +579,6 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+def setup(app):
+    app.connect("autodoc-skip-member", autodoc_skip_member)

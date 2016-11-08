@@ -35,7 +35,7 @@ class COTEditProduct(COTSubmodule):
     """Edit product, vendor, and version information strings.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTGenericSubmodule.ui`,
     :attr:`~COTSubmodule.package`,
     :attr:`~COTSubmodule.output`
 
@@ -51,7 +51,11 @@ class COTEditProduct(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        Args:
+          ui (UI): User interface instance.
+        """
         super(COTEditProduct, self).__init__(ui)
         self.product_class = None
         """Product class identifier."""
@@ -73,7 +77,8 @@ class COTEditProduct(COTSubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if not any([
                 self.product_class,
@@ -92,7 +97,8 @@ class COTEditProduct(COTSubmodule):
     def run(self):
         """Do the actual work of this submodule.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        Raises:
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTEditProduct, self).run()
 
@@ -139,11 +145,11 @@ class COTEditProduct(COTSubmodule):
 
     def create_subparser(self):
         """Create 'edit-product' CLI subparser."""
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'edit-product',
             aliases=['set-product', 'set-version'],
             help="""Edit product info in an OVF""",
-            usage=self.UI.fill_usage("edit-product", [
+            usage=self.ui.fill_usage("edit-product", [
                 "PACKAGE [-o OUTPUT] [-c PRODUCT_CLASS] \
 [-p PRODUCT] [-n VENDOR] [-v SHORT_VERSION] [-V FULL_VERSION] \
 [-u PRODUCT_URL ] [-r VENDOR_URL] [-l APPLICATION_URL]",

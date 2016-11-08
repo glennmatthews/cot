@@ -8,12 +8,15 @@ Common OVF Tool (COT)
    introduction
    installation
    usage
+   glossary
    changelog
    contributing
    thanks
    COT
+   COT.disks
    COT.helpers
    COT.ovf
+   COT.platforms
 
 
 Indices and tables

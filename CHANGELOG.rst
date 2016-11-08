@@ -3,6 +3,48 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.8.0`_ - 2016-11-08
+---------------------
+
+**Fixed**
+
+- TypeError in ``find_item`` method (`#54`_).
+- ``cot inject-config`` correctly handles OVAs with multiple empty CD-ROM
+  drives to choose amongst (`#54`_ also).
+- Cisco CSR1000v platform now supports 8 CPUs as a valid option.
+
+**Added**
+
+- ``cot inject-config --extra-files`` parameter (`#53`_).
+- Helper class for ``isoinfo`` (a companion to ``mkisofs``).
+- Added glossary of terms to COT documentation.
+- Inline documentation (docstrings) are now validated using the `Pylint`_
+  `docparams`_ extension.
+
+**Changed**
+
+- Refactored the monolithic ``COT/platforms.py`` file into a proper submodule.
+- :func:`~COT.helpers.mkisofs.MkIsoFs.create_iso` now adds Rock Ridge extensions
+  by default.
+- Refactored :mod:`COT.helpers` into two modules - :mod:`COT.helpers`
+  (now just for handling helper programs such as ``apt-get`` and ``mkisofs``)
+  and :mod:`COT.disks` (which uses the helpers to handle ISO/VMDK/QCOW2/RAW
+  image files).
+- Inline documentation (docstrings) have been converted to "`Google style`_"
+  for better readability in the code. Sphinx rendering of documentation
+  (for readthedocs.org, etc) now makes use of the `napoleon`_ extension to
+  handle this style.
+
+**Removed**
+
+- :func:`get_checksum` is no longer part of the :mod:`COT.helpers` API.
+  (It's now the method :func:`~COT.data_validation.file_checksum` in
+  ``COT.data_validation``, where it really belonged from the start).
+- :func:`download_and_expand` is no longer part of the :mod:`COT.helpers`
+  public API. (It's now the static method
+  :func:`~COT.helpers.helper.Helper.download_and_expand_tgz`
+  on class :class:`~COT.helpers.helper.Helper`.)
+
 `1.7.4`_ - 2016-09-21
 ---------------------
 
@@ -519,6 +561,8 @@ Initial public release.
 .. _#50: https://github.com/glennmatthews/cot/issues/50
 .. _#51: https://github.com/glennmatthews/cot/issues/51
 .. _#52: https://github.com/glennmatthews/cot/issues/52
+.. _#53: https://github.com/glennmatthews/cot/issues/53
+.. _#54: https://github.com/glennmatthews/cot/issues/54
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -542,11 +586,15 @@ Initial public release.
 .. _pydocstyle: https://pypi.python.org/pypi/pydocstyle
 .. _`flake8-docstrings`: https://pypi.python.org/pypi/flake8-docstrings
 .. _Pylint: https://www.pylint.org/
+.. _docparams: https://docs.pylint.org/en/1.6.0/extensions.html#parameter-documentation-checker
 .. _`pep8-naming`: https://pypi.python.org/pypi/pep8-naming
 .. _mccabe: https://pypi.python.org/pypi/mccabe
 .. _Codecov: https://codecov.io
+.. _`Google style`: https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments
+.. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.8.0: https://github.com/glennmatthews/cot/compare/v1.7.4...v1.8.0
 .. _1.7.4: https://github.com/glennmatthews/cot/compare/v1.7.3...v1.7.4
 .. _1.7.3: https://github.com/glennmatthews/cot/compare/v1.7.2...v1.7.3
 .. _1.7.2: https://github.com/glennmatthews/cot/compare/v1.7.1...v1.7.2

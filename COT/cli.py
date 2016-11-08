@@ -68,9 +68,11 @@ def formatter(verbosity=logging.INFO):
     We offer different (more verbose) formatting when debugging is enabled,
     hence this need.
 
-    :param verbosity: Logging level as defined by :mod:`logging`.
-    :return: Formatter object for use with :mod:`logging`.
-    :rtype: instance of :class:`colorlog.ColoredFormatter`
+    Args:
+      verbosity (int): Logging level as defined by :mod:`logging`.
+
+    Returns:
+      colorlog.ColoredFormatter: Formatter object to use with :mod:`logging`.
     """
     from colorlog import ColoredFormatter
     log_colors = {
@@ -116,7 +118,12 @@ class CLI(UI):
     """
 
     def __init__(self, terminal_width=None):
-        """Create CLI handler instance."""
+        """Create CLI handler instance.
+
+        Args:
+          terminal_width (int): (optional) Set the terminal width for this
+              CLI, independent of the actual terminal in use.
+        """
         super(CLI, self).__init__(force=True)
         # In python 2.7, we want raw_input, but in python 3 we want input.
         try:
@@ -138,8 +145,8 @@ class CLI(UI):
         if _argcomplete:
             argcomplete.autocomplete(self.parser)
 
-        import COT.helpers.helper
-        COT.helpers.helper.confirm = self.confirm
+        from COT.helpers import Helper
+        Helper.USER_INTERFACE = self
 
     @property
     def terminal_width(self):
@@ -162,19 +169,22 @@ class CLI(UI):
         Automatically prepends a ``cot subcommand --help`` usage string
         to the provided list.
 
-        ::
+        Args:
+          subcommand (str): Subcommand name/keyword
+          usage_list (list): List of usage strings for this subcommand.
+        Returns:
+          string: All usage strings, each appropriately wrapped to the
+          :func:`terminal_width` value.
 
-          >>> print(CLI(50).fill_usage('add-file',
-          ...       ["FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"]))
-          <BLANKLINE>
-            cot add-file --help
-            cot <opts> add-file FILE PACKAGE [-o OUTPUT]
-                                [-f FILE_ID]
+        Examples:
+          ::
 
-        :param str subcommand: Subcommand name/keyword
-        :param list usage_list: List of usage strings for this subcommand.
-        :returns: String containing all usage strings, each appropriately
-            wrapped to the :func:`terminal_width` value.
+            >>> print(CLI(50).fill_usage('add-file',
+            ...       ["FILE PACKAGE [-o OUTPUT] [-f FILE_ID]"]))
+            <BLANKLINE>
+              cot add-file --help
+              cot <opts> add-file FILE PACKAGE [-o OUTPUT]
+                                  [-f FILE_ID]
         """
         # Automatically add a line for --help to the usage
         output_lines = ["\n  cot "+subcommand+" --help"]
@@ -230,37 +240,39 @@ class CLI(UI):
     def fill_examples(self, example_list):
         r"""Pretty-print a set of usage examples.
 
-        ::
+        Args:
+          example_list (list): List of (description, CLI example) tuples.
 
-          >>> print(CLI(70).fill_examples([
-          ...    ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
-          ...     " admin/admin, creating a VM named 'test_vm' from foo.ova.",
-          ...     'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
-          ...     ' -n test_vm'),
-          ...    ("Deploy to vSphere/ESXi server 192.0.2.100, with username"
-          ...     " admin (prompting the user to input a password at runtime),"
-          ...     " creating a VM based on profile '1CPU-2.5GB' in foo.ova.",
-          ...     'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB')
-          ... ]))
-          Examples:
-            Deploy to vSphere/ESXi server 192.0.2.100 with credentials
-            admin/admin, creating a VM named 'test_vm' from foo.ova.
-          <BLANKLINE>
-              cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
-                  -n test_vm
-          <BLANKLINE>
-            Deploy to vSphere/ESXi server 192.0.2.100, with username admin
-            (prompting the user to input a password at runtime), creating a VM
-            based on profile '1CPU-2.5GB' in foo.ova.
-          <BLANKLINE>
-              cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
+        Returns:
+          str: Concatenation of examples, each wrapped appropriately to the
+          :func:`terminal_width` value. CLI examples will be wrapped with
+          backslashes and a hanging indent.
 
-        :param list example_list: List of (description, CLI example)
-            tuples.
+        Examples:
+          ::
 
-        :return: Examples wrapped appropriately to the :func:`terminal_width`
-            value. CLI examples will be wrapped with backslashes and
-            a hanging indent.
+            >>> print(CLI(68).fill_examples([
+            ...  ("Deploy to vSphere/ESXi server 192.0.2.100 with credentials"
+            ...   " admin/admin, creating a VM named 'test_vm' from foo.ova.",
+            ...   'cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin'
+            ...   ' -n test_vm'),
+            ...  ("Deploy to vSphere/ESXi server 192.0.2.100, with username"
+            ...   " admin (prompting the user to input a password at runtime),"
+            ...   " creating a VM based on profile '1CPU-2.5GB' in foo.ova.",
+            ...   'cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB')
+            ... ]))
+            Examples:
+              Deploy to vSphere/ESXi server 192.0.2.100 with credentials
+              admin/admin, creating a VM named 'test_vm' from foo.ova.
+            <BLANKLINE>
+                cot deploy foo.ova esxi 192.0.2.100 -u admin -p admin \
+                    -n test_vm
+            <BLANKLINE>
+              Deploy to vSphere/ESXi server 192.0.2.100, with username admin
+              (prompting the user to input a password at runtime), creating a
+              VM based on profile '1CPU-2.5GB' in foo.ova.
+            <BLANKLINE>
+                cot deploy foo.ova esxi 192.0.2.100 -u admin -c 1CPU-2.5GB
         """
         output_lines = ["Examples:"]
         # Just as in fill_usage, the default textwrap behavior
@@ -303,7 +315,8 @@ class CLI(UI):
         Will call :func:`formatter` and associate the resulting formatter
         with logging.
 
-        :param level: Logging level as defined by :mod:`logging`
+        Args:
+          level (int): Logging level as defined by :mod:`logging`
         """
         if not self.handler:
             self.handler = logging.StreamHandler()
@@ -319,8 +332,10 @@ class CLI(UI):
 
         Calls :func:`parse_args` followed by :func:`main`.
 
-        :param list argv: The CLI argv value (not including argv[0])
-        :return: Return code from :func:`main`
+        Args:
+          argv (list): The CLI argv value (not including argv[0])
+        Returns:
+          int: Return code from :func:`main`
         """
         args = self.parse_args(argv)
         return self.main(args)
@@ -330,9 +345,10 @@ class CLI(UI):
 
         Auto-accepts if :attr:`force` is set to ``True``.
 
-        :param str prompt: Message to prompt the user with
-        :return: ``True`` (user confirms acceptance) or ``False``
-            (user declines)
+        Args:
+          prompt (str): Message to prompt the user with
+        Returns:
+          bool: ``True`` (user accepts) or ``False`` (user declines)
         """
         if self.force:
             logger.warning("Automatically agreeing to '%s'", prompt)
@@ -363,12 +379,13 @@ class CLI(UI):
         Auto-inputs the :attr:`default_value` if :attr:`force` is set to
         ``True``.
 
-        :param str prompt: Message to prompt the user with
-        :param str default_value: Default value to input if the user simply
-            hits Enter without entering a value, or if :attr:`force`.
+        Args:
+          prompt (str): Message to prompt the user with
+          default_value (str): Default value to input if the user simply
+              hits Enter without entering a value, or if :attr:`force`.
 
-        :return: Input value
-        :rtype: str
+        Returns:
+          str: Input value
         """
         if self.force:
             logger.warning("Automatically entering '%s' in response to '%s'",
@@ -383,10 +400,15 @@ class CLI(UI):
     def get_password(self, username, host):
         """Get password string from the user.
 
-        :param str username: Username the password is associated with
-        :param str host: Host the password is associated with
-        :raise InvalidInputError: if :attr:`force` is ``True``
-          (as there is no "default" password value)
+        Args:
+          username (str): Username the password is associated with
+          host (str): Host the password is associated with
+
+        Raises:
+          InvalidInputError: if :attr:`force` is ``True``
+              (as there is no "default" password value)
+        Returns:
+          str: Password string
         """
         if self.force:
             raise InvalidInputError("No password specified for {0}@{1}"
@@ -493,13 +515,17 @@ class CLI(UI):
                       **kwargs):
         """Create a subparser under the specified parent.
 
-        :param str title: Canonical keyword for this subparser
-        :param object parent: Subparser grouping object returned by
-            :meth:`ArgumentParser.add_subparsers`
-        :param list aliases: Aliases for ``title``. Only used
-            in Python 3.x.
-        :param str lookup_prefix: String to prepend to ``title`` and
-            each alias in ``aliases`` for lookup purposes.
+        Args:
+          title (str): Canonical keyword for this subparser
+          parent (object): Subparser grouping object returned by
+              :meth:`ArgumentParser.add_subparsers`
+          aliases (list): Aliases for ``title``. Only used in Python 3.x.
+          lookup_prefix (str): String to prepend to ``title`` and
+              each alias in ``aliases`` for lookup purposes.
+          kwargs (dict): Passed through to :meth:`parent.add_parser`
+
+        Returns:
+          object: Subparser object
         """
         # Subparser aliases are only supported by argparse in Python 3.2+
         if sys.hexversion >= 0x03020000 and aliases:
@@ -520,8 +546,10 @@ class CLI(UI):
     def parse_args(self, argv):
         """Parse the given CLI arguments into a namespace object.
 
-        :param list argv: List of CLI arguments, not including argv0
-        :return: Parser namespace object
+        Args:
+          argv (list): List of CLI arguments, not including argv0
+        Returns:
+          argparse.Namespace: Parser namespace object
         """
         # Parse the user input
         args = self.parser.parse_args(argv)
@@ -535,7 +563,13 @@ class CLI(UI):
 
     @staticmethod
     def args_to_dict(args):
-        """Convert args to a dict and perform any needed cleanup."""
+        """Convert args to a dict and perform any needed cleanup.
+
+        Args:
+          args (argparse.Namespace): Namespace from :meth:`parse_args`.
+        Returns:
+          dict: Dictionary of arg to value
+        """
         arg_dict = vars(args)
         del arg_dict["_verbosity"]
         del arg_dict["_force"]
@@ -553,9 +587,12 @@ class CLI(UI):
 
     @staticmethod
     def set_instance_attributes(arg_dict):
-        """Pass the CLI argument dictionary to the instance attributes TODO.
+        """Set attributes of the :attr:`instance` based on the given arg_dict.
 
-        :raise InvalidInputError: if attributes are not validly set.
+        Args:
+          arg_dict (dict): Dictionary of (attribute, value).
+        Raises:
+          InvalidInputError: if attributes are not validly set.
         """
         # Set mandatory (CAPITALIZED) args first, then optional args
         for (arg, value) in arg_dict.items():
@@ -581,14 +618,17 @@ class CLI(UI):
           :func:`~COT.submodule.COTGenericSubmodule.finished`.
         * Catches various exceptions and handles them appropriately.
 
-        :param args: Parser namespace object returned from :func:`parse_args`.
-        :rtype: int
-        :return: Exit code for the COT executable.
+        Args:
+          args (argparse.Namespace): Parser namespace object returned from
+              :func:`parse_args`.
 
-          * 0 on successful completion
-          * 1 on runtime error
-          * 2 on input error (parser error,
-            :class:`~COT.data_validation.InvalidInputError`, etc.)
+        Returns:
+          int: Exit code for the COT executable.
+
+           * 0 on successful completion
+           * 1 on runtime error
+           * 2 on input error (parser error,
+             :class:`~COT.data_validation.InvalidInputError`, etc.)
         """
         # pylint: disable=protected-access
         self.force = args._force

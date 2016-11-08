@@ -18,97 +18,63 @@
 
 http://cdrecord.org/
 https://www.gnu.org/software/xorriso/
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  MkISOFS
+  GenISOImage
+  XorrISO
 """
 
-import logging
-
-from .helper import Helper, HelperError
-
-logger = logging.getLogger(__name__)
+from .helper import Helper
 
 
-class MkIsoFS(Helper):
-    """Helper provider for ``mkisofs``, ``genisoimage``, or ``xorriso``.
+class MkISOFS(Helper):
+    """Helper provider for ``mkisofs``.
 
     http://cdrecord.org/
-    https://www.gnu.org/software/xorriso/
-
-    **Methods**
-
-    .. autosummary::
-      :nosignatures:
-
-      install_helper
-      create_iso
     """
+
+    _provider_package = {
+        'port': 'cdrtools',
+    }
 
     def __init__(self):
         """Initializer."""
-        super(MkIsoFS, self).__init__(
-            "mkisofs",
-            version_regexp="(?:mkisofs|genisoimage|xorriso) ([0-9.]+)")
+        super(MkISOFS, self).__init__("mkisofs",
+                                      version_regexp="mkisofs ([0-9.]+)")
 
-    @property
-    def name(self):
-        """Either mkisofs, genisoimage, or xorriso depending on environment."""
-        if not self._path:
-            self._path = self.find_executable("mkisofs")
-            if self._path:
-                self._name = "mkisofs"
-        if not self._path:
-            self._path = self.find_executable("genisoimage")
-            if self._path:
-                self._name = "genisoimage"
-        if not self._path:
-            self._path = self.find_executable("xorriso")
-            if self._path:
-                self._name = "xorriso"
-        return self._name
 
-    @property
-    def path(self):
-        """Find ``mkisofs``, ``genisoimage``, or ``xorriso`` if available."""
-        assert self.name
-        return self._path
+class GenISOImage(Helper):
+    """Helper provider for ``genisoimage``, a fork of mkisofs."""
 
-    def install_helper(self):
-        """Install ``mkisofs``, ``genisoimage``, or ``xorriso``."""
-        if self.should_not_be_installed_but_is():
-            return
-        logger.info("Installing 'mkisofs' and/or 'genisoimage'...")
-        self._name = None
-        if Helper.port_install('cdrtools'):
-            self._name = 'mkisofs'
-        elif Helper.yum_install('genisoimage'):
-            self._name = "genisoimage"
-        else:
-            try:
-                if Helper.apt_install('genisoimage'):
-                    self._name = "genisoimage"
-            except HelperError:
-                pass
+    _provider_package = {
+        'apt-get': 'genisoimage',
+        'yum': 'genisoimage',
+    }
 
-        if not self._name:
-            if Helper.apt_install('xorriso'):
-                self._name = "xorriso"
-            else:
-                raise NotImplementedError(
-                    "Unsure how to install mkisofs.\n"
-                    "See http://cdrecord.org/")
-        logger.info("Successfully installed '%s'", self.name)
+    def __init__(self):
+        """Initializer."""
+        super(GenISOImage, self).__init__(
+            "genisoimage",
+            version_regexp="genisoimage ([0-9.]+)")
 
-    def create_iso(self, file_path, contents):
-        """Create a new ISO image at the requested location.
 
-        :param str file_path: Desired location of new disk image
-        :param list contents: List of file paths to package into the created
-          image.
-        """
-        logger.info("Calling %s to create an ISO image", self.name)
-        # mkisofs and genisoimage take the same parameters, conveniently,
-        # while xorriso needs to be asked to pretend to be mkisofs
-        args = ['-output', file_path, '-full-iso9660-filenames',
-                '-iso-level', '2'] + contents
-        if self.name == 'xorriso':
-            args = ['-as', 'mkisofs'] + args
-        self.call_helper(args)
+class XorrISO(Helper):
+    """Helper provider for ``xorriso``.
+
+    https://www.gnu.org/software/xorriso/
+    """
+
+    _provider_package = {
+        'apt-get': 'xorriso',
+    }
+
+    def __init__(self):
+        """Initializer."""
+        super(XorrISO, self).__init__(
+            "xorriso",
+            version_regexp="xorriso ([0-9.]+)")

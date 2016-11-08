@@ -1,6 +1,6 @@
 [MASTER]
 
-load-plugins=verboselogs.pylint
+load-plugins=pylint.extensions.docparams,verboselogs.pylint
 
 # Ignore generated code we don't control
 ignore=_version.py
@@ -24,6 +24,10 @@ reports=no
 #   locally-disabled
 #   too-few-public-methods
 #
+# Disabled temporarily
+#   missing-returns-doc (https://github.com/PyCQA/pylint/pull/1008)
+#   missing-raises-doc (https://github.com/PyCQA/pylint/pull/1011)
+#
 disable=bad-continuation,
   duplicate-code,
   fixme,
@@ -31,6 +35,8 @@ disable=bad-continuation,
   locally-disabled,
   too-few-public-methods,
   trailing-whitespace,
+  missing-returns-doc,
+  missing-raises-doc
 
 [BASIC]
 
@@ -57,15 +63,20 @@ max-attributes=29
 max-locals=29
 # default: max-public-methods=20
 # current worst offender: OVF
-max-public-methods=75
+max-public-methods=73
 # default: max-returns=6
 # default: max-statements=50
+
+[DOCS]
+
+accept-no-param-doc=no
+accept-no-return-type-doc=yes
 
 [FORMAT]
 
 # default: max-module-lines: 1000
-# current worst offender: OVF
-max-module-lines=2700
+# current worst offender: COT/ovf/ovf.py
+max-module-lines=3000
 
 [LOGGING]
 
