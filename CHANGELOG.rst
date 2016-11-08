@@ -6,6 +6,13 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Removed**
+
+- Discontinued support for Python 2.6 as it has been retired since 2013.
+
+`1.8.0`_ - 2016-11-08
+---------------------
+
 **Fixed**
 
 - TypeError in ``find_item`` method (`#54`_).
@@ -37,7 +44,6 @@ This project adheres to `Semantic Versioning`_.
 
 **Removed**
 
-- Discontinued support for Python 2.6 as it has been retired since 2013.
 - :func:`get_checksum` is no longer part of the :mod:`COT.helpers` API.
   (It's now the method :func:`~COT.data_validation.file_checksum` in
   ``COT.data_validation``, where it really belonged from the start).
@@ -595,6 +601,7 @@ Initial public release.
 .. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.8.0: https://github.com/glennmatthews/cot/compare/v1.7.4...v1.8.0
 .. _1.7.4: https://github.com/glennmatthews/cot/compare/v1.7.3...v1.7.4
 .. _1.7.3: https://github.com/glennmatthews/cot/compare/v1.7.2...v1.7.3
 .. _1.7.2: https://github.com/glennmatthews/cot/compare/v1.7.1...v1.7.2
