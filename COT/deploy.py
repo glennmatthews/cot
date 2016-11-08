@@ -144,10 +144,7 @@ class SerialConnection(object):
                                       .format(kind))
 
     @classmethod
-    def validate_options(cls,
-                         kind,
-                         value,     # pylint: disable=unused-argument
-                         options):
+    def validate_options(cls, kind, value, options):
         """Check that the given set of options are valid for this connection.
 
         Args:
@@ -159,6 +156,7 @@ class SerialConnection(object):
         Raises:
           InvalidInputError: if options are not valid.
         """
+        # pylint: disable=unused-argument
         if kind == 'file':
             if 'datastore' not in options:
                 raise InvalidInputError("For a serial connection to a file, "
