@@ -28,7 +28,7 @@ from COT.helpers import (
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access,missing-type-doc,missing-param-doc
 
 
 class TestISO(COT_UT):

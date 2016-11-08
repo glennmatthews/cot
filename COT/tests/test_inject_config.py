@@ -32,6 +32,7 @@ from COT.data_validation import InvalidInputError, ValueUnsupportedError
 from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
 from COT.helpers import helpers
 from COT.disks import disk_representation_from_file
+from COT.remove_file import COTRemoveFile
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +182,53 @@ ovf:size="{config_size}" />
             # file name for secondary bootstrap config
             self.assertEqual(disk_representation_from_file(config_iso).files,
                              ["iosxr_config_admin.txt"])
+        else:
+            logger.info("isoinfo not available, not checking disk contents")
+
+    def test_inject_config_iso_multiple_drives(self):
+        """Inject config file on an ISO when multiple empty drives exist."""
+        temp_ovf = os.path.join(self.temp_dir, "intermediate.ovf")
+
+        # Remove the existing ISO from our input_ovf:
+        rm = COTRemoveFile(UI())
+        rm.package = self.input_ovf
+        rm.output = temp_ovf
+        rm.file_path = "input.iso"
+        rm.run()
+        rm.finished()
+        rm.destroy()
+
+        # Now we have two empty drives.
+        self.instance.package = temp_ovf
+        self.instance.config_file = self.config_file
+        self.instance.run()
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
+        self.instance.finished()
+        config_iso = os.path.join(self.temp_dir, 'config.iso')
+        self.check_diff("""
+     <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />
+-    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
++    <ovf:File ovf:href="config.iso" ovf:id="config.iso" \
+ovf:size="{config_size}" />
+   </ovf:References>
+...
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Description>Configuration disk</rasd:Description>
+         <rasd:ElementName>CD-ROM 1</rasd:ElementName>
+-        <rasd:HostResource>ovf:/file/file2</rasd:HostResource>
++        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
+         <rasd:InstanceID>7</rasd:InstanceID>"""
+                        .format(vmdk_size=self.FILE_SIZE['input.vmdk'],
+                                iso_size=self.FILE_SIZE['input.iso'],
+                                cfg_size=self.FILE_SIZE['sample_cfg.txt'],
+                                config_size=os.path.getsize(config_iso)))
+        if helpers['isoinfo']:
+            # The sample_cfg.text should be renamed to the platform-specific
+            # file name for bootstrap config - in this case, config.txt
+            self.assertEqual(disk_representation_from_file(config_iso).files,
+                             ["config.txt"])
         else:
             logger.info("isoinfo not available, not checking disk contents")
 

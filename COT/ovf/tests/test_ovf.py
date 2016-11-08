@@ -363,6 +363,7 @@ ovf:size="{cfg_size}" />
 
     @mock.patch("COT.ovf.OVF.detect_type_from_name", return_value=".vbox")
     def test_unknown_extension(self, mock_type):
+        # pylint: disable=missing-type-doc,missing-param-doc
         """Test handling of unexpected behavior in detect_type_from_name."""
         # unsupported input file type
         with self.assertRaises(VMInitError) as cm:

@@ -55,7 +55,7 @@ class COTEditHardware(COTSubmodule):
     """Edit hardware information (CPUs, RAM, NICs, etc.).
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTGenericSubmodule.ui`,
     :attr:`~COTSubmodule.package`,
     :attr:`~COTSubmodule.output`
 
@@ -78,7 +78,11 @@ class COTEditHardware(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        Args:
+          ui (UI): User interface instance.
+        """
         super(COTEditHardware, self).__init__(ui)
         self.profiles = None
         """Configuration profile(s) to edit."""
@@ -297,7 +301,8 @@ class COTEditHardware(COTSubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         # Need some work to do!
         if not any([x is not None and x is not False for x in [
@@ -330,13 +335,13 @@ class COTEditHardware(COTSubmodule):
         profile_list = self.vm.config_profiles
         for profile in self.profiles:  # pylint: disable=not-an-iterable
             if profile not in profile_list:
-                self.UI.confirm_or_die(
+                self.ui.confirm_or_die(
                     "Profile '{0}' does not exist. Create it?"
                     .format(profile))
-                label = self.UI.get_input(
+                label = self.ui.get_input(
                     "Please enter a label for this configuration profile",
                     profile)
-                desc = self.UI.get_input(
+                desc = self.ui.get_input(
                     "Please enter a description for this "
                     "configuration profile", label)
                 self.vm.create_configuration_profile(profile, label=label,
@@ -348,7 +353,7 @@ class COTEditHardware(COTSubmodule):
         Helper for :meth:`_run_update_profiles`.
         """
         if self.profiles is None:
-            self.UI.confirm_or_die(
+            self.ui.confirm_or_die(
                 "--delete-all-other-profiles was specified but no "
                 "--profiles was specified. Really proceed to delete ALL "
                 "configuration profiles?")
@@ -358,7 +363,7 @@ class COTEditHardware(COTSubmodule):
                                       set(self.profiles))
         for profile in profiles_to_delete:
             if self.profiles is not None:
-                if not self.UI.confirm("Delete profile {0}?".format(profile)):
+                if not self.ui.confirm("Delete profile {0}?".format(profile)):
                     logger.verbose("Skipping deletion of profile %s", profile)
                     continue
             # else (profiles == None) we already confirmed earlier
@@ -369,13 +374,13 @@ class COTEditHardware(COTSubmodule):
         if self.profiles is not None:
             # Warn user about non-profile-aware properties
             if self.virtual_system_type is not None:
-                self.UI.confirm_or_die(
+                self.ui.confirm_or_die(
                     "VirtualSystemType is not filtered by configuration"
                     " profile. Requested system type(s) '{0}' will be set for"
                     " ALL profiles, not just profile(s) {1}. Continue?"
                     .format(" ".join(self.virtual_system_type), self.profiles))
             if self.network_descriptions is not None:
-                self.UI.confirm_or_die(
+                self.ui.confirm_or_die(
                     "Network descriptions are not filtered by configuration"
                     " profile. Requested network descriptions will be set for"
                     " networks across ALL profiles, not just profile(s) {0}."
@@ -446,7 +451,7 @@ class COTEditHardware(COTSubmodule):
         if self.nics is not None:
             for (profile, count) in nics_dict.items():
                 if self.nics < count:
-                    self.UI.confirm_or_die(
+                    self.ui.confirm_or_die(
                         "Profile {0} currently has {1} NIC(s). "
                         "Delete {2} NIC(s) to reduce to {3} total?"
                         .format(profile, count,
@@ -502,11 +507,11 @@ class COTEditHardware(COTSubmodule):
                     new_desc = None
 
                 if network not in existing_networks:
-                    self.UI.confirm_or_die(
+                    self.ui.confirm_or_die(
                         "Network {0} is not currently defined. "
                         "Create it?".format(network))
                     if not new_desc:
-                        new_desc = self.UI.get_input(
+                        new_desc = self.ui.get_input(
                             "Please enter a description for this network",
                             network)
                 # create or update
@@ -520,7 +525,7 @@ class COTEditHardware(COTSubmodule):
             serial_dict = self.vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
                 if self.serial_ports < count:
-                    self.UI.confirm_or_die(
+                    self.ui.confirm_or_die(
                         "Profile {0} currently has {1} serial port(s). "
                         "Delete {2} port(s) to reduce to {3} total?"
                         .format(profile, count, (count - self.serial_ports),
@@ -531,7 +536,7 @@ class COTEditHardware(COTSubmodule):
             serial_dict = self.vm.get_serial_count(self.profiles)
             for (profile, count) in serial_dict.items():
                 if len(self.serial_connectivity) < count:
-                    self.UI.confirm_or_die(
+                    self.ui.confirm_or_die(
                         "There are {0} serial port(s) under profile {1}, but "
                         "you have specified connectivity information for only "
                         "{2}. "
@@ -544,7 +549,8 @@ class COTEditHardware(COTSubmodule):
     def run(self):
         """Do the actual work of this submodule.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        Raises:
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTEditHardware, self).run()
 
@@ -577,14 +583,14 @@ class COTEditHardware(COTSubmodule):
 
     def create_subparser(self):
         """Create 'edit-hardware' CLI subparser."""
-        wrapper = textwrap.TextWrapper(width=self.UI.terminal_width - 1,
+        wrapper = textwrap.TextWrapper(width=self.ui.terminal_width - 1,
                                        initial_indent='  ',
                                        subsequent_indent='  ')
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'edit-hardware',
             add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            usage=self.UI.fill_usage("edit-hardware", [
+            usage=self.ui.fill_usage("edit-hardware", [
                 "PACKAGE [-o OUTPUT] -v TYPE [TYPE2 ...]",
                 "PACKAGE [-o OUTPUT] \
 [-p PROFILE [PROFILE2 ...] [--delete-all-other-profiles]] [-c CPUS] \
@@ -602,7 +608,7 @@ class COTEditHardware(COTSubmodule):
                 " strings. The syntax for the wildcard option is '{' followed"
                 " by a number to start incrementing from, followed by '}'."
                 " See examples below."
-            ) + "\n\n" + self.UI.fill_examples([
+            ) + "\n\n" + self.ui.fill_examples([
                 ('Create a new profile named "1CPU-8GB" with 1 CPU and 8'
                  ' gigabytes of RAM',
                  'cot edit-hardware csr1000v.ova --output csr1000v_custom.ova'
@@ -715,25 +721,30 @@ class COTEditHardware(COTSubmodule):
 def expand_list_wildcard(name_list, length, quiet=False):
     """Expand a list containing a wildcard to the desired length.
 
+    Args:
+      name_list (list): List of names to assign, or None
+      length (list): Length to expand to
+      quiet (bool): Silence usual log messages generated by this function.
+
+    Returns:
+      list: Expanded list, or empty list if ``name_list`` is None or empty.
+
     Since various items (NIC names, network names, etc.) are often
     named or numbered sequentially, we provide this API to allow the
     user to specify a wildcard value to permit automatically
     expanding a list of input strings to the desired length.
     The syntax for the wildcard option is ``{`` followed by a number
     (indicating the starting index for the name) followed by ``}``.
-    Examples::
 
-      >>> expand_list_wildcard(None, 3)
-      []
-      >>> expand_list_wildcard(["eth{0}"], 3)
-      ['eth0', 'eth1', 'eth2']
-      >>> expand_list_wildcard(["mgmt0", "eth{10}"], 4)
-      ['mgmt0', 'eth10', 'eth11', 'eth12']
+    Examples:
+      ::
 
-    :param list name_list: List of names to assign, or None
-    :param list length: Length to expand to
-    :param bool quiet: Silence usual log messages generated by this function.
-    :return: Expanded list, or empty list if ``name_list`` is None or empty.
+        >>> expand_list_wildcard(None, 3)
+        []
+        >>> expand_list_wildcard(["eth{0}"], 3)
+        ['eth0', 'eth1', 'eth2']
+        >>> expand_list_wildcard(["mgmt0", "eth{10}"], 4)
+        ['mgmt0', 'eth10', 'eth11', 'eth12']
     """
     if not name_list:
         return []
@@ -761,22 +772,26 @@ def expand_list_wildcard(name_list, length, quiet=False):
 def guess_list_wildcard(known_values):
     """Inverse of :func:`expand_list_wildcard`. Guess the wildcard for a list.
 
-    Examples::
+    Args:
+      known_values (list): Values to guess from
 
-      >>> guess_list_wildcard(['foo', 'bar', 'baz'])
-      >>> guess_list_wildcard(['foo1', 'foo2', 'foo3'])
-      ['foo{1}']
-      >>> guess_list_wildcard(['foo', 'bar', 'baz3', 'baz4', 'baz5'])
-      ['foo', 'bar', 'baz{3}']
-      >>> guess_list_wildcard(['Eth0/1', 'Eth0/2', 'Eth0/3'])
-      ['Eth0/{1}']
-      >>> guess_list_wildcard(['Eth0/0', 'Eth1/0', 'Eth2/0'])
-      ['Eth{0}/0']
-      >>> guess_list_wildcard(['fake1', 'fake2', 'real4', 'real5'])
-      ['fake1', 'fake2', 'real{4}']
+    Returns:
+      list: Guessed wildcard list, or None if unable to guess
 
-    :param list known_values: Values to guess from
-    :return: Guessed wildcard list, or None if unable to guess
+    Examples:
+      ::
+
+        >>> guess_list_wildcard(['foo', 'bar', 'baz'])
+        >>> guess_list_wildcard(['foo1', 'foo2', 'foo3'])
+        ['foo{1}']
+        >>> guess_list_wildcard(['foo', 'bar', 'baz3', 'baz4', 'baz5'])
+        ['foo', 'bar', 'baz{3}']
+        >>> guess_list_wildcard(['Eth0/1', 'Eth0/2', 'Eth0/3'])
+        ['Eth0/{1}']
+        >>> guess_list_wildcard(['Eth0/0', 'Eth1/0', 'Eth2/0'])
+        ['Eth{0}/0']
+        >>> guess_list_wildcard(['fake1', 'fake2', 'real4', 'real5'])
+        ['fake1', 'fake2', 'real{4}']
     """
     logger.debug("Attempting to infer a pattern from %s", known_values)
     # Guess sequences ending with simple N, N+1, N+2

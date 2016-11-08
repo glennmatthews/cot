@@ -25,7 +25,7 @@ from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.vmdktool import VMDKTool
 from COT.helpers import helpers
 
-# pylint: disable=protected-access
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 @mock.patch('COT.helpers.Helper.download_and_expand_tgz',

@@ -13,6 +13,7 @@ We would like to thank:
   * Jeff Haag
   * Jeff Loughridge
   * Jonathan Muslow
+  * Scott O'Donnell
   * Rick Ogg
   * Keerthi Rawat
   * David Rosenfeld

@@ -33,7 +33,8 @@ class Yum(PackageManager):
     def install_package(self, package):
         """Install the requested package if needed.
 
-        :param str package: Name of the package to install.
+        Args:
+          package (str): Name of the package to install.
         """
         self.call(['--quiet', 'install', package],
                   capture_output=False, retry_with_sudo=True)

@@ -49,9 +49,9 @@ if sys.version_info < (3, 3):
 if sys.version_info < (2, 7) or (sys.version_info >= (3, 0) and
                                  sys.version_info < (3, 4)):
     # Sphinx 1.5 and later requires 2.7 or 3.4
-    setup_requires = install_requires + ['sphinx>=1.3,<1.5']
+    setup_requires = install_requires + ['sphinx>=1.3.1,<1.5']
 else:
-    setup_requires = install_requires + ['sphinx>=1.3']
+    setup_requires = install_requires + ['sphinx>=1.3.1']
 
 setup_requires.append('sphinx_rtd_theme')
 

@@ -63,7 +63,13 @@ from distutils.util import strtobool
 
 
 def to_string(obj):
-    """Get string representation of an object, special-case for XML Element."""
+    """Get string representation of an object, special-case for XML Element.
+
+    Args:
+      obj (object): Object to represent as a string.
+    Returns:
+      str: string representation
+    """
     if ET.iselement(obj):
         return ET.tostring(obj)
     else:
@@ -71,9 +77,21 @@ def to_string(obj):
 
 
 def alphanum_split(key):
-    """Split the key into a list of [text, int, text, int, ...]."""
+    """Split the key into a list of [text, int, text, int, ...].
+
+    Args:
+      key (str): String to split.
+    Returns:
+      list: List of tokens
+    """
     def text_to_int(text):
-        """Convert number strings to ints, leave other strings as text."""
+        """Convert number strings to ints, leave other strings as text.
+
+        Args:
+          text (object): Input to convert (str or int)
+        Returns:
+          object: Converted value (str or int)
+        """
         return int(text) if text.isdigit() else text
 
     return [text_to_int(c) for c in re.split('([0-9]+)', key)]
@@ -86,8 +104,10 @@ def natural_sort(l):
 
     See also http://nedbatchelder.com/blog/200712/human_sorting.html
 
-    :param list l: List to sort
-    :return: Sorted list
+    Args:
+      l (list): List to sort
+    Returns:
+      list: Sorted list
     """
     # Sort based on alphanum_split return value
     return sorted(l, key=alphanum_split)
@@ -96,11 +116,13 @@ def natural_sort(l):
 def match_or_die(first_label, first, second_label, second):
     """Make sure "first" and "second" are equal or raise an error.
 
-    :param str first_label: Descriptive label for :attr:`first`
-    :param first: First object to compare
-    :param str second_label: Descriptive label for :attr:`second`
-    :param second: Second object to compare
-    :raise ValueMismatchError: if ``first != second``
+    Args:
+      first_label (str): Descriptive label for :attr:`first`
+      first (object): First object to compare
+      second_label (str): Descriptive label for :attr:`second`
+      second (object): Second object to compare
+    Raises:
+      ValueMismatchError: if ``first != second``
     """
     if first != second:
         raise ValueMismatchError("{0} {1} does not match {2} {3}"
@@ -113,13 +135,16 @@ def match_or_die(first_label, first, second_label, second):
 def canonicalize_helper(label, user_input, mappings, re_flags=0):
     """Try to find a mapping of input to output.
 
-    :param str label: Label to use in any error raised
-    :param str user_input: User-provided string
-    :param list mappings: List of ``(expr, canonical)`` pairs for mapping.
-    :param re_flags: ``re.IGNORECASE``, etc. if desired
-    :returns: The canonical string
-    :raise ValueUnsupportedError: If no ``expr`` in ``mappings`` matches
-      ``input``.
+    Args:
+      label (str): Label to use in any error raised
+      user_input (str): User-provided string
+      mappings (list): List of ``(expr, canonical)`` pairs for mapping.
+      re_flags (int): ``re.IGNORECASE``, etc. if desired
+    Returns:
+      str: The canonical string
+    Raises:
+      ValueUnsupportedError: If no ``expr`` in ``mappings`` matches the given
+          ``user_input``.
     """
     if user_input is None or user_input == "":
         return None
@@ -132,13 +157,16 @@ def canonicalize_helper(label, user_input, mappings, re_flags=0):
 def canonicalize_ide_subtype(subtype):
     """Try to convert the given IDE controller string to a canonical form.
 
-    :param str subtype: User-provided string
-    :returns: The canonical string, one of:
+    Args:
+      subtype (str): User-provided string
+    Returns:
+      str: The canonical string, one of:
 
       - ``PIIX4``
       - ``virtio``
 
-    :raise ValueUnsupportedError: If the canonical string cannot be determined
+    Raises:
+      ValueUnsupportedError: If the canonical string cannot be determined
     """
     return canonicalize_helper("IDE controller subtype", subtype,
                                [
@@ -162,10 +190,12 @@ NIC_TYPES = [m[1] for m in _NIC_MAPPINGS]
 def canonicalize_nic_subtype(subtype):
     """Try to convert the given NIC subtype string to a canonical form.
 
-    :param str subtype: User-provided string
-    :returns: The canonical string, one of :data:`NIC_TYPES`
-
-    :raise ValueUnsupportedError: If the canonical string cannot be determined
+    Args:
+      subtype (str): User-provided string
+    Returns:
+      str: The canonical string, one of :data:`NIC_TYPES`
+    Raises:
+      ValueUnsupportedError: If the canonical string cannot be determined
 
     .. seealso::
        :meth:`COT.platforms.GenericPlatform.validate_nic_type`
@@ -177,8 +207,10 @@ def canonicalize_nic_subtype(subtype):
 def canonicalize_scsi_subtype(subtype):
     """Try to convert the given SCSI controller string to a canonical form.
 
-    :param str subtype: User-provided string
-    :returns: The canonical string, one of:
+    Args:
+      subtype (str): User-provided string
+    Returns:
+      str: The canonical string, one of:
 
       - ``buslogic``
       - ``lsilogic``
@@ -186,7 +218,8 @@ def canonicalize_scsi_subtype(subtype):
       - ``virtio``
       - ``VirtualSCSI``
 
-    :raise ValueUnsupportedError: If the canonical string cannot be determined
+    Raises:
+      ValueUnsupportedError: If the canonical string cannot be determined
     """
     return canonicalize_helper("SCSI controller subtype", subtype,
                                [
@@ -202,10 +235,13 @@ def canonicalize_scsi_subtype(subtype):
 def check_for_conflict(label, li):
     """Make sure the list does not contain references to more than one object.
 
-    :param str label: Descriptive label to be used if an error is raised
-    :param list li: List of object references (which may include ``None``)
-    :raises ValueMismatchError: if references differ
-    :returns: the object or ``None``
+    Args:
+      label (str): Descriptive label to be used if an error is raised
+      li (list): List of object references (which may include ``None``)
+    Raises:
+      ValueMismatchError: if references differ
+    Returns:
+      object: the object or ``None``
     """
     obj = None
     for i, obj1 in enumerate(li):
@@ -225,9 +261,11 @@ def check_for_conflict(label, li):
 def file_checksum(path_or_obj, checksum_type):
     """Get the checksum of the given file.
 
-    :param str path_or_obj: File path to checksum OR an opened file object
-    :param str checksum_type: Supported values are 'md5' and 'sha1'.
-    :return: String containing hexadecimal file checksum
+    Args:
+      path_or_obj (str): File path to checksum OR an opened file object
+      checksum_type (str): Supported values are 'md5' and 'sha1'.
+    Returns:
+      str: Hexadecimal file checksum
     """
     # pylint: disable=redefined-variable-type
     if checksum_type == 'md5':
@@ -271,9 +309,12 @@ def mac_address(string):
     * xx-xx-xx-xx-xx-xx
     * xxxx.xxxx.xxxx
 
-    :param string: String to validate
-    :raise InvalidInputError: if string is not a valid MAC address
-    :return: Validated string(with leading/trailing whitespace stripped)
+    Args:
+      string (str): String to validate
+    Raises:
+      InvalidInputError: if string is not a valid MAC address
+    Returns:
+      str: Validated string(with leading/trailing whitespace stripped)
     """
     string = string.strip()
     if not (re.match(r"([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$", string) or
@@ -290,9 +331,12 @@ def device_address(string):
 
     Validate string is an appropriately formed device address such as '1:0'.
 
-    :param str string: String to validate
-    :raise InvalidInputError: if string is not a well-formatted device address
-    :return: Validated string (with leading/trailing whitespace stripped)
+    Args:
+      string (str): String to validate
+    Raises:
+      InvalidInputError: if string is not a well-formatted device address
+    Returns:
+      str: Validated string (with leading/trailing whitespace stripped)
     """
     string = string.strip()
     if not re.match(r"\d+:\d+$", string):
@@ -304,9 +348,12 @@ def device_address(string):
 def no_whitespace(string):
     """Parser helper function for arguments not allowed to contain whitespace.
 
-    :param str string: String to validate
-    :raise InvalidInputError: if string contains internal whitespace
-    :return: Validated string (with leading/trailing whitespace stripped)
+    Args:
+      string (str): String to validate
+    Raises:
+      InvalidInputError: if string contains internal whitespace
+    Returns:
+      str: Validated string (with leading/trailing whitespace stripped)
     """
     string = string.strip()
     if len(string.split()) > 1:
@@ -320,14 +367,19 @@ def validate_int(string,
                  label="input"):
     """Parser helper function for validating integer arguments in a range.
 
-    :param str string: String to convert to an integer and validate
-    :param int minimum: Minimum valid value (optional)
-    :param int maximum: Maximum valid value (optional)
-    :param str label: Label to include in any errors raised
-    :return: Validated integer value
-    :raise ValueUnsupportedError: if :attr:`string` can't be converted to int
-    :raise ValueTooLowError: if value is less than :attr:`minimum`
-    :raise ValueTooHighError: if value is more than :attr:`maximum`
+    Args:
+      string (str): String to convert to an integer and validate
+      minimum (int): Minimum valid value (optional)
+      maximum (int): Maximum valid value (optional)
+      label (str): Label to include in any errors raised
+
+    Returns:
+      int: Validated integer value
+
+    Raises:
+      ValueUnsupportedError: if :attr:`string` can't be converted to int
+      ValueTooLowError: if value is less than :attr:`minimum`
+      ValueTooHighError: if value is more than :attr:`maximum`
     """
     try:
         i = int(string)
@@ -344,6 +396,14 @@ def non_negative_int(string):
     """Parser helper function for integer arguments that must be 0 or more.
 
     Alias for :func:`validate_int` setting :attr:`minimum` to 0.
+
+    Args:
+      string (str): String to validate.
+    Returns:
+      int: Validated integer value
+    Raises:
+      ValueUnsupportedError: if :attr:`string` can't be converted to int
+      ValueTooLowError: if value is less than 0
     """
     return validate_int(string, minimum=0)
 
@@ -352,12 +412,30 @@ def positive_int(string):
     """Parser helper function for integer arguments that must be 1 or more.
 
     Alias for :func:`validate_int` setting :attr:`minimum` to 1.
+
+    Args:
+      string (str): String to validate.
+    Returns:
+      int: Validated integer value
+    Raises:
+      ValueUnsupportedError: if :attr:`string` can't be converted to int
+      ValueTooLowError: if value is less than 1
     """
     return validate_int(string, minimum=1)
 
 
 def truth_value(value):
-    """Parser helper function for truth values like '0', 'y', or 'false'."""
+    """Parser helper function for truth values like '0', 'y', or 'false'.
+
+    Wrapper for :func:`distutils.util.strtobool`
+
+    Args:
+      value (str): String to parse/validate
+    Returns:
+      bool: True or False
+    Raises:
+      ValueUnsupportedError: if the value can't be parsed to a boolean.
+    """
     if isinstance(value, bool):
         return value
     try:
@@ -387,16 +465,17 @@ class InvalidInputError(ValueError):
 class ValueUnsupportedError(InvalidInputError):
     """An unsupported value was provided.
 
-    :ivar value_type: descriptive string
-    :ivar actual_value: invalid value that was provided
-    :ivar expected_value: expected (valid) value or values (item or list)
+    Args:
+      value_type (str): descriptive string
+      actual_value (str): invalid value that was provided
+      expected_value (object): expected/valid value(s) (item or list)
     """
 
-    def __init__(self, value_type, actual, expected):
+    def __init__(self, value_type, actual_value, expected_value):
         """Create an instance of this class."""
         self.value_type = value_type
-        self.actual_value = actual
-        self.expected_value = expected
+        self.actual_value = actual_value
+        self.expected_value = expected_value
         super(ValueUnsupportedError, self).__init__(str(self))
 
     def __str__(self):
@@ -409,9 +488,10 @@ class ValueUnsupportedError(InvalidInputError):
 class ValueTooLowError(ValueUnsupportedError):
     """A numerical input was less than the lowest supported value.
 
-    :ivar value_type: descriptive string
-    :ivar actual_value: invalid value that was provided
-    :ivar expected_value: minimum supported value
+    Args:
+      value_type (str): descriptive string
+      actual_value (int): invalid value that was provided
+      expected_value (int): minimum supported value
     """
 
     def __str__(self):
@@ -424,9 +504,10 @@ class ValueTooLowError(ValueUnsupportedError):
 class ValueTooHighError(ValueUnsupportedError):
     """A numerical input was higher than the highest supported value.
 
-    :ivar value_type: descriptive string
-    :ivar actual_value: invalid value that was provided
-    :ivar expected_value: maximum supported value
+    Args:
+      value_type (str): descriptive string
+      actual_value (int): invalid value that was provided
+      expected_value (int): maximum supported value
     """
 
     def __str__(self):

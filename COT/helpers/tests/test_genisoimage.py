@@ -26,7 +26,7 @@ from COT.helpers.mkisofs import GenISOImage
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=protected-access
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 class TestGenISOImage(HelperUT):

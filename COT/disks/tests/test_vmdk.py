@@ -28,6 +28,8 @@ from COT.helpers import helpers, HelperError
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 class TestVMDK(COT_UT):
     """Test cases for VMDK class."""

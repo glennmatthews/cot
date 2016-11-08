@@ -67,7 +67,8 @@ class TestCOTEditProduct(COT_UT):
         self.instance.product_class = "com.cisco.csr1000v"
         self.instance.run()
         self.instance.finished()
-        self.assertLogged(**self.invalid_hardware_warning(None, '0', 'NICs'))
+        self.assertLogged(
+            **self.invalid_hardware_warning(None, '0', 'NIC count'))
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>

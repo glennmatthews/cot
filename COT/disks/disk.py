@@ -31,7 +31,15 @@ class DiskRepresentation(object):
                  disk_subformat=None,
                  capacity=None,
                  files=None):
-        """Create a representation of an existing disk or create a new disk."""
+        """Create a representation of an existing disk or create a new disk.
+
+        Args:
+          path (str): Path to existing file or path to create new file at.
+          disk_subformat (str): Subformat option(s) of the disk to create
+              (e.g., 'rockridge' for ISO, 'streamOptimized' for VMDK), if any.
+          capacity (int): Capacity of disk to create
+          files (int): Files to place in the filesystem of this disk.
+        """
         if not path:
             raise ValueError("Path must be set to a valid value, but got {0}"
                              .format(path))
@@ -79,16 +87,29 @@ class DiskRepresentation(object):
     def from_other_image(cls, input_image, output_dir, output_subformat=None):
         """Convert the other disk image into an image of this type.
 
-        :param DiskRepresentation input_image: Existing image representation.
-        :param str output_dir: Output directory to store the new image in.
-        :param str output_subformat: Any relevant subformat information.
-        :rtype: instance of DiskRepresentation or subclass
+        Args:
+          input_image (DiskRepresentation): Existing image representation.
+          output_dir (str): Output directory to store the new image in.
+          output_subformat (str): Any relevant subformat information.
+
+        Raises:
+          NotImplementedError: Subclasses may implement this.
         """
         raise NotImplementedError("Not a valid target for conversion")
 
     @classmethod
     def file_is_this_type(cls, path):
-        """Check if the given file is image type represented by this class."""
+        """Check if the given file is image type represented by this class.
+
+        Args:
+          path (str): Path to file to check.
+
+        Returns:
+          bool: True (file matches this type) or False (file does not match)
+
+        Raises:
+          HelperError: if no file exists at ``path``.
+        """
         if not os.path.exists(path):
             raise HelperError(2, "No such file or directory: '{0}'"
                               .format(path))

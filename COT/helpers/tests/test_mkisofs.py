@@ -25,9 +25,9 @@ import mock
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.mkisofs import MkISOFS
 
-logger = logging.getLogger(__name__)
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
-# pylint: disable=protected-access
+logger = logging.getLogger(__name__)
 
 
 class TestMkISOFS(HelperUT):

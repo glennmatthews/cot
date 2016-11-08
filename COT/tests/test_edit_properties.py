@@ -498,7 +498,10 @@ Enter new value for this property
 
         def custom_input(prompt,
                          default_value):  # pylint: disable=unused-argument
-            """Mock for get_input."""
+            """Mock for :meth:`COT.ui_shared.UI.get_input`.
+
+            For the parameters, see get_input.
+            """
             if self.counter > 0:
                 log = expected[self.counter-1][msgs_idx]
                 if log is not None:
@@ -521,16 +524,16 @@ Enter new value for this property
             self.counter += 1
             return canned_input
 
-        _input = self.instance.UI.get_input
+        _input = self.instance.ui.get_input
         try:
-            self.instance.UI.get_input = custom_input
+            self.instance.ui.get_input = custom_input
             self.instance.package = self.input_ovf
             self.instance.run()
             log = expected[self.counter - 1][msgs_idx]
             if log is not None:
                 self.assertLogged(**log)  # pylint: disable=not-a-mapping
         finally:
-            self.instance.UI.get_input = _input
+            self.instance.ui.get_input = _input
         self.instance.finished()
         self.check_diff("""
        <ovf:Category>1. Bootstrap Properties</ovf:Category>

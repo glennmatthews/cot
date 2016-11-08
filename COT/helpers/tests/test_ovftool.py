@@ -21,7 +21,7 @@ import mock
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.ovftool import OVFTool
 
-# pylint: disable=protected-access
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 class TestOVFTool(HelperUT):

@@ -35,17 +35,41 @@ class IOSv(GenericPlatform):
 
     @classmethod
     def guess_nic_name(cls, nic_number):
-        """GigabitEthernet0/0, GigabitEthernet0/1, etc."""
+        """GigabitEthernet0/0, GigabitEthernet0/1, etc.
+
+        Args:
+          nic_number (int): Nth NIC to name.
+        Returns:
+          * "GigabitEthernet0/0"
+          * "GigabitEthernet0/1"
+          * etc.
+        """
         return "GigabitEthernet0/" + str(nic_number - 1)
 
     @classmethod
     def validate_cpu_count(cls, cpus):
-        """IOSv only supports a single CPU."""
+        """IOSv only supports a single CPU.
+
+        Args:
+          cpus (int): Number of CPUs.
+
+        Raises:
+          ValueTooLowError: if ``cpus`` is less than 1
+          ValueTooHighError: if ``cpus`` is more than 1
+        """
         validate_int(cpus, 1, 1, "CPUs")
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
-        """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB."""
+        """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB.
+
+        Args:
+          mebibytes (int): RAM, in MiB.
+
+        Raises:
+          ValueTooLowError: if ``mebibytes`` is less than 192
+          ValueTooHighError: if ``mebibytes`` is more than 3072
+        """
         if mebibytes < 192:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "192 MiB")
         elif mebibytes < 384:
@@ -57,10 +81,26 @@ class IOSv(GenericPlatform):
 
     @classmethod
     def validate_nic_count(cls, count):
-        """IOSv supports up to 16 NICs."""
+        """IOSv supports up to 16 NICs.
+
+        Args:
+          count (int): Number of NICs.
+
+        Raises:
+          ValueTooLowError: if ``count`` is less than 0
+          ValueTooHighError: if ``count`` is more than 16
+        """
         validate_int(count, 0, 16, "NICs")
 
     @classmethod
     def validate_serial_count(cls, count):
-        """IOSv requires 1-2 serial ports."""
+        """IOSv requires 1-2 serial ports.
+
+        Args:
+          count (int): Number of serial ports.
+
+        Raises:
+          ValueTooLowError: if ``count`` is less than 1
+          ValueTooHighError: if ``count`` is more than 2
+        """
         validate_int(count, 1, 2, "serial ports")

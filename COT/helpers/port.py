@@ -38,7 +38,8 @@ class Port(PackageManager):
     def install_package(self, package):
         """Install the requested package if needed.
 
-        :param str package: Name of the package to install.
+        Args:
+          package (str): Name of the package to install.
         """
         # Check for updates
         if not Port._updated:

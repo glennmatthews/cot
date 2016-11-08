@@ -29,7 +29,7 @@ from COT.helpers import helpers
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=protected-access
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 @mock.patch('COT.helpers.fatdisk.FatDisk.download_and_expand_tgz',

@@ -28,6 +28,8 @@ from COT.helpers import helpers
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 class TestQCOW2(COT_UT):
     """Test cases for QCOW2 class."""
