@@ -44,7 +44,17 @@ class IOSXRv(GenericPlatform):
 
     @classmethod
     def guess_nic_name(cls, nic_number):
-        """MgmtEth0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc."""
+        """MgmtEth0/0/CPU0/0, GigabitEthernet0/0/0/0, Gig0/0/0/1, etc.
+
+        Args:
+          nic_number (int): Nth NIC to name.
+
+        Returns:
+          * "MgmtEth0/0/CPU0/0"
+          * "GigabitEthernet0/0/0/0"
+          * "GigabitEthernet0/0/0/1"
+          * etc.
+        """
         if nic_number == 1:
             return "MgmtEth0/0/CPU0/0"
         else:
@@ -52,12 +62,28 @@ class IOSXRv(GenericPlatform):
 
     @classmethod
     def validate_cpu_count(cls, cpus):
-        """IOS XRv supports 1-8 CPUs."""
+        """IOS XRv supports 1-8 CPUs.
+
+        Args:
+          cpus (int): Number of CPUs
+
+        Raises:
+          ValueTooLowError: if ``cpus`` is less than 1
+          ValueTooHighError: if ``cpus`` is more than 8
+        """
         validate_int(cpus, 1, 8, "CPUs")
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
-        """Minimum 3 GiB, max 8 GiB of RAM."""
+        """Minimum 3 GiB, max 8 GiB of RAM.
+
+        Args:
+          mebibytes (int): RAM, in MiB.
+
+        Raises:
+          ValueTooLowError: if ``mebibytes`` is less than 3072
+          ValueTooHighError: if ``mebibytes`` is more than 8192
+        """
         if mebibytes < 3072:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "3 GiB")
         elif mebibytes > 8192:
@@ -65,12 +91,27 @@ class IOSXRv(GenericPlatform):
 
     @classmethod
     def validate_nic_count(cls, count):
-        """IOS XRv requires at least one NIC."""
+        """IOS XRv requires at least one NIC.
+
+        Args:
+          count (int): Number of NICs.
+
+        Raises:
+          ValueTooLowError: if ``count`` is less than 1
+        """
         validate_int(count, 1, None, "NIC count")
 
     @classmethod
     def validate_serial_count(cls, count):
-        """IOS XRv supports 1-4 serial ports."""
+        """IOS XRv supports 1-4 serial ports.
+
+        Args:
+          count (int): Number of serial ports.
+
+        Raises:
+          ValueTooLowError: if ``count`` is less than 1
+          ValueTooHighError: if ``count`` is more than 4
+        """
         validate_int(count, 1, 4, "serial ports")
 
 
@@ -83,8 +124,11 @@ class IOSXRvRP(IOSXRv):
     def guess_nic_name(cls, nic_number):
         """Fabric and management only.
 
-        * fabric
-        * MgmtEth0/{SLOT}/CPU0/0
+        Args:
+          nic_number (int): Nth NIC to name.
+
+        Returns:
+          str: "fabric" or "MgmtEth0/{SLOT}/CPU0/0" only
         """
         if nic_number == 1:
             return "fabric"
@@ -93,7 +137,15 @@ class IOSXRvRP(IOSXRv):
 
     @classmethod
     def validate_nic_count(cls, count):
-        """Fabric plus an optional management NIC."""
+        """Fabric plus an optional management NIC.
+
+        Args:
+          count (int): Number of NICs.
+
+        Raises:
+          ValueTooLowError: if ``count`` is less than 1
+          ValueTooHighError: if ``count`` is more than 2
+        """
         validate_int(count, 1, 2, "NIC count")
 
 
@@ -110,10 +162,15 @@ class IOSXRvLC(IOSXRv):
     def guess_nic_name(cls, nic_number):
         """Fabric interface plus slot-appropriate GigabitEthernet interfaces.
 
-        * fabric
-        * GigabitEthernet0/{SLOT}/0/0
-        * GigabitEthernet0/{SLOT}/0/1
-        * etc.
+        Args:
+            nic_number (int): Nth NIC to name.
+
+        Returns:
+            str:
+                * "fabric"
+                * "GigabitEthernet0/{SLOT}/0/0"
+                * "GigabitEthernet0/{SLOT}/0/1"
+                * etc.
         """
         if nic_number == 1:
             return "fabric"
@@ -122,5 +179,13 @@ class IOSXRvLC(IOSXRv):
 
     @classmethod
     def validate_serial_count(cls, count):
-        """No serial ports are needed but up to 4 can be used for debugging."""
+        """No serial ports are needed but up to 4 can be used for debugging.
+
+        Args:
+            count (int): Number of serial ports.
+
+        Raises:
+            ValueTooLowError: if ``count`` is less than 0
+            ValueTooHighError: if ``count`` is more than 4
+        """
         validate_int(count, 0, 4, "serial ports")

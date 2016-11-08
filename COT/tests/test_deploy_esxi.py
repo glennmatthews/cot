@@ -36,6 +36,8 @@ from COT.data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-param-doc,missing-type-doc
+
 
 @mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
 @mock.patch('subprocess.check_call')

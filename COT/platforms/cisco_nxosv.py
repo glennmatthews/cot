@@ -35,14 +35,18 @@ class NXOSv(GenericPlatform):
     def guess_nic_name(cls, nic_number):
         """NX-OSv names its NICs a bit interestingly...
 
-        * mgmt0
-        * Ethernet2/1
-        * Ethernet2/2
-        * ...
-        * Ethernet2/48
-        * Ethernet3/1
-        * Ethernet3/2
-        * ...
+        Args:
+          nic_number (int): Nth NIC to name.
+
+        Returns:
+          * mgmt0
+          * Ethernet2/1
+          * Ethernet2/2
+          * ...
+          * Ethernet2/48
+          * Ethernet3/1
+          * Ethernet3/2
+          * ...
         """
         if nic_number == 1:
             return "mgmt0"
@@ -52,12 +56,28 @@ class NXOSv(GenericPlatform):
 
     @classmethod
     def validate_cpu_count(cls, cpus):
-        """NX-OSv requires 1-8 CPUs."""
+        """NX-OSv requires 1-8 CPUs.
+
+        Args:
+          cpus (int): Number of CPUs
+
+        Raises:
+          ValueTooLowError: if ``cpus`` is less than 1
+          ValueTooHighError: if ``cpus`` is more than 8
+        """
         validate_int(cpus, 1, 8, "CPUs")
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
-        """NX-OSv requires 2-8 GiB of RAM."""
+        """NX-OSv requires 2-8 GiB of RAM.
+
+        Args:
+          mebibytes (int): RAM, in MiB.
+
+        Raises:
+          ValueTooLowError: if ``mebibytes`` is less than 2048
+            ValueTooHighError: if ``mebibytes`` is more than 8192
+        """
         if mebibytes < 2048:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "2 GiB")
         elif mebibytes > 8192:
@@ -65,5 +85,13 @@ class NXOSv(GenericPlatform):
 
     @classmethod
     def validate_serial_count(cls, count):
-        """NX-OSv requires 1-2 serial ports."""
+        """NX-OSv requires 1-2 serial ports.
+
+        Args:
+          count (int): Number of serial ports.
+
+        Raises:
+          ValueTooLowError: if ``count`` is less than 1
+          ValueTooHighError: if ``count`` is more than 2
+        """
         validate_int(count, 1, 2, "serial ports")

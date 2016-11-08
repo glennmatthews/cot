@@ -55,7 +55,14 @@ class TestCSR1000V(unittest.TestCase):
         self.assertRaises(ValueUnsupportedError,
                           self.cls.validate_cpu_count, 3)
         self.cls.validate_cpu_count(4)
-        self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 5)
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_cpu_count, 5)
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_cpu_count, 6)
+        self.assertRaises(ValueUnsupportedError,
+                          self.cls.validate_cpu_count, 7)
+        self.cls.validate_cpu_count(8)
+        self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 9)
 
     def test_memory_amount(self):
         """Test RAM allocation limits."""

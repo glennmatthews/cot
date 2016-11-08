@@ -28,6 +28,8 @@ from COT.helpers import HelperError
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 class TestRAW(COT_UT):
     """Test cases for RAW disk image representation."""

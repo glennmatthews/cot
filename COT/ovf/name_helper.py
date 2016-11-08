@@ -38,9 +38,11 @@ from COT.data_validation import ValueUnsupportedError
 def name_helper(version):
     """Generate an instance of the correct OVFNameHelper variant class.
 
-    :param float version: OVF specification version to use, such as 0.9,
-      1.0, or 2.0
-    :return: Instance of OVFNameHelper[012] as appropriate.
+    Args:
+      version (float): OVF specification version to use, such as 0.9, 1.0,
+          or 2.0
+    Returns:
+      Instance of OVFNameHelper[012] as appropriate.
     """
     if version < 1.0:
         return OVFNameHelper0()
@@ -54,6 +56,12 @@ class _Tag(object):
     """Helper class representing a named XML namespace and associated tag."""
 
     def __init__(self, namespace_name, tag):
+        """Store namespace name and tag.
+
+        Args:
+          namespace_name (str): XML namespace name
+          tag (str): XML tag
+        """
         self.namespace_name = namespace_name.upper()
         self.tag = tag
 
@@ -82,6 +90,7 @@ class OVFNameHelper1(object):
         # Older OVF versions have ethernet and storage items
         # in the same RASD namespace as other hardware, but 2.x has separate
     )
+    """Shorthand for XML namespace URIs usually seen in a version 1.x OVF."""
 
     # Non-standard namespaces (such as VMWare's
     # 'http://www.vmware.com/schema/ovf') should not be added to the NSM
@@ -109,6 +118,12 @@ class OVFNameHelper1(object):
         'parallel': '22',
         'usb':      '23',
     }
+    """Mapping of human-readable strings to ResourceType values.
+
+    See
+    http://schemas.dmtf.org/wbem/cim-html/2/CIM_ResourceAllocationSettingData.html
+    for more details.
+    """     # noqa: E501
 
     # Cached strings, built on the fly
     _cache = {}
@@ -251,7 +266,15 @@ class OVFNameHelper1(object):
     )
 
     def __getattr__(self, name):
-        """Transparently pass attribute lookups to _raw and _cache."""
+        """Transparently pass attribute lookups to _raw and _cache.
+
+        Args:
+          name (str): Attribute name to look up.
+        Returns:
+          Value looked up from :attr:`_raw` and/or :attr:`_cache`.
+        Raises:
+          AttributeError: if the given ``name`` is not found.
+        """
         if name in self._item_children:
             return self._item_children[name]
         if name not in self._cache:
@@ -306,7 +329,13 @@ class OVFNameHelper1(object):
         self.VIRTUAL_HW_SECTION_ATTRIB = {}
 
     def namespace_for_item_tag(self, tag):
-        """Get the XML namespace for the given item tag."""
+        """Get the XML namespace for the given item tag.
+
+        Args:
+          tag (str): Un-namespaced XML tag.
+        Returns:
+          str: XML namespace string, or None.
+        """
         if tag == self.ITEM:
             return self.RASD
         elif tag == self.STORAGE_ITEM:
@@ -316,7 +345,13 @@ class OVFNameHelper1(object):
         return None
 
     def namespace_for_resource_type(self, resource_type):
-        """Get the XML namespace for the given ResourceType."""
+        """Get the XML namespace for the given ResourceType.
+
+        Args:
+          resource_type (str): ResourceType value string.
+        Returns:
+          str: XML namespace string, or None.
+        """
         if resource_type == self.RES_MAP['ethernet']:
             return self.EPASD
         elif (resource_type == self.RES_MAP['harddisk'] or
@@ -326,7 +361,15 @@ class OVFNameHelper1(object):
             return self.RASD
 
     def item_tag_for_namespace(self, ns):
-        """Get the item tag for the given XML namespace."""
+        """Get the Item tag for the given XML namespace.
+
+        Args:
+          ns (str): XML namespace
+        Returns:
+          str: 'Item', 'StorageItem', or 'EthernetPortItem' as appropriate.
+        Raises:
+          ValueUnsupportedError: if the namespace is unrecognized
+        """
         if ns == self.RASD:
             return self.ITEM
         elif ns == self.SASD:
@@ -350,6 +393,8 @@ class OVFNameHelper0(OVFNameHelper1):
         OVFNameHelper1.NSM,
         ovf="http://www.vmware.com/schema/ovf/1/envelope",
     )
+    """Shorthand for XML namespace URIs usually seen in a version 0.x OVF."""
+
     _cache = dict(OVFNameHelper1._cache)
     _raw = dict(
         OVFNameHelper1._raw,
@@ -441,6 +486,8 @@ class OVFNameHelper2(OVFNameHelper1):
         sasd=(CIM_URI +
               "/cim-schema/2/CIM_StorageAllocationSettingData.xsd"),
     )
+    """Shorthand for XML namespace URIs usually seen in a version 2.x OVF."""
+
     _cache = dict(OVFNameHelper1._cache)
     _raw = dict(
         OVFNameHelper1._raw,

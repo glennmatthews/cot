@@ -11,12 +11,15 @@ This project adheres to `Semantic Versioning`_.
 - TypeError in ``find_item`` method (`#54`_).
 - ``cot inject-config`` correctly handles OVAs with multiple empty CD-ROM
   drives to choose amongst (`#54`_ also).
+- Cisco CSR1000v platform now supports 8 CPUs as a valid option.
 
 **Added**
 
 - ``cot inject-config --extra-files`` parameter (`#53`_).
 - Helper class for ``isoinfo`` (a companion to ``mkisofs``).
 - Added glossary of terms to COT documentation.
+- Inline documentation (docstrings) are now validated using the `Pylint`_
+  `docparams`_ extension.
 
 **Changed**
 
@@ -27,6 +30,10 @@ This project adheres to `Semantic Versioning`_.
   (now just for handling helper programs such as ``apt-get`` and ``mkisofs``)
   and :mod:`COT.disks` (which uses the helpers to handle ISO/VMDK/QCOW2/RAW
   image files).
+- Inline documentation (docstrings) have been converted to "`Google style`_"
+  for better readability in the code. Sphinx rendering of documentation
+  (for readthedocs.org, etc) now makes use of the `napoleon`_ extension to
+  handle this style.
 
 **Removed**
 
@@ -579,9 +586,12 @@ Initial public release.
 .. _pydocstyle: https://pypi.python.org/pypi/pydocstyle
 .. _`flake8-docstrings`: https://pypi.python.org/pypi/flake8-docstrings
 .. _Pylint: https://www.pylint.org/
+.. _docparams: https://docs.pylint.org/en/1.6.0/extensions.html#parameter-documentation-checker
 .. _`pep8-naming`: https://pypi.python.org/pypi/pep8-naming
 .. _mccabe: https://pypi.python.org/pypi/mccabe
 .. _Codecov: https://codecov.io
+.. _`Google style`: https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments
+.. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
 .. _1.7.4: https://github.com/glennmatthews/cot/compare/v1.7.3...v1.7.4

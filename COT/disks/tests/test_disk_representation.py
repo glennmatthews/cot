@@ -26,6 +26,8 @@ from COT.helpers import HelperError
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=missing-type-doc,missing-param-doc
+
 
 class TestDisk(COT_UT):
     """Test Disk class."""

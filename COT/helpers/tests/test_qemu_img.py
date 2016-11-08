@@ -22,7 +22,7 @@ import mock
 from COT.helpers.tests.test_helper import HelperUT
 from COT.helpers.qemu_img import QEMUImg
 
-# pylint: disable=protected-access
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 class TestQEMUImg(HelperUT):

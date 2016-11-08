@@ -14,7 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Test runner for COT doctest tests."""
+"""Test runner for COT.ovf doctest tests."""
 
 from doctest import DocTestSuite
 from unittest import TestSuite
@@ -26,8 +26,6 @@ def load_tests(*_):
     For the parameters, see :mod:`unittest`. The parameters are unused here.
     """
     suite = TestSuite()
-    suite.addTests(DocTestSuite('COT.cli'))
-    suite.addTests(DocTestSuite('COT.deploy'))
-    suite.addTests(DocTestSuite('COT.edit_hardware'))
-    suite.addTests(DocTestSuite('COT.file_reference'))
+    suite.addTests(DocTestSuite('COT.ovf.ovf'))
+    suite.addTests(DocTestSuite('COT.ovf.item'))
     return suite

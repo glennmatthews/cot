@@ -12,7 +12,9 @@
 
 """API and generic implementation of platform-specific logic."""
 
-from COT.data_validation import validate_int, ValueUnsupportedError, NIC_TYPES
+from COT.data_validation import (
+    validate_int, ValueUnsupportedError, ValueTooLowError, NIC_TYPES,
+)
 
 
 class GenericPlatform(object):
@@ -36,9 +38,19 @@ class GenericPlatform(object):
 
     SUPPORTED_NIC_TYPES = NIC_TYPES
 
+    # Some of these methods are semi-abstract, so:
+    # pylint: disable=unused-argument
+
     @classmethod
-    def controller_type_for_device(cls, _device_type):
-        """Get the default controller type for the given device type."""
+    def controller_type_for_device(cls, device_type):
+        """Get the default controller type for the given device type.
+
+        Args:
+          device_type (str): 'harddisk', 'cdrom', etc.
+
+        Returns:
+          str: 'ide' unless overridden by subclass.
+        """
         # For most platforms IDE is the correct default.
         return 'ide'
 
@@ -47,22 +59,59 @@ class GenericPlatform(object):
         """Guess the name of the Nth NIC for this platform.
 
         .. note:: This method counts from 1, not from 0!
+
+        Args:
+          nic_number (int): Nth NIC to name.
+
+        Returns:
+          str: "Ethernet1", "Ethernet2", etc. unless overridden by subclass.
         """
         return "Ethernet" + str(nic_number)
 
     @classmethod
     def validate_cpu_count(cls, cpus):
-        """Throw an error if the number of CPUs is not a supported value."""
+        """Throw an error if the number of CPUs is not a supported value.
+
+        Args:
+          cpus (int): Number of CPUs
+
+        Raises:
+          ValueTooLowError: if ``cpus`` is less than the minimum required
+              by this platform
+          ValueTooHighError: if ``cpus`` exceeds the maximum supported
+              by this platform
+        """
         validate_int(cpus, 1, None, "CPUs")
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
-        """Throw an error if the amount of RAM is not supported."""
-        validate_int(mebibytes, 1, None, "RAM")
+        """Throw an error if the amount of RAM is not supported.
+
+        Args:
+          mebibytes (int): RAM, in MiB.
+
+        Raises:
+          ValueTooLowError: if ``mebibytes`` is less than the minimum
+              required by this platform
+            ValueTooHighError: if ``mebibytes`` is more than the maximum
+                supported by this platform
+        """
+        if mebibytes < 1:
+            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "1 MiB")
 
     @classmethod
     def validate_nic_count(cls, count):
-        """Throw an error if the number of NICs is not supported."""
+        """Throw an error if the number of NICs is not supported.
+
+        Args:
+          count (int): Number of NICs.
+
+        Raises:
+          ValueTooLowError: if ``count`` is less than the minimum
+              required by this platform
+          ValueTooHighError: if ``count`` is more than the maximum
+              supported by this platform
+        """
         validate_int(count, 0, None, "NIC count")
 
     @classmethod
@@ -72,6 +121,13 @@ class GenericPlatform(object):
         .. seealso::
            - :func:`COT.data_validation.canonicalize_nic_subtype`
            - :data:`COT.data_validation.NIC_TYPES`
+
+        Args:
+          type_string (str): See :data:`COT.data_validation.NIC_TYPES`
+
+        Raises:
+          ValueUnsupportedError: if ``type_string`` is not in
+              :const:`SUPPORTED_NIC_TYPES`
         """
         if type_string not in cls.SUPPORTED_NIC_TYPES:
             raise ValueUnsupportedError("NIC type", type_string,
@@ -79,11 +135,29 @@ class GenericPlatform(object):
 
     @classmethod
     def validate_nic_types(cls, type_list):
-        """Throw an error if any NIC type string in the list is unsupported."""
+        """Throw an error if any NIC type string in the list is unsupported.
+
+        Args:
+          type_list (list): See :data:`COT.data_validation.NIC_TYPES`
+
+        Raises:
+          ValueUnsupportedError: if any value in ``type_list`` is not in
+              :const:`SUPPORTED_NIC_TYPES`
+        """
         for type_string in type_list:
             cls.validate_nic_type(type_string)
 
     @classmethod
     def validate_serial_count(cls, count):
-        """Throw an error if the number of serial ports is not supported."""
+        """Throw an error if the number of serial ports is not supported.
+
+        Args:
+          count (int): Number of serial ports.
+
+        Raises:
+          ValueTooLowError: if ``count`` is less than the minimum
+              required by this platform
+          ValueTooHighError: if ``count`` is more than the maximum
+              supported by this platform
+        """
         validate_int(count, 0, None, "serial port count")

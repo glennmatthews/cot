@@ -27,10 +27,13 @@ class QCOW2(DiskRepresentation):
     def from_other_image(cls, input_image, output_dir, output_subformat=None):
         """Convert the other disk image into an image of this type.
 
-        :param DiskRepresentation input_image: Existing image representation.
-        :param str output_dir: Output directory to store the new image in.
-        :param str output_subformat: Any relevant subformat information.
-        :rtype: instance of DiskRepresentation or subclass
+        Args:
+          input_image (DiskRepresentation): Existing image representation.
+          output_dir (str): Output directory to store the new image in.
+          output_subformat (str): Any relevant subformat information.
+
+        Returns:
+          QCOW2: representation of newly created qcow2 image file
         """
         file_name = os.path.basename(input_image.path)
         (file_prefix, _) = os.path.splitext(file_name)

@@ -29,9 +29,18 @@ from COT.helpers import HelperError, helpers
 from COT.helpers.apt_get import AptGet
 from COT.helpers.port import Port
 
+# pylint: disable=missing-param-doc,missing-type-doc
+
 
 def stub_check_output(arg_list, *_args, **_kwargs):
-    """Stub to ensure fixed version number strings."""
+    """Stub to ensure fixed version number strings.
+
+    Args:
+      arg_list (list): arg_list[0] is script being called, others are ignored.
+
+    Returns:
+      str: Canned output line, or ""
+    """
     versions = {
         "fatdisk": "fatdisk, version 1.0.0-beta",
         "genisoimage": "genisoimage 1.1.11 (Linux)",
@@ -46,7 +55,13 @@ def stub_check_output(arg_list, *_args, **_kwargs):
 
 
 def stub_dir_exists_but_not_file(path):
-    """Stub for os.path.exists; return true for man dir, false for man file."""
+    """Stub for :func:`os.path.exists`.
+
+    Args:
+      path (str): Path to check.
+    Returns:
+      bool: True for man dir, False for man file.
+    """
     return os.path.basename(path) != "cot.1"
 
 

@@ -748,7 +748,7 @@ vmdk.html#streamOptimized" />
         self.assertLogged(**self.OVERWRITING_DISK)
         self.instance.finished()
         self.assertLogged(**self.invalid_hardware_warning(
-            "howlongofaprofilenamecanweusehere", "0", "RAM"))
+            "howlongofaprofilenamecanweusehere", "0 MiB", "RAM"))
         self.assertLogged(msg="Removing unused network")
         self.check_diff(file1=self.invalid_ovf, expected="""
    <ovf:References>

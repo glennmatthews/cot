@@ -38,14 +38,17 @@ from COT.helpers.apt_get import AptGet
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=protected-access
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 class HelperUT(COT_UT):
     """Generic class for testing Helper and subclasses thereof."""
 
     def __init__(self, method_name='runTest'):
-        """Add helper instance variable."""
+        """Add helper instance variable to generic UT initialization.
+
+        For the parameters, see :class:`unittest.TestCase`.
+        """
         self.helper = None
         super(HelperUT, self).__init__(method_name)
 
@@ -95,7 +98,14 @@ class HelperUT(COT_UT):
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def apt_install_test(self, pkgname, helpername, *_):
-        """Test installation with 'dpkg' and 'apt-get'."""
+        """Test installation with 'dpkg' and 'apt-get'.
+
+        Args:
+          pkgname (str): Apt package to test installation for.
+          helpername (str): Expected value of
+              :attr:`~COT.helpers.helper.Helper.name`, if different from
+              ``pkgname``.
+        """
         helpers['dpkg']._installed = True
         # Python 2.6 doesn't let us do multiple mocks in one 'with'
         with mock.patch.object(self.helper, '_path') as mock_path:
@@ -129,7 +139,11 @@ class HelperUT(COT_UT):
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
-        """Test installation with 'port'."""
+        """Test installation with 'port'.
+
+        Args:
+          portname (str): MacPorts package name to test.
+        """
         self.select_package_manager('port')
         Port._updated = False
         # Python 2.6 doesn't let us use multiple contexts in one 'with'
@@ -318,14 +332,14 @@ class HelperGenericTest(HelperUT):
 
     def test_call_no_install(self):
         """If not installed, and user declines, raise HelperNotFoundError."""
-        _ui = Helper.UI
-        Helper.UI = UI()
-        Helper.UI.default_confirm_response = False
+        _ui = Helper.USER_INTERFACE
+        Helper.USER_INTERFACE = UI()
+        Helper.USER_INTERFACE.default_confirm_response = False
         try:
             self.assertRaises(HelperNotFoundError,
                               self.helper.call, ["Hello!"])
         finally:
-            Helper.UI = _ui
+            Helper.USER_INTERFACE = _ui
 
     def test_download_and_expand_tgz(self):
         """Validate the download_and_expand_tgz() context_manager."""

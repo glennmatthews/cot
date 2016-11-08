@@ -34,7 +34,7 @@ class COTRemoveFile(COTSubmodule):
 
     Inherited attributes:
 
-    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTGenericSubmodule.ui`,
     :attr:`~COTSubmodule.package`,
     :attr:`~COTSubmodule.output`
 
@@ -44,7 +44,11 @@ class COTRemoveFile(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        Args:
+          ui (UI): User interface instance.
+        """
         super(COTRemoveFile, self).__init__(ui)
         self.file_path = None
         """File name or path to be removed from the package."""
@@ -54,7 +58,8 @@ class COTRemoveFile(COTSubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.file_path is None and self.file_id is None:
             return False, "No file information provided!"
@@ -63,7 +68,8 @@ class COTRemoveFile(COTSubmodule):
     def run(self):
         """Do the actual work of this submodule.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        Raises:
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTRemoveFile, self).run()
 
@@ -103,18 +109,18 @@ class COTRemoveFile(COTSubmodule):
             prompt_info += " and device '{0}'".format(
                 vm.device_info_str(disk_drive))
 
-        self.UI.confirm_or_die("Remove {0}?".format(prompt_info))
+        self.ui.confirm_or_die("Remove {0}?".format(prompt_info))
 
         vm.remove_file(file_obj, disk=disk,
                        disk_drive=disk_drive)
 
     def create_subparser(self):
         """Create 'remove-file' CLI subparser."""
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'remove-file',
             aliases=['delete-file'],
             add_help=False,
-            usage=self.UI.fill_usage("remove-file", [
+            usage=self.ui.fill_usage("remove-file", [
                 "[-f FILE_PATH] [-i FILE_ID] PACKAGE [-o OUTPUT]",
             ]),
             help="Remove a file from an OVF package",

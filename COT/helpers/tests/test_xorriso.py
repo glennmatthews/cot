@@ -26,7 +26,7 @@ from COT.helpers.mkisofs import XorrISO
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=protected-access
+# pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 class TestXorrISO(HelperUT):

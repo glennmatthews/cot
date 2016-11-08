@@ -24,7 +24,11 @@ except ImportError:
         """No-op logging handler."""
 
         def emit(self, record):
-            """Do nothing."""
+            """Do nothing.
+
+            Args:
+              record (object): Ignored.
+            """
             pass
 
 from COT.platforms.cisco_iosv import IOSv
@@ -33,6 +37,8 @@ from COT.data_validation import (
 )
 
 logging.getLogger('COT').addHandler(NullHandler())
+
+# pylint: disable=missing-type-doc,missing-param-doc
 
 
 class TestIOSv(unittest.TestCase):

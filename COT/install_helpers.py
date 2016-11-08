@@ -52,7 +52,10 @@ def guess_manpath():
 def verify_manpages(man_dir):
     """Verify installation of COT's manual pages.
 
-    :return: (result, message)
+    Args:
+      man_dir (str): Base directory where manpages should be found.
+    Returns:
+      tuple: (result, message)
     """
     for f in resource_listdir("COT", "docs/man"):
         src_path = resource_filename("COT", os.path.join("docs/man", f))
@@ -78,9 +81,14 @@ def verify_manpages(man_dir):
 def _install_manpage(src_path, man_dir):
     """Install the given manual page for COT.
 
-    :return: (page_previously_installed, page_updated)
-    :raise IOError: if installation fails under some circumstances
-    :raise OSError: if installation fails under other circumstances
+    Args:
+      src_path (str): Path to manual page file.
+      man_dir (str): Base directory where page should be installed.
+    Returns:
+      tuple: (page_previously_installed, page_updated)
+    Raises:
+      IOError: if installation fails under some circumstances
+      OSError: if installation fails under other circumstances
     """
     # Which man section does this belong in?
     f = os.path.basename(src_path)
@@ -103,7 +111,10 @@ def _install_manpage(src_path, man_dir):
 def install_manpages(man_dir):
     """Install COT's manual pages.
 
-    :return: (result, message)
+    Args:
+      man_dir (str): Base directory where manpages should be installed.
+    Returns:
+      tuple: (result, message)
     """
     installed_any = False
     some_preinstalled = False
@@ -129,10 +140,20 @@ def install_manpages(man_dir):
 
 
 class COTInstallHelpers(COTGenericSubmodule):
-    """Install all helper tools that COT requires."""
+    """Install all helper tools that COT requires.
+
+    Inherited attributes:
+    :attr:`~COTGenericSubmodule.ui`,
+    :attr:`~COTSubmodule.package`,
+    :attr:`~COTSubmodule.output`
+    """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        Args:
+          ui (UI): User interface instance.
+        """
         super(COTInstallHelpers, self).__init__(ui)
         self.ignore_errors = False
         self.verify_only = False
@@ -140,7 +161,11 @@ class COTInstallHelpers(COTGenericSubmodule):
     def install_helper(self, helper):
         """Install the given helper module.
 
-        :return: (result, message)
+        Args:
+          helper (Helper): Helper module to install.
+
+        Returns:
+          tuple: (result, message)
         """
         if helper.installed:
             return (True,
@@ -162,7 +187,8 @@ class COTInstallHelpers(COTGenericSubmodule):
     def manpages_helper(self):
         """Verify or install COT's manual pages.
 
-        :return: (result, message)
+        Returns:
+          tuple: (result, message)
         """
         try:
             resource_listdir("COT", "docs/man")
@@ -200,7 +226,7 @@ class COTInstallHelpers(COTGenericSubmodule):
 
         print("Results:")
         print("-------------")
-        wrapper = textwrap.TextWrapper(width=self.UI.terminal_width,
+        wrapper = textwrap.TextWrapper(width=self.ui.terminal_width,
                                        initial_indent="",
                                        subsequent_indent=(" " * 14))
         for k in sorted(results):
@@ -211,11 +237,11 @@ class COTInstallHelpers(COTGenericSubmodule):
 
     def create_subparser(self):
         """Create 'install-helpers' CLI subparser."""
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'install-helpers',
             help=("Install/verify COT manual pages and any third-party helper "
                   "programs that COT may require"),
-            usage=self.UI.fill_usage('install-helpers',
+            usage=self.ui.fill_usage('install-helpers',
                                      ["--verify-only",
                                       "[--ignore-errors]"]),
             description="""
@@ -227,7 +253,7 @@ third-party helper programs for COT.
 * ovftool  (https://www.vmware.com/support/developer/ovf/)
 * fatdisk  (http://github.com/goblinhack/fatdisk)
 * vmdktool (http://www.freshports.org/sysutils/vmdktool/)""",
-            epilog=self.UI.fill_examples([
+            epilog=self.ui.fill_examples([
                 ("Verify whether COT can find all expected helper programs",
                  """
 > cot install-helpers --verify-only

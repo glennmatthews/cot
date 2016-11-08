@@ -42,7 +42,7 @@ class COTEditProperties(COTSubmodule):
     """Edit OVF environment XML properties.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.UI`,
+    :attr:`~COTGenericSubmodule.ui`,
     :attr:`~COTSubmodule.package`,
     :attr:`~COTSubmodule.output`
 
@@ -54,7 +54,11 @@ class COTEditProperties(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI."""
+        """Instantiate this submodule with the given UI.
+
+        Args:
+          ui (UI): User interface instance.
+        """
         super(COTEditProperties, self).__init__(ui)
         self._config_file = None
         self._properties = []
@@ -70,7 +74,8 @@ class COTEditProperties(COTSubmodule):
     def config_file(self):
         """Path to plaintext file to read configuration lines from.
 
-        :raise: :exc:`InvalidInputError` if the file does not exist.
+        Raises:
+          InvalidInputError: if the file does not exist.
         """
         return self._config_file
 
@@ -133,7 +138,8 @@ class COTEditProperties(COTSubmodule):
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
-        :returns: ``(True, ready_message)`` or ``(False, reason_why_not)``
+        Returns:
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
         if self.labels and not self.properties:
             return False, ("The --label option requires also specifying "
@@ -156,7 +162,8 @@ class COTEditProperties(COTSubmodule):
     def run(self):
         """Do the actual work of this submodule.
 
-        :raises InvalidInputError: if :func:`ready_to_run` reports ``False``
+        Raises:
+          InvalidInputError: if :func:`ready_to_run` reports ``False``
         """
         super(COTEditProperties, self).run()
 
@@ -171,7 +178,7 @@ class COTEditProperties(COTSubmodule):
                 desc = self.descriptions[i] if self.descriptions else None
                 curr_value = self.vm.get_property_value(key)
                 if curr_value is None:
-                    self.UI.confirm_or_die(
+                    self.ui.confirm_or_die(
                         "Property '{0}' does not yet exist.\n"
                         "Create it?".format(key))
                 self.vm.set_property_value(
@@ -201,7 +208,7 @@ class COTEditProperties(COTSubmodule):
             key_list = [p['key'] for p in pa]
             string_list = ["""{0:25} "{1}" """.format(p['key'], p['label'])
                            for p in pa]
-            user_input = self.UI.choose_from_list(
+            user_input = self.ui.choose_from_list(
                 header="Please choose a property to edit:",
                 option_list=key_list,
                 info_list=string_list,
@@ -230,7 +237,7 @@ class COTEditProperties(COTSubmodule):
             ])
 
             while True:
-                new_value = self.UI.get_input(prompt,
+                new_value = self.ui.get_input(prompt,
                                               default_value=old_value)
                 if new_value == old_value:
                     logger.info("Value for property '%s' is unchanged", key)
@@ -252,12 +259,12 @@ class COTEditProperties(COTSubmodule):
 
     def create_subparser(self):
         """Create 'edit-properties' CLI subparser."""
-        p = self.UI.add_subparser(
+        p = self.ui.add_subparser(
             'edit-properties',
             aliases=['set-properties', 'edit-environment', 'set-environment'],
             add_help=False,
             help="""Edit or create environment properties of an OVF""",
-            usage=self.UI.fill_usage("edit-properties", [
+            usage=self.ui.fill_usage("edit-properties", [
                 "PACKAGE [-p KEY1=VALUE1 [-p KEY2=VALUE2 ...]] "
                 "[-l LABEL1 [-l LABEL2 ...]] [-d DESC1 [-d DESC2 ...]] "
                 "[-c CONFIG_FILE] [-u [USER_CONFIGURABLE]] "
@@ -270,7 +277,7 @@ Configure environment properties of the given OVF or OVA. The user may specify
 keys and values as command-line arguments or may provide a config-file to
 read from. If neither --config-file, --properties, nor --transport are given,
 the program will run interactively.""",
-            epilog=self.UI.fill_examples([
+            epilog=self.ui.fill_examples([
                 ("Add configuration from a text file and mark the resulting"
                  " properties as non-user-configurable.",
                  'cot edit-properties input.ovf -c config.txt -u=0'),
