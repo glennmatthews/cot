@@ -54,6 +54,19 @@ class RAW(DiskRepresentation):
             self._files = result
         return self._files
 
+    @classmethod
+    def file_is_this_type(cls, path):
+        """Is this file a RAW image? Any file conceivably can be.
+
+        For the parameters, see :meth:`DiskRepresentation.file_is_this_type`.
+        """
+        # Any file *could* be a RAW image, so let that be our fallback option,
+        # i.e., less than 100% confidence:
+        confidence = super(RAW, cls).file_is_this_type(path)
+        if confidence == 100:
+            confidence = 10
+        return confidence
+
     def _create_file(self):
         """Create a raw disk image file."""
         if not self.files:

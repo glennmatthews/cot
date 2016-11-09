@@ -27,6 +27,45 @@ class DiskRepresentation(object):
     disk_format = None
     """Disk format represented by this class."""
 
+    @classmethod
+    def from_file(cls, path):
+        """Get a DiskRepresentation instance appropriate to the given file.
+
+        Args:
+          path (str): Path of existing file to represent.
+
+        Returns:
+          DiskRepresentation: Representation of this file.
+
+        Raises:
+          IOError: if no file exists at the given path
+          NotImplementedError: if the file is not a supported type.
+        """
+        if not os.path.exists(path):
+            raise IOError(2, "No such file or directory: {0}".format(path))
+        best_guess = None
+        best_confidence = 0
+        # pylint doesn't know about __subclasses__
+        # https://github.com/PyCQA/pylint/issues/555
+        # TODO: this should be fixed when pylint 2.0 is released
+        # pylint:disable=no-member
+        for sc in cls.__subclasses__():
+            confidence = sc.file_is_this_type(path)
+            if confidence > best_confidence:
+                logger.verbose("File %s may be a %s, with confidence %d",
+                               path, sc.disk_format, confidence)
+                best_guess = sc
+                best_confidence = confidence
+            elif confidence > 0 and confidence == best_confidence:
+                logger.warning("For file %s, same confidence level (%d) for "
+                               "classes %s and %s. Using %s",
+                               path, confidence, best_guess,
+                               sc, best_guess)
+        if best_guess is not None:
+            return best_guess(path)
+        else:
+            raise NotImplementedError("No support for files of this type")
+
     def __init__(self, path,
                  disk_subformat=None,
                  capacity=None,
@@ -105,7 +144,8 @@ class DiskRepresentation(object):
           path (str): Path to file to check.
 
         Returns:
-          bool: True (file matches this type) or False (file does not match)
+          int: Confidence that this file matches. 0 is definitely not a match,
+          100 is definitely a match.
 
         Raises:
           HelperError: if no file exists at ``path``.
@@ -123,7 +163,10 @@ class DiskRepresentation(object):
                                "the output from qemu-img:\n{0}"
                                .format(output))
         file_format = match.group(1)
-        return file_format == cls.disk_format
+        if file_format == cls.disk_format:
+            return 100
+        else:
+            return 0
 
     def create_file(self):
         """Given parameters but not an existing file, create that file."""

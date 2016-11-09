@@ -23,7 +23,7 @@ from distutils.version import StrictVersion
 import mock
 
 from COT.tests.ut import COT_UT
-from COT.disks import VMDK, disk_representation_from_file
+from COT.disks import VMDK, DiskRepresentation
 from COT.helpers import helpers, HelperError
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class TestVMDK(COT_UT):
         temp_disk = os.path.join(self.temp_dir, "foo.{0}".format(disk_format))
         helpers['qemu-img'].call(['create', '-f', disk_format,
                                   temp_disk, "16M"])
-        old = disk_representation_from_file(temp_disk)
+        old = DiskRepresentation.from_file(temp_disk)
         vmdk = VMDK.from_other_image(old, self.temp_dir, output_subformat)
 
         self.assertEqual(vmdk.disk_format, 'vmdk')

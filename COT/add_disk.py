@@ -40,7 +40,7 @@
 import logging
 import os.path
 
-from COT.disks import disk_representation_from_file
+from COT.disks import DiskRepresentation
 from .data_validation import InvalidInputError, ValueUnsupportedError
 from .data_validation import check_for_conflict, device_address, match_or_die
 from .submodule import COTSubmodule
@@ -126,7 +126,7 @@ class COTAddDisk(COTSubmodule):
 
     @disk_image.setter
     def disk_image(self, value):
-        self._disk_image = disk_representation_from_file(value)
+        self._disk_image = DiskRepresentation.from_file(value)
 
     @property
     def address(self):

@@ -56,7 +56,7 @@ from COT.data_validation import (
 )
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.platforms import platform_from_product_class, GenericPlatform
-from COT.disks import convert_disk, disk_representation_from_file
+from COT.disks import convert_disk, DiskRepresentation
 
 from COT.ovf.name_helper import name_helper
 from COT.ovf.hardware import OVFHardware, OVFHardwareDataError
@@ -860,7 +860,7 @@ class OVF(VMDescription, XML):
             # It seems wasteful to extract the disk file (could be
             # quite large) from the TAR just to check, so we don't.
             if file_ref.file_path is not None:
-                dr = disk_representation_from_file(file_ref.file_path)
+                dr = DiskRepresentation.from_file(file_ref.file_path)
                 real_capacity = dr.capacity
 
             disk_item = self.find_disk_from_file_id(

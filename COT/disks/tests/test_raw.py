@@ -23,7 +23,7 @@ from distutils.version import StrictVersion
 import mock
 
 from COT.tests.ut import COT_UT
-from COT.disks import RAW, VMDK, disk_representation_from_file
+from COT.disks import RAW, VMDK, DiskRepresentation
 from COT.helpers import HelperError
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class TestRAW(COT_UT):
 
     def test_convert_from_vmdk(self):
         """Test conversion of a RAW image from a VMDK."""
-        old = disk_representation_from_file(self.blank_vmdk)
+        old = DiskRepresentation.from_file(self.blank_vmdk)
         raw = RAW.from_other_image(old, self.temp_dir)
 
         self.assertEqual(raw.disk_format, 'raw')

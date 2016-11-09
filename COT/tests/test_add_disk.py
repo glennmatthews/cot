@@ -26,7 +26,7 @@ from COT.ui_shared import UI
 from COT.add_disk import COTAddDisk
 from COT.data_validation import InvalidInputError, ValueMismatchError
 from COT.data_validation import ValueUnsupportedError, ValueTooHighError
-from COT.disks import create_disk, disk_representation_from_file
+from COT.disks import create_disk, DiskRepresentation
 
 
 class TestCOTAddDisk(COT_UT):
@@ -503,8 +503,8 @@ ovf:diskId="new.vmdk" ovf:fileRef="new.vmdk" ovf:format=\
 """.format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            new_size=os.path.getsize(os.path.join(self.temp_dir, "new.vmdk"))))
         # Make sure the disk was actually converted to the right format
-        dr = disk_representation_from_file(os.path.join(self.temp_dir,
-                                                        "new.vmdk"))
+        dr = DiskRepresentation.from_file(os.path.join(self.temp_dir,
+                                                       "new.vmdk"))
         self.assertEqual(dr.disk_format, 'vmdk')
         self.assertEqual(dr.disk_subformat, "streamOptimized")
 

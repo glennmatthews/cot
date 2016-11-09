@@ -23,7 +23,6 @@ API
 
   convert_disk
   create_disk
-  disk_representation_from_file
   ~COT.disks.disk.DiskRepresentation
 
 Disk modules
@@ -39,8 +38,7 @@ Disk modules
   COT.disks.vmdk
 """
 
-import os
-
+from .disk import DiskRepresentation
 from .iso import ISO
 from .qcow2 import QCOW2
 from .raw import RAW
@@ -92,25 +90,8 @@ def create_disk(disk_format, *args, **kwargs):
                               .format(disk_format))
 
 
-def disk_representation_from_file(file_path):
-    """Get a DiskRepresentation appropriate to the given file.
-
-    Args:
-      file_path (str): Path of existing file to represent.
-
-    Returns:
-      DiskRepresentation: Representation of this file.
-    """
-    if not os.path.exists(file_path):
-        raise IOError(2, "No such file or directory: {0}".format(file_path))
-    for cls in [VMDK, QCOW2, ISO, RAW]:
-        if cls.file_is_this_type(file_path):
-            return cls(path=file_path)
-    raise NotImplementedError("No support for files of this type")
-
-
 __all__ = (
     'convert_disk',
     'create_disk',
-    'disk_representation_from_file',
+    'DiskRepresentation',
 )

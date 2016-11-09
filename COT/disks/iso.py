@@ -109,10 +109,10 @@ class ISO(DiskRepresentation):
         if helpers['isoinfo']:
             try:
                 helpers['isoinfo'].call(['-i', path, '-d'])
-                return True
+                return 100
             except HelperError:
                 # Not an ISO
-                return False
+                return 0
 
         # else, try to detect ISO files by file magic number
         with open(path, 'rb') as f:
@@ -120,8 +120,8 @@ class ISO(DiskRepresentation):
                 f.seek(offset)
                 magic = f.read(5).decode('ascii', 'ignore')
                 if magic == "CD001":
-                    return True
-        return False
+                    return 100
+        return 0
 
     @classmethod
     def from_other_image(cls, input_image, output_dir, output_subformat=None):
