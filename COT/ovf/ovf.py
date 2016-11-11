@@ -56,7 +56,7 @@ from COT.data_validation import (
 )
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.platforms import platform_from_product_class, GenericPlatform
-from COT.disks import convert_disk, DiskRepresentation
+from COT.disks import DiskRepresentation
 
 from COT.ovf.name_helper import name_helper
 from COT.ovf.hardware import OVFHardware, OVFHardwareDataError
@@ -1968,8 +1968,9 @@ class OVF(VMDescription, XML):
             logger.debug("No disk conversion needed")
             return disk_image
 
-        return convert_disk(disk_image, self.working_dir,
-                            'vmdk', 'streamOptimized')
+        return disk_image.convert_to(new_format='vmdk',
+                                     new_subformat='streamOptimized',
+                                     new_directory=self.working_dir)
 
     def search_from_filename(self, filename):
         """From the given filename, try to find any existing objects.

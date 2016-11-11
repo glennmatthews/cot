@@ -32,10 +32,3 @@ class TestDiskAPI(COT_UT):
         # No support for VHD format at present
         self.assertRaises(NotImplementedError,
                           COT.disks.create_disk, 'vhd', capacity="1M")
-
-    def test_convert_disk_errors(self):
-        """Invalid inputs to convert_disk()."""
-        self.assertRaises(
-            NotImplementedError, COT.disks.convert_disk,
-            COT.disks.DiskRepresentation.from_file(self.blank_vmdk),
-            self.temp_dir, "frobozz")

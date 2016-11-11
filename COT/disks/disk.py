@@ -27,8 +27,36 @@ class DiskRepresentation(object):
     disk_format = None
     """Disk format represented by this class."""
 
-    @classmethod
-    def from_file(cls, path):
+    @staticmethod
+    def subclasses():
+        """Subclasses of DiskRepresentation. Wraps __subclasses__ builtin."""
+        # pylint doesn't know about __subclasses__
+        # https://github.com/PyCQA/pylint/issues/555
+        # TODO: this should be fixed when pylint 2.0 is released
+        # pylint:disable=no-member
+        return DiskRepresentation.__subclasses__()
+
+    @staticmethod
+    def supported_disk_formats():
+        """List of disk format strings with support."""
+        return [sc.disk_format for sc in DiskRepresentation.subclasses()]
+
+    @staticmethod
+    def class_for_format(disk_format):
+        """Get the DiskRepresentation subclass associated with the given format.
+
+        Args:
+          disk_format (str): Disk format string such as 'iso' or 'vmdk'
+
+        Returns:
+          DiskRepresentation: appropriate subclass object.
+        """
+        return next((sc for sc in DiskRepresentation.subclasses() if
+                     sc.disk_format == disk_format),
+                    None)
+
+    @staticmethod
+    def from_file(path):
         """Get a DiskRepresentation instance appropriate to the given file.
 
         Args:
@@ -45,11 +73,7 @@ class DiskRepresentation(object):
             raise IOError(2, "No such file or directory: {0}".format(path))
         best_guess = None
         best_confidence = 0
-        # pylint doesn't know about __subclasses__
-        # https://github.com/PyCQA/pylint/issues/555
-        # TODO: this should be fixed when pylint 2.0 is released
-        # pylint:disable=no-member
-        for sc in cls.__subclasses__():
+        for sc in DiskRepresentation.subclasses():
             confidence = sc.file_is_this_type(path)
             if confidence > best_confidence:
                 logger.verbose("File %s may be a %s, with confidence %d",
@@ -121,6 +145,28 @@ class DiskRepresentation(object):
         if self._files is not None:
             return self._files
         raise NotImplementedError("Unable to determine file contents")
+
+    def convert_to(self, new_format, new_directory, new_subformat=None):
+        """Convert the disk file to a new format and return the new instance.
+
+        Args:
+          new_format (str): Format to convert to.
+          new_subformat (str): (optional) Sub-format to convert to.
+          new_directory (str): Directory path to store new image into.
+
+        Returns:
+          DiskRepresentation: Converted disk
+
+        Raises:
+          NotImplementedError: if new_format is not a supported type
+
+        .. seealso:: :meth:`from_other_image`
+        """
+        sc = self.class_for_format(new_format)
+        if sc is None:
+            raise NotImplementedError("No support for converting to type '{0}'"
+                                      .format(new_format))
+        return sc.from_other_image(self, new_directory, new_subformat)
 
     @classmethod
     def from_other_image(cls, input_image, output_dir, output_subformat=None):

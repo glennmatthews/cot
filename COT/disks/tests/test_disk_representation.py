@@ -119,3 +119,10 @@ class TestDiskRepresentation(COT_UT):
         self.assertRaises(RuntimeError,
                           DiskRepresentation,
                           path=os.path.join(self.temp_dir, "foo"))
+
+    def test_convert_to_errors(self):
+        """Invalid inputs to convert_to()."""
+        self.assertRaises(
+            NotImplementedError,
+            DiskRepresentation.from_file(self.blank_vmdk).convert_to,
+            "frobozz", self.temp_dir)

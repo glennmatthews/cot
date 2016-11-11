@@ -21,7 +21,6 @@ API
 .. autosummary::
   :nosignatures:
 
-  convert_disk
   create_disk
   ~COT.disks.disk.DiskRepresentation
 
@@ -53,26 +52,6 @@ _class_for_format = {
 }
 
 
-def convert_disk(disk_image, new_directory, new_format, new_subformat=None):
-    """Convert a disk representation into a new format.
-
-    Args:
-      disk_image (DiskRepresentation): Existing disk image as input.
-      new_directory (str): Directory to create new image under
-      new_format (str): Format to convert to.
-      new_subformat (str): (optional) Sub-format to convert to.
-
-    Returns:
-      DiskRepresentation: Converted disk.
-    """
-    if new_format not in _class_for_format:
-        raise NotImplementedError("No support for converting to type '{0}'"
-                                  .format(new_format))
-    return _class_for_format[new_format].from_other_image(disk_image,
-                                                          new_directory,
-                                                          new_subformat)
-
-
 def create_disk(disk_format, *args, **kwargs):
     """Create a disk of the requested format.
 
@@ -91,7 +70,6 @@ def create_disk(disk_format, *args, **kwargs):
 
 
 __all__ = (
-    'convert_disk',
     'create_disk',
     'DiskRepresentation',
 )
