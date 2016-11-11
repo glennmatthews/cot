@@ -56,8 +56,9 @@ class TestISO(COT_UT):
 
     def test_create_with_files(self):
         """Creation of a ISO with specific file contents."""
-        iso = ISO(path=os.path.join(self.temp_dir, "out.iso"),
-                  files=[self.input_ovf])
+        disk_path = os.path.join(self.temp_dir, "out.iso")
+        ISO.create_file(disk_path, files=[self.input_ovf])
+        iso = ISO(disk_path)
         if helpers['isoinfo']:
             # Our default create format is rockridge
             self.assertEqual(iso.disk_subformat, "rockridge")
@@ -80,9 +81,9 @@ Setting input-charset to 'UTF-8' from locale.
 
     def test_create_with_files_non_rockridge(self):
         """Creation of a non-rock-ridge ISO with specific file contents."""
-        iso = ISO(path=os.path.join(self.temp_dir, "out.iso"),
-                  files=[self.input_ovf],
-                  disk_subformat="")
+        disk_path = os.path.join(self.temp_dir, "out.iso")
+        ISO.create_file(disk_path, files=[self.input_ovf], disk_subformat="")
+        iso = ISO(disk_path)
         if helpers['isoinfo']:
             self.assertEqual(iso.disk_subformat, "")
             self.assertEqual(iso.files,
@@ -104,7 +105,7 @@ Setting input-charset to 'UTF-8' from locale.
     def test_create_without_files(self):
         """Can't create an empty ISO."""
         self.assertRaises(RuntimeError,
-                          ISO,
+                          ISO.create_file,
                           path=os.path.join(self.temp_dir, "out.iso"),
                           capacity="100")
 
@@ -112,7 +113,7 @@ Setting input-charset to 'UTF-8' from locale.
     def test_create_with_mkisofs(self, mock_call):
         """Creation of an ISO with mkisofs (default)."""
         helpers['mkisofs']._installed = True
-        ISO(path='foo.iso', files=[self.input_ovf])
+        ISO.create_file(path='foo.iso', files=[self.input_ovf])
         mock_call.assert_called_with(
             ['-output', 'foo.iso', '-full-iso9660-filenames',
              '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
@@ -122,7 +123,7 @@ Setting input-charset to 'UTF-8' from locale.
         """Creation of an ISO with genisoimage if mkisofs is unavailable."""
         helpers['mkisofs']._installed = False
         helpers['genisoimage']._installed = True
-        ISO(path='foo.iso', files=[self.input_ovf])
+        ISO.create_file(path='foo.iso', files=[self.input_ovf])
         mock_call.assert_called_with(
             ['-output', 'foo.iso', '-full-iso9660-filenames',
              '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
@@ -133,7 +134,7 @@ Setting input-charset to 'UTF-8' from locale.
         helpers['mkisofs']._installed = False
         helpers['genisoimage']._installed = False
         helpers['xorriso']._installed = True
-        ISO(path='foo.iso', files=[self.input_ovf])
+        ISO.create_file(path='foo.iso', files=[self.input_ovf])
         mock_call.assert_called_with(
             ['-as', 'mkisofs', '-output', 'foo.iso', '-full-iso9660-filenames',
              '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
@@ -147,7 +148,7 @@ Setting input-charset to 'UTF-8' from locale.
         helpers['port']._installed = False
         helpers['yum']._installed = False
         self.assertRaises(HelperNotFoundError,
-                          ISO,
+                          ISO.create_file,
                           path='foo.iso',
                           files=[self.input_ovf])
 
@@ -155,7 +156,8 @@ Setting input-charset to 'UTF-8' from locale.
     def test_create_with_mkisofs_non_rockridge(self, mock_call):
         """Creation of a non-Rock-Ridge ISO with mkisofs (default)."""
         helpers['mkisofs']._installed = True
-        ISO(path='foo.iso', files=[self.input_ovf], disk_subformat="")
+        ISO.create_file(path='foo.iso', files=[self.input_ovf],
+                        disk_subformat="")
         mock_call.assert_called_with(
             ['-output', 'foo.iso', '-full-iso9660-filenames',
              '-iso-level', '2', '-allow-lowercase', self.input_ovf])

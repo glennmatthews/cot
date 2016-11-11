@@ -67,28 +67,30 @@ class ISO(DiskRepresentation):
                 self._files = result
         return self._files
 
-    def _create_file(self):
-        """Create an ISO file."""
-        if not self._files:
+    @staticmethod
+    def _create_file(path, disk_subformat="rockridge", files=None, **kwargs):
+        """Create an ISO file.
+
+        Args:
+          path (str): Location to create the ISO file.
+          disk_subformat (str): Defaults to "rockridge". Set to "" to not
+            include Rock Ridge extensions.
+          files (list): List of files to include in this ISO (required)
+          **kwargs: unused
+        """
+        if not files:
             raise RuntimeError("Unable to create an empty ISO file")
-        # Default subformat is to include Rock Ridge extensions.
-        # To not have these, use subformat=""
-        if self._disk_subformat is None:
-            self._disk_subformat = 'rockridge'
         # We can use mkisofs, genisoimage, or xorriso, and fortunately
         # all three take similar parameters
-        args = ['-output', self.path, '-full-iso9660-filenames',
+        args = ['-output', path, '-full-iso9660-filenames',
                 '-iso-level', '2', '-allow-lowercase']
-        if self._disk_subformat == 'rockridge':
+        if disk_subformat == 'rockridge':
             args.append('-r')
-        args += self.files
+        args += files
         helper = helper_select(['mkisofs', 'genisoimage', 'xorriso'])
         if helper.name == "xorriso":
             args = ['-as', 'mkisofs'] + args
         helper.call(args)
-
-        self._disk_subformat = None
-        self._files = None
 
     @classmethod
     def file_is_this_type(cls, path):

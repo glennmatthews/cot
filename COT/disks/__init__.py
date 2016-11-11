@@ -21,7 +21,6 @@ API
 .. autosummary::
   :nosignatures:
 
-  create_disk
   ~COT.disks.disk.DiskRepresentation
 
 Disk modules
@@ -38,38 +37,11 @@ Disk modules
 """
 
 from .disk import DiskRepresentation
-from .iso import ISO
-from .qcow2 import QCOW2
-from .raw import RAW
-from .vmdk import VMDK
-
-
-_class_for_format = {
-    "iso": ISO,
-    "vmdk": VMDK,
-    "qcow2": QCOW2,
-    "raw": RAW,
-}
-
-
-def create_disk(disk_format, *args, **kwargs):
-    """Create a disk of the requested format.
-
-    Args:
-      disk_format (str): Disk format such as 'iso' or 'vmdk'.
-
-    For the other parameters, see :class:`~COT.disks.disk.DiskRepresentation`.
-
-    Returns:
-      DiskRepresentation: Created disk
-    """
-    if disk_format in _class_for_format:
-        return _class_for_format[disk_format](*args, **kwargs)
-    raise NotImplementedError("No support for files of type '{0}'"
-                              .format(disk_format))
-
+from .iso import ISO                  # noqa
+from .qcow2 import QCOW2              # noqa
+from .raw import RAW                  # noqa
+from .vmdk import VMDK                # noqa
 
 __all__ = (
-    'create_disk',
     'DiskRepresentation',
 )

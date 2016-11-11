@@ -105,19 +105,30 @@ class TestDiskRepresentation(COT_UT):
         self.assertRaises(HelperError,
                           DiskRepresentation.file_is_this_type, "/foo/bar")
 
+    def test_for_new_file_errors(self):
+        """Invalid inputs to for_new_file()."""
+        # No support for VHD format at present
+        self.assertRaises(NotImplementedError,
+                          DiskRepresentation.for_new_file,
+                          path=os.path.join(self.temp_dir, "foo.vhd"),
+                          disk_format="vhd",
+                          capacity="1M")
+
     def test_create_file_path_mandatory(self):
         """Can't create a file without specifying a path."""
-        self.assertRaises(ValueError, DiskRepresentation, path=None)
+        self.assertRaises(ValueError,
+                          DiskRepresentation.create_file, path=None)
 
     def test_create_file_already_extant(self):
         """Can't call create_file if the file already exists."""
         self.assertRaises(RuntimeError,
-                          DiskRepresentation(path=self.blank_vmdk).create_file)
+                          DiskRepresentation.create_file,
+                          path=self.blank_vmdk)
 
     def test_create_file_insufficient_info(self):
         """Can't create a file with neither files nor capacity."""
         self.assertRaises(RuntimeError,
-                          DiskRepresentation,
+                          DiskRepresentation.create_file,
                           path=os.path.join(self.temp_dir, "foo"))
 
     def test_convert_to_errors(self):

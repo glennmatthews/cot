@@ -80,8 +80,9 @@ class TestVMDK(COT_UT):
 
     def test_create_default(self):
         """Default creation logic."""
-        vmdk = VMDK(path=os.path.join(self.temp_dir, "foo.vmdk"),
-                    capacity="16M")
+        disk_path = os.path.join(self.temp_dir, "foo.vmdk")
+        VMDK.create_file(path=disk_path, capacity="16M")
+        vmdk = VMDK(disk_path)
         self.assertEqual(vmdk.path, os.path.join(self.temp_dir, "foo.vmdk"))
         self.assertEqual(vmdk.disk_format, "vmdk")
         self.assertEqual(vmdk.disk_subformat, "streamOptimized")
@@ -89,9 +90,10 @@ class TestVMDK(COT_UT):
 
     def test_create_stream_optimized(self):
         """Explicit subformat specification."""
-        vmdk = VMDK(path=os.path.join(self.temp_dir, "foo.vmdk"),
-                    capacity="16M",
-                    disk_subformat="streamOptimized")
+        disk_path = os.path.join(self.temp_dir, "foo.vmdk")
+        VMDK.create_file(path=disk_path, capacity="16M",
+                         disk_subformat="streamOptimized")
+        vmdk = VMDK(disk_path)
         self.assertEqual(vmdk.path, os.path.join(self.temp_dir, "foo.vmdk"))
         self.assertEqual(vmdk.disk_format, "vmdk")
         self.assertEqual(vmdk.disk_subformat, "streamOptimized")
@@ -99,9 +101,10 @@ class TestVMDK(COT_UT):
 
     def test_create_monolithic_sparse(self):
         """Explicit subformat specification."""
-        vmdk = VMDK(path=os.path.join(self.temp_dir, "foo.vmdk"),
-                    capacity="16M",
-                    disk_subformat="monolithicSparse")
+        disk_path = os.path.join(self.temp_dir, "foo.vmdk")
+        VMDK.create_file(path=disk_path, capacity="16M",
+                         disk_subformat="monolithicSparse")
+        vmdk = VMDK(disk_path)
         self.assertEqual(vmdk.path, os.path.join(self.temp_dir, "foo.vmdk"))
         self.assertEqual(vmdk.disk_format, "vmdk")
         self.assertEqual(vmdk.disk_subformat, "monolithicSparse")
@@ -110,5 +113,6 @@ class TestVMDK(COT_UT):
     def test_create_files_unsupported(self):
         """No support for creating a VMDK with a filesystem."""
         self.assertRaises(NotImplementedError,
-                          VMDK, path=os.path.join(self.temp_dir, "foo.vmdk"),
+                          VMDK.create_file,
+                          path=os.path.join(self.temp_dir, "foo.vmdk"),
                           files=[self.input_iso])

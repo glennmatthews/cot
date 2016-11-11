@@ -22,7 +22,7 @@ import shutil
 
 from COT.add_disk import add_disk_worker
 from COT.data_validation import ValueUnsupportedError, InvalidInputError
-from COT.disks import create_disk
+from COT.disks import DiskRepresentation
 from COT.submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
@@ -194,18 +194,18 @@ class COTInjectConfig(COTSubmodule):
         # pylint:disable=redefined-variable-type
         if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
             bootstrap_file = os.path.join(vm.working_dir, 'config.iso')
-            disk_image = create_disk(disk_format='iso',
-                                     path=bootstrap_file,
-                                     files=config_files)
+            disk_format = 'iso'
         elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
             bootstrap_file = os.path.join(vm.working_dir, 'config.img')
-            disk_image = create_disk(disk_format='raw',
-                                     path=bootstrap_file,
-                                     files=config_files)
+            disk_format = 'raw'
         else:
             raise ValueUnsupportedError("bootstrap disk drive type",
                                         platform.BOOTSTRAP_DISK_TYPE,
                                         "'cdrom' or 'harddisk'")
+
+        disk_image = DiskRepresentation.for_new_file(bootstrap_file,
+                                                     disk_format,
+                                                     files=config_files)
 
         # Inject the disk image into the OVA, using "add-disk" functionality
         add_disk_worker(
