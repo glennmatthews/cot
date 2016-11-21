@@ -3,6 +3,17 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Added**
+
+- COT can now detect the presence of an .ovf file in a TAR archive even if
+  the archive is not named *.ova and even if the .ovf file is not the first
+  file in the archive as specified by the OVF specification. This allows
+  (read-only at present) handling of VirtualBox Vagrant .box files,
+  which are approximately equivalent to non-standards-compliant OVAs.
+
 `1.8.1`_ - 2016-11-12
 ---------------------
 
