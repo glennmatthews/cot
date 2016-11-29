@@ -21,7 +21,7 @@ API
 .. autosummary::
   :nosignatures:
 
-  ~COT.disks.disk.DiskRepresentation
+  DiskRepresentation
 
 Disk modules
 ------------
@@ -29,18 +29,19 @@ Disk modules
 .. autosummary::
   :toctree:
 
-  COT.disks.disk
   COT.disks.iso
   COT.disks.qcow2
   COT.disks.raw
   COT.disks.vmdk
 """
 
+# flake8: noqa: F401
+
 from .disk import DiskRepresentation
-from .iso import ISO                  # noqa
-from .qcow2 import QCOW2              # noqa
-from .raw import RAW                  # noqa
-from .vmdk import VMDK                # noqa
+from .iso import ISO
+from .qcow2 import QCOW2
+from .raw import RAW
+from .vmdk import VMDK
 
 __all__ = (
     'DiskRepresentation',
