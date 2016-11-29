@@ -297,7 +297,7 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """Force the VM under test to use a particular Platform class.
 
         Args:
-           plat (COT.platforms.GenericPlatform): Platform class to use
+           plat (COT.platforms.Platform): Platform class to use
         """
         # pylint: disable=protected-access
         self.instance.vm._platform = plat

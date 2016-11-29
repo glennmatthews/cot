@@ -385,7 +385,7 @@ class OVFHardware(object):
           new_item_profiles (list): Profiles new_item should belong to
           item_count (int): How many Items of this type (including this
               item) now exist. Used with
-              :meth:`COT.platform.GenericPlatform.guess_nic_name`
+              :meth:`COT.platform.Platform.guess_nic_name`
 
         Returns:
           OVFItem: Updated :param:`new_item`

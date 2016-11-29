@@ -14,7 +14,7 @@
 
 import logging
 
-from COT.platforms.generic import GenericPlatform
+from COT.platforms.platform import Platform
 from COT.data_validation import (
     ValueTooLowError, ValueTooHighError, validate_int,
 )
@@ -22,7 +22,7 @@ from COT.data_validation import (
 logger = logging.getLogger(__name__)
 
 
-class NXOSv(GenericPlatform):
+class NXOSv(Platform):
     """Platform-specific logic for Cisco NX-OSv (Titanium)."""
 
     PLATFORM_NAME = "Cisco NX-OSv"

@@ -198,7 +198,7 @@ def canonicalize_nic_subtype(subtype):
       ValueUnsupportedError: If the canonical string cannot be determined
 
     .. seealso::
-       :meth:`COT.platforms.GenericPlatform.validate_nic_type`
+       :meth:`COT.platforms.Platform.validate_nic_type`
     """
     return canonicalize_helper("NIC subtype", subtype,
                                _NIC_MAPPINGS, re.IGNORECASE)

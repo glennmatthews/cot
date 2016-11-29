@@ -158,7 +158,7 @@ class VMDescription(object):
     def platform(self):
         """The Platform class object associated with this VM.
 
-        :class:`~COT.platforms.GenericPlatform` or a more specific subclass
+        :class:`~COT.platforms.Platform` or a more specific subclass
         if recognized as such.
         """
         raise NotImplementedError("no platform value available.")

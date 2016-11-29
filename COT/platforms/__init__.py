@@ -12,7 +12,7 @@
 
 """Package for identifying guest platforms and handling platform differences.
 
-The :class:`~COT.platforms.generic.GenericPlatform` class describes the API
+The :class:`~COT.platforms.platform.Platform` class describes the API
 and provides a generic implementation that can be overridden by subclasses
 to provide platform-specific logic.
 
@@ -35,7 +35,7 @@ Platform modules
 .. autosummary::
   :toctree:
 
-  COT.platforms.generic
+  COT.platforms.platform
   COT.platforms.cisco_csr1000v
   COT.platforms.cisco_iosv
   COT.platforms.cisco_iosxrv
@@ -45,7 +45,7 @@ Platform modules
 
 import logging
 
-from .generic import GenericPlatform
+from .platform import Platform
 from .cisco_csr1000v import CSR1000V
 from .cisco_iosv import IOSv
 from .cisco_iosxrv import IOSXRv, IOSXRvRP, IOSXRvLC
@@ -89,16 +89,16 @@ def platform_from_product_class(product_class):
       product_class (str): String such as 'com.cisco.iosv'
 
     Returns:
-      class: GenericPlatform or a subclass of it
+      class: Platform or a subclass of it
     """
     if product_class is None:
-        return GenericPlatform
+        return Platform
     if is_known_product_class(product_class):
         return PRODUCT_PLATFORM_MAP[product_class]
     logger.warning("Unrecognized product class '%s' - known classes "
                    "are %s. Treating as a generic platform",
                    product_class, PRODUCT_PLATFORM_MAP.keys())
-    return GenericPlatform
+    return Platform
 
 
 __all__ = (

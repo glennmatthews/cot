@@ -135,7 +135,7 @@ class COTInjectConfig(COTSubmodule):
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``
           ValueUnsupportedError: if the
-              :const:`~COT.platforms.GenericPlatform.BOOTSTRAP_DISK_TYPE` of
+              :const:`~COT.platforms.Platform.BOOTSTRAP_DISK_TYPE` of
               the associated VM's
               :attr:`~COT.vm_description.VMDescription.platform` is not
               'cdrom' or 'harddisk'

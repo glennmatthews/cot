@@ -14,7 +14,7 @@
 
 import logging
 
-from COT.platforms.generic import GenericPlatform
+from COT.platforms.platform import Platform
 from COT.data_validation import (
     ValueTooLowError, ValueTooHighError, validate_int,
 )
@@ -22,7 +22,7 @@ from COT.data_validation import (
 logger = logging.getLogger(__name__)
 
 
-class IOSv(GenericPlatform):
+class IOSv(Platform):
     """Platform-specific logic for Cisco IOSv."""
 
     PLATFORM_NAME = "Cisco IOSv"

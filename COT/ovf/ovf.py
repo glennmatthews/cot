@@ -55,7 +55,7 @@ from COT.data_validation import (
     ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
 )
 from COT.file_reference import FileOnDisk, FileInTAR
-from COT.platforms import platform_from_product_class, GenericPlatform
+from COT.platforms import platform_from_product_class, Platform
 from COT.disks import DiskRepresentation
 
 from COT.ovf.name_helper import name_helper
@@ -483,7 +483,7 @@ class OVF(VMDescription, XML):
     def platform(self):
         """The platform type, as determined from the OVF descriptor.
 
-        This will be the class :class:`~COT.platforms.GenericPlatform` or
+        This will be the class :class:`~COT.platforms.Platform` or
         a more-specific subclass if recognized as such.
         """
         if self._platform is None:
@@ -927,7 +927,7 @@ class OVF(VMDescription, XML):
         str_list = []
         str_list.append('-' * width)
         str_list.append(self.input_file)
-        if self.platform and self.platform is not GenericPlatform:
+        if self.platform and self.platform is not Platform:
             str_list.append("COT detected platform type: {0}"
                             .format(self.platform.PLATFORM_NAME))
         str_list.append('-' * width)
@@ -1922,7 +1922,7 @@ class OVF(VMDescription, XML):
         Raises:
           NotImplementedError: if the :attr:`platform` for this OVF
               does not define
-              :const:`~COT.platforms.GenericPlatform.LITERAL_CLI_STRING`
+              :const:`~COT.platforms.Platform.LITERAL_CLI_STRING`
         """
         i = 0
         if not self.platform.LITERAL_CLI_STRING:

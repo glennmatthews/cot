@@ -17,7 +17,7 @@ from COT.data_validation import (
 )
 
 
-class GenericPlatform(object):
+class Platform(object):
     """Generic class for operations that depend on guest platform.
 
     To be used whenever the guest is unrecognized or does not need

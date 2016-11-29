@@ -12,17 +12,17 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Unit test cases for the GenericPlatform class."""
+"""Unit test cases for the Platform class."""
 
 import unittest
-from COT.platforms.generic import GenericPlatform
+from COT.platforms.platform import Platform
 from COT.data_validation import ValueTooLowError
 
 
-class TestGenericPlatform(unittest.TestCase):
+class TestPlatform(unittest.TestCase):
     """Test cases for generic platform handling."""
 
-    cls = GenericPlatform
+    cls = Platform
 
     def test_controller_type_for_device(self):
         """Test platform-specific logic for device controllers."""
