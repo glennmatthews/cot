@@ -12,13 +12,13 @@
 
 """Package for identifying guest platforms and handling platform differences.
 
-The :class:`~COT.platforms.platform.Platform` class describes the API
+The :class:`Platform` class describes the API
 and provides a generic implementation that can be overridden by subclasses
 to provide platform-specific logic.
 
-In general, other modules should not instantiate subclasses directly but should
-instead use the :func:`~COT.platforms.platform_from_product_class` API to
-derive the appropriate subclass instance.
+In general, other modules should not access subclasses directly but should
+instead use the :meth:`Platform.for_product_string` API to
+derive the appropriate subclass object.
 
 API
 ---
@@ -26,8 +26,7 @@ API
 .. autosummary::
   :nosignatures:
 
-  is_known_product_class
-  platform_from_product_class
+  Platform
 
 Platform modules
 ----------------
@@ -35,7 +34,6 @@ Platform modules
 .. autosummary::
   :toctree:
 
-  COT.platforms.platform
   COT.platforms.cisco_csr1000v
   COT.platforms.cisco_iosv
   COT.platforms.cisco_iosxrv
@@ -44,6 +42,8 @@ Platform modules
 """
 
 import logging
+
+# flake8: noqa: F401
 
 from .platform import Platform
 from .cisco_csr1000v import CSR1000V
@@ -55,53 +55,6 @@ from .cisco_nxosv import NXOSv
 logger = logging.getLogger(__name__)
 
 
-PRODUCT_PLATFORM_MAP = {
-    'com.cisco.csr1000v':    CSR1000V,
-    'com.cisco.iosv':        IOSv,
-    'com.cisco.nx-osv':      NXOSv,
-    'com.cisco.ios-xrv':     IOSXRv,
-    'com.cisco.ios-xrv.rp':  IOSXRvRP,
-    'com.cisco.ios-xrv.lc':  IOSXRvLC,
-    'com.cisco.ios-xrv9000': IOSXRv9000,
-    # Some early releases of IOS XRv 9000 used the
-    # incorrect string 'com.cisco.ios-xrv64'.
-    'com.cisco.ios-xrv64':   IOSXRv9000,
-}
-"""Mapping of known product class strings to Platform classes."""
-
-
-def is_known_product_class(product_class):
-    """Determine if the given product class string is a known one.
-
-    Args:
-      product_class (str): String such as 'com.cisco.iosv'
-
-    Returns:
-      bool: Whether product_class is known.
-    """
-    return product_class in PRODUCT_PLATFORM_MAP
-
-
-def platform_from_product_class(product_class):
-    """Get the class of Platform corresponding to a product class string.
-
-    Args:
-      product_class (str): String such as 'com.cisco.iosv'
-
-    Returns:
-      class: Platform or a subclass of it
-    """
-    if product_class is None:
-        return Platform
-    if is_known_product_class(product_class):
-        return PRODUCT_PLATFORM_MAP[product_class]
-    logger.warning("Unrecognized product class '%s' - known classes "
-                   "are %s. Treating as a generic platform",
-                   product_class, PRODUCT_PLATFORM_MAP.keys())
-    return Platform
-
-
 __all__ = (
-    'is_known_product_class',
-    'platform_from_product_class',
+    'Platform',
 )

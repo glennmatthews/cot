@@ -125,3 +125,6 @@ class CSR1000V(Platform):
           ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 0, 2, "serial ports")
+
+
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.csr1000v'] = CSR1000V

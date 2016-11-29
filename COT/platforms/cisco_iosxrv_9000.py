@@ -14,6 +14,7 @@
 
 import logging
 
+from COT.platforms.platform import Platform
 from COT.platforms.cisco_iosxrv import IOSXRv
 from COT.data_validation import (
     ValueTooLowError, ValueTooHighError, validate_int,
@@ -92,3 +93,8 @@ class IOSXRv9000(IOSXRv):
           ValueTooLowError: if ``count`` is less than 4
         """
         validate_int(count, 4, None, "NIC count")
+
+
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.ios-xrv9000'] = IOSXRv9000
+# Some early releases of this platform instead used:
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.ios-xrv64'] = IOSXRv9000

@@ -12,9 +12,13 @@
 
 """API and generic implementation of platform-specific logic."""
 
+import logging
+
 from COT.data_validation import (
     validate_int, ValueUnsupportedError, ValueTooLowError, NIC_TYPES,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class Platform(object):
@@ -37,6 +41,28 @@ class Platform(object):
     BOOTSTRAP_DISK_TYPE = 'cdrom'
 
     SUPPORTED_NIC_TYPES = NIC_TYPES
+
+    PRODUCT_PLATFORM_MAP = {}
+    """Mapping of product strings to product classes."""
+
+    @classmethod
+    def for_product_string(cls, product_string):
+        """Get the class of Platform corresponding to a product string.
+
+        Args:
+          product_string (str): String such as 'com.cisco.iosxrv'
+
+        Returns:
+          class: Platform or the appropriate subclass.
+        """
+        if product_string is None:
+            return Platform
+        if product_string in cls.PRODUCT_PLATFORM_MAP:
+            return cls.PRODUCT_PLATFORM_MAP[product_string]
+        logger.warning("Unrecognized product class '%s' - known classes "
+                       "are %s. Treating as a generic platform.",
+                       product_string, cls.PRODUCT_PLATFORM_MAP.keys())
+        return Platform
 
     # Some of these methods are semi-abstract, so:
     # pylint: disable=unused-argument
@@ -161,3 +187,6 @@ class Platform(object):
               supported by this platform
         """
         validate_int(count, 0, None, "serial port count")
+
+
+Platform.PRODUCT_PLATFORM_MAP[None] = Platform

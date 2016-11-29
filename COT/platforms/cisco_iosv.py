@@ -104,3 +104,6 @@ class IOSv(Platform):
           ValueTooHighError: if ``count`` is more than 2
         """
         validate_int(count, 1, 2, "serial ports")
+
+
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.iosv'] = IOSv

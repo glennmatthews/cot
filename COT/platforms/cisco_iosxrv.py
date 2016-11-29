@@ -189,3 +189,8 @@ class IOSXRvLC(IOSXRv):
             ValueTooHighError: if ``count`` is more than 4
         """
         validate_int(count, 0, 4, "serial ports")
+
+
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.ios-xrv'] = IOSXRv
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.ios-xrv.rp'] = IOSXRvRP
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.ios-xrv.lc'] = IOSXRvLC

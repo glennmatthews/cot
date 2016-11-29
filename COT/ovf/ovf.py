@@ -55,7 +55,7 @@ from COT.data_validation import (
     ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
 )
 from COT.file_reference import FileOnDisk, FileInTAR
-from COT.platforms import platform_from_product_class, Platform
+from COT.platforms import Platform
 from COT.disks import DiskRepresentation
 
 from COT.ovf.name_helper import name_helper
@@ -487,7 +487,7 @@ class OVF(VMDescription, XML):
         a more-specific subclass if recognized as such.
         """
         if self._platform is None:
-            self._platform = platform_from_product_class(self.product_class)
+            self._platform = Platform.for_product_string(self.product_class)
             logger.info("OVF product class %s --> platform %s",
                         self.product_class, self.platform.__name__)
         return self._platform
