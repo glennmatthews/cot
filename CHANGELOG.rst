@@ -13,6 +13,8 @@ This project adheres to `Semantic Versioning`_.
 - Issue in which explicitly specified NIC names were being overwritten by
   names auto-derived from network names when attempting to set both NIC name
   and network names in a single ``cot edit-hardware`` call.
+- ``cot edit-properties`` again accepts property values containing the characters
+  ``+`` and ``=`` (`#59`_).
 
 **Added**
 
@@ -593,6 +595,7 @@ Initial public release.
 .. _#53: https://github.com/glennmatthews/cot/issues/53
 .. _#54: https://github.com/glennmatthews/cot/issues/54
 .. _#58: https://github.com/glennmatthews/cot/issues/58
+.. _#59: https://github.com/glennmatthews/cot/issues/59
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
