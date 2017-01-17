@@ -578,7 +578,7 @@ class CLI(UI):
             # When argparse is using both "nargs='+'" and "action=append",
             # this allows some flexibility in the user CLI, but the parsed
             # output is a nested list of lists. E.g., "-a 1 2 -a 3" would parse
-            # as [[1, 2][3]] rather than the desired [1, 2, 3].
+            # as [[1, 2], [3]] rather than the desired [1, 2, 3].
             # Flatten it back out before we pass it through to the submodule!
             if (isinstance(value, list) and
                     all(isinstance(v, list) for v in value)):
