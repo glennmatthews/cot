@@ -683,5 +683,6 @@ def main():
     """Launch COT from the CLI."""
     CLI().run(sys.argv[1:])
 
+
 if __name__ == "__main__":
     main()
