@@ -637,12 +637,13 @@ class COTEditHardware(COTSubmodule):
         g.add_argument('-o', '--output',
                        help="Name/path of new OVF/OVA package to create "
                        "instead of updating the existing OVF")
-        g.add_argument('-v', '--virtual-system-type', nargs='+',
+        g.add_argument('-v', '--virtual-system-type',
+                       action='append', nargs='+',
                        type=no_whitespace, metavar=('TYPE', 'TYPE2'),
                        help="Change virtual system type(s) supported by "
                        "this OVF/OVA package.")
-        g.add_argument('-p', '--profiles', nargs='+', type=no_whitespace,
-                       metavar=('PROFILE', 'PROFILE2'),
+        g.add_argument('-p', '--profiles', action='append', nargs='+',
+                       type=no_whitespace, metavar=('PROFILE', 'PROFILE2'),
                        help="Make hardware changes only under the given "
                        "configuration profile(s). (default: changes apply "
                        "to all profiles)")
@@ -662,7 +663,7 @@ class COTEditHardware(COTSubmodule):
 
         g.add_argument('-n', '--nics', type=non_negative_int,
                        help="Set the number of NICs.")
-        g.add_argument('--nic-types', nargs='+',
+        g.add_argument('--nic-types', action='append', nargs='+',
                        metavar=('TYPE', 'TYPE2'),
                        help="Set the hardware type(s) for all NICs. "
                        "(default: do not change existing NICs, and new "
@@ -671,11 +672,11 @@ class COTEditHardware(COTSubmodule):
                        metavar=('NAME1', 'NAME2'),
                        help="Specify a list of one or more NIC names or "
                        "patterns to apply to NIC devices. See Notes.")
-        g.add_argument('-N', '--nic-networks', nargs='+',
+        g.add_argument('-N', '--nic-networks', action='append', nargs='+',
                        metavar=('NETWORK', 'NETWORK2'),
                        help="Specify a series of one or more network names "
                        "or patterns to map NICs to. See Notes.")
-        g.add_argument('--network-descriptions', nargs='+',
+        g.add_argument('--network-descriptions', action='append', nargs='+',
                        metavar=('NAME1', 'NAME2'),
                        help="Specify a list of one or more network "
                        "descriptions or patterns to apply to the networks. "

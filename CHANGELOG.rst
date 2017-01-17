@@ -6,6 +6,11 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Fixed**
+
+- Issue (`#58`_) where various multi-value CLI options for the `edit-hardware`
+  and `inject-config` commands did not append properly.
+
 **Added**
 
 - COT can now detect the presence of an .ovf file in a TAR archive even if
@@ -584,6 +589,7 @@ Initial public release.
 .. _#52: https://github.com/glennmatthews/cot/issues/52
 .. _#53: https://github.com/glennmatthews/cot/issues/53
 .. _#54: https://github.com/glennmatthews/cot/issues/54
+.. _#58: https://github.com/glennmatthews/cot/issues/58
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
