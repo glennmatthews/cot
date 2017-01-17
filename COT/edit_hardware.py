@@ -3,7 +3,7 @@
 # edit_hardware.py - Implements "edit-hardware" sub-command
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -447,7 +447,6 @@ class COTEditHardware(COTSubmodule):
         vm = self.vm
 
         nics_dict = vm.get_nic_count(self.profiles)
-        max_nics = max(nics_dict.values())
         if self.nics is not None:
             for (profile, count) in nics_dict.items():
                 if self.nics < count:
@@ -461,15 +460,8 @@ class COTEditHardware(COTSubmodule):
         if self.nic_types is not None:
             vm.set_nic_types(self.nic_types, self.profiles)
 
-        nics_dict = vm.get_nic_count(self.profiles)
-        max_nics = max(nics_dict.values())
-
         if self.mac_addresses_list is not None:
             vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
-
-        if self.nic_names is not None:
-            names = expand_list_wildcard(self.nic_names, max_nics)
-            vm.set_nic_names(names, self.profiles)
 
     def _run_update_networks(self):
         """Handle network changes. Helper for :meth:`run`."""
@@ -518,6 +510,15 @@ class COTEditHardware(COTSubmodule):
                 vm.create_network(network, new_desc)
 
             vm.set_nic_networks(new_networks, self.profiles)
+
+    def _run_update_nic_names(self):
+        """Update NIC names. Helper for :meth:`run`."""
+        if self.nic_names is not None:
+            vm = self.vm
+            nics_dict = vm.get_nic_count(self.profiles)
+            max_nics = max(nics_dict.values())
+            names = expand_list_wildcard(self.nic_names, max_nics)
+            vm.set_nic_names(names, self.profiles)
 
     def _run_update_serial(self):
         """Handle serial port changes. Helper for :meth:`run`."""
@@ -572,6 +573,10 @@ class COTEditHardware(COTSubmodule):
         self._run_update_nics()
 
         self._run_update_networks()
+
+        # Update NIC names *after* updating networks, as we don't want
+        # network-induced name changes to overwrite user-specified names.
+        self._run_update_nic_names()
 
         self._run_update_serial()
 

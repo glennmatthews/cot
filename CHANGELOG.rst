@@ -8,8 +8,11 @@ This project adheres to `Semantic Versioning`_.
 
 **Fixed**
 
-- Issue (`#58`_) where various multi-value CLI options for the `edit-hardware`
-  and `inject-config` commands did not append properly.
+- Issue (`#58`_) where various multi-value CLI options for the
+  ``edit-hardware`` and ``inject-config`` commands did not append properly.
+- Issue in which explicitly specified NIC names were being overwritten by
+  names auto-derived from network names when attempting to set both NIC name
+  and network names in a single ``cot edit-hardware`` call.
 
 **Added**
 
