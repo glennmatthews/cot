@@ -265,9 +265,10 @@ class Helper(object):
             match = re.search(self._version_regexp, output)
             if not match:
                 raise RuntimeError(
-                    "Unable to find version number for '{0}' in output from '{0} {1}':"
-                    "\n{2}".format(self.name, ' '.join(self._version_args),
-                                   output))
+                    "Unable to find version number for '{0}' in output from"
+                    " '{0} {1}':\n{2}".format(self.name,
+                                              ' '.join(self._version_args),
+                                              output))
             self._version = StrictVersion(match.group(1))
         return self._version
 
