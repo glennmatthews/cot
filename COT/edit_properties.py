@@ -88,7 +88,7 @@ class COTEditProperties(COTSubmodule):
 
     @property
     def properties(self):
-        """List of property (key, value, type) tuples to update.
+        r"""List of property (key, value, type) tuples to update.
 
         Properties may also be set from strings (such as by CLI)
         with the syntax ``<key>[=<value>][+<type>]``.
@@ -106,19 +106,18 @@ class COTEditProperties(COTSubmodule):
             ... "string_type+string",
             ... "full-type=yes+boolean",
             ... ]
-            >>> print("\\n".join(["{0:15} {1:10} {2}".format(*p)
-            ... for p in i.properties]))
-            no_value        None       None
-            key             value      None
-            string_type     None       string
-            full-type       yes        boolean
+            >>> print("\n".join([str(p) for p in i.properties]))
+            ('no_value', None, None)
+            ('key', 'value', None)
+            ('string_type', None, 'string')
+            ('full-type', 'yes', 'boolean')
             >>> i.properties = [
             ... "ssh=autopubkey=ssh-rsa AA...q+t0...Tuw== root@MASTER",
             ... "tricky=+foo",
             ... "tricky_value=++foo==++",
             ... "trickiest=bar+foo=hello+boolean",
             ... ]
-            >>> print("\\n".join([str(p) for p in i.properties]))
+            >>> print("\n".join([str(p) for p in i.properties]))
             ('ssh', 'autopubkey=ssh-rsa AA...q+t0...Tuw== root@MASTER', None)
             ('tricky', '', 'foo')
             ('tricky_value', '++foo==++', None)
