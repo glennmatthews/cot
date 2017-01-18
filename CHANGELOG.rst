@@ -6,6 +6,10 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Added**
+
+- Support for Python 3.6
+
 **Removed**
 
 - Discontinued support for Python 2.6 as it has been retired since 2013.
