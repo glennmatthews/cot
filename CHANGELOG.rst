@@ -3,6 +3,27 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.8.2`_ - 2017-01-18
+---------------------
+
+**Fixed**
+
+- Issue (`#58`_) where various multi-value CLI options for the
+  ``edit-hardware`` and ``inject-config`` commands did not append properly.
+- Issue in which explicitly specified NIC names were being overwritten by
+  names auto-derived from network names when attempting to set both NIC name
+  and network names in a single ``cot edit-hardware`` call.
+- ``cot edit-properties`` again accepts property values containing the characters
+  ``+`` and ``=`` (`#59`_).
+
+**Added**
+
+- COT can now detect the presence of an .ovf file in a TAR archive even if
+  the archive is not named ``*.ova*`` and even if the .ovf file is not the first
+  file in the archive as specified by the OVF specification. This allows
+  (read-only at present) handling of VirtualBox Vagrant .box files,
+  which are approximately equivalent to non-standards-compliant OVAs.
+
 `1.8.1`_ - 2016-11-12
 ---------------------
 
@@ -573,6 +594,8 @@ Initial public release.
 .. _#52: https://github.com/glennmatthews/cot/issues/52
 .. _#53: https://github.com/glennmatthews/cot/issues/53
 .. _#54: https://github.com/glennmatthews/cot/issues/54
+.. _#58: https://github.com/glennmatthews/cot/issues/58
+.. _#59: https://github.com/glennmatthews/cot/issues/59
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -604,6 +627,7 @@ Initial public release.
 .. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.8.2: https://github.com/glennmatthews/cot/compare/v1.8.1...v1.8.2
 .. _1.8.1: https://github.com/glennmatthews/cot/compare/v1.8.0...v1.8.1
 .. _1.8.0: https://github.com/glennmatthews/cot/compare/v1.7.4...v1.8.0
 .. _1.7.4: https://github.com/glennmatthews/cot/compare/v1.7.3...v1.7.4

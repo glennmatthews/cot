@@ -88,6 +88,7 @@ class custom_bdist_egg(bdist_egg):  # noqa: N801
         self.run_command('build_sphinx')
         bdist_egg.run(self)
 
+
 cmdclass['bdist_egg'] = custom_bdist_egg
 
 
@@ -100,6 +101,7 @@ class custom_test(test):  # noqa: N801
                                            "COT/docs/man")):
             self.run_command('build_sphinx')
         test.with_project_on_sys_path(self, func)
+
 
 cmdclass['test'] = custom_test
 

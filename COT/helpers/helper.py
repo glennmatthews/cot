@@ -264,8 +264,11 @@ class Helper(object):
             output = self.call(self._version_args, require_success=False)
             match = re.search(self._version_regexp, output)
             if not match:
-                raise RuntimeError("Unable to find version number in output:"
-                                   "\n{0}".format(output))
+                raise RuntimeError(
+                    "Unable to find version number for '{0}' in output from"
+                    " '{0} {1}':\n{2}".format(self.name,
+                                              ' '.join(self._version_args),
+                                              output))
             self._version = StrictVersion(match.group(1))
         return self._version
 
@@ -301,7 +304,7 @@ class Helper(object):
                     "Please install it and/or check your $PATH."
                     .format(self.name))
             self.install()
-        args.insert(0, self.name)
+        args = [self.name] + args
         if capture_output:
             return check_output(args, **kwargs)
         else:

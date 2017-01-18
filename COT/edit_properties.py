@@ -3,7 +3,7 @@
 # edit_properties.py - Implements "edit-properties" sub-command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -88,14 +88,56 @@ class COTEditProperties(COTSubmodule):
 
     @property
     def properties(self):
-        """List of property (key, value, type) tuples to update."""
+        r"""List of property (key, value, type) tuples to update.
+
+        Properties may also be set from strings (such as by CLI)
+        with the syntax ``<key>[=<value>][+<type>]``.
+
+        Examples:
+          ::
+
+            >>> from COT.ui_shared import UI
+            >>> i = COTEditProperties(UI())
+            >>> i.properties
+            []
+            >>> i.properties = [
+            ... "no_value",
+            ... "key=value",
+            ... "string_type+string",
+            ... "full-type=yes+boolean",
+            ... ]
+            >>> print("\n".join([str(p) for p in i.properties]))
+            ('no_value', None, None)
+            ('key', 'value', None)
+            ('string_type', None, 'string')
+            ('full-type', 'yes', 'boolean')
+            >>> i.properties = [
+            ... "ssh=autopubkey=ssh-rsa AA...q+t0...Tuw== root@MASTER",
+            ... "tricky=+foo",
+            ... "tricky_value=++foo==++",
+            ... "trickiest=bar+foo=hello+boolean",
+            ... ]
+            >>> print("\n".join([str(p) for p in i.properties]))
+            ('ssh', 'autopubkey=ssh-rsa AA...q+t0...Tuw== root@MASTER', None)
+            ('tricky', '', 'foo')
+            ('tricky_value', '++foo==++', None)
+            ('trickiest', 'bar+foo=hello', 'boolean')
+        """
         return self._properties
 
     @properties.setter
     def properties(self, value):
         new_value = []
         for prop in value:
-            match = re.match(r"^([^=+]+?)(=[^=+]*?)?(\+[^=+]*?)?$", prop)
+            # While our string is delimited by '+' and '=' as "key=value+type",
+            # those characters may also be included in the actual value,
+            # as in an SSH private key:
+            # 'autopubkey=ssh-rsa AA...gl/p...q+t0...Tuw== root@MASTER'
+            # or other base64-encoded value ([A-Za-z0-9+/=] or [A-Za-z0-9-_=])
+            # So we have to be "clever" in how we parse things.
+            # To handle ambiguity, we presume that the characters '+' and '='
+            # MAY appear in a value string but NOT in a key or prop_type.
+            match = re.match(r"^([^=+]+)(=.*?)?(\+[^=+]+?)?$", prop)
             if not match:
                 raise InvalidInputError("Invalid property '{0}' - properties "
                                         "must be in 'key[=value][+type]' form"
@@ -113,7 +155,7 @@ class COTEditProperties(COTSubmodule):
 
     @property
     def transports(self):
-        """Transport mechanism(s) for environment properties.."""
+        """Transport mechanism(s) for environment properties."""
         return self._transports
 
     _KNOWN_TRANSPORTS = {
