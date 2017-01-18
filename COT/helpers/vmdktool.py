@@ -3,7 +3,7 @@
 # vmdktool.py - Helper for 'vmdktool'
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -54,7 +54,7 @@ class VMDKTool(Helper):
             helpers['port'].install_package('vmdktool')
             return
         elif platform.system() != 'Linux':
-            self.unsure_how_to_install()
+            raise self.unsure_how_to_install()
 
         # We don't have vmdktool in apt or yum yet,
         # but we can build it manually:

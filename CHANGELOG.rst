@@ -10,6 +10,10 @@ This project adheres to `Semantic Versioning`_.
 
 - Support for Python 3.6
 
+**Fixed**
+
+- Improved messaging when COT is unable to install a helper program (`#57`_).
+
 `1.8.2`_ - 2017-01-18
 ---------------------
 
@@ -601,6 +605,7 @@ Initial public release.
 .. _#52: https://github.com/glennmatthews/cot/issues/52
 .. _#53: https://github.com/glennmatthews/cot/issues/53
 .. _#54: https://github.com/glennmatthews/cot/issues/54
+.. _#57: https://github.com/glennmatthews/cot/issues/57
 .. _#58: https://github.com/glennmatthews/cot/issues/58
 .. _#59: https://github.com/glennmatthews/cot/issues/59
 
