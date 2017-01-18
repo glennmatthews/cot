@@ -46,6 +46,13 @@ install_requires = [
 if sys.version_info < (3, 3):
     install_requires.append('backports.shutil_get_terminal_size')
 
+# http://docs.python-requests.org/en/latest/community/
+#      faq/#what-are-hostname-doesn-t-match-errors
+# COT tends to run into this issue when downloading the VMDKtool source
+if sys.version_info < (2, 7, 9):
+    install_requires.append('pyOpenSSL')
+    install_requires.append('ndg-httpsclient')
+
 if sys.version_info < (2, 7) or (sys.version_info >= (3, 0) and
                                  sys.version_info < (3, 4)):
     # Sphinx 1.5 and later requires 2.7 or 3.4
@@ -81,6 +88,7 @@ class custom_bdist_egg(bdist_egg):  # noqa: N801
         self.run_command('build_sphinx')
         bdist_egg.run(self)
 
+
 cmdclass['bdist_egg'] = custom_bdist_egg
 
 
@@ -93,6 +101,7 @@ class custom_test(test):  # noqa: N801
                                            "COT/docs/man")):
             self.run_command('build_sphinx')
         test.with_project_on_sys_path(self, func)
+
 
 cmdclass['test'] = custom_test
 

@@ -175,6 +175,7 @@ def canonicalize_ide_subtype(subtype):
                                ],
                                re.IGNORECASE)
 
+
 _NIC_MAPPINGS = [
     ("e1000e", 'E1000e'),
     ("e1000", 'E1000'),

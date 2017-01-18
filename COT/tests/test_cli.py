@@ -41,6 +41,22 @@ from COT.data_validation import InvalidInputError
 class TestCOTCLI(COT_UT):
     """Parent class for CLI test cases."""
 
+    @staticmethod
+    def creating_network_warning(net_name):
+        """Warning log message for creating a new network entry.
+
+        Args:
+          net_name (str): Name of new network
+        Returns:
+          dict: kwargs suitable for passing into :meth:`assertLogged`
+        """
+        return {
+            'levelname': 'WARNING',
+            'msg': "Automatically agreeing to '%s'",
+            'args': ("Network {0} is not currently defined. Create it?"
+                     .format(net_name), ),
+        }
+
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         self.cli = CLI(terminal_width=80)
@@ -77,7 +93,8 @@ class TestCOTCLI(COT_UT):
         with mock.patch('sys.stdin'), \
                 mock.patch('sys.stdout',
                            new_callable=StringIO.StringIO) as _so, \
-                mock.patch('sys.stderr'):
+                mock.patch('sys.stderr',
+                           new_callable=StringIO.StringIO) as _se:
             try:
                 rc = self.cli.run(argv)
             except SystemExit as se:
@@ -87,10 +104,11 @@ class TestCOTCLI(COT_UT):
                     print(se.code, file=sys.stderr)
                     rc = 1
             stdout = _so.getvalue()
+            stderr = _se.getvalue()
 
         self.assertEqual(rc, result,
-                         "\nargv: \n{0}\nstdout:\n{1}"
-                         .format(" ".join(argv), stdout))
+                         "\nargv: \n{0}\nstdout:\n{1}\nstderr:\n{2}"
+                         .format(" ".join(argv), stdout, stderr))
         return stdout
 
 
@@ -615,6 +633,129 @@ class TestCLIEditHardware(TestCOTCLI):
         # Invalid NIC type
         self.call_cot(base_args + ['--nic_type', 'GLENN'], result=2)
 
+    def test_args_append(self):
+        """Test for https://github.com/glennmatthews/cot/issues/58."""
+        # Multiple parameters for each arg:
+        self.call_cot(['edit-hardware', self.input_ovf, '-o', self.temp_file,
+                       '-v', 'vmx-08', 'vmx-09',
+                       '--nic-types', 'e1000', 'virtio',
+                       '--nic-names', 'mgmt', 'eth{1}',
+                       '-N', 'VM Network', 'Eth{1}',
+                       '--network-descriptions', 'VM Network', 'Ethernet {1}',
+                       '-M', '00:00:00:00:00:00', '00:00:00:00:00:01',
+                       '-S', 'telnet://localhost:1', 'telnet://localhost:2',
+                       '--scsi-subtypes', 'lsilogic', 'virtio',
+                       '--ide-subtypes', 'PIIX4', 'virtio'])
+        self.assertLogged(**self.creating_network_warning('Eth1'))
+        self.assertLogged(**self.creating_network_warning('Eth2'))
+        self.check_diff("""
+       <ovf:Description>VM Network</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="Eth1">
++      <ovf:Description>Ethernet 1</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="Eth2">
++      <ovf:Description>Ethernet 2</ovf:Description>
+     </ovf:Network>
+...
+         <vssd:VirtualSystemIdentifier>test</vssd:VirtualSystemIdentifier>
+-        <vssd:VirtualSystemType>vmx-07 vmx-08</vssd:VirtualSystemType>
++        <vssd:VirtualSystemType>vmx-08 vmx-09</vssd:VirtualSystemType>
+       </ovf:System>
+...
+         <rasd:InstanceID>3</rasd:InstanceID>
+-        <rasd:ResourceSubType>lsilogic</rasd:ResourceSubType>
++        <rasd:ResourceSubType>lsilogic virtio</rasd:ResourceSubType>
+         <rasd:ResourceType>6</rasd:ResourceType>
+...
+         <rasd:InstanceID>4</rasd:InstanceID>
++        <rasd:ResourceSubType>PIIX4 virtio</rasd:ResourceSubType>
+         <rasd:ResourceType>5</rasd:ResourceType>
+...
+         <rasd:InstanceID>5</rasd:InstanceID>
++        <rasd:ResourceSubType>PIIX4 virtio</rasd:ResourceSubType>
+         <rasd:ResourceType>5</rasd:ResourceType>
+...
+       <ovf:Item ovf:required="false">
++        <rasd:Address>telnet://localhost:1</rasd:Address>
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+...
+       <ovf:Item ovf:required="false">
++        <rasd:Address>telnet://localhost:2</rasd:Address>
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+...
+       <ovf:Item>
++        <rasd:Address>00:00:00:00:00:00</rasd:Address>
+         <rasd:AddressOnParent>11</rasd:AddressOnParent>
+...
+         <rasd:Connection>VM Network</rasd:Connection>
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet1</rasd:ElementName>
++        <rasd:Description>E1000/virtio ethernet adapter on "VM Network"\
+</rasd:Description>
++        <rasd:ElementName>mgmt</rasd:ElementName>
+         <rasd:InstanceID>11</rasd:InstanceID>
+-        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 virtio</rasd:ResourceSubType>
+         <rasd:ResourceType>10</rasd:ResourceType>
+...
+       <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
++        <rasd:Address>00:00:00:00:00:01</rasd:Address>
+         <rasd:AddressOnParent>12</rasd:AddressOnParent>
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>VM Network</rasd:Connection>
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet2</rasd:ElementName>
++        <rasd:Connection>Eth1</rasd:Connection>
++        <rasd:Description>E1000/virtio ethernet adapter on "Eth1"\
+</rasd:Description>
++        <rasd:ElementName>eth1</rasd:ElementName>
+         <rasd:InstanceID>12</rasd:InstanceID>
+-        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 virtio</rasd:ResourceSubType>
+         <rasd:ResourceType>10</rasd:ResourceType>
+...
+       <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
++        <rasd:Address>00:00:00:00:00:01</rasd:Address>
+         <rasd:AddressOnParent>13</rasd:AddressOnParent>
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>VM Network</rasd:Connection>
+-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
+-        <rasd:ElementName>GigabitEthernet3</rasd:ElementName>
++        <rasd:Connection>Eth2</rasd:Connection>
++        <rasd:Description>E1000/virtio ethernet adapter on "Eth2"\
+</rasd:Description>
++        <rasd:ElementName>eth2</rasd:ElementName>
+         <rasd:InstanceID>13</rasd:InstanceID>
+-        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
++        <rasd:ResourceSubType>E1000 virtio</rasd:ResourceSubType>
+         <rasd:ResourceType>10</rasd:ResourceType>
+""")
+
+        temp_file_2 = os.path.join(self.temp_dir, "out2.ovf")
+        # Multiple instances of each arg:
+        self.call_cot(['edit-hardware', self.input_ovf, '-o', temp_file_2,
+                       '-v', 'vmx-08', '-v', 'vmx-09',
+                       '--nic-types', 'e1000', '--nic-types', 'virtio',
+                       '--nic-names', 'mgmt', '--nic-names', 'eth{1}',
+                       '-N', 'VM Network', '-N', 'Eth{1}',
+                       '--network-descriptions', 'VM Network',
+                       '--network-descriptions', 'Ethernet {1}',
+                       '-M', '00:00:00:00:00:00', '-M', '00:00:00:00:00:01',
+                       '-S', 'telnet://localhost:1',
+                       '-S', 'telnet://localhost:2',
+                       '--scsi-subtypes', 'lsilogic',
+                       '--scsi-subtypes', 'virtio',
+                       '--ide-subtypes', 'PIIX4', '--ide-subtypes', 'virtio'])
+        self.assertLogged(**self.creating_network_warning('Eth1'))
+        self.assertLogged(**self.creating_network_warning('Eth2'))
+
+        # Both inputs should create the same output OVF.
+        self.check_diff("", file1=self.temp_file, file2=temp_file_2)
+
 
 class TestCLIEditProduct(TestCOTCLI):
     """CLI test cases for "cot edit-product" command."""
@@ -761,11 +902,14 @@ class TestCLIInjectConfig(TestCOTCLI):
         # Missing strings
         self.call_cot(['inject-config', self.input_ovf, '-c'], result=2)
         self.call_cot(['inject-config', self.input_ovf, '-s'], result=2)
+        self.call_cot(['inject-config', self.input_ovf, '-e'], result=2)
         # Nonexistent config files
         self.call_cot(['inject-config', self.input_ovf,
                        '-c', '/foo'], result=2)
         self.call_cot(['inject-config', self.input_ovf,
                        '-s', '/foo'], result=2)
+        self.call_cot(['inject-config', self.input_ovf,
+                       '-e', '/foo'], result=2)
 
 
 class TestCLIDeploy(TestCOTCLI):

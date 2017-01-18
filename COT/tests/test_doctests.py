@@ -3,7 +3,7 @@
 # test_doctests.py - test runner for COT doctests
 #
 # July 2016, Glenn F. Matthews
-# Copyright (c) 2016 the COT project developers.
+# Copyright (c) 2016-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -29,5 +29,6 @@ def load_tests(*_):
     suite.addTests(DocTestSuite('COT.cli'))
     suite.addTests(DocTestSuite('COT.deploy'))
     suite.addTests(DocTestSuite('COT.edit_hardware'))
+    suite.addTests(DocTestSuite('COT.edit_properties'))
     suite.addTests(DocTestSuite('COT.file_reference'))
     return suite

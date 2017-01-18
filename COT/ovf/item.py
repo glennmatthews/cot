@@ -3,7 +3,7 @@
 # item.py - OVFItem class
 #
 # June 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -280,10 +280,11 @@ class OVFItem(object):
     def value_add_wildcards(self, name, value, profiles):
         """Add wildcard placeholders to a string that may need updating.
 
-        If the ElementName or Description references the VirtualQuantity,
-        Connection, or ResourceSubType, replace that reference with a
-        placeholder that we can regenerate at output time. That way, if the
-        VirtualQuantity or ResourceSubType changes, these can change too.
+        If the Description references the ElementName, or the
+        ElementName or Description references the VirtualQuantity,
+        Connection, or ResourceSubType, replace such references with a
+        placeholder that we can regenerate at output time. That way, if
+        any of the linked items change, these strings can change too.
 
         Args:
           name (str): Property name
@@ -296,6 +297,11 @@ class OVFItem(object):
         .. seealso::
            :meth:`value_replace_wildcards`
         """
+        if name == self.ITEM_DESCRIPTION:
+            en_val = self.get_value(self.ELEMENT_NAME, profiles)
+            if en_val is not None:
+                value = re.sub(en_val, "_EN_", value)
+
         if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, profiles)
             if vq_val is not None:
@@ -309,11 +315,6 @@ class OVFItem(object):
             if conn_val is not None:
                 value = re.sub(conn_val, "_CONN_", value)
 
-        # Similarly, if the Description references the ElementName...
-        if name == self.ITEM_DESCRIPTION:
-            en_val = self.get_value(self.ELEMENT_NAME, profiles)
-            if en_val is not None:
-                value = re.sub(en_val, "_EN_", value)
         return value
 
     def value_replace_wildcards(self, name, value, profiles):
@@ -332,6 +333,10 @@ class OVFItem(object):
         """
         if not value:
             return value
+        if name == self.ITEM_DESCRIPTION:
+            en_val = self._get_value(self.ELEMENT_NAME, profiles)
+            if en_val is not None:
+                value = re.sub("_EN_", str(en_val), str(value))
         if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
             # To regenerate text that depends on these values:
             rst_val = self._get_value(self.RESOURCE_SUB_TYPE, profiles)
@@ -345,10 +350,6 @@ class OVFItem(object):
                 value = re.sub("_VQ_", str(vq_val), str(value))
             if conn_val is not None:
                 value = re.sub("_CONN_", str(conn_val), str(value))
-        if name == self.ITEM_DESCRIPTION:
-            en_val = self._get_value(self.ELEMENT_NAME, profiles)
-            if en_val is not None:
-                value = re.sub("_EN_", str(en_val), str(value))
         return value
 
     def _set_new_property(self, name, value, profiles):

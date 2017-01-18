@@ -219,7 +219,7 @@ class OVF(VMDescription, XML):
           filename (str): File name/path
 
         Returns:
-          str: '.ovf' or '.ova'
+          str: '.ovf', '.box' or '.ova'
 
         Raises:
           ValueUnsupportedError: if filename doesn't match ovf/ova
@@ -228,7 +228,7 @@ class OVF(VMDescription, XML):
         filename = os.path.basename(filename)
         extension = os.path.splitext(filename)[1]
 
-        if extension == ".ovf" or extension == ".ova":
+        if extension == ".ovf" or extension == ".ova" or extension == ".box":
             return extension
         # Some sources of files are not good about preserving the extension
         # and hence tend to append additional extensions - while this may open
@@ -260,7 +260,7 @@ class OVF(VMDescription, XML):
           str: OVF descriptor path
         """
         extension = self.detect_type_from_name(input_file)
-        if extension == '.ova':
+        if extension == '.ova' or extension == '.box':
             # Untar the ova to our working directory
             return self.untar(input_file)
         elif extension == '.ovf':
@@ -2621,13 +2621,6 @@ class OVF(VMDescription, XML):
             # For now we just validate #1.
             if not tarf.getmembers():
                 raise VMInitError(1, "No files to untar", file_path)
-            ovf_descriptor = tarf.getmembers()[0]
-            if os.path.splitext(ovf_descriptor.name)[1] != '.ovf':
-                raise VMInitError(1,
-                                  "First file in TAR is '{0}' but it should "
-                                  "have been an OVF file - OVA is invalid!"
-                                  .format(ovf_descriptor.name),
-                                  file_path)
             # Make sure the provided file doesn't contain any malicious paths
             # http://stackoverflow.com/questions/8112742/
             for n in tarf.getnames():
@@ -2636,6 +2629,23 @@ class OVF(VMDescription, XML):
                         .startswith(self.working_dir)):
                     raise VMInitError(1, "Tar file contains malicious/unsafe "
                                       "file path '{0}'!".format(n), file_path)
+
+            ovf_descriptor = tarf.getmembers()[0]
+            if os.path.splitext(ovf_descriptor.name)[1] != '.ovf':
+                # Do we have an OVF descriptor elsewhere in the file?
+                candidates = [mem for mem in tarf.getmembers() if
+                              os.path.splitext(mem.name)[1] == '.ovf']
+                if not candidates:
+                    raise VMInitError(1,
+                                      "TAR file '{0}' does not contain an OVF "
+                                      "descriptor - OVA is invalid!"
+                                      .format(ovf_descriptor.name),
+                                      file_path)
+                ovf_descriptor = candidates[0]
+                logger.warning(
+                    "OVF file %s found, but is not the first file in the TAR "
+                    "as it should be - OVA is not standard-compliant!",
+                    ovf_descriptor.name)
 
             # TODO: In theory we could read the ovf descriptor XML directly
             # from the TAR and not need to even extract this file to disk...
