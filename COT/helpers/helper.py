@@ -344,12 +344,20 @@ class Helper(object):
         if self.info_uri:
             msg += "\nRefer to {0} for information".format(self.info_uri)
 
-        if platform.system() == 'Darwin' and (
-                'port' in self._provider_package and not helpers['port']):
-            msg += ("\nCOT can use MacPorts (https://www.macports.org/),"
-                    " if available on your system, to install {0} and other"
-                    " helpers for you.".format(self.name))
-            return RuntimeError(msg)
+        if platform.system() == 'Darwin':
+            if 'brew' in self._provider_package and not helpers['brew']:
+                msg += ("\nCOT can use Homebrew (https://brew.sh), "
+                        "if available on your system, to install {0}."
+                        .format(self.name))
+            if 'port' in self._provider_package and not helpers['port']:
+                msg += ("\nCOT can use MacPorts (https://www.macports.org/), "
+                        "if available on your system, to install {0}."
+                        .format(self.name))
+            if ('brew' in self._provider_package or
+                    'port' in self._provider_package):
+                return RuntimeError(msg)
+            else:
+                return NotImplementedError(msg)
         elif platform.system() == 'Linux' and (
                 ('apt-get' in self._provider_package or
                  'yum' in self._provider_package) and
@@ -479,11 +487,13 @@ helpers = HelperDict(Helper)
 class PackageManager(Helper):
     """Helper program with additional API method install_package()."""
 
-    def install_package(self, package):
+    def install_package(self, package, *args, **kwargs):
         """Install the requested package if needed.
 
         Args:
           package (str): Name of the package to install.
+          *args (list): Subclasses may accept additional positional args.
+          **kwargs (dict): Subclasses may accept additional keyword args.
         """
         raise NotImplementedError("install_package not implemented!")
 

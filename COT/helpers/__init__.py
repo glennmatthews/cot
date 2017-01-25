@@ -1,5 +1,5 @@
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2015-2016 the COT project developers.
+# Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -38,6 +38,7 @@ Helper modules
 
   COT.helpers.helper
   COT.helpers.apt_get
+  COT.helpers.brew
   COT.helpers.fatdisk
   COT.helpers.gcc
   COT.helpers.isoinfo
@@ -55,6 +56,7 @@ from .helper import (
     HelperError, HelperNotFoundError, helper_select,
 )
 from .apt_get import AptGet       # noqa
+from .brew import Brew            # noqa
 from .fatdisk import FatDisk      # noqa
 from .gcc import GCC              # noqa
 from .isoinfo import ISOInfo      # noqa

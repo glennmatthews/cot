@@ -9,6 +9,7 @@ This project adheres to `Semantic Versioning`_.
 **Added**
 
 - Support for Python 3.6
+- Support for `brew` package manager (`#55`_).
 
 **Fixed**
 
@@ -605,6 +606,7 @@ Initial public release.
 .. _#52: https://github.com/glennmatthews/cot/issues/52
 .. _#53: https://github.com/glennmatthews/cot/issues/53
 .. _#54: https://github.com/glennmatthews/cot/issues/54
+.. _#55: https://github.com/glennmatthews/cot/issues/55
 .. _#57: https://github.com/glennmatthews/cot/issues/57
 .. _#58: https://github.com/glennmatthews/cot/issues/58
 .. _#59: https://github.com/glennmatthews/cot/issues/59

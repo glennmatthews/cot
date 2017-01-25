@@ -3,7 +3,7 @@
 # isoinfo.py - Helper for 'isoinfo'
 #
 # September 2016, Glenn F. Matthews
-# Copyright (c) 2016 the COT project developers.
+# Copyright (c) 2016-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -30,6 +30,7 @@ class ISOInfo(Helper):
 
     _provider_package = {
         'apt-get': 'genisoimage',
+        'brew': 'cdrtools',
         'port': 'cdrtools',
     }
 

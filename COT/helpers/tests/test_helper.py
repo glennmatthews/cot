@@ -3,7 +3,7 @@
 # test_helpers.py - Unit test cases for COT.helpers submodule.
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -74,7 +74,7 @@ class HelperUT(COT_UT):
     @staticmethod
     def select_package_manager(name):
         """Select the specified installer program for Helper to use."""
-        for pm_name in ['apt-get', 'port', 'yum']:
+        for pm_name in ['apt-get', 'brew', 'port', 'yum']:
             helpers[pm_name]._installed = (pm_name == name)
 
     def enable_apt_install(self):
@@ -136,6 +136,24 @@ class HelperUT(COT_UT):
                     self.assertSubprocessCalls(
                         mock_check_call,
                         [['apt-get', '-q', 'install', pkgname]])
+
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    def brew_install_test(self, brew_params, *_):
+        """Test installation with 'brew'.
+
+        Args:
+          brew_params (str,): Homebrew formula name to test, or list of args.
+        """
+        self.select_package_manager('brew')
+        if isinstance(brew_params, str):
+            brew_params = [brew_params]
+        # Python 2.6 doesn't let us use multiple contexts in one 'with'
+        with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch.object(self.helper, '_path') as mock_path:
+                mock_path.return_value = (None, '/bin/' + brew_params[0])
+                self.helper.install()
+                mock_check_call.assert_called_with(
+                    ['brew', 'install'] + brew_params)
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
