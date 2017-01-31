@@ -1,5 +1,5 @@
 # October 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -40,6 +40,7 @@ Platform modules
   COT.platforms.cisco_iosv
   COT.platforms.cisco_iosxrv
   COT.platforms.cisco_iosxrv_9000
+  COT.platforms.cisco_nexus_9000v
   COT.platforms.cisco_nxosv
 """
 
@@ -50,6 +51,7 @@ from .cisco_csr1000v import CSR1000V
 from .cisco_iosv import IOSv
 from .cisco_iosxrv import IOSXRv, IOSXRvRP, IOSXRvLC
 from .cisco_iosxrv_9000 import IOSXRv9000
+from .cisco_nexus_9000v import Nexus9000v
 from .cisco_nxosv import NXOSv
 
 logger = logging.getLogger(__name__)
@@ -58,6 +60,7 @@ logger = logging.getLogger(__name__)
 PRODUCT_PLATFORM_MAP = {
     'com.cisco.csr1000v':    CSR1000V,
     'com.cisco.iosv':        IOSv,
+    'com.cisco.n9k':         Nexus9000v,
     'com.cisco.nx-osv':      NXOSv,
     'com.cisco.ios-xrv':     IOSXRv,
     'com.cisco.ios-xrv.rp':  IOSXRvRP,
@@ -78,6 +81,14 @@ def is_known_product_class(product_class):
 
     Returns:
       bool: Whether product_class is known.
+
+    Examples:
+      ::
+
+        >>> is_known_product_class("com.cisco.n9k")
+        True
+        >>> is_known_product_class("foobar")
+        False
     """
     return product_class in PRODUCT_PLATFORM_MAP
 
@@ -90,6 +101,16 @@ def platform_from_product_class(product_class):
 
     Returns:
       class: GenericPlatform or a subclass of it
+
+    Examples:
+      ::
+
+        >>> platform_from_product_class("com.cisco.n9k")
+        <class 'COT.platforms.cisco_nexus_9000v.Nexus9000v'>
+        >>> platform_from_product_class(None)
+        <class 'COT.platforms.generic.GenericPlatform'>
+        >>> platform_from_product_class("frobozz")
+        <class 'COT.platforms.generic.GenericPlatform'>
     """
     if product_class is None:
         return GenericPlatform

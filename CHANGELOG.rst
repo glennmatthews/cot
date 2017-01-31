@@ -10,6 +10,7 @@ This project adheres to `Semantic Versioning`_.
 
 - Support for Python 3.6
 - Support for `brew` package manager (`#55`_).
+- Support for Cisco Nexus 9000v (NX-OSv 9000) platform (`#60`_).
 
 **Fixed**
 
@@ -610,6 +611,7 @@ Initial public release.
 .. _#57: https://github.com/glennmatthews/cot/issues/57
 .. _#58: https://github.com/glennmatthews/cot/issues/58
 .. _#59: https://github.com/glennmatthews/cot/issues/59
+.. _#60: https://github.com/glennmatthews/cot/issues/60
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
