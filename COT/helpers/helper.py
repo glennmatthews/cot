@@ -511,6 +511,23 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
           returns a value other than 0 (instead of a
           :class:`subprocess.CalledProcessError`).
       OSError: as :func:`subprocess.check_call`.
+
+    Examples:
+      ::
+
+        >>> check_call(['/nope/does/not/exist'])   # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+          ...
+        HelperNotFoundError: [Errno 2] Unable to locate helper program ...
+        >>> check_call(['false'])
+        Traceback (most recent call last):
+          ...
+        HelperError: [Errno 1] Helper program 'false' exited with error 1
+        >>> check_call(['false'], require_success=False)
+        >>> check_call(['/etc/'])
+        Traceback (most recent call last):
+          ...
+        OSError: [Errno 13] Permission denied
     """
     cmd = args[0]
     logger.info("Calling '%s'...", " ".join(args))
@@ -545,7 +562,7 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
 
 
 def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
-    """Wrapper for :func:`subprocess.check_output`.
+    r"""Wrapper for :func:`subprocess.check_output`.
 
     Automatically redirects stderr to stdout, captures both to a buffer,
     and generates a debug message with the stdout contents.
@@ -569,6 +586,28 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
           returns a value other than 0 (instead of a
           :class:`subprocess.CalledProcessError`).
       OSError: as :func:`subprocess.check_output`.
+
+    Examples:
+      ::
+
+        >>> check_output(['/nope/does/not/exist'])   # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+          ...
+        HelperNotFoundError: [Errno 2] Unable to locate helper program ...
+        >>> check_output(['false'])
+        Traceback (most recent call last):
+          ...
+        HelperError: [Errno 1] Helper program 'false' exited with error 1:
+        > false
+        <BLANKLINE>
+        >>> check_output(['false'], require_success=False)
+        u''
+        >>> check_output(['echo', 'Hello world!'])
+        u'Hello world!\n'
+        >>> check_output(['/etc/'])
+        Traceback (most recent call last):
+          ...
+        OSError: [Errno 13] Permission denied
     """
     cmd = args[0]
     logger.info("Calling '%s' and capturing its output...", " ".join(args))
@@ -652,3 +691,8 @@ def helper_select(choices):
         msg += "\n" + str(helpers[name].unsure_how_to_install())
 
     raise HelperNotFoundError(msg)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
