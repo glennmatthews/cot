@@ -3,7 +3,7 @@
 # data_validation.py - Helper libraries to validate data sanity
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -69,6 +69,18 @@ def to_string(obj):
       obj (object): Object to represent as a string.
     Returns:
       str: string representation
+    Examples:
+      ::
+
+        >>> to_string("Hello")
+        'Hello'
+        >>> to_string(27.5)
+        '27.5'
+        >>> e = ET.Element('hello', attrib={'key': 'value'})
+        >>> str(e)     # doctest: +ELLIPSIS
+        "<Element 'hello' at 0x...>"
+        >>> to_string(e)
+        '<hello key="value" />'
     """
     if ET.iselement(obj):
         return ET.tostring(obj)
@@ -77,12 +89,19 @@ def to_string(obj):
 
 
 def alphanum_split(key):
-    """Split the key into a list of [text, int, text, int, ...].
+    """Split the key into a list of [text, int, text, int, ..., text].
 
     Args:
       key (str): String to split.
     Returns:
       list: List of tokens
+    Examples:
+      ::
+
+        >>> alphanum_split("hello1world27")
+        ['hello', 1, 'world', 27, '']
+        >>> alphanum_split("1istheloneliestnumber")
+        ['', 1, 'istheloneliestnumber']
     """
     def text_to_int(text):
         """Convert number strings to ints, leave other strings as text.
@@ -108,6 +127,13 @@ def natural_sort(l):
       l (list): List to sort
     Returns:
       list: Sorted list
+    Examples:
+      ::
+
+        >>> natural_sort(["Eth3", "Eth1", "Eth10", "Eth2"])
+        ['Eth1', 'Eth2', 'Eth3', 'Eth10']
+        >>> natural_sort(["3rd", "1st", "10th", "101st"])
+        ['1st', '3rd', '10th', '101st']
     """
     # Sort based on alphanum_split return value
     return sorted(l, key=alphanum_split)
@@ -123,6 +149,13 @@ def match_or_die(first_label, first, second_label, second):
       second (object): Second object to compare
     Raises:
       ValueMismatchError: if ``first != second``
+    Examples:
+      ::
+
+        >>> match_or_die("old", 1, "new", 2)
+        Traceback (most recent call last):
+          ...
+        ValueMismatchError: old 1 does not match new 2
     """
     if first != second:
         raise ValueMismatchError("{0} {1} does not match {2} {3}"
@@ -355,6 +388,15 @@ def no_whitespace(string):
       InvalidInputError: if string contains internal whitespace
     Returns:
       str: Validated string (with leading/trailing whitespace stripped)
+    Examples:
+      ::
+
+        >>> no_whitespace("    hello    ")
+        'hello'
+        >>> no_whitespace('hello world')
+        Traceback (most recent call last):
+          ...
+        InvalidInputError: 'hello world' contains invalid whitespace
     """
     string = string.strip()
     if len(string.split()) > 1:

@@ -3,7 +3,7 @@
 # add_disk.py - Implements "cot add-disk" command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -59,6 +59,20 @@ def validate_controller_address(controller, address):
 
     Raises:
       InvalidInputError: if the address/controller combo is invalid.
+
+    Examples:
+      ::
+
+        >>> validate_controller_address("ide", "0:0")
+        >>> validate_controller_address("ide", "1:3")
+        Traceback (most recent call last):
+          ...
+        InvalidInputError: IDE disk address must be between 0:0 and 1:1
+        >>> validate_controller_address("scsi", "1:3")
+        >>> validate_controller_address("scsi", "4:0")
+        Traceback (most recent call last):
+          ...
+        InvalidInputError: SCSI disk address must be between 0:0 and 3:15
     """
     logger.info("validate_controller_address: %s, %s", controller, address)
     if controller is not None and address is not None:
@@ -269,7 +283,20 @@ def guess_drive_type_from_extension(disk_file_name):
       str: "cdrom" or "harddisk"
     Raises:
       InvalidInputError: if the disk type cannot be guessed.
-    """
+    Examples:
+      ::
+
+        >>> guess_drive_type_from_extension('/foo/bar.vmdk')
+        'harddisk'
+        >>> guess_drive_type_from_extension('baz.vmdk.iso')
+        'cdrom'
+        >>> guess_drive_type_from_extension('/etc/os-release')
+        Traceback (most recent call last):
+          ...
+        InvalidInputError: Unable to guess disk drive type for file '/etc/os-release' from its extension ''.
+        Known extensions are ['.img', '.iso', '.qcow2', '.raw', '.vmdk']
+        Please specify '--type harddisk' or '--type cdrom'.
+    """    # noqa: E501
     disk_extension = os.path.splitext(disk_file_name)[1]
     ext_type_map = {
         '.iso':   'cdrom',
@@ -285,7 +312,8 @@ def guess_drive_type_from_extension(disk_file_name):
             "Unable to guess disk drive type for file '{0}' from its "
             "extension '{1}'.\nKnown extensions are {2}\n"
             "Please specify '--type harddisk' or '--type cdrom'."
-            .format(disk_file_name, disk_extension, ext_type_map.keys()))
+            .format(disk_file_name, disk_extension,
+                    sorted(ext_type_map.keys())))
     return drive_type
 
 
