@@ -827,3 +827,8 @@ def guess_list_wildcard(known_values):
 
     logger.debug("Unable to guess a pattern")
     return None
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

@@ -30,8 +30,8 @@ import os.path
 import re
 import textwrap
 
-from .submodule import COTSubmodule
-from .data_validation import (
+from COT.submodule import COTSubmodule
+from COT.data_validation import (
     truth_value, ValueUnsupportedError, InvalidInputError
 )
 
@@ -382,3 +382,8 @@ the program will run interactively.""",
                        "arbitrary URI may be specified.")
 
         p.set_defaults(instance=self)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
