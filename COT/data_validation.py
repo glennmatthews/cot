@@ -200,6 +200,17 @@ def canonicalize_ide_subtype(subtype):
 
     Raises:
       ValueUnsupportedError: If the canonical string cannot be determined
+    Examples:
+      ::
+
+        >>> canonicalize_ide_subtype('VirtIO')
+        'virtio'
+        >>> canonicalize_ide_subtype('PIIX4')
+        'PIIX4'
+        >>> canonicalize_ide_subtype('usb')  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+          ...
+        ValueUnsupportedError: Unsupported value 'usb' for IDE controller ...
     """
     return canonicalize_helper("IDE controller subtype", subtype,
                                [
@@ -230,6 +241,17 @@ def canonicalize_nic_subtype(subtype):
       str: The canonical string, one of :data:`NIC_TYPES`
     Raises:
       ValueUnsupportedError: If the canonical string cannot be determined
+    Examples:
+      ::
+
+        >>> canonicalize_nic_subtype('e1000')
+        'E1000'
+        >>> canonicalize_nic_subtype('vmxnet 3')
+        'VMXNET3'
+        >>> canonicalize_nic_subtype('foobar')  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+          ...
+        ValueUnsupportedError: Unsupported value 'foobar' for NIC subtype ...
 
     .. seealso::
        :meth:`COT.platforms.GenericPlatform.validate_nic_type`
@@ -254,6 +276,17 @@ def canonicalize_scsi_subtype(subtype):
 
     Raises:
       ValueUnsupportedError: If the canonical string cannot be determined
+    Examples:
+      ::
+
+        >>> canonicalize_scsi_subtype('LSI Logic')
+        'lsilogic'
+        >>> canonicalize_scsi_subtype('VirtIO')
+        'virtio'
+        >>> canonicalize_scsi_subtype('baz')  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+          ...
+        ValueUnsupportedError: Unsupported value 'baz' for SCSI controller ...
     """
     return canonicalize_helper("SCSI controller subtype", subtype,
                                [
@@ -276,6 +309,19 @@ def check_for_conflict(label, li):
       ValueMismatchError: if references differ
     Returns:
       object: the object or ``None``
+    Examples:
+      ::
+
+        >>> check_for_conflict("example", ['foo', None, 'foo'])
+        'foo'
+        >>> check_for_conflict("conflict", [None, 'foo', 'bar'])
+        Traceback (most recent call last):
+          ...
+        ValueMismatchError: Found multiple candidates for the conflict:
+        foo
+        ...and...
+        bar
+        Please correct or clarify your search parameters.
     """
     obj = None
     for i, obj1 in enumerate(li):
@@ -284,7 +330,7 @@ def check_for_conflict(label, li):
         for obj2 in li[(i+1):]:
             if obj2 is not None and obj1 != obj2:
                 raise ValueMismatchError(
-                    "Found multiple candidates for the {0}: "
+                    "Found multiple candidates for the {0}:"
                     "\n{1}\n...and...\n{2}\nPlease correct or clarify "
                     "your search parameters."
                     .format(label, to_string(obj1), to_string(obj2)))
@@ -361,7 +407,7 @@ def mac_address(string):
 
 
 def device_address(string):
-    """Parser helper function for device address arguments.
+    r"""Parser helper function for device address arguments.
 
     Validate string is an appropriately formed device address such as '1:0'.
 
@@ -371,6 +417,15 @@ def device_address(string):
       InvalidInputError: if string is not a well-formatted device address
     Returns:
       str: Validated string (with leading/trailing whitespace stripped)
+    Examples:
+      ::
+
+        >>> device_address("  1:0\n")
+        '1:0'
+        >>> device_address("1:0:1")
+        Traceback (most recent call last):
+          ...
+        InvalidInputError: '1:0:1' is not a valid device address
     """
     string = string.strip()
     if not re.match(r"\d+:\d+$", string):
@@ -423,6 +478,20 @@ def validate_int(string,
       ValueUnsupportedError: if :attr:`string` can't be converted to int
       ValueTooLowError: if value is less than :attr:`minimum`
       ValueTooHighError: if value is more than :attr:`maximum`
+
+    Examples:
+      ::
+
+        >>> validate_int('1')
+        1
+        >>> validate_int('foo', label='x')
+        Traceback (most recent call last):
+          ...
+        ValueUnsupportedError: Unsupported value 'foo' for x - expected integer
+        >>> validate_int('100', label='x', maximum=10)
+        Traceback (most recent call last):
+          ...
+        ValueTooHighError: Value '100' for x is too high - must be at most 10
     """
     try:
         i = int(string)
@@ -447,6 +516,13 @@ def non_negative_int(string):
     Raises:
       ValueUnsupportedError: if :attr:`string` can't be converted to int
       ValueTooLowError: if value is less than 0
+    Examples:
+      ::
+
+        >>> non_negative_int('-1')
+        Traceback (most recent call last):
+          ...
+        ValueTooLowError: Value '-1' for input is too low - must be at least 0
     """
     return validate_int(string, minimum=0)
 
@@ -463,6 +539,13 @@ def positive_int(string):
     Raises:
       ValueUnsupportedError: if :attr:`string` can't be converted to int
       ValueTooLowError: if value is less than 1
+    Examples:
+      ::
+
+        >>> positive_int('0')
+        Traceback (most recent call last):
+          ...
+        ValueTooLowError: Value '0' for input is too low - must be at least 1
     """
     return validate_int(string, minimum=1)
 
@@ -470,7 +553,8 @@ def positive_int(string):
 def truth_value(value):
     """Parser helper function for truth values like '0', 'y', or 'false'.
 
-    Wrapper for :func:`distutils.util.strtobool`
+    Makes use of :func:`distutils.util.strtobool`, but returns True/False
+    rather than 1/0.
 
     Args:
       value (str): String to parse/validate
@@ -478,11 +562,25 @@ def truth_value(value):
       bool: True or False
     Raises:
       ValueUnsupportedError: if the value can't be parsed to a boolean.
+    Examples:
+      ::
+
+        >>> truth_value('y')
+        True
+        >>> truth_value('false')
+        False
+        >>> truth_value(True)
+        True
+        >>> truth_value('foo')    # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+          ...
+        ValueUnsupportedError: Unsupported value 'foo' for truth value ...
     """
     if isinstance(value, bool):
         return value
     try:
-        return strtobool(value)
+        # Despite its name, strtobool returns 1 or 0 not True or False
+        return bool(strtobool(value))
     except ValueError:
         raise ValueUnsupportedError(
             "truth value",
@@ -558,3 +656,8 @@ class ValueTooHighError(ValueUnsupportedError):
         return ("Value '{0}' for {1} is too high - must be at most {2}"
                 .format(self.actual_value, self.value_type,
                         self.expected_value))
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
