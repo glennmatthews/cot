@@ -66,15 +66,17 @@ def validate_controller_address(controller, address):
       ::
 
         >>> validate_controller_address("ide", "0:0")
-        >>> validate_controller_address("ide", "1:3")
-        Traceback (most recent call last):
-          ...
-        InvalidInputError: IDE disk address must be between 0:0 and 1:1
+        >>> try:
+        ...     validate_controller_address("ide", "1:3")
+        ... except InvalidInputError as e:
+        ...     print(e)
+        IDE disk address must be between 0:0 and 1:1
         >>> validate_controller_address("scsi", "1:3")
-        >>> validate_controller_address("scsi", "4:0")
-        Traceback (most recent call last):
-          ...
-        InvalidInputError: SCSI disk address must be between 0:0 and 3:15
+        >>> try:
+        ...     validate_controller_address("scsi", "4:0")
+        ... except InvalidInputError as e:
+        ...     print(e)
+        SCSI disk address must be between 0:0 and 3:15
     """
     logger.info("validate_controller_address: %s, %s", controller, address)
     if controller is not None and address is not None:
@@ -292,10 +294,12 @@ def guess_drive_type_from_extension(disk_file_name):
         'harddisk'
         >>> guess_drive_type_from_extension('baz.vmdk.iso')
         'cdrom'
-        >>> guess_drive_type_from_extension('/etc/os-release')
-        Traceback (most recent call last):
-          ...
-        InvalidInputError: Unable to guess disk drive type for file '/etc/os-release' from its extension ''.
+        >>> try:
+        ...     guess_drive_type_from_extension('/etc/os-release')
+        ...     raise AssertionError("no exception raised")
+        ... except InvalidInputError as e:
+        ...     print(e)
+        Unable to guess disk drive type for file '/etc/os-release' from its extension ''.
         Known extensions are ['.img', '.iso', '.qcow2', '.raw', '.vmdk']
         Please specify '--type harddisk' or '--type cdrom'.
     """    # noqa: E501

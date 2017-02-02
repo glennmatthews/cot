@@ -59,6 +59,7 @@
 import xml.etree.ElementTree as ET
 import hashlib
 import re
+import sys
 from distutils.util import strtobool
 
 
@@ -77,13 +78,16 @@ def to_string(obj):
         >>> to_string(27.5)
         '27.5'
         >>> e = ET.Element('hello', attrib={'key': 'value'})
-        >>> str(e)     # doctest: +ELLIPSIS
-        "<Element 'hello' at 0x...>"
-        >>> to_string(e)
-        '<hello key="value" />'
+        >>> print(e)   # doctest: +ELLIPSIS
+        <Element 'hello' at 0x...>
+        >>> print(to_string(e))
+        <hello key="value" />
     """
     if ET.iselement(obj):
-        return ET.tostring(obj)
+        if sys.version_info[0] >= 3:
+            return ET.tostring(obj, encoding='unicode')
+        else:
+            return ET.tostring(obj)
     else:
         return str(obj)
 
@@ -152,10 +156,11 @@ def match_or_die(first_label, first, second_label, second):
     Examples:
       ::
 
-        >>> match_or_die("old", 1, "new", 2)
-        Traceback (most recent call last):
-          ...
-        ValueMismatchError: old 1 does not match new 2
+        >>> try:
+        ...     match_or_die("old", 1, "new", 2)
+        ... except ValueMismatchError as e:
+        ...     print(e)
+        old 1 does not match new 2
     """
     if first != second:
         raise ValueMismatchError("{0} {1} does not match {2} {3}"
@@ -207,10 +212,11 @@ def canonicalize_ide_subtype(subtype):
         'virtio'
         >>> canonicalize_ide_subtype('PIIX4')
         'PIIX4'
-        >>> canonicalize_ide_subtype('usb')  # doctest: +ELLIPSIS
-        Traceback (most recent call last):
-          ...
-        ValueUnsupportedError: Unsupported value 'usb' for IDE controller ...
+        >>> try:  # doctest: +ELLIPSIS
+        ...     canonicalize_ide_subtype('usb')
+        ... except ValueUnsupportedError as e:
+        ...     print(e)
+        Unsupported value 'usb' for IDE controller subtype...
     """
     return canonicalize_helper("IDE controller subtype", subtype,
                                [
@@ -248,10 +254,11 @@ def canonicalize_nic_subtype(subtype):
         'E1000'
         >>> canonicalize_nic_subtype('vmxnet 3')
         'VMXNET3'
-        >>> canonicalize_nic_subtype('foobar')  # doctest: +ELLIPSIS
-        Traceback (most recent call last):
-          ...
-        ValueUnsupportedError: Unsupported value 'foobar' for NIC subtype ...
+        >>> try:  # doctest: +ELLIPSIS
+        ...     canonicalize_nic_subtype('foobar')
+        ... except ValueUnsupportedError as e:
+        ...     print(e)
+        Unsupported value 'foobar' for NIC subtype ...
 
     .. seealso::
        :meth:`COT.platforms.GenericPlatform.validate_nic_type`
@@ -283,10 +290,11 @@ def canonicalize_scsi_subtype(subtype):
         'lsilogic'
         >>> canonicalize_scsi_subtype('VirtIO')
         'virtio'
-        >>> canonicalize_scsi_subtype('baz')  # doctest: +ELLIPSIS
-        Traceback (most recent call last):
-          ...
-        ValueUnsupportedError: Unsupported value 'baz' for SCSI controller ...
+        >>> try:  # doctest: +ELLIPSIS
+        ...     canonicalize_scsi_subtype('baz')
+        ... except ValueUnsupportedError as e:
+        ...     print(e)
+        Unsupported value 'baz' for SCSI controller subtype...
     """
     return canonicalize_helper("SCSI controller subtype", subtype,
                                [
@@ -314,10 +322,11 @@ def check_for_conflict(label, li):
 
         >>> check_for_conflict("example", ['foo', None, 'foo'])
         'foo'
-        >>> check_for_conflict("conflict", [None, 'foo', 'bar'])
-        Traceback (most recent call last):
-          ...
-        ValueMismatchError: Found multiple candidates for the conflict:
+        >>> try:
+        ...     check_for_conflict("conflict", [None, 'foo', 'bar'])
+        ... except ValueMismatchError as e:
+        ...     print(e)
+        Found multiple candidates for the conflict:
         foo
         ...and...
         bar
@@ -422,10 +431,11 @@ def device_address(string):
 
         >>> device_address("  1:0\n")
         '1:0'
-        >>> device_address("1:0:1")
-        Traceback (most recent call last):
-          ...
-        InvalidInputError: '1:0:1' is not a valid device address
+        >>> try:
+        ...     device_address("1:0:1")
+        ... except InvalidInputError as e:
+        ...     print(e)
+        '1:0:1' is not a valid device address
     """
     string = string.strip()
     if not re.match(r"\d+:\d+$", string):
@@ -448,10 +458,11 @@ def no_whitespace(string):
 
         >>> no_whitespace("    hello    ")
         'hello'
-        >>> no_whitespace('hello world')
-        Traceback (most recent call last):
-          ...
-        InvalidInputError: 'hello world' contains invalid whitespace
+        >>> try:
+        ...     no_whitespace('hello world')
+        ... except InvalidInputError as e:
+        ...     print(e)
+        'hello world' contains invalid whitespace
     """
     string = string.strip()
     if len(string.split()) > 1:
@@ -484,14 +495,16 @@ def validate_int(string,
 
         >>> validate_int('1')
         1
-        >>> validate_int('foo', label='x')
-        Traceback (most recent call last):
-          ...
-        ValueUnsupportedError: Unsupported value 'foo' for x - expected integer
-        >>> validate_int('100', label='x', maximum=10)
-        Traceback (most recent call last):
-          ...
-        ValueTooHighError: Value '100' for x is too high - must be at most 10
+        >>> try:
+        ...     validate_int('foo', label='x')
+        ... except ValueUnsupportedError as e:
+        ...     print(e)
+        Unsupported value 'foo' for x - expected integer
+        >>> try:
+        ...     validate_int('100', label='x', maximum=10)
+        ... except ValueTooHighError as e:
+        ...     print(e)
+        Value '100' for x is too high - must be at most 10
     """
     try:
         i = int(string)
@@ -519,10 +532,15 @@ def non_negative_int(string):
     Examples:
       ::
 
-        >>> non_negative_int('-1')
-        Traceback (most recent call last):
-          ...
-        ValueTooLowError: Value '-1' for input is too low - must be at least 0
+        >>> non_negative_int('0')
+        0
+        >>> non_negative_int('1000')
+        1000
+        >>> try:
+        ...     non_negative_int('-1')
+        ... except ValueTooLowError as e:
+        ...     print(e)
+        Value '-1' for input is too low - must be at least 0
     """
     return validate_int(string, minimum=0)
 
@@ -542,10 +560,13 @@ def positive_int(string):
     Examples:
       ::
 
-        >>> positive_int('0')
-        Traceback (most recent call last):
-          ...
-        ValueTooLowError: Value '0' for input is too low - must be at least 1
+        >>> positive_int('1')
+        1
+        >>> try:
+        ...     positive_int('0')
+        ... except ValueTooLowError as e:
+        ...     print(e)
+        Value '0' for input is too low - must be at least 1
     """
     return validate_int(string, minimum=1)
 
@@ -571,10 +592,11 @@ def truth_value(value):
         False
         >>> truth_value(True)
         True
-        >>> truth_value('foo')    # doctest: +ELLIPSIS
-        Traceback (most recent call last):
-          ...
-        ValueUnsupportedError: Unsupported value 'foo' for truth value ...
+        >>> try:    # doctest: +ELLIPSIS
+        ...     truth_value('foo')
+        ... except ValueUnsupportedError as e:
+        ...     print(e)
+        Unsupported value 'foo' for truth value - expected ['y', ...
     """
     if isinstance(value, bool):
         return value
