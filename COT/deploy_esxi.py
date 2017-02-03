@@ -3,7 +3,7 @@
 # deploy_esxi.py - Implements "cot deploy ... esxi" command
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 #
 # This file is part of the Common OVF Tool (COT) project.
@@ -13,13 +13,6 @@
 # according to the terms contained in the LICENSE.txt file.
 
 """Module for deploying VMs to ESXi, vCenter, and vSphere.
-
-**Functions**
-
-.. autosummary::
-  :nosignatures:
-
-  get_object_from_connection
 
 **Classes**
 
@@ -80,6 +73,8 @@ class SmarterConnection(SmartConnection):
         Raises:
           vim.fault.HostConnectFault: TODO
           requests.exceptions.ConnectionError: TODO
+        Yields:
+          pyVmomi.VmomiSupport.vim.ServiceInstance: Session service instance.
         """
         logger.verbose("Establishing connection to %s:%s...",
                        self.server, self.port)
@@ -156,44 +151,29 @@ class SmarterConnection(SmartConnection):
         return errno, inner_message
 
 
-def get_object_from_connection(conn, vimtype, name):
-    """Look up an object by name.
-
-    Args:
-      conn (SmarterConnection): Connection to ESXi.
-      vimtype (object): currently only ``vim.VirtualMachine``
-      name (str): Name of the object to look up.
-    Returns:
-      object: Located object
-    """
-    obj = None
-    content = conn.RetrieveContent()
-    container = content.viewManager.CreateContainerView(
-        content.rootFolder, [vimtype], True)
-    for c in container.view:
-        if c.name == name:
-            obj = c
-            break
-    return obj
-
-
 class PyVmomiVMReconfigSpec(object):
     """Context manager for reconfiguring an ESXi VM using PyVmomi."""
 
-    def __init__(self, conn, vm_name):
-        """Use the given name to look up a VM using the given connection.
+    def __init__(self, service_instance, vm_name):
+        """Use the given name to look up a VM using the given service_instance.
 
         Args:
-          conn (SmarterConnection): Connection to ESXi.
+          service_instance (pyVmomi.VmomiSupport.vim.ServiceInstance):
+            Connection to ESXi.
           vm_name (str): Virtual machine name.
         """
-        self.vm = get_object_from_connection(conn, vim.VirtualMachine, vm_name)
+        self.service_instance = service_instance
+        self.vm = self.lookup_object(vim.VirtualMachine, vm_name)
         if not self.vm:
             raise LookupError("No VM '{0}' was found!".format(vm_name))
         self.spec = vim.vm.ConfigSpec()
 
     def __enter__(self):
-        """Use a ConfigSpec as the context manager object."""
+        """Use a ConfigSpec as the context manager object.
+
+        Yields:
+            pyVmomi.VmomiSupport.vim.vm.ConfigSpec: config specification
+        """
         return self.spec
 
     def __exit__(self, exc_type, exc_value, trace):
@@ -205,6 +185,23 @@ class PyVmomiVMReconfigSpec(object):
         if exc_type is None:
             logger.verbose("Reconfiguring VM...")
             self.vm.ReconfigVM_Task(spec=self.spec)
+
+    def lookup_object(self, vimtype, name):
+        """Look up an object by name.
+
+        Args:
+          vimtype (object): currently only ``vim.VirtualMachine``
+          name (str): Name of the object to look up.
+        Returns:
+          object: Located object
+        """
+        content = self.service_instance.RetrieveContent()
+        container = content.viewManager.CreateContainerView(
+            content.rootFolder, [vimtype], True)
+        for c in container.view:
+            if c.name == name:
+                return c
+        return None
 
 
 class COTDeployESXi(COTDeploy):
@@ -421,10 +418,12 @@ class COTDeployESXi(COTDeploy):
               'tcp', 'telnet', or 'device'
         """
         logger.info("Fixing up serial ports...")
-        with SmarterConnection(self.ui, self.server,
-                               self.username, self.password) as conn:
+        with SmarterConnection(self.ui,
+                               self.server,
+                               self.username,
+                               self.password) as service_instance:
             logger.verbose("Connection established")
-            with PyVmomiVMReconfigSpec(conn, self.vm_name) as spec:
+            with PyVmomiVMReconfigSpec(service_instance, self.vm_name) as spec:
                 logger.verbose("Spec created")
                 spec.deviceChange = []
                 for s in self.serial_connection:
