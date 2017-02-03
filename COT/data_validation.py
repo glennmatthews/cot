@@ -79,7 +79,7 @@ def to_string(obj):
         '27.5'
         >>> e = ET.Element('hello', attrib={'key': 'value'})
         >>> print(e)   # doctest: +ELLIPSIS
-        <Element 'hello' at 0x...>
+        <Element ...hello... at ...>
         >>> print(to_string(e))
         <hello key="value" />
     """
