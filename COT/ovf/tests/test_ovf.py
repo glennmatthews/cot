@@ -428,10 +428,14 @@ ovf:size="{cfg_size}" />
         # .ova that contains an OVF descriptor but in the wrong position
         tarf = tarfile.open(fake_file, 'a')
         try:
-            tarf.add(self.input_ovf, os.path.basename(self.input_ovf))
+            tarf.add(self.minimal_ovf, os.path.basename(self.minimal_ovf))
         finally:
             tarf.close()
-        self.assertRaises(VMInitError, OVF, fake_file, None)
+        # this results in a logged warning but not rejection - Postel's Law
+        with VMContextManager(fake_file, None):
+            self.assertLogged(
+                levelname="WARNING",
+                msg="OVF file %s found, but .*not.*first")
 
         # .ova with unsafe absolute path references
         tarf = tarfile.open(fake_file, 'w')

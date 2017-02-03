@@ -3,7 +3,7 @@
 # test_iso.py - Unit test cases for ISO disk representation.
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -33,6 +33,11 @@ logger = logging.getLogger(__name__)
 
 class TestISO(COT_UT):
     """Test cases for ISO class."""
+
+    def setUp(self):
+        """Test case setup function called automatically before each test."""
+        super(TestISO, self).setUp()
+        self.foo_iso = os.path.join(self.temp_dir, "foo.iso")
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test."""
@@ -113,9 +118,9 @@ Setting input-charset to 'UTF-8' from locale.
     def test_create_with_mkisofs(self, mock_call):
         """Creation of an ISO with mkisofs (default)."""
         helpers['mkisofs']._installed = True
-        ISO.create_file(path='foo.iso', files=[self.input_ovf])
+        ISO.create_file(path=self.foo_iso, files=[self.input_ovf])
         mock_call.assert_called_with(
-            ['-output', 'foo.iso', '-full-iso9660-filenames',
+            ['-output', self.foo_iso, '-full-iso9660-filenames',
              '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
 
     @mock.patch("COT.helpers.mkisofs.GenISOImage.call")
@@ -123,9 +128,9 @@ Setting input-charset to 'UTF-8' from locale.
         """Creation of an ISO with genisoimage if mkisofs is unavailable."""
         helpers['mkisofs']._installed = False
         helpers['genisoimage']._installed = True
-        ISO.create_file(path='foo.iso', files=[self.input_ovf])
+        ISO.create_file(path=self.foo_iso, files=[self.input_ovf])
         mock_call.assert_called_with(
-            ['-output', 'foo.iso', '-full-iso9660-filenames',
+            ['-output', self.foo_iso, '-full-iso9660-filenames',
              '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
 
     @mock.patch("COT.helpers.mkisofs.XorrISO.call")
@@ -134,10 +139,11 @@ Setting input-charset to 'UTF-8' from locale.
         helpers['mkisofs']._installed = False
         helpers['genisoimage']._installed = False
         helpers['xorriso']._installed = True
-        ISO.create_file(path='foo.iso', files=[self.input_ovf])
+        ISO.create_file(path=self.foo_iso, files=[self.input_ovf])
         mock_call.assert_called_with(
-            ['-as', 'mkisofs', '-output', 'foo.iso', '-full-iso9660-filenames',
-             '-iso-level', '2', '-allow-lowercase', '-r', self.input_ovf])
+            ['-as', 'mkisofs', '-output', self.foo_iso,
+             '-full-iso9660-filenames', '-iso-level', '2', '-allow-lowercase',
+             '-r', self.input_ovf])
 
     def test_create_no_helpers_available(self):
         """Creation of ISO should fail if no helpers are install[ed|able]."""
@@ -149,17 +155,17 @@ Setting input-charset to 'UTF-8' from locale.
         helpers['yum']._installed = False
         self.assertRaises(HelperNotFoundError,
                           ISO.create_file,
-                          path='foo.iso',
+                          path=self.foo_iso,
                           files=[self.input_ovf])
 
     @mock.patch("COT.helpers.mkisofs.MkISOFS.call")
     def test_create_with_mkisofs_non_rockridge(self, mock_call):
         """Creation of a non-Rock-Ridge ISO with mkisofs (default)."""
         helpers['mkisofs']._installed = True
-        ISO.create_file(path='foo.iso', files=[self.input_ovf],
+        ISO.create_file(path=self.foo_iso, files=[self.input_ovf],
                         disk_subformat="")
         mock_call.assert_called_with(
-            ['-output', 'foo.iso', '-full-iso9660-filenames',
+            ['-output', self.foo_iso, '-full-iso9660-filenames',
              '-iso-level', '2', '-allow-lowercase', self.input_ovf])
 
     def test_file_is_this_type_nonexistent(self):

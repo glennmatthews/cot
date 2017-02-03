@@ -18,6 +18,7 @@ reports=no
 #
 # Disabled due to redundancy with flake8:
 #   bad-continuation
+#   line-too-long
 #   trailing-whitespace
 #
 # Disabled due to useless noise:
@@ -32,6 +33,7 @@ disable=bad-continuation,
   duplicate-code,
   fixme,
   invalid-name,
+  line-too-long,
   locally-disabled,
   too-few-public-methods,
   trailing-whitespace,

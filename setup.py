@@ -3,7 +3,7 @@
 # setup.py - installer script for COT package
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -88,6 +88,7 @@ class custom_bdist_egg(bdist_egg):  # noqa: N801
         self.run_command('build_sphinx')
         bdist_egg.run(self)
 
+
 cmdclass['bdist_egg'] = custom_bdist_egg
 
 
@@ -100,6 +101,7 @@ class custom_test(test):  # noqa: N801
                                            "COT/docs/man")):
             self.run_command('build_sphinx')
         test.with_project_on_sys_path(self, func)
+
 
 cmdclass['test'] = custom_test
 
@@ -167,6 +169,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     keywords='virtualization ovf ova esxi vmware vcenter',
 )

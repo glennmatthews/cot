@@ -3,7 +3,7 @@
 # edit_hardware.py - test cases for the COTEditHardware class
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -53,6 +53,23 @@ class TestCOTEditHardware(COT_UT):
         'msg': "No network names specified, but NICs must be mapped.*",
         'args': ('VM Network',),
     }
+
+    @staticmethod
+    def removing_network_warning(name=None):
+        """Warning log message for deleting a network entry.
+
+        Args:
+          name (str): Name of network being deleted. Defaults to 'VM Network'.
+        Returns:
+          dict: kwargs suitable for passing into :meth:`assertLogged`
+        """
+        if not name:
+            name = "VM Network"
+        return {
+            'levelname': "WARNING",
+            'msg': "Removing unused network %s",
+            'args': [name],
+        }
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
@@ -557,6 +574,72 @@ CIM_ResourceAllocationSettingData">
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>""", file1=self.csr_ovf)
 
+    def test_set_nic_count_named_nics_and_networks(self):
+        """Add more NICs and explicitly named networks across all profiles.
+
+        This tests a user-reported issue where COT gets confused because the
+        base OVF uses the same strings for NIC and network names, but the
+        desired output OVF does not.
+        """
+        self.instance.package = self.csr_ovf
+        self.instance.nics = 4
+        self.instance.nic_names = ['GigabitEthernet{1}']
+        self.instance.nic_networks = ["Alpha", "Beta", "Delta", "Gamma"]
+        self.instance.run()
+        self.instance.finished()
+        self.assertLogged(**self.removing_network_warning('GigabitEthernet1'))
+        self.assertLogged(**self.removing_network_warning('GigabitEthernet2'))
+        self.assertLogged(**self.removing_network_warning('GigabitEthernet3'))
+        self.check_diff("""
+     <ovf:Info>The list of logical networks</ovf:Info>
+-    <ovf:Network ovf:name="GigabitEthernet1">
+-      <ovf:Description>Data network 1</ovf:Description>
++    <ovf:Network ovf:name="Alpha">
++      <ovf:Description>Alpha</ovf:Description>
+     </ovf:Network>
+-    <ovf:Network ovf:name="GigabitEthernet2">
+-      <ovf:Description>Data network 2</ovf:Description>
++    <ovf:Network ovf:name="Beta">
++      <ovf:Description>Beta</ovf:Description>
+     </ovf:Network>
+-    <ovf:Network ovf:name="GigabitEthernet3">
+-      <ovf:Description>Data network 3</ovf:Description>
++    <ovf:Network ovf:name="Delta">
++      <ovf:Description>Delta</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="Gamma">
++      <ovf:Description>Gamma</ovf:Description>
+     </ovf:Network>
+...
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>GigabitEthernet1</rasd:Connection>
++        <rasd:Connection>Alpha</rasd:Connection>
+         <rasd:Description>NIC representing GigabitEthernet1</rasd:Description>
+...
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>GigabitEthernet2</rasd:Connection>
++        <rasd:Connection>Beta</rasd:Connection>
+         <rasd:Description>NIC representing GigabitEthernet2</rasd:Description>
+...
+         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+-        <rasd:Connection>GigabitEthernet3</rasd:Connection>
++        <rasd:Connection>Delta</rasd:Connection>
+         <rasd:Description>NIC representing GigabitEthernet3</rasd:Description>
+...
+         <rasd:InstanceID>13</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>14</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>Gamma</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet4</rasd:Description>
++        <rasd:ElementName>GigabitEthernet4</rasd:ElementName>
++        <rasd:InstanceID>14</rasd:InstanceID>
+         <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
+""", file1=self.csr_ovf)
+
     def test_set_nic_count_merge_profiles(self):
         """Add NICs that already exist under one profile to another."""
         self.instance.package = self.input_ovf
@@ -658,7 +741,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.nics = 0
         self.instance.run()
         self.instance.finished()
-        self.assertLogged(**self.REMOVING_NETWORK)
+        self.assertLogged(**self.removing_network_warning('bridged'))
         self.assertLogged(**self.REMOVING_NETWORKSECTION)
 
         self.instance.package = self.temp_file
@@ -728,7 +811,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.nic_networks = ['UT', 'UT', 'UT']
         self.instance.run()
         self.instance.finished()
-        self.assertLogged(**self.REMOVING_NETWORK)
+        self.assertLogged(**self.removing_network_warning())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="VM Network">
@@ -774,7 +857,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.network_descriptions = ['First UT']
         self.instance.run()
         self.instance.finished()
-        self.assertLogged(**self.REMOVING_NETWORK)
+        self.assertLogged(**self.removing_network_warning())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="VM Network">
@@ -818,7 +901,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.network_descriptions = ['First network', '#{2} Network']
         self.instance.run()
         self.instance.finished()
-        self.assertLogged(**self.REMOVING_NETWORK)
+        self.assertLogged(**self.removing_network_warning())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="VM Network">
@@ -1071,7 +1154,7 @@ CIM_ResourceAllocationSettingData">
             ['00:00:00:00:00:01', '11:22:33:44:55:66', 'fe:fd:fc:fb:fa:f9']
         self.instance.run()
         self.instance.finished()
-        self.assertLogged(**self.REMOVING_NETWORK)
+        self.assertLogged(**self.removing_network_warning())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="VM Network">
@@ -1767,7 +1850,7 @@ CIM_ResourceAllocationSettingData">
                           args=('ethernet', 'Connection', ['Foobar']))
         self.instance.finished()
         # network 'Foobar' is not used, so it'll be deleted
-        self.assertLogged(**self.REMOVING_NETWORK)
+        self.assertLogged(**self.removing_network_warning('Foobar'))
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
  <?xml version='1.0' encoding='utf-8'?>
@@ -1804,7 +1887,7 @@ CIM_ResourceAllocationSettingData">
         self.instance.nics = 0
         self.instance.run()
         self.instance.finished()
-        self.assertLogged(**self.REMOVING_NETWORK)
+        self.assertLogged(**self.removing_network_warning())
         self.assertLogged(**self.REMOVING_NETWORKSECTION)
         self.check_diff(file1=self.temp_file, file2=self.minimal_ovf,
                         expected="")

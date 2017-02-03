@@ -3,7 +3,7 @@
 # file_reference.py - APIs abstracting away various ways to refer to a file.
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2015-2016 the COT project developers.
+# Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -146,7 +146,7 @@ class FileInTAR(object):
         if not tarfile.is_tarfile(tarfile_path):
             raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
         self.tarfile_path = tarfile_path
-        self.filename = filename
+        self.filename = os.path.normpath(filename)
         if not self.exists:
             raise IOError("{0} does not exist in {1}"
                           .format(filename, tarfile_path))
@@ -187,6 +187,13 @@ class FileInTAR(object):
                 tarf.getmember(self.filename)
                 return True
             except KeyError:
+                # Perhaps an issue with 'foo.txt' versus './foo.txt'?
+                for mem in tarf.getmembers():
+                    if os.path.normpath(mem.name) == self.filename:
+                        logger.verbose("Found {0} at {1} in TAR file"
+                                       .format(self.filename, mem.name))
+                        self.filename = mem.name
+                        return True
                 return False
 
     @property
@@ -245,3 +252,8 @@ class FileInTAR(object):
             tarf.addfile(self.tarf.getmember(self.filename), self.obj)
         finally:
             self.close()
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

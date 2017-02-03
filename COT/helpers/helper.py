@@ -3,7 +3,7 @@
 # helper.py - Abstract provider of a non-Python helper program.
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2015-2016 the COT project developers.
+# Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -51,6 +51,7 @@ import os
 import os.path
 import contextlib
 import errno
+import platform
 import re
 import shutil
 import subprocess
@@ -264,8 +265,11 @@ class Helper(object):
             output = self.call(self._version_args, require_success=False)
             match = re.search(self._version_regexp, output)
             if not match:
-                raise RuntimeError("Unable to find version number in output:"
-                                   "\n{0}".format(output))
+                raise RuntimeError(
+                    "Unable to find version number for '{0}' in output from"
+                    " '{0} {1}':\n{2}".format(self.name,
+                                              ' '.join(self._version_args),
+                                              output))
             self._version = StrictVersion(match.group(1))
         return self._version
 
@@ -301,7 +305,7 @@ class Helper(object):
                     "Please install it and/or check your $PATH."
                     .format(self.name))
             self.install()
-        args.insert(0, self.name)
+        args = [self.name] + args
         if capture_output:
             return check_output(args, **kwargs)
         else:
@@ -321,7 +325,7 @@ class Helper(object):
         if self.installed:
             return
         if not self.installable:
-            self.unsure_how_to_install()
+            raise self.unsure_how_to_install()
         logger.info("Installing '%s'...", self.name)
         # Call the subclass implementation
         self._install()
@@ -335,11 +339,27 @@ class Helper(object):
         logger.info("Successfully installed '%s'", self.name)
 
     def unsure_how_to_install(self):
-        """Raise a NotImplementedError about missing install logic."""
+        """Return a RuntimeError or NotImplementedError for install trouble."""
         msg = "Unsure how to install {0}.".format(self.name)
         if self.info_uri:
             msg += "\nRefer to {0} for information".format(self.info_uri)
-        raise NotImplementedError(msg)
+
+        if platform.system() == 'Darwin' and (
+                'port' in self._provider_package and not helpers['port']):
+            msg += ("\nCOT can use MacPorts (https://www.macports.org/),"
+                    " if available on your system, to install {0} and other"
+                    " helpers for you.".format(self.name))
+            return RuntimeError(msg)
+        elif platform.system() == 'Linux' and (
+                ('apt-get' in self._provider_package or
+                 'yum' in self._provider_package) and
+                not (helpers['apt-get'] or helpers['yum'])):
+            msg += ("\nCOT can use package managers 'yum' or 'apt-get' to"
+                    " install helpers on your system, but it appears that"
+                    " you have neither of these package managers?")
+            return RuntimeError(msg)
+        else:
+            return NotImplementedError(msg)
 
     def _install(self):
         """Subclass-specific implementation of installation logic."""
@@ -349,7 +369,7 @@ class Helper(object):
                 helpers[pm_name].install_package(package)
                 return
         # We shouldn't get here under normal call flow and logic.
-        self.unsure_how_to_install()
+        raise self.unsure_how_to_install()
 
     @staticmethod
     @contextlib.contextmanager
@@ -491,6 +511,33 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
           returns a value other than 0 (instead of a
           :class:`subprocess.CalledProcessError`).
       OSError: as :func:`subprocess.check_call`.
+
+    Examples:
+      ::
+
+        >>> check_call(['true'])
+        >>> try:
+        ...     check_call(['false'])
+        ... except HelperError as e:
+        ...     print(e.errno)
+        ...     print(e.strerror)
+        1
+        Helper program 'false' exited with error 1
+        >>> check_call(['false'], require_success=False)
+        >>> try:
+        ...     check_call(['/non/exist'])
+        ... except HelperNotFoundError as e:
+        ...     print(e.errno)
+        ...     print(e.strerror)
+        2
+        Unable to locate helper program '/non/exist'. Please check your $PATH.
+        >>> try:
+        ...     check_call(['/etc/'])
+        ... except OSError as e:
+        ...     print(e.errno)
+        ...     print(e.strerror)
+        13
+        Permission denied
     """
     cmd = args[0]
     logger.info("Calling '%s'...", " ".join(args))
@@ -525,7 +572,7 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
 
 
 def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
-    """Wrapper for :func:`subprocess.check_output`.
+    r"""Wrapper for :func:`subprocess.check_output`.
 
     Automatically redirects stderr to stdout, captures both to a buffer,
     and generates a debug message with the stdout contents.
@@ -549,6 +596,37 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
           returns a value other than 0 (instead of a
           :class:`subprocess.CalledProcessError`).
       OSError: as :func:`subprocess.check_output`.
+
+    Examples:
+      ::
+
+        >>> output = check_output(['echo', 'Hello world!'])
+        >>> assert output == "Hello world!\n"
+        >>> try:
+        ...     check_output(['false'])
+        ... except HelperError as e:
+        ...     print(e.errno)
+        ...     print(e.strerror)
+        1
+        Helper program 'false' exited with error 1:
+        > false
+        <BLANKLINE>
+        >>> output = check_output(['false'], require_success=False)
+        >>> assert output == ''
+        >>> try:
+        ...     check_output(['/non/exist'])
+        ... except HelperNotFoundError as e:
+        ...     print(e.errno)
+        ...     print(e.strerror)
+        2
+        Unable to locate helper program '/non/exist'. Please check your $PATH.
+        >>> try:
+        ...     check_output(['/etc/'])
+        ... except OSError as e:
+        ...     print(e.errno)
+        ...     print(e.strerror)
+        13
+        Permission denied
     """
     cmd = args[0]
     logger.info("Calling '%s' and capturing its output...", " ".join(args))
@@ -599,7 +677,7 @@ def helper_select(choices):
     Returns:
       Helper: The selected helper class instance.
     """
-    for choice in choices:
+    def _name_min_ver_from_choice(choice):
         if isinstance(choice, str):
             # Helper name only, no version constraints
             name = choice
@@ -608,21 +686,32 @@ def helper_select(choices):
             # Tuple of (name, version)
             (name, vers) = choice
             min_version = StrictVersion(vers)
+
+        return (name, min_version)
+
+    for choice in choices:
+        name, min_version = _name_min_ver_from_choice(choice)
         if helpers[name]:
             if min_version is None or helpers[name].version >= min_version:
                 return helpers[name]
 
     # OK, nothing yet installed. So what can we install?
     for choice in choices:
-        if isinstance(choice, str):
-            name = choice
-            min_version = None
-        else:
-            (name, vers) = choice
-            min_version = StrictVersion(vers)
+        name, min_version = _name_min_ver_from_choice(choice)
         if helpers[name].installable:
             helpers[name].install()
             if min_version is None or helpers[name].version >= min_version:
                 return helpers[name]
 
-    raise HelperNotFoundError("No helper available or installable!")
+    msg = "No helper in list {0} is available or installable!".format(choices)
+
+    for choice in choices:
+        name, _ = _name_min_ver_from_choice(choice)
+        msg += "\n" + str(helpers[name].unsure_how_to_install())
+
+    raise HelperNotFoundError(msg)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

@@ -248,7 +248,7 @@ be included as-is and will not be renamed.""")
         p.add_argument('-s', '--secondary-config-file',
                        help="Text file to embed as secondary configuration"
                        " (currently only used for IOS XR admin config)")
-        p.add_argument('-e', '--extra-files', nargs='+',
+        p.add_argument('-e', '--extra-files', action='append', nargs='+',
                        metavar=('EXTRA_FILE', 'EXTRA_FILE2'),
                        help="Additional file(s) to include as-is")
         p.add_argument('PACKAGE',

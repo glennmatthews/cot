@@ -3,7 +3,7 @@
 # deploy.py - Implements "cot deploy" command
 #
 # June 2014, Kevin A. Keim
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 #
 # This file is part of the Common OVF Tool (COT) project.
@@ -464,3 +464,8 @@ class COTDeploy(COTReadOnlySubmodule):
             "This argument may be repeated to specify more port connections. "
             "Each entry should be structured as 'kind:value' or "
             "'kind:value,options'.")
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

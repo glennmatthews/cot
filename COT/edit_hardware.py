@@ -3,7 +3,7 @@
 # edit_hardware.py - Implements "edit-hardware" sub-command
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -447,7 +447,6 @@ class COTEditHardware(COTSubmodule):
         vm = self.vm
 
         nics_dict = vm.get_nic_count(self.profiles)
-        max_nics = max(nics_dict.values())
         if self.nics is not None:
             for (profile, count) in nics_dict.items():
                 if self.nics < count:
@@ -461,15 +460,8 @@ class COTEditHardware(COTSubmodule):
         if self.nic_types is not None:
             vm.set_nic_types(self.nic_types, self.profiles)
 
-        nics_dict = vm.get_nic_count(self.profiles)
-        max_nics = max(nics_dict.values())
-
         if self.mac_addresses_list is not None:
             vm.set_nic_mac_addresses(self.mac_addresses_list, self.profiles)
-
-        if self.nic_names is not None:
-            names = expand_list_wildcard(self.nic_names, max_nics)
-            vm.set_nic_names(names, self.profiles)
 
     def _run_update_networks(self):
         """Handle network changes. Helper for :meth:`run`."""
@@ -518,6 +510,15 @@ class COTEditHardware(COTSubmodule):
                 vm.create_network(network, new_desc)
 
             vm.set_nic_networks(new_networks, self.profiles)
+
+    def _run_update_nic_names(self):
+        """Update NIC names. Helper for :meth:`run`."""
+        if self.nic_names is not None:
+            vm = self.vm
+            nics_dict = vm.get_nic_count(self.profiles)
+            max_nics = max(nics_dict.values())
+            names = expand_list_wildcard(self.nic_names, max_nics)
+            vm.set_nic_names(names, self.profiles)
 
     def _run_update_serial(self):
         """Handle serial port changes. Helper for :meth:`run`."""
@@ -572,6 +573,10 @@ class COTEditHardware(COTSubmodule):
         self._run_update_nics()
 
         self._run_update_networks()
+
+        # Update NIC names *after* updating networks, as we don't want
+        # network-induced name changes to overwrite user-specified names.
+        self._run_update_nic_names()
 
         self._run_update_serial()
 
@@ -637,12 +642,13 @@ class COTEditHardware(COTSubmodule):
         g.add_argument('-o', '--output',
                        help="Name/path of new OVF/OVA package to create "
                        "instead of updating the existing OVF")
-        g.add_argument('-v', '--virtual-system-type', nargs='+',
+        g.add_argument('-v', '--virtual-system-type',
+                       action='append', nargs='+',
                        type=no_whitespace, metavar=('TYPE', 'TYPE2'),
                        help="Change virtual system type(s) supported by "
                        "this OVF/OVA package.")
-        g.add_argument('-p', '--profiles', nargs='+', type=no_whitespace,
-                       metavar=('PROFILE', 'PROFILE2'),
+        g.add_argument('-p', '--profiles', action='append', nargs='+',
+                       type=no_whitespace, metavar=('PROFILE', 'PROFILE2'),
                        help="Make hardware changes only under the given "
                        "configuration profile(s). (default: changes apply "
                        "to all profiles)")
@@ -662,7 +668,7 @@ class COTEditHardware(COTSubmodule):
 
         g.add_argument('-n', '--nics', type=non_negative_int,
                        help="Set the number of NICs.")
-        g.add_argument('--nic-types', nargs='+',
+        g.add_argument('--nic-types', action='append', nargs='+',
                        metavar=('TYPE', 'TYPE2'),
                        help="Set the hardware type(s) for all NICs. "
                        "(default: do not change existing NICs, and new "
@@ -671,11 +677,11 @@ class COTEditHardware(COTSubmodule):
                        metavar=('NAME1', 'NAME2'),
                        help="Specify a list of one or more NIC names or "
                        "patterns to apply to NIC devices. See Notes.")
-        g.add_argument('-N', '--nic-networks', nargs='+',
+        g.add_argument('-N', '--nic-networks', action='append', nargs='+',
                        metavar=('NETWORK', 'NETWORK2'),
                        help="Specify a series of one or more network names "
                        "or patterns to map NICs to. See Notes.")
-        g.add_argument('--network-descriptions', nargs='+',
+        g.add_argument('--network-descriptions', action='append', nargs='+',
                        metavar=('NAME1', 'NAME2'),
                        help="Specify a list of one or more network "
                        "descriptions or patterns to apply to the networks. "
@@ -821,3 +827,8 @@ def guess_list_wildcard(known_values):
 
     logger.debug("Unable to guess a pattern")
     return None
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

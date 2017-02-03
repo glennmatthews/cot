@@ -3,7 +3,7 @@
 # add_disk.py - Implements "cot add-disk" command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -41,9 +41,11 @@ import logging
 import os.path
 
 from COT.disks import DiskRepresentation
-from .data_validation import InvalidInputError, ValueUnsupportedError
-from .data_validation import check_for_conflict, device_address, match_or_die
-from .submodule import COTSubmodule
+from COT.data_validation import (
+    InvalidInputError, ValueUnsupportedError,
+    check_for_conflict, device_address, match_or_die,
+)
+from COT.submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +61,22 @@ def validate_controller_address(controller, address):
 
     Raises:
       InvalidInputError: if the address/controller combo is invalid.
+
+    Examples:
+      ::
+
+        >>> validate_controller_address("ide", "0:0")
+        >>> try:
+        ...     validate_controller_address("ide", "1:3")
+        ... except InvalidInputError as e:
+        ...     print(e)
+        IDE disk address must be between 0:0 and 1:1
+        >>> validate_controller_address("scsi", "1:3")
+        >>> try:
+        ...     validate_controller_address("scsi", "4:0")
+        ... except InvalidInputError as e:
+        ...     print(e)
+        SCSI disk address must be between 0:0 and 3:15
     """
     logger.info("validate_controller_address: %s, %s", controller, address)
     if controller is not None and address is not None:
@@ -269,7 +287,22 @@ def guess_drive_type_from_extension(disk_file_name):
       str: "cdrom" or "harddisk"
     Raises:
       InvalidInputError: if the disk type cannot be guessed.
-    """
+    Examples:
+      ::
+
+        >>> guess_drive_type_from_extension('/foo/bar.vmdk')
+        'harddisk'
+        >>> guess_drive_type_from_extension('baz.vmdk.iso')
+        'cdrom'
+        >>> try:
+        ...     guess_drive_type_from_extension('/etc/os-release')
+        ...     raise AssertionError("no exception raised")
+        ... except InvalidInputError as e:
+        ...     print(e)
+        Unable to guess disk drive type for file '/etc/os-release' from its extension ''.
+        Known extensions are ['.img', '.iso', '.qcow2', '.raw', '.vmdk']
+        Please specify '--type harddisk' or '--type cdrom'.
+    """    # noqa: E501
     disk_extension = os.path.splitext(disk_file_name)[1]
     ext_type_map = {
         '.iso':   'cdrom',
@@ -285,7 +318,8 @@ def guess_drive_type_from_extension(disk_file_name):
             "Unable to guess disk drive type for file '{0}' from its "
             "extension '{1}'.\nKnown extensions are {2}\n"
             "Please specify '--type harddisk' or '--type cdrom'."
-            .format(disk_file_name, disk_extension, ext_type_map.keys()))
+            .format(disk_file_name, disk_extension,
+                    sorted(ext_type_map.keys())))
     return drive_type
 
 
@@ -355,28 +389,34 @@ def search_for_elements(vm, disk_file, file_id, controller, address):
     return file_obj, disk_obj, ctrl_item, disk_item
 
 
-def guess_controller_type(vm, ctrl_item, drive_type):
+def guess_controller_type(platform, ctrl_item, drive_type):
     """If a controller type wasn't specified, try to guess from context.
 
     Args:
-      vm (VMDescription): Virtual machine object
-      ctrl_item (object): Any known controller object
+      platform (Platform): Platform class to guess controller for
+      ctrl_item (object): Any known controller object, or None
       drive_type (str): "cdrom" or "harddisk"
     Returns:
       str: 'ide' or 'scsi'
     Raises:
-      ValueUnsupportedError: if ``ctrl_item`` is not an IDE or SCSI
-          controller device.
+      ValueUnsupportedError: if ``ctrl_item`` is not None but is also not
+          an IDE or SCSI controller device.
+    Examples:
+      ::
+
+        >>> from COT.platforms import Platform
+        >>> guess_controller_type(Platform, None, 'harddisk')
+        'ide'
     """
     if ctrl_item is None:
         # If the user didn't tell us which controller type they wanted,
         # and we didn't find a controller item based on existing file/disk,
         # then we need to guess which type of controller we need,
         # based on the platform and the disk drive type.
-        ctrl_type = vm.platform.controller_type_for_device(drive_type)
+        ctrl_type = platform.controller_type_for_device(drive_type)
         logger.warning("Guessing controller type should be %s "
                        "based on disk drive type %s and platform %s",
-                       ctrl_type, drive_type, vm.platform.__name__)
+                       ctrl_type, drive_type, platform.__name__)
     else:
         ctrl_type = ctrl_item.hardware_type
         if ctrl_type != 'ide' and ctrl_type != 'scsi':
@@ -543,7 +583,7 @@ def add_disk_worker(vm,
         search_for_elements(vm, disk_filename, file_id, controller, address)
 
     if controller is None:
-        controller = guess_controller_type(vm, ctrl_item, drive_type)
+        controller = guess_controller_type(vm.platform, ctrl_item, drive_type)
 
     if ctrl_item is None and address is None:
         # We didn't find a specific controller from the user info,
@@ -592,3 +632,8 @@ def add_disk_worker(vm,
     # Finally, the disk Item
     vm.add_disk_device(drive_type, disk_addr, diskname,
                        description, disk, file_obj, ctrl_item, disk_item)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
