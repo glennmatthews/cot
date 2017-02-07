@@ -3,7 +3,7 @@
 # file_reference.py - APIs abstracting away various ways to refer to a file.
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2015-2016 the COT project developers.
+# Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -252,3 +252,8 @@ class FileInTAR(object):
             tarf.addfile(self.tarf.getmember(self.filename), self.obj)
         finally:
             self.close()
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

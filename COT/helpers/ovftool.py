@@ -3,7 +3,7 @@
 # ovftool.py - Helper for 'ovftool'
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -41,12 +41,12 @@ class OVFTool(Helper):
         return False
 
     def unsure_how_to_install(self):
-        """Raise a NotImplementedError about missing install logic.
+        """Return a NotImplementedError about missing install logic.
 
         We override the default install implementation to raise a more
         detailed error message for ovftool.
         """
-        raise NotImplementedError(
+        return NotImplementedError(
             "No support for automated installation of ovftool, as VMware "
             "requires a site login to download it. See "
             "https://www.vmware.com/support/developer/ovf/"
