@@ -29,7 +29,10 @@ class DiskRepresentation(object):
 
     @staticmethod
     def subclasses():
-        """Subclasses of DiskRepresentation. Wraps __subclasses__ builtin."""
+        """List of subclasses of DiskRepresentation.
+
+        Wraps the :meth:`class.__subclasses__` builtin.
+        """
         # pylint doesn't know about __subclasses__
         # https://github.com/PyCQA/pylint/issues/555
         # TODO: this should be fixed when pylint 2.0 is released

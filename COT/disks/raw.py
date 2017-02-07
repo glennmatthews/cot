@@ -56,7 +56,9 @@ class RAW(DiskRepresentation):
 
     @classmethod
     def file_is_this_type(cls, path):
-        """Is this file a RAW image? Any file conceivably can be.
+        """Whether this file is a RAW image.
+
+        Any file conceivably can be a RAW image; there's no file magic number.
 
         For the parameters, see :meth:`DiskRepresentation.file_is_this_type`.
         """
