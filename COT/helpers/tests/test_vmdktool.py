@@ -120,7 +120,7 @@ class TestVMDKTool(HelperUT):
 
     def test_install_helper_brew(self, *_):
         """Test installation via 'brew'."""
-        self.brew_install_test('glennmatthews/core/vmdktool')
+        self.brew_install_test('vmdktool')
 
     def test_install_helper_port(self, *_):
         """Test installation via 'port'."""

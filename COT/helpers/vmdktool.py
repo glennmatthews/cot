@@ -57,7 +57,7 @@ class VMDKTool(Helper):
             helpers['port'].install_package('vmdktool')
             return
         elif helpers['brew']:
-            helpers['brew'].install_package('glennmatthews/core/vmdktool')
+            helpers['brew'].install_package('vmdktool')
             return
         elif platform.system() != 'Linux':
             raise self.unsure_how_to_install()
