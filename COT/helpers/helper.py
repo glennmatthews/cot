@@ -487,13 +487,12 @@ helpers = HelperDict(Helper)
 class PackageManager(Helper):
     """Helper program with additional API method install_package()."""
 
-    def install_package(self, package, *args, **kwargs):
+    def install_package(self, package):
         """Install the requested package if needed.
 
         Args:
-          package (str): Name of the package to install.
-          *args (list): Subclasses may accept additional positional args.
-          **kwargs (dict): Subclasses may accept additional keyword args.
+          package (str,list): Name of the package to install or list of
+            parameters needed to install the package.
         """
         raise NotImplementedError("install_package not implemented!")
 

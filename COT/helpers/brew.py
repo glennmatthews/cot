@@ -34,17 +34,16 @@ class Brew(PackageManager):
             version_args=['--version'],
             version_regexp=r"Homebrew ([0-9.]+)")
 
-    def install_package(self,       # pylint: disable=arguments-differ
-                        package,
-                        opts=None):
+    def install_package(self, package):
         """Install the requested package if needed.
 
         Args:
-          package (str): Name of the package to install.
-          opts (list): Additional parameters to append to the command.
+          package (str,list): Name of the package to install or list of
+            parameters needed to install the package.
         """
         # Brew automatically updates when called so no need for us to do it.
-        cmd = ['install', package]
-        if opts:
-            cmd += opts
+        if isinstance(package, list):
+            cmd = ['install'] + package
+        else:
+            cmd = ['install', package]
         self.call(cmd, capture_output=False)

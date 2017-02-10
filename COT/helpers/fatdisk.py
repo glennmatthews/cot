@@ -39,6 +39,11 @@ class FatDisk(Helper):
             info_uri="http://github.com/goblinhack/fatdisk",
             version_regexp="version ([0-9.]+)")
 
+    _provider_package = {
+        'brew': ['glennmatthews/fatdisk/fatdisk', '--devel'],
+        'port': 'fatdisk',
+    }
+
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""

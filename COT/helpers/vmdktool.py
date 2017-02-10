@@ -35,6 +35,11 @@ class VMDKTool(Helper):
     http://www.freshports.org/sysutils/vmdktool/
     """
 
+    _provider_package = {
+        'brew': 'vmdktool',
+        'port': 'vmdktool',
+    }
+
     def __init__(self):
         """Initializer."""
         super(VMDKTool, self).__init__(
