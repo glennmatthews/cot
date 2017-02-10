@@ -150,6 +150,7 @@ Setting input-charset to 'UTF-8' from locale.
         helpers['genisoimage']._installed = False
         helpers['xorriso']._installed = False
         helpers['apt-get']._installed = False
+        helpers['brew']._installed = False
         helpers['port']._installed = False
         helpers['yum']._installed = False
         self.assertRaises(HelperNotFoundError,

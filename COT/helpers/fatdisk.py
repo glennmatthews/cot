@@ -42,7 +42,7 @@ class FatDisk(Helper):
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
-        return bool(helpers['port'] or
+        return bool(helpers['brew'] or helpers['port'] or
                     (platform.system() == 'Linux' and
                      (helpers['make'] or helpers['make'].installable) and
                      (helpers['clang'] or helpers['gcc'] or
@@ -52,6 +52,10 @@ class FatDisk(Helper):
         """Install ``fatdisk``."""
         if helpers['port']:
             helpers['port'].install_package('fatdisk')
+            return
+        elif helpers['brew']:
+            helpers['brew'].install_package('glennmatthews/fatdisk/fatdisk',
+                                            opts=['--devel'])
             return
         elif platform.system() != 'Linux':
             raise self.unsure_how_to_install()

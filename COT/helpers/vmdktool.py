@@ -46,12 +46,18 @@ class VMDKTool(Helper):
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
-        return bool(helpers['apt-get'] or helpers['port'] or helpers['yum'])
+        return bool(helpers['apt-get'] or
+                    helpers['brew'] or
+                    helpers['port'] or
+                    helpers['yum'])
 
     def _install(self):
         """Install ``vmdktool``."""
         if helpers['port']:
             helpers['port'].install_package('vmdktool')
+            return
+        elif helpers['brew']:
+            helpers['brew'].install_package('vmdktool')
             return
         elif platform.system() != 'Linux':
             raise self.unsure_how_to_install()

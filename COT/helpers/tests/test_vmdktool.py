@@ -3,7 +3,7 @@
 # test_vmdktool.py - Unit test cases for COT.helpers.vmdktool submodule.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -117,6 +117,10 @@ class TestVMDKTool(HelperUT):
                  '/home/cot/opt/local/bin'],
                 ['make', 'install', 'PREFIX=/opt/local', 'DESTDIR=/home/cot'],
             ])
+
+    def test_install_helper_brew(self, *_):
+        """Test installation via 'brew'."""
+        self.brew_install_test('vmdktool')
 
     def test_install_helper_port(self, *_):
         """Test installation via 'port'."""
