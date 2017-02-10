@@ -180,6 +180,7 @@ class Helper(object):
 
       call
       install
+      _install
       unsure_how_to_install
     """
 
@@ -370,13 +371,18 @@ class Helper(object):
             return NotImplementedError(msg)
 
     def _install(self):
-        """Subclass-specific implementation of installation logic."""
+        """Subclass-specific implementation of installation logic.
+
+        This method should only be called from :meth:`install`,
+        which does the appropriate pre-validation against the
+        :attr:`installed` and :attr:`installable` properties before
+        calling into this method if appropriate.
+        """
         # Default implementation
         for pm_name, package in self._provider_package.items():
             if helpers[pm_name]:
                 helpers[pm_name].install_package(package)
                 return
-        # We shouldn't get here under normal call flow and logic.
         raise self.unsure_how_to_install()
 
     @staticmethod
@@ -491,8 +497,8 @@ class PackageManager(Helper):
         """Install the requested package if needed.
 
         Args:
-          package (str,list): Name of the package to install or list of
-            parameters needed to install the package.
+          package (str): Name of the package to install, or a list of
+            parameters used to install the package.
         """
         raise NotImplementedError("install_package not implemented!")
 

@@ -38,8 +38,8 @@ class Brew(PackageManager):
         """Install the requested package if needed.
 
         Args:
-          package (str,list): Name of the package to install or list of
-            parameters needed to install the package.
+          package (str): Name of the package to install, or a list of
+            parameters used to install the package.
         """
         # Brew automatically updates when called so no need for us to do it.
         if isinstance(package, list):

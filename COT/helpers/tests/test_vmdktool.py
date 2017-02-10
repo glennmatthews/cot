@@ -174,4 +174,4 @@ class TestVMDKTool(HelperUT):
     def test_install_helper_mac_no_package_manager(self, *_):
         """Mac installation requires port."""
         self.select_package_manager(None)
-        self.assertRaises(NotImplementedError, self.helper.install)
+        self.assertRaises(RuntimeError, self.helper.install)

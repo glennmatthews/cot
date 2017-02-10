@@ -55,15 +55,14 @@ class FatDisk(Helper):
 
     def _install(self):
         """Install ``fatdisk``."""
-        if helpers['port']:
-            helpers['port'].install_package('fatdisk')
+        try:
+            super(FatDisk, self)._install()
             return
-        elif helpers['brew']:
-            helpers['brew'].install_package('glennmatthews/fatdisk/fatdisk',
-                                            opts=['--devel'])
-            return
-        elif platform.system() != 'Linux':
-            raise self.unsure_how_to_install()
+        except NotImplementedError:
+            # We have an alternative install method available for Linux,
+            # below - but if not Linux, you're out of luck!
+            if platform.system() != 'Linux':
+                raise
 
         # Fatdisk installation requires make
         helpers['make'].install()

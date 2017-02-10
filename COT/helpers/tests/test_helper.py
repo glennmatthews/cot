@@ -215,13 +215,25 @@ class HelperUT(COT_UT):
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('platform.system', return_value='Windows')
-    def test_install_unsupported(self, *_):
-        """Unable to install without a package manager."""
+    def test_install_windows_unsupported(self, *_):
+        """No support for installation on Windows.
+
+        This is a somewhat artificial test of logic in ``_install``
+        that is normally unreachable when calling ``install()``.
+        """
+        if self.helper is None:
+            return
         self.select_package_manager(None)
-        if self.helper:
-            with mock.patch.object(self.helper, '_path', new=None):
-                self.assertRaises(NotImplementedError,
-                                  self.helper.install)
+        self.assertRaises(NotImplementedError, self.helper._install)
+
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    @mock.patch('platform.system', return_value='Linux')
+    def test_install_linux_no_package_manager(self, *_):
+        """Unable to install on Linux without a package manager."""
+        if self.helper is None:
+            return
+        self.select_package_manager(None)
+        self.assertRaises(RuntimeError, self.helper._install)
 
 
 class HelperGenericTest(HelperUT):

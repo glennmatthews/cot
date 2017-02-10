@@ -58,14 +58,14 @@ class VMDKTool(Helper):
 
     def _install(self):
         """Install ``vmdktool``."""
-        if helpers['port']:
-            helpers['port'].install_package('vmdktool')
+        try:
+            super(VMDKTool, self)._install()
             return
-        elif helpers['brew']:
-            helpers['brew'].install_package('vmdktool')
-            return
-        elif platform.system() != 'Linux':
-            raise self.unsure_how_to_install()
+        except NotImplementedError:
+            # We have an alternative install method available for Linux,
+            # below - but if not Linux, you're out of luck!
+            if platform.system() != 'Linux':
+                raise
 
         # We don't have vmdktool in apt or yum yet,
         # but we can build it manually:
