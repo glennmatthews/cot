@@ -317,7 +317,9 @@ class Helper(object):
         """Install the helper program.
 
         Raises:
-          NotImplementedError: if not :attr:`installable`
+          NotImplementedError: if not :attr:`installable` on this platform
+          RuntimeError: if potentially :attr:`installable` on this platform
+            but required helpers (e.g., package managers) are not available.
           HelperError: if installation is attempted but fails.
 
         Subclasses should not override this method but instead should provide

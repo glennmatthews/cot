@@ -244,6 +244,12 @@ class HelperGenericTest(HelperUT):
         self.helper = Helper("generic")
         super(HelperGenericTest, self).setUp()
 
+    def tearDown(self):
+        """Cleanup function called automatically prior to each test."""
+        self.helper._installed = False
+        Helper._provider_package = {}
+        super(HelperGenericTest, self).tearDown()
+
     def test_check_call_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist."""
         self.assertRaises(HelperNotFoundError,
@@ -344,9 +350,54 @@ class HelperGenericTest(HelperUT):
 
     @mock.patch('COT.helpers.Helper.installable',
                 new_callable=mock.PropertyMock, return_value=True)
-    def test_install_no_package_managers(self, *_):
-        """If installable lies, default _install should fail cleanly."""
+    def test_install_not_implemented(self, *_):
+        """If installable lies, default _install method should fail cleanly."""
+        self.helper._installed = False
         self.assertRaises(NotImplementedError, self.helper.install)
+
+    @mock.patch('COT.helpers.Helper.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    @mock.patch('platform.system', return_value='Darwin')
+    def test_install_missing_package_manager_mac(self, *_):
+        """RuntimeError if Mac install supported but brew/port are absent."""
+        self.helper._installed = False
+        self.helper._provider_package['brew'] = 'install-me-with-brew'
+        self.helper._provider_package['port'] = 'install-me-with-port'
+        self.select_package_manager(None)
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper.install()
+        msg = str(cm.exception)
+        self.assertRegex(msg, "Unsure how to install generic.")
+        # Since both helpers are supported, we should see both messages
+        self.assertRegex(msg, "COT can use Homebrew")
+        self.assertRegex(msg, "COT can use MacPorts")
+
+        del self.helper._provider_package['brew']
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper.install()
+        msg = str(cm.exception)
+        self.assertRegex(msg, "Unsure how to install generic.")
+        # Now we should only see the supported one
+        self.assertNotRegex(msg, "COT can use Homebrew")
+        self.assertRegex(msg, "COT can use MacPorts")
+
+        del self.helper._provider_package['port']
+        # Now we should fall back to NotImplementedError
+        with self.assertRaises(NotImplementedError) as cm:
+            self.helper.install()
+        msg = str(cm.exception)
+        self.assertRegex(msg, "Unsure how to install generic.")
+        self.assertNotRegex(msg, "COT can use Homebrew")
+        self.assertNotRegex(msg, "COT can use MacPorts")
+
+        self.helper._provider_package['brew'] = 'install-me-with-brew'
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper.install()
+        msg = str(cm.exception)
+        self.assertRegex(msg, "Unsure how to install generic.")
+        # Now we should only see the supported one
+        self.assertRegex(msg, "COT can use Homebrew")
+        self.assertNotRegex(msg, "COT can use MacPorts")
 
     @mock.patch('COT.helpers.Helper._install')
     @mock.patch('COT.helpers.Helper.installable',
