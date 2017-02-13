@@ -145,13 +145,12 @@ class HelperUT(COT_UT):
         self.select_package_manager('brew')
         if isinstance(brew_params, str):
             brew_params = [brew_params]
-        # Python 2.6 doesn't let us use multiple contexts in one 'with'
-        with mock.patch('subprocess.check_call') as mock_check_call:
-            with mock.patch.object(self.helper, '_path') as mock_path:
-                mock_path.return_value = (None, '/bin/' + brew_params[0])
-                self.helper.install()
-                mock_check_call.assert_called_with(
-                    ['brew', 'install'] + brew_params)
+        with mock.patch('subprocess.check_call') as mock_check_call, \
+                mock.patch.object(self.helper, '_path') as mock_path:
+            mock_path.return_value = (None, '/bin/' + brew_params[0])
+            self.helper.install()
+            mock_check_call.assert_called_with(
+                ['brew', 'install'] + brew_params)
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
