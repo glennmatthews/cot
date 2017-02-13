@@ -812,3 +812,8 @@ class OVFItem(object):
             item_list.append(item)
 
         return item_list
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

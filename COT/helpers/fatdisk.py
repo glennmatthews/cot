@@ -3,7 +3,7 @@
 # fatdisk.py - Helper for 'fatdisk'
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -39,10 +39,15 @@ class FatDisk(Helper):
             info_uri="http://github.com/goblinhack/fatdisk",
             version_regexp="version ([0-9.]+)")
 
+    _provider_package = {
+        'brew': ['glennmatthews/fatdisk/fatdisk', '--devel'],
+        'port': 'fatdisk',
+    }
+
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
-        return bool(helpers['port'] or
+        return bool(helpers['brew'] or helpers['port'] or
                     (platform.system() == 'Linux' and
                      (helpers['make'] or helpers['make'].installable) and
                      (helpers['clang'] or helpers['gcc'] or
@@ -50,11 +55,14 @@ class FatDisk(Helper):
 
     def _install(self):
         """Install ``fatdisk``."""
-        if helpers['port']:
-            helpers['port'].install_package('fatdisk')
+        try:
+            super(FatDisk, self)._install()
             return
-        elif platform.system() != 'Linux':
-            self.unsure_how_to_install()
+        except NotImplementedError:
+            # We have an alternative install method available for Linux,
+            # below - but if not Linux, you're out of luck!
+            if platform.system() != 'Linux':
+                raise
 
         # Fatdisk installation requires make
         helpers['make'].install()

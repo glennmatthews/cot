@@ -3,7 +3,7 @@
 # fatdisk.py - Unit test cases for COT.helpers.fatdisk submodule.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -128,6 +128,10 @@ class TestFatDisk(HelperUT):
         self.assertTrue(re.search("/fatdisk$", mock_copy.call_args[0][0]))
         self.assertEqual('/home/cot/opt/local/bin', mock_copy.call_args[0][1])
 
+    def test_install_brew(self, *_):
+        """Test installation via 'brew'."""
+        self.brew_install_test(['glennmatthews/fatdisk/fatdisk', '--devel'])
+
     def test_install_port(self, *_):
         """Test installation via 'port'."""
         self.port_install_test('fatdisk')
@@ -199,4 +203,4 @@ class TestFatDisk(HelperUT):
     def test_install_helper_mac_no_package_manager(self, *_):
         """Mac installation requires port."""
         self.select_package_manager(None)
-        self.assertRaises(NotImplementedError, self.helper.install)
+        self.assertRaises(RuntimeError, self.helper.install)

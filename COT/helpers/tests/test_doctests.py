@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #
-# test_doctests.py - test runner for COT doctests
+# test_doctests.py - test runner for COT.helpers doctests
 #
-# July 2016, Glenn F. Matthews
+# February 2017, Glenn F. Matthews
 # Copyright (c) 2016-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
@@ -14,16 +14,10 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Test runner for COT doctest tests."""
-
-import logging
+"""Test runner for COT.helpers doctest tests."""
 
 from doctest import DocTestSuite
 from unittest import TestSuite
-
-from COT.tests.ut import NullHandler
-
-logging.getLogger('COT').addHandler(NullHandler())
 
 
 def load_tests(*_):
@@ -32,12 +26,5 @@ def load_tests(*_):
     For the parameters, see :mod:`unittest`. The parameters are unused here.
     """
     suite = TestSuite()
-    suite.addTests(DocTestSuite('COT.add_disk'))
-    suite.addTests(DocTestSuite('COT.cli'))
-    suite.addTests(DocTestSuite('COT.data_validation'))
-    suite.addTests(DocTestSuite('COT.deploy'))
-    suite.addTests(DocTestSuite('COT.edit_hardware'))
-    suite.addTests(DocTestSuite('COT.edit_properties'))
-    suite.addTests(DocTestSuite('COT.file_reference'))
-    suite.addTests(DocTestSuite('COT.platforms'))
+    suite.addTests(DocTestSuite('COT.helpers.helper'))
     return suite

@@ -3,7 +3,7 @@
 # vmdktool.py - Helper for 'vmdktool'
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -35,6 +35,11 @@ class VMDKTool(Helper):
     http://www.freshports.org/sysutils/vmdktool/
     """
 
+    _provider_package = {
+        'brew': 'vmdktool',
+        'port': 'vmdktool',
+    }
+
     def __init__(self):
         """Initializer."""
         super(VMDKTool, self).__init__(
@@ -46,15 +51,21 @@ class VMDKTool(Helper):
     @property
     def installable(self):
         """Whether COT is capable of installing this program on this system."""
-        return bool(helpers['apt-get'] or helpers['port'] or helpers['yum'])
+        return bool(helpers['apt-get'] or
+                    helpers['brew'] or
+                    helpers['port'] or
+                    helpers['yum'])
 
     def _install(self):
         """Install ``vmdktool``."""
-        if helpers['port']:
-            helpers['port'].install_package('vmdktool')
+        try:
+            super(VMDKTool, self)._install()
             return
-        elif platform.system() != 'Linux':
-            self.unsure_how_to_install()
+        except NotImplementedError:
+            # We have an alternative install method available for Linux,
+            # below - but if not Linux, you're out of luck!
+            if platform.system() != 'Linux':
+                raise
 
         # We don't have vmdktool in apt or yum yet,
         # but we can build it manually:
