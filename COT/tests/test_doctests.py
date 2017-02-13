@@ -16,8 +16,14 @@
 
 """Test runner for COT doctest tests."""
 
+import logging
+
 from doctest import DocTestSuite
 from unittest import TestSuite
+
+from COT.tests.ut import NullHandler
+
+logging.getLogger('COT').addHandler(NullHandler())
 
 
 def load_tests(*_):
@@ -33,4 +39,5 @@ def load_tests(*_):
     suite.addTests(DocTestSuite('COT.edit_hardware'))
     suite.addTests(DocTestSuite('COT.edit_properties'))
     suite.addTests(DocTestSuite('COT.file_reference'))
+    suite.addTests(DocTestSuite('COT.platforms'))
     return suite

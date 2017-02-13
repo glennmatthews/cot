@@ -3,7 +3,7 @@
 # test_helpers.py - Unit test cases for COT.helpers submodule.
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -74,7 +74,7 @@ class HelperUT(COT_UT):
     @staticmethod
     def select_package_manager(name):
         """Select the specified installer program for Helper to use."""
-        for pm_name in ['apt-get', 'port', 'yum']:
+        for pm_name in ['apt-get', 'brew', 'port', 'yum']:
             helpers[pm_name]._installed = (pm_name == name)
 
     def enable_apt_install(self):
@@ -136,6 +136,24 @@ class HelperUT(COT_UT):
                 [['apt-get', '-q', 'install', pkgname]])
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
+    def brew_install_test(self, brew_params, *_):
+        """Test installation with 'brew'.
+
+        Args:
+          brew_params (str,): Homebrew formula name to test, or list of args.
+        """
+        self.select_package_manager('brew')
+        if isinstance(brew_params, str):
+            brew_params = [brew_params]
+        # Python 2.6 doesn't let us use multiple contexts in one 'with'
+        with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch.object(self.helper, '_path') as mock_path:
+                mock_path.return_value = (None, '/bin/' + brew_params[0])
+                self.helper.install()
+                mock_check_call.assert_called_with(
+                    ['brew', 'install'] + brew_params)
+
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
         """Test installation with 'port'.
 
@@ -194,13 +212,25 @@ class HelperUT(COT_UT):
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('platform.system', return_value='Windows')
-    def test_install_unsupported(self, *_):
-        """Unable to install without a package manager."""
+    def test_install_windows_unsupported(self, *_):
+        """No support for installation on Windows.
+
+        This is a somewhat artificial test of logic in ``_install``
+        that is normally unreachable when calling ``install()``.
+        """
+        if self.helper is None:
+            return
         self.select_package_manager(None)
-        if self.helper:
-            with mock.patch.object(self.helper, '_path', new=None):
-                self.assertRaises(NotImplementedError,
-                                  self.helper.install)
+        self.assertRaises(NotImplementedError, self.helper._install)
+
+    @mock.patch('distutils.spawn.find_executable', return_value=None)
+    @mock.patch('platform.system', return_value='Linux')
+    def test_install_linux_no_package_manager(self, *_):
+        """Unable to install on Linux without a package manager."""
+        if self.helper is None:
+            return
+        self.select_package_manager(None)
+        self.assertRaises(RuntimeError, self.helper._install)
 
 
 class HelperGenericTest(HelperUT):
@@ -210,6 +240,12 @@ class HelperGenericTest(HelperUT):
         """Test case setup function called automatically prior to each test."""
         self.helper = Helper("generic")
         super(HelperGenericTest, self).setUp()
+
+    def tearDown(self):
+        """Cleanup function called automatically prior to each test."""
+        self.helper._installed = False
+        Helper._provider_package = {}
+        super(HelperGenericTest, self).tearDown()
 
     def test_check_call_helpernotfounderror(self):
         """HelperNotFoundError if executable doesn't exist."""
@@ -311,9 +347,54 @@ class HelperGenericTest(HelperUT):
 
     @mock.patch('COT.helpers.Helper.installable',
                 new_callable=mock.PropertyMock, return_value=True)
-    def test_install_no_package_managers(self, *_):
-        """If installable lies, default _install should fail cleanly."""
+    def test_install_not_implemented(self, *_):
+        """If installable lies, default _install method should fail cleanly."""
+        self.helper._installed = False
         self.assertRaises(NotImplementedError, self.helper.install)
+
+    @mock.patch('COT.helpers.Helper.installable',
+                new_callable=mock.PropertyMock, return_value=True)
+    @mock.patch('platform.system', return_value='Darwin')
+    def test_install_missing_package_manager_mac(self, *_):
+        """RuntimeError if Mac install supported but brew/port are absent."""
+        self.helper._installed = False
+        self.helper._provider_package['brew'] = 'install-me-with-brew'
+        self.helper._provider_package['port'] = 'install-me-with-port'
+        self.select_package_manager(None)
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper.install()
+        msg = str(cm.exception)
+        self.assertRegex(msg, "Unsure how to install generic.")
+        # Since both helpers are supported, we should see both messages
+        self.assertRegex(msg, "COT can use Homebrew")
+        self.assertRegex(msg, "COT can use MacPorts")
+
+        del self.helper._provider_package['brew']
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper.install()
+        msg = str(cm.exception)
+        self.assertRegex(msg, "Unsure how to install generic.")
+        # Now we should only see the supported one
+        self.assertNotRegex(msg, "COT can use Homebrew")
+        self.assertRegex(msg, "COT can use MacPorts")
+
+        del self.helper._provider_package['port']
+        # Now we should fall back to NotImplementedError
+        with self.assertRaises(NotImplementedError) as cm:
+            self.helper.install()
+        msg = str(cm.exception)
+        self.assertRegex(msg, "Unsure how to install generic.")
+        self.assertNotRegex(msg, "COT can use Homebrew")
+        self.assertNotRegex(msg, "COT can use MacPorts")
+
+        self.helper._provider_package['brew'] = 'install-me-with-brew'
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper.install()
+        msg = str(cm.exception)
+        self.assertRegex(msg, "Unsure how to install generic.")
+        # Now we should only see the supported one
+        self.assertRegex(msg, "COT can use Homebrew")
+        self.assertNotRegex(msg, "COT can use MacPorts")
 
     @mock.patch('COT.helpers.Helper._install')
     @mock.patch('COT.helpers.Helper.installable',

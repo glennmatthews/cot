@@ -3,7 +3,7 @@
 # test_qemu_img.py - Unit test cases for COT.helpers.qemu_img submodule.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -83,6 +83,10 @@ Command syntax:
     def test_install_apt_get(self):
         """Test installation via 'apt-get'."""
         self.apt_install_test('qemu-utils', 'qemu-img')
+
+    def test_install_brew(self):
+        """Test installation via 'brew'."""
+        self.brew_install_test('qemu')
 
     def test_install_port(self):
         """Test installation via 'port'."""

@@ -3,12 +3,14 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
-`Unreleased`_
--------------
+`1.9.0`_ - 2017-02-13
+---------------------
 
 **Added**
 
 - Support for Python 3.6
+- Support for `brew` package manager (`#55`_).
+- Support for Cisco Nexus 9000v (NX-OSv 9000) platform (`#60`_).
 
 **Removed**
 
@@ -609,9 +611,11 @@ Initial public release.
 .. _#52: https://github.com/glennmatthews/cot/issues/52
 .. _#53: https://github.com/glennmatthews/cot/issues/53
 .. _#54: https://github.com/glennmatthews/cot/issues/54
+.. _#55: https://github.com/glennmatthews/cot/issues/55
 .. _#57: https://github.com/glennmatthews/cot/issues/57
 .. _#58: https://github.com/glennmatthews/cot/issues/58
 .. _#59: https://github.com/glennmatthews/cot/issues/59
+.. _#60: https://github.com/glennmatthews/cot/issues/60
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -643,6 +647,7 @@ Initial public release.
 .. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.9.0: https://github.com/glennmatthews/cot/compare/v1.8.2...v1.9.0
 .. _1.8.2: https://github.com/glennmatthews/cot/compare/v1.8.1...v1.8.2
 .. _1.8.1: https://github.com/glennmatthews/cot/compare/v1.8.0...v1.8.1
 .. _1.8.0: https://github.com/glennmatthews/cot/compare/v1.7.4...v1.8.0
