@@ -3,8 +3,8 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
-`Unreleased`_
--------------
+`1.9.0`_ - 2017-02-13
+---------------------
 
 **Added**
 
@@ -643,6 +643,7 @@ Initial public release.
 .. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.9.0: https://github.com/glennmatthews/cot/compare/v1.8.2...v1.9.0
 .. _1.8.2: https://github.com/glennmatthews/cot/compare/v1.8.1...v1.8.2
 .. _1.8.1: https://github.com/glennmatthews/cot/compare/v1.8.0...v1.8.1
 .. _1.8.0: https://github.com/glennmatthews/cot/compare/v1.7.4...v1.8.0
