@@ -54,6 +54,16 @@ class Platform(object):
 
         Returns:
           class: Platform or the appropriate subclass.
+
+        Examples:
+          ::
+
+            >>> Platform.for_product_string("com.cisco.n9k")
+            <class 'COT.platforms.cisco_nexus_9000v.Nexus9000v'>
+            >>> Platform.for_product_string(None)
+            <class 'COT.platforms.platform.Platform'>
+            >>> Platform.for_product_string("frobozz")
+            <class 'COT.platforms.platform.Platform'>
         """
         if product_string is None:
             return Platform

@@ -180,6 +180,7 @@ class Helper(object):
 
       call
       install
+      _install
       unsure_how_to_install
     """
 
@@ -316,7 +317,9 @@ class Helper(object):
         """Install the helper program.
 
         Raises:
-          NotImplementedError: if not :attr:`installable`
+          NotImplementedError: if not :attr:`installable` on this platform
+          RuntimeError: if potentially :attr:`installable` on this platform
+            but required helpers (e.g., package managers) are not available.
           HelperError: if installation is attempted but fails.
 
         Subclasses should not override this method but instead should provide
@@ -344,12 +347,20 @@ class Helper(object):
         if self.info_uri:
             msg += "\nRefer to {0} for information".format(self.info_uri)
 
-        if platform.system() == 'Darwin' and (
-                'port' in self._provider_package and not helpers['port']):
-            msg += ("\nCOT can use MacPorts (https://www.macports.org/),"
-                    " if available on your system, to install {0} and other"
-                    " helpers for you.".format(self.name))
-            return RuntimeError(msg)
+        if platform.system() == 'Darwin':
+            if 'brew' in self._provider_package and not helpers['brew']:
+                msg += ("\nCOT can use Homebrew (https://brew.sh), "
+                        "if available on your system, to install {0}."
+                        .format(self.name))
+            if 'port' in self._provider_package and not helpers['port']:
+                msg += ("\nCOT can use MacPorts (https://www.macports.org/), "
+                        "if available on your system, to install {0}."
+                        .format(self.name))
+            if ('brew' in self._provider_package or
+                    'port' in self._provider_package):
+                return RuntimeError(msg)
+            else:
+                return NotImplementedError(msg)
         elif platform.system() == 'Linux' and (
                 ('apt-get' in self._provider_package or
                  'yum' in self._provider_package) and
@@ -362,13 +373,18 @@ class Helper(object):
             return NotImplementedError(msg)
 
     def _install(self):
-        """Subclass-specific implementation of installation logic."""
+        """Subclass-specific implementation of installation logic.
+
+        This method should only be called from :meth:`install`,
+        which does the appropriate pre-validation against the
+        :attr:`installed` and :attr:`installable` properties before
+        calling into this method if appropriate.
+        """
         # Default implementation
         for pm_name, package in self._provider_package.items():
             if helpers[pm_name]:
                 helpers[pm_name].install_package(package)
                 return
-        # We shouldn't get here under normal call flow and logic.
         raise self.unsure_how_to_install()
 
     @staticmethod
@@ -483,7 +499,8 @@ class PackageManager(Helper):
         """Install the requested package if needed.
 
         Args:
-          package (str): Name of the package to install.
+          package (str): Name of the package to install, or a list of
+            parameters used to install the package.
         """
         raise NotImplementedError("install_package not implemented!")
 

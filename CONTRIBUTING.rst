@@ -98,9 +98,13 @@ coverage_ (``pip install coverage``) then run ``tox`` from the COT directory:
   ...
   py34 runtests: commands[0] | coverage run --append setup.py test --quiet
   ...
+  py35 runtests: commands[0] | coverage run --append setup.py test --quiet
+  ...
+  py36 runtests: commands[0] | coverage run --append setup.py test --quiet
+  ...
   pypy runtests: commands[0] | coverage run --append setup.py test --quiet
   ...
-  flake8 runtests: commands[0] | flake8 --verbose
+  flake8 runtests: commands[0] | flake8
   ...
   pylint runtests: commands[0] | pylint COT
   ...
@@ -108,22 +112,23 @@ coverage_ (``pip install coverage``) then run ``tox`` from the COT directory:
   ...
   stats runtests: commands[0] | coverage combine
   stats runtests: commands[1] | coverage report -i
-  Name                        Stmts   Miss  Cover
-  -----------------------------------------------
-  COT/__init__.py                 5      0   100%
-  COT/add_disk.py               166      1    99%
-  COT/add_file.py                45      0   100%
-  COT/cli.py                    252     15    94%
-  COT/data_validation.py         88      0   100%
-  COT/deploy.py                 148      4    97%
-  COT/deploy_esxi.py            201     28    86%
-  COT/edit_hardware.py          273      2    99%
+  Name                                 Stmts   Miss Branch BrPart  Cover
+  ----------------------------------------------------------------------
+  COT/__init__.py                          5      0      0      0   100%
+  COT/add_disk.py                        168      3     66      3    97%
+  COT/add_file.py                         45      0     12      0   100%
+  COT/cli.py                             254     15     95      9    93%
+  COT/data_validation.py                 124      2     44      1    98%
+  COT/deploy.py                          154      6     62      6    94%
+  COT/deploy_esxi.py                     196      0     68      1    99%
+  COT/disks/__init__.py                   23      0     10      0   100%
+  COT/disks/disk.py                       56      1     20      1    97%
   ...
-  COT/vm_description.py         168      4    98%
-  COT/vm_factory.py              26      0   100%
-  COT/xml_file.py               120      0   100%
-  -----------------------------------------------
-  TOTAL                        4692    136    97%
+  COT/vm_description.py                  166      4      4      0    98%
+  COT/vm_factory.py                       26      0      4      0   100%
+  COT/xml_file.py                        121      3     54      1    98%
+  ----------------------------------------------------------------------
+  TOTAL                                 5122    114   1908    105    97%
   stats runtests: commands[2] | coverage html -i
   _______________ summary _______________
     setup: commands succeeded
@@ -131,6 +136,8 @@ coverage_ (``pip install coverage``) then run ``tox`` from the COT directory:
     py27: commands succeeded
     py33: commands succeeded
     py34: commands succeeded
+    py35: commands succeeded
+    py36: commands succeeded
     pypy: commands succeeded
     flake8: commands succeeded
     pylint: commands succeeded

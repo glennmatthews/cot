@@ -4,7 +4,7 @@
 # test_mkisofs.py - Unit test cases for MkISOFS helper class.
 #
 # March 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -55,6 +55,10 @@ class TestMkISOFS(HelperUT):
         self.helper.install()
         mock_check_output.assert_not_called()
         mock_check_call.assert_not_called()
+
+    def test_install_helper_brew(self):
+        """Test installation via 'brew'."""
+        self.brew_install_test('cdrtools')
 
     def test_install_helper_port(self):
         """Test installation via 'port'."""

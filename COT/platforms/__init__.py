@@ -1,5 +1,5 @@
 # October 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -38,6 +38,7 @@ Platform modules
   COT.platforms.cisco_iosv
   COT.platforms.cisco_iosxrv
   COT.platforms.cisco_iosxrv_9000
+  COT.platforms.cisco_nexus_9000v
   COT.platforms.cisco_nxosv
 """
 
@@ -50,6 +51,7 @@ from .cisco_csr1000v import CSR1000V
 from .cisco_iosv import IOSv
 from .cisco_iosxrv import IOSXRv, IOSXRvRP, IOSXRvLC
 from .cisco_iosxrv_9000 import IOSXRv9000
+from .cisco_nexus_9000v import Nexus9000v
 from .cisco_nxosv import NXOSv
 
 logger = logging.getLogger(__name__)
