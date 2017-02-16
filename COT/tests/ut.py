@@ -3,7 +3,7 @@
 # ut.py - Test case wrapper for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -28,24 +28,14 @@ import time
 import logging
 from logging.handlers import BufferingHandler
 # Make sure there's always a "no-op" logging handler.
-try:
-    from logging import NullHandler
-except ImportError:
-    class NullHandler(logging.Handler):
-        """No-op logging handler."""
-
-        def emit(self, record):
-            """Do nothing.
-
-            Args:
-              record (LogRecord): Record to ignore.
-            """
-            pass
+from logging import NullHandler
 
 import traceback
 try:
+    # Python 2.x
     import StringIO
 except ImportError:
+    # Python 3.x
     import io as StringIO
 
 from pkg_resources import resource_filename
@@ -57,6 +47,7 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+
 from verboselogs import VerboseLogger
 logging.setLoggerClass(VerboseLogger)
 
