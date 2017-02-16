@@ -1,7 +1,7 @@
 # test_cisco_iosv.py - Unit test cases for Cisco IOSv platform
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,37 +14,20 @@
 
 """Unit test cases for IOSv platform."""
 
-import unittest
-import logging
-# Make sure there's always a "no-op" logging handler.
-try:
-    from logging import NullHandler
-except ImportError:
-    class NullHandler(logging.Handler):
-        """No-op logging handler."""
-
-        def emit(self, record):
-            """Do nothing.
-
-            Args:
-              record (object): Ignored.
-            """
-            pass
-
 from COT.platforms.cisco_iosv import IOSv
 from COT.data_validation import (
     ValueUnsupportedError, ValueTooLowError, ValueTooHighError
 )
-
-logging.getLogger('COT').addHandler(NullHandler())
+from COT.platforms.tests import PlatformTests
 
 # pylint: disable=missing-type-doc,missing-param-doc
 
 
-class TestIOSv(unittest.TestCase):
+class TestIOSv(PlatformTests.PlatformTest):
     """Test cases for Cisco IOSv platform handling."""
 
     cls = IOSv
+    product_string = "com.cisco.iosv"
 
     def test_nic_name(self):
         """Test NIC name construction."""

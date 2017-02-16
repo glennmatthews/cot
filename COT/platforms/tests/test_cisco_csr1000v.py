@@ -1,7 +1,7 @@
 # test_cisco_csr1000v.py - Unit test cases for Cisco CSR1000V platform
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,17 +14,18 @@
 
 """Unit test cases for CSR1000V platform."""
 
-import unittest
 from COT.platforms.cisco_csr1000v import CSR1000V
 from COT.data_validation import (
     ValueUnsupportedError, ValueTooLowError, ValueTooHighError
 )
+from COT.platforms.tests import PlatformTests
 
 
-class TestCSR1000V(unittest.TestCase):
+class TestCSR1000V(PlatformTests.PlatformTest):
     """Test cases for Cisco CSR 1000V platform handling."""
 
     cls = CSR1000V
+    product_string = "com.cisco.csr1000v"
 
     def test_controller_type_for_device(self):
         """Test platform-specific logic for device controllers."""

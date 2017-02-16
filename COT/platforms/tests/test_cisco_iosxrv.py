@@ -1,7 +1,7 @@
 # test_cisco_iosxrv.py - Unit test cases for Cisco IOS XRv platform handling
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,17 +14,18 @@
 
 """Unit test cases for IOSXRv class and its subclasses."""
 
-import unittest
 from COT.platforms.cisco_iosxrv import IOSXRv, IOSXRvRP, IOSXRvLC
 from COT.data_validation import (
     ValueUnsupportedError, ValueTooLowError, ValueTooHighError
 )
+from COT.platforms.tests import PlatformTests
 
 
-class TestIOSXRv(unittest.TestCase):
+class TestIOSXRv(PlatformTests.PlatformTest):
     """Test cases for Cisco IOS XRv platform handling."""
 
     cls = IOSXRv
+    product_string = "com.cisco.ios-xrv"
 
     def test_nic_name(self):
         """Test NIC name construction."""
@@ -83,6 +84,7 @@ class TestIOSXRvRP(TestIOSXRv):
     """Test cases for Cisco IOS XRv HA-capable RP platform handling."""
 
     cls = IOSXRvRP
+    product_string = "com.cisco.ios-xrv.rp"
 
     # Inherit all test cases from IOSXRv class, except where overridden below:
 
@@ -109,6 +111,7 @@ class TestIOSXRvLC(TestIOSXRv):
     """Test cases for Cisco IOS XRv line card platform handling."""
 
     cls = IOSXRvLC
+    product_string = "com.cisco.ios-xrv.lc"
 
     # Inherit all test cases from IOSXRv class, except where overridden below:
 

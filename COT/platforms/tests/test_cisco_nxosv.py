@@ -1,7 +1,7 @@
 # test_cisco_nxosv.py - Unit test cases for Cisco NXOSv platform
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,17 +14,18 @@
 
 """Unit test cases for NXOSv platform."""
 
-import unittest
 from COT.platforms.cisco_nxosv import NXOSv
 from COT.data_validation import (
     ValueUnsupportedError, ValueTooLowError, ValueTooHighError
 )
+from COT.platforms.tests import PlatformTests
 
 
-class TestNXOSv(unittest.TestCase):
+class TestNXOSv(PlatformTests.PlatformTest):
     """Test cases for Cisco NX-OSv platform handling."""
 
     cls = NXOSv
+    product_string = "com.cisco.nx-osv"
 
     def test_nic_name(self):
         """Test NIC name construction."""

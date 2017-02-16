@@ -14,17 +14,18 @@
 
 """Unit test cases for Nexus 9000v platform."""
 
-import unittest
 from COT.platforms.cisco_nexus_9000v import Nexus9000v
 from COT.data_validation import (
     ValueUnsupportedError, ValueTooLowError, ValueTooHighError
 )
+from COT.platforms.tests import PlatformTests
 
 
-class TestNexus9000v(unittest.TestCase):
+class TestNexus9000v(PlatformTests.PlatformTest):
     """Test cases for Cisco Nexus 9000v platform handling."""
 
     cls = Nexus9000v
+    product_string = "com.cisco.n9k"
 
     def test_nic_name(self):
         """Test NIC name construction."""

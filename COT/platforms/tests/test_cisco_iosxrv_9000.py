@@ -1,7 +1,7 @@
 # test_cisco_iosxrv_9000.py - Unit test cases for Cisco IOS XRv9k platform
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,17 +14,18 @@
 
 """Unit test cases for IOSXRv9000 class."""
 
-import unittest
 from COT.platforms.cisco_iosxrv_9000 import IOSXRv9000
 from COT.data_validation import (
     ValueUnsupportedError, ValueTooLowError, ValueTooHighError
 )
+from COT.platforms.tests import PlatformTests
 
 
-class TestIOSXRv9000(unittest.TestCase):
+class TestIOSXRv9000(PlatformTests.PlatformTest):
     """Test cases for Cisco IOS XRv 9000 platform handling."""
 
     cls = IOSXRv9000
+    product_string = "com.cisco.ios-xrv9000"
 
     def test_nic_name(self):
         """Test NIC name construction."""
