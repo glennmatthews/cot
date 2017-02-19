@@ -46,7 +46,6 @@
   no_whitespace
   non_negative_int
   positive_int
-  to_string
   validate_int
   truth_value
 
@@ -56,40 +55,11 @@
   NIC_TYPES
 """
 
-import xml.etree.ElementTree as ET
 import hashlib
 import re
-import sys
 from distutils.util import strtobool
 
-
-def to_string(obj):
-    """Get string representation of an object, special-case for XML Element.
-
-    Args:
-      obj (object): Object to represent as a string.
-    Returns:
-      str: string representation
-    Examples:
-      ::
-
-        >>> to_string("Hello")
-        'Hello'
-        >>> to_string(27.5)
-        '27.5'
-        >>> e = ET.Element('hello', attrib={'key': 'value'})
-        >>> print(e)   # doctest: +ELLIPSIS
-        <Element ...hello... at ...>
-        >>> print(to_string(e))
-        <hello key="value" />
-    """
-    if ET.iselement(obj):
-        if sys.version_info[0] >= 3:
-            return ET.tostring(obj, encoding='unicode')
-        else:
-            return ET.tostring(obj)
-    else:
-        return str(obj)
+from COT.ui_shared import to_string
 
 
 def alphanum_split(key):

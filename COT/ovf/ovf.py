@@ -3,7 +3,7 @@
 # ovf.py - Class for OVF/OVA handling
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -15,15 +15,6 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 """Module for handling OVF and OVA virtual machine description files.
-
-**Functions**
-
-.. autosummary::
-  :nosignatures:
-
-  byte_count
-  byte_string
-  factor_bytes
 
 **Classes**
 
@@ -57,131 +48,16 @@ from COT.data_validation import (
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.platforms import Platform
 from COT.disks import DiskRepresentation
+from COT.ui_shared import pretty_bytes
 
 from COT.ovf.name_helper import name_helper
 from COT.ovf.hardware import OVFHardware, OVFHardwareDataError
 from COT.ovf.item import list_union
+from COT.ovf.utilities import (
+    programmatic_bytes_to_int, int_bytes_to_programmatic_units
+)
 
 logger = logging.getLogger(__name__)
-
-
-def byte_count(base_val, multiplier):
-    """Convert an OVF-style value + multiplier into decimal byte count.
-
-    Inverse operation of :func:`factor_bytes`.
-
-    Args:
-      base_val (str): Base value string (value of ``ovf:capacity``, etc.)
-      multiplier (str): Multiplier string (value of
-          ``ovf:capacityAllocationUnits``, etc.)
-
-    Returns:
-      int: Number of bytes
-
-    Examples:
-      ::
-
-        >>> byte_count("128", "byte * 2^20")
-        134217728
-        >>> byte_count("512", "MegaBytes")
-        536870912
-    """
-    if not multiplier:
-        return int(base_val)
-
-    # multiplier like 'byte * 2^30'
-    match = re.search(r"2\^(\d+)", multiplier)
-    if match:
-        return int(base_val) << int(match.group(1))
-
-    # multiplier like 'MegaBytes'
-    si_prefixes = ["", "kilo", "mega", "giga", "tera"]
-    match = re.search("^(.*)bytes$", multiplier, re.IGNORECASE)
-    if match:
-        shift = si_prefixes.index(match.group(1).lower())
-        # Technically the below is correct:
-        #   return int(base_val) * (1000 ** shift)
-        # but instead we'll reflect common usage:
-        return int(base_val) << (10 * shift)
-
-    if multiplier and multiplier != 'byte':
-        logger.warning("Unknown multiplier string '%s'", multiplier)
-
-    return int(base_val)
-
-
-def factor_bytes(byte_value):
-    """Convert a byte count into OVF-style bytes + multiplier.
-
-    Inverse operation of :func:`byte_count`
-
-    Args:
-      byte_value (int): Number of bytes
-
-    Returns:
-      tuple: ``(base_val, multiplier)``
-
-    Examples:
-      ::
-
-        >>> factor_bytes(134217728)
-        ('128', 'byte * 2^20')
-        >>> factor_bytes(134217729)
-        ('134217729', 'byte')
-    """
-    shift = 0
-    byte_value = int(byte_value)
-    while byte_value % 1024 == 0:
-        shift += 10
-        byte_value /= 1024
-    byte_str = str(int(byte_value))
-    if shift == 0:
-        return (byte_str, "byte")
-    return (byte_str, "byte * 2^{0}".format(shift))
-
-
-def byte_string(byte_value, base_shift=0):
-    """Pretty-print the given bytes value.
-
-    Args:
-      byte_value (float): Value
-      base_shift (int): Base value of byte_value
-            (0 = bytes, 1 = KiB, 2 = MiB, etc.)
-
-    Returns:
-      str: Pretty-printed byte string such as "1.00 GiB"
-
-    Examples:
-      ::
-
-        >>> byte_string(512)
-        '512 B'
-        >>> byte_string(512, 2)
-        '512 MiB'
-        >>> byte_string(65536, 2)
-        '64 GiB'
-        >>> byte_string(65547)
-        '64.01 KiB'
-        >>> byte_string(65530, 3)
-        '63.99 TiB'
-        >>> byte_string(1023850)
-        '999.9 KiB'
-        >>> byte_string(1024000)
-        '1000 KiB'
-        >>> byte_string(1048575)
-        '1024 KiB'
-        >>> byte_string(1049200)
-        '1.001 MiB'
-        >>> byte_string(2560)
-        '2.5 KiB'
-    """
-    tags = ["B", "KiB", "MiB", "GiB", "TiB"]
-    byte_value = float(byte_value)
-    shift = base_shift
-    while byte_value >= 1024.0:
-        byte_value /= 1024.0
-        shift += 1
-    return "{0:.4g} {1}".format(byte_value, tags[shift])
 
 
 class OVF(VMDescription, XML):
@@ -538,7 +414,7 @@ class OVF(VMDescription, XML):
 
             ram_item = self.hardware.find_item('memory', profile=profile_id)
             if ram_item:
-                megabytes = (byte_count(
+                megabytes = (programmatic_bytes_to_int(
                     ram_item.get_value(self.VIRTUAL_QUANTITY, [profile_id]),
                     ram_item.get_value(self.ALLOCATION_UNITS, [profile_id])
                 ) / (1024 * 1024))
@@ -1068,7 +944,7 @@ class OVF(VMDescription, XML):
             # TODO - check file size in working dir and/or tarfile
             file_size_str = ""
         else:
-            file_size_str = byte_string(file_obj.get(self.FILE_SIZE))
+            file_size_str = pretty_bytes(file_obj.get(self.FILE_SIZE))
 
         disk_obj = self.find_disk_from_file_id(file_obj.get(self.FILE_ID))
         if disk_obj is None:
@@ -1077,7 +953,7 @@ class OVF(VMDescription, XML):
             device_item = self.find_item_from_file(file_obj)
         else:
             disk_id = disk_obj.get(self.DISK_ID)
-            disk_cap_string = byte_string(
+            disk_cap_string = pretty_bytes(
                 self.get_capacity_from_disk(disk_obj))
             device_item = self.find_item_from_disk(disk_obj)
         device_str = self.device_info_str(device_item)
@@ -1144,7 +1020,7 @@ class OVF(VMDescription, XML):
                                        attrib={self.FILE_ID: file_id})
             if file_obj is not None:
                 continue   # already reported on above
-            disk_cap_string = byte_string(self.get_capacity_from_disk(disk))
+            disk_cap_string = pretty_bytes(self.get_capacity_from_disk(disk))
             device_item = self.find_item_from_disk(disk)
             device_str = self.device_info_str(device_item)
             str_list.append(template.format("  (disk placeholder)",
@@ -1465,7 +1341,7 @@ class OVF(VMDescription, XML):
             mem_bytes = 0
             ram_item = self.hardware.find_item('memory', profile=profile_id)
             if ram_item:
-                mem_bytes = byte_count(
+                mem_bytes = programmatic_bytes_to_int(
                     ram_item.get_value(self.VIRTUAL_QUANTITY, [profile_id]),
                     ram_item.get_value(self.ALLOCATION_UNITS, [profile_id]))
             nics = self.hardware.get_item_count('ethernet', profile_id)
@@ -1483,11 +1359,11 @@ class OVF(VMDescription, XML):
             str_list.append(template.format(
                 profile_str,
                 cpus,
-                byte_string(mem_bytes),
+                pretty_bytes(mem_bytes),
                 nics,
                 serials,
                 "{0:2} / {1:>9}".format(disk_count,
-                                        byte_string(disks_size))))
+                                        pretty_bytes(disks_size))))
             if profile_id is not None and verbose:
                 profile = self.find_child(self.deploy_opt_section,
                                           self.CONFIG,
@@ -2975,7 +2851,7 @@ class OVF(VMDescription, XML):
         """
         cap = int(disk.get(self.DISK_CAPACITY))
         cap_units = disk.get(self.DISK_CAP_UNITS, 'byte')
-        return byte_count(cap, cap_units)
+        return programmatic_bytes_to_int(cap, cap_units)
 
     def set_capacity_of_disk(self, disk, capacity_bytes):
         """Set the storage capacity of the given Disk.
@@ -2991,11 +2867,7 @@ class OVF(VMDescription, XML):
             # In OVF 0.9 only bytes is supported as a unit
             disk.set(self.DISK_CAPACITY, capacity_bytes)
         else:
-            (capacity, cap_units) = factor_bytes(capacity_bytes)
+            (capacity, cap_units) = int_bytes_to_programmatic_units(
+                capacity_bytes)
             disk.set(self.DISK_CAPACITY, capacity)
             disk.set(self.DISK_CAP_UNITS, cap_units)
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()

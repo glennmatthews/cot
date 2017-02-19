@@ -26,6 +26,6 @@ def load_tests(*_):
     For the parameters, see :mod:`unittest`. The parameters are unused here.
     """
     suite = TestSuite()
-    suite.addTests(DocTestSuite('COT.ovf.ovf'))
     suite.addTests(DocTestSuite('COT.ovf.item'))
+    suite.addTests(DocTestSuite('COT.ovf.utilities'))
     return suite

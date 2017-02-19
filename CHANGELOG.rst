@@ -3,6 +3,20 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Changed**
+
+- Moved the ``to_string`` function from ``COT.data_validation`` to
+  ``COT.ui_shared``.
+- ``COT.ovf.ovf.byte_string`` has been moved and renamed to
+  ``COT.ui_shared.pretty_bytes``.
+- ``COT.ovf.ovf.byte_count`` has been moved and renamed to
+  ``COT.ovf.utilities.programmatic_bytes_to_int``.
+- ``COT.ovf.ovf.factor_bytes`` has been moved and renamed to
+  ``COT.ovf.utilities.int_bytes_to_programmatic_units``.
+
 `1.9.0`_ - 2017-02-13
 ---------------------
 
