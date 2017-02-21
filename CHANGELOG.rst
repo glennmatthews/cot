@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`1.9.1`_ - 2017-02-21
+---------------------
+
+**Changed**
+
+- Removed 32 MiB memory limitation on Cisco IOS XRv 9000 platform.
+
 `1.9.0`_ - 2017-02-13
 ---------------------
 
@@ -643,6 +650,7 @@ Initial public release.
 .. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.9.1: https://github.com/glennmatthews/cot/compare/v1.9.0...v1.9.1
 .. _1.9.0: https://github.com/glennmatthews/cot/compare/v1.8.2...v1.9.0
 .. _1.8.2: https://github.com/glennmatthews/cot/compare/v1.8.1...v1.8.2
 .. _1.8.1: https://github.com/glennmatthews/cot/compare/v1.8.0...v1.8.1
