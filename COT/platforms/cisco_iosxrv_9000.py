@@ -1,5 +1,5 @@
 # September 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -16,9 +16,7 @@ import logging
 
 from COT.platforms.platform import Platform
 from COT.platforms.cisco_iosxrv import IOSXRv
-from COT.data_validation import (
-    ValueTooLowError, ValueTooHighError, validate_int,
-)
+from COT.data_validation import ValueTooLowError, validate_int
 
 logger = logging.getLogger(__name__)
 
@@ -68,19 +66,16 @@ class IOSXRv9000(IOSXRv):
 
     @classmethod
     def validate_memory_amount(cls, mebibytes):
-        """Minimum 8 GiB, maximum 32 GiB.
+        """Minimum 8 GiB, no known maximum (128GiB+ is permitted).
 
         Args:
           mebibytes (int): RAM, in MiB.
 
         Raises:
           ValueTooLowError: if ``mebibytes`` is less than 8192
-          ValueTooHighError: if ``mebibytes`` is more than 32768
         """
         if mebibytes < 8192:
             raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "8 GiB")
-        elif mebibytes > 32768:
-            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "32 GiB")
 
     @classmethod
     def validate_nic_count(cls, count):

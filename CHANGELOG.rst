@@ -17,6 +17,13 @@ This project adheres to `Semantic Versioning`_.
 - ``COT.ovf.ovf.factor_bytes`` has been moved and renamed to
   ``COT.ovf.utilities.int_bytes_to_programmatic_units``.
 
+`1.9.1`_ - 2017-02-21
+---------------------
+
+**Changed**
+
+- Removed 32 GiB memory limitation on Cisco IOS XRv 9000 platform.
+
 `1.9.0`_ - 2017-02-13
 ---------------------
 
@@ -657,6 +664,7 @@ Initial public release.
 .. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.9.1: https://github.com/glennmatthews/cot/compare/v1.9.0...v1.9.1
 .. _1.9.0: https://github.com/glennmatthews/cot/compare/v1.8.2...v1.9.0
 .. _1.8.2: https://github.com/glennmatthews/cot/compare/v1.8.1...v1.8.2
 .. _1.8.1: https://github.com/glennmatthews/cot/compare/v1.8.0...v1.8.1

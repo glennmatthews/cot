@@ -53,8 +53,7 @@ class TestIOSXRv9000(PlatformTests.PlatformTest):
                           self.cls.validate_memory_amount, 8191)
         self.cls.validate_memory_amount(8192)
         self.cls.validate_memory_amount(32768)
-        self.assertRaises(ValueTooHighError,
-                          self.cls.validate_memory_amount, 32769)
+        self.cls.validate_memory_amount(128 * 1024)
 
     def test_nic_count(self):
         """Test NIC range limits."""
