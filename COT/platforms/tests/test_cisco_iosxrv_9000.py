@@ -1,7 +1,7 @@
 # test_cisco_iosxrv_9000.py - Unit test cases for Cisco IOS XRv9k platform
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -52,8 +52,7 @@ class TestIOSXRv9000(unittest.TestCase):
                           self.cls.validate_memory_amount, 8191)
         self.cls.validate_memory_amount(8192)
         self.cls.validate_memory_amount(32768)
-        self.assertRaises(ValueTooHighError,
-                          self.cls.validate_memory_amount, 32769)
+        self.cls.validate_memory_amount(128 * 1024)
 
     def test_nic_count(self):
         """Test NIC range limits."""

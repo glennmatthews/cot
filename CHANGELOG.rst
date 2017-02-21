@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Changed**
+
+- Removed 32 MiB memory limitation on Cisco IOS XRv 9000 platform.
+
 `1.9.0`_ - 2017-02-13
 ---------------------
 
