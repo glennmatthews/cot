@@ -8,7 +8,7 @@ This project adheres to `Semantic Versioning`_.
 
 **Changed**
 
-- Removed 32 MiB memory limitation on Cisco IOS XRv 9000 platform.
+- Removed 32 GiB memory limitation on Cisco IOS XRv 9000 platform.
 
 `1.9.0`_ - 2017-02-13
 ---------------------
