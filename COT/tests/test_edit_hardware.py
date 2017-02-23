@@ -128,6 +128,7 @@ class TestCOTEditHardware(COT_UT):
     def test_valid_by_platform(self):
         """Verify that some input values' validity depends on platform."""
         self.instance.package = self.input_ovf
+        self.instance.ui.default_confirm_response = False
         # IOSv only supports 1 vCPU and up to 3 GB of RAM
         self.set_vm_platform(IOSv)
         with self.assertRaises(InvalidInputError):

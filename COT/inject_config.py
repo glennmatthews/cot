@@ -3,7 +3,7 @@
 # inject_config.py - Implements "cot inject-config" command
 #
 # February 2014, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -74,7 +74,7 @@ class COTInjectConfig(COTSubmodule):
             if not self.vm.platform.CONFIG_TEXT_FILE:
                 raise InvalidInputError(
                     "Configuration file not supported for platform {0}"
-                    .format(self.vm.platform.__name__))
+                    .format(self.vm.platform))
         self._config_file = value
 
     @property
@@ -98,7 +98,7 @@ class COTInjectConfig(COTSubmodule):
             if not self.vm.platform.SECONDARY_CONFIG_TEXT_FILE:
                 raise InvalidInputError(
                     "Secondary configuration file not supported "
-                    "for platform {0}".format(self.vm.platform.__name__))
+                    "for platform {0}".format(self.vm.platform))
         self._secondary_config_file = value
 
     @property

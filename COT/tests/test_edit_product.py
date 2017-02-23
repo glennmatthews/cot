@@ -3,7 +3,7 @@
 # edit_product.py - test cases for the COTEditProduct class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -85,15 +85,13 @@ class TestCOTEditProduct(COT_UT):
         self.instance.run()
         self.instance.finished()
         self.assertLogged(**self.invalid_hardware_warning(
-            '1CPU-384MB-2NIC', "384 MiB", "RAM"))
+            '1CPU-384MB-2NIC', "384", "MiB of RAM"))
         self.assertLogged(**self.invalid_hardware_warning(
             '1CPU-384MB-2NIC', "2", "NIC count"))
         self.assertLogged(**self.invalid_hardware_warning(
-            '1CPU-1GB-8NIC', "1024 MiB", "RAM"))
+            '1CPU-1GB-8NIC', "1024", "MiB of RAM"))
         self.assertLogged(**self.invalid_hardware_warning(
-            '1CPU-3GB-10NIC', "3072 MiB", "RAM"))
-        self.assertLogged(**self.invalid_hardware_warning(
-            '1CPU-3GB-16NIC', "3072 MiB", "RAM"))
+            '1CPU-3GB-10NIC', "3072", "MiB of RAM"))
         self.check_diff(file1=self.iosv_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>

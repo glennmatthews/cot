@@ -224,6 +224,23 @@ class UI(object):
         if not self.confirm(prompt):
             sys.exit("Aborting.")
 
+    def validate_value(self, helper_function, *args):
+        """Ask the user whether to ignore a ValueError.
+
+        Args:
+          helper_function (function): Validation function to call, which
+            may raise a ValueError.
+          *args: Arguments to pass to `helper_function`.
+        Raises:
+          ValueError: if `helper_function` raises a ValueError and the
+            user declines to ignore it.
+        """
+        try:
+            helper_function(*args)
+        except ValueError as err:
+            if not self.confirm("Warning:\n{0}\nContinue anyway?".format(err)):
+                raise
+
     def choose_from_list(self, footer, option_list, default_value,
                          header="", info_list=None):
         """Prompt the user to choose from a list.

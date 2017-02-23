@@ -8,14 +8,51 @@ This project adheres to `Semantic Versioning`_.
 
 **Changed**
 
-- Moved the ``to_string`` function from ``COT.data_validation`` to
-  ``COT.ui_shared``.
-- ``COT.ovf.ovf.byte_string`` has been moved and renamed to
-  ``COT.ui_shared.pretty_bytes``.
-- ``COT.ovf.ovf.byte_count`` has been moved and renamed to
-  ``COT.ovf.utilities.programmatic_bytes_to_int``.
-- ``COT.ovf.ovf.factor_bytes`` has been moved and renamed to
-  ``COT.ovf.utilities.int_bytes_to_programmatic_units``.
+- With ``cot edit-hardware``, the platform hardware validation is no longer
+  a hard limit. Instead, if a value appears to be invalid, the user will be
+  warned about the validation failure and given the option to continue or
+  abort (`#61`_).
+  ``cot --force ...``, as usual, can be used to auto-continue without prompting.
+- Lots of API changes:
+
+  - Moved the ``to_string`` function from ``COT.data_validation`` to
+    ``COT.ui_shared``.
+  - Function ``COT.deploy_esxi.get_object_from_connection`` is now method
+    ``PyVmomiVMReconfigSpec.lookup_object``.
+
+  - COT.disks module:
+
+    - Function ``create_disk`` is now split into class methods
+      ``DiskRepresentation.for_new_file`` (creates the disk file and returns a
+      corresponding ``DiskRepresentation`` instance) and
+      ``DiskRepresentation.create_file`` (creates disk file only).
+    - Function ``convert_disk`` is now class method
+      ``DiskRepresentation.convert_to``
+    - Function ``disk_representation_from_file`` is now
+      class method ``DiskRepresentation.from_file``
+    - The ``DiskRepresentation`` constructor now only takes the path to a file
+      as input - if you want to create a new file, use
+      ``DiskRepresentation.for_new_file`` instead of calling the
+      constructor directly.
+
+  - COT.ovf module:
+
+    - ``COT.ovf.ovf.byte_string`` has been moved and renamed to
+      ``COT.ui_shared.pretty_bytes``.
+    - ``COT.ovf.ovf.byte_count`` has been moved and renamed to
+      ``COT.ovf.utilities.programmatic_bytes_to_int``.
+    - ``COT.ovf.ovf.factor_bytes`` has been moved and renamed to
+      ``COT.ovf.utilities.int_bytes_to_programmatic_units``.
+
+  - COT.platforms module:
+
+    - Class ``GenericPlatform`` is now ``Platform``.
+    - Function ``platform_from_product_class`` is now class method
+      ``Platform.for_product_string`` and returns an instance
+      of a ``Platform`` class rather than the class object itself.
+    - Most ``Platform`` APIs are now instance methods instead of
+      class methods.
+    - Function ``is_known_product_class`` has been removed.
 
 `1.9.1`_ - 2017-02-21
 ---------------------
@@ -633,6 +670,7 @@ Initial public release.
 .. _#58: https://github.com/glennmatthews/cot/issues/58
 .. _#59: https://github.com/glennmatthews/cot/issues/59
 .. _#60: https://github.com/glennmatthews/cot/issues/60
+.. _#61: https://github.com/glennmatthews/cot/issues/61
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

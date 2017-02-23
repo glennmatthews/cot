@@ -365,7 +365,7 @@ class OVF(VMDescription, XML):
         if self._platform is None:
             self._platform = Platform.for_product_string(self.product_class)
             logger.info("OVF product class %s --> platform %s",
-                        self.product_class, self.platform.__name__)
+                        self.product_class, self.platform)
         return self._platform
 
     def validate_hardware(self):
@@ -803,9 +803,9 @@ class OVF(VMDescription, XML):
         str_list = []
         str_list.append('-' * width)
         str_list.append(self.input_file)
-        if self.platform and self.platform is not Platform:
+        if self.platform and self.platform.__class__ is not Platform:
             str_list.append("COT detected platform type: {0}"
-                            .format(self.platform.PLATFORM_NAME))
+                            .format(self.platform))
         str_list.append('-' * width)
         return '\n'.join(str_list)
 
@@ -1803,7 +1803,7 @@ class OVF(VMDescription, XML):
         i = 0
         if not self.platform.LITERAL_CLI_STRING:
             raise NotImplementedError("no known support for literal CLI on " +
-                                      self.platform.PLATFORM_NAME)
+                                      str(self.platform))
         with open(file_path, 'r') as f:
             for line in f:
                 line = line.strip()

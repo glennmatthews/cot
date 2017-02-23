@@ -1,5 +1,5 @@
 # September 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -13,12 +13,18 @@
 """API and generic implementation of platform-specific logic."""
 
 import logging
+from collections import defaultdict
+from enum import Enum
 
 from COT.data_validation import (
-    validate_int, ValueUnsupportedError, ValueTooLowError, NIC_TYPES,
+    validate_int, ValueUnsupportedError, NIC_TYPES, ValidRange,
 )
 
 logger = logging.getLogger(__name__)
+
+
+Hardware = Enum('Hardware', 'cpus memory nic_count serial_count')
+"""Enumeration of hardware types with integer values."""
 
 
 class Platform(object):
@@ -29,21 +35,53 @@ class Platform(object):
     """
 
     PLATFORM_NAME = "(unrecognized platform, generic)"
+    """String used as a descriptive label for this class of Platform."""
 
-    # Default file name for text configuration file to embed
     CONFIG_TEXT_FILE = 'config.txt'
-    # Most platforms do not support a secondary configuration file
-    SECONDARY_CONFIG_TEXT_FILE = None
-    # Most platforms do not support configuration properties in the environment
-    LITERAL_CLI_STRING = 'config'
+    """When embedding a primary configuration text file, use this filename.
 
-    # Most platforms use a CD-ROM for bootstrap configuration
+    .. seealso::
+        :attr:`COT.inject_config.COTInjectConfig.config_file`
+    """
+
+    SECONDARY_CONFIG_TEXT_FILE = None
+    """When embedding a secondary configuration text file, use this filename.
+
+    Most platforms do not support a secondary configuration file.
+
+    .. seealso::
+        :attr:`COT.inject_config.COTInjectConfig.secondary_config_file`
+    """
+
+    LITERAL_CLI_STRING = 'config'
+    """Key prefix for converting text config to OVF environment properties.
+
+    Most platforms do not support configuration properties in the environment,
+    and so should define this attribute to ``None``.
+
+    .. seealso::
+        :meth:`~COT.ovf.ovf.OVF.config_file_to_properties`
+    """
+
     BOOTSTRAP_DISK_TYPE = 'cdrom'
+    """Type of disk (cdrom/harddisk) to use for bootstrap configuration.
+
+    Most platforms use a CD-ROM for this purpose.
+    """
 
     SUPPORTED_NIC_TYPES = NIC_TYPES
+    """List of NIC device types supported by this platform."""
 
     PRODUCT_PLATFORM_MAP = {}
     """Mapping of product strings to product classes."""
+
+    HARDWARE_LIMITS = {
+        Hardware.cpus: ValidRange(1, None),
+        Hardware.memory: ValidRange(1, None),
+        Hardware.nic_count: ValidRange(0, None),
+        Hardware.serial_count: ValidRange(0, None),
+    }
+    """Range of valid values for various hardware properties."""
 
     @classmethod
     def for_product_string(cls, product_string):
@@ -53,7 +91,7 @@ class Platform(object):
           product_string (str): String such as 'com.cisco.iosxrv'
 
         Returns:
-          class: Platform or the appropriate subclass.
+          Platform: Instance of Platform or the appropriate subclass.
 
         Examples:
           ::
@@ -66,19 +104,35 @@ class Platform(object):
             <class 'COT.platforms.platform.Platform'>
         """
         if product_string is None:
-            return Platform
+            return Platform()
         if product_string in cls.PRODUCT_PLATFORM_MAP:
-            return cls.PRODUCT_PLATFORM_MAP[product_string]
+            return cls.PRODUCT_PLATFORM_MAP[product_string]()
         logger.warning("Unrecognized product class '%s' - known classes "
                        "are %s. Treating as a generic platform.",
                        product_string, cls.PRODUCT_PLATFORM_MAP.keys())
-        return Platform
+        return Platform()
+
+    def __init__(self):
+        """Create an instance of this class."""
+        self._already_validated = defaultdict(dict)
+        """Cache of values already validated.
+
+        ::
+
+          _already_validated[Hardware.cpus][value] = True
+
+        Used to avoid raising the same ValueError over and over from various
+        points in the code.
+        """
+
+    def __str__(self):
+        """String representation - same as :attr:`PLATFORM_NAME`."""
+        return self.__class__.PLATFORM_NAME
 
     # Some of these methods are semi-abstract, so:
-    # pylint: disable=unused-argument
+    # pylint: disable=unused-argument, no-self-use
 
-    @classmethod
-    def controller_type_for_device(cls, device_type):
+    def controller_type_for_device(self, device_type):
         """Get the default controller type for the given device type.
 
         Args:
@@ -90,8 +144,7 @@ class Platform(object):
         # For most platforms IDE is the correct default.
         return 'ide'
 
-    @classmethod
-    def guess_nic_name(cls, nic_number):
+    def guess_nic_name(self, nic_number):
         """Guess the name of the Nth NIC for this platform.
 
         .. note:: This method counts from 1, not from 0!
@@ -104,8 +157,7 @@ class Platform(object):
         """
         return "Ethernet" + str(nic_number)
 
-    @classmethod
-    def validate_cpu_count(cls, cpus):
+    def validate_cpu_count(self, cpus):
         """Throw an error if the number of CPUs is not a supported value.
 
         Args:
@@ -117,10 +169,12 @@ class Platform(object):
           ValueTooHighError: if ``cpus`` exceeds the maximum supported
               by this platform
         """
-        validate_int(cpus, 1, None, "CPUs")
+        if cpus not in self._already_validated[Hardware.cpus]:
+            self._already_validated[Hardware.cpus][cpus] = True
+            validate_int(cpus, *self.HARDWARE_LIMITS[Hardware.cpus],
+                         label="CPUs for platform {0}".format(self))
 
-    @classmethod
-    def validate_memory_amount(cls, mebibytes):
+    def validate_memory_amount(self, mebibytes):
         """Throw an error if the amount of RAM is not supported.
 
         Args:
@@ -132,11 +186,12 @@ class Platform(object):
             ValueTooHighError: if ``mebibytes`` is more than the maximum
                 supported by this platform
         """
-        if mebibytes < 1:
-            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "1 MiB")
+        if mebibytes not in self._already_validated[Hardware.memory]:
+            self._already_validated[Hardware.memory][mebibytes] = True
+            validate_int(mebibytes, *self.HARDWARE_LIMITS[Hardware.memory],
+                         label="MiB of RAM for platform {0}".format(self))
 
-    @classmethod
-    def validate_nic_count(cls, count):
+    def validate_nic_count(self, count):
         """Throw an error if the number of NICs is not supported.
 
         Args:
@@ -148,10 +203,12 @@ class Platform(object):
           ValueTooHighError: if ``count`` is more than the maximum
               supported by this platform
         """
-        validate_int(count, 0, None, "NIC count")
+        if count not in self._already_validated[Hardware.nic_count]:
+            self._already_validated[Hardware.nic_count][count] = True
+            validate_int(count, *self.HARDWARE_LIMITS[Hardware.nic_count],
+                         label="NIC count for platform {0}".format(self))
 
-    @classmethod
-    def validate_nic_type(cls, type_string):
+    def validate_nic_type(self, type_string):
         """Throw an error if the NIC type string is not supported.
 
         .. seealso::
@@ -165,12 +222,12 @@ class Platform(object):
           ValueUnsupportedError: if ``type_string`` is not in
               :const:`SUPPORTED_NIC_TYPES`
         """
-        if type_string not in cls.SUPPORTED_NIC_TYPES:
-            raise ValueUnsupportedError("NIC type", type_string,
-                                        cls.SUPPORTED_NIC_TYPES)
+        if type_string not in self.SUPPORTED_NIC_TYPES:
+            raise ValueUnsupportedError(
+                "NIC type for {0}".format(self),
+                type_string, self.SUPPORTED_NIC_TYPES)
 
-    @classmethod
-    def validate_nic_types(cls, type_list):
+    def validate_nic_types(self, type_list):
         """Throw an error if any NIC type string in the list is unsupported.
 
         Args:
@@ -181,10 +238,9 @@ class Platform(object):
               :const:`SUPPORTED_NIC_TYPES`
         """
         for type_string in type_list:
-            cls.validate_nic_type(type_string)
+            self.validate_nic_type(type_string)
 
-    @classmethod
-    def validate_serial_count(cls, count):
+    def validate_serial_count(self, count):
         """Throw an error if the number of serial ports is not supported.
 
         Args:
@@ -196,7 +252,11 @@ class Platform(object):
           ValueTooHighError: if ``count`` is more than the maximum
               supported by this platform
         """
-        validate_int(count, 0, None, "serial port count")
+        if count not in self._already_validated[Hardware.serial_count]:
+            self._already_validated[Hardware.serial_count][count] = True
+            validate_int(count, *self.HARDWARE_LIMITS[Hardware.serial_count],
+                         label="serial port count for platform {0}"
+                         .format(self))
 
 
 Platform.PRODUCT_PLATFORM_MAP[None] = Platform

@@ -1,5 +1,5 @@
 # September 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,10 +14,8 @@
 
 import logging
 
-from COT.platforms.platform import Platform
-from COT.data_validation import (
-    ValueTooLowError, ValueTooHighError, validate_int,
-)
+from COT.platforms.platform import Platform, Hardware
+from COT.data_validation import ValidRange
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +31,15 @@ class IOSv(Platform):
     BOOTSTRAP_DISK_TYPE = 'harddisk'
     SUPPORTED_NIC_TYPES = ["E1000"]
 
-    @classmethod
-    def guess_nic_name(cls, nic_number):
+    HARDWARE_LIMITS = Platform.HARDWARE_LIMITS.copy()
+    HARDWARE_LIMITS.update({
+        Hardware.cpus: ValidRange(1, 1),
+        Hardware.memory: ValidRange(192, 3072),   # but see also below
+        Hardware.nic_count: ValidRange(0, 16),
+        Hardware.serial_count: ValidRange(1, 2),
+    })
+
+    def guess_nic_name(self, nic_number):
         """GigabitEthernet0/0, GigabitEthernet0/1, etc.
 
         Args:
@@ -46,21 +51,7 @@ class IOSv(Platform):
         """
         return "GigabitEthernet0/" + str(nic_number - 1)
 
-    @classmethod
-    def validate_cpu_count(cls, cpus):
-        """IOSv only supports a single CPU.
-
-        Args:
-          cpus (int): Number of CPUs.
-
-        Raises:
-          ValueTooLowError: if ``cpus`` is less than 1
-          ValueTooHighError: if ``cpus`` is more than 1
-        """
-        validate_int(cpus, 1, 1, "CPUs")
-
-    @classmethod
-    def validate_memory_amount(cls, mebibytes):
+    def validate_memory_amount(self, mebibytes):
         """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB.
 
         Args:
@@ -70,40 +61,13 @@ class IOSv(Platform):
           ValueTooLowError: if ``mebibytes`` is less than 192
           ValueTooHighError: if ``mebibytes`` is more than 3072
         """
-        if mebibytes < 192:
-            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "192 MiB")
-        elif mebibytes < 384:
+        previously_validated = (mebibytes in
+                                self._already_validated[Hardware.memory])
+        super(IOSv, self).validate_memory_amount(mebibytes)
+        if mebibytes < 384 and not previously_validated:
             # Warn but allow
             logger.warning("Less than 384MiB of RAM may not be sufficient "
                            "for some IOSv feature sets")
-        elif mebibytes > 3072:
-            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "3 GiB")
-
-    @classmethod
-    def validate_nic_count(cls, count):
-        """IOSv supports up to 16 NICs.
-
-        Args:
-          count (int): Number of NICs.
-
-        Raises:
-          ValueTooLowError: if ``count`` is less than 0
-          ValueTooHighError: if ``count`` is more than 16
-        """
-        validate_int(count, 0, 16, "NICs")
-
-    @classmethod
-    def validate_serial_count(cls, count):
-        """IOSv requires 1-2 serial ports.
-
-        Args:
-          count (int): Number of serial ports.
-
-        Raises:
-          ValueTooLowError: if ``count`` is less than 1
-          ValueTooHighError: if ``count`` is more than 2
-        """
-        validate_int(count, 1, 2, "serial ports")
 
 
 Platform.PRODUCT_PLATFORM_MAP['com.cisco.iosv'] = IOSv

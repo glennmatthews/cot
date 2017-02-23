@@ -3,7 +3,7 @@
 # test_add_disk.py - test cases for the COTAddDisk class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -749,7 +749,7 @@ vmdk.html#streamOptimized" />
         self.assertLogged(**self.OVERWRITING_DISK)
         self.instance.finished()
         self.assertLogged(**self.invalid_hardware_warning(
-            "howlongofaprofilenamecanweusehere", "0 MiB", "RAM"))
+            "howlongofaprofilenamecanweusehere", "0", "MiB of RAM"))
         self.assertLogged(msg="Removing unused network")
         self.check_diff(file1=self.invalid_ovf, expected="""
    <ovf:References>

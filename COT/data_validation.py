@@ -57,6 +57,7 @@
 
 import hashlib
 import re
+from collections import namedtuple
 from distutils.util import strtobool
 
 from COT.ui_shared import to_string
@@ -443,7 +444,7 @@ def no_whitespace(string):
 
 def validate_int(string,
                  minimum=None, maximum=None,
-                 label="input"):
+                 label=None):
     """Parser helper function for validating integer arguments in a range.
 
     Args:
@@ -476,6 +477,8 @@ def validate_int(string,
         ...     print(e)
         Value '100' for x is too high - must be at most 10
     """
+    if label is None:
+        label = "input"
     try:
         i = int(string)
     except ValueError:
@@ -487,13 +490,14 @@ def validate_int(string,
     return i
 
 
-def non_negative_int(string):
+def non_negative_int(string, label=None):
     """Parser helper function for integer arguments that must be 0 or more.
 
     Alias for :func:`validate_int` setting :attr:`minimum` to 0.
 
     Args:
       string (str): String to validate.
+      label (str): Label to include in any errors raised
     Returns:
       int: Validated integer value
     Raises:
@@ -512,16 +516,17 @@ def non_negative_int(string):
         ...     print(e)
         Value '-1' for input is too low - must be at least 0
     """
-    return validate_int(string, minimum=0)
+    return validate_int(string, minimum=0, label=label)
 
 
-def positive_int(string):
+def positive_int(string, label=None):
     """Parser helper function for integer arguments that must be 1 or more.
 
     Alias for :func:`validate_int` setting :attr:`minimum` to 1.
 
     Args:
       string (str): String to validate.
+      label (str): Label to include in any errors raised
     Returns:
       int: Validated integer value
     Raises:
@@ -538,7 +543,7 @@ def positive_int(string):
         ...     print(e)
         Value '0' for input is too low - must be at least 1
     """
-    return validate_int(string, minimum=1)
+    return validate_int(string, minimum=1, label=label)
 
 
 def truth_value(value):
@@ -580,6 +585,10 @@ def truth_value(value):
             ['y', 'yes', 't', 'true', 'on', 1,
              'n', 'no', 'f', 'false', 'off', 0]
         )
+
+
+ValidRange = namedtuple('ValidRange', ['minimum', 'maximum'])
+"""Simple helper class representing a range of valid values."""
 
 
 # Some handy exception and error types we can throw

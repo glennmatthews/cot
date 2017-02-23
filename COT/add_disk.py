@@ -393,7 +393,7 @@ def guess_controller_type(platform, ctrl_item, drive_type):
     """If a controller type wasn't specified, try to guess from context.
 
     Args:
-      platform (Platform): Platform class to guess controller for
+      platform (Platform): Platform instance to guess controller for
       ctrl_item (object): Any known controller object, or None
       drive_type (str): "cdrom" or "harddisk"
     Returns:
@@ -405,7 +405,7 @@ def guess_controller_type(platform, ctrl_item, drive_type):
       ::
 
         >>> from COT.platforms import Platform
-        >>> guess_controller_type(Platform, None, 'harddisk')
+        >>> guess_controller_type(Platform(), None, 'harddisk')
         'ide'
     """
     if ctrl_item is None:
@@ -416,7 +416,7 @@ def guess_controller_type(platform, ctrl_item, drive_type):
         ctrl_type = platform.controller_type_for_device(drive_type)
         logger.warning("Guessing controller type should be %s "
                        "based on disk drive type %s and platform %s",
-                       ctrl_type, drive_type, platform.__name__)
+                       ctrl_type, drive_type, platform)
     else:
         ctrl_type = ctrl_item.hardware_type
         if ctrl_type != 'ide' and ctrl_type != 'scsi':

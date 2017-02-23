@@ -3,7 +3,7 @@
 # test_inject_config.py - test cases for the COTInjectConfig class
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -157,11 +157,11 @@ ovf:size="{config_size}" />
         self.assertLogged(**self.invalid_hardware_warning(
             '1CPU-1GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
-            '1CPU-1GB-1NIC', '1024 MiB', 'RAM'))
+            '1CPU-1GB-1NIC', '1024', 'MiB of RAM'))
         self.assertLogged(**self.invalid_hardware_warning(
             '2CPU-2GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
-            '2CPU-2GB-1NIC', '2048 MiB', 'RAM'))
+            '2CPU-2GB-1NIC', '2048', 'MiB of RAM'))
         config_iso = os.path.join(self.temp_dir, 'config.iso')
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
@@ -415,11 +415,11 @@ ovf:size="{config_size}" />
         self.assertLogged(**self.invalid_hardware_warning(
             '1CPU-1GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
-            '1CPU-1GB-1NIC', '1024 MiB', 'RAM'))
+            '1CPU-1GB-1NIC', '1024', 'MiB of RAM'))
         self.assertLogged(**self.invalid_hardware_warning(
             '2CPU-2GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
-            '2CPU-2GB-1NIC', '2048 MiB', 'RAM'))
+            '2CPU-2GB-1NIC', '2048', 'MiB of RAM'))
         config_iso = os.path.join(self.temp_dir, 'config.iso')
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \

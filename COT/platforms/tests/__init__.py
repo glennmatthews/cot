@@ -48,42 +48,49 @@ class PlatformTests(object):
         product_string = ""
         """The product string for use with Platform.for_product_class()."""
 
+        def setUp(self):
+            """Test case setup method."""
+            super(PlatformTests.PlatformTest, self).setUp()
+            self.assertNotEqual(self.cls, None)
+            self.ins = self.cls()    # pylint:disable=not-callable
+
         def test_controller_type_for_device(self):
             """Test platform-specific logic for device controllers."""
-            self.assertEqual(self.cls.controller_type_for_device('harddisk'),
+            self.assertEqual(self.ins.controller_type_for_device('harddisk'),
                              'ide')
-            self.assertEqual(self.cls.controller_type_for_device('cdrom'),
+            self.assertEqual(self.ins.controller_type_for_device('cdrom'),
                              'ide')
 
         def test_nic_name(self):
             """Test NIC name construction."""
-            self.assertEqual(self.cls.guess_nic_name(1), "Ethernet1")
-            self.assertEqual(self.cls.guess_nic_name(100), "Ethernet100")
+            self.assertEqual(self.ins.guess_nic_name(1), "Ethernet1")
+            self.assertEqual(self.ins.guess_nic_name(100), "Ethernet100")
 
         def test_cpu_count(self):
             """Test CPU count limits."""
-            self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
-            self.cls.validate_cpu_count(1)
+            self.assertRaises(ValueTooLowError, self.ins.validate_cpu_count, 0)
+            self.ins.validate_cpu_count(1)
 
         def test_memory_amount(self):
             """Test RAM allocation limits."""
             self.assertRaises(ValueTooLowError,
-                              self.cls.validate_memory_amount, 0)
-            self.cls.validate_memory_amount(1)
+                              self.ins.validate_memory_amount, 0)
+            self.ins.validate_memory_amount(1)
 
         def test_nic_count(self):
             """Test NIC range limits."""
             self.assertRaises(ValueTooLowError,
-                              self.cls.validate_nic_count, -1)
-            self.cls.validate_nic_count(0)
+                              self.ins.validate_nic_count, -1)
+            self.ins.validate_nic_count(0)
 
         def test_serial_count(self):
             """Test serial port range limits."""
             self.assertRaises(ValueTooLowError,
-                              self.cls.validate_serial_count, -1)
-            self.cls.validate_serial_count(0)
+                              self.ins.validate_serial_count, -1)
+            self.ins.validate_serial_count(0)
 
         def test_for_product_string(self):
             """Test Platform.for_product_string lookup of this class."""
-            self.assertEqual(Platform.for_product_string(self.product_string),
-                             self.cls)
+            self.assertEqual(
+                Platform.for_product_string(self.product_string).__class__,
+                self.cls)

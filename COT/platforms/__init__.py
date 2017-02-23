@@ -12,13 +12,13 @@
 
 """Package for identifying guest platforms and handling platform differences.
 
-The :class:`Platform` class describes the API
+The :class:`~COT.platforms.platform.Platform` class describes the API
 and provides a generic implementation that can be overridden by subclasses
 to provide platform-specific logic.
 
 In general, other modules should not access subclasses directly but should
-instead use the :meth:`Platform.for_product_string` API to
-derive the appropriate subclass object.
+instead use the :meth:`~COT.platforms.platform.Platform.for_product_string`
+API to derive the appropriate subclass object.
 
 API
 ---
@@ -26,7 +26,7 @@ API
 .. autosummary::
   :nosignatures:
 
-  Platform
+  ~COT.platforms.platform.Platform
 
 Platform modules
 ----------------
@@ -34,6 +34,7 @@ Platform modules
 .. autosummary::
   :toctree:
 
+  COT.platforms.platform
   COT.platforms.cisco_csr1000v
   COT.platforms.cisco_iosv
   COT.platforms.cisco_iosxrv
