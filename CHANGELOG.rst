@@ -19,6 +19,7 @@ This project adheres to `Semantic Versioning`_.
     ``COT.ui_shared``.
   - Function ``COT.deploy_esxi.get_object_from_connection`` is now method
     ``PyVmomiVMReconfigSpec.lookup_object``.
+  - Function ``COT.cli.formatter`` is now class ``COT.logging_.COTFormatter``.
 
   - COT.disks module:
 

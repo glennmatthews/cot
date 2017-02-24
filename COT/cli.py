@@ -3,7 +3,7 @@
 # cli.py - CLI handling for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -17,13 +17,6 @@
 # PYTHON_ARGCOMPLETE_OK
 
 """CLI entry point for the Common OVF Tool (COT) suite.
-
-**Functions**
-
-.. autosummary::
-  :nosignatures:
-
-  formatter
 
 **Classes**
 
@@ -58,43 +51,9 @@ except ImportError:
 from COT import __version_long__
 from COT.data_validation import InvalidInputError, ValueMismatchError
 from COT.ui_shared import UI
+from COT.logging_ import COTFormatter
 
 logger = logging.getLogger(__name__)
-
-
-def formatter(verbosity=logging.INFO):
-    """Create formatter for log output.
-
-    We offer different (more verbose) formatting when debugging is enabled,
-    hence this need.
-
-    Args:
-      verbosity (int): Logging level as defined by :mod:`logging`.
-
-    Returns:
-      colorlog.ColoredFormatter: Formatter object to use with :mod:`logging`.
-    """
-    from colorlog import ColoredFormatter
-    log_colors = {
-        'DEBUG':    'blue',
-        'VERBOSE':  'cyan',
-        'INFO':     'green',
-        'WARNING':  'yellow',
-        'ERROR':    'red',
-        'CRITICAL': 'red',
-    }
-    format_string = "%(log_color)s"
-    datefmt = None
-    if verbosity <= logging.DEBUG:
-        format_string += "%(asctime)s.%(msecs)d "
-        datefmt = "%H:%M:%S"
-    format_string += "%(levelname)8s: "
-    if verbosity <= logging.VERBOSE:
-        format_string += "%(name)-22s "
-    format_string += "%(message)s"
-    return ColoredFormatter(format_string,
-                            datefmt=datefmt,
-                            log_colors=log_colors)
 
 
 class CLI(UI):
@@ -312,8 +271,7 @@ class CLI(UI):
     def set_verbosity(self, level):
         """Enable logging and/or change the logging verbosity level.
 
-        Will call :func:`formatter` and associate the resulting formatter
-        with logging.
+        Will create a :class:`COTFormatter` and use it for log formatting.
 
         Args:
           level (int): Logging level as defined by :mod:`logging`
@@ -321,7 +279,7 @@ class CLI(UI):
         if not self.handler:
             self.handler = logging.StreamHandler()
         self.handler.setLevel(level)
-        self.handler.setFormatter(formatter(level))
+        self.handler.setFormatter(COTFormatter(level))
         if not self.master_logger:
             self.master_logger = logging.getLogger('COT')
             self.master_logger.addHandler(self.handler)
