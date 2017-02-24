@@ -130,7 +130,7 @@ class COTEditHardware(COTSubmodule):
             raise InvalidInputError("cpus value must be an integer")
         if value < 1:
             raise InvalidInputError("CPU count must be at least 1")
-        self.vm.platform.validate_cpu_count(value)
+        self.ui.validate_value(self.vm.platform.validate_cpu_count, value)
         self._cpus = value
 
     @property
@@ -169,7 +169,8 @@ class COTEditHardware(COTSubmodule):
                 logger.warning("Memory units not specified, "
                                "guessing '%s' means '%s MiB'",
                                mem_value, mem_value)
-        self.vm.platform.validate_memory_amount(mem_value)
+        self.ui.validate_value(self.vm.platform.validate_memory_amount,
+                               mem_value)
         self._memory = mem_value
 
     @property
@@ -183,7 +184,8 @@ class COTEditHardware(COTSubmodule):
             value = int(value)
         except ValueError:
             raise InvalidInputError("nics value must be an integer")
-        self.vm.platform.validate_nic_count(value)
+        non_negative_int(value, label="nics")
+        self.ui.validate_value(self.vm.platform.validate_nic_count, value)
         self._nics = value
 
     @property
@@ -215,7 +217,7 @@ class COTEditHardware(COTSubmodule):
     @nic_types.setter
     def nic_types(self, value):
         value = [canonicalize_nic_subtype(v) for v in value]
-        self.vm.platform.validate_nic_types(value)
+        self.ui.validate_value(self.vm.platform.validate_nic_types, value)
         self._nic_types = value
 
     @property
@@ -229,7 +231,8 @@ class COTEditHardware(COTSubmodule):
             value = int(value)
         except ValueError:
             raise InvalidInputError("serial_ports value must be an integer")
-        self.vm.platform.validate_serial_count(value)
+        non_negative_int(value, label="serial_ports")
+        self.ui.validate_value(self.vm.platform.validate_serial_count, value)
         self._serial_ports = value
 
     @property
@@ -829,6 +832,6 @@ def guess_list_wildcard(known_values):
     return None
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":   # pragma: no cover
     import doctest
     doctest.testmod()

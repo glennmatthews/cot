@@ -23,7 +23,7 @@ from distutils.version import StrictVersion
 import mock
 
 from COT.tests.ut import COT_UT
-from COT.disks import RAW, VMDK, disk_representation_from_file
+from COT.disks import RAW, VMDK, DiskRepresentation
 from COT.helpers import HelperError
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class TestRAW(COT_UT):
 
     def test_convert_from_vmdk(self):
         """Test conversion of a RAW image from a VMDK."""
-        old = disk_representation_from_file(self.blank_vmdk)
+        old = DiskRepresentation.from_file(self.blank_vmdk)
         raw = RAW.from_other_image(old, self.temp_dir)
 
         self.assertEqual(raw.disk_format, 'raw')
@@ -51,7 +51,7 @@ class TestRAW(COT_UT):
     @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
                 new_callable=mock.PropertyMock,
                 return_value=StrictVersion("1.0.0"))
-    @mock.patch('COT.disks.raw.RAW.create_file')
+    @mock.patch('os.path.exists', return_value=True)
     @mock.patch('COT.helpers.qemu_img.QEMUImg.call')
     @mock.patch('COT.helpers.vmdktool.VMDKTool.call')
     def test_convert_from_vmdk_old_qemu(self, mock_vmdktool, mock_qemuimg, *_):
@@ -65,7 +65,7 @@ class TestRAW(COT_UT):
     @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
                 new_callable=mock.PropertyMock,
                 return_value=StrictVersion("1.2.0"))
-    @mock.patch('COT.disks.raw.RAW.create_file')
+    @mock.patch('os.path.exists', return_value=True)
     @mock.patch('COT.helpers.qemu_img.QEMUImg.call')
     @mock.patch('COT.helpers.vmdktool.VMDKTool.call')
     def test_convert_from_vmdk_new_qemu(self, mock_vmdktool, mock_qemuimg, *_):
@@ -79,24 +79,26 @@ class TestRAW(COT_UT):
 
     def test_create_with_capacity(self):
         """Creation of a raw image of a particular size."""
-        raw = RAW(path=os.path.join(self.temp_dir, "out.raw"),
-                  capacity="16M")
+        disk_path = os.path.join(self.temp_dir, "out.raw")
+        RAW.create_file(disk_path, capacity="16M")
+        raw = RAW(disk_path)
         self.assertEqual(raw.disk_format, 'raw')
         self.assertEqual(raw.disk_subformat, None)
 
     def test_create_with_files(self):
         """Creation of a raw image with specific file contents."""
-        raw = RAW(path=os.path.join(self.temp_dir, "out.img"),
-                  files=[self.input_ovf])
+        disk_path = os.path.join(self.temp_dir, "out.raw")
+        RAW.create_file(disk_path, files=[self.input_ovf])
+        raw = RAW(disk_path)
         self.assertEqual(raw.files,
                          [os.path.basename(self.input_ovf)])
         self.assertEqual(raw.capacity, "8388608")
 
     def test_create_with_files_and_capacity(self):
         """Creation of raw image with specified capacity and file contents."""
-        raw = RAW(path=os.path.join(self.temp_dir, "out.img"),
-                  files=[self.input_ovf],
-                  capacity="64M")
+        disk_path = os.path.join(self.temp_dir, "out.img")
+        RAW.create_file(disk_path, files=[self.input_ovf], capacity="64M")
+        raw = RAW(disk_path)
         self.assertEqual(raw.files,
                          [os.path.basename(self.input_ovf)])
         self.assertEqual(raw.capacity, "67108864")

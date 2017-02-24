@@ -1,9 +1,7 @@
-#!/usr/bin/env python
+# test_generic_platform.py - Unit test cases for COT "generic platform"
 #
-# test_doctests.py - test runner for COT doctests
-#
-# July 2016, Glenn F. Matthews
-# Copyright (c) 2016 the COT project developers.
+# October 2016, Glenn F. Matthews
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,18 +12,14 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Test runner for COT.ovf doctest tests."""
+"""Unit test cases for the Platform class."""
 
-from doctest import DocTestSuite
-from unittest import TestSuite
+from COT.platforms.tests import PlatformTests
+from COT.platforms.platform import Platform
 
 
-def load_tests(*_):
-    """Load doctests as unittest test suite.
+class TestPlatform(PlatformTests.PlatformTest):
+    """Test cases for generic platform handling."""
 
-    For the parameters, see :mod:`unittest`. The parameters are unused here.
-    """
-    suite = TestSuite()
-    suite.addTests(DocTestSuite('COT.ovf.item'))
-    suite.addTests(DocTestSuite('COT.ovf.utilities'))
-    return suite
+    cls = Platform
+    product_string = ""

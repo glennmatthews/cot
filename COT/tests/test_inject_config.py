@@ -3,7 +3,7 @@
 # test_inject_config.py - test cases for the COTInjectConfig class
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -31,7 +31,7 @@ from COT.inject_config import COTInjectConfig
 from COT.data_validation import InvalidInputError, ValueUnsupportedError
 from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC
 from COT.helpers import helpers
-from COT.disks import disk_representation_from_file
+from COT.disks import DiskRepresentation
 from COT.remove_file import COTRemoveFile
 
 logger = logging.getLogger(__name__)
@@ -139,7 +139,7 @@ ovf:size="{config_size}" />
         if helpers['isoinfo']:
             # The sample_cfg.text should be renamed to the platform-specific
             # file name for bootstrap config - in this case, config.txt
-            self.assertEqual(disk_representation_from_file(config_iso).files,
+            self.assertEqual(DiskRepresentation.from_file(config_iso).files,
                              ["config.txt"])
         else:
             logger.info("isoinfo not available, not checking disk contents")
@@ -157,11 +157,11 @@ ovf:size="{config_size}" />
         self.assertLogged(**self.invalid_hardware_warning(
             '1CPU-1GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
-            '1CPU-1GB-1NIC', '1024 MiB', 'RAM'))
+            '1CPU-1GB-1NIC', '1024', 'MiB of RAM'))
         self.assertLogged(**self.invalid_hardware_warning(
             '2CPU-2GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
-            '2CPU-2GB-1NIC', '2048 MiB', 'RAM'))
+            '2CPU-2GB-1NIC', '2048', 'MiB of RAM'))
         config_iso = os.path.join(self.temp_dir, 'config.iso')
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
@@ -180,7 +180,7 @@ ovf:size="{config_size}" />
         if helpers['isoinfo']:
             # The sample_cfg.text should be renamed to the platform-specific
             # file name for secondary bootstrap config
-            self.assertEqual(disk_representation_from_file(config_iso).files,
+            self.assertEqual(DiskRepresentation.from_file(config_iso).files,
                              ["iosxr_config_admin.txt"])
         else:
             logger.info("isoinfo not available, not checking disk contents")
@@ -227,7 +227,7 @@ ovf:size="{config_size}" />
         if helpers['isoinfo']:
             # The sample_cfg.text should be renamed to the platform-specific
             # file name for bootstrap config - in this case, config.txt
-            self.assertEqual(disk_representation_from_file(config_iso).files,
+            self.assertEqual(DiskRepresentation.from_file(config_iso).files,
                              ["config.txt"])
         else:
             logger.info("isoinfo not available, not checking disk contents")
@@ -273,7 +273,7 @@ for bootstrap configuration.</rasd:Description>
                         .format(input_size=self.FILE_SIZE['input.vmdk'],
                                 config_size=os.path.getsize(config_vmdk)))
         # TODO - we don't currently have a way to check VMDK file listing
-        # self.assertEqual(disk_representation_from_file(config_vmdk).files,
+        # self.assertEqual(DiskRepresentation.from_file(config_vmdk).files,
         #                 ["ios_config.txt"])
 
     def test_inject_config_unsupported_format_existing(self):
@@ -386,7 +386,7 @@ ovf:size="{config_size}" />
             config_iso = os.path.join(self.temp_dir, 'config.iso')
             if helpers['isoinfo']:
                 self.assertEqual(
-                    disk_representation_from_file(config_iso).files,
+                    DiskRepresentation.from_file(config_iso).files,
                     [
                         'input.ovf',
                         'minimal.ovf',
@@ -415,11 +415,11 @@ ovf:size="{config_size}" />
         self.assertLogged(**self.invalid_hardware_warning(
             '1CPU-1GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
-            '1CPU-1GB-1NIC', '1024 MiB', 'RAM'))
+            '1CPU-1GB-1NIC', '1024', 'MiB of RAM'))
         self.assertLogged(**self.invalid_hardware_warning(
             '2CPU-2GB-1NIC', 'VMXNET3', 'NIC type'))
         self.assertLogged(**self.invalid_hardware_warning(
-            '2CPU-2GB-1NIC', '2048 MiB', 'RAM'))
+            '2CPU-2GB-1NIC', '2048', 'MiB of RAM'))
         config_iso = os.path.join(self.temp_dir, 'config.iso')
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
@@ -437,7 +437,7 @@ ovf:size="{config_size}" />
                                 config_size=os.path.getsize(config_iso)))
         if helpers['isoinfo']:
             self.assertEqual(
-                disk_representation_from_file(config_iso).files,
+                DiskRepresentation.from_file(config_iso).files,
                 [
                     "iosxr_config.txt",
                     "iosxr_config_admin.txt",

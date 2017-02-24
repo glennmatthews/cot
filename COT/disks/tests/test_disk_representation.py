@@ -21,16 +21,66 @@ import os
 import mock
 
 from COT.tests.ut import COT_UT
-from COT.disks.disk import DiskRepresentation
-from COT.helpers import HelperError
+from COT.disks import DiskRepresentation
+from COT.helpers import helpers, HelperError
 
 logger = logging.getLogger(__name__)
 
 # pylint: disable=missing-type-doc,missing-param-doc
 
 
-class TestDisk(COT_UT):
-    """Test Disk class."""
+class TestDiskRepresentation(COT_UT):
+    """Test DiskRepresentation class."""
+
+    def test_disk_representation_from_file_raw(self):
+        """Test if DiskRepresentation.from_file() works for raw images."""
+        temp_disk = os.path.join(self.temp_dir, 'foo.img')
+        helpers['qemu-img'].call(['create', '-f', 'raw', temp_disk, "16M"])
+        dr = DiskRepresentation.from_file(temp_disk)
+        self.assertEqual(dr.disk_format, "raw")
+        self.assertEqual(dr.disk_subformat, None)
+
+    def test_disk_representation_from_file_qcow2(self):
+        """Test if DiskRepresentation.from_file() works for qcow2 images."""
+        temp_disk = os.path.join(self.temp_dir, 'foo.qcow2')
+        helpers['qemu-img'].call(['create', '-f', 'qcow2', temp_disk, "16M"])
+        dr = DiskRepresentation.from_file(temp_disk)
+        self.assertEqual(dr.disk_format, "qcow2")
+        self.assertEqual(dr.disk_subformat, None)
+
+    def test_disk_representation_from_file_vmdk(self):
+        """Test if DiskRepresentation.from_file() works for vmdk images."""
+        dr = DiskRepresentation.from_file(self.blank_vmdk)
+        self.assertEqual(dr.disk_format, "vmdk")
+        self.assertEqual(dr.disk_subformat, "streamOptimized")
+
+    def test_disk_representation_from_file_iso(self):
+        """Test if DiskRepresentation.from_file() works for iso images."""
+        dr = DiskRepresentation.from_file(self.input_iso)
+        self.assertEqual(dr.disk_format, "iso")
+        # In Travis CI we can't currently install isoinfo (via genisoimage).
+        # https://github.com/travis-ci/apt-package-whitelist/issues/588
+        if helpers['isoinfo']:
+            self.assertEqual(dr.disk_subformat, "")
+
+    def test_disk_representation_from_file_errors(self):
+        """Check DiskRepresentation.from_file() error handling."""
+        self.assertRaises(IOError, DiskRepresentation.from_file,
+                          "")
+        self.assertRaises(IOError, DiskRepresentation.from_file,
+                          "/foo/bar/baz")
+        self.assertRaises(TypeError, DiskRepresentation.from_file,
+                          None)
+        with mock.patch('COT.helpers.helper.check_output') as mock_co:
+            mock_co.return_value = "qemu-img info: unsupported command"
+            self.assertRaises(RuntimeError,
+                              DiskRepresentation.from_file,
+                              self.input_vmdk)
+        # We support QCOW2 but not QCOW at present
+        temp_path = os.path.join(self.temp_dir, "foo.qcow")
+        helpers['qemu-img'].call(['create', '-f', 'qcow', temp_path, '8M'])
+        self.assertRaises(NotImplementedError,
+                          DiskRepresentation.from_file, temp_path)
 
     @mock.patch('COT.helpers.helper.check_output')
     def test_capacity_qemu_error(self, mock_check_output):
@@ -55,17 +105,35 @@ class TestDisk(COT_UT):
         self.assertRaises(HelperError,
                           DiskRepresentation.file_is_this_type, "/foo/bar")
 
+    def test_for_new_file_errors(self):
+        """Invalid inputs to for_new_file()."""
+        # No support for VHD format at present
+        self.assertRaises(NotImplementedError,
+                          DiskRepresentation.for_new_file,
+                          path=os.path.join(self.temp_dir, "foo.vhd"),
+                          disk_format="vhd",
+                          capacity="1M")
+
     def test_create_file_path_mandatory(self):
         """Can't create a file without specifying a path."""
-        self.assertRaises(ValueError, DiskRepresentation, path=None)
+        self.assertRaises(ValueError,
+                          DiskRepresentation.create_file, path=None)
 
     def test_create_file_already_extant(self):
         """Can't call create_file if the file already exists."""
         self.assertRaises(RuntimeError,
-                          DiskRepresentation(path=self.blank_vmdk).create_file)
+                          DiskRepresentation.create_file,
+                          path=self.blank_vmdk)
 
     def test_create_file_insufficient_info(self):
         """Can't create a file with neither files nor capacity."""
         self.assertRaises(RuntimeError,
-                          DiskRepresentation,
+                          DiskRepresentation.create_file,
                           path=os.path.join(self.temp_dir, "foo"))
+
+    def test_convert_to_errors(self):
+        """Invalid inputs to convert_to()."""
+        self.assertRaises(
+            NotImplementedError,
+            DiskRepresentation.from_file(self.blank_vmdk).convert_to,
+            "frobozz", self.temp_dir)

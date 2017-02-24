@@ -3,7 +3,7 @@
 # vm_description.py - Abstract class for reading, editing, and writing VMs
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -156,10 +156,10 @@ class VMDescription(object):
 
     @property
     def platform(self):
-        """The Platform class object associated with this VM.
+        """The Platform instance object associated with this VM.
 
-        :class:`~COT.platforms.GenericPlatform` or a more specific subclass
-        if recognized as such.
+        An instance of :class:`~COT.platforms.Platform` or a more specific
+        subclass if recognized as such.
         """
         raise NotImplementedError("no platform value available.")
 

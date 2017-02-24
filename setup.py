@@ -41,6 +41,9 @@ install_requires = [
     'pyvmomi>=5.5.0.2014.1',
     'requests>=2.5.1',
     'verboselogs>=1.0',
+
+    # enum module is standard in Python 3.4 and later, else use enum34
+    'enum34; python_version < "3.4"',
 ]
 # shutil.get_terminal_size is standard in 3.3 and later only.
 if sys.version_info < (3, 3):

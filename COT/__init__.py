@@ -49,7 +49,7 @@ Helper library modules
 
   COT.data_validation
   COT.file_reference
-  COT.platforms
+  COT.logging_
 
 User interface modules
 ----------------------
@@ -64,8 +64,10 @@ Sub-packages
 .. autosummary::
   :toctree:
 
+  COT.disks
   COT.helpers
   COT.ovf
+  COT.platforms
 """
 
 from ._version import get_versions

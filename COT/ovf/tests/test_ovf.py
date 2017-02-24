@@ -3,7 +3,7 @@
 # test_ovf.py - Unit test cases for COT OVF/OVA handling
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -31,40 +31,12 @@ import mock
 
 from COT.tests.ut import COT_UT
 from COT.ovf import OVF
-from COT.ovf.ovf import byte_count, byte_string, factor_bytes
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
 from COT.helpers import helpers, HelperError
 from COT.vm_context_manager import VMContextManager
 
 logger = logging.getLogger(__name__)
-
-
-class TestByteString(COT_UT):
-    """Test cases for byte-count to string conversion functions."""
-
-    def test_byte_count(self):
-        """Test byte_count() function."""
-        self.assertEqual(byte_count("128", "byte"), 128)
-        self.assertEqual(byte_count("1", "byte * 2^10"), 1024)
-
-        # unknown multiplier is ignored with a warning
-        self.assertEqual(byte_count("100", "foobar"), 100)
-        self.assertLogged(levelname='WARNING',
-                          msg="Unknown multiplier string '%s'",
-                          args=('foobar',))
-
-    def test_factor_bytes(self):
-        """Test factor_bytes() function."""
-        self.assertEqual(factor_bytes("2147483648"), ("2", "byte * 2^30"))
-        self.assertEqual(factor_bytes(2147483649), ("2147483649", "byte"))
-
-    def test_byte_string(self):
-        """Test byte_string() function."""
-        self.assertEqual(byte_string(1024), "1 KiB")
-        self.assertEqual(byte_string(250691584), "239.1 MiB")
-        self.assertEqual(byte_string(2560, base_shift=2), "2.5 GiB")
-        self.assertEqual(byte_string(512, base_shift=2), "512 MiB")
 
 
 class TestOVFInputOutput(COT_UT):

@@ -14,8 +14,9 @@
 
 import logging
 
+from COT.platforms.platform import Platform, Hardware
 from COT.platforms.cisco_iosxrv import IOSXRv
-from COT.data_validation import ValueTooLowError, validate_int
+from COT.data_validation import ValidRange
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,14 @@ class IOSXRv9000(IOSXRv):
     PLATFORM_NAME = "Cisco IOS XRv 9000"
     SUPPORTED_NIC_TYPES = ["E1000", "virtio", "VMXNET3"]
 
-    @classmethod
-    def guess_nic_name(cls, nic_number):
+    HARDWARE_LIMITS = IOSXRv.HARDWARE_LIMITS.copy()
+    HARDWARE_LIMITS.update({
+        Hardware.cpus: ValidRange(1, 32),
+        Hardware.memory: ValidRange(8192, None),
+        Hardware.nic_count: ValidRange(4, None),
+    })
+
+    def guess_nic_name(self, nic_number):
         """MgmtEth0/0/CPU0/0, CtrlEth, DevEth, GigabitEthernet0/0/0/0, etc.
 
         Args:
@@ -50,40 +57,7 @@ class IOSXRv9000(IOSXRv):
         else:
             return "GigabitEthernet0/0/0/" + str(nic_number - 4)
 
-    @classmethod
-    def validate_cpu_count(cls, cpus):
-        """Minimum 1, maximum 32 CPUs.
 
-        Args:
-          cpus (int): Number of CPUs
-
-        Raises:
-          ValueTooLowError: if ``cpus`` is less than 1
-          ValueTooHighError: if ``cpus`` is more than 32
-        """
-        validate_int(cpus, 1, 32, "CPUs")
-
-    @classmethod
-    def validate_memory_amount(cls, mebibytes):
-        """Minimum 8 GiB, no known maximum (128GiB+ is permitted).
-
-        Args:
-          mebibytes (int): RAM, in MiB.
-
-        Raises:
-          ValueTooLowError: if ``mebibytes`` is less than 8192
-        """
-        if mebibytes < 8192:
-            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "8 GiB")
-
-    @classmethod
-    def validate_nic_count(cls, count):
-        """IOS XRv 9000 requires at least 4 NICs.
-
-        Args:
-          count (int): Number of NICs.
-
-        Raises:
-          ValueTooLowError: if ``count`` is less than 4
-        """
-        validate_int(count, 4, None, "NIC count")
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.ios-xrv9000'] = IOSXRv9000
+# Some early releases of this platform instead used:
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.ios-xrv64'] = IOSXRv9000

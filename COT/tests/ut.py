@@ -3,7 +3,7 @@
 # ut.py - Test case wrapper for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -293,14 +293,14 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         self.logging_handler = UTLoggingHandler(self)
         self.instance = None
 
-    def set_vm_platform(self, plat):
+    def set_vm_platform(self, plat_class):
         """Force the VM under test to use a particular Platform class.
 
         Args:
-           plat (COT.platforms.GenericPlatform): Platform class to use
+           plat_class (COT.platforms.Platform): Platform class to use
         """
         # pylint: disable=protected-access
-        self.instance.vm._platform = plat
+        self.instance.vm._platform = plat_class()
 
     def check_cot_output(self, expected):
         """Grab the output from COT and check it against expected output.

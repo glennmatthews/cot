@@ -40,7 +40,7 @@
 import logging
 import os.path
 
-from COT.disks import disk_representation_from_file
+from COT.disks import DiskRepresentation
 from COT.data_validation import (
     InvalidInputError, ValueUnsupportedError,
     check_for_conflict, device_address, match_or_die,
@@ -144,7 +144,7 @@ class COTAddDisk(COTSubmodule):
 
     @disk_image.setter
     def disk_image(self, value):
-        self._disk_image = disk_representation_from_file(value)
+        self._disk_image = DiskRepresentation.from_file(value)
 
     @property
     def address(self):
@@ -393,7 +393,7 @@ def guess_controller_type(platform, ctrl_item, drive_type):
     """If a controller type wasn't specified, try to guess from context.
 
     Args:
-      platform (GenericPlatform): Platform class to guess controller for
+      platform (Platform): Platform instance to guess controller for
       ctrl_item (object): Any known controller object, or None
       drive_type (str): "cdrom" or "harddisk"
     Returns:
@@ -404,8 +404,8 @@ def guess_controller_type(platform, ctrl_item, drive_type):
     Examples:
       ::
 
-        >>> from COT.platforms import GenericPlatform
-        >>> guess_controller_type(GenericPlatform, None, 'harddisk')
+        >>> from COT.platforms import Platform
+        >>> guess_controller_type(Platform(), None, 'harddisk')
         'ide'
     """
     if ctrl_item is None:
@@ -416,7 +416,7 @@ def guess_controller_type(platform, ctrl_item, drive_type):
         ctrl_type = platform.controller_type_for_device(drive_type)
         logger.warning("Guessing controller type should be %s "
                        "based on disk drive type %s and platform %s",
-                       ctrl_type, drive_type, platform.__name__)
+                       ctrl_type, drive_type, platform)
     else:
         ctrl_type = ctrl_item.hardware_type
         if ctrl_type != 'ide' and ctrl_type != 'scsi':
@@ -634,6 +634,6 @@ def add_disk_worker(vm,
                        description, disk, file_obj, ctrl_item, disk_item)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":    # pragma: no cover
     import doctest
     doctest.testmod()

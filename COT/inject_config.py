@@ -3,7 +3,7 @@
 # inject_config.py - Implements "cot inject-config" command
 #
 # February 2014, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -22,7 +22,7 @@ import shutil
 
 from COT.add_disk import add_disk_worker
 from COT.data_validation import ValueUnsupportedError, InvalidInputError
-from COT.disks import create_disk
+from COT.disks import DiskRepresentation
 from COT.submodule import COTSubmodule
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ class COTInjectConfig(COTSubmodule):
             if not self.vm.platform.CONFIG_TEXT_FILE:
                 raise InvalidInputError(
                     "Configuration file not supported for platform {0}"
-                    .format(self.vm.platform.__name__))
+                    .format(self.vm.platform))
         self._config_file = value
 
     @property
@@ -98,7 +98,7 @@ class COTInjectConfig(COTSubmodule):
             if not self.vm.platform.SECONDARY_CONFIG_TEXT_FILE:
                 raise InvalidInputError(
                     "Secondary configuration file not supported "
-                    "for platform {0}".format(self.vm.platform.__name__))
+                    "for platform {0}".format(self.vm.platform))
         self._secondary_config_file = value
 
     @property
@@ -135,7 +135,7 @@ class COTInjectConfig(COTSubmodule):
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``
           ValueUnsupportedError: if the
-              :const:`~COT.platforms.GenericPlatform.BOOTSTRAP_DISK_TYPE` of
+              :const:`~COT.platforms.Platform.BOOTSTRAP_DISK_TYPE` of
               the associated VM's
               :attr:`~COT.vm_description.VMDescription.platform` is not
               'cdrom' or 'harddisk'
@@ -194,18 +194,18 @@ class COTInjectConfig(COTSubmodule):
         # pylint:disable=redefined-variable-type
         if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
             bootstrap_file = os.path.join(vm.working_dir, 'config.iso')
-            disk_image = create_disk(disk_format='iso',
-                                     path=bootstrap_file,
-                                     files=config_files)
+            disk_format = 'iso'
         elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
             bootstrap_file = os.path.join(vm.working_dir, 'config.img')
-            disk_image = create_disk(disk_format='raw',
-                                     path=bootstrap_file,
-                                     files=config_files)
+            disk_format = 'raw'
         else:
             raise ValueUnsupportedError("bootstrap disk drive type",
                                         platform.BOOTSTRAP_DISK_TYPE,
                                         "'cdrom' or 'harddisk'")
+
+        disk_image = DiskRepresentation.for_new_file(bootstrap_file,
+                                                     disk_format,
+                                                     files=config_files)
 
         # Inject the disk image into the OVA, using "add-disk" functionality
         add_disk_worker(

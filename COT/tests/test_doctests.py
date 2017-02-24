@@ -39,5 +39,7 @@ def load_tests(*_):
     suite.addTests(DocTestSuite('COT.edit_hardware'))
     suite.addTests(DocTestSuite('COT.edit_properties'))
     suite.addTests(DocTestSuite('COT.file_reference'))
+    suite.addTests(DocTestSuite('COT.logging_'))
     suite.addTests(DocTestSuite('COT.platforms'))
+    suite.addTests(DocTestSuite('COT.ui_shared'))
     return suite

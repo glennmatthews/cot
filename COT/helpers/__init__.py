@@ -55,18 +55,21 @@ from .helper import (
     Helper, PackageManager, helpers,
     HelperError, HelperNotFoundError, helper_select,
 )
-from .apt_get import AptGet       # noqa
-from .brew import Brew            # noqa
-from .fatdisk import FatDisk      # noqa
-from .gcc import GCC              # noqa
-from .isoinfo import ISOInfo      # noqa
-from .make import Make            # noqa
-from .mkisofs import MkISOFS, GenISOImage, XorrISO   # noqa
-from .ovftool import OVFTool      # noqa
-from .port import Port            # noqa
-from .qemu_img import QEMUImg     # noqa
-from .vmdktool import VMDKTool    # noqa
-from .yum import Yum              # noqa
+
+# flake8: noqa: F401
+
+from .apt_get import AptGet
+from .brew import Brew
+from .fatdisk import FatDisk
+from .gcc import GCC
+from .isoinfo import ISOInfo
+from .make import Make
+from .mkisofs import MkISOFS, GenISOImage, XorrISO
+from .ovftool import OVFTool
+from .port import Port
+from .qemu_img import QEMUImg
+from .vmdktool import VMDKTool
+from .yum import Yum
 
 # pylint doesn't know about __subclasses__
 # https://github.com/PyCQA/pylint/issues/555
