@@ -120,6 +120,6 @@ def int_bytes_to_programmatic_units(byte_value):
     return (byte_str, "byte * 2^{0}".format(shift))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":   # pragma: no cover
     import doctest
     doctest.testmod()

@@ -317,6 +317,6 @@ class UI(object):
         raise NotImplementedError("No implementation of get_password()")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":   # pragma: no cover
     import doctest
     doctest.testmod()

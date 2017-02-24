@@ -814,6 +814,6 @@ class OVFItem(object):
         return item_list
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":   # pragma: no cover
     import doctest
     doctest.testmod()

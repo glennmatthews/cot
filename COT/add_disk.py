@@ -634,6 +634,6 @@ def add_disk_worker(vm,
                        description, disk, file_obj, ctrl_item, disk_item)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":    # pragma: no cover
     import doctest
     doctest.testmod()

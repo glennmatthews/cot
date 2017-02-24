@@ -88,6 +88,6 @@ class COTFormatter(ColoredFormatter):
                                            log_colors=self.LOG_COLORS)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":   # pragma: no cover
     import doctest
     doctest.testmod()
