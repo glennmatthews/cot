@@ -23,6 +23,7 @@ before_script:
   - export PREFIX=$PWD
 
 install:
+  - pip install --upgrade pip
   - pip install tox-travis
   - pip install codecov
 
