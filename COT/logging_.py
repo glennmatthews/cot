@@ -37,7 +37,7 @@ logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
 
-class COTFormatter(ColoredFormatter):
+class COTFormatter(ColoredFormatter, object):
     r"""Logging formatter with colorization and variable verbosity.
 
     COT logs are formatted differently (more or less verbosely) depending
