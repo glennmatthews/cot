@@ -55,8 +55,8 @@ class COTFormatter(ColoredFormatter):
       ...                            None, None)
       >>> record.created = 0
       >>> record.msecs = 0
-      >>> COTFormatter(logging.DEBUG).format(record)
-      '\x1b[32m19:00:00.0     INFO: test_func              Hello world!\x1b[0m'
+      >>> COTFormatter(logging.DEBUG).format(record)   # doctest: +ELLIPSIS
+      '\x1b[32m...:00.0     INFO: test_func              Hello world!\x1b[0m'
       >>> COTFormatter(logging.VERBOSE).format(record)
       '\x1b[32m    INFO: test_func              Hello world!\x1b[0m'
       >>> COTFormatter(logging.INFO).format(record)
