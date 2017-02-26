@@ -22,11 +22,23 @@ installation method.
 
   sudo pip install cot
 
+or, to install for the current user only (typically installing to ``~/.local/``):
+
+::
+
+  pip install --user cot
+
 If you have already installed COT and wish to update to the latest available version:
 
 ::
 
   sudo pip install --upgrade cot
+
+or
+
+::
+
+  pip install --user --upgrade cot
 
 Installing optional features
 ''''''''''''''''''''''''''''
@@ -92,6 +104,24 @@ Install the COT libraries and script
 ::
 
   sudo python setup.py install
+
+Troubleshooting
+---------------
+
+"ValueError: Expected version spec"
+'''''''''''''''''''''''''''''''''''
+
+If you get an error like 
+
+::
+
+  ValueError: ('Expected version spec in', 'enum34; python_version < "3.4"', 'at', '; python_version < "3.4"')
+
+then you may need to update your version of ``pip`` and/or ``setuptools``:
+
+::
+
+  sudo pip install --upgrade pip setuptools
 
 Installing helper programs
 --------------------------
