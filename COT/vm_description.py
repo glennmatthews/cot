@@ -23,6 +23,8 @@
   VMDescription
 """
 
+from __future__ import print_function
+
 import atexit
 import logging
 import os.path
@@ -30,11 +32,8 @@ import shutil
 import tempfile
 import warnings
 
-from verboselogs import VerboseLogger
-
-from .data_validation import ValueUnsupportedError
-
-logging.setLoggerClass(VerboseLogger)
+from COT.data_validation import ValueUnsupportedError
+import COT.logging_     # noqa: F401 pylint:disable=unused-import
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +45,40 @@ class VMInitError(EnvironmentError):
 class VMDescription(object):
     """Abstract class for reading, editing, and writing VM definitions.
 
+    Examples:
+      Because instantiating this class creates a temporary directory
+      (:attr:`working_dir`), it's important to always clean up.
+      This can be done explicitly::
+
+        >>> foo = VMDescription("foo.txt", None)
+        >>> tmpdir = foo.working_dir
+        >>> os.path.exists(tmpdir)
+        True
+        >>> foo.destroy()
+        >>> os.path.exists(tmpdir)
+        False
+
+      or implicitly by using this class as a context manager::
+
+        >>> with VMDescription("foo.txt", None) as foo:
+        ...     tmpdir = foo.working_dir
+        ...     os.path.exists(tmpdir)
+        ...
+        True
+        >>> os.path.exists(tmpdir)
+        False
+
+      If the specific VM class is unknown, you can use the
+      :meth:`factory` method to try to obtain an appropriate subclass::
+
+        >>> try:    # doctest: +ELLIPSIS
+        ...     with VMDescription.factory("foo.txt", None) as foo:
+        ...         print(foo.__class__.__name__)
+        ... except VMInitError as e:
+        ...     print(e)
+        [Errno 2] Unknown VM description type for input file...
+
+
     **Properties**
 
     .. autosummary::
@@ -53,6 +86,7 @@ class VMDescription(object):
 
       input_file
       output_file
+      working_dir
       platform
       config_profiles
       default_config_profile
@@ -86,6 +120,53 @@ class VMDescription(object):
         """
         raise ValueUnsupportedError("filename", filename, ("none implemented"))
 
+    @classmethod
+    def factory(cls, input_file, *args, **kwargs):
+        """Factory method to select and create the appropriate subclass.
+
+        Args:
+          input_file (str): Input file to test against each class's
+            :meth:`detect_type_from_name` implementation.
+          *args: Passed through to selected subclass :meth:`__init__`.
+          **kwargs: Passed through to selected subclass :meth:`__init__`.
+
+        Returns:
+          VMDescription: appropriate subclass instance.
+
+        Raises:
+          VMInitError: if no appropriate subclass is identified
+          VMInitError: if the selected subclass fails instantiation
+        """
+        vm_class = None
+        supported_types = []
+        # pylint doesn't know about __subclasses__
+        # https://github.com/PyCQA/pylint/issues/555
+        # TODO: this should be fixed when pylint 2.0 is released
+        # pylint:disable=no-member
+        for candidate_class in VMDescription.__subclasses__():
+            try:
+                candidate_class.detect_type_from_name(input_file)
+                vm_class = candidate_class
+                break
+            except ValueUnsupportedError as e:
+                supported_types += [e.expected_value]
+
+        if not vm_class:
+            raise VMInitError(2,
+                              "Unknown VM description type for input file -"
+                              " only supported types are {0}"
+                              .format(supported_types),
+                              input_file)
+
+        logger.info("Loading '%s' as %s", input_file, vm_class.__name__)
+        try:
+            vm = vm_class(input_file, *args, **kwargs)
+        except ValueUnsupportedError as e:
+            raise VMInitError(2, str(e), input_file)
+        logger.verbose("Loaded VM object from %s", input_file)
+
+        return vm
+
     def __init__(self, input_file, output_file=None):
         """Read the given VM description file into memory.
 
@@ -102,12 +183,28 @@ class VMDescription(object):
         """
         self._input_file = input_file
         self._product_class = None
-        self.working_dir = tempfile.mkdtemp(prefix="cot")
+        self._working_dir = tempfile.mkdtemp(prefix="cot")
         logger.verbose("Temporary directory for VM created from %s: %s",
                        input_file, self.working_dir)
         self._output_file = None
         self.output_file = output_file
         atexit.register(self.destroy)
+
+    def __enter__(self):
+        """Begin a block using this VM as a context manager object."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, trace):
+        """Exiting context manager block. If no error, call :meth:`write`.
+
+        In any case, also call :meth:`destroy`.
+        For the parameters, see :mod:`contextlib`.
+        """
+        try:
+            if exc_type is None:
+                self.write()
+        finally:
+            self.destroy()
 
     def destroy(self):
         """Clean up after ourselves.
@@ -123,10 +220,6 @@ class VMDescription(object):
         except AttributeError:
             pass
 
-    def __del__(self):
-        """Destructor. Call :meth:`destroy`."""
-        self.destroy()
-
     @property
     def input_file(self):
         """Data file to read in."""
@@ -141,9 +234,18 @@ class VMDescription(object):
     def output_file(self, value):
         self._output_file = value
 
+    @property
+    def working_dir(self):
+        """Temporary directory this instance can use for storage.
+
+        Will be automatically erased when :meth:`destroy` is called.
+        """
+        return self._working_dir
+
     def write(self):
         """Write the VM description to :attr:`output_file`, if any."""
-        raise NotImplementedError("write not implemented")
+        if self.output_file:
+            raise NotImplementedError("write not implemented")
 
     @property
     def product_class(self):
@@ -775,3 +877,8 @@ class VMDescription(object):
           tuple: ``(type, address)``, such as ``("ide", "1:0")``.
         """
         raise NotImplementedError("find_device_location not implemented")
+
+
+if __name__ == "__main__":   # pragma: no cover
+    import doctest
+    doctest.testmod()

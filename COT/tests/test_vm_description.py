@@ -21,14 +21,40 @@ try:
 except ImportError:
     import unittest
 
+import mock
+
 from COT.vm_description import VMDescription
 from COT.data_validation import ValueUnsupportedError
+
+# pylint: disable=missing-type-doc,missing-param-doc
 
 
 class TestVMDescription(unittest.TestCase):
     """Test cases for abstract VMDescription class."""
 
     TEXT_FILE = resource_filename(__name__, 'sample_cfg.txt')
+
+    @mock.patch("os.path.exists", return_value=True)
+    @mock.patch("tempfile.mkdtemp", return_value="/foo/bar")
+    @mock.patch("shutil.rmtree")
+    @mock.patch("COT.vm_description.VMDescription.write")
+    def test_context_manager(self, write, rmtree, *_):
+        """Verify context manager logic."""
+        # Successful exit - write() is called and working_dir is cleaned up
+        with VMDescription("foo.txt", None):
+            pass
+        write.assert_called_once()
+        rmtree.assert_called_once_with("/foo/bar")
+
+        write.reset_mock()
+        rmtree.reset_mock()
+
+        # Error exit - cleanup still happens but write() is not called
+        with self.assertRaises(RuntimeError):
+            with VMDescription("foo.txt", None):
+                raise RuntimeError("Gotcha!")
+        write.assert_not_called()
+        rmtree.assert_called_once_with("/foo/bar")
 
     def test_generic_class_apis(self):
         """Verify class APIs with generic implementations."""
@@ -38,7 +64,7 @@ class TestVMDescription(unittest.TestCase):
 
     def test_abstract_io_apis(self):
         """Get NotImplementedError from abstract I/O APIs."""
-        ins = VMDescription(self.TEXT_FILE, None)
+        ins = VMDescription(self.TEXT_FILE, self.TEXT_FILE)
 
         self.assertRaises(NotImplementedError,
                           ins.write)
@@ -119,6 +145,8 @@ class TestVMDescription(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           ins.create_configuration_profile,
                           None, None, None)
+        self.assertRaises(NotImplementedError,
+                          ins.delete_configuration_profile, None)
         with self.assertRaises(NotImplementedError):
             assert ins.system_types
         with self.assertRaises(NotImplementedError):
@@ -151,6 +179,8 @@ class TestVMDescription(unittest.TestCase):
                           ins.get_serial_count, None)
         self.assertRaises(NotImplementedError,
                           ins.set_serial_count, 0, None)
+        self.assertRaises(NotImplementedError,
+                          ins.get_serial_connectivity, None)
         self.assertRaises(NotImplementedError,
                           ins.set_serial_connectivity, None, None)
         self.assertRaises(NotImplementedError,

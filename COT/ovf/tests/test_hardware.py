@@ -15,8 +15,7 @@
 """Unit test cases for COT.ovf.OVFHardware class."""
 
 from COT.tests.ut import COT_UT
-
-from COT.vm_context_manager import VMContextManager
+from COT.ovf import OVF
 
 
 class TestOVFHardware(COT_UT):
@@ -24,7 +23,7 @@ class TestOVFHardware(COT_UT):
 
     def test_find_item_multiple_matches(self):
         """Check find_item raises LookupError if multiple matches are found."""
-        with VMContextManager(self.input_ovf) as ovf:
+        with OVF(self.input_ovf, None) as ovf:
             hw = ovf.hardware
             self.assertRaisesRegex(
                 LookupError,
@@ -33,6 +32,6 @@ class TestOVFHardware(COT_UT):
 
     def test_find_item_no_matches(self):
         """Test that find_item returns None if no matches are found."""
-        with VMContextManager(self.input_ovf) as ovf:
+        with OVF(self.input_ovf, None) as ovf:
             hw = ovf.hardware
             self.assertEqual(None, hw.find_item(resource_type='usb'))

@@ -42,4 +42,5 @@ def load_tests(*_):
     suite.addTests(DocTestSuite('COT.logging_'))
     suite.addTests(DocTestSuite('COT.platforms'))
     suite.addTests(DocTestSuite('COT.ui_shared'))
+    suite.addTests(DocTestSuite('COT.vm_description'))
     return suite

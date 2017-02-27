@@ -34,7 +34,6 @@ from COT.ovf import OVF
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
 from COT.helpers import helpers, HelperError
-from COT.vm_context_manager import VMContextManager
 
 logger = logging.getLogger(__name__)
 
@@ -77,12 +76,12 @@ class TestOVFInputOutput(COT_UT):
 
     def test_input_output(self):
         """Read an OVF then write it again, verify no changes."""
-        with VMContextManager(self.input_ovf, self.temp_file) as vm:
+        with OVF(self.input_ovf, self.temp_file) as vm:
             self.assertEqual(vm.ovf_version, 1.0)
         self.check_diff('')
 
         # Filename output too
-        with VMContextManager(self.input_ovf, self.temp_file + '.a.b.c'):
+        with OVF(self.input_ovf, self.temp_file + '.a.b.c'):
             self.assertLogged(
                 levelname='WARNING',
                 msg="found '%s' in mid-filename; treating as such",
@@ -91,13 +90,13 @@ class TestOVFInputOutput(COT_UT):
 
     def test_input_output_v09(self):
         """Test reading/writing of a v0.9 OVF."""
-        with VMContextManager(self.v09_ovf, self.temp_file) as vm:
+        with OVF(self.v09_ovf, self.temp_file) as vm:
             self.assertEqual(vm.ovf_version, 0.9)
         self.check_diff('', file1=self.v09_ovf)
 
     def test_input_output_v20_vbox(self):
         """Test reading/writing of a v2.0 OVF from VirtualBox."""
-        with VMContextManager(self.v20_vbox_ovf, self.temp_file) as vm:
+        with OVF(self.v20_vbox_ovf, self.temp_file) as vm:
             self.assertEqual(vm.ovf_version, 2.0)
 
         # TODO - vbox XML is not very clean so the diffs are large...
@@ -108,7 +107,7 @@ class TestOVFInputOutput(COT_UT):
 
     def test_input_output_vmware(self):
         """Test reading/writing of an OVF with custom extensions."""
-        with VMContextManager(self.vmware_ovf, self.temp_file):
+        with OVF(self.vmware_ovf, self.temp_file):
             pass
         # VMware disagrees with COT on some fiddly details of XML formatting
         self.check_diff("""
@@ -144,8 +143,7 @@ CIM_VirtualSystemSettingData" vmw:buildId="build-880146">
         shutil.copy(self.input_vmdk, self.staging_dir)
         shutil.copy(self.sample_cfg, self.staging_dir)
         # Don't copy input.iso to the staging directory.
-        with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
-                              self.temp_file):
+        with OVF(os.path.join(self.staging_dir, 'input.ovf'), self.temp_file):
             self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.REMOVING_FILE)
         self.check_diff("""
@@ -158,14 +156,12 @@ ovf:size="{cfg_size}" />
            cfg_size=self.FILE_SIZE['sample_cfg.txt']))
 
         # Read-only OVF
-        with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
-                              None):
+        with OVF(os.path.join(self.staging_dir, 'input.ovf'), None):
             self.assertLogged(**self.NONEXISTENT_FILE)
 
         # File exists at read time but has disappeared by write time
         shutil.copy(self.input_iso, self.staging_dir)
-        with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
-                              self.temp_file):
+        with OVF(os.path.join(self.staging_dir, 'input.ovf'), self.temp_file):
             os.remove(os.path.join(self.staging_dir, 'input.iso'))
         self.assertLogged(**self.FILE_DISAPPEARED)
         self.assertLogged(**self.REMOVING_FILE)
@@ -188,9 +184,8 @@ ovf:size="{cfg_size}" />
             tarf.add(self.sample_cfg, 'sample_cfg.txt')
         finally:
             tarf.close()
-        with VMContextManager(
-                os.path.join(self.staging_dir, 'input.ova'),
-                os.path.join(self.temp_dir, 'output.ovf')):
+        with OVF(os.path.join(self.staging_dir, 'input.ova'),
+                 os.path.join(self.temp_dir, 'output.ovf')):
             self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.REMOVING_FILE)
         self.check_diff(file2=os.path.join(self.temp_dir, 'output.ovf'),
@@ -204,8 +199,7 @@ ovf:size="{cfg_size}" />
            cfg_size=self.FILE_SIZE['sample_cfg.txt']))
 
         # Also test read-only OVA logic:
-        with VMContextManager(os.path.join(self.staging_dir, "input.ova"),
-                              None):
+        with OVF(os.path.join(self.staging_dir, "input.ova"), None):
             self.assertLogged(**self.NONEXISTENT_FILE)
 
     def test_input_output_bad_file(self):
@@ -218,8 +212,8 @@ ovf:size="{cfg_size}" />
         # Copy blank.vmdk to input.vmdk so as to have the wrong size/checksum
         shutil.copy(self.blank_vmdk,
                     os.path.join(self.staging_dir, 'input.vmdk'))
-        with VMContextManager(os.path.join(self.staging_dir, 'input.ovf'),
-                              os.path.join(self.temp_dir, "temp.ova")):
+        with OVF(os.path.join(self.staging_dir, 'input.ovf'),
+                 os.path.join(self.temp_dir, "temp.ova")):
             pass
         self.assertLogged(msg="Size of file.*seems to have changed.*"
                           "The updated OVF will reflect this change.")
@@ -229,8 +223,8 @@ ovf:size="{cfg_size}" />
         # Write out to OVA (which will correct the file size information)
 
         # Now read in the OVA
-        with VMContextManager(os.path.join(self.temp_dir, "temp.ova"),
-                              os.path.join(self.temp_dir, "temp.ovf")):
+        with OVF(os.path.join(self.temp_dir, "temp.ova"),
+                 os.path.join(self.temp_dir, "temp.ovf")):
             # Replace the tar file fake .vmdk with the real .vmdk
             tarf = tarfile.open(os.path.join(self.temp_dir, "temp.ova"), 'a')
             tarf.add(self.input_vmdk, 'input.vmdk')
@@ -357,7 +351,7 @@ ovf:size="{cfg_size}" />
         # unsupported output file type
         mock_type.return_value = ".ovf"
         with self.assertRaises(NotImplementedError) as cm:
-            with VMContextManager(self.input_ovf, None) as vm:
+            with OVF(self.input_ovf, None) as vm:
                 mock_type.return_value = ".qcow2"
                 vm.output_file = os.path.join(self.temp_dir, "foo.qcow2")
 
@@ -404,7 +398,7 @@ ovf:size="{cfg_size}" />
         finally:
             tarf.close()
         # this results in a logged warning but not rejection - Postel's Law
-        with VMContextManager(fake_file, None):
+        with OVF(fake_file, None):
             self.assertLogged(
                 levelname="WARNING",
                 msg="OVF file %s found, but .*not.*first")
@@ -459,12 +453,12 @@ ovf:size="{cfg_size}" />
     def test_configuration_profiles(self):
         """Check profile id list APIs."""
         # No profiles defined
-        with VMContextManager(self.vmware_ovf, None) as ovf:
+        with OVF(self.vmware_ovf, None) as ovf:
             self.assertEqual(ovf.config_profiles, [])
             self.assertEqual(ovf.default_config_profile, None)
 
         # Profile list exists
-        with VMContextManager(self.input_ovf, None) as ovf:
+        with OVF(self.input_ovf, None) as ovf:
             # default profile is first in the list
             self.assertEqual(ovf.config_profiles,
                              ["4CPU-4GB-3NIC",
@@ -474,6 +468,6 @@ ovf:size="{cfg_size}" />
 
     def test_find_empty_drive_unsupported(self):
         """Negative test for find_empty_drive()."""
-        with VMContextManager(self.input_ovf, None) as ovf:
+        with OVF(self.input_ovf, None) as ovf:
             self.assertRaises(ValueUnsupportedError,
                               ovf.find_empty_drive, 'floppy')

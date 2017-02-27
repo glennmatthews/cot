@@ -21,8 +21,8 @@ from __future__ import print_function
 import logging
 import os.path
 
+from COT.vm_description import VMDescription
 from .submodule import COTGenericSubmodule
-from .vm_context_manager import VMContextManager
 from .data_validation import InvalidInputError
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ class COTInfo(COTGenericSubmodule):
         for package in self.package_list:
             if not first:
                 print("")
-            with VMContextManager(package, None) as vm:
+            with VMDescription.factory(package, None) as vm:
                 print(vm.info_string(self.ui.terminal_width - 1,
                                      self.verbosity))
             first = False

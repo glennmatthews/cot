@@ -20,7 +20,8 @@ This project adheres to `Semantic Versioning`_.
   - Function ``COT.deploy_esxi.get_object_from_connection`` is now method
     ``PyVmomiVMReconfigSpec.lookup_object``.
   - Function ``COT.cli.formatter`` is now class ``COT.logging_.COTFormatter``.
-
+  - The functionality of classes ``VMContextManager`` and ``VMFactory`` has
+    been rolled into the core ``VMDescription`` class.
   - COT.disks module:
 
     - Function ``create_disk`` is now split into class methods
@@ -53,7 +54,11 @@ This project adheres to `Semantic Versioning`_.
       of a ``Platform`` class rather than the class object itself.
     - Most ``Platform`` APIs are now instance methods instead of
       class methods.
-    - Function ``is_known_product_class`` has been removed.
+
+**Removed**
+
+  - Classes ``VMContextManager`` and ``VMFactory`` have been removed.
+  - Function ``COT.platforms.is_known_product_class`` has been removed.
 
 `1.9.1`_ - 2017-02-21
 ---------------------

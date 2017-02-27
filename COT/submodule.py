@@ -30,7 +30,7 @@ import os.path
 import logging
 
 from .data_validation import InvalidInputError
-from .vm_factory import VMFactory
+from .vm_description import VMDescription
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +120,7 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
     def package(self):
         """VM description file to read from.
 
-        Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
+        Calls :meth:`COT.vm_description.VMDescription.factory` to instantiate
         :attr:`self.vm` from the provided file.
 
         Raises:
@@ -137,7 +137,7 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
             self.vm.destroy()
             self.vm = None
         if value is not None:
-            self.vm = VMFactory.create(value, None)
+            self.vm = VMDescription.factory(value, None)
         self._package = value
 
     def ready_to_run(self):
@@ -178,7 +178,7 @@ class COTSubmodule(COTGenericSubmodule):
     def package(self):
         """VM description file to read (and possibly write).
 
-        Calls :meth:`COT.vm_factory.VMFactory.create` to instantiate
+        Calls :meth:`COT.vm_description.VMDescription.factory` to instantiate
         :attr:`self.vm` from the provided file.
 
         Raises:
@@ -195,7 +195,7 @@ class COTSubmodule(COTGenericSubmodule):
             self.vm.destroy()
             self.vm = None
         if value is not None:
-            self.vm = VMFactory.create(value, self.output)
+            self.vm = VMDescription.factory(value, self.output)
         self._package = value
 
     @property

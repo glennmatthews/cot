@@ -25,7 +25,6 @@ from COT.tests.ut import COT_UT
 from COT.ovf import OVF
 from COT.ovf.name_helper import OVFNameHelper1
 from COT.ovf.item import OVFItem
-from COT.vm_context_manager import VMContextManager
 
 
 class TestOVFItem(COT_UT):
@@ -101,7 +100,7 @@ OVFItem:
 
     def test_remove_profile(self):
         """Test case for remove_profile() method."""
-        with VMContextManager(self.input_ovf, self.temp_file) as ovf:
+        with OVF(self.input_ovf, self.temp_file) as ovf:
             hw = ovf.hardware
             # InstanceID 11, NIC 0 (default, under all profiles)
             item = hw.item_dict['11']

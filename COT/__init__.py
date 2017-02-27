@@ -19,8 +19,6 @@ Virtual machine definition modules
   :toctree:
 
   COT.vm_description
-  COT.vm_factory
-  COT.vm_context_manager
   COT.xml_file
 
 Command modules
