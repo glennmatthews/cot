@@ -350,6 +350,15 @@ class VMDescription(object):
     def version_long(self, value):
         raise NotImplementedError("version_long setter not implemented")
 
+    def predicted_output_size(self):
+        """Estimate how much disk space (in bytes) is needed to write out.
+
+        Returns:
+          int: Estimated number of bytes consumed when writing out to
+            :attr:`output_file` (plus any associated files).
+        """
+        raise NotImplementedError("predicted_output_size not implemented")
+
     # API methods needed for add-disk
     def convert_disk_if_needed(self,   # pylint: disable=no-self-use
                                disk_image,

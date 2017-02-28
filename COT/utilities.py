@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 #
-# March 2017, Glenn F. Matthews
+# utilities.py - General utility functions
+#
+# February 2017, Glenn F. Matthews
 # Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
@@ -18,16 +20,37 @@
 .. autosummary::
   :nosignatures:
 
+  available_bytes_at_path
   pretty_bytes
+  tar_entry_size
   to_string
 """
 
 import logging
+import os
 import sys
 
 import xml.etree.ElementTree as ET
 
 logger = logging.getLogger(__name__)
+
+
+def available_bytes_at_path(path):
+    """Get the available disk space in a given directory.
+
+    Args:
+      path (str): Directory path to check.
+
+    Returns:
+      int: Available space, in bytes
+    """
+    # TODO input validation - os.path.exists, etc.
+    logger.debug("Checking available disk space in '%s'", path)
+    statvfs = os.statvfs(path)
+    # available = free blocks times block size
+    available = statvfs.f_bfree * statvfs.f_frsize
+    logger.debug("There appears to be %s available", pretty_bytes(available))
+    return available
 
 
 def pretty_bytes(byte_value, base_shift=0):
@@ -92,6 +115,34 @@ def pretty_bytes(byte_value, base_shift=0):
     if shift == 0:
         byte_value = round(byte_value)
     return "{0:.4g} {1}".format(byte_value, tags[shift])
+
+
+def tar_entry_size(filesize):
+    """The space a file of the given size will actually require in a TAR file.
+
+    The entry has a 512-byte header followd by the actual file data,
+    padded to a multiple of 512 bytes if necessary.
+
+    Args:
+      filesize (int): File size in bytes
+
+    Returns:
+      int: Bytes consumed in a TAR archive by this file.
+
+    Examples:
+      ::
+
+        >>> tar_entry_size(1)
+        1024
+        >>> tar_entry_size(511)
+        1024
+        >>> tar_entry_size(512)
+        1024
+        >>> tar_entry_size(513)
+        1536
+    """
+    # round up to next multiple of 512
+    return 512 + filesize + ((512 - filesize) % 512)
 
 
 def to_string(obj):

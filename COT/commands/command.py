@@ -31,6 +31,7 @@ import logging
 
 from COT.data_validation import InvalidInputError
 from COT.vm_description import VMDescription
+from COT.utilities import available_bytes_at_path, pretty_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +177,7 @@ class ReadWriteCommand(Command):
         self._package = None
         # Default to an unspecified output rather than no output
         self._output = ""
+        self._predicted_output_size = 0
 
     @property
     def package(self):
@@ -199,6 +201,7 @@ class ReadWriteCommand(Command):
             self.vm = None
         if value is not None:
             self.vm = VMDescription.factory(value, self.output)
+            self._check_and_warn_disk_space()
         self._package = value
 
     @property
@@ -219,6 +222,50 @@ class ReadWriteCommand(Command):
         self._output = value
         if self.vm is not None:
             self.vm.output_file = value
+            self._check_and_warn_disk_space(force_prompt=True)
+
+    def _check_and_warn_disk_space(self, force_prompt=False):
+        """Check estimated disk space required against the available space.
+
+        If the estimate exceeds the available, warn the user and prompt
+        for confirmation to continue anyway.
+
+        Safe to call repeatedly - will only prompt the user again if the
+        space estimate changes or if ``force_prompt`` is True.
+
+        Args:
+          force_prompt (bool): If True, reprompt the user even if the estimate
+           has not changed.
+        """
+        if not self.vm:
+            logger.debug("Input VM not yet set, so not yet able "
+                         " to check estimated output size.")
+            return
+        if not self.output:
+            logger.debug("Output location not yet set, so not yet able"
+                         " to check disk space")
+            return
+
+        predicted = self.vm.predicted_output_size()
+        if predicted == self._predicted_output_size and not force_prompt:
+            return
+
+        if predicted != self._predicted_output_size:
+            logger.verbose("Predicted disk usage changed from %s to %s",
+                           pretty_bytes(self._predicted_output_size),
+                           pretty_bytes(predicted))
+            self._predicted_output_size = predicted
+
+        available = available_bytes_at_path(os.path.dirname(self.output))
+        # Compare double predicted size against available space to provide
+        # sufficient margin of error against temporary files, other processes
+        # consuming disk space, etc.
+        if predicted * 2 > available:
+            self.ui.confirm_or_die(
+                "Output to disk is estimated to require {0} but only {1}"
+                " is available at the requested location."
+                " Output may fail. Continue anyway?"
+                .format(predicted, available))
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -249,5 +296,6 @@ class ReadWriteCommand(Command):
         """Write the current VM state out to disk if requested."""
         # do any command-specific work here, then:
         if self.vm is not None:
+            self._check_and_warn_disk_space()
             self.vm.write()
         super(ReadWriteCommand, self).finished()

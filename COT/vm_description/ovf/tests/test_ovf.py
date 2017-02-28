@@ -439,6 +439,41 @@ ovf:size="{cfg_size}" />
         # TODO - inconsistent order of File versus Disk?
         # TODO - Sections in wrong order?
 
+
+class TestOVFAPI(COT_UT):
+    """Test cases for OVF APIs."""
+
+    def setUp(self):
+        """Test case setup function called automatically prior to each test."""
+        super(TestOVFAPI, self).setUp()
+        # Output to OVA instead of OVF by default
+        self.temp_file = os.path.join(self.temp_dir, "out.ova")
+
+    def test_predicted_output_size(self):
+        """Check output size prediction against reality."""
+        self.validate_output_with_ovftool = False
+        for input_file in [
+                self.input_ovf,
+                self.minimal_ovf,
+                self.iosv_ovf,
+                self.v09_ovf,
+                self.v20_vbox_ovf,
+                self.vmware_ovf,
+        ]:
+            with OVF(input_file, self.temp_file) as ovf:
+                predicted = ovf.predicted_output_size()
+            actual = os.stat(self.temp_file).st_size
+            # Up to 10% greater than reality is OK,
+            # but aim for never less than.
+            self.assertGreaterEqual(
+                predicted, actual,
+                "predicted output size of {0} was {1} but actual size is {2}"
+                .format(input_file, predicted, actual))
+            self.assertLessEqual(
+                predicted, int(actual * 1.1),
+                "predicted output size of {0} was {1} but actual size is {2}"
+                .format(input_file, predicted, actual))
+
     def test_configuration_profiles(self):
         """Check profile id list APIs."""
         # No profiles defined

@@ -65,7 +65,7 @@ max-attributes=29
 max-locals=29
 # default: max-public-methods=20
 # current worst offender: OVF
-max-public-methods=73
+max-public-methods=74
 # default: max-returns=6
 # default: max-statements=50
 
@@ -78,7 +78,7 @@ accept-no-return-type-doc=yes
 
 # default: max-module-lines: 1000
 # current worst offender: COT/ovf/ovf.py
-max-module-lines=2900
+max-module-lines=3000
 
 [LOGGING]
 

@@ -42,14 +42,14 @@ from COT.data_validation import (
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.platforms import Platform
 from COT.disks import DiskRepresentation
-from COT.utilities import pretty_bytes
+from COT.utilities import pretty_bytes, tar_entry_size
 
 from ..vm_description import VMDescription, VMInitError
 from .name_helper import name_helper
 from .hardware import OVFHardware, OVFHardwareDataError
 from .item import list_union
 from .utilities import (
-    programmatic_bytes_to_int, int_bytes_to_programmatic_units
+    int_bytes_to_programmatic_units, programmatic_bytes_to_int,
 )
 
 logger = logging.getLogger(__name__)
@@ -658,11 +658,52 @@ class OVF(VMDescription, XML):
                                  .format(name))
         return getattr(self.name_helper, name)
 
+    def predicted_output_size(self):
+        """Estimate how much disk space (in bytes) is needed to write out.
+
+        Since OVA (TAR) is an uncompressed format, the disk space required
+        is approximately the same for both OVF and OVA output. Thus we can
+        provide this value even if :attr:`output_file` is ``None``.
+
+        In the TAR format, each file in the archive has a 512-byte header
+        and its total size is rounded up to a multiple of 512 bytes. The
+        archive is terminated by 2 512-byte blocks filled with zero, and
+        the overall archive file size is a multiple of 10 kiB.
+
+        Returns:
+          int: Estimated number of bytes consumed when writing out to
+            :attr:`output_file` (plus any associated files).
+        """
+        # Size of the OVF descriptor
+        needed = tar_entry_size(len(ET.tostring(self.root)))
+
+        # Account for the size of all the referenced files
+        manifest_size = 0
+        for href, file_ref in self._file_references.items():
+            # Approximate size of a manifest entry for this file
+            manifest_size += 50 + len(href)
+
+            # Size of the file proper
+            needed += tar_entry_size(file_ref.size)
+
+        # Manifest file
+        needed += tar_entry_size(manifest_size)
+
+        # Archive end - two 512-byte records filled with zeros
+        needed += 1024
+
+        # Overall size must be a multiple of 10 kiB
+        needed += (10240 - needed) % 10240
+
+        logger.verbose("Estimated output size is %s", pretty_bytes(needed))
+        return needed
+
     def write(self):
         """Write OVF or OVA to :attr:`output_file`, if set."""
         if not self.output_file:
             return
 
+        logger.info("Preparing to write out to file %s", self.output_file)
         prefix = os.path.splitext(self.output_file)[0]
         extension = self.output_extension
 

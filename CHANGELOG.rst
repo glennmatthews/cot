@@ -6,6 +6,18 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Added**
+
+- ``COTSubmodule`` now checks the available disk space of the requested output
+  location against the predicted VM output size and warns the user if there is
+  likely to be a problem.
+- New modules and APIs:
+
+  - ``VMDescription.predicted_output_size()`` instance method, to ask a VM to
+    predict how much disk space will be required when output to disk.
+  - ``COT.utilities`` module with functions ``available_bytes_at_path`` and
+    ``tar_entry_size``.
+
 **Removed**
 
 - Discontinued support for Python 2.6 as it has been retired since 2013.
