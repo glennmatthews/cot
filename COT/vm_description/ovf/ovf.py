@@ -40,7 +40,6 @@ import textwrap
 from contextlib import closing
 
 from COT.xml_file import XML, register_namespace
-from COT.vm_description import VMDescription, VMInitError
 from COT.data_validation import (
     match_or_die, check_for_conflict, file_checksum,
     ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
@@ -50,10 +49,11 @@ from COT.platforms import Platform
 from COT.disks import DiskRepresentation
 from COT.ui_shared import pretty_bytes
 
-from COT.ovf.name_helper import name_helper
-from COT.ovf.hardware import OVFHardware, OVFHardwareDataError
-from COT.ovf.item import list_union
-from COT.ovf.utilities import (
+from ..vm_description import VMDescription, VMInitError
+from .name_helper import name_helper
+from .hardware import OVFHardware, OVFHardwareDataError
+from .item import list_union
+from .utilities import (
     programmatic_bytes_to_int, int_bytes_to_programmatic_units
 )
 

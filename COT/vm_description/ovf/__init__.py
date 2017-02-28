@@ -12,7 +12,7 @@
 
 """Package for handling OVF and OVA virtual machine description files.
 
-The :class:`COT.ovf.OVF` class provides an implementation of the
+The :class:`OVF` class provides an implementation of the
 :class:`COT.vm_description.VMDescription` interface. In general, COT
 submodules should be agnostic of the internals of this package and should
 only use the ``VMDescription`` interface.
@@ -23,15 +23,16 @@ API
 .. autosummary::
   :nosignatures:
 
-  ~COT.ovf.ovf.OVF
+  OVF
 
 Exceptions
 ----------
 
 .. autosummary::
+  :nosignatures:
 
-  ~COT.ovf.hardware.OVFHardwareDataError
-  ~COT.ovf.item.OVFItemDataError
+  ~COT.vm_description.ovf.hardware.OVFHardwareDataError
+  ~COT.vm_description.ovf.item.OVFItemDataError
 
 Modules
 -------
@@ -39,11 +40,10 @@ Modules
 .. autosummary::
   :toctree:
 
-  COT.ovf.ovf
-  COT.ovf.hardware
-  COT.ovf.item
-  COT.ovf.name_helper
-  COT.ovf.utilities
+  COT.vm_description.ovf.hardware
+  COT.vm_description.ovf.item
+  COT.vm_description.ovf.name_helper
+  COT.vm_description.ovf.utilities
 """
 
 from .ovf import OVF

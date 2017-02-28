@@ -3,7 +3,7 @@
 # test_item.py - Unit test cases for OVFItem class
 #
 # June 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,7 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Unit test cases for COT.ovf.OVFItem class."""
+"""Unit test cases for COT.vm_description.ovf.OVFItem class."""
 
 import tempfile
 import shutil
@@ -22,9 +22,9 @@ import xml.etree.ElementTree as ET
 
 from COT.tests.ut import COT_UT
 
-from COT.ovf import OVF
-from COT.ovf.name_helper import OVFNameHelper1
-from COT.ovf.item import OVFItem
+from COT.vm_description.ovf import OVF
+from COT.vm_description.ovf.name_helper import OVFNameHelper1
+from COT.vm_description.ovf.item import OVFItem
 
 
 class TestOVFItem(COT_UT):

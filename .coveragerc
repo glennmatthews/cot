@@ -5,8 +5,9 @@ omit =
     COT/tests/*
     COT/disks/tests/*
     COT/helpers/tests/*
-    COT/ovf/tests/*
     COT/platforms/tests/*
+    COT/vm_description/tests/*
+    COT/vm_description/ovf/tests/*
     COT/_version.py
     setup.py
     versioneer.py

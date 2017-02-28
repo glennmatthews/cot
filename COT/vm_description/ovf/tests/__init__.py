@@ -1,5 +1,5 @@
 # June 2016, Glenn F. Matthews
-# Copyright (c) 2016 the COT project developers.
+# Copyright (c) 2016-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -10,4 +10,4 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Unit test cases for the COT.ovf package."""
+"""Unit test cases for the COT.vm_description.ovf package."""

@@ -14,14 +14,14 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Unit test cases for COT.ovf.utilities module.
+"""Unit test cases for COT.vm_description.ovf.utilities module.
 
-Most test cases are implemented as doctests in the COT.ovf.utilities
-module; this is for additional tests that are impractical as doctests.
+Most test cases are implemented as doctests in the module itself;
+this is for additional tests that are impractical as doctests.
 """
 
 from COT.tests.ut import COT_UT
-from COT.ovf.utilities import programmatic_bytes_to_int
+from COT.vm_description.ovf.utilities import programmatic_bytes_to_int
 
 
 class TestProgrammaticUnits(COT_UT):

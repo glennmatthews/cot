@@ -15,8 +15,8 @@ Common OVF Tool (COT)
    COT
    COT.disks
    COT.helpers
-   COT.ovf
    COT.platforms
+   COT.vm_description
 
 
 Indices and tables

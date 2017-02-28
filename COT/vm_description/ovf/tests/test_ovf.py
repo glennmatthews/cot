@@ -14,7 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Unit test cases for COT.ovf.OVF class."""
+"""Unit test cases for COT.vm_description.ovf.OVF class."""
 
 import filecmp
 import logging
@@ -30,7 +30,7 @@ from contextlib import closing
 import mock
 
 from COT.tests.ut import COT_UT
-from COT.ovf import OVF
+from COT.vm_description.ovf import OVF
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
 from COT.helpers import helpers, HelperError
@@ -336,7 +336,8 @@ ovf:size="{cfg_size}" />
         self.assertEqual(cm.exception.filename,
                          self.localfile("ersatz_ovf_3.0.ovf"))
 
-    @mock.patch("COT.ovf.OVF.detect_type_from_name", return_value=".vbox")
+    @mock.patch("COT.vm_description.ovf.OVF.detect_type_from_name",
+                return_value=".vbox")
     def test_unknown_extension(self, mock_type):
         # pylint: disable=missing-type-doc,missing-param-doc
         """Test handling of unexpected behavior in detect_type_from_name."""

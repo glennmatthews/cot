@@ -41,12 +41,13 @@ class OVFHardwareDataError(Exception):
 
 
 class OVFHardware(object):
-    """Helper class for :class:`~COT.ovf.ovf.OVF`.
+    """Helper class for :class:`~COT.vm_description.ovf.ovf.OVF`.
 
     Represents all hardware items defined by this OVF;
     i.e., the contents of all Items in the VirtualHardwareSection.
 
-    Fundamentally it's just a dict of :class:`~COT.ovf.item.OVFItem` objects
+    Fundamentally it's just a dict of
+    :class:`~COT.vm_description.ovf.item.OVFItem` objects
     with a bunch of helper methods.
     """
 
@@ -155,11 +156,12 @@ class OVFHardware(object):
         return str(i)
 
     def new_item(self, resource_type, profile_list=None):
-        """Create a new :class:`~COT.ovf.item.OVFItem` of the given type.
+        """Create a new OVFItem of the given type.
 
         Args:
           resource_type (str): String such as 'cpu' or 'harddisk' - used as
-              a key to :data:`~COT.ovf.name_helper.OVFNameHelper1.RES_MAP`
+            a key to
+            :data:`~COT.vm_description.ovf.name_helper.OVFNameHelper1.RES_MAP`
           profile_list (list): Profiles the new item should belong to
 
         Returns:
@@ -193,7 +195,7 @@ class OVFHardware(object):
         # TODO: error handling - currently a no-op if item not in item_dict
 
     def clone_item(self, parent_item, profile_list):
-        """Clone an :class:`OVFItem` to create a new instance.
+        """Clone an OVFItem to create a new instance.
 
         Args:
           parent_item (OVFItem): Instance to clone from
@@ -245,7 +247,7 @@ class OVFHardware(object):
           profile_list (list): List of profiles to filter on
 
         Returns:
-          list: Matching :class:`~COT.ovf.item.OVFItem` instances
+          list: Matching OVFItem instances
         """
         items = [self.item_dict[instance] for instance in
                  natural_sort(self.item_dict)]
@@ -259,7 +261,7 @@ class OVFHardware(object):
         return filtered_items
 
     def find_item(self, resource_type=None, properties=None, profile=None):
-        """Find the only :class:`OVFItem` of the given :attr:`resource_type`.
+        """Find the only OVFItem of the given :attr:`resource_type`.
 
         Args:
           resource_type (str): Resource type string like 'scsi' or 'serial'

@@ -1,4 +1,4 @@
-``COT.vm_description`` module
-=============================
+``COT.vm_description`` package reference
+========================================
 
 .. automodule:: COT.vm_description

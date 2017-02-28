@@ -42,7 +42,7 @@ import xml.etree.ElementTree as ET
 from COT.data_validation import natural_sort, ValueUnsupportedError
 from COT.xml_file import XML
 
-from COT.ovf.name_helper import name_helper
+from .name_helper import name_helper
 
 logger = logging.getLogger(__name__)
 

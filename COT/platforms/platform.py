@@ -60,7 +60,7 @@ class Platform(object):
     and so should define this attribute to ``None``.
 
     .. seealso::
-        :meth:`~COT.ovf.ovf.OVF.config_file_to_properties`
+        :meth:`~COT.vm_description.VMDescription.config_file_to_properties`
     """
 
     BOOTSTRAP_DISK_TYPE = 'cdrom'

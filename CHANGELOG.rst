@@ -15,6 +15,7 @@ This project adheres to `Semantic Versioning`_.
   ``cot --force ...``, as usual, can be used to auto-continue without prompting.
 - Lots of API changes:
 
+  - Moved ``COT.ovf`` module to a submodule under ``COT.vm_description``.
   - Moved the ``to_string`` function from ``COT.data_validation`` to
     ``COT.ui_shared``.
   - Function ``COT.deploy_esxi.get_object_from_connection`` is now method

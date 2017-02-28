@@ -13,14 +13,6 @@
 """
 Package implementing the Common OVF Tool.
 
-Virtual machine definition modules
-----------------------------------
-.. autosummary::
-  :toctree:
-
-  COT.vm_description
-  COT.xml_file
-
 Command modules
 ---------------
 .. autosummary::
@@ -48,6 +40,7 @@ Helper library modules
   COT.data_validation
   COT.file_reference
   COT.logging_
+  COT.xml_file
 
 User interface modules
 ----------------------
@@ -64,8 +57,8 @@ Sub-packages
 
   COT.disks
   COT.helpers
-  COT.ovf
   COT.platforms
+  COT.vm_description
 """
 
 from ._version import get_versions
