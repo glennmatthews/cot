@@ -3,6 +3,7 @@
 branch = True
 omit =
     COT/tests/*
+    COT/commands/tests/*
     COT/disks/tests/*
     COT/helpers/tests/*
     COT/platforms/tests/*

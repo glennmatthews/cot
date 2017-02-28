@@ -134,8 +134,15 @@ setup(
 
     # Package contents
     cmdclass=cmdclass,
-    packages=['COT', 'COT.disks', 'COT.helpers', 'COT.platforms',
-              'COT.vm_description', 'COT.vm_description.ovf'],
+    packages=[
+        'COT',
+        'COT.commands',
+        'COT.disks',
+        'COT.helpers',
+        'COT.platforms',
+        'COT.vm_description',
+        'COT.vm_description.ovf',
+    ],
     package_data={
         'COT': ['docs/man/*'],
     },

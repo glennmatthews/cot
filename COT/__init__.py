@@ -13,25 +13,6 @@
 """
 Package implementing the Common OVF Tool.
 
-Command modules
----------------
-.. autosummary::
-  :toctree:
-
-  COT.submodule
-  COT.add_disk
-  COT.add_file
-  COT.deploy
-  COT.deploy_esxi
-  COT.edit_hardware
-  COT.edit_product
-  COT.edit_properties
-  COT.help
-  COT.info
-  COT.inject_config
-  COT.install_helpers
-  COT.remove_file
-
 Helper library modules
 ----------------------
 .. autosummary::
@@ -55,6 +36,7 @@ Sub-packages
 .. autosummary::
   :toctree:
 
+  COT.commands
   COT.disks
   COT.helpers
   COT.platforms

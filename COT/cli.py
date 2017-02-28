@@ -52,6 +52,7 @@ from COT import __version_long__
 from COT.data_validation import InvalidInputError, ValueMismatchError
 from COT.ui_shared import UI
 from COT.logging_ import COTFormatter
+from COT.commands import command_classes
 
 logger = logging.getLogger(__name__)
 
@@ -439,30 +440,7 @@ class CLI(UI):
         subclass, then calls
         :func:`~COT.submodule.COTGenericSubmodule.create_subparser` for each.
         """
-        from COT.add_disk import COTAddDisk
-        from COT.add_file import COTAddFile
-        from COT.deploy_esxi import COTDeployESXi
-        from COT.edit_hardware import COTEditHardware
-        from COT.edit_product import COTEditProduct
-        from COT.edit_properties import COTEditProperties
-        from COT.help import COTHelp
-        from COT.info import COTInfo
-        from COT.inject_config import COTInjectConfig
-        from COT.install_helpers import COTInstallHelpers
-        from COT.remove_file import COTRemoveFile
-        for klass in [
-                COTAddDisk,
-                COTAddFile,
-                COTDeployESXi,
-                COTEditHardware,
-                COTEditProduct,
-                COTEditProperties,
-                COTHelp,
-                COTInfo,
-                COTInjectConfig,
-                COTInstallHelpers,
-                COTRemoveFile,
-        ]:
+        for klass in command_classes:
             instance = klass(self)
             # the subparser stores a reference to the instance (args.instance)
             # so we don't need to persist it here...
