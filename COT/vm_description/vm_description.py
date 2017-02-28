@@ -27,12 +27,14 @@ from __future__ import print_function
 
 import atexit
 import logging
+import os
 import os.path
 import shutil
 import tempfile
 import warnings
 
 from COT.data_validation import ValueUnsupportedError
+from COT.utilities import directory_size, pretty_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -213,8 +215,11 @@ class VMDescription(object):
         try:
             if hasattr(self,
                        'working_dir') and os.path.exists(self.working_dir):
-                logger.debug("Removing temporary directory '%s'",
-                             self.working_dir)
+                total_size = directory_size(self.working_dir)
+                logger.verbose("Removing working directory '%s', size %s",
+                               self.working_dir,
+                               pretty_bytes(total_size))
+                # Clean up
                 shutil.rmtree(self.working_dir)
         except AttributeError:
             pass

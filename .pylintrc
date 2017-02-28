@@ -77,7 +77,7 @@ accept-no-return-type-doc=yes
 [FORMAT]
 
 # default: max-module-lines: 1000
-# current worst offender: COT/ovf/ovf.py
+# current worst offender: ovf.py
 max-module-lines=3000
 
 [LOGGING]

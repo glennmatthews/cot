@@ -683,8 +683,10 @@ class OVF(VMDescription, XML):
             # Approximate size of a manifest entry for this file
             manifest_size += 50 + len(href)
 
-            # Size of the file proper
-            needed += tar_entry_size(file_ref.size)
+            if file_ref is not None:
+                # TODO - can be None in invalid.ovf example, what should we do?
+                # Size of the file proper
+                needed += tar_entry_size(file_ref.size)
 
         # Manifest file
         needed += tar_entry_size(manifest_size)

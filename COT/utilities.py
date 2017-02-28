@@ -21,6 +21,7 @@
   :nosignatures:
 
   available_bytes_at_path
+  directory_size
   pretty_bytes
   tar_entry_size
   to_string
@@ -51,6 +52,25 @@ def available_bytes_at_path(path):
     available = statvfs.f_bfree * statvfs.f_frsize
     logger.debug("There appears to be %s available", pretty_bytes(available))
     return available
+
+
+def directory_size(path):
+    """Total bytes consumed by the contents of a directory.
+
+    Args:
+      path (str): Directory path
+
+    Returns:
+      int: Total bytes consumed by files in this directory.
+    """
+    total_size = 0
+    for dirpath, _, filenames in os.walk(path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            total_size += os.path.getsize(fp)
+    logger.debug("Total disk space consumed by %s is %s",
+                 path, pretty_bytes(total_size))
+    return total_size
 
 
 def pretty_bytes(byte_value, base_shift=0):

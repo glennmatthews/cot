@@ -20,7 +20,6 @@ import logging
 import os.path
 import re
 import shutil
-import tempfile
 
 import mock
 
@@ -369,34 +368,33 @@ ovf:size="{config_size}" />
     def test_inject_extra_directory(self):
         """Test injection of extras from an entire directory."""
         self.instance.package = self.input_ovf
-        extra_dir = tempfile.mkdtemp(prefix="cot_ic_ut")
-        try:
-            shutil.copy(self.input_ovf, extra_dir)
-            shutil.copy(self.minimal_ovf, extra_dir)
-            subdir = os.path.join(extra_dir, "subdirectory")
-            os.makedirs(subdir)
-            shutil.copy(self.invalid_ovf, subdir)
+        extra_dir = os.path.join(self.temp_dir, "configs")
+        os.makedirs(extra_dir)
 
-            self.instance.extra_files = [extra_dir]
-            self.instance.run()
-            self.assertLogged(**self.OVERWRITING_DISK_ITEM)
-            self.instance.finished()
+        shutil.copy(self.input_ovf, extra_dir)
+        shutil.copy(self.minimal_ovf, extra_dir)
+        subdir = os.path.join(extra_dir, "subdirectory")
+        os.makedirs(subdir)
+        shutil.copy(self.invalid_ovf, subdir)
 
-            config_iso = os.path.join(self.temp_dir, 'config.iso')
-            if helpers['isoinfo']:
-                self.assertEqual(
-                    DiskRepresentation.from_file(config_iso).files,
-                    [
-                        'input.ovf',
-                        'minimal.ovf',
-                        'subdirectory',
-                        'subdirectory/invalid.ovf',
-                    ]
-                )
-            else:
-                logger.info("isoinfo not present, not checking disk contents")
-        finally:
-            shutil.rmtree(extra_dir)
+        self.instance.extra_files = [extra_dir]
+        self.instance.run()
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
+        self.instance.finished()
+
+        config_iso = os.path.join(self.temp_dir, 'config.iso')
+        if helpers['isoinfo']:
+            self.assertEqual(
+                DiskRepresentation.from_file(config_iso).files,
+                [
+                    'input.ovf',
+                    'minimal.ovf',
+                    'subdirectory',
+                    'subdirectory/invalid.ovf',
+                ]
+            )
+        else:
+            logger.info("isoinfo not present, not checking disk contents")
 
     def test_inject_config_primary_secondary_extra(self):
         """Test injection of primary and secondary files and extras."""

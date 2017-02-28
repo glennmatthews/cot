@@ -8,13 +8,17 @@ This project adheres to `Semantic Versioning`_.
 
 **Added**
 
-- ``COTSubmodule`` now checks the available disk space of the requested output
-  location against the predicted VM output size and warns the user if there is
-  likely to be a problem.
+- ``ReadWriteCommand`` (formerly ``COTSubmodule``) now checks the available
+  disk space of the requested output location against the predicted VM output
+  size (using new methods ``VMDescription.predicted_output_size`` and
+  ``Command.check_disk_space``) and if there is likely to be a problem,
+  warns the user before continuing.
 - New modules and APIs:
 
-  - ``VMDescription.predicted_output_size()`` instance method, to ask a VM to
-    predict how much disk space will be required when output to disk.
+  - ``Command.working_dir_disk_space_required()`` instance method, to ask a
+    command to estimate how much temporary storage it will require. This
+    method is now automatically called from Command unit tests to validate
+    its accuracy.
   - ``COT.utilities`` module with functions ``available_bytes_at_path`` and
     ``tar_entry_size``.
 

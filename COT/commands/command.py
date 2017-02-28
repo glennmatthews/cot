@@ -68,6 +68,16 @@ class Command(object):
         Returns:
           tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
+        if self.vm and not self.check_disk_space(
+                self.working_dir_disk_space_required(),
+                self.vm.working_dir, "Temporary storage"):
+            return (False,
+                    "Insufficient disk space available for temporary file"
+                    " storage in working directory {0}."
+                    "\nTo change working directory location, set $TMPDIR"
+                    " in your environment before calling COT."
+                    .format(self.vm.working_dir))
+
         return True, "Ready to go!"
 
     def run(self):
@@ -98,6 +108,59 @@ class Command(object):
     def create_subparser(self):
         """Add subparser for the CLI of this command."""
         pass
+
+    def working_dir_disk_space_required(self):
+        """How much space this module will require in :attr:`working_dir`.
+
+        By default, assumes the entire VM may be written to working directory.
+        Subclasses may wish to extend or override this.
+
+        Returns:
+          int: Predicted temporary storage requirements.
+        """
+        if self.vm is not None:
+            return self.vm.predicted_output_size()
+        return 0
+
+    def check_disk_space(self, required_size, location,
+                         label="File", die=False):
+        """Check whether there is sufficient disk space available.
+
+        If there is insufficient space, warn the user before continuing.
+
+        Args:
+          required_size (int): Bytes required
+          location (str): Path to check availability of.
+          label (str): Descriptive label to display in user messages.
+          die (bool): If True, use :meth:`~COT.ui.UI.confirm_or_die` instead
+            of :meth:`~COT.ui.UI.confirm`
+
+        Returns:
+          bool: Whether sufficient space is available (or if not,
+            whether the user has opted to continue anyway).
+        """
+        dir_path = os.path.abspath(location)
+        while dir_path and not os.path.isdir(dir_path):
+            dir_path = os.path.dirname(dir_path)
+        if not dir_path:
+            raise ValueError("Unable to determine directory path of {0}"
+                             .format(location))
+
+        available = available_bytes_at_path(dir_path)
+        logger.verbose("Checking requested disk space %s against available"
+                       " space in %s (%s)", pretty_bytes(required_size),
+                       dir_path, pretty_bytes(available))
+        if required_size <= available:
+            return True
+        msg = ("{0} requires {1} of disk space but only {2} is available"
+               " at {3}. Operation may fail. Continue anyway?"
+               .format(label, pretty_bytes(required_size),
+                       pretty_bytes(available), location))
+        if die:
+            self.ui.confirm_or_die(msg)
+            return True
+        else:
+            return self.ui.confirm(msg)
 
 
 class ReadCommand(Command):
@@ -228,7 +291,7 @@ class ReadWriteCommand(Command):
         """Check estimated disk space required against the available space.
 
         If the estimate exceeds the available, warn the user and prompt
-        for confirmation to continue anyway.
+        for confirmation to continue anyway or else abort.
 
         Safe to call repeatedly - will only prompt the user again if the
         space estimate changes or if ``force_prompt`` is True.
@@ -236,6 +299,10 @@ class ReadWriteCommand(Command):
         Args:
           force_prompt (bool): If True, reprompt the user even if the estimate
            has not changed.
+
+        Raises:
+          SystemExit: if disk space is insufficient and the user declines
+            to continue regardless of this information.
         """
         if not self.vm:
             logger.debug("Input VM not yet set, so not yet able "
@@ -256,16 +323,11 @@ class ReadWriteCommand(Command):
                            pretty_bytes(predicted))
             self._predicted_output_size = predicted
 
-        available = available_bytes_at_path(os.path.dirname(self.output))
         # Compare double predicted size against available space to provide
         # sufficient margin of error against temporary files, other processes
         # consuming disk space, etc.
-        if predicted * 2 > available:
-            self.ui.confirm_or_die(
-                "Output to disk is estimated to require {0} but only {1}"
-                " is available at the requested location."
-                " Output may fail. Continue anyway?"
-                .format(predicted, available))
+        self.check_disk_space(2 * predicted, self.output, "VM output",
+                              die=True)
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.

@@ -42,6 +42,7 @@ from pkg_resources import resource_filename
 import mock
 
 from COT.helpers import helpers, HelperError
+from COT.utilities import directory_size, pretty_bytes
 
 try:
     import unittest2 as unittest
@@ -401,6 +402,16 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         logging.getLogger('COT').removeHandler(self.logging_handler)
 
         if self.instance:
+            # Check instance working directory prediction against reality
+            if self.instance.vm:
+                estimate = self.instance.working_dir_disk_space_required()
+                actual = directory_size(self.instance.vm.working_dir)
+                if estimate < actual:
+                    self.fail("Estimated {0} would be needed in working"
+                              " directory, but VM actually used {1}"
+                              .format(pretty_bytes(estimate),
+                                      pretty_bytes(actual)))
+
             self.instance.destroy()
             self.instance = None
 

@@ -22,6 +22,7 @@ import shutil
 
 from COT.data_validation import ValueUnsupportedError, InvalidInputError
 from COT.disks import DiskRepresentation
+from COT.utilities import directory_size
 from .command import command_classes, ReadWriteCommand
 from .add_disk import add_disk_worker
 
@@ -128,6 +129,36 @@ class COTInjectConfig(ReadWriteCommand):
                 self.extra_files):
             return False, "No files specified - nothing to do!"
         return super(COTInjectConfig, self).ready_to_run()
+
+    def working_dir_disk_space_required(self):
+        """How much space this module will require in :attr:`working_dir`.
+
+        Returns:
+          int: Predicted temporary storage requirements
+        """
+        base_required = super(COTInjectConfig,
+                              self).working_dir_disk_space_required()
+        extra_required = 0
+        if self.config_file:
+            extra_required += os.path.getsize(self.config_file)
+        if self.secondary_config_file:
+            extra_required += os.path.getsize(self.secondary_config_file)
+        for filepath in self.extra_files:
+            if os.path.isdir(filepath):
+                extra_required += directory_size(filepath)
+            else:
+                extra_required += os.path.getsize(filepath)
+
+        if (self.vm and self.vm.platform and
+                self.vm.platform.BOOTSTRAP_DISK_TYPE == "cdrom"):
+            # ISO size ~= size of files contained
+            pass
+        else:
+            # RAW image size ~= size of files contained, rounded up to 8MiB
+            # see RAW._create_file()
+            extra_required += ((8 << 20) - extra_required) % (8 << 20)
+
+        return base_required + extra_required
 
     def run(self):
         """Do the actual work of this command.
