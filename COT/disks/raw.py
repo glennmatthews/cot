@@ -54,38 +54,58 @@ class RAW(DiskRepresentation):
             self._files = result
         return self._files
 
-    def _create_file(self):
-        """Create a raw disk image file."""
-        if not self.files:
-            helpers['qemu-img'].call(['create', '-f', 'raw',
-                                      self.path, self.capacity])
-        else:
-            if not self._capacity:
-                # What size disk do we need to contain the requested file(s)?
-                capacity_val = 0
-                for content_file in self.files:
-                    capacity_val += os.path.getsize(content_file)
-                    # Round capacity to the next larger multiple of 8 MB
-                    # just to be safe...
-                capacity_val = int(8 * ((capacity_val / 1024 / 1024 / 8) + 1))
-                capacity_str = "{0}M".format(capacity_val)
-                self._capacity = capacity_str
-                logger.verbose(
-                    "To contain files %s, disk capacity of %s will be %s",
-                    self.files, self.path, capacity_str)
-            logger.info("Calling fatdisk to create/format a raw disk image")
-            helpers['fatdisk'].call(
-                [self.path, 'format', 'size', self.capacity, 'fat32'])
-            for content_file in self.files:
-                logger.verbose("Calling fatdisk to add %s to the image",
-                               content_file)
-                helpers['fatdisk'].call(
-                    [self.path, 'fileadd', content_file,
-                     os.path.basename(content_file)])
-            logger.info("All requested files successfully added to %s",
-                        self.path)
-            self._capacity = None
-            self._files = None
+    @classmethod
+    def file_is_this_type(cls, path):
+        """Whether this file is a RAW image.
+
+        Any file conceivably can be a RAW image; there's no file magic number.
+
+        For the parameters, see :meth:`DiskRepresentation.file_is_this_type`.
+        """
+        # Any file *could* be a RAW image, so let that be our fallback option,
+        # i.e., less than 100% confidence:
+        confidence = super(RAW, cls).file_is_this_type(path)
+        if confidence == 100:
+            confidence = 10
+        return confidence
+
+    @classmethod
+    def _create_file(cls, path, files=None, capacity=None, **kwargs):
+        """Create a raw disk image file.
+
+        Args:
+          path (str): Location to create RAW file.
+          files (list): List of files to include in a FAT32 filesystem.
+          capacity (str): Disk capacity string. If not set, will be calculated
+            as just sufficient to include the given ``files``.
+          **kwargs: passed through to :meth:`DiskRepresentation._create_file`
+        """
+        if not files:
+            super(RAW, cls)._create_file(path, capacity=capacity, **kwargs)
+            return
+
+        if not capacity:
+            # What size disk do we need to contain the requested file(s)?
+            capacity_val = 0
+            for content_file in files:
+                capacity_val += os.path.getsize(content_file)
+            # Round capacity to the next larger multiple of 8 MB
+            # just to be safe...
+            capacity_val = int(8 * ((capacity_val / 1024 / 1024 / 8) + 1))
+            capacity_str = "{0}M".format(capacity_val)
+            capacity = capacity_str
+            logger.verbose(
+                "To contain files %s, disk capacity of %s will be %s",
+                files, path, capacity_str)
+
+        logger.info("Calling fatdisk to create/format a raw disk image")
+        helpers['fatdisk'].call([path, 'format', 'size', capacity, 'fat32'])
+        for content_file in files:
+            logger.verbose("Calling fatdisk to add %s to the image",
+                           content_file)
+            helpers['fatdisk'].call([path, 'fileadd', content_file,
+                                     os.path.basename(content_file)])
+        logger.info("All requested files successfully added to %s", path)
 
     @classmethod
     def from_other_image(cls, input_image, output_dir, output_subformat=None):

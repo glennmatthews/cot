@@ -2,3 +2,4 @@
 ===================================
 
 .. automodule:: COT.platforms
+  :no-members:

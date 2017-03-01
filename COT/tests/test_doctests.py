@@ -32,12 +32,7 @@ def load_tests(*_):
     For the parameters, see :mod:`unittest`. The parameters are unused here.
     """
     suite = TestSuite()
-    suite.addTests(DocTestSuite('COT.add_disk'))
-    suite.addTests(DocTestSuite('COT.cli'))
     suite.addTests(DocTestSuite('COT.data_validation'))
-    suite.addTests(DocTestSuite('COT.deploy'))
-    suite.addTests(DocTestSuite('COT.edit_hardware'))
-    suite.addTests(DocTestSuite('COT.edit_properties'))
     suite.addTests(DocTestSuite('COT.file_reference'))
-    suite.addTests(DocTestSuite('COT.platforms'))
+    suite.addTests(DocTestSuite('COT.utilities'))
     return suite

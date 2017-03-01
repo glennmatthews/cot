@@ -48,9 +48,6 @@ try:
 except ImportError:
     import unittest
 
-from verboselogs import VerboseLogger
-logging.setLoggerClass(VerboseLogger)
-
 logger = logging.getLogger(__name__)
 
 
@@ -282,14 +279,14 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         self.logging_handler = UTLoggingHandler(self)
         self.instance = None
 
-    def set_vm_platform(self, plat):
+    def set_vm_platform(self, plat_class):
         """Force the VM under test to use a particular Platform class.
 
         Args:
-           plat (COT.platforms.GenericPlatform): Platform class to use
+           plat_class (COT.platforms.Platform): Platform class to use
         """
         # pylint: disable=protected-access
-        self.instance.vm._platform = plat
+        self.instance.vm._platform = plat_class()
 
     def check_cot_output(self, expected):
         """Grab the output from COT and check it against expected output.

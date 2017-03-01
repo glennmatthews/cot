@@ -41,6 +41,9 @@ install_requires = [
     'pyvmomi>=5.5.0.2014.1',
     'requests>=2.5.1',
     'verboselogs>=1.0',
+
+    # enum module is standard in Python 3.4 and later, else use enum34
+    'enum34; python_version < "3.4"',
 ]
 # shutil.get_terminal_size is standard in 3.3 and later only.
 if sys.version_info < (3, 3):
@@ -53,9 +56,8 @@ if sys.version_info < (2, 7, 9):
     install_requires.append('pyOpenSSL')
     install_requires.append('ndg-httpsclient')
 
-if sys.version_info < (2, 7) or (sys.version_info >= (3, 0) and
-                                 sys.version_info < (3, 4)):
-    # Sphinx 1.5 and later requires 2.7 or 3.4
+if sys.version_info >= (3, 0) and sys.version_info < (3, 4):
+    # Sphinx 1.5 and later dropped support for python 3.3
     setup_requires = install_requires + ['sphinx>=1.3.1,<1.5']
 else:
     setup_requires = install_requires + ['sphinx>=1.3.1']
@@ -131,13 +133,22 @@ setup(
 
     # Package contents
     cmdclass=cmdclass,
-    packages=['COT', 'COT.disks', 'COT.helpers', 'COT.ovf', 'COT.platforms'],
+    packages=[
+        'COT',
+        'COT.commands',
+        'COT.disks',
+        'COT.helpers',
+        'COT.platforms',
+        'COT.ui',
+        'COT.vm_description',
+        'COT.vm_description.ovf',
+    ],
     package_data={
         'COT': ['docs/man/*'],
     },
     entry_points={
         'console_scripts': [
-            'cot = COT.cli:main',
+            'cot = COT.ui.cli:main',
         ],
     },
     include_package_data=True,

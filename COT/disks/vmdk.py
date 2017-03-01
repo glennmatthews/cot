@@ -95,16 +95,14 @@ class VMDK(DiskRepresentation):
             output_path])
         return cls(output_path)
 
-    def _create_file(self):
-        """Worker function for create_file()."""
-        if self._files:
-            raise NotImplementedError("Don't know how to create a disk of "
-                                      "this format containing a filesystem")
-        if self._disk_subformat is None:
-            self._disk_subformat = "streamOptimized"
+    @classmethod
+    def _create_file(cls, path, disk_subformat="streamOptimized", **kwargs):
+        """Worker function for create_file().
 
-        helpers['qemu-img'].call(['create', '-f', self.disk_format,
-                                  '-o', 'subformat=' + self._disk_subformat,
-                                  self.path, self.capacity])
-        self._disk_subformat = None
-        self._capacity = None
+        Args:
+          path (str): Location to create VMDK file.
+          disk_subformat (str): Defaults to "streamOptimized".
+          **kwargs: See :meth:`DiskRepresentation._create_file`
+        """
+        super(VMDK, cls)._create_file(path, disk_subformat=disk_subformat,
+                                      **kwargs)

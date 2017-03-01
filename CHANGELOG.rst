@@ -3,6 +3,75 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Removed**
+
+- Discontinued support for Python 2.6 as it has been retired since 2013.
+
+**Changed**
+
+- With ``cot edit-hardware``, the platform hardware validation is no longer
+  a hard limit. Instead, if a value appears to be invalid, the user will be
+  warned about the validation failure and given the option to continue or
+  abort (`#61`_).
+  ``cot --force ...``, as usual, can be used to auto-continue without prompting.
+- Lots of API changes:
+
+  - All commands ('submodules') are now grouped as a sub-package
+    under ``COT.commands``. Most classes in this package have been renamed.
+  - Moved ``COT.ovf`` package to be a sub-package under ``COT.vm_description``.
+  - Moved UI and CLI classes into a ``COT.ui`` sub-package.
+  - Moved the ``to_string`` function from ``COT.data_validation`` to
+    ``COT.utilities``.
+  - Function ``COT.deploy_esxi.get_object_from_connection`` is now method
+    ``PyVmomiVMReconfigSpec.lookup_object``.
+  - Function ``COT.cli.formatter`` is now class
+    ``COT.ui.cli.CLILoggingFormatter``.
+  - The functionality of classes ``VMContextManager`` and ``VMFactory`` has
+    been rolled into the core ``VMDescription`` class.
+  - COT.disks module:
+
+    - Function ``create_disk`` is now split into class methods
+      ``DiskRepresentation.for_new_file`` (creates the disk file and returns a
+      corresponding ``DiskRepresentation`` instance) and
+      ``DiskRepresentation.create_file`` (creates disk file only).
+    - Function ``convert_disk`` is now class method
+      ``DiskRepresentation.convert_to``
+    - Function ``disk_representation_from_file`` is now
+      class method ``DiskRepresentation.from_file``
+    - The ``DiskRepresentation`` constructor now only takes the path to a file
+      as input - if you want to create a new file, use
+      ``DiskRepresentation.for_new_file`` instead of calling the
+      constructor directly.
+
+  - COT.ovf module:
+
+    - ``COT.ovf.ovf.byte_string`` has been moved and renamed to
+      ``COT.utilities.pretty_bytes``.
+    - ``COT.ovf.ovf.byte_count`` has been moved and renamed to
+      ``COT.ovf.utilities.programmatic_bytes_to_int``.
+    - ``COT.ovf.ovf.factor_bytes`` has been moved and renamed to
+      ``COT.ovf.utilities.int_bytes_to_programmatic_units``.
+
+  - COT.platforms module:
+
+    - Class ``GenericPlatform`` is now ``Platform``.
+    - Function ``platform_from_product_class`` is now class method
+      ``Platform.for_product_string`` and returns an instance
+      of a ``Platform`` class rather than the class object itself.
+    - Most ``Platform`` APIs are now instance methods instead of
+      class methods.
+    - Function ``COT.platforms.is_known_product_class`` has been removed.
+
+`1.9.1`_ - 2017-02-21
+---------------------
+
+**Changed**
+
+- Removed 32 GiB memory limitation on Cisco IOS XRv 9000 platform.
+
 `1.9.0`_ - 2017-02-13
 ---------------------
 
@@ -11,10 +80,6 @@ This project adheres to `Semantic Versioning`_.
 - Support for Python 3.6
 - Support for `brew` package manager (`#55`_).
 - Support for Cisco Nexus 9000v (NX-OSv 9000) platform (`#60`_).
-
-**Removed**
-
-- Discontinued support for Python 2.6 as it has been retired since 2013.
 
 **Fixed**
 
@@ -616,6 +681,7 @@ Initial public release.
 .. _#58: https://github.com/glennmatthews/cot/issues/58
 .. _#59: https://github.com/glennmatthews/cot/issues/59
 .. _#60: https://github.com/glennmatthews/cot/issues/60
+.. _#61: https://github.com/glennmatthews/cot/issues/61
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -647,6 +713,7 @@ Initial public release.
 .. _napoleon: http://www.sphinx-doc.org/en/latest/ext/napoleon.html
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _1.9.1: https://github.com/glennmatthews/cot/compare/v1.9.0...v1.9.1
 .. _1.9.0: https://github.com/glennmatthews/cot/compare/v1.8.2...v1.9.0
 .. _1.8.2: https://github.com/glennmatthews/cot/compare/v1.8.1...v1.8.2
 .. _1.8.1: https://github.com/glennmatthews/cot/compare/v1.8.0...v1.8.1

@@ -25,7 +25,7 @@ from distutils.version import StrictVersion
 import requests
 import mock
 
-from COT.ui_shared import UI
+from COT.ui import UI
 from COT.tests.ut import COT_UT
 from COT.helpers.helper import TemporaryDirectory, check_call, check_output
 from COT.helpers import (
