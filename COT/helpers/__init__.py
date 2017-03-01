@@ -19,6 +19,7 @@ API
 .. autosummary::
   :nosignatures:
 
+  Helper
   helpers
   helper_select
 
@@ -92,6 +93,7 @@ for cls in PackageManager.__subclasses__():
 
 
 __all__ = (
+    'Helper',
     'HelperError',
     'HelperNotFoundError',
     'helpers',

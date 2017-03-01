@@ -35,6 +35,28 @@ Sub-packages
   COT.platforms
   COT.ui
   COT.vm_description
+
+.. note::
+  The hierarchy of permissible imports between sub-packages is as follows::
+
+      COT.ui
+         |
+         +---> COT.commands
+         |        |
+         |        +---> COT.vm_description
+         |        |        |
+         |        |        +---> COT.platforms
+         |        |        |
+         |        +--------+---> COT.disks
+         |        |                 |
+         +--------+-----------------+---> COT.helpers
+
+  Thus, to avoid circular dependencies, none of the other sub-packages may
+  ``import COT.ui`` - if they wish to interact with the UI in any way
+  (e.g., :mod:`COT.helpers` prompting the user to confirm whether to try
+  to install a helper program), this needs to be done with a callback object
+  (e.g., :attr:`COT.helpers.Helper.USER_INTERFACE`) rather than an import of
+  the other module.
 """
 
 from ._version import get_versions
