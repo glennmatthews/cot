@@ -16,7 +16,7 @@ This project adheres to `Semantic Versioning`_.
 - Lots of API changes:
 
   - All commands ('submodules') are now grouped as a sub-package
-    under ``COT.commands``.
+    under ``COT.commands``. Most classes in this package have been renamed.
   - Moved ``COT.ovf`` package to be a sub-package under ``COT.vm_description``.
   - Moved the ``to_string`` function from ``COT.data_validation`` to
     ``COT.ui_shared``.

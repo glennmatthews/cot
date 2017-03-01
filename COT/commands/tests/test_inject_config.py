@@ -23,7 +23,6 @@ import shutil
 import tempfile
 
 import mock
-from pkg_resources import resource_filename
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -51,7 +50,7 @@ class TestCOTInjectConfig(COT_UT):
         super(TestCOTInjectConfig, self).setUp()
         self.instance = COTInjectConfig(UI())
         self.instance.output = self.temp_file
-        self.config_file = resource_filename(__name__, "sample_cfg.txt")
+        self.config_file = self.localfile("sample_cfg.txt")
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""

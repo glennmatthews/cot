@@ -19,7 +19,6 @@
 import filecmp
 import os.path
 import re
-from pkg_resources import resource_filename
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -673,7 +672,7 @@ vmdk.html#streamOptimized" />
 
         # Add a fourth disk...
         self.instance.package = self.temp_file
-        self.instance.disk_image = resource_filename(__name__, 'input.iso')
+        self.instance.disk_image = self.input_iso
         self.instance.run()
         self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_CDROM)
         self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
@@ -739,7 +738,7 @@ vmdk.html#streamOptimized" />
     def test_overwrite_implicit_file_id(self):
         """file_id defaults to filename if not set."""
         self.instance.package = self.invalid_ovf
-        self.instance.disk_image = resource_filename(__name__, "input.vmdk")
+        self.instance.disk_image = self.input_vmdk
         self.instance.run()
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
@@ -795,7 +794,7 @@ ovf:size="{input_size}" />
     def test_overwrite_disk_with_bad_parent_by_file(self):
         """Negative test - invalid parent for disk, identified by filename."""
         self.instance.package = self.invalid_ovf
-        self.instance.disk_image = resource_filename(__name__, 'input.iso')
+        self.instance.disk_image = self.input_iso
         self.assertRaises(LookupError, self.instance.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)

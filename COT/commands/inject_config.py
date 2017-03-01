@@ -22,19 +22,19 @@ import shutil
 
 from COT.data_validation import ValueUnsupportedError, InvalidInputError
 from COT.disks import DiskRepresentation
-from .command import command_classes, COTSubmodule
+from .command import command_classes, ReadWriteCommand
 from .add_disk import add_disk_worker
 
 logger = logging.getLogger(__name__)
 
 
-class COTInjectConfig(COTSubmodule):
+class COTInjectConfig(ReadWriteCommand):
     """Wrap configuration file(s) into a disk image embedded into the VM.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.ui`,
-    :attr:`~COTSubmodule.package`,
-    :attr:`~COTSubmodule.output`
+    :attr:`~Command.ui`,
+    :attr:`~ReadWriteCommand.package`,
+    :attr:`~ReadWriteCommand.output`
 
     Attributes:
     :attr:`config_file`,
@@ -43,7 +43,7 @@ class COTInjectConfig(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -130,7 +130,7 @@ class COTInjectConfig(COTSubmodule):
         return super(COTInjectConfig, self).ready_to_run()
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``

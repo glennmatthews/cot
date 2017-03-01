@@ -3,7 +3,7 @@
 # edit_properties.py - test cases for the COTEditProperties class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -18,7 +18,6 @@
 
 import logging
 import re
-from pkg_resources import resource_filename
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -27,7 +26,7 @@ from COT.data_validation import ValueUnsupportedError
 
 
 class TestCOTEditProperties(COT_UT):
-    """Unit tests for COTEditProperties submodule."""
+    """Unit tests for COTEditProperties command."""
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
@@ -211,8 +210,7 @@ ovf:userConfigurable="false" ovf:value="yep!" />
     def test_load_config_file(self):
         """Inject a sequence of properties from a config file."""
         self.instance.package = self.input_ovf
-        self.instance.config_file = resource_filename(__name__,
-                                                      "sample_cfg.txt")
+        self.instance.config_file = self.localfile("sample_cfg.txt")
         self.instance.run()
         self.instance.finished()
         self.check_diff("""
@@ -230,8 +228,7 @@ ovf:value="interface Loopback0" />
     def test_combined(self):
         """Set individual properties AND add from a config file."""
         self.instance.package = self.input_ovf
-        self.instance.config_file = resource_filename(__name__,
-                                                      "sample_cfg.txt")
+        self.instance.config_file = self.localfile("sample_cfg.txt")
         self.instance.properties = ["login-password=cisco123",
                                     "enable-ssh-server=1"]
         self.instance.user_configurable = True
@@ -345,8 +342,7 @@ set!</ovf:Description>
     def test_config_file_not_supported(self):
         """Platform doesn't support literal CLI configuration."""
         self.instance.package = self.iosv_ovf
-        self.instance.config_file = resource_filename(__name__,
-                                                      "sample_cfg.txt")
+        self.instance.config_file = self.localfile("sample_cfg.txt")
         self.assertRaises(NotImplementedError,
                           self.instance.run)
 

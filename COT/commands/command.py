@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# submodule.py - Abstract interface for COT 'command' submodules.
+# command.py - Abstract interface for COT command implementations.
 #
 # December 2014, Glenn F. Matthews
 # Copyright (c) 2014-2017 the COT project developers.
@@ -21,9 +21,9 @@
 .. autosummary::
   :nosignatures:
 
-  COTGenericSubmodule
-  COTReadOnlySubmodule
-  COTSubmodule
+  Command
+  ReadCommand
+  ReadWriteCommand
 """
 
 import os.path
@@ -38,20 +38,20 @@ command_classes = []
 """List of concrete command classes"""
 
 
-class COTGenericSubmodule(object):
-    """Abstract interface for COT command submodules.
+class Command(object):
+    """Abstract interface for COT commands.
 
     Attributes:
     :attr:`vm`,
     :attr:`ui`
 
     .. note :: Generally a command should not inherit directly from this class,
-      but should instead subclass :class:`COTReadOnlySubmodule` or
-      :class:`COTSubmodule` as appropriate.
+      but should instead subclass :class:`ReadCommand` or
+      :class:`ReadWriteCommand` as appropriate.
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -70,7 +70,7 @@ class COTGenericSubmodule(object):
         return True, "Ready to go!"
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         Raises:
           InvalidInputError: if :meth:`ready_to_run` reports ``False``
@@ -89,18 +89,18 @@ class COTGenericSubmodule(object):
         pass
 
     def destroy(self):
-        """Destroy any VM associated with this submodule."""
+        """Destroy any VM associated with this command."""
         if self.vm is not None:
             self.vm.destroy()
             self.vm = None
 
     def create_subparser(self):
-        """Add subparser for the CLI of this submodule."""
+        """Add subparser for the CLI of this command."""
         pass
 
 
-class COTReadOnlySubmodule(COTGenericSubmodule):
-    """Class for submodules that do not modify the OVF, such as 'deploy'.
+class ReadCommand(Command):
+    """Command that reads from but does not write to the OVF, such as 'deploy'.
 
     Inherited attributes:
     :attr:`vm`,
@@ -111,12 +111,12 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
         """
-        super(COTReadOnlySubmodule, self).__init__(ui)
+        super(ReadCommand, self).__init__(ui)
         self._package = None
 
     @property
@@ -151,11 +151,11 @@ class COTReadOnlySubmodule(COTGenericSubmodule):
         """
         if self.package is None:
             return False, "PACKAGE is a mandatory argument!"
-        return super(COTReadOnlySubmodule, self).ready_to_run()
+        return super(ReadCommand, self).ready_to_run()
 
 
-class COTSubmodule(COTGenericSubmodule):
-    """Class for submodules that read and write the OVF.
+class ReadWriteCommand(Command):
+    """Command that reads from and writes to a VM description.
 
     Inherited attributes:
     :attr:`vm`,
@@ -167,12 +167,12 @@ class COTSubmodule(COTGenericSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
         """
-        super(COTSubmodule, self).__init__(ui)
+        super(ReadWriteCommand, self).__init__(ui)
         self._package = None
         # Default to an unspecified output rather than no output
         self._output = ""
@@ -203,7 +203,7 @@ class COTSubmodule(COTGenericSubmodule):
 
     @property
     def output(self):
-        """Output file for this submodule.
+        """Output file for this command.
 
         If the specified file already exists,  will prompt the user
         (:meth:`~COT.ui_shared.UI.confirm_or_die`) to
@@ -228,10 +228,10 @@ class COTSubmodule(COTGenericSubmodule):
         """
         if self.package is None:
             return False, "PACKAGE is a mandatory argument!"
-        return super(COTSubmodule, self).ready_to_run()
+        return super(ReadWriteCommand, self).ready_to_run()
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         If :attr:`output` was not previously set, automatically
         sets it to the value of :attr:`PACKAGE`.
@@ -239,7 +239,7 @@ class COTSubmodule(COTGenericSubmodule):
         Raises:
           InvalidInputError: if :meth:`ready_to_run` reports ``False``
         """
-        super(COTSubmodule, self).run()
+        super(ReadWriteCommand, self).run()
 
         if not self.output:
             self.output = self.package
@@ -247,7 +247,7 @@ class COTSubmodule(COTGenericSubmodule):
 
     def finished(self):
         """Write the current VM state out to disk if requested."""
-        # do any submodule-specific work here, then:
+        # do any command-specific work here, then:
         if self.vm is not None:
             self.vm.write()
-        super(COTSubmodule, self).finished()
+        super(ReadWriteCommand, self).finished()

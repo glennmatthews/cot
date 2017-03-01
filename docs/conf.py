@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 
 def regenerate_usage_contents(force=False):
-    """Get CLI usage strings for all submodules and write them to file."""
+    """Get CLI usage strings for all COT commands and write them to file."""
     COT_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     logger.info("COT path: "+COT_path)
     sys.path.insert(0, COT_path)

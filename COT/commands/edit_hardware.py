@@ -46,18 +46,18 @@ from COT.data_validation import (
     no_whitespace, mac_address, non_negative_int, positive_int,
     InvalidInputError,
 )
-from .command import command_classes, COTSubmodule
+from .command import command_classes, ReadWriteCommand
 
 logger = logging.getLogger(__name__)
 
 
-class COTEditHardware(COTSubmodule):
+class COTEditHardware(ReadWriteCommand):
     """Edit hardware information (CPUs, RAM, NICs, etc.).
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.ui`,
-    :attr:`~COTSubmodule.package`,
-    :attr:`~COTSubmodule.output`
+    :attr:`~Command.ui`,
+    :attr:`~ReadWriteCommand.package`,
+    :attr:`~ReadWriteCommand.output`
 
     Attributes:
     :attr:`profiles`,
@@ -78,7 +78,7 @@ class COTEditHardware(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -551,7 +551,7 @@ class COTEditHardware(COTSubmodule):
                                             self.profiles)
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``

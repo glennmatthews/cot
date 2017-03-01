@@ -3,7 +3,7 @@
 # remove_file.py - Implements "cot remove-file" command
 #
 # June 2016, Glenn F. Matthews
-# Copyright (c) 2016 the COT project developers.
+# Copyright (c) 2016-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -25,19 +25,19 @@ import logging
 from COT.data_validation import (
     check_for_conflict, match_or_die, InvalidInputError
 )
-from .command import command_classes, COTSubmodule
+from .command import command_classes, ReadWriteCommand
 
 logger = logging.getLogger(__name__)
 
 
-class COTRemoveFile(COTSubmodule):
+class COTRemoveFile(ReadWriteCommand):
     """Remove a file (such as a README) from the package.
 
     Inherited attributes:
 
-    :attr:`~COTGenericSubmodule.ui`,
-    :attr:`~COTSubmodule.package`,
-    :attr:`~COTSubmodule.output`
+    :attr:`~Command.ui`,
+    :attr:`~ReadWriteCommand.package`,
+    :attr:`~ReadWriteCommand.output`
 
     Attributes:
     :attr:`file_path`,
@@ -45,7 +45,7 @@ class COTRemoveFile(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -67,7 +67,7 @@ class COTRemoveFile(COTSubmodule):
         return super(COTRemoveFile, self).ready_to_run()
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``

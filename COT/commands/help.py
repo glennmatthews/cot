@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #
-# help.py - Submodule for 'help' keyword
+# help.py - Command for 'help' keyword
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -19,23 +19,23 @@
 import logging
 
 from COT.data_validation import InvalidInputError
-from .command import command_classes, COTGenericSubmodule
+from .command import command_classes, Command
 
 logger = logging.getLogger(__name__)
 
 
-class COTHelp(COTGenericSubmodule):
+class COTHelp(Command):
     """Provide 'help <subcommand>' syntax.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.ui`
+    :attr:`~Command.ui`
 
     Attributes:
     :attr:`subcommand`
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.

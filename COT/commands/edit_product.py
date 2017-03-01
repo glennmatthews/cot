@@ -3,7 +3,7 @@
 # edit_product.py - Implements "edit-product" sub-command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -26,18 +26,18 @@
 
 import logging
 
-from .command import command_classes, COTSubmodule
+from .command import command_classes, ReadWriteCommand
 
 logger = logging.getLogger(__name__)
 
 
-class COTEditProduct(COTSubmodule):
+class COTEditProduct(ReadWriteCommand):
     """Edit product, vendor, and version information strings.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.ui`,
-    :attr:`~COTSubmodule.package`,
-    :attr:`~COTSubmodule.output`
+    :attr:`~Command.ui`,
+    :attr:`~ReadWriteCommand.package`,
+    :attr:`~ReadWriteCommand.output`
 
     Attributes:
     :attr:`product_class`
@@ -51,7 +51,7 @@ class COTEditProduct(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -95,7 +95,7 @@ class COTEditProduct(COTSubmodule):
         return super(COTEditProduct, self).ready_to_run()
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``

@@ -206,11 +206,11 @@ class PyVmomiVMReconfigSpec(object):
 
 
 class COTDeployESXi(COTDeploy):
-    """Submodule for deploying VMs on ESXi and VMware vCenter/vSphere.
+    """Sub-command for deploying VMs on ESXi and VMware vCenter/vSphere.
 
     Inherited attributes:
-    :attr:`~COT.submodule.COTGenericSubmodule.ui`,
-    :attr:`~COT.submodule.COTReadOnlySubmodule.package`,
+    :attr:`~COT.commands.Command.ui`,
+    :attr:`~COT.commands.ReadCommand.package`,
     :attr:`~COT.deploy.COTDeploy.generic_parser`,
     :attr:`~COT.deploy.COTDeploy.parser`,
     :attr:`~COT.deploy.COTDeploy.subparsers`,
@@ -230,7 +230,7 @@ class COTDeployESXi(COTDeploy):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -336,7 +336,7 @@ class COTDeployESXi(COTDeploy):
         return ovftool_args
 
     def run(self):
-        """Do the actual work of this submodule - deploying to ESXi.
+        """Do the actual work of this command - deploying to ESXi.
 
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``
@@ -473,7 +473,7 @@ class COTDeployESXi(COTDeploy):
         spec.deviceChange.append(serial_spec)
 
     def create_subparser(self):
-        """Add subparser for the CLI of this submodule.
+        """Add subparser for the CLI of this command.
 
         This will create the shared :attr:`~COTDeploy.parser`, then
         create our own sub-subparser under :attr:`~COTDeploy.subparsers`.

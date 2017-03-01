@@ -3,7 +3,7 @@
 # info.py - Implements "info" sub-command
 #
 # October 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -23,16 +23,16 @@ import os.path
 
 from COT.vm_description import VMDescription
 from COT.data_validation import InvalidInputError
-from .command import command_classes, COTGenericSubmodule
+from .command import command_classes, Command
 
 logger = logging.getLogger(__name__)
 
 
-class COTInfo(COTGenericSubmodule):
+class COTInfo(Command):
     """Display VM information string.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.ui`
+    :attr:`~Command.ui`
 
     Attributes:
     :attr:`package_list`,
@@ -40,7 +40,7 @@ class COTInfo(COTGenericSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -85,7 +85,7 @@ class COTInfo(COTGenericSubmodule):
         return super(COTInfo, self).ready_to_run()
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``

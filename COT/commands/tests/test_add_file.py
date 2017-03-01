@@ -17,7 +17,6 @@
 """Unit test cases for COT.add_file.COTAddFile class."""
 
 import os.path
-from pkg_resources import resource_filename
 
 from COT.tests.ut import COT_UT
 from COT.ui_shared import UI
@@ -83,7 +82,7 @@ ovf:size="{cfg_size}" />
     def test_overwrite_file(self):
         """Overwrite a file implicitly."""
         self.instance.package = self.input_ovf
-        self.instance.file = resource_filename(__name__, 'input.iso')
+        self.instance.file = self.input_iso
         self.instance.run()
         self.assertLogged(**self.OVERWRITING_FILE)
         self.instance.finished()
@@ -109,7 +108,7 @@ ovf:size="{cfg_size}" />
    <ovf:VirtualSystem ovf:id="x">
 """.format(self.FILE_SIZE['blank.vmdk']))
 
-        from COT.add_disk import COTAddDisk
+        from COT.commands.add_disk import COTAddDisk
         ad = COTAddDisk(UI())
         ad.package = intermediate_ovf
         ad.output = self.temp_file

@@ -434,11 +434,11 @@ class CLI(UI):
         self.subparser_lookup = {}
 
     def create_subparsers(self):
-        """Populate the CLI sub-parsers for all known submodules.
+        """Populate the CLI sub-parsers for all known commands.
 
-        Creates an instance of each :class:`~COT.submodule.COTGenericSubmodule`
-        subclass, then calls
-        :func:`~COT.submodule.COTGenericSubmodule.create_subparser` for each.
+        Creates an instance of each :class:`~COT.commands.Command` subclass in
+        :data:`COT.commands.command_classes`, then calls
+        :func:`~COT.commands.Command.create_subparser` for each.
         """
         for klass in command_classes:
             instance = klass(self)
@@ -515,7 +515,7 @@ class CLI(UI):
             # this allows some flexibility in the user CLI, but the parsed
             # output is a nested list of lists. E.g., "-a 1 2 -a 3" would parse
             # as [[1, 2], [3]] rather than the desired [1, 2, 3].
-            # Flatten it back out before we pass it through to the submodule!
+            # Flatten it back out before we pass it through to the command!
             if (isinstance(value, list) and
                     all(isinstance(v, list) for v in value)):
                 arg_dict[arg] = [v for l in value for v in l]
@@ -545,13 +545,12 @@ class CLI(UI):
 
         * Calls :func:`set_verbosity` with the appropriate verbosity level
           derived from the args.
-        * Looks up the appropriate :class:`~COT.submodule.COTGenericSubmodule`
+        * Looks up the appropriate :class:`~COT.commands.Command`
           instance corresponding to the subcommand that was invoked.
         * Converts :attr:`args` to a dict and calls
-          :func:`~COT.submodule.COTGenericSubmodule.set_value` for each
-          arg/value in the dict.
-        * Calls :func:`~COT.submodule.COTGenericSubmodule.run` followed by
-          :func:`~COT.submodule.COTGenericSubmodule.finished`.
+          :func:`set_instance_attributes` to pass these args to the instance.
+        * Calls :func:`~COT.commands.Command.run` followed by
+          :func:`~COT.commands.Command.finished`.
         * Catches various exceptions and handles them appropriately.
 
         Args:
@@ -576,7 +575,7 @@ class CLI(UI):
 
         subp = self.subparser_lookup[args._subcommand]
 
-        # Call the appropriate submodule and handle any resulting errors
+        # Call the appropriate command and handle any resulting errors
         arg_dict = self.args_to_dict(args)
         try:
             self.set_instance_attributes(arg_dict)

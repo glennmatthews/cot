@@ -28,7 +28,7 @@ import re
 
 from COT.data_validation import InvalidInputError, ValueUnsupportedError
 
-from .command import COTReadOnlySubmodule
+from .command import ReadCommand
 
 logger = logging.getLogger(__name__)
 
@@ -188,15 +188,15 @@ class SerialConnection(object):
                 .format(self.kind, self.value, self.options))
 
 
-class COTDeploy(COTReadOnlySubmodule):
-    """Semi-abstract class for submodules used to deploy a VM to a hypervisor.
+class COTDeploy(ReadCommand):
+    """Semi-abstract class for commands used to deploy a VM to a hypervisor.
 
     Provides some baseline parameters and input validation that are expected
     to be common across all concrete subclasses.
 
     Inherited attributes:
-    :attr:`~COT.command.COTGenericSubmodule.ui`,
-    :attr:`~COT.command.COTReadOnlySubmodule.package`,
+    :attr:`~COT.command.Command.ui`,
+    :attr:`~COT.command.ReadCommand.package`,
 
     Attributes:
     :attr:`generic_parser`,
@@ -212,7 +212,7 @@ class COTDeploy(COTReadOnlySubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -339,7 +339,7 @@ class COTDeploy(COTReadOnlySubmodule):
         return super(COTDeploy, self).ready_to_run()
 
     def run(self):
-        """Do the actual work of this submodule."""
+        """Do the actual work of this command."""
         super(COTDeploy, self).run()
 
         # ensure configuration was specified
@@ -388,7 +388,7 @@ class COTDeploy(COTReadOnlySubmodule):
         """Create 'deploy' CLI subparser if it doesn't already exist.
 
         .. note::
-          Unlike most submodules, this one has subparsers of its own -
+          Unlike most commands, this one has subparsers of its own -
           ``'cot deploy PACKAGE <hypervisor>'`` so subclasses of this module
           should call ``super().create_subparser()`` (to create the main
           'deploy' subparser if it doesn't already exist) then call

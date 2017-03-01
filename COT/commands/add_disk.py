@@ -45,7 +45,7 @@ from COT.data_validation import (
     InvalidInputError, ValueUnsupportedError,
     check_for_conflict, device_address, match_or_die,
 )
-from .command import command_classes, COTSubmodule
+from .command import command_classes, ReadWriteCommand
 
 logger = logging.getLogger(__name__)
 
@@ -93,13 +93,13 @@ def validate_controller_address(controller, address):
                 "IDE disk address must be between 0:0 and 1:1")
 
 
-class COTAddDisk(COTSubmodule):
+class COTAddDisk(ReadWriteCommand):
     """Add or replace a disk in a virtual machine.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.ui`,
-    :attr:`~COTSubmodule.package`,
-    :attr:`~COTSubmodule.output`
+    :attr:`~Command.ui`,
+    :attr:`~ReadWriteCommand.package`,
+    :attr:`~ReadWriteCommand.output`
 
     Attributes:
     :attr:`disk_image`,
@@ -113,7 +113,7 @@ class COTAddDisk(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -190,7 +190,7 @@ class COTAddDisk(COTSubmodule):
         return super(COTAddDisk, self).ready_to_run()
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         Raises:
           InvalidInputError: if :meth:`ready_to_run` reports ``False``

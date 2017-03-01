@@ -3,7 +3,7 @@
 # install_helpers.py - Implements "cot install-helpers" command
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -27,7 +27,7 @@ import textwrap
 from pkg_resources import resource_listdir, resource_filename
 
 from COT.helpers import Helper, HelperError, HelperNotFoundError, helpers
-from .command import command_classes, COTGenericSubmodule
+from .command import command_classes, Command
 
 logger = logging.getLogger(__name__)
 
@@ -139,17 +139,15 @@ def install_manpages(man_dir):
     return True, msg
 
 
-class COTInstallHelpers(COTGenericSubmodule):
+class COTInstallHelpers(Command):
     """Install all helper tools that COT requires.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.ui`,
-    :attr:`~COTSubmodule.package`,
-    :attr:`~COTSubmodule.output`
+    :attr:`~Command.ui`,
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.

@@ -3,7 +3,7 @@
 # add_file.py - Implements "cot add-file" command
 #
 # October 2013, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -24,18 +24,18 @@ import os.path
 import logging
 
 from COT.data_validation import check_for_conflict, InvalidInputError
-from .command import command_classes, COTSubmodule
+from .command import command_classes, ReadWriteCommand
 
 logger = logging.getLogger(__name__)
 
 
-class COTAddFile(COTSubmodule):
+class COTAddFile(ReadWriteCommand):
     """Add a file (such as a README) to the package.
 
     Inherited attributes:
-    :attr:`~COTGenericSubmodule.ui`,
-    :attr:`~COTSubmodule.package`,
-    :attr:`~COTSubmodule.output`
+    :attr:`~Command.ui`,
+    :attr:`~ReadWriteCommand.package`,
+    :attr:`~ReadWriteCommand.output`
 
     Attributes:
     :attr:`file`,
@@ -43,7 +43,7 @@ class COTAddFile(COTSubmodule):
     """
 
     def __init__(self, ui):
-        """Instantiate this submodule with the given UI.
+        """Instantiate this command with the given UI.
 
         Args:
           ui (UI): User interface instance.
@@ -80,7 +80,7 @@ class COTAddFile(COTSubmodule):
         return super(COTAddFile, self).ready_to_run()
 
     def run(self):
-        """Do the actual work of this submodule.
+        """Do the actual work of this command.
 
         Raises:
           InvalidInputError: if :func:`ready_to_run` reports ``False``

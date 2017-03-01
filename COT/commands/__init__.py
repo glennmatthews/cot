@@ -19,9 +19,9 @@ API
 .. autosummary::
   :nosignatures:
 
-  COTGenericSubmodule
-  COTReadOnlySubmodule
-  COTSubmodule
+  Command
+  ReadCommand
+  ReadWriteCommand
 
 Command modules
 ---------------
@@ -43,7 +43,7 @@ Command modules
   COT.commands.remove_file
 """
 
-from .command import command_classes, COTGenericSubmodule, COTReadOnlySubmodule, COTSubmodule
+from .command import command_classes, Command, ReadCommand, ReadWriteCommand
 
 # flake8: noqa: F401
 from .add_disk import COTAddDisk
@@ -60,7 +60,7 @@ from .remove_file import COTRemoveFile
 
 __all__ = (
     'command_classes',
-    'COTGenericSubmodule',
-    'COTReadOnlySubmodule',
-    'COTSubmodule',
+    'Command',
+    'ReadCommand',
+    'ReadWriteCommand',
 )
