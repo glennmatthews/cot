@@ -33,7 +33,6 @@ import tempfile
 import warnings
 
 from COT.data_validation import ValueUnsupportedError
-import COT.logging_     # noqa: F401 pylint:disable=unused-import
 
 logger = logging.getLogger(__name__)
 

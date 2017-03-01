@@ -20,7 +20,6 @@ Utility modules
 
   COT.data_validation
   COT.file_reference
-  COT.logging_
   COT.utilities
   COT.xml_file
 
@@ -59,7 +58,16 @@ Sub-packages
   the other module.
 """
 
+import logging
+
+# VerboseLogger adds a log level 'verbose' between 'info' and 'debug'.
+# This lets us be a bit more fine-grained in our logging verbosity.
+from verboselogs import VerboseLogger
+
 from ._version import get_versions
+
+logging.setLoggerClass(VerboseLogger)
+
 __version__ = get_versions()['version']
 del get_versions
 

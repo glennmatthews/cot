@@ -23,7 +23,8 @@ This project adheres to `Semantic Versioning`_.
     ``COT.utilities``.
   - Function ``COT.deploy_esxi.get_object_from_connection`` is now method
     ``PyVmomiVMReconfigSpec.lookup_object``.
-  - Function ``COT.cli.formatter`` is now class ``COT.logging_.COTFormatter``.
+  - Function ``COT.cli.formatter`` is now class
+    ``COT.ui.cli.CLILoggingFormatter``.
   - The functionality of classes ``VMContextManager`` and ``VMFactory`` has
     been rolled into the core ``VMDescription`` class.
   - COT.disks module:

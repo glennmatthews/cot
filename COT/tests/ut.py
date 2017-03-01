@@ -59,8 +59,6 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-from verboselogs import VerboseLogger
-logging.setLoggerClass(VerboseLogger)
 
 logger = logging.getLogger(__name__)
 

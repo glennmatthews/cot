@@ -24,6 +24,7 @@
   :nosignatures:
 
   CLI
+  CLILoggingFormatter
 """
 
 from __future__ import print_function
@@ -35,6 +36,8 @@ import re
 import logging
 import getpass
 import textwrap
+
+from colorlog import ColoredFormatter
 
 # get_terminal_size() is part of the standard library in python 3.3 and later
 try:
@@ -50,7 +53,6 @@ except ImportError:
 
 from COT import __version_long__
 from COT.data_validation import InvalidInputError, ValueMismatchError
-from COT.logging_ import COTFormatter
 from COT.commands import command_classes
 from .ui import UI
 
@@ -272,7 +274,8 @@ class CLI(UI):
     def set_verbosity(self, level):
         """Enable logging and/or change the logging verbosity level.
 
-        Will create a :class:`COTFormatter` and use it for log formatting.
+        Will create a :class:`CLILoggingFormatter` and use it for
+        colorized, appropriately verbose log formatting.
 
         Args:
           level (int): Logging level as defined by :mod:`logging`
@@ -280,7 +283,7 @@ class CLI(UI):
         if not self.handler:
             self.handler = logging.StreamHandler()
         self.handler.setLevel(level)
-        self.handler.setFormatter(COTFormatter(level))
+        self.handler.setFormatter(CLILoggingFormatter(level))
         if not self.master_logger:
             self.master_logger = logging.getLogger('COT')
             self.master_logger.addHandler(self.handler)
@@ -612,6 +615,57 @@ class CLI(UI):
         # stack trace and exit - this is ugly so the more specific handling we
         # can provide, the better!
         return 0
+
+
+class CLILoggingFormatter(ColoredFormatter, object):
+    r"""Logging formatter with colorization and variable verbosity.
+
+    COT logs are formatted differently (more or less verbosely) depending
+    on the logging level.
+
+    .. seealso:: :class:`logging.Formatter`
+
+    Args:
+      verbosity (int): Logging level as defined by :mod:`logging`.
+
+    Examples::
+
+      >>> record = logging.LogRecord("test_func", logging.INFO,
+      ...                            "/fake.py", 22, "Hello world!",
+      ...                            None, None)
+      >>> record.created = 0
+      >>> record.msecs = 0
+      >>> CLILoggingFormatter(logging.DEBUG).format(record) # doctest:+ELLIPSIS
+      '\x1b[32m...:00.0     INFO: test_func              Hello world!\x1b[0m'
+      >>> CLILoggingFormatter(logging.VERBOSE).format(record)
+      '\x1b[32m    INFO: test_func              Hello world!\x1b[0m'
+      >>> CLILoggingFormatter(logging.INFO).format(record)
+      '\x1b[32m    INFO: Hello world!\x1b[0m'
+    """
+
+    LOG_COLORS = {
+        'DEBUG':    'blue',
+        'VERBOSE':  'cyan',
+        'INFO':     'green',
+        'WARNING':  'yellow',
+        'ERROR':    'red',
+        'CRITICAL': 'red',
+    }
+
+    def __init__(self, verbosity=logging.INFO):
+        """Create formatter for COT log output with the given verbosity."""
+        format_string = "%(log_color)s"
+        datefmt = None
+        if verbosity <= logging.DEBUG:
+            format_string += "%(asctime)s.%(msecs)d "
+            datefmt = "%H:%M:%S"
+        format_string += "%(levelname)8s: "
+        if verbosity <= logging.VERBOSE:
+            format_string += "%(name)-22s "
+        format_string += "%(message)s"
+        super(CLILoggingFormatter, self).__init__(format_string,
+                                                  datefmt=datefmt,
+                                                  log_colors=self.LOG_COLORS)
 
 
 def main():
