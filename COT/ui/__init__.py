@@ -1,5 +1,5 @@
-# September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# March 2017, Glenn F. Matthews
+# Copyright (c) 2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -11,37 +11,30 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 """
-Package implementing the Common OVF Tool.
+Package providing common API for the COT user interface (UI) of whatever type.
 
-Utility modules
----------------
+API
+---
+
+.. autosummary::
+  :nosignatures:
+
+  UI
+
+Implementation modules
+----------------------
+
 .. autosummary::
   :toctree:
 
-  COT.data_validation
-  COT.file_reference
-  COT.logging_
-  COT.utilities
-  COT.xml_file
-
-Sub-packages
-------------
-.. autosummary::
-  :toctree:
-
-  COT.commands
-  COT.disks
-  COT.helpers
-  COT.platforms
-  COT.ui
-  COT.vm_description
+  COT.ui.cli
 """
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+from .ui import UI
 
-__version_long__ = (
-    """Common OVF Tool (COT), version """ + __version__ +
-    """\nCopyright (C) 2013-2017 the COT project developers."""
+# flake8: noqa: F401
+from .cli import CLI
+
+__all__ = (
+    'UI',
 )

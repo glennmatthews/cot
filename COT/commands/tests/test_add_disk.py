@@ -21,7 +21,7 @@ import os.path
 import re
 
 from COT.tests.ut import COT_UT
-from COT.ui_shared import UI
+from COT.ui import UI
 from COT.commands.add_disk import COTAddDisk
 from COT.data_validation import InvalidInputError, ValueMismatchError
 from COT.data_validation import ValueUnsupportedError, ValueTooHighError

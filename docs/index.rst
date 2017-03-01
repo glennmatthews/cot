@@ -13,11 +13,6 @@ Common OVF Tool (COT)
    contributing
    thanks
    COT
-   COT.commands
-   COT.disks
-   COT.helpers
-   COT.platforms
-   COT.vm_description
 
 
 Indices and tables

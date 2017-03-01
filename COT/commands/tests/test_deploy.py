@@ -20,7 +20,7 @@ import logging
 import re
 
 from COT.tests.ut import COT_UT
-from COT.ui_shared import UI
+from COT.ui import UI
 from COT.commands.deploy import COTDeploy, SerialConnection
 from COT.data_validation import InvalidInputError, ValueUnsupportedError
 

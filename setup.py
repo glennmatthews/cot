@@ -140,6 +140,7 @@ setup(
         'COT.disks',
         'COT.helpers',
         'COT.platforms',
+        'COT.ui',
         'COT.vm_description',
         'COT.vm_description.ovf',
     ],
@@ -148,7 +149,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'cot = COT.cli:main',
+            'cot = COT.ui.cli:main',
         ],
     },
     include_package_data=True,

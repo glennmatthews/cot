@@ -17,7 +17,7 @@
 """Test cases for COT.commands.ReadWriteCommand class."""
 
 from COT.tests.ut import COT_UT
-from COT.ui_shared import UI
+from COT.ui import UI
 from COT.commands import ReadWriteCommand
 from COT.vm_description import VMInitError
 

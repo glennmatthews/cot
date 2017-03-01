@@ -1,7 +1,7 @@
-# ui_shared.py - Unit test cases for generic UI class
+# test_ui.py - Unit test cases for generic UI class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2015-2016 the COT project developers.
+# Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -12,15 +12,15 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Unit test cases for COT.ui_shared.UI class."""
+"""Unit test cases for COT.ui.UI class."""
 
 import unittest
 
-from COT.ui_shared import UI
+from COT.ui import UI
 
 
 class TestUI(unittest.TestCase):
-    """Test cases for the COT.ui_shared.UI class."""
+    """Test cases for the COT.ui.UI class."""
 
     def test_apis_without_force(self):
         """Test confirm(), confirm_or_die(), etc. without --force."""

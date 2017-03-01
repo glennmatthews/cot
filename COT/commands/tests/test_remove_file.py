@@ -19,7 +19,7 @@
 import os.path
 
 from COT.tests.ut import COT_UT
-from COT.ui_shared import UI
+from COT.ui import UI
 from COT.commands.remove_file import COTRemoveFile
 from COT.data_validation import InvalidInputError, ValueMismatchError
 

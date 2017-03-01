@@ -32,10 +32,5 @@ def load_tests(*_):
     For the parameters, see :mod:`unittest`. The parameters are unused here.
     """
     suite = TestSuite()
-    suite.addTests(DocTestSuite('COT.data_validation'))
-    suite.addTests(DocTestSuite('COT.file_reference'))
-    suite.addTests(DocTestSuite('COT.logging_'))
-    suite.addTests(DocTestSuite('COT.platforms'))
-    suite.addTests(DocTestSuite('COT.utilities'))
-    suite.addTests(DocTestSuite('COT.vm_description'))
+    suite.addTests(DocTestSuite('COT.ui.cli'))
     return suite

@@ -50,9 +50,9 @@ except ImportError:
 
 from COT import __version_long__
 from COT.data_validation import InvalidInputError, ValueMismatchError
-from COT.ui_shared import UI
 from COT.logging_ import COTFormatter
 from COT.commands import command_classes
+from .ui import UI
 
 logger = logging.getLogger(__name__)
 

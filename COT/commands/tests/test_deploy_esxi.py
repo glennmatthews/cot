@@ -29,7 +29,7 @@ import requests
 from pyVmomi import vim
 
 from COT.tests.ut import COT_UT, unittest
-from COT.ui_shared import UI
+from COT.ui import UI
 import COT.commands.deploy_esxi
 from COT.commands.deploy_esxi import COTDeployESXi, SmarterConnection
 from COT.data_validation import InvalidInputError
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-param-doc,missing-type-doc
 
 
-@mock.patch('COT.ui_shared.UI.get_password', return_value='passwd')
+@mock.patch('COT.ui.UI.get_password', return_value='passwd')
 @mock.patch('subprocess.check_call')
 class TestCOTDeployESXi(COT_UT):
     """Test cases for COTDeployESXi class."""
@@ -273,7 +273,7 @@ class TestCOTDeployESXi(COT_UT):
 
     @mock.patch('pyVim.connect.__FindSupportedVersion', return_value=['vim25'])
     @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
-    @mock.patch('COT.ui_shared.UI.confirm_or_die', return_value=True)
+    @mock.patch('COT.ui.UI.confirm_or_die', return_value=True)
     def test_serial_fixup_stubbed_create(self, mock_cod, *_):
         """Test fixup_serial_ports creation of serial ports not in the OVF."""
         self.instance.package = self.minimal_ovf

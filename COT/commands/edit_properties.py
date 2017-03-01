@@ -96,7 +96,7 @@ class COTEditProperties(ReadWriteCommand):
         Examples:
           ::
 
-            >>> from COT.ui_shared import UI
+            >>> from COT.ui import UI
             >>> i = COTEditProperties(UI())
             >>> i.properties
             []

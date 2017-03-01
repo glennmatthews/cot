@@ -47,7 +47,7 @@ from COT.data_validation import (
 from COT.file_reference import FileOnDisk, FileInTAR
 from COT.platforms import Platform
 from COT.disks import DiskRepresentation
-from COT.ui_shared import pretty_bytes
+from COT.utilities import pretty_bytes
 
 from ..vm_description import VMDescription, VMInitError
 from .name_helper import name_helper

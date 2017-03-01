@@ -20,7 +20,7 @@ import logging
 import re
 
 from COT.tests.ut import COT_UT
-from COT.ui_shared import UI
+from COT.ui import UI
 from COT.commands.edit_properties import COTEditProperties
 from COT.data_validation import ValueUnsupportedError
 
@@ -494,7 +494,7 @@ Enter new value for this property
 
         def custom_input(prompt,
                          default_value):  # pylint: disable=unused-argument
-            """Mock for :meth:`COT.ui_shared.UI.get_input`.
+            """Mock for :meth:`COT.ui.UI.get_input`.
 
             For the parameters, see get_input.
             """

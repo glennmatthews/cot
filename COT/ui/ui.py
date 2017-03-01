@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# ui_shared.py - abstraction between CLI and GUI
+# ui.py - abstract user interface API for COT
 #
 # December 2014, Glenn F. Matthews
 # Copyright (c) 2014-2017 the COT project developers.
@@ -14,15 +14,7 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Generic user interface functions and abstract user interface superclass.
-
-**Functions**
-
-.. autosummary::
-  :nosignatures:
-
-  pretty_bytes
-  to_string
+"""Generic semi-abstract user interface superclass.
 
 **Classes**
 
@@ -34,7 +26,6 @@
 
 import logging
 import sys
-import xml.etree.ElementTree as ET
 
 from verboselogs import VerboseLogger
 
@@ -44,103 +35,31 @@ logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
 
-def to_string(obj):
-    """Get string representation of an object, special-case for XML Element.
-
-    Args:
-      obj (object): Object to represent as a string.
-    Returns:
-      str: string representation
-    Examples:
-      ::
-
-        >>> to_string("Hello")
-        'Hello'
-        >>> to_string(27.5)
-        '27.5'
-        >>> e = ET.Element('hello', attrib={'key': 'value'})
-        >>> print(e)   # doctest: +ELLIPSIS
-        <Element ...hello... at ...>
-        >>> print(to_string(e))
-        <hello key="value" />
-    """
-    if ET.iselement(obj):
-        if sys.version_info[0] >= 3:
-            return ET.tostring(obj, encoding='unicode')
-        else:
-            return ET.tostring(obj)
-    else:
-        return str(obj)
-
-
-def pretty_bytes(byte_value, base_shift=0):
-    """Pretty-print the given bytes value.
-
-    Args:
-      byte_value (float): Value
-      base_shift (int): Base value of byte_value
-            (0 = bytes, 1 = KiB, 2 = MiB, etc.)
-
-    Returns:
-      str: Pretty-printed byte string such as "1.00 GiB"
-
-    Examples:
-      ::
-
-        >>> pretty_bytes(512)
-        '512 B'
-        >>> pretty_bytes(512, 2)
-        '512 MiB'
-        >>> pretty_bytes(65536, 2)
-        '64 GiB'
-        >>> pretty_bytes(65547)
-        '64.01 KiB'
-        >>> pretty_bytes(65530, 3)
-        '63.99 TiB'
-        >>> pretty_bytes(1023850)
-        '999.9 KiB'
-        >>> pretty_bytes(1024000)
-        '1000 KiB'
-        >>> pretty_bytes(1048575)
-        '1024 KiB'
-        >>> pretty_bytes(1049200)
-        '1.001 MiB'
-        >>> pretty_bytes(2560)
-        '2.5 KiB'
-        >>> pretty_bytes(.0001, 3)
-        '104.9 KiB'
-        >>> pretty_bytes(.01, 1)
-        '10 B'
-        >>> pretty_bytes(.001, 1)
-        '1 B'
-        >>> pretty_bytes(.0001, 1)
-        '0 B'
-        >>> pretty_bytes(100, -1)
-        Traceback (most recent call last):
-            ...
-        ValueError: base_shift must not be negative
-    """
-    if base_shift < 0:
-        raise ValueError("base_shift must not be negative")
-    tags = ["B", "KiB", "MiB", "GiB", "TiB"]
-    byte_value = float(byte_value)
-    shift = base_shift
-    while byte_value >= 1024.0:
-        byte_value /= 1024.0
-        shift += 1
-    while byte_value < 1.0 and shift > 0:
-        byte_value *= 1024.0
-        shift -= 1
-    # Fractions of a byte should be considered a rounding error:
-    if shift == 0:
-        byte_value = round(byte_value)
-    return "{0:.4g} {1}".format(byte_value, tags[shift])
-
-
 class UI(object):
     """Abstract user interface functionality.
 
     Can also be used in test code as a stub that autoconfirms everything.
+
+    **Properties**
+
+    .. autosummary::
+      :nosignatures:
+
+      terminal_width
+
+    **API Methods**
+
+    .. autosummary::
+      :nosignatures:
+
+      choose_from_list
+      confirm
+      confirm_or_die
+      validate_value
+      fill_examples
+      fill_usage
+      get_input
+      get_password
     """
 
     def __init__(self, force=False):
@@ -154,8 +73,10 @@ class UI(object):
 
         (As opposed to interactively prompting the user.)
         """
+
         self.default_confirm_response = True
         """Knob for API testing, sets the default response to confirm()."""
+
         self._terminal_width = 80
         from COT.helpers import Helper
         Helper.USER_INTERFACE = self
@@ -315,8 +236,3 @@ class UI(object):
           NotImplementedError: Must be implemented by a subclass.
         """
         raise NotImplementedError("No implementation of get_password()")
-
-
-if __name__ == "__main__":   # pragma: no cover
-    import doctest
-    doctest.testmod()

@@ -59,7 +59,7 @@ class Command(object):
         self.vm = None
         """Virtual machine description (:class:`VMDescription`)."""
         self.ui = ui
-        """User interface instance (:class:`~ui_shared.UI` or subclass)."""
+        """User interface instance (:class:`~COT.ui.UI` or subclass)."""
 
     def ready_to_run(self):  # pylint: disable=no-self-use
         """Check whether the module is ready to :meth:`run`.
@@ -206,7 +206,7 @@ class ReadWriteCommand(Command):
         """Output file for this command.
 
         If the specified file already exists,  will prompt the user
-        (:meth:`~COT.ui_shared.UI.confirm_or_die`) to
+        (:meth:`~COT.ui.UI.confirm_or_die`) to
         confirm overwriting the existing file.
         """
         return self._output

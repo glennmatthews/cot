@@ -25,7 +25,7 @@ import tempfile
 import mock
 
 from COT.tests.ut import COT_UT
-from COT.ui_shared import UI
+from COT.ui import UI
 from COT.commands.inject_config import COTInjectConfig
 from COT.data_validation import InvalidInputError, ValueUnsupportedError
 from COT.platforms import CSR1000V, IOSv, IOSXRv, IOSXRvLC

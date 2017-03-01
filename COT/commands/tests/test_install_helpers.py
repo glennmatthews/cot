@@ -23,7 +23,7 @@ import sys
 import mock
 
 from COT.tests.ut import COT_UT
-from COT.ui_shared import UI
+from COT.ui import UI
 from COT.commands.install_helpers import COTInstallHelpers
 from COT.helpers import HelperError, helpers
 from COT.helpers.apt_get import AptGet

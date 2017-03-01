@@ -60,7 +60,7 @@ import re
 from collections import namedtuple
 from distutils.util import strtobool
 
-from COT.ui_shared import to_string
+from COT.utilities import to_string
 
 
 def alphanum_split(key):
