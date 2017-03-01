@@ -134,13 +134,22 @@ setup(
 
     # Package contents
     cmdclass=cmdclass,
-    packages=['COT', 'COT.disks', 'COT.helpers', 'COT.ovf', 'COT.platforms'],
+    packages=[
+        'COT',
+        'COT.commands',
+        'COT.disks',
+        'COT.helpers',
+        'COT.platforms',
+        'COT.ui',
+        'COT.vm_description',
+        'COT.vm_description.ovf',
+    ],
     package_data={
         'COT': ['docs/man/*'],
     },
     entry_points={
         'console_scripts': [
-            'cot = COT.cli:main',
+            'cot = COT.ui.cli:main',
         ],
     },
     include_package_data=True,

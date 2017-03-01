@@ -13,62 +13,61 @@
 """
 Package implementing the Common OVF Tool.
 
-Virtual machine definition modules
-----------------------------------
-.. autosummary::
-  :toctree:
-
-  COT.vm_description
-  COT.xml_file
-
-Command modules
+Utility modules
 ---------------
-.. autosummary::
-  :toctree:
-
-  COT.submodule
-  COT.add_disk
-  COT.add_file
-  COT.deploy
-  COT.deploy_esxi
-  COT.edit_hardware
-  COT.edit_product
-  COT.edit_properties
-  COT.help
-  COT.info
-  COT.inject_config
-  COT.install_helpers
-  COT.remove_file
-
-Helper library modules
-----------------------
 .. autosummary::
   :toctree:
 
   COT.data_validation
   COT.file_reference
-  COT.logging_
-
-User interface modules
-----------------------
-.. autosummary::
-  :toctree:
-
-  COT.ui_shared
-  COT.cli
+  COT.utilities
+  COT.xml_file
 
 Sub-packages
 ------------
 .. autosummary::
   :toctree:
 
+  COT.commands
   COT.disks
   COT.helpers
-  COT.ovf
   COT.platforms
+  COT.ui
+  COT.vm_description
+
+.. note::
+  The hierarchy of permissible imports between sub-packages is as follows::
+
+      COT.ui
+         |
+         +---> COT.commands
+         |        |
+         |        +---> COT.vm_description
+         |        |        |
+         |        |        +---> COT.platforms
+         |        |        |
+         |        +--------+---> COT.disks
+         |        |                 |
+         +--------+-----------------+---> COT.helpers
+
+  Thus, to avoid circular dependencies, none of the other sub-packages may
+  ``import COT.ui`` - if they wish to interact with the UI in any way
+  (e.g., :mod:`COT.helpers` prompting the user to confirm whether to try
+  to install a helper program), this needs to be done with a callback object
+  (e.g., :attr:`COT.helpers.Helper.USER_INTERFACE`) rather than an import of
+  the other module.
 """
 
+import logging
+
+# VerboseLogger adds a log level 'verbose' between 'info' and 'debug'.
+# This lets us be a bit more fine-grained in our logging verbosity.
+from verboselogs import VerboseLogger
+
 from ._version import get_versions
+
+logging.setLoggerClass(VerboseLogger)
+
 __version__ = get_versions()['version']
 del get_versions
 

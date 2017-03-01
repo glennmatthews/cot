@@ -74,10 +74,9 @@ Add automated unit tests
 ------------------------
 
 Whether adding new functionality or fixing a bug, **please** add appropriate
-unit test case(s) under ``COT/tests/``, ``COT/helpers/tests/``, or
-``COT/ovf/tests`` (as appropriate) to cover your changes. Your changes
-**must** pass all existing and new automated test cases before your code
-will be accepted.
+unit test case(s) under ``COT/tests/`` or  ``COT/<sub-package>/tests/``
+(as appropriate) to cover your changes. Your changes **must** pass all existing
+and new automated test cases before your code will be accepted.
 
 You can run the COT automated tests under a single Python version by
 running ``python ./setup.py test``.

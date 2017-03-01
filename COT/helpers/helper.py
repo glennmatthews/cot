@@ -78,9 +78,6 @@ import distutils.spawn
 from distutils.version import StrictVersion
 import requests
 
-from verboselogs import VerboseLogger
-
-logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
 try:

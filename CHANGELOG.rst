@@ -15,11 +15,16 @@ This project adheres to `Semantic Versioning`_.
   ``cot --force ...``, as usual, can be used to auto-continue without prompting.
 - Lots of API changes:
 
+  - All commands ('submodules') are now grouped as a sub-package
+    under ``COT.commands``. Most classes in this package have been renamed.
+  - Moved ``COT.ovf`` package to be a sub-package under ``COT.vm_description``.
+  - Moved UI and CLI classes into a ``COT.ui`` sub-package.
   - Moved the ``to_string`` function from ``COT.data_validation`` to
-    ``COT.ui_shared``.
+    ``COT.utilities``.
   - Function ``COT.deploy_esxi.get_object_from_connection`` is now method
     ``PyVmomiVMReconfigSpec.lookup_object``.
-  - Function ``COT.cli.formatter`` is now class ``COT.logging_.COTFormatter``.
+  - Function ``COT.cli.formatter`` is now class
+    ``COT.ui.cli.CLILoggingFormatter``.
   - The functionality of classes ``VMContextManager`` and ``VMFactory`` has
     been rolled into the core ``VMDescription`` class.
   - COT.disks module:
@@ -40,7 +45,7 @@ This project adheres to `Semantic Versioning`_.
   - COT.ovf module:
 
     - ``COT.ovf.ovf.byte_string`` has been moved and renamed to
-      ``COT.ui_shared.pretty_bytes``.
+      ``COT.utilities.pretty_bytes``.
     - ``COT.ovf.ovf.byte_count`` has been moved and renamed to
       ``COT.ovf.utilities.programmatic_bytes_to_int``.
     - ``COT.ovf.ovf.factor_bytes`` has been moved and renamed to
