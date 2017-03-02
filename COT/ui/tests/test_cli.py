@@ -24,8 +24,10 @@ import os.path
 import sys
 
 try:
+    # Python 2.x
     import StringIO
 except ImportError:
+    # Python 3.x
     import io as StringIO
 
 import mock
@@ -90,22 +92,21 @@ class TestCOTCLI(COT_UT):
         if fixup_args:
             argv = ['--quiet'] + argv
 
-        # Python 2.6 doesn't let us mock multiple times in one 'with'
-        with mock.patch('sys.stdin'):
-            with mock.patch('sys.stdout',
-                            new_callable=StringIO.StringIO) as _so:
-                with mock.patch('sys.stderr',
-                                new_callable=StringIO.StringIO) as _se:
-                    try:
-                        rc = self.cli.run(argv)
-                    except SystemExit as se:
-                        try:
-                            rc = int(se.code)
-                        except (TypeError, ValueError):
-                            print(se.code, file=sys.stderr)
-                            rc = 1
-                    stdout = _so.getvalue()
-                    stderr = _se.getvalue()
+        with mock.patch('sys.stdin'), \
+                mock.patch('sys.stdout',
+                           new_callable=StringIO.StringIO) as _so, \
+                mock.patch('sys.stderr',
+                           new_callable=StringIO.StringIO) as _se:
+            try:
+                rc = self.cli.run(argv)
+            except SystemExit as se:
+                try:
+                    rc = int(se.code)
+                except (TypeError, ValueError):
+                    print(se.code, file=sys.stderr)
+                    rc = 1
+            stdout = _so.getvalue()
+            stderr = _se.getvalue()
 
         self.assertEqual(rc, result,
                          "\nargv: \n{0}\nstdout:\n{1}\nstderr:\n{2}"

@@ -30,16 +30,11 @@ import os.path
 import re
 import tarfile
 import xml.etree.ElementTree as ET
-# In 2.7+, ET raises a ParseError if XML parsing fails,
-# but in 2.6 it raises an ExpatError. Hide this variation.
-try:
-    from xml.etree.ElementTree import ParseError
-except ImportError:
-    from xml.parsers.expat import ExpatError as ParseError
+from xml.etree.ElementTree import ParseError
 import textwrap
 from contextlib import closing
 
-from COT.xml_file import XML, register_namespace
+from COT.xml_file import XML
 from COT.data_validation import (
     match_or_die, check_for_conflict, file_checksum,
     ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
@@ -203,11 +198,12 @@ class OVF(VMDescription, XML):
             self.name_helper = name_helper(self.ovf_version)
 
             for (prefix, URI) in self.NSM.items():
-                register_namespace(prefix, URI)
+                ET.register_namespace(prefix, URI)
 
             # Register additional non-standard namespaces we're aware of:
-            register_namespace('vmw', "http://www.vmware.com/schema/ovf")
-            register_namespace('vbox', "http://www.virtualbox.org/ovf/machine")
+            ET.register_namespace('vmw', "http://www.vmware.com/schema/ovf")
+            ET.register_namespace('vbox',
+                                  "http://www.virtualbox.org/ovf/machine")
 
             # Go ahead and set pointers to some of the most useful XML sections
             self.envelope = self.root

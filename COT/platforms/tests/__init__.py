@@ -15,21 +15,7 @@
 import unittest
 import logging
 # Make sure there's always a "no-op" logging handler.
-try:
-    from logging import NullHandler
-except ImportError:
-    # Python 2.6
-    class NullHandler(logging.Handler):
-        """No-op logging handler."""
-
-        def emit(self, record):
-            """Do nothing.
-
-            Args:
-              record (object): Ignored.
-            """
-            pass
-
+from logging import NullHandler
 
 from COT.data_validation import ValueTooLowError
 from COT.platforms import Platform

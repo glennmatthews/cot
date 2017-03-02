@@ -107,35 +107,33 @@ class HelperUT(COT_UT):
               ``pkgname``.
         """
         helpers['dpkg']._installed = True
-        # Python 2.6 doesn't let us do multiple mocks in one 'with'
-        with mock.patch.object(self.helper, '_path') as mock_path:
-            with mock.patch('subprocess.check_call') as mock_check_call:
-                with mock.patch(
-                        'COT.helpers.helper.check_output',
-                        return_value="is not installed and no "
-                        "information is available") as mock_check_output:
-                    mock_path.return_value = (None, '/bin/' + helpername)
-                    self.enable_apt_install()
-                    self.helper.install()
-                    self.assertSubprocessCalls(mock_check_output,
-                                               [['dpkg', '-s', pkgname]])
-                    self.assertSubprocessCalls(
-                        mock_check_call,
-                        [
-                            ['apt-get', '-q', 'update'],
-                            ['apt-get', '-q', 'install', pkgname],
-                        ])
-                    self.assertEqual(helpername, self.helper.name)
-                    self.assertAptUpdated()
-                    # Make sure we don't 'apt-get update' again unnecessarily
-                    mock_check_call.reset_mock()
-                    mock_check_output.reset_mock()
-                    self.helper.install()
-                    self.assertSubprocessCalls(mock_check_output,
-                                               [['dpkg', '-s', pkgname]])
-                    self.assertSubprocessCalls(
-                        mock_check_call,
-                        [['apt-get', '-q', 'install', pkgname]])
+        with mock.patch.object(self.helper, '_path') as mock_path, \
+            mock.patch('subprocess.check_call') as mock_check_call, \
+            mock.patch('COT.helpers.helper.check_output',
+                       return_value="is not installed and no "
+                       "information is available") as mock_check_output:
+            mock_path.return_value = (None, '/bin/' + helpername)
+            self.enable_apt_install()
+            self.helper.install()
+            self.assertSubprocessCalls(mock_check_output,
+                                       [['dpkg', '-s', pkgname]])
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [
+                    ['apt-get', '-q', 'update'],
+                    ['apt-get', '-q', 'install', pkgname],
+                ])
+            self.assertEqual(helpername, self.helper.name)
+            self.assertAptUpdated()
+            # Make sure we don't 'apt-get update' again unnecessarily
+            mock_check_call.reset_mock()
+            mock_check_output.reset_mock()
+            self.helper.install()
+            self.assertSubprocessCalls(mock_check_output,
+                                       [['dpkg', '-s', pkgname]])
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['apt-get', '-q', 'install', pkgname]])
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def brew_install_test(self, brew_params, *_):
@@ -147,13 +145,12 @@ class HelperUT(COT_UT):
         self.select_package_manager('brew')
         if isinstance(brew_params, str):
             brew_params = [brew_params]
-        # Python 2.6 doesn't let us use multiple contexts in one 'with'
-        with mock.patch('subprocess.check_call') as mock_check_call:
-            with mock.patch.object(self.helper, '_path') as mock_path:
-                mock_path.return_value = (None, '/bin/' + brew_params[0])
-                self.helper.install()
-                mock_check_call.assert_called_with(
-                    ['brew', 'install'] + brew_params)
+        with mock.patch('subprocess.check_call') as mock_check_call, \
+                mock.patch.object(self.helper, '_path') as mock_path:
+            mock_path.return_value = (None, '/bin/' + brew_params[0])
+            self.helper.install()
+            mock_check_call.assert_called_with(
+                ['brew', 'install'] + brew_params)
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
@@ -164,22 +161,21 @@ class HelperUT(COT_UT):
         """
         self.select_package_manager('port')
         Port._updated = False
-        # Python 2.6 doesn't let us use multiple contexts in one 'with'
-        with mock.patch('subprocess.check_call') as mock_check_call:
-            with mock.patch.object(self.helper, '_path') as mock_path:
-                mock_path.return_value = (None, '/bin/' + portname)
-                self.helper.install()
-                self.assertSubprocessCalls(
-                    mock_check_call,
-                    [['port', 'selfupdate'],
-                     ['port', 'install', portname]])
-                self.assertTrue(Port._updated)
-                # Make sure we don't call port selfupdate again unnecessarily
-                mock_check_call.reset_mock()
-                self.helper.install()
-                self.assertSubprocessCalls(
-                    mock_check_call,
-                    [['port', 'install', portname]])
+        with mock.patch('subprocess.check_call') as mock_check_call, \
+                mock.patch.object(self.helper, '_path') as mock_path:
+            mock_path.return_value = (None, '/bin/' + portname)
+            self.helper.install()
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['port', 'selfupdate'],
+                 ['port', 'install', portname]])
+            self.assertTrue(Port._updated)
+            # Make sure we don't call port selfupdate again unnecessarily
+            mock_check_call.reset_mock()
+            self.helper.install()
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['port', 'install', portname]])
 
     def yum_install_test(self, pkgname, *_):
         """Test installation with yum."""

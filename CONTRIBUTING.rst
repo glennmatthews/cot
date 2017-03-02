@@ -89,8 +89,6 @@ coverage_ (``pip install coverage``) then run ``tox`` from the COT directory:
 
   cot/$ tox
   ...
-  py26 runtests: commands[0] | coverage run --append setup.py test --quiet
-  ...
   py27 runtests: commands[0] | coverage run --append setup.py test --quiet
   ...
   py33 runtests: commands[0] | coverage run --append setup.py test --quiet
@@ -131,7 +129,6 @@ coverage_ (``pip install coverage``) then run ``tox`` from the COT directory:
   stats runtests: commands[2] | coverage html -i
   _______________ summary _______________
     setup: commands succeeded
-    py26: commands succeeded
     py27: commands succeeded
     py33: commands succeeded
     py34: commands succeeded

@@ -35,13 +35,13 @@ fi
 '''
 
 import sys
-# We require Python 2.6.6
-if not hasattr(sys, "hexversion") or sys.hexversion < 0x020606f0:
+# We require Python 2.7.1 or later
+if not hasattr(sys, "hexversion") or sys.hexversion < 0x020701f0:
     sys.stderr.write("Your version of python is too old:\n")
     sys.stderr.write(sys.executable)
     sys.stderr.write("\n")
     sys.stderr.write(sys.version)
-    sys.stderr.write("\nPython 2.6.6 or later is required to run COT\n")
+    sys.stderr.write("\nPython 2.7.1 or later is required to run COT\n")
     sys.exit(1)
 # Different servers may have different Python versions,
 # which may generate different compiled bytecode, causing errors

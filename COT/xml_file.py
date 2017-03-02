@@ -19,23 +19,8 @@
 import xml.etree.ElementTree as ET
 import logging
 import re
-import sys
 
 logger = logging.getLogger(__name__)
-
-
-def register_namespace(prefix, uri):
-    """Record a particular mapping between a namespace prefix and URI.
-
-    Args:
-      prefix (str): Namespace prefix such as "ovf"
-      uri (str): Namespace URI such as "http://schemas.dmtf.org/ovf/envelope/1"
-    """
-    try:
-        ET.register_namespace(prefix, uri)
-    except AttributeError:
-        # 2.6 doesn't have the above API so we must write directly
-        ET._namespace_map[uri] = prefix  # pylint: disable=protected-access
 
 
 class XML(object):
@@ -85,9 +70,7 @@ class XML(object):
           xml_file (str): File path to read.
 
         Raises:
-          xml.etree.ElementTree.ParseError: if parsing fails under Python
-              2.7 or later
-          xml.parsers.expat.ExpatError: if parsing fails under Python 2.6
+          xml.etree.ElementTree.ParseError: if parsing fails
         """
         # Parse the XML into memory
         self.tree = ET.parse(xml_file)
@@ -116,11 +99,7 @@ class XML(object):
         # option
         #
         # This is a bug - see http://bugs.python.org/issue17088
-        if sys.hexversion >= 0x02070000:
-            self.tree.write(xml_file, xml_declaration=True, encoding='utf-8')
-        else:
-            # 2.6 doesn't have the xml_declaration parameter. Sigh.
-            self.tree.write(xml_file, encoding='utf-8')
+        self.tree.write(xml_file, xml_declaration=True, encoding='utf-8')
 
     def xml_reindent(self, parent, depth):
         """Recursively add indentation to XML to make it look nice.

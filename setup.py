@@ -56,9 +56,8 @@ if sys.version_info < (2, 7, 9):
     install_requires.append('pyOpenSSL')
     install_requires.append('ndg-httpsclient')
 
-if sys.version_info < (2, 7) or (sys.version_info >= (3, 0) and
-                                 sys.version_info < (3, 4)):
-    # Sphinx 1.5 and later requires 2.7 or 3.4
+if sys.version_info >= (3, 0) and sys.version_info < (3, 4):
+    # Sphinx 1.5 and later dropped support for python 3.3
     setup_requires = install_requires + ['sphinx>=1.3.1,<1.5']
 else:
     setup_requires = install_requires + ['sphinx>=1.3.1']
@@ -175,7 +174,6 @@ setup(
         'Operating System :: POSIX :: Linux',
         # Supported versions
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',

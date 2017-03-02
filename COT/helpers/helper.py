@@ -56,23 +56,6 @@ import re
 import shutil
 import subprocess
 
-try:
-    from subprocess import check_output as _check_output
-except ImportError:
-    # Python 2.6 doesn't have subprocess.check_output.
-    # Implement it ourselves:
-    def _check_output(args, **kwargs):
-        process = subprocess.Popen(args,
-                                   stdout=subprocess.PIPE,
-                                   **kwargs)
-        stdout, _ = process.communicate()
-        retcode = process.poll()
-        if retcode:
-            e = subprocess.CalledProcessError(retcode, " ".join(args))
-            e.output = stdout
-            raise e
-        return stdout
-
 import tarfile
 import distutils.spawn
 from distutils.version import StrictVersion
@@ -416,12 +399,8 @@ class Helper(object):
                 shutil.copyfileobj(response.raw, f)
             del response
             logger.debug("Extracting %s", tgz)
-            # the "with tarfile.open()..." construct isn't supported in 2.6
-            tarf = tarfile.open(tgz, "r:gz")
-            try:
+            with tarfile.open(tgz, "r:gz") as tarf:
                 tarf.extractall(path=d)
-            finally:
-                tarf.close()
             try:
                 yield d
             finally:
@@ -645,9 +624,9 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
     cmd = args[0]
     logger.info("Calling '%s' and capturing its output...", " ".join(args))
     try:
-        stdout = _check_output(args,
-                               stderr=subprocess.STDOUT,
-                               **kwargs).decode('ascii', 'ignore')
+        stdout = subprocess.check_output(args,
+                                         stderr=subprocess.STDOUT,
+                                         **kwargs).decode('ascii', 'ignore')
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise

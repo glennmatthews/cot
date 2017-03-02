@@ -6,6 +6,10 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Removed**
+
+- Discontinued support for Python 2.6 as it has been retired since 2013.
+
 **Changed**
 
 - With ``cot edit-hardware``, the platform hardware validation is no longer
@@ -59,11 +63,7 @@ This project adheres to `Semantic Versioning`_.
       of a ``Platform`` class rather than the class object itself.
     - Most ``Platform`` APIs are now instance methods instead of
       class methods.
-
-**Removed**
-
-  - Classes ``VMContextManager`` and ``VMFactory`` have been removed.
-  - Function ``COT.platforms.is_known_product_class`` has been removed.
+    - Function ``COT.platforms.is_known_product_class`` has been removed.
 
 `1.9.1`_ - 2017-02-21
 ---------------------
