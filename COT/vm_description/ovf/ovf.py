@@ -2518,9 +2518,9 @@ class OVF(VMDescription, XML):
                               os.path.splitext(mem.name)[1] == '.ovf']
                 if not candidates:
                     raise VMInitError(1,
-                                      "TAR file '{0}' does not contain an OVF "
-                                      "descriptor - OVA is invalid!"
-                                      .format(ovf_descriptor.name),
+                                      "TAR file does not seem to contain any"
+                                      " .ovf file to serve as OVF descriptor"
+                                      " - OVA is invalid!",
                                       file_path)
                 ovf_descriptor = candidates[0]
                 logger.warning(
