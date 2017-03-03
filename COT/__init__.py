@@ -67,6 +67,7 @@ from verboselogs import VerboseLogger
 from ._version import get_versions
 
 logging.setLoggerClass(VerboseLogger)
+logging.captureWarnings(True)
 
 __version__ = get_versions()['version']
 del get_versions

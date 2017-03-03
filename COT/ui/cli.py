@@ -98,8 +98,6 @@ class CLI(UI):
         self._terminal_width = terminal_width
         self.wrapper = textwrap.TextWrapper(width=self.terminal_width - 1)
 
-        logging.captureWarnings(True)
-
         self.create_parser()
         self.create_subparsers()
         if _argcomplete:
