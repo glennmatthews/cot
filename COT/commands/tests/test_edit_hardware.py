@@ -18,14 +18,14 @@
 
 import re
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.edit_hardware import COTEditHardware
 from COT.data_validation import InvalidInputError
 from COT.platforms import IOSv, IOSXRv
 
 
-class TestCOTEditHardware(COT_UT):
+class TestCOTEditHardware(CommandTestCase):
     """Test the COTEditHardware class."""
 
     NEW_HW_FROM_SCRATCH = {

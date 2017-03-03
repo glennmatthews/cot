@@ -30,19 +30,9 @@ from logging.handlers import BufferingHandler
 # Make sure there's always a "no-op" logging handler.
 from logging import NullHandler
 
-import traceback
-try:
-    # Python 2.x
-    import StringIO
-except ImportError:
-    # Python 3.x
-    import io as StringIO
-
 from pkg_resources import resource_filename
-import mock
 
 from COT.helpers import helpers, HelperError
-from COT.utilities import directory_size, pretty_bytes
 
 try:
     import unittest2 as unittest
@@ -191,21 +181,6 @@ class COT_UT(unittest.TestCase):  # noqa: N801
     }
 
     # Standard WARNING logger messages we may expect at various points:
-    TYPE_NOT_SPECIFIED_GUESS_HARDDISK = {
-        'levelname': 'WARNING',
-        'msg': "drive type not specified.*guessing.*based on file extension",
-        'args': ('harddisk', ),
-    }
-    TYPE_NOT_SPECIFIED_GUESS_CDROM = {
-        'levelname': 'WARNING',
-        'msg': "drive type not specified.*guessing.*based on file extension",
-        'args': ('cdrom', ),
-    }
-    CONTROLLER_NOT_SPECIFIED_GUESS_IDE = {
-        'levelname': 'WARNING',
-        'msg': "Guessing controller type.*based on disk drive type",
-        'args': ('ide', r'.*', r'.*'),
-    }
     UNRECOGNIZED_PRODUCT_CLASS = {
         'levelname': 'WARNING',
         'msg': "Unrecognized product class.*Treating as a generic platform",
@@ -219,14 +194,6 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         'levelname': 'WARNING',
         'msg': "Removing reference to missing file",
     }
-    OVERWRITING_FILE = {
-        'levelname': 'WARNING',
-        'msg': "Overwriting existing File in OVF",
-    }
-    OVERWRITING_DISK = {
-        'levelname': 'WARNING',
-        'msg': "Overwriting existing Disk in OVF",
-    }
     DELETING_DISK = {
         'levelname': 'WARNING',
         'msg': "Existing element will be deleted.",
@@ -234,10 +201,6 @@ class COT_UT(unittest.TestCase):  # noqa: N801
     DELETING_DISK_SECTION = {
         'levelname': 'WARNING',
         'msg': "removing DiskSection",
-    }
-    OVERWRITING_DISK_ITEM = {
-        'levelname': 'WARNING',
-        'msg': "Overwriting existing disk Item in OVF",
     }
 
     @staticmethod
@@ -278,34 +241,6 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         """
         super(COT_UT, self).__init__(method_name)
         self.logging_handler = UTLoggingHandler(self)
-        self.instance = None
-
-    def set_vm_platform(self, plat_class):
-        """Force the VM under test to use a particular Platform class.
-
-        Args:
-           plat_class (COT.platforms.Platform): Platform class to use
-        """
-        # pylint: disable=protected-access
-        self.instance.vm._platform = plat_class()
-
-    def check_cot_output(self, expected):
-        """Grab the output from COT and check it against expected output.
-
-        Args:
-          expected (str): Expected output
-        Raises:
-          AssertionError: if an error is raised by COT when run
-          AssertionError: if the output returned does not match expected.
-        """
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as so:
-            try:
-                self.instance.run()
-            except (TypeError, ValueError, SyntaxError, LookupError):
-                self.fail(traceback.format_exc())
-            output = so.getvalue()
-        self.maxDiff = None
-        self.assertMultiLineEqual(expected.strip(), output.strip())
 
     def check_diff(self, expected, file1=None, file2=None):
         """Get diff of two files and compare it to the expected output.
@@ -400,20 +335,6 @@ class COT_UT(unittest.TestCase):  # noqa: N801
         self.logging_handler.assertNoLogsOver(logging.INFO)
 
         logging.getLogger('COT').removeHandler(self.logging_handler)
-
-        if self.instance:
-            # Check instance working directory prediction against reality
-            if self.instance.vm:
-                estimate = self.instance.working_dir_disk_space_required()
-                actual = directory_size(self.instance.vm.working_dir)
-                if estimate < actual:
-                    self.fail("Estimated {0} would be needed in working"
-                              " directory, but VM actually used {1}"
-                              .format(pretty_bytes(estimate),
-                                      pretty_bytes(actual)))
-
-            self.instance.destroy()
-            self.instance = None
 
         self.validate_with_ovftool(self.temp_file)
 

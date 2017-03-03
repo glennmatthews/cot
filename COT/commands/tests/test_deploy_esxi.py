@@ -28,7 +28,12 @@ import mock
 import requests
 from pyVmomi import vim
 
-from COT.tests.ut import COT_UT, unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 import COT.commands.deploy_esxi
 from COT.commands.deploy_esxi import COTDeployESXi, SmarterConnection
@@ -41,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 @mock.patch('COT.ui.UI.get_password', return_value='passwd')
 @mock.patch('subprocess.check_call')
-class TestCOTDeployESXi(COT_UT):
+class TestCOTDeployESXi(CommandTestCase):
     """Test cases for COTDeployESXi class."""
 
     # Some WARNING logger messages we may expect at various points:
@@ -363,7 +368,7 @@ class TestCOTDeployESXi(COT_UT):
                          "Error connecting to localhost:443: None")
 
 
-class TestSmarterConnection(COT_UT):
+class TestSmarterConnection(unittest.TestCase):
     """Test cases for SmarterConnection class methods."""
 
     def test_unwrap_connection_error_27(self):

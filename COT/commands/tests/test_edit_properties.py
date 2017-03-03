@@ -19,13 +19,13 @@
 import logging
 import re
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.edit_properties import COTEditProperties
 from COT.data_validation import ValueUnsupportedError
 
 
-class TestCOTEditProperties(COT_UT):
+class TestCOTEditProperties(CommandTestCase):
     """Unit tests for COTEditProperties command."""
 
     def setUp(self):

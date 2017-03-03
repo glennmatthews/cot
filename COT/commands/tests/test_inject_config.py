@@ -23,7 +23,7 @@ import shutil
 
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.inject_config import COTInjectConfig
 from COT.data_validation import InvalidInputError, ValueUnsupportedError
@@ -35,7 +35,7 @@ from COT.commands.remove_file import COTRemoveFile
 logger = logging.getLogger(__name__)
 
 
-class TestCOTInjectConfig(COT_UT):
+class TestCOTInjectConfig(CommandTestCase):
     """Test cases for COTInjectConfig class."""
 
     # Expected WARNING message

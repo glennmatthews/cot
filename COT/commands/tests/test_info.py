@@ -16,13 +16,13 @@
 
 """Unit test cases for the COT.info.COTInfo class."""
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.info import COTInfo
 from COT.data_validation import InvalidInputError
 
 
-class TestCOTInfo(COT_UT):
+class TestCOTInfo(CommandTestCase):
     """Test cases for the COTInfo class."""
 
     def setUp(self):

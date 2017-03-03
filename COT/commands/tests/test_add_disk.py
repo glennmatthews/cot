@@ -20,7 +20,7 @@ import filecmp
 import os.path
 import re
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.add_disk import COTAddDisk
 from COT.data_validation import InvalidInputError, ValueMismatchError
@@ -29,7 +29,7 @@ from COT.disks import DiskRepresentation
 from COT.disks.qcow2 import QCOW2
 
 
-class TestCOTAddDisk(COT_UT):
+class TestCOTAddDisk(CommandTestCase):
     """Test cases for the COTAddDisk module."""
 
     def setUp(self):

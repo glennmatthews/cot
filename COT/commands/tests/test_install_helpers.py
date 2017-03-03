@@ -22,7 +22,7 @@ import sys
 
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.install_helpers import COTInstallHelpers
 from COT.helpers import HelperError, helpers
@@ -67,7 +67,7 @@ def stub_dir_exists_but_not_file(path):
 
 # pylint: disable=protected-access
 
-class TestCOTInstallHelpers(COT_UT):
+class TestCOTInstallHelpers(CommandTestCase):
     """Test the COTInstallHelpers class."""
 
     def setUp(self):

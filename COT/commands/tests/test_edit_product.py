@@ -18,13 +18,13 @@
 
 import re
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.edit_product import COTEditProduct
 from COT.data_validation import InvalidInputError
 
 
-class TestCOTEditProduct(COT_UT):
+class TestCOTEditProduct(CommandTestCase):
     """Unit tests for COTEditProduct command."""
 
     def setUp(self):

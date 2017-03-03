@@ -19,7 +19,12 @@
 import logging
 import re
 
-from COT.tests.ut import COT_UT
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.deploy import COTDeploy, SerialConnection
 from COT.data_validation import InvalidInputError, ValueUnsupportedError
@@ -27,7 +32,7 @@ from COT.data_validation import InvalidInputError, ValueUnsupportedError
 logger = logging.getLogger(__name__)
 
 
-class TestCOTDeploy(COT_UT):
+class TestCOTDeploy(CommandTestCase):
     """Test cases for COTDeploy."""
 
     def setUp(self):
@@ -74,7 +79,7 @@ class TestCOTDeploy(COT_UT):
         self.instance.run()
 
 
-class TestSerialConnection(COT_UT):
+class TestSerialConnection(unittest.TestCase):
     """Unit test cases for SerialConnection class."""
 
     def test_from_cli_string_invalid(self):

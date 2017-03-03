@@ -18,13 +18,13 @@
 
 import os.path
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.add_file import COTAddFile
 from COT.data_validation import InvalidInputError
 
 
-class TestCOTAddFile(COT_UT):
+class TestCOTAddFile(CommandTestCase):
     """Test cases for the COTAddFile module."""
 
     def setUp(self):

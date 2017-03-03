@@ -19,7 +19,7 @@
 import os.path
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands import ReadWriteCommand
 from COT.vm_description import VMInitError
@@ -27,7 +27,7 @@ from COT.vm_description import VMInitError
 # pylint: disable=missing-param-doc,missing-type-doc
 
 
-class TestReadWriteCommand(COT_UT):
+class TestReadWriteCommand(CommandTestCase):
     """Test cases for ReadWriteCommand class."""
 
     def setUp(self):

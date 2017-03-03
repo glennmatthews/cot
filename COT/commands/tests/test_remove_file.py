@@ -18,13 +18,13 @@
 
 import os.path
 
-from COT.tests.ut import COT_UT
+from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands.remove_file import COTRemoveFile
 from COT.data_validation import InvalidInputError, ValueMismatchError
 
 
-class TestCOTRemoveFile(COT_UT):
+class TestCOTRemoveFile(CommandTestCase):
     """Test cases for the COTRemoveFile module."""
 
     def setUp(self):
