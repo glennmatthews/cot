@@ -122,7 +122,7 @@ def pretty_bytes(byte_value, base_shift=0):
     """
     if base_shift < 0:
         raise ValueError("base_shift must not be negative")
-    tags = ["B", "KiB", "MiB", "GiB", "TiB"]
+    tags = ["B", "KiB", "MiB", "GiB", "TiB", 'PiB', 'EiB', 'ZiB', 'YiB']
     byte_value = float(byte_value)
     shift = base_shift
     while byte_value >= 1024.0:
