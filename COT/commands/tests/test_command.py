@@ -14,17 +14,75 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Test cases for COT.commands.ReadWriteCommand class."""
+"""Test cases for COT.commands.Command class and generic subclasses."""
 
 import os.path
 import mock
 
 from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
-from COT.commands import ReadWriteCommand
+from COT.commands import Command, ReadCommand, ReadWriteCommand
 from COT.vm_description import VMInitError
 
 # pylint: disable=missing-param-doc,missing-type-doc
+
+class TestCommand(CommandTestCase):
+    """Test cases for Command base class."""
+
+    command_class = Command
+
+    def test_disk_space_required_zero_if_no_vm(self):
+        """Corner case - no VM yet, working_dir_disk_space_required == 0."""
+        self.assertEqual(self.command.working_dir_disk_space_required(), 0)
+
+    def test_check_disk_space_sufficient(self):
+        """Positive test for check_disk_space API."""
+        self.assertTrue(self.command.check_disk_space(1, self.temp_dir))
+        self.assertTrue(self.command.check_disk_space(1, self.temp_dir,
+                                                      label="Hello", die=True))
+
+    @mock.patch("COT.commands.command.available_bytes_at_path", return_value=0)
+    def test_check_disk_space_insufficient(self, *_):
+        """Negative test for check_disk_space API."""
+        # If user declines, return False or die
+        self.command.ui.default_confirm_response = False
+        self.assertFalse(self.command.check_disk_space(100, self.temp_dir))
+        self.assertRaises(SystemExit, self.command.check_disk_space,
+                          100, self.temp_dir, die=True)
+
+        # If user accepts, return True anyways
+        self.command.ui.default_confirm_response = True
+        self.assertTrue(self.command.check_disk_space(100, self.temp_dir))
+        self.assertTrue(self.command.check_disk_space(100, self.temp_dir,
+                        die=True))
+
+
+class TestReadCommand(CommandTestCase):
+    """Test cases for ReadCommand class."""
+
+    command_class = ReadCommand
+
+    def test_not_ready_if_insufficient_space(self):
+        """Ensure that ready_to_run() fails if disk space is lacking."""
+        self.command.package = self.input_ovf
+
+        self.command.ui.default_confirm_response = False
+        with mock.patch.object(self.command,
+                               'working_dir_disk_space_required',
+                               return_value=(1 << 60)):
+            ready, reason = self.command.ready_to_run()
+
+        self.assertFalse(ready)
+        self.assertRegex(reason, "Insufficient disk space available")
+
+        # User can opt to continue anyway
+        self.command.ui.default_confirm_response = True
+        with mock.patch.object(self.command,
+                               'working_dir_disk_space_required',
+                               return_value=(1 << 60)):
+            ready, reason = self.command.ready_to_run()
+
+        self.assertTrue(ready)
 
 
 class TestReadWriteCommand(CommandTestCase):

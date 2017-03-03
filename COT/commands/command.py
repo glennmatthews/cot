@@ -142,9 +142,8 @@ class Command(object):
         dir_path = os.path.abspath(location)
         while dir_path and not os.path.isdir(dir_path):
             dir_path = os.path.dirname(dir_path)
-        if not dir_path:
-            raise ValueError("Unable to determine directory path of {0}"
-                             .format(location))
+        # The above will never fail to find something - in the worst case,
+        # it may ascend all the way to the filesystem root, but stop there.
 
         available = available_bytes_at_path(dir_path)
         logger.verbose("Checking requested disk space %s against available"
