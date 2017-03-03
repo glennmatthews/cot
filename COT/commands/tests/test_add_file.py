@@ -3,7 +3,7 @@
 # test_add_file.py - test cases for the COTAddFile class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -27,35 +27,31 @@ from COT.data_validation import InvalidInputError
 class TestCOTAddFile(CommandTestCase):
     """Test cases for the COTAddFile module."""
 
-    def setUp(self):
-        """Test case setup function called automatically prior to each test."""
-        super(TestCOTAddFile, self).setUp()
-        self.instance = COTAddFile(UI())
-        self.instance.output = self.temp_file
+    command_class = COTAddFile
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
-        ready, reason = self.instance.ready_to_run()
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertEqual("FILE is a mandatory argument!", reason)
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
-        self.instance.file = self.iosv_ovf
-        ready, reason = self.instance.ready_to_run()
+        self.command.file = self.iosv_ovf
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertEqual("PACKAGE is a mandatory argument!", reason)
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
-        self.instance.package = self.input_ovf
-        ready, reason = self.instance.ready_to_run()
+        self.command.package = self.input_ovf
+        ready, reason = self.command.ready_to_run()
         self.assertTrue(ready)
 
     def test_add_file(self):
         """Basic file addition."""
-        self.instance.package = self.input_ovf
-        self.instance.file = self.iosv_ovf
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.file = self.iosv_ovf
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
 ovf:size="{cfg_size}" />
@@ -66,11 +62,11 @@ ovf:size="{cfg_size}" />
 
     def test_add_file_with_id(self):
         """Add a file with explicit 'file_id' argument."""
-        self.instance.package = self.input_ovf
-        self.instance.file = self.iosv_ovf
-        self.instance.file_id = "myfile"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.file = self.iosv_ovf
+        self.command.file_id = "myfile"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
 ovf:size="{cfg_size}" />
@@ -81,22 +77,22 @@ ovf:size="{cfg_size}" />
 
     def test_overwrite_file(self):
         """Overwrite a file implicitly."""
-        self.instance.package = self.input_ovf
-        self.instance.file = self.input_iso
-        self.instance.run()
+        self.command.package = self.input_ovf
+        self.command.file = self.input_iso
+        self.command.run()
         self.assertLogged(**self.OVERWRITING_FILE)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff("")
 
     def test_add_file_then_change_to_disk(self):
         """Add a disk as a file, then make it a proper disk."""
-        self.instance.package = self.minimal_ovf
+        self.command.package = self.minimal_ovf
         intermediate_ovf = os.path.join(self.temp_dir, "mid.ovf")
-        self.instance.output = intermediate_ovf
-        self.instance.file = self.blank_vmdk
-        self.instance.file_id = "mydisk"
-        self.instance.run()
-        self.instance.finished()
+        self.command.output = intermediate_ovf
+        self.command.file = self.blank_vmdk
+        self.command.file_id = "mydisk"
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         file2=intermediate_ovf,
                         expected="""

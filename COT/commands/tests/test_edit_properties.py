@@ -20,7 +20,6 @@ import logging
 import re
 
 from COT.commands.tests.command_testcase import CommandTestCase
-from COT.ui import UI
 from COT.commands.edit_properties import COTEditProperties
 from COT.data_validation import ValueUnsupportedError
 
@@ -28,47 +27,47 @@ from COT.data_validation import ValueUnsupportedError
 class TestCOTEditProperties(CommandTestCase):
     """Unit tests for COTEditProperties command."""
 
+    command_class = COTEditProperties
+
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTEditProperties, self).setUp()
-        self.instance = COTEditProperties(UI())
-        self.instance.output = self.temp_file
         self.counter = 0
 
     def test_not_ready_to_run_labels(self):
         """Test ready_to_run() failure scenarios involving the --label opt."""
-        self.instance.package = self.input_ovf
+        self.command.package = self.input_ovf
         # --label requires --properties
-        self.instance.labels = ["label1", "label2"]
-        ready, reason = self.instance.ready_to_run()
+        self.command.labels = ["label1", "label2"]
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertRegex(reason, r"--label.*requires.*--properties")
         # --label and --properties must have the same number of params
-        self.instance.properties = ["foo=bar"]
-        ready, reason = self.instance.ready_to_run()
+        self.command.properties = ["foo=bar"]
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertRegex(reason, r"--label.*\(2\).*--properties \(1\)")
 
     def test_not_ready_to_run_descriptions(self):
         """Test ready_to_run() failure scenarios involving the --desc opt."""
-        self.instance.package = self.input_ovf
+        self.command.package = self.input_ovf
         # --desc requires --properties
-        self.instance.descriptions = ["desc1", "desc2"]
-        ready, reason = self.instance.ready_to_run()
+        self.command.descriptions = ["desc1", "desc2"]
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertRegex(reason, r"--description.*requires.*--properties")
         # --desc and --properties must have the same number of params
-        self.instance.properties = ["foo=bar"]
-        ready, reason = self.instance.ready_to_run()
+        self.command.properties = ["foo=bar"]
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertRegex(reason, r"--description.*\(2\).*--properties \(1\)")
 
     def test_set_property_value(self):
         """Set the value of an existing property."""
-        self.instance.package = self.input_ovf
-        self.instance.properties = ["login-username=admin"]
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.properties = ["login-username=admin"]
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Category>1. Bootstrap Properties</ovf:Category>
 -      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
@@ -80,13 +79,13 @@ ovf:type="string" ovf:userConfigurable="true" ovf:value="admin">
 
     def test_set_multiple_property_values(self):
         """Set the value of several existing properties."""
-        self.instance.package = self.input_ovf
-        self.instance.properties = [
+        self.command.package = self.input_ovf
+        self.command.properties = [
             "login-username=admin",
             "login-password=cisco123",
             "enable-ssh-server=1"]
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Category>1. Bootstrap Properties</ovf:Category>
 -      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \
@@ -114,13 +113,13 @@ ovf:userConfigurable="true" ovf:value="true">
 
     def test_create_property(self):
         """Create new properties but do not set their values yet."""
-        self.instance.package = self.input_ovf
-        self.instance.properties = [
+        self.command.package = self.input_ovf
+        self.command.properties = [
             "new-property-2=",    # default value is empty string
             "new-property-3",     # no default value
         ]
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Property>
 +      <ovf:Property ovf:key="new-property-2" ovf:type="string" ovf:value="" />
@@ -130,10 +129,10 @@ ovf:userConfigurable="true" ovf:value="true">
 
     def test_create_and_set_property(self):
         """Create a new property and set its value."""
-        self.instance.package = self.input_ovf
-        self.instance.properties = ["new-property=hello"]
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.properties = ["new-property=hello"]
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Property>
 +      <ovf:Property ovf:key="new-property" ovf:type="string" \
@@ -143,15 +142,15 @@ ovf:value="hello" />
 
     def test_create_property_variants(self):
         """Variant options for creating new properties."""
-        self.instance.package = self.input_ovf
-        self.instance.properties = [
+        self.command.package = self.input_ovf
+        self.command.properties = [
             "empty-property",
             "property-with-value=value",
             "prop-with-type+string",
             "prop-with-value-and-type=yes+boolean",
         ]
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Property>
 +      <ovf:Property ovf:key="empty-property" ovf:type="string" />
@@ -165,25 +164,25 @@ ovf:value="true" />
 
     def test_change_type_existing_invalid(self):
         """Change the type of an existing property so that value is invalid."""
-        self.instance.package = self.invalid_ovf
+        self.command.package = self.invalid_ovf
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
-        self.instance.properties = ['jabberwock+boolean']
+        self.command.properties = ['jabberwock+boolean']
         with self.assertRaises(ValueUnsupportedError):
-            self.instance.run()
+            self.command.run()
 
     def test_create_edit_and_user_configurable(self):
         """Create new props, edit existing, and set user-configable flag."""
-        self.instance.package = self.input_ovf
-        self.instance.properties = [
+        self.command.package = self.input_ovf
+        self.command.properties = [
             'new-property=false+boolean',
             'domain-name=example.com',
             'another-new=yep!',
             'enable-https-server+string',
         ]
-        self.instance.user_configurable = False
-        self.instance.run()
-        self.instance.finished()
+        self.command.user_configurable = False
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Property>
 -      <ovf:Property ovf:key="enable-https-server" ovf:type="boolean" \
@@ -209,10 +208,10 @@ ovf:userConfigurable="false" ovf:value="yep!" />
 
     def test_load_config_file(self):
         """Inject a sequence of properties from a config file."""
-        self.instance.package = self.input_ovf
-        self.instance.config_file = self.localfile("sample_cfg.txt")
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.config_file = self.localfile("sample_cfg.txt")
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Property>
 +      <ovf:Property ovf:key="config-0001" ovf:type="string" \
@@ -227,13 +226,13 @@ ovf:value="interface Loopback0" />
 
     def test_combined(self):
         """Set individual properties AND add from a config file."""
-        self.instance.package = self.input_ovf
-        self.instance.config_file = self.localfile("sample_cfg.txt")
-        self.instance.properties = ["login-password=cisco123",
-                                    "enable-ssh-server=1"]
-        self.instance.user_configurable = True
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.config_file = self.localfile("sample_cfg.txt")
+        self.command.properties = ["login-password=cisco123",
+                                   "enable-ssh-server=1"]
+        self.command.user_configurable = True
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Property>
 -      <ovf:Property ovf:key="login-password" ovf:password="true" \
@@ -265,8 +264,8 @@ ovf:userConfigurable="true" ovf:value="end" />
 
     def test_qualifiers_maxlen(self):
         """Ensure property values are limited by MaxLen qualifiers."""
-        self.instance.package = self.input_ovf
-        vm = self.instance.vm
+        self.command.package = self.input_ovf
+        vm = self.command.vm
 
         vm.set_property_value("login-password", "ababab")
         self.assertRaises(ValueUnsupportedError,
@@ -277,10 +276,10 @@ ovf:userConfigurable="true" ovf:value="end" />
 
     def test_qualifiers_minlen(self):
         """Ensure property values are limited by MinLen qualifiers."""
-        self.instance.package = self.invalid_ovf
+        self.command.package = self.invalid_ovf
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
-        vm = self.instance.vm
+        vm = self.command.vm
 
         vm.set_property_value("jabberwock", "super duper alley-ooper scooper")
         self.assertRaises(ValueUnsupportedError,
@@ -290,13 +289,13 @@ ovf:userConfigurable="true" ovf:value="end" />
 
     def test_update_label_and_description(self):
         """Update label and description for existing properties."""
-        self.instance.package = self.input_ovf
-        self.instance.properties = ["hostname", "enable-ssh-server"]
-        self.instance.labels = ["Hostname", "Enable Remote SSH Access"]
-        self.instance.descriptions = ["Enter the router hostname",
-                                      "Enable <sshd>; disable <telnetd>"]
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.properties = ["hostname", "enable-ssh-server"]
+        self.command.labels = ["Hostname", "Enable Remote SSH Access"]
+        self.command.descriptions = ["Enter the router hostname",
+                                     "Enable <sshd>; disable <telnetd>"]
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Property ovf:key="hostname" ovf:qualifiers="MaxLen(63)" \
 ovf:type="string" ovf:userConfigurable="true" ovf:value="">
@@ -320,10 +319,10 @@ set!</ovf:Description>
 
     def test_create_property_no_preexisting(self):
         """Set property values for an OVF that has none previously."""
-        self.instance.package = self.minimal_ovf
-        self.instance.properties = ["hello=world"]
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.properties = ["hello=world"]
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf, expected="""
      </ovf:VirtualHardwareSection>
 +    <ovf:ProductSection>
@@ -335,26 +334,26 @@ set!</ovf:Description>
 
     def test_create_property_no_preexisting_v09(self):
         """Set property for a v0.9 OVF with no pre-existing properties."""
-        self.instance.package = self.v09_ovf
-        self.instance.properties = ["hello=world"]
-        self.assertRaises(NotImplementedError, self.instance.run)
+        self.command.package = self.v09_ovf
+        self.command.properties = ["hello=world"]
+        self.assertRaises(NotImplementedError, self.command.run)
 
     def test_config_file_not_supported(self):
         """Platform doesn't support literal CLI configuration."""
-        self.instance.package = self.iosv_ovf
-        self.instance.config_file = self.localfile("sample_cfg.txt")
+        self.command.package = self.iosv_ovf
+        self.command.config_file = self.localfile("sample_cfg.txt")
         self.assertRaises(NotImplementedError,
-                          self.instance.run)
+                          self.command.run)
 
     def test_set_transport(self):
         """Set environment transport value."""
-        self.instance.package = self.input_ovf
-        self.instance.transports = ['ibm', 'iso', 'vmware']
-        self.assertEqual(self.instance.transports,
+        self.command.package = self.input_ovf
+        self.command.transports = ['ibm', 'iso', 'vmware']
+        self.assertEqual(self.command.transports,
                          ["http://www.ibm.com/xmlns/ovf/transport/filesystem/"
                           "etc/ovf-transport", "iso", "com.vmware.guestInfo"])
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      </ovf:OperatingSystemSection>
 -    <ovf:VirtualHardwareSection ovf:transport="iso">
@@ -371,13 +370,13 @@ transport/filesystem/etc/ovf-transport iso com.vmware.guestInfo">
 
     def test_set_transport_unknown(self):
         """Setting the transport to an unknown value is OK but warned about."""
-        self.instance.package = self.input_ovf
-        self.instance.transports = ['com.vmware.guestInfo', 'foobar']
+        self.command.package = self.input_ovf
+        self.command.transports = ['com.vmware.guestInfo', 'foobar']
         self.assertLogged(**self.UNKNOWN_TRANSPORT)
-        self.assertEqual(self.instance.transports,
+        self.assertEqual(self.command.transports,
                          ['com.vmware.guestInfo', 'foobar'])
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      </ovf:OperatingSystemSection>
 -    <ovf:VirtualHardwareSection ovf:transport="iso">
@@ -387,9 +386,9 @@ transport/filesystem/etc/ovf-transport iso com.vmware.guestInfo">
 
     def test_set_transport_v09(self):
         """Set the transport method for a v0.9 OVF."""
-        self.instance.package = self.v09_ovf
-        self.instance.transports = ['iso']
-        self.assertRaises(NotImplementedError, self.instance.run)
+        self.command.package = self.v09_ovf
+        self.command.transports = ['iso']
+        self.assertRaises(NotImplementedError, self.command.run)
 
     def test_edit_interactive(self):
         """Exercise the interactive CLI for COT edit-properties."""
@@ -520,17 +519,17 @@ Enter new value for this property
             self.counter += 1
             return canned_input
 
-        _input = self.instance.ui.get_input
+        _input = self.command.ui.get_input
         try:
-            self.instance.ui.get_input = custom_input
-            self.instance.package = self.input_ovf
-            self.instance.run()
+            self.command.ui.get_input = custom_input
+            self.command.package = self.input_ovf
+            self.command.run()
             log = expected[self.counter - 1][msgs_idx]
             if log is not None:
                 self.assertLogged(**log)  # pylint: disable=not-a-mapping
         finally:
-            self.instance.ui.get_input = _input
-        self.instance.finished()
+            self.command.ui.get_input = _input
+        self.command.finished()
         self.check_diff("""
        <ovf:Category>1. Bootstrap Properties</ovf:Category>
 -      <ovf:Property ovf:key="login-username" ovf:qualifiers="MaxLen(64)" \

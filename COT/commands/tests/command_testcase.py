@@ -31,6 +31,7 @@ except ImportError:
 from COT.tests.ut import COT_UT
 from COT.ui import UI
 from COT.utilities import directory_size, pretty_bytes
+from COT.commands import Command, ReadWriteCommand
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 class CommandTestCase(COT_UT):
     """Base class for COT Command class test cases."""
 
-    command_class = None
+    command_class = Command
     """Command subclass to instantiate for each test step."""
 
     # WARNING logger messages we may expect at various points
@@ -73,17 +74,30 @@ class CommandTestCase(COT_UT):
         'msg': "Overwriting existing disk Item in OVF",
     }
 
-    def __init__(self, *args, **kwargs):
-        """Add command instance to generic UT initialization.
+    def setUp(self):
+        """Test case setup function called automatically before each test."""
+        super(CommandTestCase, self).setUp()
+        self.command = self.command_class(UI())
+        if isinstance(self.command, ReadWriteCommand):
+            self.command.output = self.temp_file
 
-        For the parameters, see :class:`unittest.TestCase`.
-        """
-        super(CommandTestCase, self).__init__(*args, **kwargs)
-        if self.__class__.command_class is not None:
-            # pylint: disable=not-callable
-            self.instance = self.__class__.command_class(UI())
-        else:
-            self.instance = None
+    def tearDown(self):
+        """Test case cleanup function called automatically after each test."""
+        if self.command:
+            # Check instance working directory prediction against reality
+            if self.command.vm:
+                estimate = self.command.working_dir_disk_space_required()
+                actual = directory_size(self.command.vm.working_dir)
+                if estimate < actual:
+                    self.fail("Estimated {0} would be needed in working"
+                              " directory, but VM actually used {1}"
+                              .format(pretty_bytes(estimate),
+                                      pretty_bytes(actual)))
+
+            self.command.destroy()
+            self.command = None
+
+        super(CommandTestCase, self).tearDown()
 
     def set_vm_platform(self, plat_class):
         """Force the VM under test to use a particular Platform class.
@@ -92,7 +106,7 @@ class CommandTestCase(COT_UT):
            plat_class (COT.platforms.Platform): Platform class to use
         """
         # pylint: disable=protected-access
-        self.instance.vm._platform = plat_class()
+        self.command.vm._platform = plat_class()
 
     def check_cot_output(self, expected):
         """Grab the output from COT and check it against expected output.
@@ -105,27 +119,9 @@ class CommandTestCase(COT_UT):
         """
         with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as so:
             try:
-                self.instance.run()
+                self.command.run()
             except (TypeError, ValueError, SyntaxError, LookupError):
                 self.fail(traceback.format_exc())
             output = so.getvalue()
         self.maxDiff = None
         self.assertMultiLineEqual(expected.strip(), output.strip())
-
-    def tearDown(self):
-        """Test case cleanup function called automatically after each test."""
-        if self.instance:
-            # Check instance working directory prediction against reality
-            if self.instance.vm:
-                estimate = self.instance.working_dir_disk_space_required()
-                actual = directory_size(self.instance.vm.working_dir)
-                if estimate < actual:
-                    self.fail("Estimated {0} would be needed in working"
-                              " directory, but VM actually used {1}"
-                              .format(pretty_bytes(estimate),
-                                      pretty_bytes(actual)))
-
-            self.instance.destroy()
-            self.instance = None
-
-        super(CommandTestCase, self).tearDown()

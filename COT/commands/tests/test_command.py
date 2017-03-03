@@ -30,29 +30,25 @@ from COT.vm_description import VMInitError
 class TestReadWriteCommand(CommandTestCase):
     """Test cases for ReadWriteCommand class."""
 
-    def setUp(self):
-        """Test case setup function called automatically prior to each test."""
-        super(TestReadWriteCommand, self).setUp()
-        self.instance = ReadWriteCommand(UI())
-        self.instance.output = self.temp_file
+    command_class = ReadWriteCommand
 
     def test_vmfactory_fail(self):
         """If package/output are unsupported, expect a VMInitError."""
-        self.instance.output = "foo.vmx"
+        self.command.output = "foo.vmx"
         with self.assertRaises(VMInitError):
-            self.instance.package = self.input_ovf
+            self.command.package = self.input_ovf
 
     def test_create_subparser_noop(self):
         """The generic class doesn't create a subparser."""
-        self.instance.create_subparser()
+        self.command.create_subparser()
 
     def test_set_output_implicitly(self):
         """If 'output' is not specifically set, run() sets it to 'package'."""
-        self.instance.output = ""
-        self.instance.package = self.input_ovf
-        self.assertEqual(self.instance.output, "")
-        self.instance.run()
-        self.assertEqual(self.instance.output, self.input_ovf)
+        self.command.output = ""
+        self.command.package = self.input_ovf
+        self.assertEqual(self.command.output, "")
+        self.command.run()
+        self.assertEqual(self.command.output, self.input_ovf)
 
     @mock.patch("COT.vm_description.ovf.OVF.predicted_output_size")
     @mock.patch("COT.commands.command.available_bytes_at_path")
@@ -63,41 +59,41 @@ class TestReadWriteCommand(CommandTestCase):
 
         # Cases that do not result in a check:
         # 1. Set package without setting output
-        self.instance = ReadWriteCommand(UI())
-        self.instance.package = self.input_ovf
+        self.command = ReadWriteCommand(UI())
+        self.command.package = self.input_ovf
 
         mock_size.assert_not_called()
         mock_available.assert_not_called()
-        self.instance.destroy()
+        self.command.destroy()
 
         # 2. Set output without setting package
-        self.instance = ReadWriteCommand(UI())
-        self.instance.output = self.temp_file
+        self.command = ReadWriteCommand(UI())
+        self.command.output = self.temp_file
         mock_size.assert_not_called()
         mock_available.assert_not_called()
 
-        self.instance.destroy()
+        self.command.destroy()
         mock_size.reset_mock()
         mock_available.reset_mock()
 
         # Cases that do result in a check:
         # 1. Setting package when output is already set
-        self.instance = ReadWriteCommand(UI())
-        self.instance.output = self.temp_file
-        self.instance.package = self.input_ovf
-        self.assertNotEqual(self.instance.vm, None)
+        self.command = ReadWriteCommand(UI())
+        self.command.output = self.temp_file
+        self.command.package = self.input_ovf
+        self.assertNotEqual(self.command.vm, None)
         mock_size.assert_called_once()
         mock_available.assert_called_once()
 
-        self.instance.destroy()
+        self.command.destroy()
         mock_size.reset_mock()
         mock_available.reset_mock()
 
         # 2. Setting output when package is already set
-        self.instance = ReadWriteCommand(UI())
-        self.instance.package = self.input_ovf
-        self.instance.output = self.temp_file
-        self.assertNotEqual(self.instance.vm, None)
+        self.command = ReadWriteCommand(UI())
+        self.command.package = self.input_ovf
+        self.command.output = self.temp_file
+        self.assertNotEqual(self.command.vm, None)
         mock_size.assert_called_once()
         mock_available.assert_called_once()
 
@@ -105,7 +101,7 @@ class TestReadWriteCommand(CommandTestCase):
         mock_available.reset_mock()
 
         # 3. Changing output when package is already set
-        self.instance.output = os.path.join(self.temp_dir, "new_out.ovf")
+        self.command.output = os.path.join(self.temp_dir, "new_out.ovf")
         mock_size.assert_called_once()
         mock_available.assert_called_once()
 

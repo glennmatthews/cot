@@ -71,88 +71,84 @@ class TestCOTEditHardware(CommandTestCase):
             'args': [name],
         }
 
-    def setUp(self):
-        """Test case setup function called automatically prior to each test."""
-        super(TestCOTEditHardware, self).setUp()
-        self.instance = COTEditHardware(UI())
-        self.instance.output = self.temp_file
+    command_class = COTEditHardware
 
     def test_not_ready_with_no_args(self):
         """Test ready_to_run() behavior."""
-        self.instance.package = self.input_ovf
-        ready, reason = self.instance.ready_to_run()
+        self.command.package = self.input_ovf
+        ready, reason = self.command.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("No work requested", reason))
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
     def test_valid_args(self):
         """Verify that various valid args are accepted and stored."""
-        self.instance.package = self.input_ovf
-        self.instance.cpus = "1"
-        self.assertEqual(self.instance.cpus, 1)
-        self.instance.memory = "1GB"
-        self.assertEqual(self.instance.memory, 1024)
-        self.instance.memory = "2g"
-        self.assertEqual(self.instance.memory, 2048)
-        self.instance.memory = "256M"
-        self.assertEqual(self.instance.memory, 256)
-        self.instance.memory = "1024"
+        self.command.package = self.input_ovf
+        self.command.cpus = "1"
+        self.assertEqual(self.command.cpus, 1)
+        self.command.memory = "1GB"
+        self.assertEqual(self.command.memory, 1024)
+        self.command.memory = "2g"
+        self.assertEqual(self.command.memory, 2048)
+        self.command.memory = "256M"
+        self.assertEqual(self.command.memory, 256)
+        self.command.memory = "1024"
         self.assertLogged(**self.MEMORY_UNIT_GUESS)
-        self.assertEqual(self.instance.memory, 1024)
-        self.instance.nics = 1
-        self.assertEqual(self.instance.nics, 1)
-        self.instance.serial_ports = 1
-        self.assertEqual(self.instance.serial_ports, 1)
+        self.assertEqual(self.command.memory, 1024)
+        self.command.nics = 1
+        self.assertEqual(self.command.nics, 1)
+        self.command.serial_ports = 1
+        self.assertEqual(self.command.serial_ports, 1)
 
     def test_invalid_always_args(self):
         """Verify that various values are always invalid."""
         # pylint: disable=redefined-variable-type
-        self.instance.package = self.input_ovf
+        self.command.package = self.input_ovf
         with self.assertRaises(InvalidInputError):
-            self.instance.cpus = 0
+            self.command.cpus = 0
         with self.assertRaises(InvalidInputError):
-            self.instance.cpus = "a"
+            self.command.cpus = "a"
         with self.assertRaises(InvalidInputError):
-            self.instance.memory = 0
+            self.command.memory = 0
         with self.assertRaises(InvalidInputError):
-            self.instance.memory = "GB"
+            self.command.memory = "GB"
         with self.assertRaises(InvalidInputError):
-            self.instance.nics = -1
+            self.command.nics = -1
         with self.assertRaises(InvalidInputError):
-            self.instance.nics = "b"
+            self.command.nics = "b"
         with self.assertRaises(InvalidInputError):
-            self.instance.serial_ports = -1
+            self.command.serial_ports = -1
         with self.assertRaises(InvalidInputError):
-            self.instance.serial_ports = "c"
+            self.command.serial_ports = "c"
 
     def test_valid_by_platform(self):
         """Verify that some input values' validity depends on platform."""
-        self.instance.package = self.input_ovf
-        self.instance.ui.default_confirm_response = False
+        self.command.package = self.input_ovf
+        self.command.ui.default_confirm_response = False
         # IOSv only supports 1 vCPU and up to 3 GB of RAM
         self.set_vm_platform(IOSv)
         with self.assertRaises(InvalidInputError):
-            self.instance.cpus = 2
+            self.command.cpus = 2
         with self.assertRaises(InvalidInputError):
-            self.instance.memory = "4GB"
+            self.command.memory = "4GB"
         # ...but IOSXRv supports up to 8 CPUs and 3-8 GB of RAM
         self.set_vm_platform(IOSXRv)
-        self.instance.cpus = 2
-        self.instance.cpus = 8
+        self.command.cpus = 2
+        self.command.cpus = 8
         with self.assertRaises(InvalidInputError):
-            self.instance.cpus = 9
-        self.instance.memory = "4"
+            self.command.cpus = 9
+        self.command.memory = "4"
         self.assertLogged(**self.MEMORY_UNIT_GUESS)
-        self.instance.memory = "8GB"
+        self.command.memory = "8GB"
         with self.assertRaises(InvalidInputError):
-            self.instance.memory = "9GB"
+            self.command.memory = "9GB"
 
     def test_set_system_type_single(self):
         """Set the VirtualSystemType to a single value."""
-        self.instance.package = self.input_ovf
-        self.instance.virtual_system_type = ['vmx-09']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.virtual_system_type = ['vmx-09']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <vssd:VirtualSystemIdentifier>test</vssd:VirtualSystemIdentifier>
 -        <vssd:VirtualSystemType>vmx-07 vmx-08</vssd:VirtualSystemType>
@@ -162,16 +158,16 @@ class TestCOTEditHardware(CommandTestCase):
 
     def test_set_system_type_list(self):
         """Set the VirtualSystemType to a list of values."""
-        self.instance.package = self.input_ovf
-        self.instance.virtual_system_type = \
+        self.command.package = self.input_ovf
+        self.command.virtual_system_type = \
             ['vmx-07', 'vmx-08', 'vmx-09', 'Cisco:Internal:VMCloud-01']
         # 'profiles' will be ignored in this case,
         # as VirtualSystemType is not filtered by profile
-        self.instance.profiles = ['2CPU-2GB-1NIC']
-        self.instance.run()
+        self.command.profiles = ['2CPU-2GB-1NIC']
+        self.command.run()
         # TODO - catch warning logger message that should be generated
         # due to profiles being ignored.
-        self.instance.finished()
+        self.command.finished()
         self.check_diff("""
          <vssd:VirtualSystemIdentifier>test</vssd:VirtualSystemIdentifier>
 -        <vssd:VirtualSystemType>vmx-07 vmx-08</vssd:VirtualSystemType>
@@ -182,10 +178,10 @@ Cisco:Internal:VMCloud-01</vssd:VirtualSystemType>
 
     def test_set_system_type_no_existing(self):
         """Add a VirtualSystemType to an OVF that doesn't have any."""
-        self.instance.package = self.minimal_ovf
-        self.instance.virtual_system_type = ['vmx-07', 'vmx-08']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.virtual_system_type = ['vmx-07', 'vmx-08']
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
  <?xml version='1.0' encoding='utf-8'?>
@@ -206,11 +202,11 @@ CIM_VirtualSystemSettingData">
 
     def test_set_cpus_one_profile(self):
         """Change the number of CPUs under a specific profile."""
-        self.instance.package = self.input_ovf
-        self.instance.cpus = 8
-        self.instance.profiles = ['2CPU-2GB-1NIC']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.cpus = 8
+        self.command.profiles = ['2CPU-2GB-1NIC']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:Description>Number of Virtual CPUs</rasd:Description>
 -        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
@@ -224,11 +220,11 @@ CIM_VirtualSystemSettingData">
 
     def test_set_cpus_merge_profiles(self):
         """Change # CPUs under one profile to match another profile."""
-        self.instance.package = self.input_ovf
-        self.instance.cpus = 4
-        self.instance.profiles = ['2CPU-2GB-1NIC']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.cpus = 4
+        self.command.profiles = ['2CPU-2GB-1NIC']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Item>
 -      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
@@ -247,10 +243,10 @@ CIM_VirtualSystemSettingData">
 
     def test_set_cpus_all_profiles(self):
         """Change value under all profiles, merging a group of Items."""
-        self.instance.package = self.input_ovf
-        self.instance.cpus = 1
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.cpus = 1
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
       </ovf:Item>
 -      <ovf:Item ovf:configuration="2CPU-2GB-1NIC">
@@ -276,11 +272,11 @@ CIM_VirtualSystemSettingData">
 
     def test_set_cpus_no_existing(self):
         """Create a CPU definition in an OVF that doesn't have one."""
-        self.instance.package = self.minimal_ovf
-        self.instance.cpus = 1
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.command.cpus = 1
+        self.command.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
  <?xml version='1.0' encoding='utf-8'?>
@@ -302,12 +298,12 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_memory_one_profile(self):
         """Set memory allocation under one profile."""
-        self.instance.package = self.input_ovf
-        self.instance.memory = 3072
+        self.command.package = self.input_ovf
+        self.command.memory = 3072
         self.assertLogged(**self.MEMORY_UNIT_GUESS)
-        self.instance.profiles = ['2CPU-2GB-1NIC']
-        self.instance.run()
-        self.instance.finished()
+        self.command.profiles = ['2CPU-2GB-1NIC']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:Description>Memory Size</rasd:Description>
 -        <rasd:ElementName>2048MB of memory</rasd:ElementName>
@@ -321,10 +317,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_memory_all_profiles(self):
         """Set memory allocation under one profile."""
-        self.instance.package = self.input_ovf
-        self.instance.memory = "3072M"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.memory = "3072M"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:Description>Memory Size</rasd:Description>
 -        <rasd:ElementName>1024MB of memory</rasd:ElementName>
@@ -354,11 +350,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_memory_no_existing(self):
         """Create a RAM definition in an OVF that doesn't have one."""
-        self.instance.package = self.minimal_ovf
-        self.instance.memory = "4GB"
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.command.memory = "4GB"
+        self.command.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
  <?xml version='1.0' encoding='utf-8'?>
@@ -381,11 +377,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_type_one_profile(self):
         """Set NIC hardware type under a single profile."""
-        self.instance.package = self.input_ovf
-        self.instance.profiles = ['4CPU-4GB-3NIC']
-        self.instance.nic_type = "E1000"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.profiles = ['4CPU-4GB-3NIC']
+        self.command.nic_type = "E1000"
+        self.command.run()
+        self.command.finished()
         # This requires cloning the "default" NIC under instance 11
         # to create a profile-specific version of this NIC
         self.check_diff("""
@@ -428,11 +424,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_type_all_profiles(self):
         """Change NIC hardware type under all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_type = "virtio-net-pci"
-        self.assertEqual(self.instance.nic_type, "virtio")
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_type = "virtio-net-pci"
+        self.assertEqual(self.command.nic_type, "virtio")
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:Connection>VM Network</rasd:Connection>
 -        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
@@ -470,19 +466,19 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_type_no_existing(self):
         """Set NIC hardware type for an OVF with no NICs (no-op)."""
-        self.instance.package = self.minimal_ovf
-        self.instance.nic_type = "virtio"
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.command.nic_type = "virtio"
+        self.command.run()
         self.assertLogged(**self.NO_ITEMS_NO_WORK)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff("", file1=self.minimal_ovf)
 
     def test_set_nic_count_add(self):
         """Add additional NICs across all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.nics = 5
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nics = 5
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Item>
 -      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
@@ -525,10 +521,10 @@ CIM_ResourceAllocationSettingData">
         In this OVF, each NIC is mapped to a unique network, so COT must be
         smart enough to create additional networks as well.
         """
-        self.instance.package = self.csr_ovf
-        self.instance.nics = 6
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.csr_ovf
+        self.command.nics = 6
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Description>Data network 3</ovf:Description>
 +    </ovf:Network>
@@ -582,12 +578,12 @@ CIM_ResourceAllocationSettingData">
         base OVF uses the same strings for NIC and network names, but the
         desired output OVF does not.
         """
-        self.instance.package = self.csr_ovf
-        self.instance.nics = 4
-        self.instance.nic_names = ['GigabitEthernet{1}']
-        self.instance.nic_networks = ["Alpha", "Beta", "Delta", "Gamma"]
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.csr_ovf
+        self.command.nics = 4
+        self.command.nic_names = ['GigabitEthernet{1}']
+        self.command.nic_networks = ["Alpha", "Beta", "Delta", "Gamma"]
+        self.command.run()
+        self.command.finished()
         self.assertLogged(**self.removing_network_warning('GigabitEthernet1'))
         self.assertLogged(**self.removing_network_warning('GigabitEthernet2'))
         self.assertLogged(**self.removing_network_warning('GigabitEthernet3'))
@@ -643,11 +639,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_count_merge_profiles(self):
         """Add NICs that already exist under one profile to another."""
-        self.instance.package = self.input_ovf
-        self.instance.nics = 3
-        self.instance.profiles = ['2CPU-2GB-1NIC']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nics = 3
+        self.command.profiles = ['2CPU-2GB-1NIC']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Item>
 -      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
@@ -662,11 +658,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_count_create_new_one_profile(self):
         """"Create a new NIC under a single profile."""
-        self.instance.package = self.input_ovf
-        self.instance.nics = '4'
-        self.instance.profiles = ['4CPU-4GB-3NIC']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nics = '4'
+        self.command.profiles = ['4CPU-4GB-3NIC']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Item>
 +      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
@@ -685,11 +681,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_count_delete_nics(self):
         """Set NIC count to a lower value, deleting some NICs."""
-        self.instance.package = self.input_ovf
-        self.instance.nics = 0
-        self.instance.profiles = ['1CPU-1GB-1NIC']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nics = 0
+        self.command.profiles = ['1CPU-1GB-1NIC']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Item>
 -      <ovf:Item>
@@ -699,12 +695,12 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_count_no_existing(self):
         """Create a NIC when nothing pre-exists."""
-        self.instance.package = self.minimal_ovf
-        self.instance.nics = 2
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.command.nics = 2
+        self.command.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
         self.assertLogged(**self.GENERIC_NETWORK)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf, expected="""
  <?xml version='1.0' encoding='utf-8'?>
 -<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
@@ -738,19 +734,19 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_count_zero_then_re_add(self):
         """Set NIC count to zero, then recreate the NICs."""
-        self.instance.package = self.v09_ovf
-        self.instance.nics = 0
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.v09_ovf
+        self.command.nics = 0
+        self.command.run()
+        self.command.finished()
         self.assertLogged(**self.removing_network_warning('bridged'))
         self.assertLogged(**self.REMOVING_NETWORKSECTION)
 
-        self.instance.package = self.temp_file
-        self.instance.nics = 1
-        self.instance.run()
+        self.command.package = self.temp_file
+        self.command.nics = 1
+        self.command.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
         self.assertLogged(**self.GENERIC_NETWORK)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff(file1=self.v09_ovf, expected="""
    <ovf:Section xsi:type="ovf:NetworkSection_Type">
 -    <ovf:Info>The list of logical networks</ovf:Info>
@@ -779,12 +775,12 @@ CIM_ResourceAllocationSettingData">
         """Create a new network and map a NIC to it under a single profile."""
         # Create a new network and map to it under one profile
         # This involves splitting the existing NIC into two items
-        self.instance.package = self.input_ovf
-        self.instance.nic_networks = ['UT']
-        self.instance.network_descriptions = ['Unit test network']
-        self.instance.profiles = ['2CPU-2GB-1NIC']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_networks = ['UT']
+        self.command.network_descriptions = ['Unit test network']
+        self.command.profiles = ['2CPU-2GB-1NIC']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Description>VM Network</ovf:Description>
 +    </ovf:Network>
@@ -808,10 +804,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_network_all_profiles(self):
         """Test changing NIC network mapping across all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_networks = ['UT', 'UT', 'UT']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_networks = ['UT', 'UT', 'UT']
+        self.command.run()
+        self.command.finished()
         self.assertLogged(**self.removing_network_warning())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
@@ -853,11 +849,11 @@ CIM_ResourceAllocationSettingData">
         Remaining networks get the last description in the list.
         Remaining NICs get the last network in the list.
         """
-        self.instance.package = self.input_ovf
-        self.instance.nic_networks = ['UT1', 'UT2']
-        self.instance.network_descriptions = ['First UT']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_networks = ['UT1', 'UT2']
+        self.command.network_descriptions = ['First UT']
+        self.command.run()
+        self.command.finished()
         self.assertLogged(**self.removing_network_warning())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
@@ -897,11 +893,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_network_list_pattern(self):
         """Use wildcard expansion to create multiple networks as needed."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_networks = ["UT_{20}_network"]
-        self.instance.network_descriptions = ['First network', '#{2} Network']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_networks = ["UT_{20}_network"]
+        self.command.network_descriptions = ['First network', '#{2} Network']
+        self.command.run()
+        self.command.finished()
         self.assertLogged(**self.removing_network_warning())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
@@ -947,10 +943,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_network_description_only(self):
         """Set network descriptions without changing network names."""
-        self.instance.package = self.input_ovf
-        self.instance.network_descriptions = ['Network 1', 'Network 2']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.network_descriptions = ['Network 1', 'Network 2']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      <ovf:Network ovf:name="VM Network">
 -      <ovf:Description>VM Network</ovf:Description>
@@ -960,10 +956,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_mac_address_single_all_profiles(self):
         """Set a single MAC address on all NICs on all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.mac_addresses_list = ['10:20:30:40:50:60']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.mac_addresses_list = ['10:20:30:40:50:60']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Item>
 +        <rasd:Address>10:20:30:40:50:60</rasd:Address>
@@ -980,11 +976,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_mac_addresses_list_all_profiles(self):
         """Set a sequence of MAC addresses for all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.mac_addresses_list = \
+        self.command.package = self.input_ovf
+        self.command.mac_addresses_list = \
             ['10:20:30:40:50:60', '01:02:03:04:05:06', 'ab:cd:ef:00:00:00']
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Item>
 +        <rasd:Address>10:20:30:40:50:60</rasd:Address>
@@ -1001,10 +997,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_name_list_exact(self):
         """Set a list of names identical in length to the number of NICs."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_names = ['foo', 'bar', 'baz']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_names = ['foo', 'bar', 'baz']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
@@ -1027,13 +1023,13 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_name_list_extra(self):
         """Set a list of NIC names that's longer than needed."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_names = ['foo', 'bar', 'baz', 'bat']
-        self.instance.run()
+        self.command.package = self.input_ovf
+        self.command.nic_names = ['foo', 'bar', 'baz', 'bat']
+        self.command.run()
         self.assertLogged(levelname="ERROR",
                           msg="not all %s values were used",
                           args=('ethernet', 'ElementName', ['bat']))
-        self.instance.finished()
+        self.command.finished()
         self.check_diff("""
          <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
@@ -1056,10 +1052,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_name_list_short(self):
         """Set a list of NIC names that's shorter than needed."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_names = ['foo', 'bar']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_names = ['foo', 'bar']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
@@ -1082,10 +1078,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_name_pattern(self):
         """Set NIC names based on a pattern."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_names = ['eth{0}']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_names = ['eth{0}']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
@@ -1108,10 +1104,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_name_list_pattern(self):
         """Set NIC names based on a constant plus a pattern."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_names = ['foo', 'eth{10}']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.nic_names = ['foo', 'eth{10}']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
 </rasd:Description>
@@ -1134,27 +1130,27 @@ CIM_ResourceAllocationSettingData">
 
     def test_deprecated_nic_type(self):
         """The nic_type method is deprecated by nic_types."""
-        self.instance.package = self.input_ovf
-        self.assertEqual(self.instance.nic_type, None)
+        self.command.package = self.input_ovf
+        self.assertEqual(self.command.nic_type, None)
 
-        self.instance.nic_type = 'e1000'
-        self.assertEqual(self.instance.nic_type, 'E1000')
-        self.assertEqual(self.instance.nic_types, ['E1000'])
+        self.command.nic_type = 'e1000'
+        self.assertEqual(self.command.nic_type, 'E1000')
+        self.assertEqual(self.command.nic_types, ['E1000'])
 
-        self.instance.nic_types = ['e1000', 'virtio']
-        self.assertEqual(self.instance.nic_types, ['E1000', 'virtio'])
+        self.command.nic_types = ['e1000', 'virtio']
+        self.assertEqual(self.command.nic_types, ['E1000', 'virtio'])
         with self.assertRaises(TypeError):
-            assert self.instance.nic_type
+            assert self.command.nic_type
 
     def test_set_nic_kitchen_sink_all_profiles(self):
         """Test changing many NIC properties at once under all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.nic_types = ['e1000', 'virtio']
-        self.instance.nic_networks = ['UT1', 'UT2', 'UT3']
-        self.instance.mac_addresses_list = \
+        self.command.package = self.input_ovf
+        self.command.nic_types = ['e1000', 'virtio']
+        self.command.nic_networks = ['UT1', 'UT2', 'UT3']
+        self.command.mac_addresses_list = \
             ['00:00:00:00:00:01', '11:22:33:44:55:66', 'fe:fd:fc:fb:fa:f9']
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.assertLogged(**self.removing_network_warning())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
@@ -1222,12 +1218,12 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_kitchen_sink_one_profile(self):
         """Test changing many NIC properties at once under one profile."""
-        self.instance.package = self.input_ovf
-        self.instance.profiles = ['4CPU-4GB-3NIC']
-        self.instance.nics = 4
-        self.instance.nic_networks = ['UT']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.profiles = ['4CPU-4GB-3NIC']
+        self.command.nics = 4
+        self.command.nic_networks = ['UT']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Description>VM Network</ovf:Description>
 +    </ovf:Network>
@@ -1279,14 +1275,14 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_nic_kitchen_sink_no_existing(self):
         """Define NIC in an OVF that previously had none."""
-        self.instance.package = self.minimal_ovf
-        self.instance.nics = 1
-        self.instance.nic_networks = ['testme']
-        self.instance.nic_types = ['virtio-net-pci', 'e1000']
-        self.instance.mac_addresses_list = ['12:34:56:78:9a:bc']
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.command.nics = 1
+        self.command.nic_networks = ['testme']
+        self.command.nic_types = ['virtio-net-pci', 'e1000']
+        self.command.mac_addresses_list = ['12:34:56:78:9a:bc']
+        self.command.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
  <?xml version='1.0' encoding='utf-8'?>
@@ -1317,11 +1313,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_serial_count_delete_one_profile(self):
         """Remove a shared serial port from one profile only."""
-        self.instance.package = self.input_ovf
-        self.instance.profiles = ['2CPU-2GB-1NIC']
-        self.instance.serial_ports = 1
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.profiles = ['2CPU-2GB-1NIC']
+        self.command.serial_ports = 1
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Item>
 -      <ovf:Item ovf:required="false">
@@ -1332,10 +1328,10 @@ ovf:required="false">
 
     def test_set_serial_count_delete_all_profiles(self):
         """Remove a serial port across all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.serial_ports = 1
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.serial_ports = 1
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Item>
 -      <ovf:Item ovf:required="false">
@@ -1351,10 +1347,10 @@ ovf:required="false">
 
     def test_set_serial_count_create_all_profiles(self):
         """Create a serial port under all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.serial_ports = 3
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.serial_ports = 3
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        </ovf:Item>
 +      <ovf:Item ovf:required="false">
@@ -1370,11 +1366,11 @@ ovf:required="false">
 
     def test_set_serial_count_no_existing(self):
         """Create a serial port in an OVF that had none."""
-        self.instance.package = self.minimal_ovf
-        self.instance.serial_ports = 1
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.command.serial_ports = 1
+        self.command.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
  <?xml version='1.0' encoding='utf-8'?>
@@ -1395,10 +1391,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_serial_connectivity_one_port_all_profiles(self):
         """Set serial connectivity for one port under all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.serial_connectivity = ['telnet://localhost:22001']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.serial_connectivity = ['telnet://localhost:22001']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Item ovf:required="false">
 +        <rasd:Address>telnet://localhost:22001</rasd:Address>
@@ -1407,11 +1403,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_serial_connectivity_two_ports_all_profiles(self):
         """Set serial connectivity for multiple ports across all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.serial_connectivity = \
+        self.command.package = self.input_ovf
+        self.command.serial_connectivity = \
             ['telnet://localhost:22001', 'telnet://localhost:22002']
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Item ovf:required="false">
 +        <rasd:Address>telnet://localhost:22001</rasd:Address>
@@ -1424,12 +1420,12 @@ CIM_ResourceAllocationSettingData">
 
     def test_serial_create_kitchen_sink(self):
         """Create a serial port and set connectivity in one pass."""
-        self.instance.package = self.input_ovf
-        self.instance.serial_ports = '3'
-        self.instance.serial_connectivity = \
+        self.command.package = self.input_ovf
+        self.command.serial_ports = '3'
+        self.command.serial_connectivity = \
             ['telnet://foo:1', 'telnet://foo:2', 'telnet://foo:3']
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Item ovf:required="false">
 +        <rasd:Address>telnet://foo:1</rasd:Address>
@@ -1454,11 +1450,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_serial_delete_kitchen_sink(self):
         """Delete a serial port and set connectivity in one pass."""
-        self.instance.package = self.input_ovf
-        self.instance.serial_ports = 1
-        self.instance.serial_connectivity = ['telnet://bar:22']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.serial_ports = 1
+        self.command.serial_connectivity = ['telnet://bar:22']
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Item ovf:required="false">
 +        <rasd:Address>telnet://bar:22</rasd:Address>
@@ -1478,11 +1474,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_scsi_subtype_all_profiles(self):
         """Set SCSI controller subtype under all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.scsi_subtype = "virtio"
-        self.assertEqual(self.instance.scsi_subtype, "virtio")
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.scsi_subtype = "virtio"
+        self.assertEqual(self.command.scsi_subtype, "virtio")
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:InstanceID>3</rasd:InstanceID>
 -        <rasd:ResourceSubType>lsilogic</rasd:ResourceSubType>
@@ -1492,13 +1488,13 @@ CIM_ResourceAllocationSettingData">
 
     def test_clear_scsi_subtype_all_profiles(self):
         """Clear SCSI controller subtype under all profiles."""
-        self.instance.package = self.input_ovf
+        self.command.package = self.input_ovf
         # TODO: this should really be an empty list or None
-        self.instance.scsi_subtype = ""
-        self.assertEqual(self.instance.scsi_subtype, None)
-        self.assertEqual(self.instance.scsi_subtypes, [])
-        self.instance.run()
-        self.instance.finished()
+        self.command.scsi_subtype = ""
+        self.assertEqual(self.command.scsi_subtype, None)
+        self.assertEqual(self.command.scsi_subtypes, [])
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
          <rasd:InstanceID>3</rasd:InstanceID>
 -        <rasd:ResourceSubType>lsilogic</rasd:ResourceSubType>
@@ -1507,14 +1503,14 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_scsi_subtype_one_profile(self):
         """Set SCSI controller subtype under a single profile."""
-        self.instance.package = self.input_ovf
-        self.instance.scsi_subtypes = ['buslogic', 'lsilogic']
-        self.assertEqual(self.instance.scsi_subtypes, ['buslogic', 'lsilogic'])
+        self.command.package = self.input_ovf
+        self.command.scsi_subtypes = ['buslogic', 'lsilogic']
+        self.assertEqual(self.command.scsi_subtypes, ['buslogic', 'lsilogic'])
         with self.assertRaises(TypeError):
-            assert self.instance.scsi_subtype
-        self.instance.profiles = ['4CPU-4GB-3NIC']
-        self.instance.run()
-        self.instance.finished()
+            assert self.command.scsi_subtype
+        self.command.profiles = ['4CPU-4GB-3NIC']
+        self.command.run()
+        self.command.finished()
         # This requires creating a new variant of the SCSI controller
         # specific to this profile
         self.check_diff("""
@@ -1532,26 +1528,26 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_scsi_subtype_no_existing(self):
         """Set SCSI controller subtype for an OVF with none (no-op)."""
-        self.instance.package = self.minimal_ovf
-        self.assertEqual(self.instance.scsi_subtype, None)
-        self.assertEqual(self.instance.scsi_subtypes, None)
-        self.instance.scsi_subtype = "virtualscsi"
-        self.assertEqual(self.instance.scsi_subtype, "VirtualSCSI")
-        self.assertEqual(self.instance.scsi_subtypes, ["VirtualSCSI"])
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.assertEqual(self.command.scsi_subtype, None)
+        self.assertEqual(self.command.scsi_subtypes, None)
+        self.command.scsi_subtype = "virtualscsi"
+        self.assertEqual(self.command.scsi_subtype, "VirtualSCSI")
+        self.assertEqual(self.command.scsi_subtypes, ["VirtualSCSI"])
+        self.command.run()
         self.assertLogged(**self.NO_ITEMS_NO_WORK)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff("", file1=self.minimal_ovf)
 
     def test_set_ide_subtype_all_profiles(self):
         """Set IDE controller subtype across all profiles."""
-        self.instance.package = self.input_ovf
-        self.instance.ide_subtypes = ["virtio", "piix4"]
-        self.assertEqual(self.instance.ide_subtypes, ["virtio", "PIIX4"])
+        self.command.package = self.input_ovf
+        self.command.ide_subtypes = ["virtio", "piix4"]
+        self.assertEqual(self.command.ide_subtypes, ["virtio", "PIIX4"])
         with self.assertRaises(TypeError):
-            assert self.instance.ide_subtype
-        self.instance.run()
-        self.instance.finished()
+            assert self.command.ide_subtype
+        self.command.run()
+        self.command.finished()
         # Since there is no pre-existing subtype, we just create it
         # under each controller:
         self.check_diff("""
@@ -1566,13 +1562,13 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_ide_subtype_one_profile(self):
         """Set IDE controller subtype under a single profile."""
-        self.instance.package = self.input_ovf
-        self.instance.ide_subtype = "virtio"
-        self.assertEqual(self.instance.ide_subtype, "virtio")
-        self.assertEqual(self.instance.ide_subtypes, ["virtio"])
-        self.instance.profiles = ['4CPU-4GB-3NIC']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.ide_subtype = "virtio"
+        self.assertEqual(self.command.ide_subtype, "virtio")
+        self.assertEqual(self.command.ide_subtypes, ["virtio"])
+        self.command.profiles = ['4CPU-4GB-3NIC']
+        self.command.run()
+        self.command.finished()
         # Here we have to create new controllers under this profile
         # while leaving the default alone
         self.check_diff("""
@@ -1601,22 +1597,22 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_ide_subtype_no_existing(self):
         """Set IDE controller subtype for an OVF with none (no-op)."""
-        self.instance.package = self.minimal_ovf
-        self.assertEqual(self.instance.ide_subtype, None)
-        self.assertEqual(self.instance.ide_subtypes, None)
-        self.instance.ide_subtype = "virtio"
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.assertEqual(self.command.ide_subtype, None)
+        self.assertEqual(self.command.ide_subtypes, None)
+        self.command.ide_subtype = "virtio"
+        self.command.run()
         self.assertLogged(**self.NO_ITEMS_NO_WORK)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff("", file1=self.minimal_ovf)
 
     def test_create_profile_inherit_default(self):
         """Create a new profile that's identical to the default one."""
-        self.instance.package = self.input_ovf
-        self.instance.profiles = ['UT']
-        self.instance.cpus = 1
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.profiles = ['UT']
+        self.command.cpus = 1
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      </ovf:Configuration>
 +    <ovf:Configuration ovf:id="UT">
@@ -1628,11 +1624,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_create_new_profile(self):
         """Create a new profile with new values."""
-        self.instance.package = self.input_ovf
-        self.instance.profiles = ['UT']
-        self.instance.cpus = 8
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.profiles = ['UT']
+        self.command.cpus = 8
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      </ovf:Configuration>
 +    <ovf:Configuration ovf:id="UT">
@@ -1656,12 +1652,12 @@ CIM_ResourceAllocationSettingData">
 
     def test_create_two_profiles(self):
         """Create two profiles at once."""
-        self.instance.package = self.input_ovf
-        self.instance.profiles = ['UT', 'UT2']
-        self.instance.memory = 8192
+        self.command.package = self.input_ovf
+        self.command.profiles = ['UT', 'UT2']
+        self.command.memory = 8192
         self.assertLogged(**self.MEMORY_UNIT_GUESS)
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      </ovf:Configuration>
 +    <ovf:Configuration ovf:id="UT">
@@ -1688,10 +1684,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_create_profile_no_existing(self):
         """Add a profile to an OVF that doesn't have any."""
-        self.instance.package = self.minimal_ovf
-        self.instance.profiles = ['UT']
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.profiles = ['UT']
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
    <ovf:References />
@@ -1707,11 +1703,11 @@ CIM_ResourceAllocationSettingData">
 
     def test_delete_one_profile(self):
         """Delete one configuration profile."""
-        self.instance.package = self.input_ovf
-        self.instance.profiles = ['1CPU-1GB-1NIC', '4CPU-4GB-3NIC']
-        self.instance.delete_all_other_profiles = True
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.profiles = ['1CPU-1GB-1NIC', '4CPU-4GB-3NIC']
+        self.command.delete_all_other_profiles = True
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      </ovf:Configuration>
 -    <ovf:Configuration ovf:id="2CPU-2GB-1NIC">
@@ -1747,10 +1743,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_delete_all_profiles(self):
         """Delete all configuration profiles, leaving only the default hw."""
-        self.instance.package = self.input_ovf
-        self.instance.delete_all_other_profiles = True
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.delete_all_other_profiles = True
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
    </ovf:NetworkSection>
 -  <ovf:DeploymentOptionSection>
@@ -1841,15 +1837,15 @@ CIM_ResourceAllocationSettingData">
 
     def test_create_delete_network_no_existing(self):
         """Create then delete a network in an OVF with none previously."""
-        self.instance.package = self.minimal_ovf
-        self.instance.nic_networks = ["VM Network", "Foobar"]
-        self.instance.nics = 1
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.command.nic_networks = ["VM Network", "Foobar"]
+        self.command.nics = 1
+        self.command.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
         self.assertLogged(levelname="ERROR",
                           msg="not all %s values were used",
                           args=('ethernet', 'Connection', ['Foobar']))
-        self.instance.finished()
+        self.command.finished()
         # network 'Foobar' is not used, so it'll be deleted
         self.assertLogged(**self.removing_network_warning('Foobar'))
         self.check_diff(file1=self.minimal_ovf,
@@ -1877,17 +1873,17 @@ CIM_ResourceAllocationSettingData">
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
 """)
-        self.instance.destroy()
-        self.instance = None
+        self.command.destroy()
+        self.command = None
         self.validate_with_ovftool(self.temp_file)
 
         # Now remove all NICs and make sure it's cleaned back up
-        self.instance = COTEditHardware(UI())
-        self.instance.output = self.temp_file
-        self.instance.package = self.temp_file
-        self.instance.nics = 0
-        self.instance.run()
-        self.instance.finished()
+        self.command = COTEditHardware(UI())
+        self.command.output = self.temp_file
+        self.command.package = self.temp_file
+        self.command.nics = 0
+        self.command.run()
+        self.command.finished()
         self.assertLogged(**self.removing_network_warning())
         self.assertLogged(**self.REMOVING_NETWORKSECTION)
         self.check_diff(file1=self.temp_file, file2=self.minimal_ovf,
@@ -1895,10 +1891,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_cpus_v09(self):
         """Test CPU count settings with a v0.9 OVF."""
-        self.instance.package = self.v09_ovf
-        self.instance.cpus = 2
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.v09_ovf
+        self.command.cpus = 2
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.v09_ovf,
                         expected="""
        <ovf:Item>
@@ -1914,10 +1910,10 @@ CIM_ResourceAllocationSettingData">
 
     def test_set_cpus_vmware(self):
         """Test CPU setting with a VMWare OVF."""
-        self.instance.package = self.vmware_ovf
-        self.instance.cpus = 4
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.vmware_ovf
+        self.command.cpus = 4
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.vmware_ovf,
                         expected="""
 -<?xml version="1.0" encoding="UTF-8"?>

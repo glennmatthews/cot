@@ -19,7 +19,6 @@
 import re
 
 from COT.commands.tests.command_testcase import CommandTestCase
-from COT.ui import UI
 from COT.commands.edit_product import COTEditProduct
 from COT.data_validation import InvalidInputError
 
@@ -27,46 +26,42 @@ from COT.data_validation import InvalidInputError
 class TestCOTEditProduct(CommandTestCase):
     """Unit tests for COTEditProduct command."""
 
-    def setUp(self):
-        """Test case setup function called automatically prior to each test."""
-        super(TestCOTEditProduct, self).setUp()
-        self.instance = COTEditProduct(UI())
-        self.instance.output = self.temp_file
+    command_class = COTEditProduct
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
-        ready, reason = self.instance.ready_to_run()
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertTrue(re.search("No work requested", reason))
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
-        self.instance.package = self.input_ovf
-        ready, reason = self.instance.ready_to_run()
+        self.command.package = self.input_ovf
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertTrue(re.search("No work requested", reason))
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
-        self.instance.version = "X"
-        ready, reason = self.instance.ready_to_run()
+        self.command.version = "X"
+        ready, reason = self.command.ready_to_run()
         self.assertTrue(ready)
 
-        self.instance.version = None
-        self.instance.full_version = "Y"
-        ready, reason = self.instance.ready_to_run()
+        self.command.version = None
+        self.command.full_version = "Y"
+        ready, reason = self.command.ready_to_run()
         self.assertTrue(ready)
 
-        self.instance.full_version = None
-        ready, reason = self.instance.ready_to_run()
+        self.command.full_version = None
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertTrue(re.search("No work requested", reason))
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
     def test_edit_product_class_no_existing(self):
         """Add a product class where none existed before."""
-        self.instance.package = self.minimal_ovf
-        self.instance.product_class = "com.cisco.csr1000v"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.product_class = "com.cisco.csr1000v"
+        self.command.run()
+        self.command.finished()
         self.assertLogged(
             **self.invalid_hardware_warning(None, '0', 'NIC count'))
         self.check_diff(file1=self.minimal_ovf,
@@ -80,10 +75,10 @@ class TestCOTEditProduct(CommandTestCase):
 
     def test_edit_product_class(self):
         """Change the product class."""
-        self.instance.package = self.iosv_ovf
-        self.instance.product_class = "com.cisco.ios-xrv9000"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.iosv_ovf
+        self.command.product_class = "com.cisco.ios-xrv9000"
+        self.command.run()
+        self.command.finished()
         self.assertLogged(**self.invalid_hardware_warning(
             '1CPU-384MB-2NIC', "384", "MiB of RAM"))
         self.assertLogged(**self.invalid_hardware_warning(
@@ -104,18 +99,18 @@ ovf:instance="1" ovf:required="false">
 
     def test_edit_product_class_noop(self):
         """Setting the product class to itself should do nothing."""
-        self.instance.package = self.iosv_ovf
-        self.instance.product_class = "com.cisco.iosv"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.iosv_ovf
+        self.command.product_class = "com.cisco.iosv"
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.iosv_ovf, expected="")
 
     def test_edit_short_version(self):
         """Editing the short version alone."""
-        self.instance.package = self.input_ovf
-        self.instance.version = "5.3.1"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.version = "5.3.1"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Vendor>VENDOR</ovf:Vendor>
 -      <ovf:Version>DEV</ovf:Version>
@@ -125,10 +120,10 @@ ovf:instance="1" ovf:required="false">
 
     def test_edit_full_version(self):
         """Editing the full version alone."""
-        self.instance.package = self.input_ovf
-        self.instance.full_version = "Cisco IOS XRv, version 3.14159"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.full_version = "Cisco IOS XRv, version 3.14159"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Version>DEV</ovf:Version>
 -      <ovf:FullVersion>DEVELOPMENT IMAGE</ovf:FullVersion>
@@ -138,10 +133,10 @@ ovf:instance="1" ovf:required="false">
 
     def test_edit_product(self):
         """Editing the product alone."""
-        self.instance.package = self.input_ovf
-        self.instance.product = "Cisco IOS XRv"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.product = "Cisco IOS XRv"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Info>Information about the installed software</ovf:Info>
 -      <ovf:Product>PRODUCT</ovf:Product>
@@ -151,11 +146,11 @@ ovf:instance="1" ovf:required="false">
 
     def test_edit_product_url(self):
         """Editing the product url alone."""
-        self.instance.package = self.input_ovf
-        self.instance.product_url = "http://www.cisco.com/c/en/us/products/\
+        self.command.package = self.input_ovf
+        self.command.product_url = "http://www.cisco.com/c/en/us/products/\
 ios-nx-os-software/ios-xe/index.html"
-        self.instance.run()
-        self.instance.finished()
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:FullVersion>DEVELOPMENT IMAGE</ovf:FullVersion>
 -      <ovf:ProductUrl>PRODUCT_URL</ovf:ProductUrl>
@@ -166,10 +161,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_vendor(self):
         """Editing the vendor alone."""
-        self.instance.package = self.input_ovf
-        self.instance.vendor = "Cisco Systems, Inc."
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.vendor = "Cisco Systems, Inc."
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:Product>PRODUCT</ovf:Product>
 -      <ovf:Vendor>VENDOR</ovf:Vendor>
@@ -179,10 +174,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_vendor_url(self):
         """Editing the vendor url alone."""
-        self.instance.package = self.input_ovf
-        self.instance.vendor_url = "http://www.cisco.com"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.vendor_url = "http://www.cisco.com"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:ProductUrl>PRODUCT_URL</ovf:ProductUrl>
 -      <ovf:VendorUrl>VENDOR_URL</ovf:VendorUrl>
@@ -192,10 +187,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_application_url(self):
         """Editing the application url alone."""
-        self.instance.package = self.input_ovf
-        self.instance.application_url = "https://router1:530/"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.application_url = "https://router1:530/"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
        <ovf:VendorUrl>VENDOR_URL</ovf:VendorUrl>
 -      <ovf:AppUrl>APPLICATION_URL</ovf:AppUrl>
@@ -205,10 +200,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_product_no_existing(self):
         """Edit product in an OVF with no previous values."""
-        self.instance.package = self.minimal_ovf
-        self.instance.product = "Product"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.product = "Product"
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>
@@ -221,10 +216,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_product_url_no_existing(self):
         """Edit product url in an OVF with no previous values."""
-        self.instance.package = self.minimal_ovf
-        self.instance.product_url = "Product URL"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.product_url = "Product URL"
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>
@@ -237,10 +232,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_vendor_no_existing(self):
         """Edit vendor in an OVF with no previous values."""
-        self.instance.package = self.minimal_ovf
-        self.instance.vendor = "Vendor"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.vendor = "Vendor"
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>
@@ -253,10 +248,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_vendor_url_no_existing(self):
         """Edit vendor url in an OVF with no previous values."""
-        self.instance.package = self.minimal_ovf
-        self.instance.vendor_url = "Vendor URL"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.vendor_url = "Vendor URL"
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>
@@ -269,10 +264,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_application_url_no_existing(self):
         """Edit application url in an OVF with no previous values."""
-        self.instance.package = self.minimal_ovf
-        self.instance.application_url = "Application URL"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.application_url = "Application URL"
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>
@@ -285,10 +280,10 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_full_no_existing(self):
         """Edit full version in an OVF with no previous values."""
-        self.instance.package = self.minimal_ovf
-        self.instance.full_version = "Full Version"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.minimal_ovf
+        self.command.full_version = "Full Version"
+        self.command.run()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>
@@ -301,19 +296,19 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_all(self):
         """Edit all product section strings."""
-        self.instance.package = self.input_ovf
-        self.instance.product_class = ''
-        self.instance.version = "5.2.0.01I"
-        self.instance.full_version = "Cisco IOS XRv, Version 5.2"
-        self.instance.product = "Cisco IOS XRv"
-        self.instance.product_url = "http://www.cisco.com/c/en/us/products\
+        self.command.package = self.input_ovf
+        self.command.product_class = ''
+        self.command.version = "5.2.0.01I"
+        self.command.full_version = "Cisco IOS XRv, Version 5.2"
+        self.command.product = "Cisco IOS XRv"
+        self.command.product_url = "http://www.cisco.com/c/en/us/products\
 /ios-nx-os-software/ios-xe/index.html"
-        self.instance.vendor = "Cisco Systems, Inc."
-        self.instance.vendor_url = "http://www.cisco.com"
-        self.instance.application_url = "https://router1:530/"
-        self.instance.run()
+        self.command.vendor = "Cisco Systems, Inc."
+        self.command.vendor_url = "http://www.cisco.com"
+        self.command.application_url = "https://router1:530/"
+        self.command.run()
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff("""
      </ovf:VirtualHardwareSection>
 -    <ovf:ProductSection ovf:required="false">
@@ -339,18 +334,18 @@ ios-nx-os-software/ios-xe/index.html</ovf:ProductUrl>
 
     def test_edit_all_no_existing(self):
         """Edit all product section strings with no previous values."""
-        self.instance.package = self.minimal_ovf
-        self.instance.product_class = "foobar"
-        self.instance.version = "Version"
-        self.instance.full_version = "Full Version"
-        self.instance.product = "Product"
-        self.instance.product_url = "Product URL"
-        self.instance.vendor = "Vendor"
-        self.instance.vendor_url = "Vendor URL"
-        self.instance.application_url = "Application URL"
-        self.instance.run()
+        self.command.package = self.minimal_ovf
+        self.command.product_class = "foobar"
+        self.command.version = "Version"
+        self.command.full_version = "Full Version"
+        self.command.product = "Product"
+        self.command.product_url = "Product URL"
+        self.command.vendor = "Vendor"
+        self.command.vendor_url = "Vendor URL"
+        self.command.application_url = "Application URL"
+        self.command.run()
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
-        self.instance.finished()
+        self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
      </ovf:VirtualHardwareSection>

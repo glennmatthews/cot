@@ -3,7 +3,7 @@
 # test_remove_file.py - test cases for the COTRemoveFile class
 #
 # June 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -19,7 +19,6 @@
 import os.path
 
 from COT.commands.tests.command_testcase import CommandTestCase
-from COT.ui import UI
 from COT.commands.remove_file import COTRemoveFile
 from COT.data_validation import InvalidInputError, ValueMismatchError
 
@@ -27,55 +26,51 @@ from COT.data_validation import InvalidInputError, ValueMismatchError
 class TestCOTRemoveFile(CommandTestCase):
     """Test cases for the COTRemoveFile module."""
 
-    def setUp(self):
-        """Test case setup function called automatically prior to each test."""
-        super(TestCOTRemoveFile, self).setUp()
-        self.instance = COTRemoveFile(UI())
-        self.instance.output = self.temp_file
+    command_class = COTRemoveFile
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""
-        self.instance.package = self.input_ovf
-        ready, reason = self.instance.ready_to_run()
+        self.command.package = self.input_ovf
+        ready, reason = self.command.ready_to_run()
         self.assertFalse(ready)
         self.assertRegex(reason, "No file information")
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
-        self.instance.file_path = "input.vmdk"
-        ready, reason = self.instance.ready_to_run()
+        self.command.file_path = "input.vmdk"
+        ready, reason = self.command.ready_to_run()
         self.assertTrue(ready)
 
-        self.instance.file_path = None
-        self.instance.file_id = "file1"
-        ready, reason = self.instance.ready_to_run()
+        self.command.file_path = None
+        self.command.file_id = "file1"
+        ready, reason = self.command.ready_to_run()
         self.assertTrue(ready)
 
     def test_conflicting_args(self):
         """Test conflicting arguments are detected and rejected."""
-        self.instance.package = self.input_ovf
+        self.command.package = self.input_ovf
         # input.vmdk is file1, file2 is input.iso
-        self.instance.file_path = "input.vmdk"
-        self.instance.file_id = "file2"
-        self.assertRaises(ValueMismatchError, self.instance.run)
+        self.command.file_path = "input.vmdk"
+        self.command.file_id = "file2"
+        self.assertRaises(ValueMismatchError, self.command.run)
 
     def test_path_nonexistent(self):
         """Test error handling of a file path that isn't in the OVF."""
-        self.instance.package = self.input_ovf
-        self.instance.file_path = "foobar"
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.command.package = self.input_ovf
+        self.command.file_path = "foobar"
+        self.assertRaises(InvalidInputError, self.command.run)
 
     def test_id_nonexistent(self):
         """Test error handling of a file id that isn't in the OVF."""
-        self.instance.package = self.input_ovf
-        self.instance.file_id = "e-dad"
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.command.package = self.input_ovf
+        self.command.file_id = "e-dad"
+        self.assertRaises(InvalidInputError, self.command.run)
 
     def test_text_file_by_path(self):
         """Test deletion of a text file selected by path."""
-        self.instance.package = self.input_ovf
-        self.instance.file_path = "sample_cfg.txt"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.file_path = "sample_cfg.txt"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
 -    <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
@@ -89,10 +84,10 @@ ovf:size="{cfg_size}" />
 
     def test_text_file_by_id(self):
         """Test deletion of a text file selected by id."""
-        self.instance.package = self.input_ovf
-        self.instance.file_id = "textfile"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.file_id = "textfile"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
 -    <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
@@ -110,10 +105,10 @@ ovf:size="{cfg_size}" />
         Because empty CD-ROM drives are permitted, the file is unmapped but
         the device is not deleted.
         """
-        self.instance.package = self.input_ovf
-        self.instance.file_path = "input.iso"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.file_path = "input.iso"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
      <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />
 -    <ovf:File ovf:href="input.iso" ovf:id="file2" ovf:size="{iso_size}" />
@@ -136,10 +131,10 @@ ovf:size="{cfg_size}" />
         Empty hard disk devices are not permitted so the entire disk device
         will be deleted.
         """
-        self.instance.package = self.input_ovf
-        self.instance.file_id = "file1"
-        self.instance.run()
-        self.instance.finished()
+        self.command.package = self.input_ovf
+        self.command.file_id = "file1"
+        self.command.run()
+        self.command.finished()
         self.check_diff("""
    <ovf:References>
 -    <ovf:File ovf:href="input.vmdk" ovf:id="file1" ovf:size="{vmdk_size}" />

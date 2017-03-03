@@ -3,7 +3,7 @@
 # deploy.py - test cases for the COTDeploy class and helpers
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -25,7 +25,6 @@ except ImportError:
     import unittest
 
 from COT.commands.tests.command_testcase import CommandTestCase
-from COT.ui import UI
 from COT.commands.deploy import COTDeploy, SerialConnection
 from COT.data_validation import InvalidInputError, ValueUnsupportedError
 
@@ -35,48 +34,49 @@ logger = logging.getLogger(__name__)
 class TestCOTDeploy(CommandTestCase):
     """Test cases for COTDeploy."""
 
+    command_class = COTDeploy
+
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTDeploy, self).setUp()
-        self.instance = COTDeploy(UI())
-        self.instance.package = self.input_ovf
+        self.command.package = self.input_ovf
 
     def test_not_ready_with_no_args(self):
         """Verify that ready_to_run() is False without all mandatory args."""
-        ready, reason = self.instance.ready_to_run()
+        ready, reason = self.command.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("HYPERVISOR.*mandatory", reason))
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
-        self.instance.hypervisor = "esxi"
-        self.instance.package = None
-        ready, reason = self.instance.ready_to_run()
+        self.command.hypervisor = "esxi"
+        self.command.package = None
+        ready, reason = self.command.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("PACKAGE.*mandatory", reason))
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
     def test_invalid_args(self):
         """Negative testing for various arguments."""
         with self.assertRaises(InvalidInputError):
-            self.instance.hypervisor = "frobozz"
+            self.command.hypervisor = "frobozz"
         with self.assertRaises(InvalidInputError):
-            self.instance.configuration = ""
+            self.command.configuration = ""
         with self.assertRaises(InvalidInputError):
-            self.instance.configuration = "X"
+            self.command.configuration = "X"
         with self.assertRaises(InvalidInputError):
-            self.instance.network_map = [""]
+            self.command.network_map = [""]
         with self.assertRaises(InvalidInputError):
-            self.instance.network_map = ["foo"]
+            self.command.network_map = ["foo"]
         with self.assertRaises(InvalidInputError):
-            self.instance.network_map = ["=bar"]
+            self.command.network_map = ["=bar"]
         with self.assertRaises(InvalidInputError):
-            self.instance.network_map = ["foo="]
+            self.command.network_map = ["foo="]
 
     def test_run(self):
         """Test the generic run() implementation."""
-        self.instance.hypervisor = "esxi"
-        self.instance.serial_connection = ["tcp::22", "tcp::23", "tcp::24"]
-        self.instance.run()
+        self.command.hypervisor = "esxi"
+        self.command.serial_connection = ["tcp::22", "tcp::23", "tcp::24"]
+        self.command.run()
 
 
 class TestSerialConnection(unittest.TestCase):

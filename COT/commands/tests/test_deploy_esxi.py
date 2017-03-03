@@ -3,7 +3,7 @@
 # test_deploy_esxi.py - test cases for the COTDeployESXi class and helpers
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -34,7 +34,6 @@ except ImportError:
     import unittest
 
 from COT.commands.tests.command_testcase import CommandTestCase
-from COT.ui import UI
 import COT.commands.deploy_esxi
 from COT.commands.deploy_esxi import COTDeployESXi, SmarterConnection
 from COT.data_validation import InvalidInputError
@@ -71,54 +70,59 @@ class TestCOTDeployESXi(CommandTestCase):
         'msg': "Session failed",
     }
 
+    command_class = COTDeployESXi
+
+    # pylint thinks self.command is a Command instead of a COTDeployESXi,
+    # so tell it to be quiet about members specific to COTDeployESXi:
+    # pylint: disable=no-member
+
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTDeployESXi, self).setUp()
-        self.instance = COTDeployESXi(UI())
-        self.instance.package = self.input_ovf
-        self.instance.hypervisor = 'esxi'
+        self.command.package = self.input_ovf
+        self.command.hypervisor = 'esxi'
         # Stub out all ovftool dependencies
         # pylint: disable=protected-access
-        self._ovftool_path = self.instance.ovftool._path
-        self._ovftool_version = self.instance.ovftool._version
-        self.instance.ovftool._path = "/fake/ovftool"
-        self.instance.ovftool._version = StrictVersion("4.0.0")
+        self._ovftool_path = self.command.ovftool._path
+        self._ovftool_version = self.command.ovftool._version
+        self.command.ovftool._path = "/fake/ovftool"
+        self.command.ovftool._version = StrictVersion("4.0.0")
 
     def tearDown(self):
         """Test case cleanup function called automatically."""
         # Remove our stub
         # pylint: disable=protected-access
-        self.instance.ovftool._path = self._ovftool_path
-        self.instance.ovftool._version = self._ovftool_version
+        self.command.ovftool._path = self._ovftool_path
+        self.command.ovftool._version = self._ovftool_version
         super(TestCOTDeployESXi, self).tearDown()
 
     def test_not_ready_with_no_args(self, *_):
         """Verify ready_to_run() is False without all mandatory args."""
-        ready, reason = self.instance.ready_to_run()
+        ready, reason = self.command.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("LOCATOR.*mandatory", reason))
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
-        self.instance.locator = "localhost"
-        self.instance.package = None
-        ready, reason = self.instance.ready_to_run()
+        self.command.locator = "localhost"
+        self.command.package = None
+        ready, reason = self.command.ready_to_run()
         self.assertEqual(ready, False)
         self.assertTrue(re.search("PACKAGE.*mandatory", reason))
-        self.assertRaises(InvalidInputError, self.instance.run)
+        self.assertRaises(InvalidInputError, self.command.run)
 
     def test_invalid_args(self, *_):
         """Negative tests for various arguments."""
         with self.assertRaises(InvalidInputError):
-            self.instance.configuration = ""
+            self.command.configuration = ""
         with self.assertRaises(InvalidInputError):
-            self.instance.configuration = "X"
+            self.command.configuration = "X"
         with self.assertRaises(InvalidInputError):
-            self.instance.power_on = "frobozz"
+            self.command.power_on = "frobozz"
 
     def test_ovftool_args_basic(self, mock_check_call, *_):
         """Test that ovftool is called with the basic arguments."""
-        self.instance.locator = "localhost"
-        self.instance.run()
+        self.command.locator = "localhost"
+        self.command.run()
         mock_check_call.assert_called_once_with([
             'ovftool',
             '--deploymentOption=4CPU-4GB-3NIC',    # default configuration
@@ -131,17 +135,17 @@ class TestCOTDeployESXi(CommandTestCase):
 
     def test_ovftool_args_advanced(self, mock_check_call, *_):
         """Test that ovftool is called with more involved arguments."""
-        self.instance.locator = "localhost/host/foo"
-        self.instance.datastore = "datastore1"
-        self.instance.configuration = "2CPU-2GB-1NIC"
-        self.instance.vm_name = "myVM"
-        self.instance.power_on = True
-        self.instance.ovftool_args = "--overwrite --vService:'A B=C D'"
-        self.instance.username = "u"
-        self.instance.password = "p"
-        self.instance.network_map = ["VM Network=VM Network"]
+        self.command.locator = "localhost/host/foo"
+        self.command.datastore = "datastore1"
+        self.command.configuration = "2CPU-2GB-1NIC"
+        self.command.vm_name = "myVM"
+        self.command.power_on = True
+        self.command.ovftool_args = "--overwrite --vService:'A B=C D'"
+        self.command.username = "u"
+        self.command.password = "p"
+        self.command.network_map = ["VM Network=VM Network"]
 
-        self.instance.run()
+        self.command.run()
         mock_check_call.assert_called_once_with([
             'ovftool',
             '--overwrite',
@@ -162,9 +166,9 @@ class TestCOTDeployESXi(CommandTestCase):
         # This is tested by test_ovftool_args_basic() above.
 
         # With 4.0.0 and power_on, we fixup when deploying to vSphere:
-        self.instance.locator = "vsphere"
-        self.instance.power_on = True
-        self.instance.run()
+        self.command.locator = "vsphere"
+        self.command.power_on = True
+        self.command.run()
         mock_check_call.assert_called_once_with([
             'ovftool',
             '--X:injectOvfEnv',
@@ -185,8 +189,8 @@ class TestCOTDeployESXi(CommandTestCase):
         # Discard cached information and update the info that will be returned
         # pylint: disable=protected-access
         mock_check_call.reset_mock()
-        self.instance.ovftool._version = StrictVersion("3.5.0")
-        self.instance.run()
+        self.command.ovftool._version = StrictVersion("3.5.0")
+        self.command.run()
         mock_check_call.assert_called_once_with([
             'ovftool',
             # Nope! #'--X:injectOvfEnv',
@@ -201,13 +205,13 @@ class TestCOTDeployESXi(CommandTestCase):
 
     def test_serial_fixup_invalid_host(self, *_):
         """Failure in fixup_serial_ports() connecting to an invalid host."""
-        self.instance.locator = "localhost"
-        self.instance.serial_connection = ['tcp::2222', 'tcp::2223']
+        self.command.locator = "localhost"
+        self.command.serial_connection = ['tcp::2222', 'tcp::2223']
         # pyvmomi 6.0.0.2016 and earlier raises ConnectionError,
         # pyvmomi 6.0.0.2016.4 and later raises socket.error
         with self.assertRaises((requests.exceptions.ConnectionError,
                                 socket.error)) as cm:
-            self.instance.run()
+            self.command.run()
         # In requests 2.7 and earlier, we get the errno,
         # while in requests 2.8+, it's munged into a string only
         if cm.exception.errno is not None:
@@ -235,21 +239,21 @@ class TestCOTDeployESXi(CommandTestCase):
     @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
     def test_serial_fixup_stubbed(self, *_):
         """Test fixup_serial_ports by mocking pyVmomi library."""
-        self.instance.locator = "localhost"
-        self.instance.vm_name = "mockery"
+        self.command.locator = "localhost"
+        self.command.vm_name = "mockery"
 
         mock_vm0 = mock.create_autospec(
             COT.commands.deploy_esxi.vim.VirtualMachine)
         mock_vm0.name = "wrong_vm"
         mock_vm = mock.create_autospec(
             COT.commands.deploy_esxi.vim.VirtualMachine)
-        mock_vm.name = self.instance.vm_name
+        mock_vm.name = self.command.vm_name
         self.mock_cv.view = [mock_vm0, mock_vm]
 
-        self.instance.serial_connection = ['tcp:localhost:2222',
-                                           'tcp::2223,server',
-                                           '/dev/ttyS0']
-        self.instance.run()
+        self.command.serial_connection = ['tcp:localhost:2222',
+                                          'tcp::2223,server',
+                                          '/dev/ttyS0']
+        self.command.run()
         self.assertLogged(**self.VSPHERE_ENV_WARNING)
 
         self.assertTrue(mock_vm.ReconfigVM_Task.called)
@@ -267,11 +271,11 @@ class TestCOTDeployESXi(CommandTestCase):
         self.assertEqual('server', s2.device.backing.direction)
         self.assertEqual('/dev/ttyS0', s3.device.backing.deviceName)
 
-        self.instance.serial_connection = [
+        self.command.serial_connection = [
             'file:/tmp/foo.txt,datastore=datastore1'
         ]
         self.assertRaises(NotImplementedError,
-                          self.instance.run)
+                          self.command.run)
         self.assertLogged(**self.VSPHERE_ENV_WARNING)
         self.assertLogged(**self.SERIAL_PORT_NOT_FIXED)
         self.assertLogged(**self.SESSION_FAILED)
@@ -281,17 +285,17 @@ class TestCOTDeployESXi(CommandTestCase):
     @mock.patch('COT.ui.UI.confirm_or_die', return_value=True)
     def test_serial_fixup_stubbed_create(self, mock_cod, *_):
         """Test fixup_serial_ports creation of serial ports not in the OVF."""
-        self.instance.package = self.minimal_ovf
-        self.instance.locator = "localhost"
-        self.instance.vm_name = "mockery"
+        self.command.package = self.minimal_ovf
+        self.command.locator = "localhost"
+        self.command.vm_name = "mockery"
 
         mock_vm = mock.create_autospec(
             COT.commands.deploy_esxi.vim.VirtualMachine)
-        mock_vm.name = self.instance.vm_name
+        mock_vm.name = self.command.vm_name
         self.mock_cv.view = [mock_vm]
 
-        self.instance.serial_connection = ['tcp:localhost:2222']
-        self.instance.run()
+        self.command.serial_connection = ['tcp:localhost:2222']
+        self.command.run()
 
         self.assertTrue(mock_vm.ReconfigVM_Task.called)
         self.assertTrue(mock_cod.called)
@@ -308,8 +312,8 @@ class TestCOTDeployESXi(CommandTestCase):
     @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
     def test_serial_fixup_stubbed_vm_not_found(self, *_):
         """Test fixup_serial_ports error case where the VM isn't found."""
-        self.instance.locator = "localhost"
-        self.instance.vm_name = "mockery"
+        self.command.locator = "localhost"
+        self.command.vm_name = "mockery"
 
         mock_vm0 = mock.create_autospec(
             COT.commands.deploy_esxi.vim.VirtualMachine)
@@ -319,10 +323,10 @@ class TestCOTDeployESXi(CommandTestCase):
         mock_vm1.name = "also_wrong"
         self.mock_cv.view = [mock_vm0, mock_vm1]
 
-        self.instance.serial_connection = ['tcp:localhost:2222',
-                                           'tcp::2223,server',
-                                           '/dev/ttyS0']
-        self.assertRaises(LookupError, self.instance.run)
+        self.command.serial_connection = ['tcp:localhost:2222',
+                                          'tcp::2223,server',
+                                          '/dev/ttyS0']
+        self.assertRaises(LookupError, self.command.run)
         self.assertLogged(**self.VSPHERE_ENV_WARNING)
         self.assertLogged(**self.SESSION_FAILED)
 
@@ -333,13 +337,13 @@ class TestCOTDeployESXi(CommandTestCase):
         """Test SSL failure in pyVmomi."""
         mock_parent.side_effect = vim.fault.HostConnectFault(
             msg="certificate verify failed")
-        self.instance.locator = "localhost"
-        self.instance.serial_connection = ['tcp://localhost:2222']
+        self.command.locator = "localhost"
+        self.command.serial_connection = ['tcp://localhost:2222']
         # Try twice - first time with default behavior encounters certificate
         # failure, second time (with self-signed certificates accepted)
         # encounters the same error again and raises it
         self.assertRaises(vim.fault.HostConnectFault,
-                          self.instance.fixup_serial_ports)
+                          self.command.fixup_serial_ports)
         self.assertEqual(mock_parent.call_count, 2)
         self.assertLogged(**self.BAD_CERTIFICATE)
 
@@ -348,21 +352,21 @@ class TestCOTDeployESXi(CommandTestCase):
         """Test HostConnectFault other than SSL failure."""
         mock_parent.side_effect = vim.fault.HostConnectFault(
             msg="Malformed response while querying for local ticket: foo")
-        self.instance.locator = "localhost"
-        self.instance.serial_connection = ['tcp://localhost:2222']
+        self.command.locator = "localhost"
+        self.command.serial_connection = ['tcp://localhost:2222']
         # Try once and fail immediately
         self.assertRaises(vim.fault.HostConnectFault,
-                          self.instance.fixup_serial_ports)
+                          self.command.fixup_serial_ports)
         self.assertEqual(mock_parent.call_count, 1)
 
     @mock.patch('COT.commands.deploy_esxi.SmartConnection.__enter__')
     def test_serial_fixup_connectionerror(self, mock_parent, *_):
         """Test generic ConnectionError handling."""
         mock_parent.side_effect = requests.exceptions.ConnectionError
-        self.instance.locator = "localhost"
-        self.instance.serial_connection = ['tcp://localhost:2222']
+        self.command.locator = "localhost"
+        self.command.serial_connection = ['tcp://localhost:2222']
         with self.assertRaises(requests.exceptions.ConnectionError) as cm:
-            self.instance.fixup_serial_ports()
+            self.command.fixup_serial_ports()
         self.assertEqual(cm.exception.errno, None)
         self.assertEqual(cm.exception.strerror,
                          "Error connecting to localhost:443: None")

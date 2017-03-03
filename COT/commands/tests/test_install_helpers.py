@@ -4,7 +4,7 @@
 # install_helpers.py - test cases for the COTInstallHelpers class
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2015-2016 the COT project developers.
+# Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -23,7 +23,6 @@ import sys
 import mock
 
 from COT.commands.tests.command_testcase import CommandTestCase
-from COT.ui import UI
 from COT.commands.install_helpers import COTInstallHelpers
 from COT.helpers import HelperError, helpers
 from COT.helpers.apt_get import AptGet
@@ -70,10 +69,15 @@ def stub_dir_exists_but_not_file(path):
 class TestCOTInstallHelpers(CommandTestCase):
     """Test the COTInstallHelpers class."""
 
+    command_class = COTInstallHelpers
+
+    # pylint thinks self.command is a Command instead of a COTInstallHelpers,
+    # so tell it to be quiet about members specific to COTInstallHelpers:
+    # pylint: disable=no-member
+
     def setUp(self):
         """Do the appropriate setup before each test case."""
         super(TestCOTInstallHelpers, self).setUp()
-        self.instance = COTInstallHelpers(UI())
 
         # Manpath location detected from argv0
         # /usr/local/bin/python --> /usr/local/man
@@ -110,7 +114,7 @@ class TestCOTInstallHelpers(CommandTestCase):
 
         mock_find_executable.side_effect = stub_find_executable
 
-        self.instance.verify_only = True
+        self.command.verify_only = True
         expected_output = """
 Results:
 -------------
@@ -187,7 +191,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         with self.assertRaises(EnvironmentError):
             self.check_cot_output(expected_output)
         # ...but we can set ignore_errors to suppress this behavior
-        self.instance.ignore_errors = True
+        self.command.ignore_errors = True
         # revert to initial state
         helpers["genisoimage"]._installed = False
         self.check_cot_output(expected_output)
@@ -195,8 +199,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
     @mock.patch('os.path.exists', return_value=False)
     def test_manpages_helper_verify_dir_not_found(self, *_):
         """Call manpages_helper with verify-only, directory not found."""
-        self.instance.verify_only = True
-        result, message = self.instance.manpages_helper()
+        self.command.verify_only = True
+        result, message = self.command.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("DIRECTORY NOT FOUND: {0}/man1"
                          .format(self.manpath), message)
@@ -205,8 +209,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
     @mock.patch('os.path.exists', side_effect=stub_dir_exists_but_not_file)
     def test_manpages_helper_verify_file_not_found(self, *_):
         """Call manpages_helper with verify-only, file not found."""
-        self.instance.verify_only = True
-        result, message = self.instance.manpages_helper()
+        self.command.verify_only = True
+        result, message = self.command.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("NOT FOUND", message)
 
@@ -214,8 +218,8 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
     @mock.patch('filecmp.cmp', return_value=False)
     def test_manpages_helper_verify_file_outdated(self, *_):
         """Call manpages_helper with verify-only, file not found."""
-        self.instance.verify_only = True
-        result, message = self.instance.manpages_helper()
+        self.command.verify_only = True
+        result, message = self.command.manpages_helper()
         self.assertTrue(result)  # verify-only returns True regardless
         self.assertEqual("NEEDS UPDATE", message)
 
@@ -228,7 +232,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         mock_makedirs.side_effect = OSError(13, "Permission denied",
                                             os.path.join(self.manpath, 'man1'))
 
-        result, message = self.instance.manpages_helper()
+        result, message = self.command.manpages_helper()
         self.assertFalse(result)
         self.assertEqual("INSTALLATION FAILED: [Errno 13] "
                          "Permission denied: '{0}'"
@@ -246,7 +250,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
         mock_copy.side_effect = IOError(13, "Permission denied",
                                         "{0}/man1/cot.1".format(self.manpath))
 
-        result, message = self.instance.manpages_helper()
+        result, message = self.command.manpages_helper()
         self.assertFalse(result)
         self.assertEqual("INSTALLATION FAILED: [Errno 13] "
                          "Permission denied: '{0}/man1/cot.1'"
@@ -258,7 +262,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
     @mock.patch('os.makedirs', return_value=False)
     def test_manpages_helper_all_new(self, *_):
         """Call manpages_helper to simulate installing new manpages."""
-        result, message = self.instance.manpages_helper()
+        result, message = self.command.manpages_helper()
         self.assertTrue(result)
         self.assertEqual("successfully installed to {0}".format(self.manpath),
                          message)
@@ -269,7 +273,7 @@ vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
     @mock.patch('filecmp.cmp', return_value=False)
     def test_manpages_helper_update(self, *_):
         """Call manpages_helper to simulate updating existing manpages."""
-        result, message = self.instance.manpages_helper()
+        result, message = self.command.manpages_helper()
         self.assertTrue(result)
         self.assertEqual("successfully updated in {0}".format(self.manpath),
                          message)
