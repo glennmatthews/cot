@@ -163,7 +163,7 @@ class Command(object):
 
 
 class ReadCommand(Command):
-    """Command that reads from but does not write to the OVF, such as 'deploy'.
+    """Command, such as 'deploy', that reads from a VM file to create its vm.
 
     Inherited attributes:
     :attr:`vm`,
@@ -217,7 +217,7 @@ class ReadCommand(Command):
         return super(ReadCommand, self).ready_to_run()
 
 
-class ReadWriteCommand(Command):
+class ReadWriteCommand(ReadCommand):
     """Command that reads from and writes to a VM description.
 
     Inherited attributes:
@@ -236,24 +236,12 @@ class ReadWriteCommand(Command):
           ui (UI): User interface instance.
         """
         super(ReadWriteCommand, self).__init__(ui)
-        self._package = None
         # Default to an unspecified output rather than no output
         self._output = ""
         self._predicted_output_size = 0
 
-    @property
-    def package(self):
-        """VM description file to read (and possibly write).
-
-        Calls :meth:`COT.vm_description.VMDescription.factory` to instantiate
-        :attr:`self.vm` from the provided file.
-
-        Raises:
-          InvalidInputError: if the file does not exist.
-        """
-        return self._package
-
-    @package.setter
+    # Overriding a parent class's property is a bit ugly in Python.
+    @ReadCommand.package.setter
     def package(self, value):
         if value is not None and not os.path.exists(value):
             raise InvalidInputError("Specified package {0} does not exist!"
@@ -262,7 +250,9 @@ class ReadWriteCommand(Command):
             self.vm.destroy()
             self.vm = None
         if value is not None:
+            # Unlike ReadCommand, we pass self.output to the VM factory
             self.vm = VMDescription.factory(value, self.output)
+            # And we also check whether output space will be an issue
             self._check_and_warn_disk_space()
         self._package = value
 
@@ -327,16 +317,6 @@ class ReadWriteCommand(Command):
         # consuming disk space, etc.
         self.check_disk_space(2 * predicted, self.output, "VM output",
                               die=True)
-
-    def ready_to_run(self):
-        """Check whether the module is ready to :meth:`run`.
-
-        Returns:
-          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
-        """
-        if self.package is None:
-            return False, "PACKAGE is a mandatory argument!"
-        return super(ReadWriteCommand, self).ready_to_run()
 
     def run(self):
         """Do the actual work of this command.
