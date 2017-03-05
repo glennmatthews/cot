@@ -22,9 +22,11 @@ import mock
 from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
 from COT.commands import Command, ReadCommand, ReadWriteCommand
+from COT.data_validation import InvalidInputError
 from COT.vm_description import VMInitError
 
 # pylint: disable=missing-param-doc,missing-type-doc
+
 
 class TestCommand(CommandTestCase):
     """Test cases for Command base class."""
@@ -38,8 +40,9 @@ class TestCommand(CommandTestCase):
     def test_check_disk_space_sufficient(self):
         """Positive test for check_disk_space API."""
         self.assertTrue(self.command.check_disk_space(1, self.temp_dir))
-        self.assertTrue(self.command.check_disk_space(1, self.temp_dir,
-                                                      label="Hello", die=True))
+        self.assertTrue(self.command.check_disk_space(
+            1, self.temp_dir,
+            label="Hello", context="Contextual detail", die=True))
 
     @mock.patch("COT.commands.command.available_bytes_at_path", return_value=0)
     def test_check_disk_space_insufficient(self, *_):
@@ -61,6 +64,11 @@ class TestReadCommand(CommandTestCase):
     """Test cases for ReadCommand class."""
 
     command_class = ReadCommand
+
+    def test_set_package_nonexistent(self):
+        """Package setter raises InvalidInputError for nonexistent file."""
+        with self.assertRaises(InvalidInputError):
+            self.command.package = "/foo/bar/baz"
 
     def test_not_ready_if_insufficient_space(self):
         """Ensure that ready_to_run() fails if disk space is lacking."""
@@ -119,10 +127,13 @@ class TestReadWriteCommand(CommandTestCase):
         # 1. Set package without setting output
         self.command = ReadWriteCommand(UI())
         self.command.package = self.input_ovf
-
         mock_size.assert_not_called()
         mock_available.assert_not_called()
-        self.command.destroy()
+
+        # Unset package
+        self.command.package = None
+        mock_size.assert_not_called()
+        mock_available.assert_not_called()
 
         # 2. Set output without setting package
         self.command = ReadWriteCommand(UI())
@@ -130,14 +141,8 @@ class TestReadWriteCommand(CommandTestCase):
         mock_size.assert_not_called()
         mock_available.assert_not_called()
 
-        self.command.destroy()
-        mock_size.reset_mock()
-        mock_available.reset_mock()
-
         # Cases that do result in a check:
         # 1. Setting package when output is already set
-        self.command = ReadWriteCommand(UI())
-        self.command.output = self.temp_file
         self.command.package = self.input_ovf
         self.assertNotEqual(self.command.vm, None)
         mock_size.assert_called_once()
@@ -165,3 +170,7 @@ class TestReadWriteCommand(CommandTestCase):
 
         mock_size.reset_mock()
         mock_available.reset_mock()
+
+    def test_finished_no_vm(self):
+        """Verify that finished() can be successful if no VM was set."""
+        self.command.finished()

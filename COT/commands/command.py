@@ -70,7 +70,10 @@ class Command(object):
         """
         if self.vm and not self.check_disk_space(
                 self.working_dir_disk_space_required(),
-                self.vm.working_dir, "Temporary storage"):
+                self.vm.working_dir,
+                label="Temporary storage",
+                context="You can choose a different location by setting"
+                " $TMPDIR in your environment before calling COT"):
             return (False,
                     "Insufficient disk space available for temporary file"
                     " storage in working directory {0}."
@@ -123,7 +126,7 @@ class Command(object):
         return 0
 
     def check_disk_space(self, required_size, location,
-                         label="File", die=False):
+                         label="File", context=None, die=False):
         """Check whether there is sufficient disk space available.
 
         If there is insufficient space, warn the user before continuing.
@@ -132,6 +135,8 @@ class Command(object):
           required_size (int): Bytes required
           location (str): Path to check availability of.
           label (str): Descriptive label to display in user messages.
+          context (str): Optional string for additional context to provide
+            when prompting the user.
           die (bool): If True, use :meth:`~COT.ui.UI.confirm_or_die` instead
             of :meth:`~COT.ui.UI.confirm`
 
@@ -152,9 +157,11 @@ class Command(object):
         if required_size <= available:
             return True
         msg = ("{0} requires {1} of disk space but only {2} is available"
-               " at {3}. Operation may fail. Continue anyway?"
-               .format(label, pretty_bytes(required_size),
-                       pretty_bytes(available), location))
+               " at {3}.".format(label, pretty_bytes(required_size),
+                                 pretty_bytes(available), location))
+        if context:
+            msg += "\n({0})".format(context)
+        msg += "\nOperation may fail. Continue anyway?"
         if die:
             self.ui.confirm_or_die(msg)
             return True
@@ -241,8 +248,21 @@ class ReadWriteCommand(ReadCommand):
         self._predicted_output_size = 0
 
     # Overriding a parent class's property is a bit ugly in Python.
-    @ReadCommand.package.setter
-    def package(self, value):
+    # Also, Pylint bug: https://github.com/PyCQA/pylint/issues/844
+    @ReadCommand.package.setter   # pylint: disable=no-member
+    def package(self,   # pylint: disable=missing-type-doc,missing-param-doc
+                value):
+        """VM description file to read (and write to unless ``output`` is set).
+
+        Calls :meth:`COT.vm_description.VMDescription.factory` to instantiate
+        :attr:`self.vm` from the provided file.
+
+        Raises:
+          InvalidInputError: if the file does not exist.
+          SystemExit: if available disk space versus predicted amount required
+            for output is insufficient, and the user declines to continue
+            in response to this information.
+        """
         if value is not None and not os.path.exists(value):
             raise InvalidInputError("Specified package {0} does not exist!"
                                     .format(value))

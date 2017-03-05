@@ -1,7 +1,7 @@
 # vm_description.py - Unit test cases for generic VMDescription class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2015-2016 the COT project developers.
+# Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -68,6 +68,8 @@ class TestVMDescription(unittest.TestCase):
 
         self.assertRaises(NotImplementedError,
                           ins.write)
+
+        self.assertRaises(NotImplementedError, ins.predicted_output_size)
 
         ins.destroy()
         self.assertFalse(os.path.exists(ins.working_dir))
