@@ -24,6 +24,7 @@ before_script:
 install:
   - pip install --upgrade pip setuptools
   - pip install tox-travis
+  - pip install coveralls
   - pip install codecov
 
 cache:
@@ -35,6 +36,7 @@ script: tox
 
 after_success:
   if [ -z "$TRAVIS_TAG" ]; then
+    coveralls;
     codecov;
   else
     echo "Tag build ($TRAVIS_TAG). Not uploading coverage.";
