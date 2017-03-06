@@ -61,8 +61,10 @@ class Command(object):
         """Virtual machine description (:class:`VMDescription`)."""
         self.ui = ui
         """User interface instance (:class:`~COT.ui.UI` or subclass)."""
+        self._cached_disk_requirements = {}
+        """Private storage for :meth:`check_disk_space`."""
 
-    def ready_to_run(self):  # pylint: disable=no-self-use
+    def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
 
         Returns:
@@ -126,10 +128,19 @@ class Command(object):
         return 0
 
     def check_disk_space(self, required_size, location,
-                         label="File", context=None, die=False):
-        """Check whether there is sufficient disk space available.
+                         label="File", context=None,
+                         force_check=False, die=False):
+        """Check if there is sufficient disk space available at a location.
 
         If there is insufficient space, warn the user before continuing.
+
+        Caches space requirements per location, so it's safe to call
+        repeatedly, as it will only re-check (and possibly re-prompt the user)
+        if:
+
+          1. a different location is requested
+          2. or the required size changes
+          3. or ``force_check`` is True.
 
         Args:
           required_size (int): Bytes required
@@ -137,25 +148,42 @@ class Command(object):
           label (str): Descriptive label to display in user messages.
           context (str): Optional string for additional context to provide
             when prompting the user.
+          force_check (bool): If True, re-check and re-prompt the user even
+            if this location has previously been checked and its
+            ``required_size`` has not changed.
           die (bool): If True, use :meth:`~COT.ui.UI.confirm_or_die` instead
             of :meth:`~COT.ui.UI.confirm`
 
         Returns:
           bool: Whether sufficient space is available (or if not,
             whether the user has opted to continue anyway).
+
+        Raises:
+          SystemExit: if disk space is insufficient and ``die`` is True and
+            the user declines to continue.
         """
+        if location is None:
+            return True
         dir_path = os.path.abspath(location)
         while dir_path and not os.path.isdir(dir_path):
             dir_path = os.path.dirname(dir_path)
         # The above will never fail to find something - in the worst case,
         # it may ascend all the way to the filesystem root, but stop there.
 
+        if dir_path in self._cached_disk_requirements and not force_check:
+            prev_req, prev_avail = self._cached_disk_requirements[dir_path]
+            if required_size <= prev_req:
+                return required_size <= prev_avail
+
         available = available_bytes_at_path(dir_path)
         logger.verbose("Checking requested disk space %s against available"
                        " space in %s (%s)", pretty_bytes(required_size),
                        dir_path, pretty_bytes(available))
+        self._cached_disk_requirements[dir_path] = (required_size, available)
+
         if required_size <= available:
             return True
+
         msg = ("{0} requires {1} of disk space but only {2} is available"
                " at {3}.".format(label, pretty_bytes(required_size),
                                  pretty_bytes(available), location))
@@ -245,7 +273,6 @@ class ReadWriteCommand(ReadCommand):
         super(ReadWriteCommand, self).__init__(ui)
         # Default to an unspecified output rather than no output
         self._output = ""
-        self._predicted_output_size = 0
 
     # Overriding a parent class's property is a bit ugly in Python.
     # Also, Pylint bug: https://github.com/PyCQA/pylint/issues/844
@@ -272,8 +299,6 @@ class ReadWriteCommand(ReadCommand):
         if value is not None:
             # Unlike ReadCommand, we pass self.output to the VM factory
             self.vm = VMDescription.factory(value, self.output)
-            # And we also check whether output space will be an issue
-            self._check_and_warn_disk_space()
         self._package = value
 
     @property
@@ -294,49 +319,27 @@ class ReadWriteCommand(ReadCommand):
         self._output = value
         if self.vm is not None:
             self.vm.output_file = value
-            self._check_and_warn_disk_space(force_prompt=True)
 
-    def _check_and_warn_disk_space(self, force_prompt=False):
-        """Check estimated disk space required against the available space.
+    def ready_to_run(self):
+        """Check whether the module is ready to :meth:`run`.
 
-        If the estimate exceeds the available, warn the user and prompt
-        for confirmation to continue anyway or else abort.
-
-        Safe to call repeatedly - will only prompt the user again if the
-        space estimate changes or if ``force_prompt`` is True.
-
-        Args:
-          force_prompt (bool): If True, reprompt the user even if the estimate
-           has not changed.
-
-        Raises:
-          SystemExit: if disk space is insufficient and the user declines
-            to continue regardless of this information.
+        Returns:
+          tuple: ``(True, ready_message)`` or ``(False, reason_why_not)``
         """
-        if not self.vm:
-            logger.debug("Input VM not yet set, so not yet able "
-                         " to check estimated output size.")
-            return
-        if not self.output:
-            logger.debug("Output location not yet set, so not yet able"
-                         " to check disk space")
-            return
-
-        predicted = self.vm.predicted_output_size()
-        if predicted == self._predicted_output_size and not force_prompt:
-            return
-
-        if predicted != self._predicted_output_size:
-            logger.verbose("Predicted disk usage changed from %s to %s",
-                           pretty_bytes(self._predicted_output_size),
-                           pretty_bytes(predicted))
-            self._predicted_output_size = predicted
-
-        # Compare double predicted size against available space to provide
-        # sufficient margin of error against temporary files, other processes
-        # consuming disk space, etc.
-        self.check_disk_space(2 * predicted, self.output, "VM output",
-                              die=True)
+        ready, reason = super(ReadWriteCommand, self).ready_to_run()
+        if ready:
+            output_loc = self.output
+            if not output_loc:
+                output_loc = self.package
+            if not self.check_disk_space(2 * self.vm.predicted_output_size(),
+                                         output_loc,
+                                         label="VM output"):
+                return (False,
+                        "Insufficient disk space available to guarantee"
+                        " successful output to {0}. You may wish to specify"
+                        " a different location using the --output option."
+                        .format(output_loc))
+        return (ready, reason)
 
     def run(self):
         """Do the actual work of this command.
@@ -357,6 +360,8 @@ class ReadWriteCommand(ReadCommand):
         """Write the current VM state out to disk if requested."""
         # do any command-specific work here, then:
         if self.vm is not None:
-            self._check_and_warn_disk_space()
+            # One more sanity check
+            self.check_disk_space(2 * self.vm.predicted_output_size(),
+                                  self.output, label="VM output", die=True)
             self.vm.write()
         super(ReadWriteCommand, self).finished()

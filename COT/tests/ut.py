@@ -161,9 +161,10 @@ class COT_UT(unittest.TestCase):  # noqa: N801
 
     FILE_SIZE = {}
     for filename in [
+            'blank.vmdk',
             'input.iso',
             'input.vmdk',
-            'blank.vmdk',
+            'minimal.ovf',
             'sample_cfg.txt',
     ]:
         FILE_SIZE[filename] = os.path.getsize(resource_filename(__name__,

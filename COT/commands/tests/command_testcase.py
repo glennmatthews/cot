@@ -35,7 +35,7 @@ from COT.commands import Command, ReadWriteCommand
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=missing-param-doc
+# pylint: disable=missing-param-doc,protected-access
 
 
 class CommandTestCase(COT_UT):
@@ -79,7 +79,7 @@ class CommandTestCase(COT_UT):
         super(CommandTestCase, self).setUp()
         self.command = self.command_class(UI())
         if isinstance(self.command, ReadWriteCommand):
-            self.command.output = self.temp_file
+            self.command._output = self.temp_file
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test."""

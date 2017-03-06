@@ -20,12 +20,11 @@ import os.path
 import mock
 
 from COT.commands.tests.command_testcase import CommandTestCase
-from COT.ui import UI
 from COT.commands import Command, ReadCommand, ReadWriteCommand
 from COT.data_validation import InvalidInputError
 from COT.vm_description import VMInitError
 
-# pylint: disable=missing-param-doc,missing-type-doc
+# pylint: disable=missing-param-doc,missing-type-doc,protected-access
 
 
 class TestCommand(CommandTestCase):
@@ -45,19 +44,79 @@ class TestCommand(CommandTestCase):
             label="Hello", context="Contextual detail", die=True))
 
     @mock.patch("COT.commands.command.available_bytes_at_path", return_value=0)
-    def test_check_disk_space_insufficient(self, *_):
+    def test_check_disk_space_insufficient(self, mock_available):
         """Negative test for check_disk_space API."""
         # If user declines, return False or die
         self.command.ui.default_confirm_response = False
+
         self.assertFalse(self.command.check_disk_space(100, self.temp_dir))
+        mock_available.assert_called_once()
+
+        mock_available.reset_mock()
+        self.command._cached_disk_requirements.clear()
         self.assertRaises(SystemExit, self.command.check_disk_space,
                           100, self.temp_dir, die=True)
+        mock_available.assert_called_once()
+
+        mock_available.reset_mock()
+        self.command._cached_disk_requirements.clear()
 
         # If user accepts, return True anyways
         self.command.ui.default_confirm_response = True
+
         self.assertTrue(self.command.check_disk_space(100, self.temp_dir))
+        mock_available.assert_called_once()
+
+        mock_available.reset_mock()
+        self.command._cached_disk_requirements.clear()
         self.assertTrue(self.command.check_disk_space(100, self.temp_dir,
                         die=True))
+        mock_available.assert_called_once()
+
+    @mock.patch("COT.commands.command.available_bytes_at_path")
+    def test_check_disk_space_caching(self, mock_available):
+        """Confirm disk space checks are invoked and cached appropriately."""
+        mock_available.return_value = 50000
+
+        val = self.command.check_disk_space(100, __file__)
+        self.assertTrue(val)
+        mock_available.assert_called_once_with(os.path.dirname(__file__))
+        mock_available.reset_mock()
+
+        # Checking same path again with different, lower size - no re-check
+        val = self.command.check_disk_space(50, __file__)
+        self.assertTrue(val)
+        mock_available.assert_not_called()
+
+        # Checking the same path again with the same size - no re-check
+        val = self.command.check_disk_space(100, __file__)
+        self.assertTrue(val)
+        mock_available.assert_not_called()
+
+        # As caching is by directory not by file,
+        # checking the same directory again with the same size - no re-check
+        val = self.command.check_disk_space(100, os.path.dirname(__file__))
+        self.assertTrue(val)
+        mock_available.assert_not_called()
+
+        # Checking same path with increased size - re-check
+        val = self.command.check_disk_space(200, os.path.dirname(__file__))
+        self.assertTrue(val)
+        mock_available.assert_called_once_with(os.path.dirname(__file__))
+        mock_available.reset_mock()
+
+        # Checking different path - re-check
+        val = self.command.check_disk_space(100, self.input_ovf)
+        self.assertTrue(val)
+        mock_available.assert_called_once_with(os.path.dirname(self.input_ovf))
+        mock_available.reset_mock()
+
+        # Explictly forcing re-check
+        val = self.command.check_disk_space(100, self.input_ovf,
+                                            force_check=True)
+        self.assertTrue(val)
+        mock_available.assert_called_once_with(os.path.dirname(self.input_ovf))
+        mock_available.reset_mock()
 
 
 class TestReadCommand(CommandTestCase):
@@ -85,6 +144,7 @@ class TestReadCommand(CommandTestCase):
 
         # User can opt to continue anyway
         self.command.ui.default_confirm_response = True
+        self.command._cached_disk_requirements.clear()
         with mock.patch.object(self.command,
                                'working_dir_disk_space_required',
                                return_value=(1 << 60)):
@@ -115,61 +175,6 @@ class TestReadWriteCommand(CommandTestCase):
         self.assertEqual(self.command.output, "")
         self.command.run()
         self.assertEqual(self.command.output, self.input_ovf)
-
-    @mock.patch("COT.vm_description.ovf.OVF.predicted_output_size")
-    @mock.patch("COT.commands.command.available_bytes_at_path")
-    def test_space_checks_called(self, mock_available, mock_size):
-        """Confirm that disk space checks are invoked appropriately."""
-        mock_size.return_value = 10000
-        mock_available.return_value = 50000
-
-        # Cases that do not result in a check:
-        # 1. Set package without setting output
-        self.command = ReadWriteCommand(UI())
-        self.command.package = self.input_ovf
-        mock_size.assert_not_called()
-        mock_available.assert_not_called()
-
-        # Unset package
-        self.command.package = None
-        mock_size.assert_not_called()
-        mock_available.assert_not_called()
-
-        # 2. Set output without setting package
-        self.command = ReadWriteCommand(UI())
-        self.command.output = self.temp_file
-        mock_size.assert_not_called()
-        mock_available.assert_not_called()
-
-        # Cases that do result in a check:
-        # 1. Setting package when output is already set
-        self.command.package = self.input_ovf
-        self.assertNotEqual(self.command.vm, None)
-        mock_size.assert_called_once()
-        mock_available.assert_called_once()
-
-        self.command.destroy()
-        mock_size.reset_mock()
-        mock_available.reset_mock()
-
-        # 2. Setting output when package is already set
-        self.command = ReadWriteCommand(UI())
-        self.command.package = self.input_ovf
-        self.command.output = self.temp_file
-        self.assertNotEqual(self.command.vm, None)
-        mock_size.assert_called_once()
-        mock_available.assert_called_once()
-
-        mock_size.reset_mock()
-        mock_available.reset_mock()
-
-        # 3. Changing output when package is already set
-        self.command.output = os.path.join(self.temp_dir, "new_out.ovf")
-        mock_size.assert_called_once()
-        mock_available.assert_called_once()
-
-        mock_size.reset_mock()
-        mock_available.reset_mock()
 
     def test_finished_no_vm(self):
         """Verify that finished() can be successful if no VM was set."""

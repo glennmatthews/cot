@@ -19,6 +19,7 @@
 import filecmp
 import os.path
 import re
+import mock
 
 from COT.commands.tests.command_testcase import CommandTestCase
 from COT.commands.add_disk import COTAddDisk
@@ -27,6 +28,8 @@ from COT.data_validation import ValueUnsupportedError, ValueTooHighError
 from COT.disks import DiskRepresentation
 from COT.disks.qcow2 import QCOW2
 
+
+# pylint: disable=missing-param-doc,missing-type-doc
 
 class TestCOTAddDisk(CommandTestCase):
     """Test cases for the COTAddDisk module."""
@@ -587,6 +590,19 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>
 """.format(blank_size=self.FILE_SIZE['blank.vmdk']))
+
+    @mock.patch("COT.commands.command.available_bytes_at_path")
+    def test_add_disk_insufficient_output_space(self, mock_available):
+        """Make sure disk space check is invoked when adding a disk."""
+        self.command.package = self.minimal_ovf
+        self.command.ui.default_confirm_response = False
+        # Enough space for the OVF itself, but not for OVF + added disk
+        mock_available.return_value = 3 * self.FILE_SIZE['minimal.ovf']
+        self.command.disk_image = self.blank_vmdk
+        ready, reason = self.command.ready_to_run()
+        mock_available.assert_called_once()
+        self.assertFalse(ready)
+        self.assertRegex(reason, "Insufficient disk space available")
 
     def test_add_cdrom_to_existing_controller(self):
         """Add a CDROM drive to an existing controller."""
