@@ -184,9 +184,10 @@ class Command(object):
         if required_size <= available:
             return True
 
-        msg = ("{0} requires {1} of disk space but only {2} is available"
-               " at {3}.".format(label, pretty_bytes(required_size),
-                                 pretty_bytes(available), location))
+        msg = ("{0} may require approximately {1} of disk space,"
+               " but only {2} is available at {3}."
+               .format(label, pretty_bytes(required_size),
+                       pretty_bytes(available), location))
         if context:
             msg += "\n({0})".format(context)
         msg += "\nOperation may fail. Continue anyway?"
