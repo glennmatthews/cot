@@ -771,15 +771,17 @@ class OVF(VMDescription, XML):
 
             real_size = str(file_ref.size)
             real_capacity = None
-            # We can't check disk capacity inside a tar file.
-            # It seems wasteful to extract the disk file (could be
-            # quite large) from the TAR just to check, so we don't.
-            if file_ref.file_path is not None:
-                dr = DiskRepresentation.from_file(file_ref.file_path)
-                real_capacity = dr.capacity
 
             disk_item = self.find_disk_from_file_id(
                 file_elem.get(self.FILE_ID))
+
+            if disk_item is not None:
+                # We can't check disk capacity inside a tar file.
+                # It seems wasteful to extract the disk file (could be
+                # quite large) from the TAR just to check, so we don't.
+                if file_ref.file_path is not None:
+                    dr = DiskRepresentation.from_file(file_ref.file_path)
+                    real_capacity = dr.capacity
 
             reported_size = file_elem.get(self.FILE_SIZE)
             if real_size != reported_size:
