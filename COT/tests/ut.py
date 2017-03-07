@@ -352,6 +352,10 @@ class COT_UT(unittest.TestCase):  # noqa: N801
             self.fail("Temp directory(s) {0} left over after test!"
                       .format(delta))
 
+        # Clear output caches for helper commands:
+        for helper in helpers.values():
+            helper.cached_output.clear()
+
         # Let's try to keep things lean...
         delta_t = time.time() - self.start_time
         if delta_t > 5.0:

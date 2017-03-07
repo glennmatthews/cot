@@ -187,6 +187,11 @@ class Helper(object):
             version_args = ['--version']
         self._version_args = version_args
         self._version_regexp = version_regexp
+        self.cached_output = {}
+        """Cache of call args --> output from this call.
+
+        This is opt-in per-subclass - nothing is cached by default.
+        """
 
     def __bool__(self):
         """A helper is True if installed and False if not installed."""
@@ -255,15 +260,33 @@ class Helper(object):
         return self._version
 
     def call(self, args,
-             capture_output=True, **kwargs):
+             capture_output=True,
+             use_cached=True,
+             **kwargs):
         """Call the helper program with the given arguments.
 
         Args:
-          args (list): List of arguments to the helper program.
+          args (tuple): List of arguments to the helper program.
           capture_output (boolean): If ``True``, stdout/stderr will be
-              redirected to a buffer and returned, instead of being displayed
-              to the user. (I.e., :func:`check_output` will be invoked
-              instead of :func:`check_call`)
+            redirected to a buffer and returned, instead of being displayed
+            to the user. (I.e., :func:`check_output` will be invoked
+            instead of :func:`check_call`)
+          use_cached (boolean): If ``True``, and ``capture_output`` is also
+             ``True``, then if there is an entry in :attr:`cached_output`
+             for the given ``args``, just return that entry instead of
+             calling the helper again.
+             Ignored if ``capture_output`` is ``False``.
+
+        .. note::
+          By default no captured output is cached (as it may not necessarily
+          be appropriate to cache the output of many commands.) Subclasses
+          that wish to cache output of certain calls should wrap this method
+          with the appropriate logic, typically along the lines of::
+
+              output = super(MyHelper, self).call(args, *kwargs)
+              if output and args[0] == 'info':
+                  self.cached_output[args] = output
+              return output
 
         Returns:
           str: Captured stdout/stderr if :attr:`capture_output` is True,
@@ -286,11 +309,22 @@ class Helper(object):
                     "Please install it and/or check your $PATH."
                     .format(self.name))
             self.install()
-        args = [self.name] + args
+        # Force args to be a tuple if it was a list,
+        # as tuple is hashable for the cache and list is not.
+        args = tuple(args)
+        call_args = [self.name] + list(args)
         if capture_output:
-            return check_output(args, **kwargs)
+            if use_cached and args in self.cached_output:
+                logger.debug("Returning cached output of '%s':\n%s",
+                             " ".join(call_args),
+                             self.cached_output[args])
+                return self.cached_output[args]
+            # Default implementation does not cache any output.
+            # Subclasses should wrap this method if they want to
+            # cache output from specific commands.
+            return check_output(call_args, **kwargs)
         else:
-            check_call(args, **kwargs)
+            check_call(call_args, **kwargs)
             return None
 
     def install(self):

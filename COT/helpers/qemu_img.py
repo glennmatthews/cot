@@ -38,3 +38,15 @@ class QEMUImg(Helper):
             "qemu-img",
             info_uri="http://www.qemu.org",
             version_regexp="qemu-img version ([0-9.]+)")
+
+    def call(self, args, **kwargs):
+        """Call qemu-img with the given arguments.
+
+        Caches the output of ``qemu-img info FILE`` commands to save time.
+
+        For the parameters, see :meth:`COT.helpers.helper.Helper.call` etc.
+        """
+        output = super(QEMUImg, self).call(args, **kwargs)
+        if output and args[0] == "info":
+            self.cached_output[tuple(args)] = output
+        return output

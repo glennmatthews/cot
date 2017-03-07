@@ -16,6 +16,9 @@ This project adheres to `Semantic Versioning`_.
   available disk space in the requested output location against the VM's
   predicted output size, and if there is likely to be a problem, warns the
   user before continuing.
+- ``Helper`` classes can now opt to cache their output to avoid repeatedly
+  re-running the same command. Currently enabled for ``qemu-img info ...``
+  and ``isoinfo ...`` commands. (`#62_`)
 - New modules and APIs:
 
   - ``Command.working_dir_disk_space_required()`` instance method, to ask a
@@ -703,6 +706,7 @@ Initial public release.
 .. _#59: https://github.com/glennmatthews/cot/issues/59
 .. _#60: https://github.com/glennmatthews/cot/issues/60
 .. _#61: https://github.com/glennmatthews/cot/issues/61
+.. _#62: https://github.com/glennmatthews/cot/issues/62
 .. _#63: https://github.com/glennmatthews/cot/issues/63
 
 .. _Semantic Versioning: http://semver.org/
