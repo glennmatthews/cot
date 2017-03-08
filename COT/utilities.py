@@ -27,6 +27,7 @@
   to_string
 """
 
+import errno
 import logging
 import os
 import sys
@@ -44,12 +45,14 @@ def available_bytes_at_path(path):
 
     Returns:
       int: Available space, in bytes
+
+    Raises:
+      OSError: if the specified path does not exist or is not readable.
     """
-    # TODO input validation - os.path.exists, etc.
     logger.debug("Checking available disk space in '%s'", path)
     statvfs = os.statvfs(path)
     # available = free blocks times block size
-    available = statvfs.f_bfree * statvfs.f_frsize
+    available = statvfs.f_bavail * statvfs.f_frsize
     logger.debug("There appears to be %s available", pretty_bytes(available))
     return available
 
@@ -62,12 +65,23 @@ def directory_size(path):
 
     Returns:
       int: Total bytes consumed by files in this directory.
+
+    Raises:
+      OSError: if the specified path does not exist or is not a directory.
     """
+    if not os.path.exists(path):
+        raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+    if not os.path.isdir(path):
+        raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), path)
     total_size = 0
     for dirpath, _, filenames in os.walk(path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
-            total_size += os.path.getsize(fp)
+            try:
+                total_size += os.path.getsize(fp)
+            except OSError as e:
+                logger.debug("Unable to get size of %s (%s), continuing.",
+                             fp, e.strerror)
     logger.debug("Total disk space consumed by %s is %s",
                  path, pretty_bytes(total_size))
     return total_size

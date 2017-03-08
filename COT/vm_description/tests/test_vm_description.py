@@ -35,6 +35,7 @@ class TestVMDescription(unittest.TestCase):
     TEXT_FILE = resource_filename(__name__, 'sample_cfg.txt')
 
     @mock.patch("os.path.exists", return_value=True)
+    @mock.patch("os.path.isdir", return_value=True)
     @mock.patch("tempfile.mkdtemp", return_value="/foo/bar")
     @mock.patch("shutil.rmtree")
     @mock.patch("COT.vm_description.VMDescription.write")
