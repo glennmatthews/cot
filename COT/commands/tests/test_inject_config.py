@@ -38,9 +38,9 @@ logger = logging.getLogger(__name__)
 class TestCOTInjectConfig(CommandTestCase):
     """Test cases for COTInjectConfig class."""
 
-    # Expected WARNING message
+    # Expected message
     OVERWRITE_CONFIG_DISK = {
-        'levelname': 'WARNING',
+        'levelname': 'NOTICE',
         'msg': "Overwriting existing config disk",
     }
 
@@ -362,8 +362,8 @@ ovf:size="{config_size}" />
             resource_type='cpu')
         self.assertRaises(LookupError,
                           self.command.vm.find_device_location, cpu_item)
-        self.assertLogged(levelname="ERROR",
-                          msg="Item has no .*Parent element")
+        self.assertLogged(levelname="WARNING",
+                          msg="Item.*has no 'Parent' subelement")
 
     def test_inject_extra_directory(self):
         """Test injection of extras from an entire directory."""

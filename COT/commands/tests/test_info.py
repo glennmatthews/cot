@@ -801,3 +801,20 @@ Properties:
 """.format(self.invalid_ovf))    # noqa - trailing whitespace above is expected
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
+
+    def test_ovf_failure(self):
+        """Ensure info gracefully handles failure to load an OVF."""
+        self.command.package_list = [self.ersatz_v3_ovf, self.minimal_ovf]
+        # COT should report error in the first OVF but still show the second
+        self.check_cot_output("""
+-------------------------------------------------------------------------------
+{0}
+-------------------------------------------------------------------------------
+Configuration Profiles:  CPUs    Memory NICs Serials Disks/Capacity
+                         ---- --------- ---- ------- --------------
+  None (default)            0       0 B    0       0  0 /       0 B
+""".format(self.minimal_ovf))
+
+        self.assertLogged(levelname="ERROR",
+                          msg="Unable to display information for",
+                          args=(self.ersatz_v3_ovf, ".*"))

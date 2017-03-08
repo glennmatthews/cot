@@ -39,11 +39,11 @@ def guess_manpath():
     logger.debug("invoked from directory: %s", sys.argv[0])
     if os.path.basename(bin_dir) == 'bin':
         man_dir = os.path.join(os.path.dirname(bin_dir), "man")
-        logger.verbose("program install directory %s matches 'bin', "
+        logger.verbose("Program install directory %s matches 'bin', "
                        "so assume relative man path %s", bin_dir, man_dir)
     else:
         man_dir = "/usr/local/man"
-        logger.verbose("program install directory {0} does not appear "
+        logger.verbose("Program install directory {0} does not appear "
                        "to be 'bin', assuming system install path {0}"
                        .format(man_dir))
     return man_dir

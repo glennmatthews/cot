@@ -13,26 +13,71 @@ Follow coding guidelines
 Logging level usage
 '''''''''''''''''''
 
-  ERROR
-    Something is wrong (such as a violation of the OVF specification)
-    but COT was able to attempt to recover. If recovery is not possible,
-    you should raise an ``Error`` of appropriate type instead of logging
-    an ERROR message.
-  WARNING
-    Something unexpected or risky happened that the user needs a
-    heads-up about. This includes cases where the software had to make
-    an uncertain choice on its own due to lack of information from the
-    user.
-  INFO
-    Important status updates about normal operation of the software.
-    As this is the lowest logging level enabled by default, you should
-    keep the logs generated at this level relatively brief but
-    meaningful.
-  VERBOSE
-    Detailed information of interest to an advanced or inquisitive user.
-  DEBUG
-    Highly detailed information only useful to a developer familiar with
-    the code.
+COT uses logging levels (including the additional intermediate logging levels
+provided by the `verboselogs`_ package) as follows:
+
+======= ============================== ========================================
+Level   Usage guidelines               Examples
+======= ============================== ========================================
+ERROR   Something is definitely wrong, * OVF descriptor is not following the
+        but COT is able to proceed, at   specification.
+        least for the moment. COT may  * User has provided invalid input, but
+        raise an exception at some       can retry.
+        later point due to this issue. * Expected data is missing.
+                                       * Internal logic error in COT that
+        If continuing is already known   should never be encountered.
+        to be impossible, you should
+        raise an exception now instead
+        of logging an ERROR message.
+
+WARNING Something potentially wrong,   * COT would have prompted the user to
+        or at least risky, happened      provide input or confirm a risky
+        that the user should be          operation, but has been instructed to
+        informed of.                     run non-interactively.
+                                       * COT is having to guess whether a given
+        This includes cases where, due   disk drive should be SCSI or IDE as
+        to insufficient information      the user didn't specify which when
+        provided by the user, COT had    instructing COT to add the drive.
+        to make an uncertain choice on * User-provided information was unused,
+        its own (or was unable to make   such as providing the device type to
+        such a decision but is           set for a device that doesn't exist.
+        continuing nonetheless).       * User has instructed COT to configure
+                                         hardware settings that appear to be
+                                         outside the supported range for the
+                                         given platform.
+
+NOTICE  Something noteworthy happened  * COT does not recognize the virtual
+        that is not necessarily a        platform described by a given OVF and
+        problem, but deserves the        so will be treating it generically.
+        user's attention.              * COT is attempting to install a needed
+                                         helper application.
+        This is the lowest logging     * COT is having to create parts of the
+        level enabled by default, so     OVF descriptor from scratch.
+        messages generated at and      * COT is replacing a file or disk that
+        above this level should be       was previously included in this OVF
+        succinct and meaningful to all   with a new one.
+        users.
+
+INFO    Status updates about normal    * COT has successfully parsed an OVF or
+        operation of the software.       OVA and is ready to operate on it.
+                                       * COT is beginning to write the updated
+                                         OVF/OVA to disk.
+
+VERBOSE Detailed information of        * Individual task steps of editing
+        interest to an expert or very    an OVF.
+        curious user.                  * COT's reasoning for making high-level
+                                         decisions.
+
+DEBUG   Highly detailed information,   * Information about temporary files and
+        probably only useful to a        other internal state of COT itself.
+        developer familiar with the    * Individual operations within a complex
+        code.                            task.
+
+SPAM    Extremely detailed or          * Data dumps of XML elements and other
+        repetitive info that even a      data structures.
+        developer will rarely want     * Status updates on tasks that typically
+        to see.                          happen many times in a single COT run.
+======= ============================== ========================================
 
 Coding style
 ''''''''''''
@@ -163,6 +208,7 @@ COT follows Vincent Driessen's `A successful Git branching model`_. As such,
 please submit feature enhancement and non-critical bugfix requests to merge
 into the ``develop`` branch rather than ``master``.
 
+.. _verboselogs: https://verboselogs.readthedocs.io/en/latest/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
 .. _`PEP 257`: https://www.python.org/dev/peps/pep-0257/
 .. _flake8: http://flake8.readthedocs.org/en/latest/

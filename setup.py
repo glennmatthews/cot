@@ -40,7 +40,7 @@ install_requires = [
     'colorlog>=2.5.0',
     'pyvmomi>=5.5.0.2014.1',
     'requests>=2.5.1',
-    'verboselogs>=1.0',
+    'verboselogs>=1.6',
 
     # enum module is standard in Python 3.4 and later, else use enum34
     'enum34; python_version < "3.4"',

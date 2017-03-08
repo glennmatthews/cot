@@ -84,7 +84,7 @@ class XML(object):
         Args:
           xml_file (str): Filename to write to
         """
-        logger.debug("Writing XML to %s", xml_file)
+        logger.verbose("Writing XML to %s", xml_file)
 
         # Pretty-print the XML for readability
         self.xml_reindent(self.root, 0)
@@ -101,7 +101,8 @@ class XML(object):
         # This is a bug - see http://bugs.python.org/issue17088
         self.tree.write(xml_file, xml_declaration=True, encoding='utf-8')
 
-    def xml_reindent(self, parent, depth):
+    @staticmethod
+    def xml_reindent(parent, depth=0):
         """Recursively add indentation to XML to make it look nice.
 
         Args:
@@ -113,7 +114,7 @@ class XML(object):
         last = None
         for elem in list(parent):
             elem.tail = "\n" + (" " * depth)
-            self.xml_reindent(elem, depth)
+            XML.xml_reindent(elem, depth)
             last = elem
 
         if last is not None:
@@ -183,8 +184,14 @@ class XML(object):
             for tag_entry in tag:
                 elements.extend(parent.findall(tag_entry))
             label = [XML.strip_ns(t) for t in tag]
-        logger.debug("Examining %s %s elements under %s",
-                     len(elements), label, XML.strip_ns(parent.tag))
+
+        if not elements:
+            logger.spam("No children matching %s found under %s",
+                        label, XML.strip_ns(parent.tag))
+            return elements
+
+        logger.spam("Examining %s %s elements under %s",
+                    len(elements), label, XML.strip_ns(parent.tag))
         child_list = []
         for element in elements:
             found = True
@@ -192,16 +199,16 @@ class XML(object):
             if attrib:
                 for key in attrib.keys():
                     if element.get(key, None) != attrib[key]:
-                        logger.debug("Attribute '%s' (%s) does not match "
-                                     "expected value (%s)",
-                                     XML.strip_ns(key), element.get(key, ""),
-                                     attrib[key])
+                        logger.spam("Attribute '%s' (%s) does not match "
+                                    "expected value (%s)",
+                                    XML.strip_ns(key), element.get(key, ""),
+                                    attrib[key])
                         found = False
                         break
 
             if found:
                 child_list.append(element)
-        logger.debug("Found %s matching %s elements", len(child_list), label)
+        logger.spam("Found %s matching %s elements", len(child_list), label)
         return child_list
 
     @classmethod
@@ -292,8 +299,8 @@ class XML(object):
             attrib = {}
         element = cls.find_child(parent, tag, attrib=attrib)
         if element is None:
-            logger.debug("Creating new %s under %s",
-                         XML.strip_ns(tag), XML.strip_ns(parent.tag))
+            logger.spam("Creating new %s element under parent %s",
+                        XML.strip_ns(tag), XML.strip_ns(parent.tag))
             element = ET.Element(tag)
             XML.add_child(parent, element, ordering, known_namespaces)
         if text is not None:

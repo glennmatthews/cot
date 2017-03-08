@@ -12,11 +12,14 @@
 
 """Handling of ISO files."""
 
+import logging
 import os
 import re
 
 from COT.disks.disk import DiskRepresentation
 from COT.helpers import helpers, HelperError, helper_select
+
+logger = logging.getLogger(__name__)
 
 
 class ISO(DiskRepresentation):
@@ -109,6 +112,7 @@ class ISO(DiskRepresentation):
             raise HelperError(2, "No such file or directory: '{0}'"
                               .format(path))
         if helpers['isoinfo']:
+            logger.debug("Using 'isoinfo' to check whether %s is an ISO", path)
             try:
                 helpers['isoinfo'].call(['-i', path, '-d'])
                 return 100

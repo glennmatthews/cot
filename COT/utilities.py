@@ -49,11 +49,11 @@ def available_bytes_at_path(path):
     Raises:
       OSError: if the specified path does not exist or is not readable.
     """
-    logger.debug("Checking available disk space in '%s'", path)
     statvfs = os.statvfs(path)
     # available = free blocks times block size
     available = statvfs.f_bavail * statvfs.f_frsize
-    logger.debug("There appears to be %s available", pretty_bytes(available))
+    logger.debug("There appears to be %s available at %s",
+                 pretty_bytes(available), path)
     return available
 
 

@@ -265,6 +265,31 @@ class CLI(UI):
                 output_lines.append(wrapped_line)
         return "\n".join(output_lines)
 
+    def adjust_verbosity(self, delta):
+        """Set the logging verbosity relative to the COT default.
+
+        Wrapper for :meth:`set_verbosity`, to be used when you have
+        a delta (number of steps to offset more or less verbose)
+        rather than an actual logging level in mind.
+
+        Args:
+          delta (int): Shift in verbosity level. 0 = default verbosity;
+            positive implies more verbose; negative implies less verbose.
+        """
+        verbosity_levels = [
+            logging.CRITICAL, logging.ERROR, logging.WARNING,  # quieter
+            logging.NOTICE,                  # default
+            logging.INFO, logging.VERBOSE,   # more verbose
+            logging.DEBUG, logging.SPAM,     # really noisy
+        ]
+        verbosity = verbosity_levels.index(logging.NOTICE) + delta
+        if verbosity < 0:
+            verbosity = 0
+        elif verbosity >= len(verbosity_levels):
+            verbosity = len(verbosity_levels) - 1
+        level = verbosity_levels[verbosity]
+        self.set_verbosity(level)
+
     def set_verbosity(self, level):
         """Enable logging and/or change the logging verbosity level.
 
@@ -272,7 +297,7 @@ class CLI(UI):
         colorized, appropriately verbose log formatting.
 
         Args:
-          level (int): Logging level as defined by :mod:`logging`
+          level (int): Logging level as defined in :mod:`logging`.
         """
         if not self.handler:
             self.handler = logging.StreamHandler()
@@ -282,6 +307,8 @@ class CLI(UI):
             self.master_logger = logging.getLogger('COT')
             self.master_logger.addHandler(self.handler)
         self.master_logger.setLevel(level)
+        logger.debug("Verbosity level is now %s",
+                     logging.getLevelName(level))
 
     def run(self, argv):
         """Parse the given CLI args then run.
@@ -321,7 +348,7 @@ class CLI(UI):
         prompt = "\n".join(prompt_w)
 
         while True:
-            ans = self.input("{0} [y] ".format(prompt))
+            ans = self.input("{0} [y] ".format(prompt)).strip()
             if not ans or ans == 'y' or ans == 'Y':
                 return True
             elif ans == 'n' or ans == 'N':
@@ -405,20 +432,13 @@ class CLI(UI):
                             help="""Perform requested actions without """
                             """prompting for confirmation""")
 
-        parser.set_defaults(_verbosity=logging.INFO)
         debug_group = parser.add_mutually_exclusive_group()
         debug_group.add_argument(
-            '-q', '--quiet', dest='_verbosity',
-            action='store_const', const=logging.WARNING,
-            help="Quiet output and logging (warnings and errors only)")
+            '-q', '--quiet', dest='_quietude', action='count', default=0,
+            help="Decrease verbosity of the program (repeatable)")
         debug_group.add_argument(
-            '-v', '--verbose', dest='_verbosity',
-            action='store_const', const=logging.VERBOSE,
-            help="Verbose output and logging")
-        debug_group.add_argument(
-            '-d', '-vv', '--debug', dest='_verbosity',
-            action='store_const', const=logging.DEBUG,
-            help="Debug (most verbose) output and logging")
+            '-v', '--verbose', dest='_verbosity', action='count', default=0,
+            help="Increase verbosity of the program (repeatable)")
 
         self.parser = parser
 
@@ -540,7 +560,7 @@ class CLI(UI):
     def main(self, args):
         """Main worker function for COT when invoked from the CLI.
 
-        * Calls :func:`set_verbosity` with the appropriate verbosity level
+        * Calls :meth:`adjust_verbosity` with the appropriate verbosity level
           derived from the args.
         * Looks up the appropriate :class:`~COT.commands.Command`
           instance corresponding to the subcommand that was invoked.
@@ -564,7 +584,9 @@ class CLI(UI):
         """
         # pylint: disable=protected-access
         self.force = args._force
-        self.set_verbosity(args._verbosity)
+
+        # Verbosity level adjusted by -v and -q options
+        self.adjust_verbosity(args._verbosity - args._quietude)
 
         # In python3.3+ we can get here even without a subcommand:
         if not args._subcommand:
@@ -624,41 +646,69 @@ class CLILoggingFormatter(ColoredFormatter, object):
 
     Examples::
 
-      >>> record = logging.LogRecord("test_func", logging.INFO,
-      ...                            "/fake.py", 22, "Hello world!",
-      ...                            None, None)
+      >>> record = logging.LogRecord(
+      ... "COT.doctests",   # logger name
+      ... logging.INFO,     # message level
+      ... "/fakemodule.py", # file reporting the message
+      ... 22,               # line number in file
+      ... "Hello world!",   # message text
+      ... None,             # %-style args for message
+      ... None,             # exception info
+      ... "test_func")      # function reporting the message
       >>> record.created = 0
       >>> record.msecs = 0
+      >>> CLILoggingFormatter(logging.NOTICE).format(record)
+      '\x1b[32mINFO    :\x1b[0m Hello world!'
+      >>> CLILoggingFormatter(logging.INFO).format(record) # doctest:+ELLIPSIS
+      '\x1b[32mINFO    : fakemodule ... Hello world!'
+      >>> CLILoggingFormatter(logging.VERBOSE).format(
+      ... record) # doctest:+ELLIPSIS
+      '\x1b[32mINFO    : fakemodule ... test_func()... Hello world!'
       >>> CLILoggingFormatter(logging.DEBUG).format(record) # doctest:+ELLIPSIS
-      '\x1b[32m...:00.0     INFO: test_func              Hello world!\x1b[0m'
-      >>> CLILoggingFormatter(logging.VERBOSE).format(record)
-      '\x1b[32m    INFO: test_func              Hello world!\x1b[0m'
-      >>> CLILoggingFormatter(logging.INFO).format(record)
-      '\x1b[32m    INFO: Hello world!\x1b[0m'
+      '\x1b[32mINFO ...:00.0 : fakemodule ...22...test_func()...Hello world!'
     """
 
     LOG_COLORS = {
+        'SPAM':     '',
         'DEBUG':    'blue',
         'VERBOSE':  'cyan',
         'INFO':     'green',
-        'WARNING':  'yellow',
-        'ERROR':    'red',
-        'CRITICAL': 'red',
+        'NOTICE':   'yellow',
+        'WARNING':  'red',
+        'ERROR':    'fg_white,bg_red',
+        'CRITICAL': 'purple,bold',   # should never be used in COT
     }
 
     def __init__(self, verbosity=logging.INFO):
         """Create formatter for COT log output with the given verbosity."""
         format_string = "%(log_color)s"
         datefmt = None
+        # Start with log level string
+        format_items = ["%(levelname)-7s"]
         if verbosity <= logging.DEBUG:
-            format_string += "%(asctime)s.%(msecs)d "
+            # Provide timestamps
+            format_items.append("%(asctime)s.%(msecs)d")
             datefmt = "%H:%M:%S"
-        format_string += "%(levelname)8s: "
+        if verbosity <= logging.INFO:
+            # Provide module name
+            # Longest module names at present:
+            #   data_validation (15)
+            #   edit_properties (15)
+            #   install_helpers (15)
+            format_items.append("%(module)-15s")
+        if verbosity <= logging.DEBUG:
+            # Provide line number, up to 4 digits
+            format_items.append("%(lineno)4d")
         if verbosity <= logging.VERBOSE:
-            format_string += "%(name)-22s "
-        format_string += "%(message)s"
+            # Provide function name
+            # Pylint is configured to only allow func names up to 31 characters
+            format_items.append("%(funcName)31s()")
+
+        format_string += " : ".join(format_items)
+        format_string += " :%(reset)s %(message)s"
         super(CLILoggingFormatter, self).__init__(format_string,
                                                   datefmt=datefmt,
+                                                  reset=False,
                                                   log_colors=self.LOG_COLORS)
 
 

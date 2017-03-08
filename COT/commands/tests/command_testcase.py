@@ -58,19 +58,19 @@ class CommandTestCase(COTTestCase):
     }
     CONTROLLER_TYPE_GUESSED_IDE = {
         'levelname': 'WARNING',
-        'msg': "Guessing controller type.*based on disk drive type",
+        'msg': "Controller type not specified - guessing.*based on disk drive",
         'args': ('ide', r'.*', r'.*'),
     }
     OVERWRITING_FILE = {
-        'levelname': 'WARNING',
+        'levelname': 'NOTICE',
         'msg': "Overwriting existing File in OVF",
     }
     OVERWRITING_DISK = {
-        'levelname': 'WARNING',
+        'levelname': 'NOTICE',
         'msg': "Overwriting existing Disk in OVF",
     }
     OVERWRITING_DISK_ITEM = {
-        'levelname': 'WARNING',
+        'levelname': 'NOTICE',
         'msg': "Overwriting existing disk Item in OVF",
     }
 

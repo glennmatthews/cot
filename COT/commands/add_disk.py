@@ -78,9 +78,10 @@ def validate_controller_address(controller, address):
         ...     print(e)
         SCSI disk address must be between 0:0 and 3:15
     """
-    logger.info("validate_controller_address: %s, %s", controller, address)
+    logger.debug("validate_controller_address: %s, %s", controller, address)
     if controller is not None and address is not None:
-        logger.info("Validating controller/address combo")
+        logger.verbose("Validating address %s for controller type %s",
+                       address, controller)
         ctrl_addr = address.split(":")[0]
         disk_addr = address.split(":")[1]
         if controller == "scsi" and (int(ctrl_addr) > 3 or
@@ -157,7 +158,7 @@ class COTAddDisk(ReadWriteCommand):
 
     @address.setter
     def address(self, value):
-        logger.info("Setting address to '%s'", value)
+        logger.debug("Setting address to '%s'", value)
         validate_controller_address(self.controller, value)
         self._address = value
 
@@ -172,7 +173,7 @@ class COTAddDisk(ReadWriteCommand):
 
     @controller.setter
     def controller(self, value):
-        logger.info("Setting controller to '%s'", value)
+        logger.debug("Setting controller to '%s'", value)
         validate_controller_address(value, self.address)
         self._controller = value
 
@@ -416,8 +417,8 @@ def guess_controller_type(platform, ctrl_item, drive_type):
         # then we need to guess which type of controller we need,
         # based on the platform and the disk drive type.
         ctrl_type = platform.controller_type_for_device(drive_type)
-        logger.warning("Guessing controller type should be %s "
-                       "based on disk drive type %s and platform %s",
+        logger.warning("Controller type not specified - guessing it should be"
+                       " %s based on disk drive type %s and platform %s",
                        ctrl_type, drive_type, platform)
     else:
         ctrl_type = ctrl_item.hardware_type
@@ -425,8 +426,8 @@ def guess_controller_type(platform, ctrl_item, drive_type):
             raise ValueUnsupportedError("controller ResourceType",
                                         ctrl_type,
                                         "'ide' or 'scsi'")
-        logger.info("Guessing controller type '%s' from existing Item",
-                    ctrl_type)
+        logger.notice("Controller type not specified - using"
+                      " '%s' based on existing Item", ctrl_type)
     return ctrl_type
 
 
@@ -501,7 +502,7 @@ def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
         ui.confirm_or_die("Replace existing file {0} with {1}?"
                           .format(vm.get_path_from_file(file_obj),
                                   disk_image))
-        logger.warning("Overwriting existing File in OVF")
+        logger.notice("Overwriting existing File in OVF")
 
     if file_obj is None and (disk_obj is not None or disk_item is not None):
         ui.confirm_or_die(
@@ -509,7 +510,7 @@ def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
             .format(drive_type))
 
     if disk_obj is not None:
-        logger.warning("Overwriting existing Disk in OVF")
+        logger.notice("Overwriting existing Disk in OVF")
 
     if disk_item is not None:
         if disk_item.hardware_type != drive_type:
@@ -519,7 +520,7 @@ def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
                         drive_type))
         # We'll overwrite the existing disk Item instead of deleting
         # and recreating it, in order to preserve things like Description
-        logger.warning("Overwriting existing disk Item in OVF")
+        logger.notice("Overwriting existing disk Item in OVF")
 
     if ctrl_item is not None:
         if subtype is not None:

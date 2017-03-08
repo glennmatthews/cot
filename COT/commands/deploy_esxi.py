@@ -371,10 +371,10 @@ class COTDeployESXi(COTDeploy):
                     "'<vCenter>/<datacenter>/host/<host>') "
                     "or upgrade to ovftool 4.0.0 or later.\n"
                     "Continue deployment without OVF environment?")
-                logger.warning("deploying directly to vSphere and ovftool "
-                               "version is too low to add injectOvfEnv "
-                               "option. OVF environment properties will "
-                               "be ignored.")
+                logger.warning("COT is deploying directly to vSphere and the"
+                               " available ovftool version is too low to add"
+                               " the 'injectOvfEnv' option."
+                               " OVF environment properties will be ignored.")
             elif not self.power_on:
                 self.ui.confirm_or_die(
                     "When deploying an OVF directly to a vSphere target, "
@@ -387,13 +387,13 @@ class COTDeployESXi(COTDeploy):
                     "'<vCenter>/<datacenter>/host/<host>') "
                     "instead of a vSphere target.\n"
                     "Continue deployment without OVF environment?")
-                logger.warning("deploying directly to vSphere but "
+                logger.warning("COT is deploying directly to vSphere but "
                                "--power-on is not requested. OVF "
                                "environment properties will be ignored.")
             else:
-                logger.debug("Since ovftool version is sufficient and user "
-                             "requested --power-on, adding ovftool args to "
-                             "ensure passthru of OVF environment to guest.")
+                logger.verbose("Since ovftool version is sufficient and user "
+                               "requested --power-on, adding ovftool args to "
+                               "ensure passthru of OVF environment to guest.")
                 ovftool_args.append("--X:injectOvfEnv")
 
         ovftool_args = self.fixup_ovftool_args(ovftool_args, target)
@@ -418,7 +418,7 @@ class COTDeployESXi(COTDeploy):
               :attr:`~COT.deploy.SerialConnection.kind` other than
               'tcp', 'telnet', or 'device'
         """
-        logger.info("Fixing up serial ports...")
+        logger.info("Fixing up serial ports on deployed VM...")
         with SmarterConnection(self.ui,
                                self.server,
                                self.username,

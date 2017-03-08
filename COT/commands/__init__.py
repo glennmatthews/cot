@@ -31,6 +31,7 @@ Command modules
 
   COT.commands.add_disk
   COT.commands.add_file
+  .. COT.commands.demo_logging
   COT.commands.deploy
   COT.commands.deploy_esxi
   COT.commands.edit_hardware
@@ -48,6 +49,7 @@ from .command import command_classes, Command, ReadCommand, ReadWriteCommand
 # flake8: noqa: F401
 from .add_disk import COTAddDisk
 from .add_file import COTAddFile
+# from .demo_logging import COTDemoLogging
 from .deploy_esxi import COTDeployESXi
 from .edit_hardware import COTEditHardware
 from .edit_product import COTEditProduct

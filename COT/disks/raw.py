@@ -48,7 +48,8 @@ class RAW(DiskRepresentation):
                 if not fields:
                     continue
                 if len(fields) < 6:
-                    logger.warning("Unexpected line: %s", line)
+                    logger.warning("Unexpected line in 'fatdisk' output: %s",
+                                   line)
                     continue
                 result.append(fields[5])
             self._files = result

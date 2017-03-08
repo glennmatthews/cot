@@ -45,7 +45,8 @@ class VMDK(DiskRepresentation):
                     "Could not find VMDK 'createType' in the "
                     "file header:\n{0}".format(header))
             vmdk_format = match.group(1)
-            logger.info("VMDK sub-format is '%s'", vmdk_format)
+            logger.debug("VMDK sub-format for %s is '%s'",
+                         self.path, vmdk_format)
             self._disk_subformat = vmdk_format
         return self._disk_subformat
 

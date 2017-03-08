@@ -29,7 +29,7 @@ class TestCOTEditHardware(CommandTestCase):
     """Test the COTEditHardware class."""
 
     NEW_HW_FROM_SCRATCH = {
-        'levelname': 'WARNING',
+        'levelname': 'NOTICE',
         'msg': "No existing items.*Will create new.*from scratch",
     }
     MEMORY_UNIT_GUESS = {
@@ -40,12 +40,8 @@ class TestCOTEditHardware(CommandTestCase):
         'levelname': 'WARNING',
         'msg': "No items.*found. Nothing to do.",
     }
-    REMOVING_NETWORK = {
-        'levelname': 'WARNING',
-        'msg': "Removing unused network.*",
-    }
     REMOVING_NETWORKSECTION = {
-        'levelname': "WARNING",
+        'levelname': "NOTICE",
         'msg': "removing NetworkSection",
     }
     GENERIC_NETWORK = {
@@ -55,7 +51,7 @@ class TestCOTEditHardware(CommandTestCase):
     }
 
     @staticmethod
-    def removing_network_warning(name=None):
+    def removing_network_message(name=None):
         """Warning log message for deleting a network entry.
 
         Args:
@@ -66,7 +62,7 @@ class TestCOTEditHardware(CommandTestCase):
         if not name:
             name = "VM Network"
         return {
-            'levelname': "WARNING",
+            'levelname': "NOTICE",
             'msg': "Removing unused network %s",
             'args': [name],
         }
@@ -584,9 +580,9 @@ CIM_ResourceAllocationSettingData">
         self.command.nic_networks = ["Alpha", "Beta", "Delta", "Gamma"]
         self.command.run()
         self.command.finished()
-        self.assertLogged(**self.removing_network_warning('GigabitEthernet1'))
-        self.assertLogged(**self.removing_network_warning('GigabitEthernet2'))
-        self.assertLogged(**self.removing_network_warning('GigabitEthernet3'))
+        self.assertLogged(**self.removing_network_message('GigabitEthernet1'))
+        self.assertLogged(**self.removing_network_message('GigabitEthernet2'))
+        self.assertLogged(**self.removing_network_message('GigabitEthernet3'))
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="GigabitEthernet1">
@@ -843,7 +839,7 @@ CIM_ResourceAllocationSettingData">
         self.command.nics = 0
         self.command.run()
         self.command.finished()
-        self.assertLogged(**self.removing_network_warning('bridged'))
+        self.assertLogged(**self.removing_network_message('bridged'))
         self.assertLogged(**self.REMOVING_NETWORKSECTION)
 
         self.command.package = self.temp_file
@@ -913,7 +909,7 @@ CIM_ResourceAllocationSettingData">
         self.command.nic_networks = ['UT', 'UT', 'UT']
         self.command.run()
         self.command.finished()
-        self.assertLogged(**self.removing_network_warning())
+        self.assertLogged(**self.removing_network_message())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="VM Network">
@@ -959,7 +955,7 @@ CIM_ResourceAllocationSettingData">
         self.command.network_descriptions = ['First UT']
         self.command.run()
         self.command.finished()
-        self.assertLogged(**self.removing_network_warning())
+        self.assertLogged(**self.removing_network_message())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="VM Network">
@@ -1003,7 +999,7 @@ CIM_ResourceAllocationSettingData">
         self.command.network_descriptions = ['First network', '#{2} Network']
         self.command.run()
         self.command.finished()
-        self.assertLogged(**self.removing_network_warning())
+        self.assertLogged(**self.removing_network_message())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="VM Network">
@@ -1131,7 +1127,7 @@ CIM_ResourceAllocationSettingData">
         self.command.package = self.input_ovf
         self.command.nic_names = ['foo', 'bar', 'baz', 'bat']
         self.command.run()
-        self.assertLogged(levelname="ERROR",
+        self.assertLogged(levelname="WARNING",
                           msg="not all %s values were used",
                           args=('ethernet', 'ElementName', ['bat']))
         self.command.finished()
@@ -1256,7 +1252,7 @@ CIM_ResourceAllocationSettingData">
             ['00:00:00:00:00:01', '11:22:33:44:55:66', 'fe:fd:fc:fb:fa:f9']
         self.command.run()
         self.command.finished()
-        self.assertLogged(**self.removing_network_warning())
+        self.assertLogged(**self.removing_network_message())
         self.check_diff("""
      <ovf:Info>The list of logical networks</ovf:Info>
 -    <ovf:Network ovf:name="VM Network">
@@ -1947,12 +1943,12 @@ CIM_ResourceAllocationSettingData">
         self.command.nics = 1
         self.command.run()
         self.assertLogged(**self.NEW_HW_FROM_SCRATCH)
-        self.assertLogged(levelname="ERROR",
+        self.assertLogged(levelname="WARNING",
                           msg="not all %s values were used",
                           args=('ethernet', 'Connection', ['Foobar']))
         self.command.finished()
         # network 'Foobar' is not used, so it'll be deleted
-        self.assertLogged(**self.removing_network_warning('Foobar'))
+        self.assertLogged(**self.removing_network_message('Foobar'))
         self.check_diff(file1=self.minimal_ovf,
                         expected="""
  <?xml version='1.0' encoding='utf-8'?>
@@ -1989,7 +1985,7 @@ CIM_ResourceAllocationSettingData">
         self.command.nics = 0
         self.command.run()
         self.command.finished()
-        self.assertLogged(**self.removing_network_warning())
+        self.assertLogged(**self.removing_network_message())
         self.assertLogged(**self.REMOVING_NETWORKSECTION)
         self.check_diff(file1=self.temp_file, file2=self.minimal_ovf,
                         expected="")

@@ -419,9 +419,9 @@ class COTEditHardware(ReadWriteCommand):
         # TODO: the below relies on the assumption that the networks list
         #       is in the same order as the NICs list, which is not a given.
 
-        logger.info("Given that all existing NICs are mapped to unique "
-                    "networks, trying to guess an implicit pattern for "
-                    "creating new networks.")
+        logger.notice("Given that all existing NICs are mapped to unique "
+                      "networks, trying to guess an implicit pattern for "
+                      "creating new networks.")
         # Can we guess a pattern from vm.networks?
         self.nic_networks = guess_list_wildcard(self.vm.networks)
         if self.nic_networks:

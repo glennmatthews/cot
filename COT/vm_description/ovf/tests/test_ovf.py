@@ -385,10 +385,10 @@ ovf:size="{cfg_size}" />
             tarf.add(self.minimal_ovf, os.path.basename(self.minimal_ovf))
         finally:
             tarf.close()
-        # this results in a logged warning but not rejection - Postel's Law
+        # this results in a logged error but not rejection - Postel's Law
         with OVF(fake_file, None):
             self.assertLogged(
-                levelname="WARNING",
+                levelname="ERROR",
                 msg="OVF file %s found, but .*not.*first")
 
         # .ova with unsafe absolute path references

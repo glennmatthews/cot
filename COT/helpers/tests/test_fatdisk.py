@@ -16,7 +16,6 @@
 
 """Unit test cases for the COT.helpers.fatdisk module."""
 
-import logging
 import os
 import re
 from distutils.version import StrictVersion
@@ -26,8 +25,6 @@ import mock
 from COT.helpers.tests.test_helper import HelperTestCase
 from COT.helpers.fatdisk import FatDisk
 from COT.helpers import helpers
-
-logger = logging.getLogger(__name__)
 
 # pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
@@ -177,7 +174,6 @@ class TestFatDisk(HelperTestCase):
     @staticmethod
     def _find_make_only(name):
         """Stub for distutils.spawn.find_executable - only finds 'make'."""
-        logger.info("stub_find_executable(%s)", name)
         if name == 'make':
             return "/bin/make"
         else:

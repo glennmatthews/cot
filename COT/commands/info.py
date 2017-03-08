@@ -21,7 +21,7 @@ from __future__ import print_function
 import logging
 import os.path
 
-from COT.vm_description import VMDescription
+from COT.vm_description import VMDescription, VMInitError
 from COT.data_validation import InvalidInputError
 from .command import command_classes, Command
 
@@ -98,9 +98,13 @@ class COTInfo(Command):
         for package in self.package_list:
             if not first:
                 print("")
-            with VMDescription.factory(package, None) as vm:
-                print(vm.info_string(self.ui.terminal_width - 1,
-                                     self.verbosity))
+            try:
+                with VMDescription.factory(package, None) as vm:
+                    print(vm.info_string(self.ui.terminal_width - 1,
+                                         self.verbosity))
+            except VMInitError as exc:
+                logger.error("Unable to display information for %s: %s",
+                             package, exc.strerror)
             first = False
 
     def create_subparser(self):

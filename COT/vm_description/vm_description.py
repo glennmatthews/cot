@@ -164,7 +164,8 @@ class VMDescription(object):
             vm = vm_class(input_file, *args, **kwargs)
         except ValueUnsupportedError as exc:
             raise VMInitError(2, str(exc), input_file)
-        logger.verbose("Loaded VM object from %s", input_file)
+        logger.info("Successfully loaded %s from %s",
+                    vm_class.__name__, input_file)
 
         return vm
 
@@ -184,9 +185,9 @@ class VMDescription(object):
         """
         self._input_file = input_file
         self._product_class = None
+        logger.verbose("Creating temporary working directory for this VM")
         self._working_dir = tempfile.mkdtemp(prefix="cot")
-        logger.verbose("Temporary directory for VM created from %s: %s",
-                       input_file, self.working_dir)
+        logger.debug("Working directory: %s", self.working_dir)
         self._output_file = None
         self.output_file = output_file
         atexit.register(self.destroy)
@@ -215,10 +216,12 @@ class VMDescription(object):
         try:
             if hasattr(self,
                        'working_dir') and os.path.exists(self.working_dir):
+                logger.verbose("Removing working directory")
                 total_size = directory_size(self.working_dir)
-                logger.verbose("Removing working directory '%s', size %s",
-                               self.working_dir,
-                               pretty_bytes(total_size))
+                logger.debug("Size of working directory '%s', prior to"
+                             " removal, is %s",
+                             self.working_dir,
+                             pretty_bytes(total_size))
                 # Clean up
                 shutil.rmtree(self.working_dir)
         except AttributeError:

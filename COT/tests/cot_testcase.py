@@ -192,8 +192,8 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
 
     # Standard WARNING logger messages we may expect at various points:
     UNRECOGNIZED_PRODUCT_CLASS = {
-        'levelname': 'WARNING',
-        'msg': "Unrecognized product class.*Treating as a generic platform",
+        'levelname': 'NOTICE',
+        'msg': "Unrecognized product class.*Treating .*as a generic platform",
     }
     ADDRESS_ON_PARENT_NOT_SPECIFIED = {
         'levelname': 'WARNING',
@@ -201,15 +201,15 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
         'args': ('0', ),
     }
     REMOVING_FILE = {
-        'levelname': 'WARNING',
+        'levelname': 'NOTICE',
         'msg': "Removing reference to missing file",
     }
     DELETING_DISK = {
-        'levelname': 'WARNING',
+        'levelname': 'NOTICE',
         'msg': "Existing element will be deleted.",
     }
     DELETING_DISK_SECTION = {
-        'levelname': 'WARNING',
+        'levelname': 'NOTICE',
         'msg': "removing DiskSection",
     }
 

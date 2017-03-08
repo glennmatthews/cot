@@ -80,8 +80,8 @@ class DiskRepresentation(object):
         for subclass in DiskRepresentation.subclasses():
             confidence = subclass.file_is_this_type(path)
             if confidence > best_confidence:
-                logger.verbose("File %s may be a %s, with confidence %d",
-                               path, subclass.disk_format, confidence)
+                logger.debug("File %s may be a %s, with confidence %d",
+                             path, subclass.disk_format, confidence)
                 best_guess = subclass
                 best_confidence = confidence
             elif confidence > 0 and confidence == best_confidence:
@@ -90,6 +90,8 @@ class DiskRepresentation(object):
                                path, confidence, best_guess,
                                subclass, best_guess)
         if best_guess is not None:
+            logger.verbose("File %s appears to be a %s",
+                           path, best_guess.disk_format)
             return best_guess(path)
         else:
             raise NotImplementedError("No support for files of this type")
@@ -157,8 +159,8 @@ class DiskRepresentation(object):
                                    "from qemu-img:\n{0}"
                                    .format(output))
             self._capacity = match.group(1)
-            logger.verbose("Disk %s capacity is %s bytes", self.path,
-                           self._capacity)
+            logger.debug("Disk %s capacity is %s bytes", self.path,
+                         self._capacity)
         return self._capacity
 
     @property
@@ -223,6 +225,8 @@ class DiskRepresentation(object):
                               .format(path))
 
         # Default implementation using qemu-img
+        logger.debug("Using 'qemu-img' to check whether %s is a %s",
+                     path, cls.disk_format)
         output = helpers['qemu-img'].call(['info', path])
         # Read the format from the output
         match = re.search(r"file format: (\S*)", output)

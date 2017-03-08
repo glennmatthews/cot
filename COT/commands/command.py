@@ -173,10 +173,11 @@ class Command(object):
             if required_size <= prev_req:
                 return required_size <= prev_avail
 
+        logger.verbose("Checking requested disk space (%s) against"
+                       " available space in %s", pretty_bytes(required_size),
+                       dir_path)
+
         available = available_bytes_at_path(dir_path)
-        logger.verbose("Checking requested disk space %s against available"
-                       " space in %s (%s)", pretty_bytes(required_size),
-                       dir_path, pretty_bytes(available))
         self._cached_disk_requirements[dir_path] = (required_size, available)
 
         if required_size <= available:

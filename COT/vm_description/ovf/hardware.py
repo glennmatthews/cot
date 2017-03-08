@@ -92,7 +92,7 @@ class OVFHardware(object):
                     # Mask away the nitty-gritty details from our caller
                     raise OVFHardwareDataError("Data conflict for instance {0}"
                                                .format(instance))
-        logger.verbose(
+        logger.debug(
             "OVF contains %s hardware Item elements describing %s "
             "unique devices", item_count, len(self.item_dict))
         # Treat the current state as golden:
@@ -116,8 +116,8 @@ class OVFHardware(object):
                     modified = True
                     break
         if not modified:
-            logger.debug("No changes to hardware definition, "
-                         "so no XML update is required")
+            logger.verbose("No changes to hardware definition, "
+                           "so no XML update is required")
             return
         # Delete the existing Items:
         delete_count = 0
@@ -127,15 +127,15 @@ class OVFHardware(object):
                     item.tag == self.ovf.ETHERNET_PORT_ITEM):
                 self.ovf.virtual_hw_section.remove(item)
                 delete_count += 1
-        logger.verbose("Cleared %d existing items from VirtualHWSection",
-                       delete_count)
+        logger.debug("Cleared %d existing items from VirtualHWSection",
+                     delete_count)
         # Generate the new XML Items, in appropriately sorted order by Instance
         ordering = [self.ovf.INFO, self.ovf.SYSTEM, self.ovf.ITEM]
         for instance in natural_sort(self.item_dict):
             logger.debug("Writing Item(s) with InstanceID %s", instance)
             ovfitem = self.item_dict[instance]
             new_items = ovfitem.generate_items()
-            logger.debug("Generated %d items", len(new_items))
+            logger.spam("Generated %d items", len(new_items))
             for item in new_items:
                 XML.add_child(self.ovf.virtual_hw_section, item, ordering)
         logger.verbose("Updated XML VirtualHardwareSection, now contains %d "
@@ -179,7 +179,7 @@ class OVFHardware(object):
                              profile_list)
         self.item_dict[instance] = ovfitem
         ovfitem.modified = True
-        logger.info("Added new %s under %s, instance is %s",
+        logger.info("Created new %s under profile(s) %s, InstanceID is %s",
                     resource_type, profile_list, instance)
         return (instance, ovfitem)
 
@@ -205,8 +205,8 @@ class OVFHardware(object):
           tuple: ``(instance_id, ovfitem)``
         """
         instance = self.find_unused_instance_id()
-        logger.debug("Cloning existing Item %s with new instance ID %s",
-                     parent_item, instance)
+        logger.spam("Cloning existing Item %s with new instance ID %s",
+                    parent_item, instance)
         ovfitem = copy.deepcopy(parent_item)
 
         # Delete any profiles from the parent that we don't need now,
@@ -219,8 +219,8 @@ class OVFHardware(object):
         ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profile_list)
         ovfitem.modified = True
         self.item_dict[instance] = ovfitem
-        logger.debug("Added clone of %s under %s, instance is %s",
-                     parent_item, profile_list, instance)
+        logger.spam("Added clone of %s under %s, instance is %s",
+                    parent_item, profile_list, instance)
         return (instance, ovfitem)
 
     def item_match(self, item, resource_type, properties, profile_list):
@@ -267,7 +267,9 @@ class OVFHardware(object):
         for item in items:
             if self.item_match(item, resource_type, properties, profile_list):
                 filtered_items.append(item)
-        logger.debug("Found %s %s Items", len(filtered_items), resource_type)
+        logger.spam("Found %s Items of type %s with properties %s and"
+                    " profiles %s", len(filtered_items), resource_type,
+                    properties, profile_list)
         return filtered_items
 
     def find_item(self, resource_type=None, properties=None, profile=None):
@@ -333,8 +335,8 @@ class OVFHardware(object):
                 if ovfitem.has_profile(profile):
                     count_dict[profile] += 1
         for (profile, count) in count_dict.items():
-            logger.debug("Profile '%s' has %s %s Item(s)",
-                         profile, count, resource_type)
+            logger.spam("Profile '%s' has %s %s Item(s)",
+                        profile, count, resource_type)
         return count_dict
 
     def _update_existing_item_profiles(self, resource_type,
@@ -481,9 +483,9 @@ class OVFHardware(object):
                     new_item_profiles.append(profile)
                     count_dict[profile] += 1
             if last_item is None:
-                logger.warning("No existing items of type %s found. "
-                               "Will create new %s from scratch.",
-                               resource_type, resource_type)
+                logger.notice("No existing items of type %s found. "
+                              "Will create new %s from scratch.",
+                              resource_type, resource_type)
                 (_, new_item) = self.new_item(resource_type, new_item_profiles)
             else:
                 (_, new_item) = self.clone_item(last_item, new_item_profiles)
@@ -518,15 +520,15 @@ class OVFHardware(object):
                 logger.warning("No items of type %s found. Nothing to do.",
                                resource_type)
                 return
-            logger.warning("No existing items of type %s found. "
-                           "Will create new %s from scratch.",
-                           resource_type, resource_type)
+            logger.notice("No existing items of type %s found. "
+                          "Will create new %s from scratch.",
+                          resource_type, resource_type)
             (_, ovfitem) = self.new_item(resource_type, profile_list)
             ovfitem_list = [ovfitem]
         for ovfitem in ovfitem_list:
             ovfitem.set_property(prop_name, new_value, profile_list)
-        logger.info("Updated %s %s to %s under %s",
-                    resource_type, prop_name, new_value, profile_list)
+        logger.debug("Updated %s %s to %s under profiles %s",
+                     resource_type, prop_name, new_value, profile_list)
 
     def set_item_values_per_profile(self, resource_type, prop_name, value_list,
                                     profile_list, default=None):
@@ -555,6 +557,6 @@ class OVFHardware(object):
             logger.info("Updated %s property %s to %s under %s",
                         resource_type, prop_name, new_value, profile_list)
         if len(value_list):
-            logger.error("After scanning all known %s Items, not all "
-                         "%s values were used - leftover %s",
-                         resource_type, prop_name, value_list)
+            logger.warning("After scanning all known %s Items, not all "
+                           "%s values were used - leftover %s",
+                           resource_type, prop_name, value_list)

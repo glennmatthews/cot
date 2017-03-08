@@ -115,7 +115,7 @@ class FileOnDisk(object):
         """
         if self.file_path == os.path.join(dest_dir, self.filename):
             return
-        logger.info("Copying %s to %s", self.file_path, dest_dir)
+        logger.debug("Copying %s to %s", self.file_path, dest_dir)
         shutil.copy(self.file_path, dest_dir)
 
     def add_to_archive(self, tarf):
@@ -124,8 +124,8 @@ class FileOnDisk(object):
         Args:
           tarf (tarfile.TarFile): Add this file to that archive.
         """
-        logger.info("Adding %s to TAR file as %s",
-                    self.file_path, self.filename)
+        logger.debug("Adding %s to TAR file as %s",
+                     self.file_path, self.filename)
         tarf.add(self.file_path, self.filename)
 
 
@@ -190,8 +190,8 @@ class FileInTAR(object):
                 # Perhaps an issue with 'foo.txt' versus './foo.txt'?
                 for mem in tarf.getmembers():
                     if os.path.normpath(mem.name) == self.filename:
-                        logger.verbose("Found {0} at {1} in TAR file"
-                                       .format(self.filename, mem.name))
+                        logger.debug("Found %s at %s in TAR file",
+                                     self.filename, mem.name)
                         self.filename = mem.name
                         return True
                 return False
@@ -235,8 +235,8 @@ class FileInTAR(object):
           dest_dir (str): Destination directory or filename.
         """
         with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
-            logger.info("Extracting %s from %s to %s",
-                        self.filename, self.tarfile_path, dest_dir)
+            logger.debug("Extracting %s from %s to %s",
+                         self.filename, self.tarfile_path, dest_dir)
             tarf.extract(self.filename, dest_dir)
 
     def add_to_archive(self, tarf):
@@ -247,8 +247,8 @@ class FileInTAR(object):
         """
         self.open('r')
         try:
-            logger.info("Copying %s directly from %s to TAR file",
-                        self.filename, self.tarfile_path)
+            logger.debug("Copying %s directly from %s to TAR file",
+                         self.filename, self.tarfile_path)
             tarf.addfile(self.tarf.getmember(self.filename), self.obj)
         finally:
             self.close()

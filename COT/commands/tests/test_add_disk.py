@@ -799,7 +799,7 @@ ovf:size="{input_size}" />
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
-        self.assertLogged(levelname='WARNING',
+        self.assertLogged(levelname='ERROR',
                           msg="Unrecognized HostResource format")
 
     def test_overwrite_disk_with_bad_parent_by_file(self):

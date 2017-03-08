@@ -110,12 +110,15 @@ class Platform(object):
             <class 'COT.platforms.platform.Platform'>
         """
         if product_string is None:
+            logger.notice("No product class given. Treating this as"
+                          " a generic platform.")
             return Platform()
         if product_string in cls.PRODUCT_PLATFORM_MAP:
             return cls.PRODUCT_PLATFORM_MAP[product_string]()
-        logger.warning("Unrecognized product class '%s' - known classes "
-                       "are %s. Treating as a generic platform.",
-                       product_string, cls.PRODUCT_PLATFORM_MAP.keys())
+        logger.notice("Unrecognized product class '%s'. Treating this as"
+                      " a generic platform.", product_string)
+        logger.verbose("Known product classes are %s",
+                       cls.PRODUCT_PLATFORM_MAP.keys())
         return Platform()
 
     def __init__(self):

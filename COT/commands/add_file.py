@@ -105,7 +105,7 @@ class COTAddFile(ReadWriteCommand):
             self.ui.confirm_or_die("Replace existing file {0} with {1}?"
                                    .format(vm.get_path_from_file(file_obj),
                                            self.file))
-            logger.warning("Overwriting existing File in OVF")
+            logger.notice("Overwriting existing File in OVF")
 
         vm.add_file(self.file, self.file_id, file_obj)
 

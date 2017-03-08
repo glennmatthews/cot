@@ -2,13 +2,7 @@
 [run]
 branch = True
 omit =
-    COT/tests/*
-    COT/commands/tests/*
-    COT/disks/tests/*
-    COT/helpers/tests/*
-    COT/platforms/tests/*
-    COT/vm_description/tests/*
-    COT/vm_description/ovf/tests/*
+    */tests/*
     COT/_version.py
     setup.py
     versioneer.py

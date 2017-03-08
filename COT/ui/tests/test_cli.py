@@ -329,32 +329,31 @@ class TestCLIGeneral(TestCOTCLI):
         self.assertMultiLineEqual(out1, out2)
         if sys.hexversion < 0x03020000:
             args_str = """
-  -h, --help        show this help message and exit
-  -V, --version     show program's version number and exit
-  -f, --force       Perform requested actions without prompting for
-                    confirmation
-  -q, --quiet       Quiet output and logging (warnings and errors only)
-  -v, --verbose     Verbose output and logging
-  -d, -vv, --debug  Debug (most verbose) output and logging
+  -h, --help       show this help message and exit
+  -V, --version    show program's version number and exit
+  -f, --force      Perform requested actions without prompting for
+                   confirmation
+  -q, --quiet      Decrease verbosity of the program (repeatable)
+  -v, --verbose    Increase verbosity of the program (repeatable)
 """
             # No command aliases before Python 3.2
             command_str = """
-    add-disk        Add a disk image to an OVF package and map it as a disk in
-                    the guest environment
-    add-file        Add a file to an OVF package
-    deploy          Create a new VM on the target hypervisor from the given
-                    OVF or OVA
-    edit-hardware   Edit virtual machine hardware properties of an OVF
-    edit-product    Edit product info in an OVF
+    add-disk       Add a disk image to an OVF package and map it as a disk in
+                   the guest environment
+    add-file       Add a file to an OVF package
+    deploy         Create a new VM on the target hypervisor from the given OVF
+                   or OVA
+    edit-hardware  Edit virtual machine hardware properties of an OVF
+    edit-product   Edit product info in an OVF
     edit-properties
-                    Edit or create environment properties of an OVF
-    help            Print help for a command
-    info            Generate a description of an OVF package
-    inject-config   Inject a configuration file into an OVF package
+                   Edit or create environment properties of an OVF
+    help           Print help for a command
+    info           Generate a description of an OVF package
+    inject-config  Inject a configuration file into an OVF package
     install-helpers
-                    Install/verify COT manual pages and any third-party helper
-                    programs that COT may require
-    remove-file     Remove a file from an OVF package
+                   Install/verify COT manual pages and any third-party helper
+                   programs that COT may require
+    remove-file    Remove a file from an OVF package
 """
         else:
             # Spacing in args_str is a bit different due to subcommand aliases
@@ -363,9 +362,8 @@ class TestCLIGeneral(TestCOTCLI):
   -V, --version         show program's version number and exit
   -f, --force           Perform requested actions without prompting for
                         confirmation
-  -q, --quiet           Quiet output and logging (warnings and errors only)
-  -v, --verbose         Verbose output and logging
-  -d, -vv, --debug      Debug (most verbose) output and logging
+  -q, --quiet           Decrease verbosity of the program (repeatable)
+  -v, --verbose         Increase verbosity of the program (repeatable)
 """
             # Help should include subcommand aliases
             command_str = """
@@ -426,64 +424,64 @@ commands:
     def test_verbosity(self):
         """Verify various verbosity options and their effect on logging."""
         self.logging_handler.flush()
+        self.validate_output_with_ovftool = False
 
-        # Default verbosity is INFO
-        self.call_cot(['info', self.invalid_ovf], fixup_args=False)
-        self.assertNotEqual(
-            [], self.logging_handler.logs(levelname='ERROR'))
-        self.assertNotEqual(
-            [], self.logging_handler.logs(levelname='WARNING'))
-        self.assertNotEqual(
-            [], self.logging_handler.logs(levelname='INFO'))
-        self.assertEqual(
-            [], self.logging_handler.logs(levelname='VERBOSE'))
-        self.assertEqual(
-            [], self.logging_handler.logs(levelname='DEBUG'))
-        self.logging_handler.flush()
-
-        # -v/--verbose gives VERBOSE
-        for option in ['-v', '--verbose']:
-            self.call_cot([option, 'info', self.invalid_ovf], fixup_args=False)
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='ERROR'))
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='WARNING'))
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='INFO'))
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='VERBOSE'))
-            self.assertEqual(
-                [], self.logging_handler.logs(levelname='DEBUG'))
-            self.logging_handler.flush()
-
-        # -vv/-d/--debug gives DEBUG
-        for option in ['-vv', '-d', '--debug']:
-            self.call_cot([option, 'info', self.invalid_ovf], fixup_args=False)
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='ERROR'))
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='WARNING'))
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='INFO'))
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='VERBOSE'))
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='DEBUG'))
-            self.logging_handler.flush()
-
-        # -q/--quiet gives WARNING
-        for option in ['-q', '--quiet']:
-            self.call_cot([option, 'info', self.invalid_ovf], fixup_args=False)
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='ERROR'))
-            self.assertNotEqual(
-                [], self.logging_handler.logs(levelname='WARNING'))
-            self.assertEqual(
-                [], self.logging_handler.logs(levelname='INFO'))
-            self.assertEqual(
-                [], self.logging_handler.logs(levelname='VERBOSE'))
-            self.assertEqual(
-                [], self.logging_handler.logs(levelname='DEBUG'))
+        for args, log_level in (
+            ([], logging.NOTICE),   # default verbosity level
+            # Various ways of increasing verbosity
+            (['-v'], logging.INFO),
+            (['--verbose'], logging.INFO),
+            (['-vv'], logging.VERBOSE),
+            (['-v', '--verbose'], logging.VERBOSE),
+            (['-vvv'], logging.DEBUG),
+            (['--verbose', '--verbose', '--verbose'], logging.DEBUG),
+            (['-vv', '-vv'], logging.SPAM),
+            # Various ways of decreasing verbosity
+            (['-q'], logging.WARNING),
+            (['--quiet'], logging.WARNING),
+            (['-qq'], logging.ERROR),
+            (['--quiet', '-q'], logging.ERROR),
+            (['-qqq'], logging.CRITICAL),
+        ):
+            # We need a COT invocation that will trigger logs at every level.
+            # Previously we used simply 'cot info invalid.ovf' but that
+            # no longer produces any WARNING messages.
+            #
+            # With the below command we get at least one message at each level:
+            #
+            # ERROR  : File...referenced in the OVF descriptor does not exist.
+            # WARNING: Value '0' for MiB of RAM...too low - must be at least 1
+            # NOTICE : Unrecognized product class 'net.e-dad'...
+            # INFO   : Successfully loaded OVF from COT/tests/invalid.ovf
+            # VERBOSE: Creating temporary working directory for this VM
+            # DEBUG  : Root namespace is http://schemas.dmtf.org/ovf/envelope/1
+            # SPAM   : Adding new {http://schemas.dmtf.org/ovf/envelope/1}Item
+            self.call_cot(args + ['-f', 'edit-hardware', self.invalid_ovf,
+                                  '-o', self.temp_file, '--cpus', '2'],
+                          fixup_args=False)
+            for msg_level in (
+                logging.ERROR,
+                logging.WARNING,
+                logging.NOTICE,
+                logging.INFO,
+                logging.VERBOSE,
+                logging.DEBUG,
+                logging.SPAM,
+            ):
+                if msg_level >= log_level:
+                    self.assertNotEqual(
+                        [], self.logging_handler.logs(levelno=msg_level),
+                        "With verbosity option {0}, expected logs at"
+                        " level {1} but found none:\n{2}"
+                        .format(args, logging.getLevelName(msg_level),
+                                self.logging_handler.logs(levelno=msg_level)))
+                else:
+                    self.assertEqual(
+                        [], self.logging_handler.logs(levelno=msg_level),
+                        "With verbosity option {0}, expected no logs at"
+                        " level {1} but found:\n{2}"
+                        .format(args, logging.getLevelName(msg_level),
+                                self.logging_handler.logs(levelno=msg_level)))
             self.logging_handler.flush()
 
 

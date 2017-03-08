@@ -221,13 +221,13 @@ class Helper(object):
     def path(self):
         """Discovered path to the helper."""
         if not self._path:
-            logger.verbose("Checking for helper executable %s", self.name)
+            logger.spam("Checking for helper executable %s", self.name)
             self._path = distutils.spawn.find_executable(self.name)
             if self._path:
-                logger.verbose("%s is at %s", self.name, self.path)
+                logger.debug("%s is at %s", self.name, self.path)
                 self._installed = True
             else:
-                logger.verbose("No path to %s found", self.name)
+                logger.debug("No path to %s found", self.name)
         return self._path
 
     @property
@@ -316,9 +316,10 @@ class Helper(object):
         call_args = [self.name] + list(args)
         if capture_output:
             if use_cached and args in self.cached_output:
-                logger.debug("Returning cached output of '%s':\n%s",
-                             " ".join(call_args),
-                             self.cached_output[args])
+                logger.debug("Returning cached output of '%s'",
+                             " ".join(call_args))
+                logger.spam("Cached output:\n%s",
+                            self.cached_output[args])
                 return self.cached_output[args]
             # Default implementation does not cache any output.
             # Subclasses should wrap this method if they want to
@@ -344,7 +345,7 @@ class Helper(object):
             return
         if not self.installable:
             raise self.unsure_how_to_install()
-        logger.info("Installing '%s'...", self.name)
+        logger.notice("Installing '%s'...", self.name)
         # Call the subclass implementation
         self._install()
         # Make sure it actually performed as promised
@@ -354,7 +355,7 @@ class Helper(object):
                 "Installation did not raise an exception, but afterward, "
                 "unable to locate {0}!".format(self.name))
 
-        logger.info("Successfully installed '%s'", self.name)
+        logger.notice("Successfully installed '%s'", self.name)
 
     def unsure_how_to_install(self):
         """Return a RuntimeError or NotImplementedError for install trouble."""
@@ -457,12 +458,12 @@ class Helper(object):
             raise RuntimeError("Path {0} exists but is not a directory!"
                                .format(directory))
         try:
-            logger.verbose("Creating directory " + directory)
+            logger.debug("Creating directory " + directory)
             os.makedirs(directory, permissions)
             return True
         except OSError as exc:
-            logger.verbose("Directory %s creation failed, trying sudo",
-                           directory)
+            logger.debug("Directory %s creation failed, trying sudo",
+                         directory)
             try:
                 check_call(['sudo', 'mkdir', '-p',
                             '--mode=%o' % permissions,
@@ -486,11 +487,11 @@ class Helper(object):
         Raises:
           HelperError: if file copying fails
         """
-        logger.verbose("Copying %s to %s", src, dest)
+        logger.debug("Copying %s to %s", src, dest)
         try:
             shutil.copy(src, dest)
         except (OSError, IOError) as exc:
-            logger.verbose('Installation error, trying sudo.')
+            logger.debug('Installation error, trying sudo.')
             try:
                 check_call(['sudo', 'cp', src, dest])
             except HelperError:
@@ -568,7 +569,9 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
         Permission denied
     """
     cmd = args[0]
-    logger.info("Calling '%s'...", " ".join(args))
+    # As this call will output to stdout/stderr, make sure the user knows
+    # what's about to happen
+    logger.notice("Calling '%s'...", " ".join(args))
     try:
         subprocess.check_call(args, **kwargs)
     except OSError as exc:
@@ -595,7 +598,7 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
             raise HelperError(exc.returncode,
                               "Helper program '{0}' exited with error {1}"
                               .format(cmd, exc.returncode))
-    logger.info("...done")
+    logger.notice("...done")
     logger.debug("%s exited successfully", cmd)
 
 
@@ -657,7 +660,9 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
         Permission denied
     """
     cmd = args[0]
-    logger.info("Calling '%s' and capturing its output...", " ".join(args))
+    # Unlike check_call above, here we capture stderr/stdout, so it's
+    # much less important to notify the user about this.
+    logger.debug("Calling '%s' and capturing its output...", " ".join(args))
     try:
         stdout = subprocess.check_output(args,
                                          stderr=subprocess.STDOUT,
@@ -681,8 +686,8 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
                               "\n> {2}\n{3}".format(cmd, exc.returncode,
                                                     " ".join(args),
                                                     stdout))
-    logger.info("...done")
-    logger.verbose("%s output:\n%s", cmd, stdout)
+    logger.debug("...done")
+    logger.spam("%s output:\n%s", cmd, stdout)
     return stdout
 
 

@@ -69,7 +69,7 @@ def list_union(*lists):
     result = []
     for listing in lists:
         result.extend([x for x in listing if x not in result])
-    logger.debug("Union of %s is %s", lists, result)
+    logger.spam("Union of %s is %s", lists, result)
     return result
 
 
@@ -216,7 +216,7 @@ class OVFItem(object):
           OVFItemDataError: if the new Item conflicts with existing data
               already in the OVFItem.
         """
-        logger.debug("Adding new %s", item.tag)
+        logger.spam("Adding new %s", item.tag)
         self.namespace = self.namespace_for_item_tag(item.tag)
         if not self.namespace:
             raise ValueUnsupportedError("item",
@@ -274,7 +274,7 @@ class OVFItem(object):
                                   overwrite=False)
 
         self.modified = True
-        logger.debug("Added %s - new status:\n%s", item.tag, str(self))
+        logger.spam("Added %s - new status:\n%s", item.tag, str(self))
         self.validate()
 
     def value_add_wildcards(self, name, value, profiles):
@@ -406,8 +406,9 @@ class OVFItem(object):
             if new_set != profile_set:
                 self.modified = True
                 if not new_set:
-                    logger.debug("No longer any profiles with value %s",
-                                 known_value)
+                    logger.spam("No longer any profiles with value %s"
+                                " - deleting this value",
+                                known_value)
                     del self.properties[name][known_value]
                 else:
                     self.properties[name][known_value] = new_set
@@ -416,7 +417,8 @@ class OVFItem(object):
             self.properties[name][value] = profiles
             self.modified = True
         elif not self.properties[name]:
-            logger.debug("No longer any values saved for %s", name)
+            logger.debug("No longer any values saved for property %s"
+                         " - deleting this property", name)
             del self.properties[name]
             self.modified = True
 
@@ -465,8 +467,8 @@ class OVFItem(object):
         profiles = set(profiles)
 
         value = self.value_add_wildcards(name, value, profiles)
-        logger.debug("Setting %s to %s under profiles %s",
-                     name, value, profiles)
+        logger.spam("Setting %s to %s under profiles %s",
+                    name, value, profiles)
         if name not in self.properties:
             self._set_new_property(name, value, profiles)
         else:
@@ -488,6 +490,7 @@ class OVFItem(object):
               a particular property.
         """
         if self.has_profile(new_profile):
+            # TODO - exception instead? Not currently encountered in UT
             logger.error("Profile %s already exists under %s!",
                          new_profile, self)
             return
@@ -495,6 +498,8 @@ class OVFItem(object):
             from_item = self
         logger.debug("Adding profile %s to item %s from item %s",
                      new_profile,
+                     # TODO: add instance_id property, as this still gets
+                     # a value_dict like "{'13': set(['4CPU-4GB-3NIC'])}"
                      self.properties.get(self.INSTANCE_ID,
                                          "<unknown instance>"),
                      from_item.properties[self.INSTANCE_ID])
@@ -502,8 +507,8 @@ class OVFItem(object):
         for name in from_item.property_names:
             found = False
             if not from_item.properties[name]:
-                logger.debug("No values stored for name %s - not cloning it",
-                             name)
+                logger.spam("No values stored for name %s - not cloning it",
+                            name)
                 continue
             for (value, profiles) in from_item.properties[name].items():
                 if (None in profiles or
@@ -529,6 +534,7 @@ class OVFItem(object):
               'default' will continue to exclude this profile.
         """
         if not self.has_profile(profile):
+            # TODO: exception instead? Not currently encountered in UT
             logger.error("Requested deletion of profile '%s' but it is "
                          "not present under %s!", profile, self)
             return
@@ -551,10 +557,10 @@ class OVFItem(object):
                         if val == value:
                             continue
                         profiles -= prof
-                    logger.debug("profiles are now: %s", profiles)
+                    logger.spam("Profiles are now: %s", profiles)
                 if not profiles:
-                    logger.verbose("No more profiles for value %s, %s",
-                                   name, value)
+                    logger.debug("No more profiles for value %s, %s",
+                                 name, value)
                     del self.properties[name][value]
         self.modified = True
         self.validate()
@@ -673,8 +679,8 @@ class OVFItem(object):
             set_so_far = set()
             for profile_set in value_dict.values():
                 if None in profile_set and len(profile_set) > 1:
-                    logger.verbose("Profile set %s contains redundant info; "
-                                   "cleaning it up now...", profile_set)
+                    logger.debug("Profile set %s contains redundant info; "
+                                 "cleaning it up now...", profile_set)
                     # Clean up...
                     profile_set.clear()
                     profile_set.add(None)
@@ -733,7 +739,7 @@ class OVFItem(object):
                 # Remove duplicate and empty entries
                 set_list = [x for x in set(new_set_list) if x]
 
-        logger.debug("Final set list is %s", set_list)
+        logger.spam("Final set list is %s", set_list)
 
         # Construct a list of profile strings
         set_string_list = []
@@ -744,7 +750,7 @@ class OVFItem(object):
                 set_string_list.append(" ".join(natural_sort(final_set)))
         set_string_list = natural_sort(set_string_list)
 
-        logger.debug("set string list: %s", set_string_list)
+        logger.spam("set string list: %s", set_string_list)
 
         return set_string_list
 
@@ -769,15 +775,14 @@ class OVFItem(object):
             else:
                 item = ET.Element(item_tag, {self.ITEM_CONFIG: set_string})
                 final_set = set(set_string.split())
-            logger.debug("set string: %s; final_set: %s",
-                         set_string, final_set)
+            logger.spam("set string: %s; final_set: %s", set_string, final_set)
             for name in sorted(self.property_names):
                 val = self.get_value(name, final_set)
                 if not val:
-                    logger.info("No value defined for attribute '%s' "
-                                "under profile set '%s' for instance %s",
-                                name, set_string,
-                                self.get_value(self.INSTANCE_ID))
+                    logger.debug("No value defined for attribute '%s' "
+                                 "under profile set '%s' for instance %s",
+                                 name, set_string,
+                                 self.get_value(self.INSTANCE_ID))
                     continue
                 # Convert list of ResourceSubType values to a space-separated
                 # list for output
@@ -808,7 +813,7 @@ class OVFItem(object):
                     XML.set_or_make_child(item, self.namespace + name, val,
                                           ordering=child_ordering,
                                           known_namespaces=self.NSM.values())
-            logger.debug("Item is:\n%s", ET.tostring(item))
+            logger.spam("Item is:\n%s", ET.tostring(item))
             item_list.append(item)
 
         return item_list

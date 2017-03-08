@@ -72,7 +72,7 @@ class VMDKTool(Helper):
         # vmdktool requires make and zlib
         helpers['make'].install()
         # TODO: check for installed zlib?
-        logger.info("vmdktool requires 'zlib'... installing 'zlib'")
+        logger.notice("vmdktool requires 'zlib'... installing 'zlib'")
         if helpers['apt-get']:
             helpers['apt-get'].install_package('zlib1g-dev')
         elif helpers['yum']:

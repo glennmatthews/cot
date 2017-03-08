@@ -138,6 +138,9 @@ class COTInjectConfig(ReadWriteCommand):
         """
         base_required = super(COTInjectConfig,
                               self).working_dir_disk_space_required()
+        logger.debug("Base disk space estimate is %s. "
+                     "Adding estimated size of config disk.",
+                     base_required)
         extra_required = 0
         if self.config_file:
             extra_required += os.path.getsize(self.config_file)
@@ -158,6 +161,8 @@ class COTInjectConfig(ReadWriteCommand):
             # see RAW._create_file()
             extra_required += ((8 << 20) - extra_required) % (8 << 20)
 
+        logger.debug("Config disk estimated size is %s, for a total of %s",
+                     extra_required, base_required + extra_required)
         return base_required + extra_required
 
     def run(self):
@@ -196,7 +201,7 @@ class COTInjectConfig(ReadWriteCommand):
             self.ui.confirm_or_die(
                 "Existing configuration disk '{0}' found.\n"
                 "Continue and overwrite it?".format(file_id))
-            logger.warning("Overwriting existing config disk '%s'", file_id)
+            logger.notice("Overwriting existing config disk '%s'", file_id)
         else:
             file_id = None
             # Find the empty slot where we should inject the config
