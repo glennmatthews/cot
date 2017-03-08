@@ -283,7 +283,7 @@ class OVFNameHelper1(object):
             elif name == "EPASD" or name == "SASD":
                 self._cache[name] = self.RASD
             elif name not in self._raw:
-                raise AttributeError
+                raise AttributeError("Unknown attribute '{0}'".format(name))
             else:
                 ns = getattr(self, self._raw[name].namespace_name)
                 tag = self._raw[name].tag

@@ -657,7 +657,7 @@ CIM_ResourceAllocationSettingData">
 """)
 
     def test_set_nic_count_create_new_one_profile(self):
-        """"Create a new NIC under a single profile."""
+        """Create a new NIC under a single profile."""
         self.command.package = self.input_ovf
         self.command.nics = '4'
         self.command.profiles = ['4CPU-4GB-3NIC']
@@ -679,6 +679,85 @@ CIM_ResourceAllocationSettingData">
      </ovf:VirtualHardwareSection>
 """)
 
+    def test_set_nic_count_create_new_and_new_profile(self):
+        """Create new NICs under a new profile. Test for issue #64."""
+        self.command.package = self.input_ovf
+        self.command.nics = '4'
+        self.command.profiles = ['4CPU-4GB-4NIC']
+        self.command.run()
+        self.command.finished()
+        self.check_diff("""
+     </ovf:Configuration>
++    <ovf:Configuration ovf:id="4CPU-4GB-4NIC">
++      <ovf:Label>4CPU-4GB-4NIC</ovf:Label>
++      <ovf:Description>4CPU-4GB-4NIC</ovf:Description>
++    </ovf:Configuration>
+   </ovf:DeploymentOptionSection>
+...
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
++      <ovf:Item ovf:configuration="4CPU-4GB-3NIC 4CPU-4GB-4NIC">
+         <rasd:AddressOnParent>12</rasd:AddressOnParent>
+...
+       </ovf:Item>
+-      <ovf:Item ovf:configuration="4CPU-4GB-3NIC">
++      <ovf:Item ovf:configuration="4CPU-4GB-3NIC 4CPU-4GB-4NIC">
+         <rasd:AddressOnParent>13</rasd:AddressOnParent>
+...
+         <rasd:InstanceID>13</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item ovf:configuration="4CPU-4GB-4NIC">
++        <rasd:AddressOnParent>14</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>VM Network</rasd:Connection>
++        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"\
+</rasd:Description>
++        <rasd:ElementName>Ethernet4</rasd:ElementName>
++        <rasd:InstanceID>14</rasd:InstanceID>
+         <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
+""")
+
+    def test_set_nic_count_create_new_and_split_new_profile(self):
+        """Create new NICs under a new profile splitting from unified profile.
+
+        Another test for issue #64.
+        """
+        self.command.package = self.csr_ovf
+        self.command.nics = '4'
+        self.command.profiles = ['4CPU-4GB-4NIC']
+        self.command.run()
+        self.command.finished()
+        self.check_diff(file1=self.csr_ovf, expected="""
+     </ovf:Network>
++    <ovf:Network ovf:name="GigabitEthernet4">
++      <ovf:Description>Data network 4</ovf:Description>
++    </ovf:Network>
+   </ovf:NetworkSection>
+...
+       <ovf:Description>Large hardware profile (requires purchase of DRAM \
+upgrade SKU) - 4 vCPUs, 8 GB RAM</ovf:Description>
++    </ovf:Configuration>
++    <ovf:Configuration ovf:id="4CPU-4GB-4NIC">
++      <ovf:Label>4CPU-4GB-4NIC</ovf:Label>
++      <ovf:Description>4CPU-4GB-4NIC</ovf:Description>
+     </ovf:Configuration>
+...
+       </ovf:Item>
++      <ovf:Item ovf:configuration="4CPU-4GB-4NIC">
++        <rasd:AddressOnParent>14</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>GigabitEthernet4</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet4</rasd:Description>
++        <rasd:ElementName>GigabitEthernet4</rasd:ElementName>
++        <rasd:InstanceID>14</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3 virtio</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+""")
+
     def test_set_nic_count_delete_nics(self):
         """Set NIC count to a lower value, deleting some NICs."""
         self.command.package = self.input_ovf
@@ -691,6 +770,32 @@ CIM_ResourceAllocationSettingData">
 -      <ovf:Item>
 +      <ovf:Item ovf:configuration="2CPU-2GB-1NIC 4CPU-4GB-3NIC">
          <rasd:AddressOnParent>11</rasd:AddressOnParent>
+""")
+
+    def test_set_nic_count_delete_nics_new_profile(self):
+        """Set NIC count to a lower value under a newly created profile."""
+        self.command.package = self.csr_ovf
+        self.command.nics = 1
+        self.command.profiles = ['1CPU-4GB-1NIC']
+        self.command.run()
+        self.command.finished()
+        self.check_diff(file1=self.csr_ovf, expected="""
+     </ovf:Configuration>
++    <ovf:Configuration ovf:id="1CPU-4GB-1NIC">
++      <ovf:Label>1CPU-4GB-1NIC</ovf:Label>
++      <ovf:Description>1CPU-4GB-1NIC</ovf:Description>
++    </ovf:Configuration>
+   </ovf:DeploymentOptionSection>
+...
+       </ovf:Item>
+-      <ovf:Item>
++      <ovf:Item ovf:configuration="1CPU-4GB 2CPU-4GB 4CPU-4GB 4CPU-8GB">
+         <rasd:AddressOnParent>12</rasd:AddressOnParent>
+...
+       </ovf:Item>
+-      <ovf:Item>
++      <ovf:Item ovf:configuration="1CPU-4GB 2CPU-4GB 4CPU-4GB 4CPU-8GB">
+         <rasd:AddressOnParent>13</rasd:AddressOnParent>
 """)
 
     def test_set_nic_count_no_existing(self):

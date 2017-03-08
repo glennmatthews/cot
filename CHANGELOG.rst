@@ -6,6 +6,12 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Fixed**
+
+- Fixed a case that could result in a RuntimeError being thrown when using
+  ``cot edit-hardware`` to simultaneously create NICs and define a new
+  configuration profile (`#64`_).
+
 **Added**
 
 - ``Command`` (formerly ``COTGenericSubmodule``) now checks the available
@@ -708,6 +714,7 @@ Initial public release.
 .. _#61: https://github.com/glennmatthews/cot/issues/61
 .. _#62: https://github.com/glennmatthews/cot/issues/62
 .. _#63: https://github.com/glennmatthews/cot/issues/63
+.. _#64: https://github.com/glennmatthews/cot/issues/64
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

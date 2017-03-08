@@ -205,7 +205,17 @@ class OVFHardware(object):
           tuple: ``(instance_id, ovfitem)``
         """
         instance = self.find_unused_instance_id()
+        logger.debug("Cloning existing Item %s with new instance ID %s",
+                     parent_item, instance)
         ovfitem = copy.deepcopy(parent_item)
+
+        # Delete any profiles from the parent that we don't need now,
+        # otherwise we'll get an error when trying to set the instance ID
+        # on our clone due to self-inconsistency (#64).
+        for profile in self.ovf.config_profiles:
+            if ovfitem.has_profile(profile) and profile not in profile_list:
+                ovfitem.remove_profile(profile)
+
         ovfitem.set_property(self.ovf.INSTANCE_ID, instance, profile_list)
         ovfitem.modified = True
         self.item_dict[instance] = ovfitem
