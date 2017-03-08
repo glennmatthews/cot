@@ -59,6 +59,7 @@ d---------   0    0    0  2048 Dec 12 2012 [   23 02] ..
 """))
     def test_call_cache(self, mock_check_output):
         """ISO information is cached and replayed appropriately."""
+        self.helper._installed = True
         args = ('-i', self.input_iso, '-l')
         output = self.helper.call(args)
         # Output should be stored in the cache
@@ -77,8 +78,10 @@ d---------   0    0    0  2048 Dec 12 2012 [   23 02] ..
         self.assertEqual(output3, "Gotcha!")
         mock_check_output.assert_called_once()
 
-    def test_call_noop_nocache(self):
+    @mock.patch('COT.helpers.helper.check_output', return_value="")
+    def test_call_noop_nocache(self, _):
         """Not all calls are cached."""
         # Call is a no-op but succeeds. Nothing to cache
+        self.helper._installed = True
         self.helper.call(['-i', self.input_iso])
         self.assertDictEqual(self.helper.cached_output, {})
