@@ -119,7 +119,7 @@ class TestCommand(CommandTestCase):
         mock_available.reset_mock()
 
 
-class TestReadCommand(CommandTestCase):
+class TestReadCommand(TestCommand):
     """Test cases for ReadCommand class."""
 
     command_class = ReadCommand
@@ -129,8 +129,8 @@ class TestReadCommand(CommandTestCase):
         with self.assertRaises(InvalidInputError):
             self.command.package = "/foo/bar/baz"
 
-    def test_not_ready_if_insufficient_space(self):
-        """Ensure that ready_to_run() fails if disk space is lacking."""
+    def test_not_ready_if_insufficient_working_space(self):
+        """Verify ready_to_run() fails if working disk space is lacking."""
         self.command.package = self.input_ovf
 
         self.command.ui.default_confirm_response = False
@@ -140,7 +140,8 @@ class TestReadCommand(CommandTestCase):
             ready, reason = self.command.ready_to_run()
 
         self.assertFalse(ready)
-        self.assertRegex(reason, "Insufficient disk space available")
+        self.assertRegex(reason, "Insufficient disk space available for"
+                         " temporary file storage")
 
         # User can opt to continue anyway
         self.command.ui.default_confirm_response = True
@@ -153,7 +154,7 @@ class TestReadCommand(CommandTestCase):
         self.assertTrue(ready)
 
 
-class TestReadWriteCommand(CommandTestCase):
+class TestReadWriteCommand(TestReadCommand):
     """Test cases for ReadWriteCommand class."""
 
     command_class = ReadWriteCommand
@@ -167,6 +168,56 @@ class TestReadWriteCommand(CommandTestCase):
     def test_create_subparser_noop(self):
         """The generic class doesn't create a subparser."""
         self.command.create_subparser()
+
+    def test_not_ready_if_insufficient_output_space(self):
+        """Ensure that ready_to_run() fails if output disk space is lacking."""
+        self.command.package = self.input_ovf
+
+        self.command.ui.default_confirm_response = False
+        # Make working directory requirements negligible but output huge
+        with mock.patch.object(self.command,
+                               "working_dir_disk_space_required",
+                               return_value=0), \
+            mock.patch.object(self.command.vm,
+                              'predicted_output_size',
+                              return_value=(1 << 60)):
+            ready, reason = self.command.ready_to_run()
+
+        self.assertFalse(ready)
+        self.assertRegex(reason, "Insufficient disk space available"
+                         " to guarantee successful output")
+
+        # User can opt to continue anyway
+        self.command.ui.default_confirm_response = True
+        self.command._cached_disk_requirements.clear()
+        with mock.patch.object(self.command,
+                               "working_dir_disk_space_required",
+                               return_value=0), \
+            mock.patch.object(self.command.vm,
+                              'predicted_output_size',
+                              return_value=(1 << 60)):
+            ready, reason = self.command.ready_to_run()
+
+        self.assertTrue(ready)
+
+    def test_set_output_invalid(self):
+        """Check various failure cases for output setter."""
+        # Nonexistent output location, regardless of package
+        with self.assertRaises(InvalidInputError):
+            self.command.output = "/foo/bar/baz"
+
+        self.command.package = self.input_ovf
+        # Nonexistent output location with package set
+        with self.assertRaises(InvalidInputError):
+            self.command.output = "/foo/bar/baz.ova"
+
+        # Output to directory instead of file (currently unsupported)
+        with self.assertRaises(InvalidInputError):
+            self.command.output = self.temp_dir
+
+        # Output to "directory" under a file
+        with self.assertRaises(InvalidInputError):
+            self.command.output = os.path.join(self.input_ovf, "foo.ova")
 
     def test_set_output_implicitly(self):
         """If 'output' is not specifically set, run() sets it to 'package'."""

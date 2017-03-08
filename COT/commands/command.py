@@ -162,8 +162,6 @@ class Command(object):
           SystemExit: if disk space is insufficient and ``die`` is True and
             the user declines to continue.
         """
-        if location is None:
-            return True
         dir_path = os.path.abspath(location)
         while dir_path and not os.path.isdir(dir_path):
             dir_path = os.path.dirname(dir_path)
@@ -314,9 +312,32 @@ class ReadWriteCommand(ReadCommand):
 
     @output.setter
     def output(self, value):
-        if value and value != self._output and os.path.exists(value):
-            self.ui.confirm_or_die("Overwrite existing file {0}?"
-                                   .format(value))
+        if value:
+            value = os.path.abspath(value)
+
+        if value == self._output:
+            return
+
+        if value:
+            if os.path.exists(value):
+                if not os.path.isfile(value):
+                    raise InvalidInputError(
+                        "Output location '{0}' exists but is not a normal file"
+                        .format(value))
+                self.ui.confirm_or_die("Overwrite existing file {0}?"
+                                       .format(value))
+            else:
+                # Make sure the containing directory at least exists
+                dirpath = os.path.dirname(value)
+                if not os.path.exists(dirpath):
+                    raise InvalidInputError(
+                        "Output parent path '{0}/' does not exist"
+                        .format(dirpath))
+                elif not os.path.isdir(dirpath):
+                    raise InvalidInputError(
+                        "Output parent path '{0}/' is not a directory"
+                        .format(dirpath))
+
         self._output = value
         if self.vm is not None:
             self.vm.output_file = value
