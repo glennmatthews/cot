@@ -3,7 +3,7 @@
 # test_qcow2.py - Unit test cases for QCOW2 disk representation.
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -22,7 +22,7 @@ import os
 from distutils.version import StrictVersion
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.disks import QCOW2, VMDK, RAW
 from COT.helpers import helpers
 
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-type-doc,missing-param-doc
 
 
-class TestQCOW2(COT_UT):
+class TestQCOW2(COTTestCase):
     """Test cases for QCOW2 class."""
 
     def setUp(self):

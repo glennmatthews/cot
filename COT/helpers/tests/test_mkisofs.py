@@ -22,7 +22,7 @@ import logging
 from distutils.version import StrictVersion
 import mock
 
-from COT.helpers.tests.test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperTestCase
 from COT.helpers.mkisofs import MkISOFS
 
 # pylint: disable=missing-type-doc,missing-param-doc,protected-access
@@ -30,7 +30,7 @@ from COT.helpers.mkisofs import MkISOFS
 logger = logging.getLogger(__name__)
 
 
-class TestMkISOFS(HelperUT):
+class TestMkISOFS(HelperTestCase):
     """Test cases for MkISOFS helper class."""
 
     def setUp(self):

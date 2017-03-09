@@ -33,14 +33,14 @@ except ImportError:
 import mock
 
 from COT import __version_long__
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.ui.cli import CLI
 from COT.data_validation import InvalidInputError
 
 # pylint: disable=missing-param-doc,missing-type-doc
 
 
-class TestCOTCLI(COT_UT):
+class TestCOTCLI(COTTestCase):
     """Parent class for CLI test cases."""
 
     @staticmethod

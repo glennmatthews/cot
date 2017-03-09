@@ -3,7 +3,7 @@
 # data_validation.py - Unit test cases for COT.data_validation module
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -32,12 +32,12 @@ from COT.data_validation import (
     InvalidInputError, ValueMismatchError, ValueUnsupportedError,
     ValueTooLowError, ValueTooHighError,
 )
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 
 logger = logging.getLogger(__name__)
 
 
-class TestFileChecksum(COT_UT):
+class TestFileChecksum(COTTestCase):
     """Test cases for file_checksum() function."""
 
     def test_file_checksum_md5(self):

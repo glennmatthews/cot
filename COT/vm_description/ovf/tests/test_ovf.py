@@ -27,7 +27,7 @@ import tarfile
 from contextlib import closing
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.vm_description.ovf import OVF
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError
@@ -36,7 +36,7 @@ from COT.helpers import helpers, HelperError
 logger = logging.getLogger(__name__)
 
 
-class TestOVFInputOutput(COT_UT):
+class TestOVFInputOutput(COTTestCase):
     """Test cases for OVF file input/output."""
 
     def setUp(self):
@@ -440,7 +440,7 @@ ovf:size="{cfg_size}" />
         # TODO - Sections in wrong order?
 
 
-class TestOVFAPI(COT_UT):
+class TestOVFAPI(COTTestCase):
     """Test cases for OVF APIs."""
 
     def setUp(self):

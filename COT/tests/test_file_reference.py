@@ -3,7 +3,7 @@
 # test_file_reference.py - Unit test cases for COT file reference handling
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015, 2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -22,11 +22,11 @@ import tarfile
 from contextlib import closing
 from pkg_resources import resource_filename
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.file_reference import FileOnDisk, FileInTAR
 
 
-class TestFileOnDisk(COT_UT):
+class TestFileOnDisk(COTTestCase):
     """Test cases for FileOnDisk class."""
 
     def test_nonexistent_file(self):
@@ -81,7 +81,7 @@ class TestFileOnDisk(COT_UT):
         self.assertNotEqual(a, c)
 
 
-class TestFileInTAR(COT_UT):
+class TestFileInTAR(COTTestCase):
     """Test cases for FileInTAR class."""
 
     def setUp(self):

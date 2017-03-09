@@ -20,7 +20,7 @@ import logging
 import os
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.disks import ISO
 from COT.helpers import (
     helpers, HelperError, HelperNotFoundError,
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=protected-access,missing-type-doc,missing-param-doc
 
 
-class TestISO(COT_UT):
+class TestISO(COTTestCase):
     """Test cases for ISO class."""
 
     def setUp(self):

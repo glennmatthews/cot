@@ -3,7 +3,7 @@
 # test_raw.py - Unit test cases for RAW disk representation.
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -22,7 +22,7 @@ import os
 from distutils.version import StrictVersion
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.disks import RAW, VMDK, DiskRepresentation
 from COT.helpers import HelperError
 
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-type-doc,missing-param-doc
 
 
-class TestRAW(COT_UT):
+class TestRAW(COTTestCase):
     """Test cases for RAW disk image representation."""
 
     def test_representation_invalid(self):

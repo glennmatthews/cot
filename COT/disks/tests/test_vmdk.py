@@ -22,7 +22,7 @@ import os
 from distutils.version import StrictVersion
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.disks import VMDK, DiskRepresentation
 from COT.helpers import helpers, HelperError
 
@@ -36,7 +36,7 @@ QEMU_VERSION_WARNING = {
 }
 
 
-class TestVMDK(COT_UT):
+class TestVMDK(COTTestCase):
     """Generic test cases for VMDK class."""
 
     def test_capacity(self):
@@ -92,7 +92,7 @@ class TestVMDK(COT_UT):
                           files=[self.input_iso])
 
 
-class TestVMDKConversion(COT_UT):
+class TestVMDKConversion(COTTestCase):
     """Test cases for VMDK.from_other_image method."""
 
     def setUp(self):

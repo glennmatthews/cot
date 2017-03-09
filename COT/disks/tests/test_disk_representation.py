@@ -3,7 +3,7 @@
 # test_disk.py - Unit test cases for DiskRepresentation class.
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -20,7 +20,7 @@ import logging
 import os
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.disks import DiskRepresentation
 from COT.helpers import helpers, HelperError
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-type-doc,missing-param-doc
 
 
-class TestDiskRepresentation(COT_UT):
+class TestDiskRepresentation(COTTestCase):
     """Test DiskRepresentation class."""
 
     def test_disk_representation_from_file_raw(self):

@@ -19,13 +19,13 @@
 from distutils.version import StrictVersion
 import mock
 
-from COT.helpers.tests.test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperTestCase
 from COT.helpers.qemu_img import QEMUImg
 
 # pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
-class TestQEMUImg(HelperUT):
+class TestQEMUImg(HelperTestCase):
     """Test cases for QEMUImg helper class."""
 
     def setUp(self):

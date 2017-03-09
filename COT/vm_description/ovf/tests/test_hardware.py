@@ -14,11 +14,11 @@
 
 """Unit test cases for COT.vm_description.ovf.OVFHardware class."""
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.vm_description.ovf import OVF
 
 
-class TestOVFHardware(COT_UT):
+class TestOVFHardware(COTTestCase):
     """Unit test cases for the OVFHardware class."""
 
     def test_basic_sanity(self):

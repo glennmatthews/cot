@@ -153,7 +153,7 @@ class UTLoggingHandler(BufferingHandler):
                                             for r in matches])))
 
 
-class COT_UT(unittest.TestCase):  # noqa: N801
+class COTTestCase(unittest.TestCase):  # noqa: N801
     """Subclass of unittest.TestCase adding some additional behaviors.
 
     For the parameters, see :class:`unittest.TestCase`.
@@ -240,7 +240,7 @@ class COT_UT(unittest.TestCase):  # noqa: N801
 
         For the parameters, see :class:`unittest.TestCase`.
         """
-        super(COT_UT, self).__init__(method_name)
+        super(COTTestCase, self).__init__(method_name)
         self.logging_handler = UTLoggingHandler(self)
 
     def check_diff(self, expected, file1=None, file2=None):

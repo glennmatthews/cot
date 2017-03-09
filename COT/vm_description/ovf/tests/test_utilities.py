@@ -20,11 +20,11 @@ Most test cases are implemented as doctests in the module itself;
 this is for additional tests that are impractical as doctests.
 """
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.vm_description.ovf.utilities import programmatic_bytes_to_int
 
 
-class TestProgrammaticUnits(COT_UT):
+class TestProgrammaticUnits(COTTestCase):
     """Test cases for programmatic unit conversion functions."""
 
     def test_programmatic_bytes_to_int(self):

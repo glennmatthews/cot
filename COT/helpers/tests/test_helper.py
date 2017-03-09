@@ -26,7 +26,7 @@ import requests
 import mock
 
 from COT.ui import UI
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.helpers.helper import TemporaryDirectory, check_call, check_output
 from COT.helpers import (
     Helper, PackageManager,
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
-class HelperUT(COT_UT):
+class HelperTestCase(COTTestCase):
     """Generic class for testing Helper and subclasses thereof."""
 
     def __init__(self, method_name='runTest'):
@@ -50,7 +50,7 @@ class HelperUT(COT_UT):
         For the parameters, see :class:`unittest.TestCase`.
         """
         self.helper = None
-        super(HelperUT, self).__init__(method_name)
+        super(HelperTestCase, self).__init__(method_name)
 
     def assertSubprocessCalls(self, mock_function, args_list):  # noqa: N802
         """Assert the mock_function was called with the given lists of args."""
@@ -196,7 +196,7 @@ class HelperUT(COT_UT):
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         # subclass needs to set self.helper
-        super(HelperUT, self).setUp()
+        super(HelperTestCase, self).setUp()
         if self.helper:
             self.helper._path = None
             self.helper._installed = False
@@ -207,7 +207,7 @@ class HelperUT(COT_UT):
             helper._installed = None
             helper._path = None
             helper._version = None
-        super(HelperUT, self).tearDown()
+        super(HelperTestCase, self).tearDown()
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('platform.system', return_value='Windows')
@@ -232,7 +232,7 @@ class HelperUT(COT_UT):
         self.assertRaises(RuntimeError, self.helper._install)
 
 
-class HelperGenericTest(HelperUT):
+class HelperGenericTest(HelperTestCase):
     """Test cases for generic Helper class."""
 
     def setUp(self):
@@ -441,7 +441,7 @@ class HelperGenericTest(HelperUT):
         self.assertFalse(os.path.exists(directory))
 
 
-class PackageManagerGenericTest(HelperUT):
+class PackageManagerGenericTest(HelperTestCase):
     """Unit test for abstract PackageManager class."""
 
     def setUp(self):
@@ -459,7 +459,7 @@ class PackageManagerGenericTest(HelperUT):
 @mock.patch('os.makedirs')
 @mock.patch('os.path.exists', return_value=False)
 @mock.patch('os.path.isdir', return_value=False)
-class TestHelperMkDir(COT_UT):
+class TestHelperMkDir(COTTestCase):
     """Test cases for Helper.mkdir()."""
 
     def test_already_exists(self, mock_isdir, mock_exists,
@@ -523,7 +523,7 @@ class TestHelperMkDir(COT_UT):
 
 @mock.patch('COT.helpers.helper.check_call')
 @mock.patch('shutil.copy')
-class TestHelperCopyFile(COT_UT):
+class TestHelperCopyFile(COTTestCase):
     """Test cases for Helper.copy_file()."""
 
     def test_permission_ok(self, mock_copy, mock_check_call):
@@ -540,7 +540,7 @@ class TestHelperCopyFile(COT_UT):
         mock_check_call.assert_called_with(['sudo', 'cp', '/foo', '/bar'])
 
 
-class TestHelperSelect(COT_UT):
+class TestHelperSelect(COTTestCase):
     """Test cases for helper_select() API."""
 
     def setUp(self):

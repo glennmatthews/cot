@@ -20,14 +20,14 @@ import tempfile
 import shutil
 import xml.etree.ElementTree as ET
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 
 from COT.vm_description.ovf import OVF
 from COT.vm_description.ovf.name_helper import OVFNameHelper1
 from COT.vm_description.ovf.item import OVFItem
 
 
-class TestOVFItem(COT_UT):
+class TestOVFItem(COTTestCase):
     """Unit test cases for the OVFItem class."""
 
     def setUp(self):

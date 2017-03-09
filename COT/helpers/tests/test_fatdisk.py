@@ -23,7 +23,7 @@ from distutils.version import StrictVersion
 
 import mock
 
-from COT.helpers.tests.test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperTestCase
 from COT.helpers.fatdisk import FatDisk
 from COT.helpers import helpers
 
@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 
 @mock.patch('COT.helpers.fatdisk.FatDisk.download_and_expand_tgz',
-            side_effect=HelperUT.stub_download_and_expand_tgz)
-class TestFatDisk(HelperUT):
+            side_effect=HelperTestCase.stub_download_and_expand_tgz)
+class TestFatDisk(HelperTestCase):
     """Test cases for FatDisk helper class."""
 
     def setUp(self):

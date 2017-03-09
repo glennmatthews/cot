@@ -28,7 +28,7 @@ except ImportError:
     # Python 3.x
     import io as StringIO
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 from COT.ui import UI
 from COT.utilities import directory_size, pretty_bytes
 from COT.commands import Command, ReadWriteCommand
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-param-doc,protected-access
 
 
-class CommandTestCase(COT_UT):
+class CommandTestCase(COTTestCase):
     """Base class for COT Command class test cases."""
 
     command_class = Command

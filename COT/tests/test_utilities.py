@@ -17,12 +17,12 @@
 import errno
 import os
 
-from COT.tests.ut import COT_UT
+from COT.tests.ut import COTTestCase
 import COT.utilities
 from COT.disks.raw import RAW
 
 
-class TestUtilities(COT_UT):
+class TestUtilities(COTTestCase):
     """Test cases for COT.utilities module."""
 
     def test_available_bytes_at_path_errors(self):

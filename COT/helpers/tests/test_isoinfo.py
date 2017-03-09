@@ -20,7 +20,7 @@ import logging
 from distutils.version import StrictVersion
 import mock
 
-from COT.helpers.tests.test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperTestCase
 from COT.helpers.isoinfo import ISOInfo
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
-class TestISOInfo(HelperUT):
+class TestISOInfo(HelperTestCase):
     """Test cases for ISOInfo helper class.
 
     Currently isoinfo isn't installable in Travis CI so we mock it out.
