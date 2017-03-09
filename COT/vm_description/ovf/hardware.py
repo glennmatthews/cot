@@ -337,8 +337,8 @@ class OVFHardware(object):
                          profile, count, resource_type)
         return count_dict
 
-    def update_existing_item_count_per_profile(self, resource_type,
-                                               count, profile_list):
+    def _update_existing_item_profiles(self, resource_type,
+                                       count, profile_list):
         """Change profile membership of existing items as needed.
 
         Helper method for :meth:`set_item_count_per_profile`.
@@ -469,7 +469,7 @@ class OVFHardware(object):
             profile_list = self.ovf.config_profiles + [None]
 
         count_dict, items_to_add, last_item = \
-            self.update_existing_item_count_per_profile(
+            self._update_existing_item_profiles(
                 resource_type, count, profile_list)
 
         logger.debug("Creating %d new items", items_to_add)

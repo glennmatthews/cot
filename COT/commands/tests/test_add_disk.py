@@ -75,7 +75,7 @@ class TestCOTAddDisk(CommandTestCase):
         self.command.address = "1:1"
         self.command.file_id = "file2"
         self.assertRaises(ValueMismatchError, self.command.run)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
 
     def test_conflicting_args_2(self):
         """Test conflicting arguments are detected and rejected."""
@@ -86,7 +86,7 @@ class TestCOTAddDisk(CommandTestCase):
         # ovf contains input.iso but we're asking it to overwrite input.vmdk
         self.command.file_id = "vmdisk1"
         self.assertRaises(ValueMismatchError, self.command.run)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_CDROM)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_CDROM)
 
     def test_conflicting_args_3(self):
         """Test conflicting arguments are detected and rejected."""
@@ -98,15 +98,15 @@ class TestCOTAddDisk(CommandTestCase):
         self.command.controller = "ide"
         self.command.address = "1:0"
         self.assertRaises(ValueMismatchError, self.command.run)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
 
     def test_new_hard_disk(self):
         """Test adding a new hard disk to the OVF."""
         self.command.package = self.input_ovf
         self.command.disk_image = self.blank_vmdk
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.command.finished()
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
@@ -147,7 +147,7 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         self.command.controller = "scsi"
         self.command.address = "1:0"
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
         self.command.finished()
         self.check_diff("""
      <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
@@ -196,8 +196,8 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         self.command.package = self.iosv_ovf
         self.command.disk_image = self.blank_vmdk
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.assertLogged(**self.ADDRESS_ON_PARENT_NOT_SPECIFIED)
         self.command.finished()
         self.check_diff(file1=self.iosv_ovf,
@@ -243,8 +243,8 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
         self.command.package = self.v09_ovf
         self.command.disk_image = self.blank_vmdk
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.command.finished()
         # Default controller for generic platform is IDE for hard disks
         self.check_diff(file1=self.v09_ovf,
@@ -279,8 +279,8 @@ specifications/vmdk.html#streamOptimized" />
         self.command.package = self.v20_vbox_ovf
         self.command.disk_image = self.blank_vmdk
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.command.finished()
         # TODO - vbox XML is not very clean so the diffs are large...
         # self.check_diff('', file1=self.v20_vbox_ovf)
@@ -296,7 +296,7 @@ specifications/vmdk.html#streamOptimized" />
         # For coverage's sake, let's change the controller subtype too
         self.command.subtype = "virtio"
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.OVERWRITING_DISK)
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
@@ -339,7 +339,7 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
         self.command.controller = 'scsi'
         self.command.address = "0:0"
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.OVERWRITING_DISK)
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
@@ -471,7 +471,7 @@ ovf:diskId="file2" ovf:fileRef="file2" ovf:format=\
         self.command.disk_image = new_qcow2
         self.command.controller = 'scsi'
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
         self.command.finished()
         # Make sure the disk was converted and added to the OVF
         self.check_diff("""
@@ -515,7 +515,7 @@ ovf:diskId="new.vmdk" ovf:fileRef="new.vmdk" ovf:format=\
         self.command.package = self.input_ovf
         self.command.disk_image = new_qcow2
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.OVERWRITING_DISK)
         self.assertLogged(**self.OVERWRITING_DISK_ITEM)
@@ -548,8 +548,8 @@ ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
         self.command.package = self.minimal_ovf
         self.command.disk_image = self.blank_vmdk
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.assertLogged(**self.ADDRESS_ON_PARENT_NOT_SPECIFIED)
         self.command.finished()
         self.check_diff(file1=self.minimal_ovf,
@@ -639,8 +639,8 @@ ovf:size="{blank_size}" />
         self.command.package = self.iosv_ovf
         self.command.disk_image = self.blank_vmdk
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.assertLogged(**self.ADDRESS_ON_PARENT_NOT_SPECIFIED)
         self.command.finished()
         self.check_diff(file1=self.iosv_ovf, expected="""
@@ -685,8 +685,8 @@ vmdk.html#streamOptimized" />
         self.command.package = self.temp_file
         self.command.disk_image = self.input_iso
         self.command.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_CDROM)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_CDROM)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.command.finished()
         self.check_diff(file1=self.iosv_ovf, expected="""
      <ovf:File ovf:href="input.vmdk" ovf:id="vios-adventerprisek9-m.vmdk" \
@@ -743,8 +743,8 @@ vmdk.html#streamOptimized" />
         self.command.package = self.temp_file
         self.command.disk_image = new_qcow2
         self.assertRaises(ValueTooHighError, self.command.run)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
 
     def test_overwrite_implicit_file_id(self):
         """file_id defaults to filename if not set."""
@@ -753,8 +753,8 @@ vmdk.html#streamOptimized" />
         self.command.run()
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.OVERWRITING_DISK)
         self.command.finished()
@@ -798,7 +798,7 @@ ovf:size="{input_size}" />
         self.assertTrue(re.search("HostResource", str(cm.exception)))
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
         self.assertLogged(levelname='WARNING',
                           msg="Unrecognized HostResource format")
 
@@ -809,7 +809,7 @@ ovf:size="{input_size}" />
         self.assertRaises(LookupError, self.command.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_CDROM)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_CDROM)
 
     def test_overwrite_disk_with_bad_parent_by_fileid(self):
         """Negative test - invalid parent for disk, identified by fileid."""
@@ -819,7 +819,7 @@ ovf:size="{input_size}" />
         self.assertRaises(LookupError, self.command.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
 
     def test_overwrite_disk_with_bad_fileref(self):
         """Negative test - invalid fileref in OVF."""
@@ -829,4 +829,4 @@ ovf:size="{input_size}" />
         self.assertRaises(LookupError, self.command.run)
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)

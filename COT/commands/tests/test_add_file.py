@@ -111,8 +111,8 @@ ovf:size="{cfg_size}" />
         ad.disk_image = self.blank_vmdk
         ad.file_id = "mydisk"
         ad.run()
-        self.assertLogged(**self.TYPE_NOT_SPECIFIED_GUESS_HARDDISK)
-        self.assertLogged(**self.CONTROLLER_NOT_SPECIFIED_GUESS_IDE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.ADDRESS_ON_PARENT_NOT_SPECIFIED)
         ad.finished()

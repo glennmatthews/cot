@@ -716,11 +716,11 @@ class OVF(VMDescription, XML):
         self.validate_hardware()
 
         # Make sure file references are correct:
-        self.validate_and_update_file_references()
+        self._refresh_file_references()
 
         # Make sure all defined networks are actually used by NICs,
         # and delete any networks that are unused.
-        self.validate_and_update_networks()
+        self._refresh_networks()
 
         logger.info("Writing out to file %s", self.output_file)
 
@@ -747,7 +747,7 @@ class OVF(VMDescription, XML):
             raise NotImplementedError("Not sure how to write a '{0}' file"
                                       .format(extension))
 
-    def validate_and_update_file_references(self):
+    def _refresh_file_references(self):
         """Check all File entries to make sure they are valid and up to date.
 
         Helper method for :func:`write`.
@@ -805,7 +805,7 @@ class OVF(VMDescription, XML):
                         href, reported_capacity, real_capacity)
                     self.set_capacity_of_disk(disk_item, real_capacity)
 
-    def validate_and_update_networks(self):
+    def _refresh_networks(self):
         """Make sure all defined networks are actually used by NICs.
 
         Delete any networks that are unused and warn the user.

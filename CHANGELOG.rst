@@ -92,9 +92,14 @@ This project adheres to `Semantic Versioning`_.
     - ``COT.ovf.ovf.byte_string`` has been moved and renamed to
       ``COT.utilities.pretty_bytes``.
     - ``COT.ovf.ovf.byte_count`` has been moved and renamed to
-      ``COT.ovf.utilities.programmatic_bytes_to_int``.
+      ``COT.vm_description.ovf.utilities.programmatic_bytes_to_int``.
     - ``COT.ovf.ovf.factor_bytes`` has been moved and renamed to
-      ``COT.ovf.utilities.int_bytes_to_programmatic_units``.
+      ``COT.vm_description.ovf.utilities.int_bytes_to_programmatic_units``.
+    - ``OVF.validate_and_update_file_references`` and
+      ``OVF.validate_and_update_networks`` have been moved to private
+      functions and are no longer part of the public API of the OVF class.
+    - ``Hardware.update_existing_item_count_per_profile`` has been
+      moved to a private method.
 
   - COT.platforms module:
 

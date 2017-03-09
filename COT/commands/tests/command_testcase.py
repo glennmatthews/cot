@@ -46,17 +46,17 @@ class CommandTestCase(COT_UT):
 
     # WARNING logger messages we may expect at various points
     # TODO: change these to functions so we can populate 'args' for each
-    TYPE_NOT_SPECIFIED_GUESS_HARDDISK = {
+    DRIVE_TYPE_GUESSED_HARDDISK = {
         'levelname': 'WARNING',
         'msg': "drive type not specified.*guessing.*based on file extension",
         'args': ('harddisk', ),
     }
-    TYPE_NOT_SPECIFIED_GUESS_CDROM = {
+    DRIVE_TYPE_GUESSED_CDROM = {
         'levelname': 'WARNING',
         'msg': "drive type not specified.*guessing.*based on file extension",
         'args': ('cdrom', ),
     }
-    CONTROLLER_NOT_SPECIFIED_GUESS_IDE = {
+    CONTROLLER_TYPE_GUESSED_IDE = {
         'levelname': 'WARNING',
         'msg': "Guessing controller type.*based on disk drive type",
         'args': ('ide', r'.*', r'.*'),
