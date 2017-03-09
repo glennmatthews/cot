@@ -70,6 +70,7 @@ except ImportError:
     # Python 2.x
     import tempfile
 
+    # pylint: disable=invalid-name
     @contextlib.contextmanager
     def TemporaryDirectory(suffix='',   # noqa: N802
                            prefix='tmp',
@@ -139,7 +140,7 @@ class Helper(object):
     .. autosummary::
       :nosignatures:
 
-      cp
+      copy_file
       download_and_expand_tgz
       mkdir
 
@@ -472,7 +473,7 @@ class Helper(object):
             return True
 
     @staticmethod
-    def cp(src, dest):
+    def copy_file(src, dest):
         """Copy the given src to the given dest, using sudo if needed.
 
         Args:
@@ -498,7 +499,7 @@ class Helper(object):
         return True
 
 
-helpers = HelperDict(Helper)
+helpers = HelperDict(Helper)   # pylint: disable=invalid-name
 """Dictionary of concrete Helper subclasses to be populated at load time."""
 
 

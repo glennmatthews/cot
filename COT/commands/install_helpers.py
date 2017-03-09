@@ -104,7 +104,7 @@ def _install_manpage(src_path, man_dir):
             logger.verbose("File %s does not need to be updated", dest_path)
             return previously_installed, False
 
-    Helper.cp(src_path, dest_path)
+    Helper.copy_file(src_path, dest_path)
     return previously_installed, True
 
 

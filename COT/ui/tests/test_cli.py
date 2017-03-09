@@ -442,8 +442,8 @@ commands:
         self.logging_handler.flush()
 
         # -v/--verbose gives VERBOSE
-        for OPT in ['-v', '--verbose']:
-            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+        for option in ['-v', '--verbose']:
+            self.call_cot([option, 'info', self.invalid_ovf], fixup_args=False)
             self.assertNotEqual(
                 [], self.logging_handler.logs(levelname='ERROR'))
             self.assertNotEqual(
@@ -457,8 +457,8 @@ commands:
             self.logging_handler.flush()
 
         # -vv/-d/--debug gives DEBUG
-        for OPT in ['-vv', '-d', '--debug']:
-            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+        for option in ['-vv', '-d', '--debug']:
+            self.call_cot([option, 'info', self.invalid_ovf], fixup_args=False)
             self.assertNotEqual(
                 [], self.logging_handler.logs(levelname='ERROR'))
             self.assertNotEqual(
@@ -472,8 +472,8 @@ commands:
             self.logging_handler.flush()
 
         # -q/--quiet gives WARNING
-        for OPT in ['-q', '--quiet']:
-            self.call_cot([OPT, 'info', self.invalid_ovf], fixup_args=False)
+        for option in ['-q', '--quiet']:
+            self.call_cot([option, 'info', self.invalid_ovf], fixup_args=False)
             self.assertNotEqual(
                 [], self.logging_handler.logs(levelname='ERROR'))
             self.assertNotEqual(

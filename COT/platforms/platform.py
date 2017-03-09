@@ -23,8 +23,14 @@ from COT.data_validation import (
 logger = logging.getLogger(__name__)
 
 
-Hardware = Enum('Hardware', 'cpus memory nic_count serial_count')
-"""Enumeration of hardware types with integer values."""
+class Hardware(Enum):
+    """Enumeration of hardware types that have integer quantities."""
+
+    # The actual numbers don't matter at all
+    cpus = 1
+    memory = 2
+    nic_count = 3
+    serial_count = 4
 
 
 class Platform(object):

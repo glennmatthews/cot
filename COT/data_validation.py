@@ -91,7 +91,7 @@ def alphanum_split(key):
     return [text_to_int(c) for c in re.split('([0-9]+)', key)]
 
 
-def natural_sort(l):
+def natural_sort(iterable):
     """Sort the given list "naturally" rather than in ASCII order.
 
     E.g, "10" comes after "9" rather than between "1" and "2".
@@ -99,7 +99,7 @@ def natural_sort(l):
     See also http://nedbatchelder.com/blog/200712/human_sorting.html
 
     Args:
-      l (list): List to sort
+      iterable (list): List to sort
     Returns:
       list: Sorted list
     Examples:
@@ -111,7 +111,7 @@ def natural_sort(l):
         ['1st', '3rd', '10th', '101st']
     """
     # Sort based on alphanum_split return value
-    return sorted(l, key=alphanum_split)
+    return sorted(iterable, key=alphanum_split)
 
 
 def match_or_die(first_label, first, second_label, second):
@@ -278,12 +278,12 @@ def canonicalize_scsi_subtype(subtype):
                                re.IGNORECASE)
 
 
-def check_for_conflict(label, li):
+def check_for_conflict(label, refs):
     """Make sure the list does not contain references to more than one object.
 
     Args:
       label (str): Descriptive label to be used if an error is raised
-      li (list): List of object references (which may include ``None``)
+      refs (list): List of object references (which may include ``None``)
     Raises:
       ValueMismatchError: if references differ
     Returns:
@@ -304,10 +304,10 @@ def check_for_conflict(label, li):
         Please correct or clarify your search parameters.
     """
     obj = None
-    for i, obj1 in enumerate(li):
+    for i, obj1 in enumerate(refs):
         if obj1 is None:
             continue
-        for obj2 in li[(i+1):]:
+        for obj2 in refs[(i+1):]:
             if obj2 is not None and obj1 != obj2:
                 raise ValueMismatchError(
                     "Found multiple candidates for the {0}:"

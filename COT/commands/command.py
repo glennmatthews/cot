@@ -35,8 +35,8 @@ from COT.utilities import available_bytes_at_path, pretty_bytes
 
 logger = logging.getLogger(__name__)
 
-command_classes = []
-"""List of concrete command classes"""
+command_classes = []   # pylint: disable=invalid-name
+"""Dynamically constructed list of concrete command classes."""
 
 
 class Command(object):

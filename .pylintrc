@@ -28,11 +28,12 @@ reports=no
 # Disabled temporarily
 #   missing-returns-doc (https://github.com/PyCQA/pylint/pull/1008)
 #   missing-raises-doc (https://github.com/PyCQA/pylint/pull/1011)
+#   duplicate-code (https://github.com/PyCQA/pylint/pull/1055,
+#                   https://github.com/PyCQA/pylint/issues/214)
 #
 disable=bad-continuation,
   duplicate-code,
   fixme,
-  invalid-name,
   line-too-long,
   locally-disabled,
   too-few-public-methods,
@@ -42,11 +43,18 @@ disable=bad-continuation,
 
 [BASIC]
 
-# When enabling invalid-name, stop complaints about 'invalid constant logger'
-# good-names=i,j,k,logger,_
+# Allow variable names 'vm' and 'ui' as valid
+# Allow top-level "constant" name 'logger'
+# Allow unittest.TestCase.'maxDiff' attribute
+# Allow '_' to indicate "unused"
+good-names=i,j,k,vm,ui,logger,_,maxDiff
 
 # When enabling invalid-name, stop complaints about test method names too long
-# method-rgx=(test_[a-z0-9_]*|[a-z_][a-z0-9_]{2,30})$
+# and about assertFooBar() method naming style in unittest
+method-rgx=(test_[a-z0-9_]*|assert[A-Z][a-zA-Z0-9_]*|[a-z_][a-z0-9_]{2,30})$
+
+# Stop complaints about 1- and 2-character variable names, for now (TODO?)
+variable-rgx=[a-z_][a-z0-9_]*$
 
 [DESIGN]
 

@@ -86,4 +86,4 @@ class FatDisk(Helper):
             logger.info("Compilation complete, installing to " +
                         destination)
             self.mkdir(destination)
-            self.cp(os.path.join(new_d, 'fatdisk'), destination)
+            self.copy_file(os.path.join(new_d, 'fatdisk'), destination)

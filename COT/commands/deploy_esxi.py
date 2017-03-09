@@ -433,40 +433,40 @@ class COTDeployESXi(COTDeploy):
         logger.info("Done with serial port fixup")
 
     @staticmethod
-    def _create_serial_port(s, spec):
+    def _create_serial_port(conn, spec):
         """Use PyVmomi to create a serial connection on a VM.
 
         Args:
-          s (SerialConnection): Serial connection to create
+          conn (SerialConnection): Serial connection to create
           spec (PyVmomiVMReconfigSpec): PyVmomi VM spec object
         """
-        logger.verbose(s)
+        logger.verbose(conn)
         serial_spec = vim.vm.device.VirtualDeviceSpec()
         serial_spec.operation = 'add'
         serial_port = vim.vm.device.VirtualSerialPort()
         serial_port.yieldOnPoll = True
 
-        if s.kind == 'device':
+        if conn.kind == 'device':
             backing = serial_port.DeviceBackingInfo()
-            logger.info("Serial port will use host device %s", s.value)
-            backing.deviceName = s.value
-        elif s.kind == 'telnet' or s.kind == 'tcp':
+            logger.info("Serial port will use host device %s", conn.value)
+            backing.deviceName = conn.value
+        elif conn.kind == 'telnet' or conn.kind == 'tcp':
             backing = serial_port.URIBackingInfo()
-            backing.serviceURI = s.kind + '://' + s.value
-            if 'server' in s.options:
+            backing.serviceURI = conn.kind + '://' + conn.value
+            if 'server' in conn.options:
                 logger.info("Serial port will be a %s server at %s",
-                            s.kind, s.value)
+                            conn.kind, conn.value)
                 backing.direction = 'server'
             else:
                 logger.info(
                     "Serial port will connect via %s to %s. Use ',server' "
                     "option if a server is desired instead of client.",
-                    s.kind, s.value)
+                    conn.kind, conn.value)
                 backing.direction = 'client'
         else:
             # TODO - support other backing types
             raise NotImplementedError("no support yet for backing type '{0}'"
-                                      .format(s.kind))
+                                      .format(conn.kind))
 
         serial_port.backing = backing
         serial_spec.device = serial_port

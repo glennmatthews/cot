@@ -108,7 +108,7 @@ class OVFItem(object):
         self.properties = {}
         """Dict of dicts. properties[name][value] = (profile1, profile2)."""
         self.modified = False
-        self.NS = self.RASD   # default for most item types
+        self.namespace = self.RASD   # default for most item types
         if item is not None:
             self.add_item(item)
 
@@ -217,8 +217,8 @@ class OVFItem(object):
               already in the OVFItem.
         """
         logger.debug("Adding new %s", item.tag)
-        self.NS = self.name_helper.namespace_for_item_tag(item.tag)
-        if not self.NS:
+        self.namespace = self.namespace_for_item_tag(item.tag)
+        if not self.namespace:
             raise ValueUnsupportedError("item",
                                         item.tag,
                                         "Item, StorageItem, EthernetPortItem")
@@ -453,7 +453,7 @@ class OVFItem(object):
             value = str(value)
 
         if name == self.RESOURCE_TYPE:
-            self.NS = self.name_helper.namespace_for_resource_type(value)
+            self.namespace = self.namespace_for_resource_type(value)
 
         if not profiles:
             # Profiles not specified.
@@ -757,8 +757,8 @@ class OVFItem(object):
         set_string_list = self.get_nonintersecting_set_list()
 
         # Now, construct the Items
-        item_tag = self.name_helper.item_tag_for_namespace(self.NS)
-        child_ordering = [self.NS + i for i in self.ITEM_CHILDREN]
+        item_tag = self.item_tag_for_namespace(self.namespace)
+        child_ordering = [self.namespace + i for i in self.ITEM_CHILDREN]
         item_list = []
         for set_string in set_string_list:
             if not set_string:
@@ -805,7 +805,7 @@ class OVFItem(object):
                     item.append(ET.fromstring(val))
                 else:
                     # Children of Item must be in sorted order
-                    XML.set_or_make_child(item, self.NS + name, val,
+                    XML.set_or_make_child(item, self.namespace + name, val,
                                           ordering=child_ordering,
                                           known_namespaces=self.NSM.values())
             logger.debug("Item is:\n%s", ET.tostring(item))

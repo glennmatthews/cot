@@ -45,12 +45,6 @@ try:
 except ImportError:
     from backports.shutil_get_terminal_size import get_terminal_size
 
-try:
-    import argcomplete
-    _argcomplete = True
-except ImportError:
-    _argcomplete = False
-
 from COT import __version_long__
 from COT.data_validation import InvalidInputError, ValueMismatchError
 from COT.commands import command_classes
@@ -100,8 +94,12 @@ class CLI(UI):
 
         self.create_parser()
         self.create_subparsers()
-        if _argcomplete:
+        try:
+            # Enable argument completion, if argcomplete is installed
+            import argcomplete
             argcomplete.autocomplete(self.parser)
+        except ImportError:
+            pass
 
         from COT.helpers import Helper
         Helper.USER_INTERFACE = self

@@ -197,8 +197,8 @@ class OVF(VMDescription, XML):
             self._ovf_version = None
             self.name_helper = name_helper(self.ovf_version)
 
-            for (prefix, URI) in self.NSM.items():
-                ET.register_namespace(prefix, URI)
+            for (prefix, uri) in self.NSM.items():
+                ET.register_namespace(prefix, uri)
 
             # Register additional non-standard namespaces we're aware of:
             ET.register_namespace('vmw', "http://www.vmware.com/schema/ovf")
@@ -379,19 +379,19 @@ class OVF(VMDescription, XML):
 
         plat = self.platform
 
-        def _validate_helper(label, fn, *args):
+        def _validate_helper(label, validator, *args):
             """Call validation function, catch errors and warn user instead.
 
             Args:
               label (str): Label to prepend to any warning messages
-              fn (function): Validation function to call.
+              validator (function): Validation function to call.
               *args (list): Arguments to validation function.
 
             Returns:
               bool: True if valid, False if invalid
             """
             try:
-                fn(*args)
+                validator(*args)
                 return True
             except ValueUnsupportedError as e:
                 logger.warning(label + str(e))

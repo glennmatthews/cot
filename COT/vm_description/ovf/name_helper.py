@@ -360,25 +360,25 @@ class OVFNameHelper1(object):
         else:
             return self.RASD
 
-    def item_tag_for_namespace(self, ns):
+    def item_tag_for_namespace(self, namespace):
         """Get the Item tag for the given XML namespace.
 
         Args:
-          ns (str): XML namespace
+          namespace (str): XML namespace
         Returns:
           str: 'Item', 'StorageItem', or 'EthernetPortItem' as appropriate.
         Raises:
           ValueUnsupportedError: if the namespace is unrecognized
         """
-        if ns == self.RASD:
+        if namespace == self.RASD:
             return self.ITEM
-        elif ns == self.SASD:
+        elif namespace == self.SASD:
             return self.STORAGE_ITEM
-        elif ns == self.EPASD:
+        elif namespace == self.EPASD:
             return self.ETHERNET_PORT_ITEM
         else:
             raise ValueUnsupportedError("namespace",
-                                        ns,
+                                        namespace,
                                         [self.RASD, self.SASD, self.EPASD])
 
 

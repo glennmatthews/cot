@@ -523,19 +523,19 @@ class TestHelperMkDir(COT_UT):
 
 @mock.patch('COT.helpers.helper.check_call')
 @mock.patch('shutil.copy')
-class TestHelperCp(COT_UT):
-    """Test cases for Helper.cp()."""
+class TestHelperCopyFile(COT_UT):
+    """Test cases for Helper.copy_file()."""
 
     def test_permission_ok(self, mock_copy, mock_check_call):
         """File copy succeeds with user permissions."""
-        self.assertTrue(Helper.cp('/foo', '/bar'))
+        self.assertTrue(Helper.copy_file('/foo', '/bar'))
         mock_copy.assert_called_with('/foo', '/bar')
         mock_check_call.assert_not_called()
 
     def test_need_sudo(self, mock_copy, mock_check_call):
         """File copy needs sudo."""
         mock_copy.side_effect = OSError
-        self.assertTrue(Helper.cp('/foo', '/bar'))
+        self.assertTrue(Helper.copy_file('/foo', '/bar'))
         mock_copy.assert_called_with('/foo', '/bar')
         mock_check_call.assert_called_with(['sudo', 'cp', '/foo', '/bar'])
 

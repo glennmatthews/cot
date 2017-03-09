@@ -83,6 +83,10 @@ This project adheres to `Semantic Versioning`_.
       ``DiskRepresentation.for_new_file`` instead of calling the
       constructor directly.
 
+  - COT.helpers module:
+
+    - Static method ``Helper.cp`` has been renamed to ``Helper.copy_file``.
+
   - COT.ovf module:
 
     - ``COT.ovf.ovf.byte_string`` has been moved and renamed to
