@@ -1,5 +1,5 @@
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -263,7 +263,10 @@ class DiskRepresentation(object):
     @classmethod
     def _create_file(cls, path, files=None, capacity=None, disk_subformat=None,
                      **kwargs):
-        """Worker function for create_file().
+        """Default worker function for create_file().
+
+        Creates a blank disk using ``qemu-img``.
+        Subclasses can override this method if needed.
 
         Args:
           path (str): Location to create disk file.
@@ -282,7 +285,8 @@ class DiskRepresentation(object):
         if files:
             raise NotImplementedError("Don't know how to create a disk of "
                                       "this format containing a filesystem")
-        args = ['create', '-f', cls.disk_format, path, capacity]
+        args = ['create', '-f', cls.disk_format]
         if disk_subformat is not None:
             args += ['-o', 'subformat=' + disk_subformat]
+        args += [path, capacity]
         helpers['qemu-img'].call(args)

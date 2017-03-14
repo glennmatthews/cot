@@ -11,6 +11,13 @@ This project adheres to `Semantic Versioning`_.
 - Fixed a case that could result in a RuntimeError being thrown when using
   ``cot edit-hardware`` to simultaneously create NICs and define a new
   configuration profile (`#64`_).
+- Update minimum QEMU version preferred for creation of streamOptimized VMDK
+  files from 2.1.0 to 2.5.1, due to an incompatibility with VMware in VMDKs
+  produced by versions prior to 2.5.1 (`#65`_).
+
+  - If ``vmdktool`` is not installed, but QEMU 2.1.0-2.5.0 is, then COT will
+    fall back to usinq ``qemu-img``, but will warn of this potential
+    incompatibility with ESXi.
 
 **Added**
 
@@ -715,6 +722,7 @@ Initial public release.
 .. _#62: https://github.com/glennmatthews/cot/issues/62
 .. _#63: https://github.com/glennmatthews/cot/issues/63
 .. _#64: https://github.com/glennmatthews/cot/issues/64
+.. _#65: https://github.com/glennmatthews/cot/issues/65
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
