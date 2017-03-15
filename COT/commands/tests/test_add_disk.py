@@ -501,10 +501,10 @@ ovf:diskId="new.vmdk" ovf:fileRef="new.vmdk" ovf:format=\
 """.format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            new_size=os.path.getsize(os.path.join(self.temp_dir, "new.vmdk"))))
         # Make sure the disk was actually converted to the right format
-        dr = DiskRepresentation.from_file(os.path.join(self.temp_dir,
-                                                       "new.vmdk"))
-        self.assertEqual(dr.disk_format, 'vmdk')
-        self.assertEqual(dr.disk_subformat, "streamOptimized")
+        diskrep = DiskRepresentation.from_file(os.path.join(self.temp_dir,
+                                                            "new.vmdk"))
+        self.assertEqual(diskrep.disk_format, 'vmdk')
+        self.assertEqual(diskrep.disk_subformat, "streamOptimized")
 
     def test_disk_conversion_and_replacement(self):
         """Convert a disk to implicitly replace an existing disk."""
@@ -793,9 +793,9 @@ ovf:size="{input_size}" />
         self.command.disk_image = self.blank_vmdk
         self.command.controller = "ide"
         self.command.address = "0:0"
-        with self.assertRaises(ValueUnsupportedError) as cm:
+        with self.assertRaises(ValueUnsupportedError) as catcher:
             self.command.run()
-        self.assertTrue(re.search("HostResource", str(cm.exception)))
+        self.assertTrue(re.search("HostResource", str(catcher.exception)))
         self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
         self.assertLogged(**self.NONEXISTENT_FILE)
         self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)

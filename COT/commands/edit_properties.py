@@ -245,11 +245,11 @@ class COTEditProperties(ReadWriteCommand):
         wrapper = textwrap.TextWrapper(initial_indent='',
                                        subsequent_indent='                 ')
         format_str = '{0:15} "{1}"'
-        pa = self.vm.environment_properties
+        proparray = self.vm.environment_properties
         while True:
-            key_list = [p['key'] for p in pa]
+            key_list = [p['key'] for p in proparray]
             string_list = ["""{0:25} "{1}" """.format(p['key'], p['label'])
-                           for p in pa]
+                           for p in proparray]
             user_input = self.ui.choose_from_list(
                 header="Please choose a property to edit:",
                 option_list=key_list,
@@ -261,7 +261,7 @@ class COTEditProperties(ReadWriteCommand):
             if user_input == 'q' or user_input == 'Q':
                 break
 
-            prop = next(p for p in pa if p['key'] == user_input)
+            prop = next(p for p in proparray if p['key'] == user_input)
 
             key = prop['key']
             old_value = prop['value']
@@ -292,7 +292,7 @@ class COTEditProperties(ReadWriteCommand):
                         logger.info("Successfully updated property '%s' "
                                     "value to '%s'", key, new_value)
                         # Refresh!
-                        pa = self.vm.environment_properties
+                        proparray = self.vm.environment_properties
                         break
                     except ValueUnsupportedError as exc:
                         logger.error(exc)

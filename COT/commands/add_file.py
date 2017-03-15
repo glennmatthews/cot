@@ -92,8 +92,9 @@ class COTAddFile(ReadWriteCommand):
         filename = os.path.basename(self.file)
         (file_obj, _, _, _) = vm.search_from_filename(filename)
         if self.file_id is not None:
-            (f2, _, _, _) = vm.search_from_file_id(self.file_id)
-            file_obj = check_for_conflict("File to overwrite", [file_obj, f2])
+            (file_obj2, _, _, _) = vm.search_from_file_id(self.file_id)
+            file_obj = check_for_conflict("File to overwrite",
+                                          [file_obj, file_obj2])
         if self.file_id is None:
             if file_obj is not None:
                 self.file_id = vm.get_id_from_file(file_obj)

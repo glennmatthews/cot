@@ -24,34 +24,33 @@ class TestOVFHardware(COTTestCase):
     def test_basic_sanity(self):
         """Make sure basic loading is successful and APIs work."""
         with OVF(self.input_ovf, None) as ovf:
-            hw = ovf.hardware
-            self.assertEqual(ovf, hw.ovf)
-            self.assertEqual(13, len(hw.item_dict))
-            self.assertEqual('14', hw.find_unused_instance_id())
-            self.assertEqual(2, len(hw.find_all_items('ide')))
-            self.assertEqual(1, len(hw.find_all_items(
+            hardware = ovf.hardware
+            self.assertEqual(ovf, hardware.ovf)
+            self.assertEqual(13, len(hardware.item_dict))
+            self.assertEqual('14', hardware.find_unused_instance_id())
+            self.assertEqual(2, len(hardware.find_all_items('ide')))
+            self.assertEqual(1, len(hardware.find_all_items(
                 'ide', properties={ovf.ADDRESS: '1'})))
-            self.assertEqual(0, len(hw.find_all_items(
+            self.assertEqual(0, len(hardware.find_all_items(
                 'ide', properties={ovf.ADDRESS: '2'})))
-            self.assertNotEqual(None, hw.find_item('harddisk'))
-            self.assertEqual(None, hw.find_item('usb'))
-            self.assertRaises(LookupError, hw.find_item, 'ide')
-            self.assertEqual(1, hw.get_item_count('ethernet', None))
-            self.assertEqual(3, hw.get_item_count('ethernet', "4CPU-4GB-3NIC"))
-            self.assertEqual(3, hw.get_item_count_per_profile(
+            self.assertNotEqual(None, hardware.find_item('harddisk'))
+            self.assertEqual(None, hardware.find_item('usb'))
+            self.assertRaises(LookupError, hardware.find_item, 'ide')
+            self.assertEqual(1, hardware.get_item_count('ethernet', None))
+            self.assertEqual(3, hardware.get_item_count(
+                'ethernet', "4CPU-4GB-3NIC"))
+            self.assertEqual(3, hardware.get_item_count_per_profile(
                 'ethernet', None)["4CPU-4GB-3NIC"])
 
     def test_find_item_multiple_matches(self):
         """Check find_item raises LookupError if multiple matches are found."""
         with OVF(self.input_ovf, None) as ovf:
-            hw = ovf.hardware
             self.assertRaisesRegex(
                 LookupError,
                 r"multiple matching 'ide' Items",
-                hw.find_item, resource_type='ide')
+                ovf.hardware.find_item, resource_type='ide')
 
     def test_find_item_no_matches(self):
         """Test that find_item returns None if no matches are found."""
         with OVF(self.input_ovf, None) as ovf:
-            hw = ovf.hardware
-            self.assertEqual(None, hw.find_item(resource_type='usb'))
+            self.assertEqual(None, ovf.hardware.find_item(resource_type='usb'))

@@ -75,10 +75,10 @@ class SerialConnection(object):
         for entry in entries:
             if not entry:
                 continue
-            match = re.match(r"([^=]+)=?(.*)", entry)
-            if match:
-                key = match.group(1)
-                value = match.group(2)
+            inner_match = re.match(r"([^=]+)=?(.*)", entry)
+            if inner_match:
+                key = inner_match.group(1)
+                value = inner_match.group(2)
                 if not value:
                     value = True
                 options[key] = value

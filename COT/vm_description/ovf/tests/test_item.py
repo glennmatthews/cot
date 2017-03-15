@@ -101,9 +101,8 @@ OVFItem:
     def test_remove_profile(self):
         """Test case for remove_profile() method."""
         with OVF(self.input_ovf, self.temp_file) as ovf:
-            hw = ovf.hardware
             # InstanceID 11, NIC 0 (default, under all profiles)
-            item = hw.item_dict['11']
+            item = ovf.hardware.item_dict['11']
             self.assertTrue(item.has_profile(None))
             self.assertTrue(item.has_profile("1CPU-1GB-1NIC"))
             self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
@@ -145,9 +144,8 @@ OVFItem:
     def test_set_property(self):
         """Test cases for set_property() and related methods."""
         ovf = OVF(self.input_ovf, self.temp_file)
-        hw = ovf.hardware
         # InstanceID 1, 'CPU' - entries for 'default' plus two other profiles
-        item = hw.item_dict['1']
+        item = ovf.hardware.item_dict['1']
 
         self.assertTrue(item.has_profile(None))
         self.assertTrue(item.has_profile("2CPU-2GB-1NIC"))
@@ -241,9 +239,8 @@ OVFItem:
     def test_set_property_no_modification(self):
         """Test various operations that should do nothing."""
         ovf = OVF(self.input_ovf, self.temp_file)
-        hw = ovf.hardware
         # InstanceID 4, IDE controller
-        item = hw.item_dict['4']
+        item = ovf.hardware.item_dict['4']
 
         # set global value to empty for a property with no value
         self.assertFalse(item.modified)

@@ -188,13 +188,13 @@ ovf:size="{config_size}" />
         temp_ovf = os.path.join(self.temp_dir, "intermediate.ovf")
 
         # Remove the existing ISO from our input_ovf:
-        rm = COTRemoveFile(UI())
-        rm.package = self.input_ovf
-        rm.output = temp_ovf
-        rm.file_path = "input.iso"
-        rm.run()
-        rm.finished()
-        rm.destroy()
+        remover = COTRemoveFile(UI())
+        remover.package = self.input_ovf
+        remover.output = temp_ovf
+        remover.file_path = "input.iso"
+        remover.run()
+        remover.finished()
+        remover.destroy()
 
         # Now we have two empty drives.
         self.command.package = temp_ovf

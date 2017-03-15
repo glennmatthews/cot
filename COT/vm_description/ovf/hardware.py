@@ -65,13 +65,13 @@ class OVFHardware(object):
         valid_profiles = set(ovf.config_profiles)
         item_count = 0
         for item in ovf.virtual_hw_section:
-            ns = ovf.namespace_for_item_tag(item.tag)
-            if not ns:
+            namespace = ovf.namespace_for_item_tag(item.tag)
+            if not namespace:
                 continue
             item_count += 1
             # We index the dict by InstanceID as it's the one property of
             # an Item that uniquely identifies this set of hardware items.
-            instance = item.find(ns + self.ovf.INSTANCE_ID).text
+            instance = item.find(namespace + self.ovf.INSTANCE_ID).text
 
             # Pre-sanity check - are all of the profiles associated with this
             # item properly defined in the OVF DeploymentOptionSection?

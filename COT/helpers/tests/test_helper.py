@@ -256,9 +256,9 @@ class HelperGenericTest(HelperTestCase):
 
     def test_check_call_helpererror(self):
         """HelperError if executable fails and require_success is set."""
-        with self.assertRaises(HelperError) as cm:
+        with self.assertRaises(HelperError) as catcher:
             check_call(["false"])
-        self.assertEqual(cm.exception.errno, 1)
+        self.assertEqual(catcher.exception.errno, 1)
 
         check_call(["false"], require_success=False)
 
@@ -273,9 +273,9 @@ class HelperGenericTest(HelperTestCase):
         mock_check_call.side_effect = raise_oserror
 
         # Without retry_on_sudo, we reraise the permissions error
-        with self.assertRaises(OSError) as cm:
+        with self.assertRaises(OSError) as catcher:
             check_call(["false"])
-        self.assertEqual(cm.exception.errno, 13)
+        self.assertEqual(catcher.exception.errno, 13)
         mock_check_call.assert_called_once_with(["false"])
 
         # With retry_on_sudo, we retry.
@@ -297,9 +297,9 @@ class HelperGenericTest(HelperTestCase):
         mock_check_call.side_effect = raise_subprocess_error
 
         # Without retry_on_sudo, we reraise the permissions error
-        with self.assertRaises(HelperError) as cm:
+        with self.assertRaises(HelperError) as catcher:
             check_call(["false"])
-        self.assertEqual(cm.exception.errno, 1)
+        self.assertEqual(catcher.exception.errno, 1)
         mock_check_call.assert_called_once_with(["false"])
 
         # With retry_on_sudo, we retry.
@@ -325,10 +325,10 @@ class HelperGenericTest(HelperTestCase):
 
     def test_check_output_helpererror(self):
         """HelperError if executable fails and require_success is set."""
-        with self.assertRaises(HelperError) as cm:
+        with self.assertRaises(HelperError) as catcher:
             check_output(["false"])
 
-        self.assertEqual(cm.exception.errno, 1)
+        self.assertEqual(catcher.exception.errno, 1)
 
         check_output(["false"], require_success=False)
 
@@ -360,18 +360,18 @@ class HelperGenericTest(HelperTestCase):
         self.helper._provider_package['brew'] = 'install-me-with-brew'
         self.helper._provider_package['port'] = 'install-me-with-port'
         self.select_package_manager(None)
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(RuntimeError) as catcher:
             self.helper.install()
-        msg = str(cm.exception)
+        msg = str(catcher.exception)
         self.assertRegex(msg, "Unsure how to install generic.")
         # Since both helpers are supported, we should see both messages
         self.assertRegex(msg, "COT can use Homebrew")
         self.assertRegex(msg, "COT can use MacPorts")
 
         del self.helper._provider_package['brew']
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(RuntimeError) as catcher:
             self.helper.install()
-        msg = str(cm.exception)
+        msg = str(catcher.exception)
         self.assertRegex(msg, "Unsure how to install generic.")
         # Now we should only see the supported one
         self.assertNotRegex(msg, "COT can use Homebrew")
@@ -379,17 +379,17 @@ class HelperGenericTest(HelperTestCase):
 
         del self.helper._provider_package['port']
         # Now we should fall back to NotImplementedError
-        with self.assertRaises(NotImplementedError) as cm:
+        with self.assertRaises(NotImplementedError) as catcher:
             self.helper.install()
-        msg = str(cm.exception)
+        msg = str(catcher.exception)
         self.assertRegex(msg, "Unsure how to install generic.")
         self.assertNotRegex(msg, "COT can use Homebrew")
         self.assertNotRegex(msg, "COT can use MacPorts")
 
         self.helper._provider_package['brew'] = 'install-me-with-brew'
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(RuntimeError) as catcher:
             self.helper.install()
-        msg = str(cm.exception)
+        msg = str(catcher.exception)
         self.assertRegex(msg, "Unsure how to install generic.")
         # Now we should only see the supported one
         self.assertRegex(msg, "COT can use Homebrew")

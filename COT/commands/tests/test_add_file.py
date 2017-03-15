@@ -105,18 +105,18 @@ ovf:size="{cfg_size}" />
 """.format(self.FILE_SIZE['blank.vmdk']))
 
         from COT.commands.add_disk import COTAddDisk
-        ad = COTAddDisk(UI())
-        ad.package = intermediate_ovf
-        ad.output = self.temp_file
-        ad.disk_image = self.blank_vmdk
-        ad.file_id = "mydisk"
-        ad.run()
+        add_disk = COTAddDisk(UI())
+        add_disk.package = intermediate_ovf
+        add_disk.output = self.temp_file
+        add_disk.disk_image = self.blank_vmdk
+        add_disk.file_id = "mydisk"
+        add_disk.run()
         self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
         self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
         self.assertLogged(**self.OVERWRITING_FILE)
         self.assertLogged(**self.ADDRESS_ON_PARENT_NOT_SPECIFIED)
-        ad.finished()
-        ad.destroy()
+        add_disk.finished()
+        add_disk.destroy()
         self.check_diff(file1=intermediate_ovf, expected="""
  <?xml version='1.0' encoding='utf-8'?>
 -<ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">

@@ -117,11 +117,12 @@ class CommandTestCase(COTTestCase):
           AssertionError: if an error is raised by COT when run
           AssertionError: if the output returned does not match expected.
         """
-        with mock.patch('sys.stdout', new_callable=StringIO.StringIO) as so:
+        with mock.patch('sys.stdout',
+                        new_callable=StringIO.StringIO) as stdout:
             try:
                 self.command.run()
             except (TypeError, ValueError, SyntaxError, LookupError):
                 self.fail(traceback.format_exc())
-            output = so.getvalue()
+            output = stdout.getvalue()
         self.maxDiff = None
         self.assertMultiLineEqual(expected.strip(), output.strip())

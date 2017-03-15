@@ -309,8 +309,8 @@ class COTDeployESXi(COTDeploy):
 
         # pass network settings on to ovftool
         if self.network_map is not None:
-            for nm in self.network_map:
-                ovftool_args.append("--net:" + nm)
+            for netmap in self.network_map:
+                ovftool_args.append("--net:" + netmap)
 
         # check if user entered a name for the VM
         if self.vm_name is None:

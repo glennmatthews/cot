@@ -33,13 +33,13 @@ class TestUtilities(COTTestCase):
 
     def test_directory_size_bad_path(self):
         """Negative tests for directory_size() function."""
-        with self.assertRaises(OSError) as cm:
+        with self.assertRaises(OSError) as catcher:
             COT.utilities.directory_size("/bar/foo")
-        self.assertEqual(cm.exception.errno, errno.ENOENT)
+        self.assertEqual(catcher.exception.errno, errno.ENOENT)
 
-        with self.assertRaises(OSError) as cm:
+        with self.assertRaises(OSError) as catcher:
             COT.utilities.directory_size(__file__)
-        self.assertEqual(cm.exception.errno, errno.ENOTDIR)
+        self.assertEqual(catcher.exception.errno, errno.ENOTDIR)
 
     def test_directory_size_continuation(self):
         """Directory size calculation needs to continue even if files fail."""

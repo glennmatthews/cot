@@ -42,7 +42,8 @@ class DiskRepresentation(object):
     @staticmethod
     def supported_disk_formats():
         """List of disk format strings with support."""
-        return [sc.disk_format for sc in DiskRepresentation.subclasses()]
+        return [subclass.disk_format
+                for subclass in DiskRepresentation.subclasses()]
 
     @staticmethod
     def class_for_format(disk_format):
@@ -54,8 +55,8 @@ class DiskRepresentation(object):
         Returns:
           DiskRepresentation: appropriate subclass object.
         """
-        return next((sc for sc in DiskRepresentation.subclasses() if
-                     sc.disk_format == disk_format),
+        return next((subclass for subclass in DiskRepresentation.subclasses()
+                     if subclass.disk_format == disk_format),
                     None)
 
     @staticmethod
@@ -76,18 +77,18 @@ class DiskRepresentation(object):
             raise IOError(2, "No such file or directory: {0}".format(path))
         best_guess = None
         best_confidence = 0
-        for sc in DiskRepresentation.subclasses():
-            confidence = sc.file_is_this_type(path)
+        for subclass in DiskRepresentation.subclasses():
+            confidence = subclass.file_is_this_type(path)
             if confidence > best_confidence:
                 logger.verbose("File %s may be a %s, with confidence %d",
-                               path, sc.disk_format, confidence)
-                best_guess = sc
+                               path, subclass.disk_format, confidence)
+                best_guess = subclass
                 best_confidence = confidence
             elif confidence > 0 and confidence == best_confidence:
                 logger.warning("For file %s, same confidence level (%d) for "
                                "classes %s and %s. Using %s",
                                path, confidence, best_guess,
-                               sc, best_guess)
+                               subclass, best_guess)
         if best_guess is not None:
             return best_guess(path)
         else:
@@ -183,11 +184,11 @@ class DiskRepresentation(object):
 
         .. seealso:: :meth:`from_other_image`
         """
-        sc = self.class_for_format(new_format)
-        if sc is None:
+        subclass = self.class_for_format(new_format)
+        if subclass is None:
             raise NotImplementedError("No support for converting to type '{0}'"
                                       .format(new_format))
-        return sc.from_other_image(self, new_directory, new_subformat)
+        return subclass.from_other_image(self, new_directory, new_subformat)
 
     @classmethod
     def from_other_image(cls, input_image, output_dir, output_subformat=None):

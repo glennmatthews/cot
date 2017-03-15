@@ -43,18 +43,17 @@ disable=bad-continuation,
 
 [BASIC]
 
-# Allow variable names 'vm' and 'ui' as valid
-# Allow top-level "constant" name 'logger'
-# Allow unittest.TestCase.'maxDiff' attribute
-# Allow '_' to indicate "unused"
-good-names=i,j,k,vm,ui,logger,_,maxDiff
+# In invalid-name checker:
+# - allow variable names 'rc', 'ui', 'vm', as valid
+# - allow top-level "constant" name 'logger'
+# - allow '_' variable name to indicate "unused"
+# - allow unittest.TestCase.'maxDiff' attribute
+good-names=i,j,k,rc,ui,vm,logger,_,maxDiff
 
-# When enabling invalid-name, stop complaints about test method names too long
-# and about assertFooBar() method naming style in unittest
+# In invalid-name checker:
+# - ignore length of test case method names (test_*)
+# - don't complain about assertFooBar() method naming conventions in unittest.
 method-rgx=(test_[a-z0-9_]*|assert[A-Z][a-zA-Z0-9_]*|[a-z_][a-z0-9_]{2,30})$
-
-# Stop complaints about 2-character variable names, for now (TODO?)
-variable-rgx=[a-z_][a-z0-9_]+$
 
 [DESIGN]
 

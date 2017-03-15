@@ -262,8 +262,8 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
         if file2 is None:
             file2 = self.temp_file
 
-        with open(file1) as f1, open(file2) as f2:
-            diff = unified_diff(f1.readlines(), f2.readlines(),
+        with open(file1) as fileobj1, open(file2) as fileobj2:
+            diff = unified_diff(fileobj1.readlines(), fileobj2.readlines(),
                                 fromfile=file1, tofile=file2,
                                 n=1)   # number of context lines
         # Strip line numbers and file names from the diff

@@ -363,28 +363,30 @@ def search_for_elements(vm, disk_file, file_id, controller, address):
     """
     # 1) Check whether the DISK_IMAGE file name matches an existing File
     #    in the OVF (and from there, find the associated Disk and Items)
-    (f1, d1, ci1, di1) = vm.search_from_filename(disk_file)
+    (file1, disk1, ctrlitem1, diskitem1) = vm.search_from_filename(disk_file)
 
     # 2) Check whether the --file-id matches an existing File and/or Disk
     #    in the OVF (and from there, find the associated Items)
     # In the case where no file_id is specified, we may default to the
     # filename, so check that instead
     if file_id is not None:
-        (f2, d2, ci2, di2) = vm.search_from_file_id(file_id)
+        (file2, disk2,
+         ctrlitem2, diskitem2) = vm.search_from_file_id(file_id)
     else:
-        (f2, d2, ci2, di2) = vm.search_from_file_id(disk_file)
+        (file2, disk2,
+         ctrlitem2, diskitem2) = vm.search_from_file_id(disk_file)
 
     # 3) Check whether the --controller and --address match existing Items
     #    in the OVF (and from there, find the associated Disk and/or File)
-    (f3, d3, ci3, di3) = vm.search_from_controller(controller,
-                                                   address)
+    (file3, disk3, ctrlitem3, diskitem3) = vm.search_from_controller(
+        controller, address)
 
-    file_obj = check_for_conflict("File to overwrite", [f1, f2, f3])
-    disk_obj = check_for_conflict("Disk to overwrite", [d1, d2, d3])
+    file_obj = check_for_conflict("File to overwrite", [file1, file2, file3])
+    disk_obj = check_for_conflict("Disk to overwrite", [disk1, disk2, disk3])
     ctrl_item = check_for_conflict("controller Item to use",
-                                   [ci1, ci2, ci3])
+                                   [ctrlitem1, ctrlitem2, ctrlitem3])
     disk_item = check_for_conflict("disk Item to overwrite",
-                                   [di1, di2, di3])
+                                   [diskitem1, diskitem2, diskitem3])
 
     return file_obj, disk_obj, ctrl_item, disk_item
 

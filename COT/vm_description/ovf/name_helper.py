@@ -285,9 +285,9 @@ class OVFNameHelper1(object):
             elif name not in self._raw:
                 raise AttributeError("Unknown attribute '{0}'".format(name))
             else:
-                ns = getattr(self, self._raw[name].namespace_name)
+                namespace = getattr(self, self._raw[name].namespace_name)
                 tag = self._raw[name].tag
-                self._cache[name] = ns + tag
+                self._cache[name] = namespace + tag
         return self._cache[name]
 
     def __init__(self):

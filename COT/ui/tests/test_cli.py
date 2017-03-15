@@ -99,11 +99,11 @@ class TestCOTCLI(COTTestCase):
                            new_callable=StringIO.StringIO) as _se:
             try:
                 rc = self.cli.run(argv)
-            except SystemExit as se:
+            except SystemExit as exc:
                 try:
-                    rc = int(se.code)
+                    rc = int(exc.code)
                 except (TypeError, ValueError):
-                    print(se.code, file=sys.stderr)
+                    print(exc.code, file=sys.stderr)
                     rc = 1
             stdout = _so.getvalue()
             stderr = _se.getvalue()
@@ -324,9 +324,9 @@ class TestCLIGeneral(TestCOTCLI):
 
     def test_help(self):
         """Verify help menu for cot."""
-        o1 = self.call_cot(['-h'])
-        o2 = self.call_cot(['--help'])
-        self.assertMultiLineEqual(o1, o2)
+        out1 = self.call_cot(['-h'])
+        out2 = self.call_cot(['--help'])
+        self.assertMultiLineEqual(out1, out2)
         if sys.hexversion < 0x03020000:
             args_str = """
   -h, --help        show this help message and exit
@@ -409,7 +409,7 @@ commands:
   <command>{2}
 """  # noqa - trailing whitespace above is expected
             .format(__version_long__, args_str, command_str).strip(),
-            o1.strip())
+            out1.strip())
 
     def test_version(self):
         """Verify --version command."""

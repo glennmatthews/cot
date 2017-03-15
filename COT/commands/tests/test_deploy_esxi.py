@@ -210,14 +210,14 @@ class TestCOTDeployESXi(CommandTestCase):
         # pyvmomi 6.0.0.2016 and earlier raises ConnectionError,
         # pyvmomi 6.0.0.2016.4 and later raises socket.error
         with self.assertRaises((requests.exceptions.ConnectionError,
-                                socket.error)) as cm:
+                                socket.error)) as catcher:
             self.command.run()
         # In requests 2.7 and earlier, we get the errno,
         # while in requests 2.8+, it's munged into a string only
-        if cm.exception.errno is not None:
-            self.assertEqual(cm.exception.errno, errno.ECONNREFUSED)
+        if catcher.exception.errno is not None:
+            self.assertEqual(catcher.exception.errno, errno.ECONNREFUSED)
         self.assertRegex(
-            cm.exception.strerror,
+            catcher.exception.strerror,
             "(Error connecting to localhost:443: )?.*Connection refused")
         self.assertLogged(**self.VSPHERE_ENV_WARNING)
 
@@ -261,15 +261,16 @@ class TestCOTDeployESXi(CommandTestCase):
         _args, kwargs = mock_vm.ReconfigVM_Task.call_args
         spec = kwargs['spec']
         self.assertEqual(3, len(spec.deviceChange))
-        s1, s2, s3 = spec.deviceChange
-        self.assertEqual('add', s1.operation)
-        self.assertEqual('add', s2.operation)
-        self.assertEqual('add', s3.operation)
-        self.assertEqual('tcp://localhost:2222', s1.device.backing.serviceURI)
-        self.assertEqual('client', s1.device.backing.direction)
-        self.assertEqual('tcp://:2223', s2.device.backing.serviceURI)
-        self.assertEqual('server', s2.device.backing.direction)
-        self.assertEqual('/dev/ttyS0', s3.device.backing.deviceName)
+        change1, change2, change3 = spec.deviceChange
+        self.assertEqual('add', change1.operation)
+        self.assertEqual('add', change2.operation)
+        self.assertEqual('add', change3.operation)
+        self.assertEqual('tcp://localhost:2222',
+                         change1.device.backing.serviceURI)
+        self.assertEqual('client', change1.device.backing.direction)
+        self.assertEqual('tcp://:2223', change2.device.backing.serviceURI)
+        self.assertEqual('server', change2.device.backing.direction)
+        self.assertEqual('/dev/ttyS0', change3.device.backing.deviceName)
 
         self.command.serial_connection = [
             'file:/tmp/foo.txt,datastore=datastore1'
@@ -303,10 +304,11 @@ class TestCOTDeployESXi(CommandTestCase):
         _args, kwargs = mock_vm.ReconfigVM_Task.call_args
         spec = kwargs['spec']
         self.assertEqual(1, len(spec.deviceChange))
-        s1 = spec.deviceChange[0]
-        self.assertEqual('add', s1.operation)
-        self.assertEqual('tcp://localhost:2222', s1.device.backing.serviceURI)
-        self.assertEqual('client', s1.device.backing.direction)
+        change1 = spec.deviceChange[0]
+        self.assertEqual('add', change1.operation)
+        self.assertEqual('tcp://localhost:2222',
+                         change1.device.backing.serviceURI)
+        self.assertEqual('client', change1.device.backing.direction)
 
     @mock.patch('pyVim.connect.__FindSupportedVersion', return_value=['vim25'])
     @mock.patch('pyVim.connect.__Login', return_value=(mock_si, None))
@@ -365,10 +367,10 @@ class TestCOTDeployESXi(CommandTestCase):
         mock_parent.side_effect = requests.exceptions.ConnectionError
         self.command.locator = "localhost"
         self.command.serial_connection = ['tcp://localhost:2222']
-        with self.assertRaises(requests.exceptions.ConnectionError) as cm:
+        with self.assertRaises(requests.exceptions.ConnectionError) as catcher:
             self.command.fixup_serial_ports()
-        self.assertEqual(cm.exception.errno, None)
-        self.assertEqual(cm.exception.strerror,
+        self.assertEqual(catcher.exception.errno, None)
+        self.assertEqual(catcher.exception.strerror,
                          "Error connecting to localhost:443: None")
 
 

@@ -36,32 +36,32 @@ class TestDiskRepresentation(COTTestCase):
         """Test if DiskRepresentation.from_file() works for raw images."""
         temp_disk = os.path.join(self.temp_dir, 'foo.img')
         helpers['qemu-img'].call(['create', '-f', 'raw', temp_disk, "16M"])
-        dr = DiskRepresentation.from_file(temp_disk)
-        self.assertEqual(dr.disk_format, "raw")
-        self.assertEqual(dr.disk_subformat, None)
+        diskrep = DiskRepresentation.from_file(temp_disk)
+        self.assertEqual(diskrep.disk_format, "raw")
+        self.assertEqual(diskrep.disk_subformat, None)
 
     def test_disk_representation_from_file_qcow2(self):
         """Test if DiskRepresentation.from_file() works for qcow2 images."""
         temp_disk = os.path.join(self.temp_dir, 'foo.qcow2')
         helpers['qemu-img'].call(['create', '-f', 'qcow2', temp_disk, "16M"])
-        dr = DiskRepresentation.from_file(temp_disk)
-        self.assertEqual(dr.disk_format, "qcow2")
-        self.assertEqual(dr.disk_subformat, None)
+        diskrep = DiskRepresentation.from_file(temp_disk)
+        self.assertEqual(diskrep.disk_format, "qcow2")
+        self.assertEqual(diskrep.disk_subformat, None)
 
     def test_disk_representation_from_file_vmdk(self):
         """Test if DiskRepresentation.from_file() works for vmdk images."""
-        dr = DiskRepresentation.from_file(self.blank_vmdk)
-        self.assertEqual(dr.disk_format, "vmdk")
-        self.assertEqual(dr.disk_subformat, "streamOptimized")
+        diskrep = DiskRepresentation.from_file(self.blank_vmdk)
+        self.assertEqual(diskrep.disk_format, "vmdk")
+        self.assertEqual(diskrep.disk_subformat, "streamOptimized")
 
     def test_disk_representation_from_file_iso(self):
         """Test if DiskRepresentation.from_file() works for iso images."""
-        dr = DiskRepresentation.from_file(self.input_iso)
-        self.assertEqual(dr.disk_format, "iso")
+        diskrep = DiskRepresentation.from_file(self.input_iso)
+        self.assertEqual(diskrep.disk_format, "iso")
         # In Travis CI we can't currently install isoinfo (via genisoimage).
         # https://github.com/travis-ci/apt-package-whitelist/issues/588
         if helpers['isoinfo']:
-            self.assertEqual(dr.disk_subformat, "")
+            self.assertEqual(diskrep.disk_subformat, "")
 
     def test_disk_representation_from_file_errors(self):
         """Check DiskRepresentation.from_file() error handling."""

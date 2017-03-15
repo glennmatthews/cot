@@ -781,8 +781,8 @@ class OVF(VMDescription, XML):
                 # It seems wasteful to extract the disk file (could be
                 # quite large) from the TAR just to check, so we don't.
                 if file_ref.file_path is not None:
-                    dr = DiskRepresentation.from_file(file_ref.file_path)
-                    real_capacity = dr.capacity
+                    diskrep = DiskRepresentation.from_file(file_ref.file_path)
+                    real_capacity = diskrep.capacity
 
             reported_size = file_elem.get(self.FILE_SIZE)
             if real_size != reported_size:
@@ -1236,7 +1236,7 @@ class OVF(VMDescription, XML):
             max_width = max(max_key, max_label)
         wrapper.initial_indent = '      '
         wrapper.subsequent_indent = '      '
-        for ph in properties:
+        for propdict in properties:
             # If we have a label, and the terminal is wide enough,
             # display "<key> label value", else if no label, display
             # "<key> value", else only display "label value"
@@ -1244,23 +1244,23 @@ class OVF(VMDescription, XML):
                                   width - 8):
                 format_str = '  {key:{kw}}  {label:{lw}}  {val}'
                 str_list.append(format_str.format(
-                    key="<{0}>".format(ph['key']),
+                    key="<{0}>".format(propdict['key']),
                     kw=max_key,
-                    label=ph['label'],
+                    label=propdict['label'],
                     lw=max_label,
-                    val=('"{0}"'.format(ph['value'])
-                         if ph['value'] is not None
+                    val=('"{0}"'.format(propdict['value'])
+                         if propdict['value'] is not None
                          else '--')))
             else:
                 str_list.append('  {label:{width}}  {val}'.format(
-                    label=(ph['label'] if ph['label']
-                           else "<{0}>".format(ph['key'])),
+                    label=(propdict['label'] if propdict['label']
+                           else "<{0}>".format(propdict['key'])),
                     width=max_width,
-                    val=('"{0}"'.format(ph['value'])
-                         if ph['value'] is not None
+                    val=('"{0}"'.format(propdict['value'])
+                         if propdict['value'] is not None
                          else '--')))
             if verbosity_option == 'verbose':
-                for line in ph['description'].splitlines():
+                for line in propdict['description'].splitlines():
                     if not line:
                         str_list.append("")
                     else:

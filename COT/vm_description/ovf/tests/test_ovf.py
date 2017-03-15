@@ -318,13 +318,13 @@ ovf:size="{cfg_size}" />
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ovf claiming to be OVF version 3.0, which doesn't exist yet
-        with self.assertRaises(VMInitError) as cm:
+        with self.assertRaises(VMInitError) as catcher:
             OVF(self.localfile("ersatz_ovf_3.0.ovf"), None)
-        self.assertEqual(cm.exception.errno, 2)
-        self.assertEqual(cm.exception.strerror,
+        self.assertEqual(catcher.exception.errno, 2)
+        self.assertEqual(catcher.exception.strerror,
                          "File has an Envelope but it is in unknown namespace "
                          "http://schemas.dmtf.org/ovf/envelope/3")
-        self.assertEqual(cm.exception.filename,
+        self.assertEqual(catcher.exception.filename,
                          self.localfile("ersatz_ovf_3.0.ovf"))
 
     @mock.patch("COT.vm_description.ovf.OVF.detect_type_from_name",
@@ -333,21 +333,21 @@ ovf:size="{cfg_size}" />
         # pylint: disable=missing-type-doc,missing-param-doc
         """Test handling of unexpected behavior in detect_type_from_name."""
         # unsupported input file type
-        with self.assertRaises(VMInitError) as cm:
+        with self.assertRaises(VMInitError) as catcher:
             OVF(self.input_ovf, None)
-        self.assertEqual(cm.exception.errno, 2)
-        self.assertEqual(cm.exception.strerror,
+        self.assertEqual(catcher.exception.errno, 2)
+        self.assertEqual(catcher.exception.strerror,
                          "File does not appear to be an OVA or OVF")
-        self.assertEqual(cm.exception.filename, self.input_ovf)
+        self.assertEqual(catcher.exception.filename, self.input_ovf)
 
         # unsupported output file type
         mock_type.return_value = ".ovf"
-        with self.assertRaises(NotImplementedError) as cm, \
+        with self.assertRaises(NotImplementedError) as catcher, \
                 OVF(self.input_ovf, None) as vm:
             mock_type.return_value = ".qcow2"
             vm.output_file = os.path.join(self.temp_dir, "foo.qcow2")
 
-        self.assertEqual(cm.exception.args[0],
+        self.assertEqual(catcher.exception.args[0],
                          "Not sure how to write a '.qcow2' file")
 
     def test_invalid_ova_file(self):
@@ -366,11 +366,11 @@ ovf:size="{cfg_size}" />
         # .ova that is an empty TAR file
         tarf = tarfile.open(fake_file, 'w')
         tarf.close()
-        with self.assertRaises(VMInitError) as cm:
+        with self.assertRaises(VMInitError) as catcher:
             OVF(fake_file, None)
-        self.assertEqual(cm.exception.errno, 1)
-        self.assertEqual(cm.exception.strerror, "No files to untar")
-        self.assertEqual(cm.exception.filename, fake_file)
+        self.assertEqual(catcher.exception.errno, 1)
+        self.assertEqual(catcher.exception.strerror, "No files to untar")
+        self.assertEqual(catcher.exception.filename, fake_file)
 
         # .ova that is a TAR file but does not contain an OVF descriptor
         tarf = tarfile.open(fake_file, 'w')
