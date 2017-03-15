@@ -57,15 +57,15 @@ def verify_manpages(man_dir):
     Returns:
       tuple: (result, message)
     """
-    for f in resource_listdir("COT", "docs/man"):
-        src_path = resource_filename("COT", os.path.join("docs/man", f))
+    for filename in resource_listdir("COT", "docs/man"):
+        src_path = resource_filename("COT", os.path.join("docs/man", filename))
         # Which man section does this belong in?
-        section = os.path.splitext(f)[1][1:]
+        section = os.path.splitext(filename)[1][1:]
         dest = os.path.join(man_dir, "man{0}".format(section))
         if not os.path.exists(dest):
             return True, "DIRECTORY NOT FOUND: {0}".format(dest)
 
-        dest_path = os.path.join(dest, f)
+        dest_path = os.path.join(dest, filename)
         if os.path.exists(dest_path):
             if filecmp.cmp(src_path, dest_path):
                 logger.verbose("File %s does not need to be updated",
@@ -91,13 +91,13 @@ def _install_manpage(src_path, man_dir):
       OSError: if installation fails under other circumstances
     """
     # Which man section does this belong in?
-    f = os.path.basename(src_path)
-    section = os.path.splitext(f)[1][1:]
+    filename = os.path.basename(src_path)
+    section = os.path.splitext(filename)[1][1:]
     dest = os.path.join(man_dir, "man{0}".format(section))
     Helper.mkdir(dest)
 
     previously_installed = False
-    dest_path = os.path.join(dest, f)
+    dest_path = os.path.join(dest, filename)
     if os.path.exists(dest_path):
         previously_installed = True
         if filecmp.cmp(src_path, dest_path):
@@ -122,13 +122,14 @@ def install_manpages(man_dir):
     msg = "successfully installed to {0}".format(man_dir)
 
     try:
-        for f in resource_listdir("COT", "docs/man"):
-            src_path = resource_filename("COT", os.path.join("docs/man", f))
+        for filename in resource_listdir("COT", "docs/man"):
+            src_path = resource_filename("COT", os.path.join("docs/man",
+                                                             filename))
             prev, new = _install_manpage(src_path, man_dir)
             some_preinstalled |= prev
             installed_any |= new
-    except (IOError, OSError, HelperError) as e:
-        return False, "INSTALLATION FAILED: " + str(e)
+    except (IOError, OSError, HelperError) as exc:
+        return False, "INSTALLATION FAILED: " + str(exc)
 
     if some_preinstalled:
         if installed_any:
@@ -179,8 +180,8 @@ class COTInstallHelpers(Command):
                         .format(str(helper.path), helper.version))
             except (NotImplementedError,
                     HelperError,
-                    HelperNotFoundError) as e:
-                return (False, "INSTALLATION FAILED: " + str(e))
+                    HelperNotFoundError) as exc:
+                return (False, "INSTALLATION FAILED: " + str(exc))
 
     def manpages_helper(self):
         """Verify or install COT's manual pages.
@@ -190,8 +191,8 @@ class COTInstallHelpers(Command):
         """
         try:
             resource_listdir("COT", "docs/man")
-        except OSError as e:
-            return False, "UNABLE TO FIND PAGES: " + str(e)
+        except OSError as exc:
+            return False, "UNABLE TO FIND PAGES: " + str(exc)
 
         man_dir = guess_manpath()
 
@@ -235,7 +236,7 @@ class COTInstallHelpers(Command):
 
     def create_subparser(self):
         """Create 'install-helpers' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'install-helpers',
             help=("Install/verify COT manual pages and any third-party helper "
                   "programs that COT may require"),
@@ -313,10 +314,10 @@ vmdktool:     successfully installed to /usr/local/bin/vmdktool
 Unable to install some helpers""".strip())]),
             formatter_class=argparse.RawDescriptionHelpFormatter)
 
-        group = p.add_mutually_exclusive_group()
+        group = parser.add_mutually_exclusive_group()
 
         # TODO - nice to have!
-        # p.add_argument('--dry-run', action='store_true',
+        # parser.add_argument('--dry-run', action='store_true',
         #              help="Report the commands that would be run to install "
         #             "any helper programs, but do not actually run them.")
 
@@ -328,7 +329,7 @@ Unable to install some helpers""".strip())]),
                            help="Do not fail even if helper installation "
                            "fails.")
 
-        p.set_defaults(instance=self)
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTInstallHelpers)

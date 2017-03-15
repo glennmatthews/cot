@@ -112,9 +112,9 @@ class OVF(VMDescription, XML):
         # when it's probably a zip of an OVF) we'll err on the side of
         # accepting too much rather than incorrectly rejecting something like
         # "foo.ova.2014.05.06A" that's just lazily named.
-        m = re.search(r"(\.ov[fa])[^a-zA-Z0-9]", filename)
-        if m:
-            extension = m.group(1)
+        match = re.search(r"(\.ov[fa])[^a-zA-Z0-9]", filename)
+        if match:
+            extension = match.group(1)
             logger.warning("Filename '%s' does not end in '.ovf' or '.ova', "
                            "but found '%s' in mid-filename; treating as such.",
                            filename, extension)
@@ -179,9 +179,9 @@ class OVF(VMDescription, XML):
             # Open the provided OVF
             try:
                 XML.__init__(self, self.ovf_descriptor)
-            except ParseError as e:
+            except ParseError as exc:
                 raise VMInitError(2,
-                                  "XML error in parsing file: " + str(e),
+                                  "XML error in parsing file: " + str(exc),
                                   self.ovf_descriptor)
 
             # Quick sanity check before we go any further:
@@ -249,22 +249,22 @@ class OVF(VMDescription, XML):
 
             try:
                 self.hardware = OVFHardware(self)
-            except OVFHardwareDataError as e:
+            except OVFHardwareDataError as exc:
                 raise VMInitError(1,
-                                  "OVF descriptor is invalid: {0}".format(e),
+                                  "OVF descriptor is invalid: {0}".format(exc),
                                   self.ovf_descriptor)
 
             assert self.platform
 
             self._init_check_file_entries()
 
-        except Exception as e:
+        except Exception:
             self.destroy()
             raise
 
     def _init_check_file_entries(self):
         """Check files described in the OVF and store file references."""
-        file_list = [f.get(self.FILE_HREF) for f in
+        file_list = [file_entry.get(self.FILE_HREF) for file_entry in
                      self.references.findall(self.FILE)]
         if self.input_file == self.ovf_descriptor:
             # Check files in the directory referenced by the OVF descriptor
@@ -275,13 +275,14 @@ class OVF(VMDescription, XML):
             input_path = self.input_file
             ref_cls = FileInTAR
 
-        for f in file_list:
+        for file_href in file_list:
             try:
-                self._file_references[f] = ref_cls(input_path, f)
+                self._file_references[file_href] = ref_cls(input_path,
+                                                           file_href)
             except IOError:
                 logger.error("File '%s' referenced in the OVF descriptor "
-                             "does not exist.", f)
-                self._file_references[f] = None
+                             "does not exist.", file_href)
+                self._file_references[file_href] = None
 
     @property
     def output_file(self):
@@ -393,8 +394,8 @@ class OVF(VMDescription, XML):
             try:
                 validator(*args)
                 return True
-            except ValueUnsupportedError as e:
-                logger.warning(label + str(e))
+            except ValueUnsupportedError as exc:
+                logger.warning(label + str(exc))
                 return False
 
         for profile_id in profile_ids:
@@ -930,11 +931,11 @@ class OVF(VMDescription, XML):
         # An OVF may have zero, one, or more
         eula_header = False
         str_list = []
-        for e in self.find_all_children(self.virtual_system,
-                                        self.EULA_SECTION,
-                                        self.EULA_SECTION_ATTRIB):
-            info = e.find(self.INFO)
-            lic = e.find(self.EULA_LICENSE)
+        for eula in self.find_all_children(self.virtual_system,
+                                           self.EULA_SECTION,
+                                           self.EULA_SECTION_ATTRIB):
+            info = eula.find(self.INFO)
+            lic = eula.find(self.EULA_LICENSE)
             if lic is not None and lic.text:
                 if not eula_header:
                     str_list.append("End User License Agreement(s):")
@@ -1753,16 +1754,16 @@ class OVF(VMDescription, XML):
         # Check property qualifiers
         prop_qual = prop.get(self.PROP_QUAL, "")
         if prop_qual:
-            m = re.search(r"MaxLen\((\d+)\)", prop_qual)
-            if m:
-                max_len = int(m.group(1))
+            match = re.search(r"MaxLen\((\d+)\)", prop_qual)
+            if match:
+                max_len = int(match.group(1))
                 if len(value) > max_len:
                     raise ValueUnsupportedError(
                         key, value, "string no longer than {0} characters"
                         .format(max_len))
-            m = re.search(r"MinLen\((\d+)\)", prop_qual)
-            if m:
-                min_len = int(m.group(1))
+            match = re.search(r"MinLen\((\d+)\)", prop_qual)
+            if match:
+                min_len = int(match.group(1))
                 if len(value) < min_len:
                     raise ValueUnsupportedError(
                         key, value, "string no shorter than {0} characters"
@@ -1845,8 +1846,8 @@ class OVF(VMDescription, XML):
         if not self.platform.LITERAL_CLI_STRING:
             raise NotImplementedError("no known support for literal CLI on " +
                                       str(self.platform))
-        with open(file_path, 'r') as f:
-            for line in f:
+        with open(file_path, 'r') as fileobj:
+            for line in fileobj:
                 line = line.strip()
                 # Skip blank lines and comment lines
                 if (not line) or line[0] == '!':
@@ -2525,8 +2526,8 @@ class OVF(VMDescription, XML):
 
         try:
             tarf = tarfile.open(file_path, 'r')
-        except (EOFError, tarfile.TarError) as e:
-            raise VMInitError(1, "Could not untar file: {0}".format(e.args),
+        except (EOFError, tarfile.TarError) as exc:
+            raise VMInitError(1, "Could not untar file: {0}".format(exc.args),
                               file_path)
 
         try:
@@ -2545,12 +2546,14 @@ class OVF(VMDescription, XML):
                 raise VMInitError(1, "No files to untar", file_path)
             # Make sure the provided file doesn't contain any malicious paths
             # http://stackoverflow.com/questions/8112742/
-            for n in tarf.getnames():
-                logger.debug("Examining path of %s prior to untar", n)
-                if not (os.path.abspath(os.path.join(self.working_dir, n))
+            for pathname in tarf.getnames():
+                logger.debug("Examining path of %s prior to untar", pathname)
+                if not (os.path.abspath(os.path.join(self.working_dir,
+                                                     pathname))
                         .startswith(self.working_dir)):
                     raise VMInitError(1, "Tar file contains malicious/unsafe "
-                                      "file path '{0}'!".format(n), file_path)
+                                      "file path '{0}'!".format(pathname),
+                                      file_path)
 
             ovf_descriptor = tarf.getmembers()[0]
             if os.path.splitext(ovf_descriptor.name)[1] != '.ovf':
@@ -2597,10 +2600,10 @@ class OVF(VMDescription, XML):
         manifest = prefix + '.mf'
         # TODO: OVF 2.0 uses SHA256 instead of SHA1.
         sha1sum = file_checksum(ovf_file, 'sha1')
-        with open(manifest, 'wb') as f:
-            f.write("SHA1({file})= {sum}\n"
-                    .format(file=os.path.basename(ovf_file), sum=sha1sum)
-                    .encode('utf-8'))
+        with open(manifest, 'wb') as mfobj:
+            mfobj.write("SHA1({file})= {sum}\n"
+                        .format(file=os.path.basename(ovf_file), sum=sha1sum)
+                        .encode('utf-8'))
             # Checksum all referenced files as well
             for file_obj in self.references.findall(self.FILE):
                 file_name = file_obj.get(self.FILE_HREF)
@@ -2611,9 +2614,9 @@ class OVF(VMDescription, XML):
                 finally:
                     file_ref.close()
 
-                f.write("SHA1({file})= {sum}\n"
-                        .format(file=file_name, sum=sha1sum)
-                        .encode('utf-8'))
+                mfobj.write("SHA1({file})= {sum}\n"
+                            .format(file=file_name, sum=sha1sum)
+                            .encode('utf-8'))
 
         logger.debug("Manifest generated successfully")
         return True

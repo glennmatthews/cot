@@ -329,9 +329,9 @@ def file_checksum(path_or_obj, checksum_type):
     """
     # pylint: disable=redefined-variable-type
     if checksum_type == 'md5':
-        h = hashlib.md5()
+        hash_obj = hashlib.md5()
     elif checksum_type == 'sha1':
-        h = hashlib.sha1()
+        hash_obj = hashlib.sha1()
     else:
         raise NotImplementedError(
             "No support for generating checksum type {0}"
@@ -351,12 +351,12 @@ def file_checksum(path_or_obj, checksum_type):
             buf = file_obj.read(blocksize)
             if len(buf) == 0:
                 break
-            h.update(buf)
+            hash_obj.update(buf)
     finally:
         if file_obj != path_or_obj:
             file_obj.close()
 
-    return h.hexdigest()
+    return hash_obj.hexdigest()
 
 
 def mac_address(string):

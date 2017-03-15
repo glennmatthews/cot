@@ -87,8 +87,8 @@ class OVFHardware(object):
             else:
                 try:
                     self.item_dict[instance].add_item(item)
-                except OVFItemDataError as e:
-                    logger.debug(e)
+                except OVFItemDataError as exc:
+                    logger.debug(exc)
                     # Mask away the nitty-gritty details from our caller
                     raise OVFHardwareDataError("Data conflict for instance {0}"
                                                .format(instance))

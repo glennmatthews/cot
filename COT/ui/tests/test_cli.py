@@ -534,12 +534,12 @@ class TestCLIAddDisk(TestCOTCLI):
         self.call_cot(['add-disk', disk_path, disk_path], result=2)
         # Package file claims to be an OVF/OVA, but is not actually XML.
         fake_file = os.path.join(self.temp_dir, "foo.ovf")
-        with open(fake_file, 'w') as f:
-            f.write("< hello world!")
+        with open(fake_file, 'w') as fileobj:
+            fileobj.write("< hello world!")
         self.call_cot(['add-disk', disk_path, fake_file], result=2)
         # Package file claims to be an OVF/OVA, but is some other XML.
-        with open(fake_file, 'w') as f:
-            f.write("<xml />")
+        with open(fake_file, 'w') as fileobj:
+            fileobj.write("<xml />")
         self.call_cot(['add-disk', disk_path, fake_file], result=2)
 
     def test_nonexistent_file(self):

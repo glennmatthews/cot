@@ -101,36 +101,36 @@ class TestSerialConnection(unittest.TestCase):
 
     def test_from_cli_string_valid(self):
         """Positive tests for SerialConnection.from_cli_string()."""
-        c = SerialConnection.from_cli_string('/dev/ttyS0')
-        self.assertEqual('device', c.kind)
-        self.assertEqual('/dev/ttyS0', c.value)
-        self.assertEqual({}, c.options)
-        self.assertEqual(str(c),
+        conn = SerialConnection.from_cli_string('/dev/ttyS0')
+        self.assertEqual('device', conn.kind)
+        self.assertEqual('/dev/ttyS0', conn.value)
+        self.assertEqual({}, conn.options)
+        self.assertEqual(str(conn),
                          "<SerialConnection kind: device "
                          "value: /dev/ttyS0 options: {}>")
 
-        c = SerialConnection.from_cli_string(
+        conn = SerialConnection.from_cli_string(
             'file:/tmp/foo.txt,datastore=datastore1')
-        self.assertEqual('file', c.kind)
-        self.assertEqual('/tmp/foo.txt', c.value)
-        self.assertEqual({'datastore': 'datastore1'}, c.options)
-        self.assertEqual(str(c),
+        self.assertEqual('file', conn.kind)
+        self.assertEqual('/tmp/foo.txt', conn.value)
+        self.assertEqual({'datastore': 'datastore1'}, conn.options)
+        self.assertEqual(str(conn),
                          "<SerialConnection kind: file "
                          "value: /tmp/foo.txt "
                          "options: {'datastore': 'datastore1'}>")
 
-        c = SerialConnection.from_cli_string('tcp::22,server')
-        self.assertEqual('tcp', c.kind)
-        self.assertEqual(':22', c.value)
-        self.assertEqual({'server': True}, c.options)
-        self.assertEqual(str(c),
+        conn = SerialConnection.from_cli_string('tcp::22,server')
+        self.assertEqual('tcp', conn.kind)
+        self.assertEqual(':22', conn.value)
+        self.assertEqual({'server': True}, conn.options)
+        self.assertEqual(str(conn),
                          "<SerialConnection kind: tcp value: :22 "
                          "options: {'server': True}>")
 
-        c = SerialConnection.from_cli_string('telnet://1.1.1.1:1111')
-        self.assertEqual('telnet', c.kind)
-        self.assertEqual('1.1.1.1:1111', c.value)
-        self.assertEqual({}, c.options)
-        self.assertEqual(str(c),
+        conn = SerialConnection.from_cli_string('telnet://1.1.1.1:1111')
+        self.assertEqual('telnet', conn.kind)
+        self.assertEqual('1.1.1.1:1111', conn.value)
+        self.assertEqual({}, conn.options)
+        self.assertEqual(str(conn),
                          "<SerialConnection kind: telnet "
                          "value: 1.1.1.1:1111 options: {}>")

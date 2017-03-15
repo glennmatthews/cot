@@ -110,7 +110,7 @@ class COTAddFile(ReadWriteCommand):
 
     def create_subparser(self):
         """Create 'add-file' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'add-file',
             usage=self.ui.fill_usage("add-file", [
                 "FILE PACKAGE [-o OUTPUT] [-f FILE_ID]",
@@ -122,16 +122,16 @@ and/or file-id match existing package contents, will replace it
 (prompting for confirmation if --force was not set); otherwise, will
 create a new file entry.""")
 
-        p.add_argument('-o', '--output',
-                       help="""Name/path of new VM package to create """
-                       """instead of updating the existing package""")
-        p.add_argument('-f', '--file-id',
-                       help="""File ID string within the package """
-                       """(default: same as filename)""")
-        p.add_argument('FILE', help="""File to add to the package""")
-        p.add_argument('PACKAGE',
-                       help="""Package, OVF descriptor or OVA file to edit""")
-        p.set_defaults(instance=self)
+        parser.add_argument('-o', '--output',
+                            help="""Name/path of new VM package to create """
+                            """instead of updating the existing package""")
+        parser.add_argument('-f', '--file-id',
+                            help="""File ID string within the package """
+                            """(default: same as filename)""")
+        parser.add_argument('FILE', help="""File to add to the package""")
+        parser.add_argument('PACKAGE',
+                            help="Package, OVF descriptor or OVA file to edit")
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTAddFile)

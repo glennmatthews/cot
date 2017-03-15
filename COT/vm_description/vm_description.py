@@ -149,8 +149,8 @@ class VMDescription(object):
                 candidate_class.detect_type_from_name(input_file)
                 vm_class = candidate_class
                 break
-            except ValueUnsupportedError as e:
-                supported_types += [e.expected_value]
+            except ValueUnsupportedError as exc:
+                supported_types += [exc.expected_value]
 
         if not vm_class:
             raise VMInitError(2,
@@ -162,8 +162,8 @@ class VMDescription(object):
         logger.info("Loading '%s' as %s", input_file, vm_class.__name__)
         try:
             vm = vm_class(input_file, *args, **kwargs)
-        except ValueUnsupportedError as e:
-            raise VMInitError(2, str(e), input_file)
+        except ValueUnsupportedError as exc:
+            raise VMInitError(2, str(exc), input_file)
         logger.verbose("Loaded VM object from %s", input_file)
 
         return vm

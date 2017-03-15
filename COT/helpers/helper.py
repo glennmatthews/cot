@@ -425,21 +425,21 @@ class Helper(object):
         Yields:
           str: Temporary directory path where the archive has been extracted.
         """
-        with TemporaryDirectory(prefix="cot_helper") as d:
-            logger.debug("Temporary directory is %s", d)
+        with TemporaryDirectory(prefix="cot_helper") as directory:
+            logger.debug("Temporary directory is %s", directory)
             logger.verbose("Downloading and extracting %s", url)
             response = requests.get(url, stream=True)
-            tgz = os.path.join(d, 'helper.tgz')
-            with open(tgz, 'wb') as f:
-                shutil.copyfileobj(response.raw, f)
+            tgz = os.path.join(directory, 'helper.tgz')
+            with open(tgz, 'wb') as fileobj:
+                shutil.copyfileobj(response.raw, fileobj)
             del response
             logger.debug("Extracting %s", tgz)
             with tarfile.open(tgz, "r:gz") as tarf:
-                tarf.extractall(path=d)
+                tarf.extractall(path=directory)
             try:
-                yield d
+                yield directory
             finally:
-                logger.debug("Cleaning up temporary directory %s", d)
+                logger.debug("Cleaning up temporary directory %s", directory)
 
     @staticmethod
     def mkdir(directory, permissions=493):    # 493 == 0o755
@@ -460,7 +460,7 @@ class Helper(object):
             logger.verbose("Creating directory " + directory)
             os.makedirs(directory, permissions)
             return True
-        except OSError as e:
+        except OSError as exc:
             logger.verbose("Directory %s creation failed, trying sudo",
                            directory)
             try:
@@ -469,7 +469,7 @@ class Helper(object):
                             directory])
             except HelperError:
                 # That failed too - re-raise the original exception
-                raise e
+                raise exc
             return True
 
     @staticmethod
@@ -489,13 +489,13 @@ class Helper(object):
         logger.verbose("Copying %s to %s", src, dest)
         try:
             shutil.copy(src, dest)
-        except (OSError, IOError) as e:
+        except (OSError, IOError) as exc:
             logger.verbose('Installation error, trying sudo.')
             try:
                 check_call(['sudo', 'cp', src, dest])
             except HelperError:
                 # That failed too - re-raise the original exception
-                raise e
+                raise exc
         return True
 
 
@@ -571,20 +571,20 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
     logger.info("Calling '%s'...", " ".join(args))
     try:
         subprocess.check_call(args, **kwargs)
-    except OSError as e:
-        if retry_with_sudo and (e.errno == errno.EPERM or
-                                e.errno == errno.EACCES):
+    except OSError as exc:
+        if retry_with_sudo and (exc.errno == errno.EPERM or
+                                exc.errno == errno.EACCES):
             check_call(['sudo'] + args,
                        require_success=require_success,
                        retry_with_sudo=False,
                        **kwargs)
             return
-        if e.errno != errno.ENOENT:
+        if exc.errno != errno.ENOENT:
             raise
-        raise HelperNotFoundError(e.errno,
+        raise HelperNotFoundError(exc.errno,
                                   "Unable to locate helper program '{0}'. "
                                   "Please check your $PATH.".format(cmd))
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError as exc:
         if require_success:
             if retry_with_sudo:
                 check_call(['sudo'] + args,
@@ -592,9 +592,9 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
                            retry_with_sudo=False,
                            **kwargs)
                 return
-            raise HelperError(e.returncode,
+            raise HelperError(exc.returncode,
                               "Helper program '{0}' exited with error {1}"
-                              .format(cmd, e.returncode))
+                              .format(cmd, exc.returncode))
     logger.info("...done")
     logger.debug("%s exited successfully", cmd)
 
@@ -662,23 +662,23 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
         stdout = subprocess.check_output(args,
                                          stderr=subprocess.STDOUT,
                                          **kwargs).decode('ascii', 'ignore')
-    except OSError as e:
-        if e.errno != errno.ENOENT:
+    except OSError as exc:
+        if exc.errno != errno.ENOENT:
             raise
-        raise HelperNotFoundError(e.errno,
+        raise HelperNotFoundError(exc.errno,
                                   "Unable to locate helper program '{0}'. "
                                   "Please check your $PATH.".format(cmd))
-    except subprocess.CalledProcessError as e:
-        stdout = e.output.decode()
+    except subprocess.CalledProcessError as exc:
+        stdout = exc.output.decode()
         if require_success:
             if retry_with_sudo:
                 return check_output(['sudo'] + args,
                                     require_success=require_success,
                                     retry_with_sudo=False,
                                     **kwargs)
-            raise HelperError(e.returncode,
+            raise HelperError(exc.returncode,
                               "Helper program '{0}' exited with error {1}:"
-                              "\n> {2}\n{3}".format(cmd, e.returncode,
+                              "\n> {2}\n{3}".format(cmd, exc.returncode,
                                                     " ".join(args),
                                                     stdout))
     logger.info("...done")

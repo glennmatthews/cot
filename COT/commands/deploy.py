@@ -75,10 +75,10 @@ class SerialConnection(object):
         for entry in entries:
             if not entry:
                 continue
-            m = re.match(r"([^=]+)=?(.*)", entry)
-            if m:
-                key = m.group(1)
-                value = m.group(2)
+            match = re.match(r"([^=]+)=?(.*)", entry)
+            if match:
+                key = match.group(1)
+                value = match.group(2)
                 if not value:
                     value = True
                 options[key] = value
@@ -134,9 +134,9 @@ class SerialConnection(object):
             # //:<port>
             # <host>:<port>
             # :<port>
-            m = re.match(r'/?/?(.*:\d+)', value)
-            if m:
-                return m.group(1)
+            match = re.match(r'/?/?(.*:\d+)', value)
+            if match:
+                return match.group(1)
             raise InvalidInputError("'{0}' is not a valid value for "
                                     "a {1} connection"
                                     .format(value, kind))
@@ -302,13 +302,13 @@ class COTDeploy(ReadCommand):
     def network_map(self, value):
         for key_value_pair in value:
             try:
-                (k, v) = key_value_pair.split('=', 1)
-                logger.debug("network_map: key %s value %s", k, v)
-                if k == '' or v == '':
+                (key, val) = key_value_pair.split('=', 1)
+                logger.debug("network_map: key %s value %s", key, val)
+                if key == '' or val == '':
                     raise ValueError("message is irrelevant")
                 # Don't store the split values for now, as ovftool actually
                 # prefers exactly this 'key=value' format. Just validate.
-                # TODO - check 'k' against the list of networks in the OVF?
+                # TODO - check 'key' against the list of networks in the OVF?
             except ValueError:
                 raise InvalidInputError("Invalid network map '{0}' - mapping "
                                         "must be in 'network=target' form."
@@ -399,7 +399,7 @@ class COTDeploy(ReadCommand):
 
         if self.ui.subparser_lookup.get('deploy', None) is None:
             # Create 'cot deploy' parser
-            p = self.ui.add_subparser(
+            parser = self.ui.add_subparser(
                 'deploy',
                 usage=self.ui.fill_usage("deploy", [
                     "PACKAGE esxi ...",
@@ -409,15 +409,15 @@ class COTDeploy(ReadCommand):
                 description="Deploy an OVF or OVA to create a virtual machine "
                 "on a specified server.")
 
-            p.add_argument('PACKAGE', help="OVF descriptor or OVA file")
+            parser.add_argument('PACKAGE', help="OVF descriptor or OVA file")
 
-            self.subparsers = p.add_subparsers(
+            self.subparsers = parser.add_subparsers(
                 prog="cot deploy",
                 dest='HYPERVISOR',
                 metavar='<hypervisor>',
                 title="hypervisors")
 
-            p.set_defaults(instance=self)
+            parser.set_defaults(instance=self)
         else:
             # Unfortunately argparse doesn't readily expose the subparsers of
             # an existing parser. The below should be considered experimental!

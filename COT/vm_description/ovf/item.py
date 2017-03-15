@@ -67,8 +67,8 @@ def list_union(*lists):
         ['bar', 'foo']
     """
     result = []
-    for l in lists:
-        result.extend([x for x in l if x not in result])
+    for listing in lists:
+        result.extend([x for x in listing if x not in result])
     logger.debug("Union of %s is %s", lists, result)
     return result
 
@@ -547,10 +547,10 @@ class OVFItem(object):
                     profiles.discard(None)
                     profiles.discard(profile)
                     # Discard all profiles set elsewhere
-                    for (v, p) in list(self.properties[name].items()):
-                        if v == value:
+                    for (val, prof) in list(self.properties[name].items()):
+                        if val == value:
                             continue
-                        profiles -= p
+                        profiles -= prof
                     logger.debug("profiles are now: %s", profiles)
                 if not profiles:
                     logger.verbose("No more profiles for value %s, %s",

@@ -75,13 +75,13 @@ def directory_size(path):
         raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), path)
     total_size = 0
     for dirpath, _, filenames in os.walk(path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
             try:
-                total_size += os.path.getsize(fp)
-            except OSError as e:
+                total_size += os.path.getsize(filepath)
+            except OSError as exc:
                 logger.debug("Unable to get size of %s (%s), continuing.",
-                             fp, e.strerror)
+                             filepath, exc.strerror)
     logger.debug("Total disk space consumed by %s is %s",
                  path, pretty_bytes(total_size))
     return total_size

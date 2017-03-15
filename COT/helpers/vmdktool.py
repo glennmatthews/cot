@@ -81,8 +81,8 @@ class VMDKTool(Helper):
             raise NotImplementedError("Not sure how to install 'zlib'")
         with self.download_and_expand_tgz(
             'http://people.freebsd.org/~brian/vmdktool/vmdktool-1.4.tar.gz'
-        ) as d:
-            new_d = os.path.join(d, "vmdktool-1.4")
+        ) as directory:
+            new_d = os.path.join(directory, "vmdktool-1.4")
             logger.info("Compiling 'vmdktool'")
             # vmdktool is originally a BSD tool so it has some build
             # assumptions that aren't necessarily correct under Linux.

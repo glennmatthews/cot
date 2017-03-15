@@ -291,30 +291,30 @@ ovf:size="{cfg_size}" />
                 self.assertTrue(iso.isfile(),
                                 "symlink was not added as a regular file")
                 self.assertFalse(iso.issym())
-            except KeyError as e:
+            except KeyError as exc:
                 self.fail("KeyError: {0}\n Tarfile members = {1}"
-                          .format(e, tarf.getnames()))
+                          .format(exc, tarf.getnames()))
 
     def test_invalid_ovf_file(self):
         """Check that various invalid input OVF files result in VMInitError."""
         fake_file = os.path.join(self.temp_dir, "foo.ovf")
         # .ovf that is an empty file
-        with open(fake_file, 'w') as f:
-            f.write("")
+        with open(fake_file, 'w') as fileobj:
+            fileobj.write("")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ovf that isn't actually XML at all
-        with open(fake_file, 'w') as f:
-            f.write("< hello world!")
+        with open(fake_file, 'w') as fileobj:
+            fileobj.write("< hello world!")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ovf that is XML but not OVF XML
-        with open(fake_file, 'w') as f:
-            f.write("<?xml version='1.0' encoding='utf-8'?>")
+        with open(fake_file, 'w') as fileobj:
+            fileobj.write("<?xml version='1.0' encoding='utf-8'?>")
         self.assertRaises(VMInitError, OVF, fake_file, None)
-        with open(fake_file, 'w') as f:
-            f.write("<?xml version='1.0' encoding='utf-8'?>")
-            f.write("<foo/>")
+        with open(fake_file, 'w') as fileobj:
+            fileobj.write("<?xml version='1.0' encoding='utf-8'?>")
+            fileobj.write("<foo/>")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ovf claiming to be OVF version 3.0, which doesn't exist yet
@@ -354,13 +354,13 @@ ovf:size="{cfg_size}" />
         """Check that various invalid input OVA files result in VMInitError."""
         fake_file = os.path.join(self.temp_dir, "foo.ova")
         # .ova that is an empty file
-        with open(fake_file, 'w') as f:
-            f.write("")
+        with open(fake_file, 'w') as fileobj:
+            fileobj.write("")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ova that is not a TAR file
-        with open(fake_file, 'w') as f:
-            f.write("< hello world!")
+        with open(fake_file, 'w') as fileobj:
+            fileobj.write("< hello world!")
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ova that is an empty TAR file
@@ -403,8 +403,8 @@ ovf:size="{cfg_size}" />
                 os.path.join(os.path.dirname(self.minimal_ovf),
                              "..", "..", "..",
                              os.path.basename(self.minimal_ovf)))
-            with open(self.minimal_ovf, 'rb') as f:
-                tarf.addfile(tari, f)
+            with open(self.minimal_ovf, 'rb') as fileobj:
+                tarf.addfile(tari, fileobj)
         finally:
             tarf.close()
         self.assertRaises(VMInitError, OVF, fake_file, None)
@@ -413,10 +413,10 @@ ovf:size="{cfg_size}" />
         """Check for rejection of OVF files with valid XML but invalid data."""
         # Multiple Items under same profile with same InstanceID
         fake_file = os.path.join(self.temp_dir, "foo.ovf")
-        with open(fake_file, "w") as f:
+        with open(fake_file, "w") as fileobj:
             subprocess.check_call(['sed', 's/InstanceID>11</InstanceID>10</',
                                    self.input_ovf],
-                                  stdout=f)
+                                  stdout=fileobj)
         if helpers['ovftool']:
             # Make sure ovftool also sees this as invalid
             self.assertRaises(HelperError,
@@ -425,10 +425,10 @@ ovf:size="{cfg_size}" />
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # Item referencing a nonexistent Configuration
-        with open(fake_file, "w") as f:
+        with open(fake_file, "w") as fileobj:
             subprocess.check_call(['sed', 's/on="2CPU-2GB-1NIC"/on="foo"/',
                                    self.input_ovf],
-                                  stdout=f)
+                                  stdout=fileobj)
         if helpers['ovftool']:
             # Make sure ovftool also sees this as invalid
             self.assertRaises(HelperError,

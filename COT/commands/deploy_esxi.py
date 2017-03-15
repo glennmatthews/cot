@@ -81,11 +81,11 @@ class SmarterConnection(SmartConnection):
                        self.server, self.port)
         try:
             return super(SmarterConnection, self).__enter__()
-        except vim.fault.HostConnectFault as e:
-            if not re.search("certificate verify failed", e.msg):
+        except vim.fault.HostConnectFault as exc:
+            if not re.search("certificate verify failed", exc.msg):
                 raise
             # Self-signed certificates are pretty common for ESXi servers
-            logger.warning(e.msg)
+            logger.warning(exc.msg)
             self.ui.confirm_or_die("SSL certificate for {0} is self-signed or "
                                    "otherwise not recognized as valid. "
                                    "Accept certificate anyway?"
@@ -95,13 +95,13 @@ class SmarterConnection(SmartConnection):
             _create_unverified_context = ssl._create_unverified_context
             ssl._create_default_https_context = _create_unverified_context
             return super(SmarterConnection, self).__enter__()
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError as exc:
             # ConnectionError can wrap another internal error; let's unwrap it
             # so COT can log it more cleanly
-            e.errno, inner_message = self.unwrap_connection_error(e)
-            if e.strerror is None:
-                e.strerror = ("Error connecting to {0}:{1}: {2}"
-                              .format(self.server, self.port, inner_message))
+            exc.errno, inner_message = self.unwrap_connection_error(exc)
+            if exc.strerror is None:
+                exc.strerror = ("Error connecting to {0}:{1}: {2}"
+                                .format(self.server, self.port, inner_message))
             raise
 
     def __exit__(self,     # pylint: disable=arguments-differ
@@ -199,9 +199,9 @@ class PyVmomiVMReconfigSpec(object):
         content = self.service_instance.RetrieveContent()
         container = content.viewManager.CreateContainerView(
             content.rootFolder, [vimtype], True)
-        for c in container.view:
-            if c.name == name:
-                return c
+        for item in container.view:
+            if item.name == name:
+                return item
         return None
 
 
@@ -427,8 +427,8 @@ class COTDeployESXi(COTDeploy):
             with PyVmomiVMReconfigSpec(service_instance, self.vm_name) as spec:
                 logger.verbose("Spec created")
                 spec.deviceChange = []
-                for s in self.serial_connection:
-                    self._create_serial_port(s, spec)
+                for entry in self.serial_connection:
+                    self._create_serial_port(entry, spec)
 
         logger.info("Done with serial port fixup")
 
@@ -482,7 +482,7 @@ class COTDeployESXi(COTDeploy):
 
         import argparse
         # Create 'cot deploy ... esxi' parser
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'esxi',
             aliases=['vcenter', 'vmware', 'vsphere'],
             parent=self.subparsers,
@@ -522,21 +522,22 @@ class COTDeployESXi(COTDeploy):
             ]))
 
         # ovftool uses '-ds' as shorthand for '--datastore', so let's allow it.
-        p.add_argument("-d", "-ds", "--datastore",
-                       help="ESXi datastore to use for the new VM")
+        parser.add_argument("-d", "-ds", "--datastore",
+                            help="ESXi datastore to use for the new VM")
 
-        p.add_argument("-o", "--ovftool-args",
-                       help="Quoted string describing additional CLI "
-                       """parameters to pass through to "ovftool". Examples:"""
-                       """ -o="--foo", --ovftool-args="--foo --bar" """)
+        parser.add_argument(
+            "-o", "--ovftool-args",
+            help="Quoted string describing additional CLI parameters to pass"
+                 """ through to "ovftool". Examples:"""
+                 """ -o="--foo", --ovftool-args="--foo --bar" """)
 
-        p.add_argument("LOCATOR",
-                       help="vSphere target locator. Examples: "
-                       '"192.0.2.100" (deploy directly to ESXi server), '
-                       '"192.0.2.101/mydatacenter/host/192.0.2.100" '
-                       '(deploy via vCenter server)')
+        parser.add_argument("LOCATOR",
+                            help="vSphere target locator. Examples: "
+                            '"192.0.2.100" (deploy directly to ESXi server), '
+                            '"192.0.2.101/mydatacenter/host/192.0.2.100" '
+                            '(deploy via vCenter server)')
 
-        p.set_defaults(instance=self)
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTDeployESXi)

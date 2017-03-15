@@ -168,14 +168,14 @@ class COTEditProperties(ReadWriteCommand):
     @transports.setter
     def transports(self, value):
         self._transports = []
-        for v in value:
-            if v in self._KNOWN_TRANSPORTS.keys():
-                v = self._KNOWN_TRANSPORTS[v]
-            if v not in self._KNOWN_TRANSPORTS.values():
+        for val in value:
+            if val in self._KNOWN_TRANSPORTS.keys():
+                val = self._KNOWN_TRANSPORTS[val]
+            if val not in self._KNOWN_TRANSPORTS.values():
                 logger.warning("Unknown transport value '%s'. "
                                "You may want to contact the COT developers "
-                               "to add this as a recognized value.", v)
-            self._transports.append(v)
+                               "to add this as a recognized value.", val)
+            self._transports.append(val)
 
     def ready_to_run(self):
         """Check whether the module is ready to :meth:`run`.
@@ -261,18 +261,18 @@ class COTEditProperties(ReadWriteCommand):
             if user_input == 'q' or user_input == 'Q':
                 break
 
-            p = next(p for p in pa if p['key'] == user_input)
+            prop = next(p for p in pa if p['key'] == user_input)
 
-            key = p['key']
-            old_value = p['value']
+            key = prop['key']
+            old_value = prop['value']
             prompt = "\n".join([
-                wrapper.fill(format_str.format("Key:", p['key'])),
-                wrapper.fill(format_str.format("Label:", p['label'])),
+                wrapper.fill(format_str.format("Key:", prop['key'])),
+                wrapper.fill(format_str.format("Label:", prop['label'])),
                 wrapper.fill(format_str.format("Description:",
-                                               p['description'])),
-                wrapper.fill(format_str.format("Type:", p['type'])),
+                                               prop['description'])),
+                wrapper.fill(format_str.format("Type:", prop['type'])),
                 wrapper.fill(format_str.format("Qualifiers:",
-                                               p['qualifiers'])),
+                                               prop['qualifiers'])),
                 wrapper.fill(format_str.format("Current Value:", old_value)),
                 "",
                 "Enter new value for this property",
@@ -294,14 +294,14 @@ class COTEditProperties(ReadWriteCommand):
                         # Refresh!
                         pa = self.vm.environment_properties
                         break
-                    except ValueUnsupportedError as e:
-                        logger.error(e)
+                    except ValueUnsupportedError as exc:
+                        logger.error(exc)
                         continue
             continue
 
     def create_subparser(self):
         """Create 'edit-properties' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'edit-properties',
             aliases=['set-properties', 'edit-environment', 'set-environment'],
             add_help=False,
@@ -335,53 +335,56 @@ the program will run interactively.""",
             ]),
         )
 
-        p.add_argument('PACKAGE',
-                       help="""OVF descriptor or OVA file to edit""")
+        parser.add_argument('PACKAGE',
+                            help="""OVF descriptor or OVA file to edit""")
 
-        g = p.add_argument_group("general options")
+        group = parser.add_argument_group("general options")
 
-        g.add_argument('-h', '--help', action='help',
-                       help="""Show this help message and exit""")
-        g.add_argument('-o', '--output',
-                       help="Name/path of new OVF/OVA package to create "
-                       "instead of updating the existing OVF")
+        group.add_argument('-h', '--help', action='help',
+                           help="""Show this help message and exit""")
+        group.add_argument('-o', '--output',
+                           help="Name/path of new OVF/OVA package to create "
+                           "instead of updating the existing OVF")
 
-        g = p.add_argument_group("property setting options")
+        group = parser.add_argument_group("property setting options")
 
-        g.add_argument('-u', '--user-configurable',
-                       nargs='?', const="true", type=truth_value,
-                       help="Update the 'userConfigurable' flag on all "
-                       "edited properties to True or the given value")
+        group.add_argument('-u', '--user-configurable',
+                           nargs='?', const="true", type=truth_value,
+                           help="Update the 'userConfigurable' flag on all "
+                           "edited properties to True or the given value")
 
-        g.add_argument('-c', '--config-file',
-                       help="Read configuration CLI from this text file and "
-                       "generate generic properties for each line of CLI")
-        g.add_argument('-p', '--properties', action='append', nargs='+',
-                       metavar=('KEY1[=VALUE1][+TYPE1]', 'K2[=V2][+T2]'),
-                       help="Update or create the given property keys. "
-                       "A '=' delimits the optional value to set this key to. "
-                       "A '+' delimits the optional type to enforce for this "
-                       "key. "
-                       "This argument may be repeated as needed to specify "
-                       "multiple properties to edit.")
-        g.add_argument('-l', '--labels', action='append', nargs='+',
-                       metavar=('LABEL1', 'LABEL2'),
-                       help="Set the label(s) for the property(s) being "
-                       "edited. If this option is specified, the number of "
-                       "properties and the number of labels *must* be equal.")
-        g.add_argument('-d', '--descriptions', action='append', nargs='+',
-                       metavar=('DESC1', 'DESC2'),
-                       help="Set the description(s) for the property(s) being "
-                       "edited. If this option is specified, the number of "
-                       "properties and the number of descriptions *must* be "
-                       "equal.")
-        g.add_argument('-t', '--transports', action='append', nargs='+',
-                       metavar=('TRANSPORT', 'TRANSPORT2'),
-                       help="Set the transport method(s) for properties. "
-                       "Known values are 'iso', 'vmware', and 'ibm', or an "
-                       "arbitrary URI may be specified.")
+        group.add_argument(
+            '-c', '--config-file',
+            help="Read configuration CLI from this text file and generate"
+            " generic properties for each line of CLI")
+        group.add_argument(
+            '-p', '--properties', action='append', nargs='+',
+            metavar=('KEY1[=VALUE1][+TYPE1]', 'K2[=V2][+T2]'),
+            help="Update or create the given property keys. "
+            "A '=' delimits the optional value to set this key to. "
+            "A '+' delimits the optional type to enforce for this key. "
+            "This argument may be repeated as needed to specify multiple"
+            " properties to edit.")
+        group.add_argument(
+            '-l', '--labels', action='append', nargs='+',
+            metavar=('LABEL1', 'LABEL2'),
+            help="Set the label(s) for the property(s) being edited. "
+            "If this option is specified, the number of properties and"
+            " the number of labels *must* be equal.")
+        group.add_argument(
+            '-d', '--descriptions', action='append', nargs='+',
+            metavar=('DESC1', 'DESC2'),
+            help="Set the description(s) for the property(s) being edited. "
+            "If this option is specified, the number of properties and the"
+            " number of descriptions *must* be equal.")
+        group.add_argument(
+            '-t', '--transports', action='append', nargs='+',
+            metavar=('TRANSPORT', 'TRANSPORT2'),
+            help="Set the transport method(s) for properties. "
+            "Known values are 'iso', 'vmware', and 'ibm',"
+            " or an arbitrary URI may be specified.")
 
-        p.set_defaults(instance=self)
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTEditProperties)

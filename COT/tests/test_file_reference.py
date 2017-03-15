@@ -73,12 +73,13 @@ class TestFileOnDisk(COTTestCase):
 
     def test_equality(self):
         """Test the __eq__ and __ne__ operators."""
-        a = FileOnDisk(self.input_ovf)
-        b = FileOnDisk(os.path.dirname(self.input_ovf),
-                       os.path.basename(self.input_ovf))
-        self.assertEqual(a, b)
-        c = FileOnDisk(self.input_vmdk)
-        self.assertNotEqual(a, c)
+        entry_from_path = FileOnDisk(self.input_ovf)
+        entry_from_dir_plus_name = FileOnDisk(
+            os.path.dirname(self.input_ovf),
+            os.path.basename(self.input_ovf))
+        self.assertEqual(entry_from_path, entry_from_dir_plus_name)
+        other_entry = FileOnDisk(self.input_vmdk)
+        self.assertNotEqual(entry_from_path, other_entry)
 
 
 class TestFileInTAR(COTTestCase):

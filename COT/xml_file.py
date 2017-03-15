@@ -180,27 +180,27 @@ class XML(object):
             label = tag
         else:
             elements = []
-            for t in tag:
-                elements.extend(parent.findall(t))
+            for tag_entry in tag:
+                elements.extend(parent.findall(tag_entry))
             label = [XML.strip_ns(t) for t in tag]
         logger.debug("Examining %s %s elements under %s",
                      len(elements), label, XML.strip_ns(parent.tag))
         child_list = []
-        for e in elements:
+        for element in elements:
             found = True
 
             if attrib:
                 for key in attrib.keys():
-                    if e.get(key, None) != attrib[key]:
+                    if element.get(key, None) != attrib[key]:
                         logger.debug("Attribute '%s' (%s) does not match "
                                      "expected value (%s)",
-                                     XML.strip_ns(key), e.get(key, ""),
+                                     XML.strip_ns(key), element.get(key, ""),
                                      attrib[key])
                         found = False
                         break
 
             if found:
-                child_list.append(e)
+                child_list.append(element)
         logger.debug("Found %s matching %s elements", len(child_list), label)
         return child_list
 
@@ -290,6 +290,6 @@ class XML(object):
             XML.add_child(parent, element, ordering, known_namespaces)
         if text is not None:
             element.text = str(text)
-        for a in attrib:
-            element.set(a, attrib[a])
+        for attr in attrib:
+            element.set(attr, attrib[attr])
         return element

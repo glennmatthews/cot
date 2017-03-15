@@ -108,8 +108,8 @@ class TestValidationFunctions(unittest.TestCase):
 
         Verify that the NIC_TYPES / _NIC_MAPPINGS are idempotent.
         """
-        for t in NIC_TYPES:
-            self.assertEqual(canonicalize_nic_subtype(t), t)
+        for nictype in NIC_TYPES:
+            self.assertEqual(canonicalize_nic_subtype(nictype), nictype)
 
     def test_match_or_die(self):
         """Test the match_or_die() function."""

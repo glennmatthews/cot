@@ -34,17 +34,17 @@ class VMDK(DiskRepresentation):
         """Disk subformat, such as 'streamOptimized'."""
         if self._disk_subformat is None:
             # Look at the VMDK file header to determine the sub-format
-            with open(self.path, 'rb') as f:
+            with open(self.path, 'rb') as fileobj:
                 # The header contains a mix of binary and ASCII, so ignore
                 # any errors in decoding binary data to strings
-                header = f.read(1000).decode('ascii', 'ignore')
-                # Detect the VMDK format from the output:
-                match = re.search('createType="(.*)"', header)
-                if not match:
-                    raise RuntimeError(
-                        "Could not find VMDK 'createType' in the "
-                        "file header:\n{0}".format(header))
-                vmdk_format = match.group(1)
+                header = fileobj.read(1000).decode('ascii', 'ignore')
+            # Detect the VMDK format from the output:
+            match = re.search('createType="(.*)"', header)
+            if not match:
+                raise RuntimeError(
+                    "Could not find VMDK 'createType' in the "
+                    "file header:\n{0}".format(header))
+            vmdk_format = match.group(1)
             logger.info("VMDK sub-format is '%s'", vmdk_format)
             self._disk_subformat = vmdk_format
         return self._disk_subformat

@@ -125,8 +125,8 @@ class UTLoggingHandler(BufferingHandler):
             self.testcase.fail(
                 info + "Message {0} was logged {1} times instead of once!"
                 .format(kwargs, len(matches)))
-        for r in matches:
-            self.buffer.remove(r)
+        for match in matches:
+            self.buffer.remove(match)
 
     def assertNoLogsOver(self, max_level, info=''):  # noqa: N802
         """Fail if any logs are logged higher than the given level.
@@ -377,9 +377,9 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
                 helpers['ovftool']):
             try:
                 helpers['ovftool'].call(['--schemaValidate', filename])
-            except HelperError as e:
+            except HelperError as exc:
                 self.fail("OVF not valid according to ovftool:\n{0}"
-                          .format(e.strerror))
+                          .format(exc.strerror))
 
     def assertLogged(self, info='', **kwargs):  # noqa: N802
         """Fail unless the given logs were generated.

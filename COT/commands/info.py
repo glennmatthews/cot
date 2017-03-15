@@ -105,7 +105,7 @@ class COTInfo(Command):
 
     def create_subparser(self):
         """Create 'info' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'info',
             aliases=['describe'],
             help="""Generate a description of an OVF package""",
@@ -115,7 +115,7 @@ class COTInfo(Command):
             description="""
 Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
 
-        group = p.add_mutually_exclusive_group()
+        group = parser.add_mutually_exclusive_group()
 
         group.add_argument('-b', '--brief',
                            action='store_const', const='brief',
@@ -126,11 +126,10 @@ Show a summary of the contents of the given OVF(s) and/or OVA(s).""")
                            dest='verbosity',
                            help="""Verbose output (longer)""")
 
-        p.add_argument('PACKAGE_LIST',
-                       nargs='+',
-                       metavar='PACKAGE [PACKAGE ...]',
-                       help="OVF descriptor(s) and/or OVA file(s) to describe")
-        p.set_defaults(instance=self)
+        parser.add_argument(
+            'PACKAGE_LIST', nargs='+', metavar='PACKAGE [PACKAGE ...]',
+            help="OVF descriptor(s) and/or OVA file(s) to describe")
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTInfo)

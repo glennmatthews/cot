@@ -594,7 +594,7 @@ class COTEditHardware(ReadWriteCommand):
         wrapper = textwrap.TextWrapper(width=self.ui.terminal_width - 1,
                                        initial_indent='  ',
                                        subsequent_indent='  ')
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'edit-hardware',
             add_help=False,
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -638,93 +638,95 @@ class COTEditHardware(ReadWriteCommand):
                  ' --nic-names "mgmt" "eth{0}"'),
             ])))
 
-        g = p.add_argument_group("general options")
+        group = parser.add_argument_group("general options")
 
-        g.add_argument('-h', '--help', action='help',
-                       help="Show this help message and exit")
-        g.add_argument('-o', '--output',
-                       help="Name/path of new OVF/OVA package to create "
-                       "instead of updating the existing OVF")
-        g.add_argument('-v', '--virtual-system-type',
-                       action='append', nargs='+',
-                       type=no_whitespace, metavar=('TYPE', 'TYPE2'),
-                       help="Change virtual system type(s) supported by "
-                       "this OVF/OVA package.")
-        g.add_argument('-p', '--profiles', action='append', nargs='+',
-                       type=no_whitespace, metavar=('PROFILE', 'PROFILE2'),
-                       help="Make hardware changes only under the given "
-                       "configuration profile(s). (default: changes apply "
-                       "to all profiles)")
-        g.add_argument('--delete-all-other-profiles', action='store_true',
-                       help="Delete all configuration profiles other than"
-                       " those specified with the --profiles option")
+        group.add_argument('-h', '--help', action='help',
+                           help="Show this help message and exit")
+        group.add_argument('-o', '--output',
+                           help="Name/path of new OVF/OVA package to create "
+                           "instead of updating the existing OVF")
+        group.add_argument('-v', '--virtual-system-type',
+                           action='append', nargs='+',
+                           type=no_whitespace, metavar=('TYPE', 'TYPE2'),
+                           help="Change virtual system type(s) supported by "
+                           "this OVF/OVA package.")
+        group.add_argument('-p', '--profiles', action='append', nargs='+',
+                           type=no_whitespace, metavar=('PROFILE', 'PROFILE2'),
+                           help="Make hardware changes only under the given "
+                           "configuration profile(s). (default: changes apply "
+                           "to all profiles)")
+        group.add_argument('--delete-all-other-profiles', action='store_true',
+                           help="Delete all configuration profiles other than"
+                           " those specified with the --profiles option")
 
-        g = p.add_argument_group("computational hardware options")
+        group = parser.add_argument_group("computational hardware options")
 
-        g.add_argument('-c', '--cpus', type=positive_int,
-                       help="Set the number of CPUs.")
-        g.add_argument('-m', '--memory',
-                       help="Set the amount of RAM. "
-                       '(Examples: "4096M", "4 GiB")')
+        group.add_argument('-c', '--cpus', type=positive_int,
+                           help="Set the number of CPUs.")
+        group.add_argument('-m', '--memory',
+                           help="Set the amount of RAM. "
+                           '(Examples: "4096M", "4 GiB")')
 
-        g = p.add_argument_group("network interface options")
+        group = parser.add_argument_group("network interface options")
 
-        g.add_argument('-n', '--nics', type=non_negative_int,
-                       help="Set the number of NICs.")
-        g.add_argument('--nic-types', action='append', nargs='+',
-                       metavar=('TYPE', 'TYPE2'),
-                       help="Set the hardware type(s) for all NICs. "
-                       "(default: do not change existing NICs, and new "
-                       "NICs added will match the existing type(s).)")
-        g.add_argument('--nic-names', action='append', nargs='+',
-                       metavar=('NAME1', 'NAME2'),
-                       help="Specify a list of one or more NIC names or "
-                       "patterns to apply to NIC devices. See Notes.")
-        g.add_argument('-N', '--nic-networks', action='append', nargs='+',
-                       metavar=('NETWORK', 'NETWORK2'),
-                       help="Specify a series of one or more network names "
-                       "or patterns to map NICs to. See Notes.")
-        g.add_argument('--network-descriptions', action='append', nargs='+',
-                       metavar=('NAME1', 'NAME2'),
-                       help="Specify a list of one or more network "
-                       "descriptions or patterns to apply to the networks. "
-                       "See Notes.")
-        g.add_argument('-M', '--mac-addresses-list', type=mac_address,
-                       metavar=('MAC1', 'MAC2'), action='append', nargs='+',
-                       help="Specify a list of MAC addresses for the NICs. "
-                       "If N MACs are specified, the first (N-1) NICs "
-                       "will receive the first (N-1) MACs, and all "
-                       "remaining NICs will receive the Nth MAC")
+        group.add_argument('-n', '--nics', type=non_negative_int,
+                           help="Set the number of NICs.")
+        group.add_argument('--nic-types', action='append', nargs='+',
+                           metavar=('TYPE', 'TYPE2'),
+                           help="Set the hardware type(s) for all NICs. "
+                           "(default: do not change existing NICs, and new "
+                           "NICs added will match the existing type(s).)")
+        group.add_argument('--nic-names', action='append', nargs='+',
+                           metavar=('NAME1', 'NAME2'),
+                           help="Specify a list of one or more NIC names or "
+                           "patterns to apply to NIC devices. See Notes.")
+        group.add_argument(
+            '-N', '--nic-networks', action='append', nargs='+',
+            metavar=('NETWORK', 'NETWORK2'),
+            help="Specify a series of one or more network names or patterns"
+            " to map NICs to. See Notes.")
+        group.add_argument(
+            '--network-descriptions', action='append', nargs='+',
+            metavar=('NAME1', 'NAME2'),
+            help="Specify a list of one or more network descriptions or"
+                 " patterns to apply to the networks. See Notes.")
+        group.add_argument(
+            '-M', '--mac-addresses-list', type=mac_address,
+            metavar=('MAC1', 'MAC2'), action='append', nargs='+',
+            help="Specify a list of MAC addresses for the NICs. "
+            "If N MACs are specified, the first (N-1) NICs will receive the"
+            " first (N-1) MACs, and all remaining NICs will use the Nth MAC")
 
-        g = p.add_argument_group("serial port options")
+        group = parser.add_argument_group("serial port options")
 
-        g.add_argument('-s', '--serial-ports', type=non_negative_int,
-                       help="Set the number of serial ports.")
-        g.add_argument('-S', '--serial-connectivity',
-                       metavar=('URI1', 'URI2'), action='append', nargs='+',
-                       help="Specify a series of connectivity strings "
-                       '(URIs such as "telnet://localhost:9101") to map '
-                       "serial ports to. If fewer URIs than serial ports "
-                       "are specified, the remaining ports will be "
-                       "unmapped.""")
+        group.add_argument('-s', '--serial-ports', type=non_negative_int,
+                           help="Set the number of serial ports.")
+        group.add_argument(
+            '-S', '--serial-connectivity',
+            metavar=('URI1', 'URI2'), action='append', nargs='+',
+            help="Specify a series of connectivity strings (URIs such as"
+            ' "telnet://localhost:9101") to map serial ports to. If fewer'
+            " URIs than serial ports are specified, the remaining ports"
+            " will be unmapped.")
 
-        g = p.add_argument_group("disk and disk controller options")
+        group = parser.add_argument_group("disk and disk controller options")
 
-        g.add_argument('--scsi-subtypes', action='append', nargs='+',
-                       metavar=('TYPE', 'TYPE2'),
-                       help='Set resource subtype(s) (such as "lsilogic" or '
-                       '"virtio") for all SCSI controllers. If an empty '
-                       "string is provided, any existing subtype will be "
-                       "removed.")
-        g.add_argument('--ide-subtypes', action='append', nargs='+',
-                       metavar=('TYPE', 'TYPE2'),
-                       help='Set resource subtype(s) (such as "virtio") for '
-                       "all IDE controllers. If an empty string is "
-                       "provided, any existing subtype will be removed.")
+        group.add_argument(
+            '--scsi-subtypes', action='append', nargs='+',
+            metavar=('TYPE', 'TYPE2'),
+            help='Set resource subtype(s) (such as "lsilogic" or "virtio")'
+            " for all SCSI controllers. If an empty string is provided,"
+            " any existing subtype will be removed.")
+        group.add_argument(
+            '--ide-subtypes', action='append', nargs='+',
+            metavar=('TYPE', 'TYPE2'),
+            help='Set resource subtype(s) (such as "virtio") for all IDE'
+            " controllers. If an empty string is provided, any existing"
+            " subtype will be removed.")
 
-        p.add_argument('PACKAGE',
-                       help="OVF descriptor or OVA file to edit")
-        p.set_defaults(instance=self)
+        parser.add_argument('PACKAGE',
+                            help="OVF descriptor or OVA file to edit")
+        parser.set_defaults(instance=self)
 
 
 def expand_list_wildcard(name_list, length, quiet=False):

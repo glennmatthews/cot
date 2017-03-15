@@ -117,10 +117,10 @@ class ISO(DiskRepresentation):
                 return 0
 
         # else, try to detect ISO files by file magic number
-        with open(path, 'rb') as f:
+        with open(path, 'rb') as fileobj:
             for offset in (0x8001, 0x8801, 0x9001):
-                f.seek(offset)
-                magic = f.read(5).decode('ascii', 'ignore')
+                fileobj.seek(offset)
+                magic = fileobj.read(5).decode('ascii', 'ignore')
                 if magic == "CD001":
                     return 100
         return 0

@@ -145,7 +145,7 @@ class COTEditProduct(ReadWriteCommand):
 
     def create_subparser(self):
         """Create 'edit-product' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'edit-product',
             aliases=['set-product', 'set-version'],
             help="""Edit product info in an OVF""",
@@ -157,31 +157,33 @@ class COTEditProduct(ReadWriteCommand):
             description="""
 Edit product information attributes of the given OVF or OVA""")
 
-        p.add_argument('-o', '--output',
-                       help="Name/path of new OVF/OVA package to create "
-                       "instead of updating the existing OVF")
-        p.add_argument('-c', '--product-class',
-                       help='Product class, such as "com.cisco.csr1000v"')
-        p.add_argument('-p', '--product',
-                       help='Product name string, such as "Cisco IOS-XE"')
-        p.add_argument('-n', '--vendor',
-                       help='Vendor string, such as "Cisco Systems, Inc."')
-        p.add_argument('-v', '--version', metavar="SHORT_VERSION",
-                       help='Software short version string, such as '
-                       '"15.3(4)S" or "5.2.0.01I"')
-        p.add_argument('-V', '--full-version',
-                       help='Software long version string, such as '
-                       '"Cisco IOS-XE Software, Version 15.3(4)S"')
-        p.add_argument('-u', '--product-url',
-                       help='Product URL, such as '
-                       '"http://www.cisco.com/go/iosxrv"')
-        p.add_argument('-r', '--vendor-url',
-                       help='Vendor URL, such as "http://www.cisco.com"')
-        p.add_argument('-l', '--application-url',
-                       help='Application URL, such as "https://router1:530/"')
-        p.add_argument('PACKAGE',
-                       help="OVF descriptor or OVA file to edit")
-        p.set_defaults(instance=self)
+        parser.add_argument('-o', '--output',
+                            help="Name/path of new OVF/OVA package to create "
+                            "instead of updating the existing OVF")
+        parser.add_argument('-c', '--product-class',
+                            help='Product class, such as "com.cisco.csr1000v"')
+        parser.add_argument('-p', '--product',
+                            help='Product name string, such as "Cisco IOS-XE"')
+        parser.add_argument(
+            '-n', '--vendor',
+            help='Vendor string, such as "Cisco Systems, Inc."')
+        parser.add_argument('-v', '--version', metavar="SHORT_VERSION",
+                            help='Software short version string, such as '
+                            '"15.3(4)S" or "5.2.0.01I"')
+        parser.add_argument('-V', '--full-version',
+                            help='Software long version string, such as '
+                            '"Cisco IOS-XE Software, Version 15.3(4)S"')
+        parser.add_argument(
+            '-u', '--product-url',
+            help='Product URL, such as "http://www.cisco.com/go/iosxrv"')
+        parser.add_argument('-r', '--vendor-url',
+                            help='Vendor URL, such as "http://www.cisco.com"')
+        parser.add_argument(
+            '-l', '--application-url',
+            help='Application URL, such as "https://router1:530/"')
+        parser.add_argument('PACKAGE',
+                            help="OVF descriptor or OVA file to edit")
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTEditProduct)

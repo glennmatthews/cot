@@ -182,15 +182,17 @@ class COTInjectConfig(ReadWriteCommand):
         # Find the disk drive where the config should be injected
         # First, look for any previously-injected config disk to overwrite:
         if platform.BOOTSTRAP_DISK_TYPE == 'cdrom':
-            (f, _, _, drive_device) = vm.search_from_filename('config.iso')
+            (fileelem, _, _, drive_device) = vm.search_from_filename(
+                'config.iso')
         elif platform.BOOTSTRAP_DISK_TYPE == 'harddisk':
-            (f, _, _, drive_device) = vm.search_from_filename('config.vmdk')
+            (fileelem, _, _, drive_device) = vm.search_from_filename(
+                'config.vmdk')
         else:
             raise ValueUnsupportedError("bootstrap disk drive type",
                                         platform.BOOTSTRAP_DISK_TYPE,
                                         "'cdrom' or 'harddisk'")
-        if f is not None:
-            file_id = vm.get_id_from_file(f)
+        if fileelem is not None:
+            file_id = vm.get_id_from_file(fileelem)
             self.ui.confirm_or_die(
                 "Existing configuration disk '{0}' found.\n"
                 "Continue and overwrite it?".format(file_id))
@@ -254,7 +256,7 @@ class COTInjectConfig(ReadWriteCommand):
 
     def create_subparser(self):
         """Create 'inject-config' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'inject-config',
             aliases=['add-bootstrap'],
             help="Inject a configuration file into an OVF package",
@@ -270,21 +272,23 @@ config files will be renamed if necessary to meet expectations of the target
 platform, while any files provided with the --extra-files option will
 be included as-is and will not be renamed.""")
 
-        p.add_argument('-o', '--output',
-                       help="Name/path of new VM package to create "
-                       "instead of updating the existing package")
+        parser.add_argument('-o', '--output',
+                            help="Name/path of new VM package to create "
+                            "instead of updating the existing package")
 
-        p.add_argument('-c', '--config-file',
-                       help="Text file to embed as primary configuration")
-        p.add_argument('-s', '--secondary-config-file',
-                       help="Text file to embed as secondary configuration"
-                       " (currently only used for IOS XR admin config)")
-        p.add_argument('-e', '--extra-files', action='append', nargs='+',
-                       metavar=('EXTRA_FILE', 'EXTRA_FILE2'),
-                       help="Additional file(s) to include as-is")
-        p.add_argument('PACKAGE',
-                       help="Package, OVF descriptor or OVA file to edit")
-        p.set_defaults(instance=self)
+        parser.add_argument(
+            '-c', '--config-file',
+            help="Text file to embed as primary configuration")
+        parser.add_argument(
+            '-s', '--secondary-config-file',
+            help="Text file to embed as secondary configuration"
+            " (currently only used for IOS XR admin config)")
+        parser.add_argument('-e', '--extra-files', action='append', nargs='+',
+                            metavar=('EXTRA_FILE', 'EXTRA_FILE2'),
+                            help="Additional file(s) to include as-is")
+        parser.add_argument('PACKAGE',
+                            help="Package, OVF descriptor or OVA file to edit")
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTInjectConfig)

@@ -53,8 +53,8 @@ good-names=i,j,k,vm,ui,logger,_,maxDiff
 # and about assertFooBar() method naming style in unittest
 method-rgx=(test_[a-z0-9_]*|assert[A-Z][a-zA-Z0-9_]*|[a-z_][a-z0-9_]{2,30})$
 
-# Stop complaints about 1- and 2-character variable names, for now (TODO?)
-variable-rgx=[a-z_][a-z0-9_]*$
+# Stop complaints about 2-character variable names, for now (TODO?)
+variable-rgx=[a-z_][a-z0-9_]+$
 
 [DESIGN]
 

@@ -117,7 +117,7 @@ class COTRemoveFile(ReadWriteCommand):
 
     def create_subparser(self):
         """Create 'remove-file' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'remove-file',
             aliases=['delete-file'],
             add_help=False,
@@ -129,7 +129,7 @@ class COTRemoveFile(ReadWriteCommand):
 Remove a file from the given OVF. Will prompt for confirmation unless
 --force is set.""")
 
-        group = p.add_argument_group("general options")
+        group = parser.add_argument_group("general options")
 
         group.add_argument('-h', '--help', action='help',
                            help="""Show this help message and exit""")
@@ -137,16 +137,16 @@ Remove a file from the given OVF. Will prompt for confirmation unless
                            help="""Name/path of new OVF/OVA package to """
                            """create instead of updating the existing OVF""")
 
-        group = p.add_argument_group("file selection options")
+        group = parser.add_argument_group("file selection options")
 
         group.add_argument('-f', '--file-path',
                            help="""File name or path within the package""")
         group.add_argument('-i', '--file-id',
                            help="""File ID string within the package""")
 
-        p.add_argument('PACKAGE',
-                       help="""Package, OVF descriptor or OVA file to edit""")
-        p.set_defaults(instance=self)
+        parser.add_argument(
+            'PACKAGE', help="""Package, OVF descriptor or OVA file to edit""")
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTRemoveFile)

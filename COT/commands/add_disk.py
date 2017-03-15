@@ -210,7 +210,7 @@ class COTAddDisk(ReadWriteCommand):
 
     def create_subparser(self):
         """Create 'add-disk' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'add-disk',
             aliases=['add-drive'],
             add_help=False,
@@ -228,7 +228,7 @@ match an existing entry in the OVF, will replace the existing disk with
 the provided file (prompting for confirmation if --force was not set);
 otherwise, will create a new disk entry.""")
 
-        group = p.add_argument_group("general options")
+        group = parser.add_argument_group("general options")
 
         group.add_argument('-h', '--help', action='help',
                            help="""Show this help message and exit""")
@@ -236,7 +236,7 @@ otherwise, will create a new disk entry.""")
                            help="""Name/path of new OVF/OVA package to """
                            """create instead of updating the existing OVF""")
 
-        group = p.add_argument_group("disk-related options")
+        group = parser.add_argument_group("disk-related options")
 
         group.add_argument('-f', '--file-id',
                            help="""Disk image file ID string within the OVF """
@@ -248,7 +248,7 @@ otherwise, will create a new disk entry.""")
                            """in .vmdk/.raw/.qcow2/.img will use harddisk """
                            """and files ending in .iso will use cdrom)""")
 
-        group = p.add_argument_group("controller-related options")
+        group = parser.add_argument_group("controller-related options")
 
         group.add_argument('-c', '--controller',
                            choices=['ide', 'scsi'],
@@ -263,7 +263,7 @@ otherwise, will create a new disk entry.""")
                            help="""Disk controller subtype such as "virtio" """
                            """or "lsilogic".""")
 
-        group = p.add_argument_group("descriptive options")
+        group = parser.add_argument_group("descriptive options")
 
         group.add_argument('-d', '--description',
                            help="""Description of this disk (optional)""")
@@ -271,11 +271,11 @@ otherwise, will create a new disk entry.""")
                            help="""Name of this disk (default: """
                            """"Hard disk #" or "CD-ROM #" as appropriate)""")
 
-        p.add_argument('DISK_IMAGE',
-                       help="""Disk image file to add to the package""")
-        p.add_argument('PACKAGE',
-                       help="""OVF descriptor or OVA file to edit""")
-        p.set_defaults(instance=self)
+        parser.add_argument('DISK_IMAGE',
+                            help="""Disk image file to add to the package""")
+        parser.add_argument('PACKAGE',
+                            help="""OVF descriptor or OVA file to edit""")
+        parser.set_defaults(instance=self)
 
 
 def guess_drive_type_from_extension(disk_file_name):

@@ -71,17 +71,17 @@ class COTHelp(Command):
 
     def create_subparser(self):
         """Create 'help' CLI subparser."""
-        p = self.ui.add_subparser(
+        parser = self.ui.add_subparser(
             'help',
             help="""Print help for a command""",
             usage="""
   cot help <command>""",
             description="Display help message for the given command")
 
-        p.add_argument("SUBCOMMAND", metavar="<command>", nargs='?',
-                       help="COT subcommand to display")
+        parser.add_argument("SUBCOMMAND", metavar="<command>", nargs='?',
+                            help="COT subcommand to display")
 
-        p.set_defaults(instance=self)
+        parser.set_defaults(instance=self)
 
 
 command_classes.append(COTHelp)

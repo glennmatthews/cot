@@ -469,12 +469,12 @@ class CLI(UI):
         if parent is None:
             parent = self.subparsers
 
-        p = parent.add_parser(title, **kwargs)
-        self.subparser_lookup[lookup_prefix + title] = p
+        parser = parent.add_parser(title, **kwargs)
+        self.subparser_lookup[lookup_prefix + title] = parser
         if aliases:
             for alias in aliases:
-                self.subparser_lookup[lookup_prefix + alias] = p
-        return p
+                self.subparser_lookup[lookup_prefix + alias] = parser
+        return parser
 
     def parse_args(self, argv):
         """Parse the given CLI arguments into a namespace object.
@@ -578,23 +578,23 @@ class CLI(UI):
             self.set_instance_attributes(arg_dict)
             args.instance.run()
             args.instance.finished()
-        except (InvalidInputError, ValueMismatchError) as e:
-            subp.error(e)
-        except NotImplementedError as e:
+        except (InvalidInputError, ValueMismatchError) as exc:
+            subp.error(exc)
+        except NotImplementedError as exc:
             sys.exit("Missing functionality:\n{0}\n"
                      "Please contact the COT development team."
-                     .format(e.args[0]))
-        except EnvironmentError as e:
+                     .format(exc.args[0]))
+        except EnvironmentError as exc:
             # EnvironmentError may have some of (errno, strerror, filename).
-            if e.errno is not None:
-                if e.filename is not None:
+            if exc.errno is not None:
+                if exc.filename is not None:
                     # implicitly we also have e.strerror
-                    print("{0}: {1}".format(e.filename, e.strerror))
+                    print("{0}: {1}".format(exc.filename, exc.strerror))
                 else:
-                    print(e)
-                sys.exit(e.errno)
+                    print(exc)
+                sys.exit(exc.errno)
             else:
-                print(e.args[0])
+                print(exc.args[0])
                 sys.exit(1)
         except (KeyboardInterrupt, EOFError):
             sys.exit("\nAborted by user.")

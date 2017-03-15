@@ -190,8 +190,8 @@ class HelperTestCase(COTTestCase):
     @contextlib.contextmanager
     def stub_download_and_expand_tgz(_url):
         """Stub for Helper.download_and_expand_tgz - make a fake directory."""
-        with TemporaryDirectory(prefix="cot_ut_helper") as d:
-            yield d
+        with TemporaryDirectory(prefix="cot_ut_helper") as directory:
+            yield directory
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
