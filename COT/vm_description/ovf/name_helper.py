@@ -293,6 +293,12 @@ class OVFNameHelper1(object):
     def __init__(self):
         """Create a name helper for OVF version 1.x."""
         # 1.0 is nice in that they're all in alphabetical order
+
+        # Pylint doesn't like naming instance attributes like constants,
+        # even though really these are treated as instance constants.
+        # This needs future refactoring anyway, so for now:
+        # pylint: disable=invalid-name
+
         self.ITEM_CHILDREN = (
             self.ADDRESS,
             self.ADDRESS_ON_PARENT,
