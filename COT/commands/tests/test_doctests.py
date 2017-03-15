@@ -17,11 +17,10 @@
 """Test runner for COT.commands doctest tests."""
 
 import logging
+from logging import NullHandler
 
 from doctest import DocTestSuite
 from unittest import TestSuite
-
-from COT.tests.ut import NullHandler
 
 logging.getLogger('COT').addHandler(NullHandler())
 

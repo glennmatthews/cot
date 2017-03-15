@@ -22,7 +22,7 @@ import os
 from distutils.version import StrictVersion
 import mock
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.disks import VMDK, DiskRepresentation
 from COT.helpers import helpers, HelperError
 

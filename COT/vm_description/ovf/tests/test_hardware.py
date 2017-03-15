@@ -14,7 +14,7 @@
 
 """Unit test cases for COT.vm_description.ovf.OVFHardware class."""
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.vm_description.ovf import OVF
 
 

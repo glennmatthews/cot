@@ -28,7 +28,7 @@ except ImportError:
     # Python 3.x
     import io as StringIO
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.ui import UI
 from COT.utilities import directory_size, pretty_bytes
 from COT.commands import Command, ReadWriteCommand

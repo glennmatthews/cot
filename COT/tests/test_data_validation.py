@@ -32,7 +32,7 @@ from COT.data_validation import (
     InvalidInputError, ValueMismatchError, ValueUnsupportedError,
     ValueTooLowError, ValueTooHighError,
 )
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 
 logger = logging.getLogger(__name__)
 

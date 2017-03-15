@@ -33,7 +33,7 @@ except ImportError:
 import mock
 
 from COT import __version_long__
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.ui.cli import CLI
 from COT.data_validation import InvalidInputError
 

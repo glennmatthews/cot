@@ -20,7 +20,7 @@ import tempfile
 import shutil
 import xml.etree.ElementTree as ET
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 
 from COT.vm_description.ovf import OVF
 from COT.vm_description.ovf.name_helper import OVFNameHelper1

@@ -20,7 +20,7 @@ Most test cases are implemented as doctests in the module itself;
 this is for additional tests that are impractical as doctests.
 """
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.vm_description.ovf.utilities import programmatic_bytes_to_int
 
 

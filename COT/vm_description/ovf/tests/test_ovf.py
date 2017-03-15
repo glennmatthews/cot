@@ -27,7 +27,7 @@ import tarfile
 from contextlib import closing
 import mock
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.vm_description.ovf import OVF
 from COT.vm_description import VMInitError
 from COT.data_validation import ValueUnsupportedError

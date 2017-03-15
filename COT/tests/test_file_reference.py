@@ -22,7 +22,7 @@ import tarfile
 from contextlib import closing
 from pkg_resources import resource_filename
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.file_reference import FileOnDisk, FileInTAR
 
 

@@ -17,7 +17,7 @@
 import errno
 import os
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 import COT.utilities
 from COT.disks.raw import RAW
 

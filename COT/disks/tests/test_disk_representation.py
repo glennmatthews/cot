@@ -20,7 +20,7 @@ import logging
 import os
 import mock
 
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.disks import DiskRepresentation
 from COT.helpers import helpers, HelperError
 

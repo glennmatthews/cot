@@ -26,7 +26,7 @@ import requests
 import mock
 
 from COT.ui import UI
-from COT.tests.ut import COTTestCase
+from COT.tests import COTTestCase
 from COT.helpers.helper import TemporaryDirectory, check_call, check_output
 from COT.helpers import (
     Helper, PackageManager,
