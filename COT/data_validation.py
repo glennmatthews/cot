@@ -304,10 +304,10 @@ def check_for_conflict(label, refs):
         Please correct or clarify your search parameters.
     """
     obj = None
-    for i, obj1 in enumerate(refs):
+    for index, obj1 in enumerate(refs):
         if obj1 is None:
             continue
-        for obj2 in refs[(i+1):]:
+        for obj2 in refs[(index+1):]:
             if obj2 is not None and obj1 != obj2:
                 raise ValueMismatchError(
                     "Found multiple candidates for the {0}:"
@@ -480,14 +480,14 @@ def validate_int(string,
     if label is None:
         label = "input"
     try:
-        i = int(string)
+        value = int(string)
     except ValueError:
         raise ValueUnsupportedError(label, string, "integer")
-    if minimum is not None and i < minimum:
-        raise ValueTooLowError(label, i, minimum)
-    if maximum is not None and i > maximum:
-        raise ValueTooHighError(label, i, maximum)
-    return i
+    if minimum is not None and value < minimum:
+        raise ValueTooLowError(label, value, minimum)
+    if maximum is not None and value > maximum:
+        raise ValueTooHighError(label, value, maximum)
+    return value
 
 
 def non_negative_int(string, label=None):

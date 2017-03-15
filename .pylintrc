@@ -44,11 +44,11 @@ disable=bad-continuation,
 [BASIC]
 
 # In invalid-name checker:
-# - allow variable names 'rc', 'ui', 'vm', as valid
-# - allow top-level "constant" name 'logger'
 # - allow '_' variable name to indicate "unused"
-# - allow unittest.TestCase.'maxDiff' attribute
-good-names=i,j,k,rc,ui,vm,logger,_,maxDiff
+# - allow variable names 'rc', 'ui', 'vm', as valid despite usual 3-char min
+# - allow 'logger' as a "global constant" name
+# - accept unittest.TestCase.'maxDiff' attribute
+good-names=_,rc,ui,vm,logger,_,maxDiff
 
 # In invalid-name checker:
 # - ignore length of test case method names (test_*)

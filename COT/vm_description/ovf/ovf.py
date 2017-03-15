@@ -1842,19 +1842,20 @@ class OVF(VMDescription, XML):
               does not define
               :const:`~COT.platforms.Platform.LITERAL_CLI_STRING`
         """
-        i = 0
         if not self.platform.LITERAL_CLI_STRING:
             raise NotImplementedError("no known support for literal CLI on " +
                                       str(self.platform))
+        property_num = 0
         with open(file_path, 'r') as fileobj:
             for line in fileobj:
                 line = line.strip()
                 # Skip blank lines and comment lines
                 if (not line) or line[0] == '!':
                     continue
-                i += 1
+                property_num += 1
                 self.set_property_value(
-                    "{0}-{1:04d}".format(self.platform.LITERAL_CLI_STRING, i),
+                    "{0}-{1:04d}".format(self.platform.LITERAL_CLI_STRING,
+                                         property_num),
                     line,
                     user_configurable)
 
@@ -2696,12 +2697,12 @@ class OVF(VMDescription, XML):
         # Section elements may be in arbitrary order relative to one another,
         # but they MUST come after the References and before the VirtualSystem.
         # We'll construct them immediately before the VirtualSystem.
-        i = 0
+        index = 0
         for child in list(parent):
             if child.tag == self.VIRTUAL_SYSTEM:
                 break
-            i += 1
-        parent.insert(i, section)
+            index += 1
+        parent.insert(index, section)
 
         # All Sections must have an Info child
         self.set_or_make_child(section, self.INFO, info_string)

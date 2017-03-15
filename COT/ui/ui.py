@@ -190,8 +190,8 @@ class UI(object):
                 return match[0]
             # Did user enter a list index?
             try:
-                i = int(result)
-                return option_list[i-1]
+                index = int(result)
+                return option_list[index-1]
             except (ValueError, IndexError):
                 pass
             logger.error("Invalid input. Please try again.")

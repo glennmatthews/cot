@@ -149,11 +149,11 @@ class OVFHardware(object):
         Returns:
           str: An instance ID that is not yet in use.
         """
-        i = 1
-        while str(i) in self.item_dict.keys():
-            i += 1
-        logger.debug("Found unused InstanceID %d", i)
-        return str(i)
+        instance = 1
+        while str(instance) in self.item_dict.keys():
+            instance += 1
+        logger.debug("Found unused InstanceID %d", instance)
+        return str(instance)
 
     def new_item(self, resource_type, profile_list=None):
         """Create a new OVFItem of the given type.

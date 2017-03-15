@@ -768,12 +768,12 @@ def expand_list_wildcard(name_list, length, quiet=False):
         # Look for the magic string in the pattern
         match = re.search(r"{(\d+)}", pattern)
         if match:
-            i = int(match.group(1))
+            value = int(match.group(1))
         else:
-            i = 0
+            value = 0
         while len(name_list) < length:
-            name_list.append(re.sub(r"{\d+}", str(i), pattern))
-            i += 1
+            name_list.append(re.sub(r"{\d+}", str(value), pattern))
+            value += 1
         if not quiet:
             logger.info("New list is %s", name_list)
 
@@ -806,22 +806,23 @@ def guess_list_wildcard(known_values):
     """
     logger.debug("Attempting to infer a pattern from %s", known_values)
     # Guess sequences ending with simple N, N+1, N+2
-    for i in range(0, len(known_values)-1):
-        val = known_values[i]
-        split_val = alphanum_split(val)
-        for j in range(0, len(split_val)):
-            candidate = split_val[j]
-            if not isinstance(candidate, int):
+    for value_index in range(0, len(known_values)-1):
+        current_value = known_values[value_index]
+        split_val = alphanum_split(current_value)
+        for token_index in range(0, len(split_val)):
+            token = split_val[token_index]
+            if not isinstance(token, int):
                 continue
-            prefix = "".join([str(k) for k in split_val[:j]])
-            suffix = "".join([str(k) for k in split_val[j+1:]])
+            prefix = "".join([str(k) for k in split_val[:token_index]])
+            suffix = "".join([str(k) for k in split_val[token_index+1:]])
             logger.debug("Possible next value for %s is %s%i%s",
-                         val, prefix, candidate+1, suffix)
-            possible_next = prefix + str(candidate + 1) + suffix
-            if known_values[i+1] == possible_next:
-                match_pattern = prefix + "{" + str(candidate) + "}" + suffix
+                         current_value, prefix, token+1, suffix)
+            possible_next = prefix + str(token + 1) + suffix
+            if known_values[value_index+1] == possible_next:
+                match_pattern = prefix + "{" + str(token) + "}" + suffix
                 logger.debug("Match pattern is %s", match_pattern)
-                possible_name_list = known_values[:i] + [match_pattern]
+                possible_name_list = (known_values[:value_index] +
+                                      [match_pattern])
                 logger.debug("Checking possible name list %s",
                              possible_name_list)
                 if expand_list_wildcard(possible_name_list,

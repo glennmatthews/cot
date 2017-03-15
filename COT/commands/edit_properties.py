@@ -214,10 +214,10 @@ class COTEditProperties(ReadWriteCommand):
                                               self.user_configurable)
 
         if self.properties:
-            for i in range(0, len(self.properties)):
-                key, value, prop_type = self.properties[i]
-                label = self.labels[i] if self.labels else None
-                desc = self.descriptions[i] if self.descriptions else None
+            for index in range(0, len(self.properties)):
+                key, value, prop_type = self.properties[index]
+                label = self.labels[index] if self.labels else None
+                desc = self.descriptions[index] if self.descriptions else None
                 curr_value = self.vm.get_property_value(key)
                 if curr_value is None:
                     self.ui.confirm_or_die(

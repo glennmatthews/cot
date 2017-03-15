@@ -228,8 +228,8 @@ class COTInstallHelpers(Command):
         wrapper = textwrap.TextWrapper(width=self.ui.terminal_width,
                                        initial_indent="",
                                        subsequent_indent=(" " * 14))
-        for k in sorted(results):
-            print(wrapper.fill("{0:13} {1}".format(k + ":", results[k])))
+        for name in sorted(results):
+            print(wrapper.fill("{0:13} {1}".format(name + ":", results[name])))
         print("")
         if not result and not self.ignore_errors:
             raise EnvironmentError(1, "Unable to install some helpers")

@@ -238,7 +238,7 @@ class XML(object):
             parent.append(new_child)
         else:
             new_index = ordering.index(new_child.tag)
-            i = 0
+            index = 0
             found_position = False
             for child in list(parent):
                 try:
@@ -256,9 +256,9 @@ class XML(object):
                     # elements should implicitly come before it.
                     found_position = True
                     break
-                i += 1
+                index += 1
             if found_position:
-                parent.insert(i, new_child)
+                parent.insert(index, new_child)
             else:
                 parent.append(new_child)
 
