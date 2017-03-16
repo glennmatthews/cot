@@ -123,7 +123,7 @@ class VMDK(DiskRepresentation):
                     " message '%s'.\nIn order to generate the preferred"
                     " 'version 3' images, please upgrade to QEMU 2.5.1 or"
                     " later, or install vmdktool.",
-                    helpers['qemu-img'].version,
+                    str(helpers['qemu-img'].version),
                     "Not a supported disk format"
                     " (sparse VMDK version too old)")
 
@@ -153,7 +153,7 @@ class VMDK(DiskRepresentation):
                 " versions of VMware ESXi will reject with the message '%s'."
                 "\nIn order to generate the preferred 'version 3' images,"
                 " please upgrade to QEMU 2.5.1 or later.",
-                helpers['qemu-img'].version,
+                str(helpers['qemu-img'].version),
                 "Not a supported disk format (sparse VMDK version too old)")
 
         super(VMDK, cls)._create_file(path, disk_subformat=disk_subformat,
