@@ -319,13 +319,12 @@ ovf:size="{cfg_size}" />
 
         # .ovf claiming to be OVF version 3.0, which doesn't exist yet
         with self.assertRaises(VMInitError) as catcher:
-            OVF(self.localfile("ersatz_ovf_3.0.ovf"), None)
+            OVF(self.ersatz_v3_ovf, None)
         self.assertEqual(catcher.exception.errno, 2)
         self.assertEqual(catcher.exception.strerror,
                          "File has an Envelope but it is in unknown namespace "
-                         "http://schemas.dmtf.org/ovf/envelope/3")
-        self.assertEqual(catcher.exception.filename,
-                         self.localfile("ersatz_ovf_3.0.ovf"))
+                         "'http://schemas.dmtf.org/ovf/envelope/3'")
+        self.assertEqual(catcher.exception.filename, self.ersatz_v3_ovf)
 
     @mock.patch("COT.vm_description.ovf.OVF.detect_type_from_name",
                 return_value=".vbox")

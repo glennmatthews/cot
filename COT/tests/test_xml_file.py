@@ -1,7 +1,7 @@
 # xml_file.py - Unit test cases for generic XML file class
 #
 # January 2015, Glenn F. Matthews
-# Copyright (c) 2015-2016 the COT project developers.
+# Copyright (c) 2015-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,13 +14,11 @@
 
 """Unit test cases for the COT.xml_file.XML class."""
 
-import unittest
-from pkg_resources import resource_filename
-
 from COT.xml_file import XML
+from COT.tests import COTTestCase
 
 
-class TestXMLClass(unittest.TestCase):
+class TestXMLClass(COTTestCase):
     """Test cases for XML class methods."""
 
     def test_get_ns(self):
@@ -28,28 +26,34 @@ class TestXMLClass(unittest.TestCase):
         self.assertEqual(
             "http://schemas.dmtf.org/ovf/envelope/1",
             XML.get_ns("{http://schemas.dmtf.org/ovf/envelope/1}required"))
+
         self.assertEqual(
             "",
             XML.get_ns("required"))
+        self.assertLogged(levelname="ERROR",
+                          msg="no associated namespace")
 
     def test_strip_ns(self):
         """Test the strip_ns() function."""
         self.assertEqual(
             "required",
             XML.strip_ns("{http://schemas.dmtf.org/ovf/envelope/1}required"))
+
         self.assertEqual(
             "required",
             XML.strip_ns("required"))
+        self.assertLogged(levelname="ERROR",
+                          msg="no associated namespace")
 
 
-class TestXMLInstance(unittest.TestCase):
+class TestXMLInstance(COTTestCase):
     """Test cases for XML instance methods."""
 
     OVF = "{http://schemas.dmtf.org/ovf/envelope/1}"
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
-        self.xml = XML(resource_filename(__name__, "input.ovf"))
+        self.xml = XML(self.input_ovf)
         super(TestXMLInstance, self).setUp()
 
     def test_find_child(self):
@@ -87,6 +91,8 @@ class TestXMLInstance(unittest.TestCase):
             ordering=[self.OVF + "References"],
             known_namespaces=["http://schemas.dmtf.org/ovf/envelope/1"]
         )
+        self.assertLogged(levelname="WARNING",
+                          msg="in a known namespace.*not in the list")
 
         # Trigger the warning in add_child() logged when
         # creating a new child in a known namespace
@@ -99,3 +105,5 @@ class TestXMLInstance(unittest.TestCase):
                       self.OVF + "bar"],
             known_namespaces=["http://schemas.dmtf.org/ovf/envelope/1"]
         )
+        self.assertLogged(levelname="WARNING",
+                          msg="Found unexpected child element")

@@ -321,7 +321,7 @@ class OVF(VMDescription, XML):
             else:
                 raise VMInitError(
                     2,
-                    "File has an Envelope but it is in unknown namespace {0}"
+                    "File has an Envelope but it is in unknown namespace '{0}'"
                     .format(root_namespace),
                     self.ovf_descriptor)
         return self._ovf_version

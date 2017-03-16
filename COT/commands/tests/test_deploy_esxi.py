@@ -33,6 +33,7 @@ try:
 except ImportError:
     import unittest
 
+from COT.tests import COTTestCase
 from COT.commands.tests.command_testcase import CommandTestCase
 import COT.commands.deploy_esxi
 from COT.commands.deploy_esxi import COTDeployESXi, SmarterConnection
@@ -374,7 +375,7 @@ class TestCOTDeployESXi(CommandTestCase):
                          "Error connecting to localhost:443: None")
 
 
-class TestSmarterConnection(unittest.TestCase):
+class TestSmarterConnection(COTTestCase):
     """Test cases for SmarterConnection class methods."""
 
     def test_unwrap_connection_error_27(self):

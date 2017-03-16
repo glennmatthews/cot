@@ -51,6 +51,13 @@ class TestIOSv(PlatformTests.PlatformTest):
         self.assertRaises(ValueTooLowError,
                           self.ins.validate_memory_amount, 191)
         self.ins.validate_memory_amount(192)
+        self.assertLogged(levelname="WARNING",
+                          msg="RAM may not be sufficient")
+        self.ins.validate_memory_amount(383)
+        self.assertLogged(levelname="WARNING",
+                          msg="RAM may not be sufficient")
+        # no log expected at or above 384 MiB
+        self.ins.validate_memory_amount(384)
         self.ins.validate_memory_amount(3072)
         self.assertRaises(ValueTooHighError,
                           self.ins.validate_memory_amount, 3073)

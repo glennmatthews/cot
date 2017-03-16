@@ -209,7 +209,7 @@ ovf:userConfigurable="false" ovf:value="yep!" />
     def test_load_config_file(self):
         """Inject a sequence of properties from a config file."""
         self.command.package = self.input_ovf
-        self.command.config_file = self.localfile("sample_cfg.txt")
+        self.command.config_file = self.sample_cfg
         self.command.run()
         self.command.finished()
         self.check_diff("""
@@ -227,7 +227,7 @@ ovf:value="interface Loopback0" />
     def test_combined(self):
         """Set individual properties AND add from a config file."""
         self.command.package = self.input_ovf
-        self.command.config_file = self.localfile("sample_cfg.txt")
+        self.command.config_file = self.sample_cfg
         self.command.properties = ["login-password=cisco123",
                                    "enable-ssh-server=1"]
         self.command.user_configurable = True
@@ -341,7 +341,7 @@ set!</ovf:Description>
     def test_config_file_not_supported(self):
         """Platform doesn't support literal CLI configuration."""
         self.command.package = self.iosv_ovf
-        self.command.config_file = self.localfile("sample_cfg.txt")
+        self.command.config_file = self.sample_cfg
         self.assertRaises(NotImplementedError,
                           self.command.run)
 

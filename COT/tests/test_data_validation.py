@@ -17,12 +17,6 @@
 """Unit test cases for COT.data_validation module."""
 
 import re
-import logging
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 from COT.data_validation import (
     match_or_die, file_checksum,
@@ -33,8 +27,6 @@ from COT.data_validation import (
     ValueTooLowError, ValueTooHighError,
 )
 from COT.tests import COTTestCase
-
-logger = logging.getLogger(__name__)
 
 
 class TestFileChecksum(COTTestCase):
@@ -69,7 +61,7 @@ class TestFileChecksum(COTTestCase):
                           'crc')
 
 
-class TestValidationFunctions(unittest.TestCase):
+class TestValidationFunctions(COTTestCase):
     """Test cases for input validation APIs."""
 
     def test_canonicalize_helper(self):

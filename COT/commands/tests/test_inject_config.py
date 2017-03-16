@@ -49,7 +49,7 @@ class TestCOTInjectConfig(CommandTestCase):
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         super(TestCOTInjectConfig, self).setUp()
-        self.config_file = self.localfile("sample_cfg.txt")
+        self.config_file = self.sample_cfg
 
     def test_readiness(self):
         """Test ready_to_run() under various combinations of parameters."""

@@ -144,13 +144,23 @@ class UTLoggingHandler(BufferingHandler):
             matches = self.logs(levelno=level)
             if matches:
                 self.testcase.fail(
-                    "{info}Found {len} unexpected {lvl} message(s):\n{msgs}"
+                    "{info}Found {len} unexpected {lvl} message(s):\n\n{msgs}"
                     .format(info=info,
                             len=len(matches),
                             lvl=logging.getLevelName(level),
-                            msgs="\n".join(["msg: {0}, args: {1}"
-                                            .format(r['msg'], r['args'])
-                                            for r in matches])))
+                            msgs="\n\n".join([r['msg'] % r['args']
+                                              for r in matches])))
+
+
+def _localfile(name):
+    """Get the absolute path to a local resource file.
+
+    Args:
+      name (str): File name.
+    Returns:
+      str: Absolute file path.
+    """
+    return os.path.abspath(resource_filename(__name__, name))
 
 
 class COTTestCase(unittest.TestCase):  # noqa: N801
@@ -167,8 +177,7 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
             'minimal.ovf',
             'sample_cfg.txt',
     ]:
-        FILE_SIZE[filename] = os.path.getsize(resource_filename(__name__,
-                                                                filename))
+        FILE_SIZE[filename] = os.path.getsize(_localfile(filename))
 
     # Standard ERROR logger messages we may expect at various points:
     # TODO: change these to functions so we can populate 'args' for each
@@ -204,16 +213,34 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
         'msg': "removing DiskSection",
     }
 
-    @staticmethod
-    def localfile(name):
-        """Get the absolute path to a local resource file.
+    # Set default OVF file. Individual test cases can use others
+    input_ovf = _localfile("input.ovf")
+    # Alternative OVF files:
+    #
+    # Absolute minimal OVF descriptor needed to satisfy ovftool.
+    # Please verify any changes made to this file by running
+    # "ovftool --schemaValidate minimal.ovf"
+    minimal_ovf = _localfile("minimal.ovf")
+    # IOSv OVF
+    iosv_ovf = _localfile("iosv.ovf")
+    # CSR1000V OVF
+    csr_ovf = _localfile("csr1000v.ovf")
+    # v0.9 OVF
+    v09_ovf = _localfile("v0.9.ovf")
+    # v2.0 OVF from VirtualBox
+    v20_vbox_ovf = _localfile("ubuntu.2.0.ovf")
+    # OVF with lots of custom VMware extensions
+    vmware_ovf = _localfile("vmware.ovf")
+    # OVF with various odd/invalid contents
+    invalid_ovf = _localfile("invalid.ovf")
+    # OVF claiming to be a "version 3" OVF format, which doesn't exist yet
+    ersatz_v3_ovf = _localfile("ersatz_ovf_3.0.ovf")
 
-        Args:
-          name (str): File name.
-        Returns:
-          str: Absolute file path.
-        """
-        return os.path.abspath(resource_filename(__name__, name))
+    # Some canned disk images and other files too
+    input_iso = _localfile("input.iso")
+    input_vmdk = _localfile("input.vmdk")
+    blank_vmdk = _localfile("blank.vmdk")
+    sample_cfg = _localfile("sample_cfg.txt")
 
     @staticmethod
     def invalid_hardware_warning(profile, value, kind):
@@ -294,33 +321,6 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
         logging.getLogger('COT').addHandler(self.logging_handler)
 
         self.start_time = time.time()
-        # Set default OVF file. Individual test cases can use others
-        self.input_ovf = self.localfile("input.ovf")
-        # Alternative OVF files:
-        #
-        # Absolute minimal OVF descriptor needed to satisfy ovftool.
-        # Please verify any changes made to this file by running
-        # "ovftool --schemaValidate minimal.ovf"
-        self.minimal_ovf = self.localfile("minimal.ovf")
-        # IOSv OVF
-        self.iosv_ovf = self.localfile("iosv.ovf")
-        # CSR1000V OVF
-        self.csr_ovf = self.localfile("csr1000v.ovf")
-        # v0.9 OVF
-        self.v09_ovf = self.localfile("v0.9.ovf")
-        # v2.0 OVF from VirtualBox
-        self.v20_vbox_ovf = self.localfile("ubuntu.2.0.ovf")
-        # OVF with lots of custom VMware extensions
-        self.vmware_ovf = self.localfile("vmware.ovf")
-        # OVF with various odd/invalid contents
-        self.invalid_ovf = self.localfile("invalid.ovf")
-
-        # Some canned disk images and other files too
-        self.input_iso = os.path.abspath(self.localfile("input.iso"))
-        self.input_vmdk = self.localfile("input.vmdk")
-        self.blank_vmdk = self.localfile("blank.vmdk")
-        self.sample_cfg = self.localfile("sample_cfg.txt")
-
         # Set a temporary directory for us to write our OVF to
         self.temp_dir = tempfile.mkdtemp(prefix="cot_ut")
         self.temp_file = os.path.join(self.temp_dir, "out.ovf")

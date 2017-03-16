@@ -14,12 +14,11 @@
 
 """Unit test cases for COT.ui.UI class."""
 
-import unittest
-
 from COT.ui import UI
+from COT.tests import COTTestCase
 
 
-class TestUI(unittest.TestCase):
+class TestUI(COTTestCase):
     """Test cases for the COT.ui.UI class."""
 
     def test_apis_without_force(self):
@@ -40,14 +39,22 @@ class TestUI(unittest.TestCase):
         ins = UI(force=True)
 
         self.assertTrue(ins.confirm("prompt"))
+        self.assertLogged(levelname="WARNING", msg="Automatically agreeing")
+
         ins.confirm_or_die("prompt")
+        self.assertLogged(levelname="WARNING", msg="Automatically agreeing")
 
         ins.default_confirm_response = False
         # With --force, the default_confirm_response doesn't apply
         self.assertTrue(ins.confirm("prompt"))
+        self.assertLogged(levelname="WARNING", msg="Automatically agreeing")
+
         ins.confirm_or_die("prompt")
+        self.assertLogged(levelname="WARNING", msg="Automatically agreeing")
 
         self.assertEqual("hello", ins.get_input("Prompt:", "hello"))
+        self.assertLogged(levelname="WARNING", msg="Automatically entering",
+                          args=('hello', 'Prompt:'))
 
     def test_stub_apis(self):
         """Test stub APIs that subclasses should override."""

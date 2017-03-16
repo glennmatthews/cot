@@ -39,7 +39,7 @@ class XML(object):
         """
         match = re.match(r"\{(.*)\}", str(text))
         if not match:
-            logger.error("No namespace prefix on %s??", text)
+            logger.error("Name '%s' has no associated namespace!", text)
             return ""
         return match.group(1)
 
@@ -54,8 +54,8 @@ class XML(object):
           str: Bare name, such as "Element".
         """
         match = re.match(r"\{.*\}(.*)", str(text))
-        if match is None:
-            logger.error("No namespace prefix on %s??", text)
+        if not match:
+            logger.error("Name '%s' has no associated namespace!", text)
             return text
         else:
             return match.group(1)
@@ -223,13 +223,16 @@ class XML(object):
               known namespace.
         """
         if ordering and new_child.tag not in ordering:
-            if (known_namespaces and
-                    (XML.get_ns(new_child.tag) in known_namespaces)):
-                logger.warning("New child '%s' is not in the list of "
-                               "expected children under '%s': %s",
-                               new_child.tag,
+            child_ns = XML.get_ns(new_child.tag)
+            if known_namespaces and child_ns in known_namespaces:
+                logger.warning("New child '%s' is in a known namespace '%s',"
+                               " but is not in the list of expected children"
+                               " in this namespace under '%s':\n%s",
+                               XML.strip_ns(new_child.tag),
+                               child_ns,
                                XML.strip_ns(parent.tag),
-                               ordering)
+                               [XML.strip_ns(expected) for expected in ordering
+                                if XML.get_ns(expected) == child_ns])
             # Assume this is some sort of custom element, which
             # implicitly goes at the end of the list.
             ordering = None
@@ -246,12 +249,17 @@ class XML(object):
                         found_position = True
                         break
                 except ValueError:
-                    if (known_namespaces and (XML.get_ns(child.tag) in
-                                              known_namespaces)):
+                    child_ns = XML.get_ns(child.tag)
+                    if known_namespaces and child_ns in known_namespaces:
                         logger.warning(
-                            "Existing child element '%s' is not in expected "
-                            "list of children under '%s': \n%s",
-                            child.tag, XML.strip_ns(parent.tag), ordering)
+                            "Found unexpected child element '%s' under '%s' in"
+                            " namespace '%s'. The list of expected children in"
+                            " this namespace is only:\n%s",
+                            XML.strip_ns(child.tag),
+                            XML.strip_ns(parent.tag),
+                            child_ns,
+                            [XML.strip_ns(expected) for expected in ordering
+                             if XML.get_ns(expected) == child_ns])
                     # Assume this is some sort of custom element - all known
                     # elements should implicitly come before it.
                     found_position = True

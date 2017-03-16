@@ -12,21 +12,15 @@
 
 """Unit test cases for the COT.platforms package and its submodules."""
 
-import unittest
-import logging
-# Make sure there's always a "no-op" logging handler.
-from logging import NullHandler
-
+from COT.tests import COTTestCase
 from COT.data_validation import ValueTooLowError
 from COT.platforms import Platform
-
-logging.getLogger('COT').addHandler(NullHandler())
 
 
 class PlatformTests(object):
     """Wrapper to "hide" the below abstract class from unittest module."""
 
-    class PlatformTest(unittest.TestCase):
+    class PlatformTest(COTTestCase):
         """Abstract base class for testing of Platform subclasses."""
 
         cls = None

@@ -23,3 +23,8 @@ class TestPlatform(PlatformTests.PlatformTest):
 
     cls = Platform
     product_string = ""
+
+    def test_for_product_string(self):
+        """Confirm for_product_string() works for an empty string but warns."""
+        super(TestPlatform, self).test_for_product_string()
+        self.assertLogged(**self.UNRECOGNIZED_PRODUCT_CLASS)
