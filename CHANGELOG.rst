@@ -3,6 +3,16 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`2.0.1`_ - 2017-03-17
+---------------------
+
+**Fixed**
+
+- One unit test case,
+  COT.helpers.tests.test_helper.HelperGenericTest.test_download_and_expand_tgz,
+  was failing after 2.0.0 was released, due to its assumptions about the
+  contents of the master repo on GitHub no longer being valid. Fixed now.
+
 `2.0.0`_ - 2017-03-17
 ---------------------
 
@@ -774,6 +784,7 @@ Initial public release.
 .. _verboselogs: https://verboselogs.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _2.0.1: https://github.com/glennmatthews/cot/compare/v2.0.0...v2.0.1
 .. _2.0.0: https://github.com/glennmatthews/cot/compare/v1.9.1...v2.0.0
 .. _1.9.1: https://github.com/glennmatthews/cot/compare/v1.9.0...v1.9.1
 .. _1.9.0: https://github.com/glennmatthews/cot/compare/v1.8.2...v1.9.0
