@@ -433,7 +433,7 @@ class HelperGenericTest(HelperTestCase):
                     os.path.join(directory, "cot-master", "COT", "tests")))
                 self.assertTrue(os.path.exists(
                     os.path.join(directory, "cot-master", "COT", "tests",
-                                 "ut.py")))
+                                 "cot_testcase.py")))
         except requests.exceptions.ConnectionError:
             # unable to connect to github - might be an isolated environment
             self.fail("ConnectionError when trying to download from GitHub")
