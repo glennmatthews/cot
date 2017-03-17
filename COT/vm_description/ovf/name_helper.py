@@ -15,6 +15,54 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 """Module for handling the differences in XML between OVF spec versions.
 
+**Variation between OVF versions**
+
+XML can be a pain to work with, and when working with multiple OVF schema
+versions (currently 3 of them -- 0.9, 1.x.y, 2.0.y) it gets extra painful.
+While we could use :mod:`lxml` to *validate* inbound XML against the
+appropriate schema version, even that package does not (as far as I can
+determine) provide any assistance in *creating* XML against the appropriate
+schema definition. So we have to do it ourselves.
+
+=================== ==========================================================
+Variation           Details and examples
+=================== ==========================================================
+Root namespace      - 0.9: "http://www.vmware.com/schema/ovf/1/envelope"
+                    - 1.x: "http://schemas.dmtf.org/ovf/envelope/1"
+                    - 2.x: "http://schemas.dmtf.org/ovf/envelope/2"
+
+                    Unfortunately, the :mod:`xml.etree.ElementTree` and
+                    :mod:`lxml.etree` modules both rely on the absolute
+                    namespace URI (rather than any defined namespace
+                    prefix aliases) throughout. Thus, we can't make use of
+                    the fact that OVF descriptors of all three versions
+                    typically define the prefix "ovf" for whichever of
+                    the above URIs is appropriate. We have to use the
+                    version-appropriate namespace URI everywhere in code.
+
+Element namespaces  Example: hardware details for network interfaces are
+                    in the ``ResourceAllocationSettingData`` namespace in
+                    versions 0.x and 1.x, but split out into a separate
+                    ``EthernetPortAllocationSettingData`` namespace in
+                    version 2.x.
+
+Element tags        Network definitions are grouped under an
+                    ``ovf:Section`` element in version 0.x but under an
+                    ``ovf:NetworkSection`` in versions 1.x and 2.x.
+                    Network cards are ``ovf:Item`` elements in 0.x and
+                    1.x, but ``ovf:EthernetPortItem`` in 2.x.
+
+Element attributes  In version 0.x, the different Section types are
+                    identified by a type attribute (``<ovf:Section
+                    xsi:type="ovf:DiskSection_Type">``) while in later
+                    versions they are identified by tag
+                    (``<ovf:DiskSection>``) and do not have such an attribute.
+
+Element ordering    Most notably, the various child elements under an Item
+                    require alphabetical order in OVF 1.x and 2.x, but in
+                    0.9 they require a different, idiosyncratic order.
+=================== ==========================================================
+
 **Functions**
 
 .. autosummary::
