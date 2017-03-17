@@ -18,24 +18,25 @@ This project adheres to `Semantic Versioning`_.
   - If ``vmdktool`` is not installed, but QEMU 2.1.0-2.5.0 is, then COT will
     fall back to usinq ``qemu-img``, but will warn of this potential
     incompatibility with ESXi.
+
 - When ``cot info`` is invoked with multiple files as input, an error in
   loading one file will no longer cause the entire command to abort;
   COT will now log an error about the offending file and continue to the next.
 
 **Added**
 
-- ``Command`` (formerly ``COTGenericSubmodule``) now checks the available
-  disk space in the VM's working directory against the temporary storage
-  space the command estimates it will require, and if there is likely to be
-  a problem, warns the user before continuing. (`#63`_)
-- Similarly, ``ReadWriteCommand`` (formerly ``COTSubmodule``) now checks the
+- COT commands now check the available disk space in the temporary working
+  directory against the temporary storage space the command estimates it
+  will require, and if there is likely to be a problem, warns the user
+  before continuing. (`#63`_)
+- Additionally COT commands that write out an updated OVF/OVA now check the
   available disk space in the requested output location against the VM's
   predicted output size, and if there is likely to be a problem, warns the
   user before continuing.
 - ``Helper`` classes can now opt to cache their output to avoid repeatedly
   re-running the same command. Currently enabled for ``qemu-img info ...``
-  and ``isoinfo ...`` commands. (`#62_`)
-- New modules and APIs:
+  and ``isoinfo ...`` commands. (`#62`_)
+- New modules and APIs in support of the above:
 
   - ``Command.working_dir_disk_space_required()`` instance method, to ask a
     command to estimate how much temporary storage it will require. This
