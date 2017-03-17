@@ -12,6 +12,7 @@ We would like to thank:
   * Chandu Gutti
   * Jeff Haag
   * Jeff Loughridge
+  * Vincent Wenshi Lv
   * Jonathan Muslow
   * Scott O'Donnell
   * Rick Ogg
