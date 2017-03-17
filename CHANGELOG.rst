@@ -3,8 +3,8 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
-`Unreleased`_
--------------
+`2.0.0`_ - 2017-03-17
+---------------------
 
 **Fixed**
 
@@ -774,6 +774,7 @@ Initial public release.
 .. _verboselogs: https://verboselogs.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _2.0.0: https://github.com/glennmatthews/cot/compare/v1.9.1...v2.0.0
 .. _1.9.1: https://github.com/glennmatthews/cot/compare/v1.9.0...v1.9.1
 .. _1.9.0: https://github.com/glennmatthews/cot/compare/v1.8.2...v1.9.0
 .. _1.8.2: https://github.com/glennmatthews/cot/compare/v1.8.1...v1.8.2
