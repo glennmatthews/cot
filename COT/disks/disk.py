@@ -1,5 +1,5 @@
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -27,28 +27,115 @@ class DiskRepresentation(object):
     disk_format = None
     """Disk format represented by this class."""
 
-    def __init__(self, path,
-                 disk_subformat=None,
-                 capacity=None,
-                 files=None):
-        """Create a representation of an existing disk or create a new disk.
+    @staticmethod
+    def subclasses():
+        """List of subclasses of DiskRepresentation.
+
+        Wraps the :meth:`class.__subclasses__` builtin.
+        """
+        # pylint doesn't know about __subclasses__
+        # https://github.com/PyCQA/pylint/issues/555
+        # TODO: this should be fixed when pylint 2.0 is released
+        # pylint:disable=no-member
+        return DiskRepresentation.__subclasses__()
+
+    @staticmethod
+    def supported_disk_formats():
+        """List of disk format strings with support."""
+        return [subclass.disk_format
+                for subclass in DiskRepresentation.subclasses()]
+
+    @staticmethod
+    def class_for_format(disk_format):
+        """Get the DiskRepresentation subclass associated with the given format.
 
         Args:
-          path (str): Path to existing file or path to create new file at.
-          disk_subformat (str): Subformat option(s) of the disk to create
-              (e.g., 'rockridge' for ISO, 'streamOptimized' for VMDK), if any.
-          capacity (int): Capacity of disk to create
-          files (int): Files to place in the filesystem of this disk.
+          disk_format (str): Disk format string such as 'iso' or 'vmdk'
+
+        Returns:
+          DiskRepresentation: appropriate subclass object.
+        """
+        return next((subclass for subclass in DiskRepresentation.subclasses()
+                     if subclass.disk_format == disk_format),
+                    None)
+
+    @staticmethod
+    def from_file(path):
+        """Get a DiskRepresentation instance appropriate to the given file.
+
+        Args:
+          path (str): Path of existing file to represent.
+
+        Returns:
+          DiskRepresentation: Representation of this file.
+
+        Raises:
+          IOError: if no file exists at the given path
+          NotImplementedError: if the file is not a supported type.
+        """
+        if not os.path.exists(path):
+            raise IOError(2, "No such file or directory: {0}".format(path))
+        best_guess = None
+        best_confidence = 0
+        for subclass in DiskRepresentation.subclasses():
+            confidence = subclass.file_is_this_type(path)
+            if confidence > best_confidence:
+                logger.debug("File %s may be a %s, with confidence %d",
+                             path, subclass.disk_format, confidence)
+                best_guess = subclass
+                best_confidence = confidence
+            elif confidence > 0 and confidence == best_confidence:
+                logger.warning("For file %s, same confidence level (%d) for "
+                               "classes %s and %s. Using %s",
+                               path, confidence, best_guess,
+                               subclass, best_guess)
+        if best_guess is not None:
+            logger.verbose("File %s appears to be a %s",
+                           path, best_guess.disk_format)
+            return best_guess(path)
+        else:
+            raise NotImplementedError("No support for files of this type")
+
+    @classmethod
+    def for_new_file(cls, path, disk_format, **kwargs):
+        """Create a new disk file and return a DiskRepresentation.
+
+        Args:
+          path (str): Path to create file at.
+          disk_format (str): Disk format to create, such as 'iso' or 'vmdk'.
+          **kwargs: Arguments to pass through to appropriate DiskRepresentation
+            subclass for this format.
+
+        Returns:
+          DiskRepresentation: representation of the created file.
+
+        Raises:
+          NotImplementedError: if ``disk_format`` is not supported.
+        """
+        if cls.disk_format != disk_format:
+            cls = cls.class_for_format(disk_format)
+            if cls is None:
+                raise NotImplementedError("No support for files of type '{0}'"
+                                          .format(disk_format))
+        cls.create_file(path, **kwargs)
+        return cls(path)
+
+    def __init__(self, path):
+        """Create a representation of an existing disk.
+
+        Args:
+          path (str): Path to existing file.
         """
         if not path:
             raise ValueError("Path must be set to a valid value, but got {0}"
                              .format(path))
-        self._path = path
-        self._disk_subformat = disk_subformat
-        self._capacity = capacity
-        self._files = files
         if not os.path.exists(path):
-            self.create_file()
+            raise HelperError(2, "No such file or directory: '{0}'"
+                              .format(path))
+        self._path = path
+        self._disk_subformat = None
+        self._capacity = None
+        self._files = None
 
     @property
     def path(self):
@@ -72,8 +159,8 @@ class DiskRepresentation(object):
                                    "from qemu-img:\n{0}"
                                    .format(output))
             self._capacity = match.group(1)
-            logger.verbose("Disk %s capacity is %s bytes", self.path,
-                           self._capacity)
+            logger.debug("Disk %s capacity is %s bytes", self.path,
+                         self._capacity)
         return self._capacity
 
     @property
@@ -82,6 +169,28 @@ class DiskRepresentation(object):
         if self._files is not None:
             return self._files
         raise NotImplementedError("Unable to determine file contents")
+
+    def convert_to(self, new_format, new_directory, new_subformat=None):
+        """Convert the disk file to a new format and return the new instance.
+
+        Args:
+          new_format (str): Format to convert to.
+          new_subformat (str): (optional) Sub-format to convert to.
+          new_directory (str): Directory path to store new image into.
+
+        Returns:
+          DiskRepresentation: Converted disk
+
+        Raises:
+          NotImplementedError: if new_format is not a supported type
+
+        .. seealso:: :meth:`from_other_image`
+        """
+        subclass = self.class_for_format(new_format)
+        if subclass is None:
+            raise NotImplementedError("No support for converting to type '{0}'"
+                                      .format(new_format))
+        return subclass.from_other_image(self, new_directory, new_subformat)
 
     @classmethod
     def from_other_image(cls, input_image, output_dir, output_subformat=None):
@@ -105,7 +214,8 @@ class DiskRepresentation(object):
           path (str): Path to file to check.
 
         Returns:
-          bool: True (file matches this type) or False (file does not match)
+          int: Confidence that this file matches. 0 is definitely not a match,
+          100 is definitely a match.
 
         Raises:
           HelperError: if no file exists at ``path``.
@@ -115,6 +225,8 @@ class DiskRepresentation(object):
                               .format(path))
 
         # Default implementation using qemu-img
+        logger.debug("Using 'qemu-img' to check whether %s is a %s",
+                     path, cls.disk_format)
         output = helpers['qemu-img'].call(['info', path])
         # Read the format from the output
         match = re.search(r"file format: (\S*)", output)
@@ -123,21 +235,63 @@ class DiskRepresentation(object):
                                "the output from qemu-img:\n{0}"
                                .format(output))
         file_format = match.group(1)
-        return file_format == cls.disk_format
+        if file_format == cls.disk_format:
+            return 100
+        else:
+            return 0
 
-    def create_file(self):
-        """Given parameters but not an existing file, create that file."""
-        if os.path.exists(self.path):
-            raise RuntimeError("File already exists at {0}".format(self.path))
-        if self._capacity is None and self._files is None:
+    @classmethod
+    def create_file(cls, path, files=None, capacity=None, **kwargs):
+        """Create a new disk image file of this type.
+
+        Args:
+          path (str): Location to create disk file.
+          files (list): List of files to include in the disk's filesystem.
+          capacity (str): Disk capacity.
+          **kwargs: Subclasses and :meth:`_create_file` may accept additional
+            parameters.
+
+        Raises:
+          ValueError: if path is not a valid string
+          RuntimeError: if a file already exists at path.
+          RuntimeError: if neither files nor capacity is specified
+        """
+        if not path:
+            raise ValueError("Path must be set to a valid value, but got {0}"
+                             .format(path))
+        if os.path.exists(path):
+            raise RuntimeError("File already exists at {0}".format(path))
+        if capacity is None and files is None:
             raise RuntimeError("Capacity and/or files must be specified!")
-        self._create_file()
+        cls._create_file(path, files=files, capacity=capacity, **kwargs)
 
-    def _create_file(self):
-        """Worker function for create_file()."""
+    @classmethod
+    def _create_file(cls, path, files=None, capacity=None, disk_subformat=None,
+                     **kwargs):
+        """Default worker function for create_file().
+
+        Creates a blank disk using ``qemu-img``.
+        Subclasses can override this method if needed.
+
+        Args:
+          path (str): Location to create disk file.
+          files (list): List of files to include in the disk's filesystem.
+          capacity (str): Disk capacity.
+          disk_subformat (str): Disk subformat such as 'streamOptimized'.
+          **kwargs: Subclasses may accept additional parameters.
+
+        Raises:
+          NotImplementedError: this generic implementation doesn't know how to
+            handle any non-empty value for ``files``.
+        """
+        # pylint: disable=unused-argument
+
         # Default implementation - create a blank disk using qemu-img
-        if self._files:
+        if files:
             raise NotImplementedError("Don't know how to create a disk of "
                                       "this format containing a filesystem")
-        helpers['qemu-img'].call(['create', '-f', self.disk_format,
-                                  self.path, self.capacity])
+        args = ['create', '-f', cls.disk_format]
+        if disk_subformat is not None:
+            args += ['-o', 'subformat=' + disk_subformat]
+        args += [path, capacity]
+        helpers['qemu-img'].call(args)

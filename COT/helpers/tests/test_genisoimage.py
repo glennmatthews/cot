@@ -3,7 +3,7 @@
 # test_genisoimage.py - Unit test cases for GenISOImage class.
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -21,7 +21,7 @@ import logging
 from distutils.version import StrictVersion
 import mock
 
-from COT.helpers.tests.test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperTestCase
 from COT.helpers.mkisofs import GenISOImage
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
-class TestGenISOImage(HelperUT):
+class TestGenISOImage(HelperTestCase):
     """Test cases for GenISOImage helper class."""
 
     def setUp(self):

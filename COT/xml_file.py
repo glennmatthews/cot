@@ -19,23 +19,8 @@
 import xml.etree.ElementTree as ET
 import logging
 import re
-import sys
 
 logger = logging.getLogger(__name__)
-
-
-def register_namespace(prefix, uri):
-    """Record a particular mapping between a namespace prefix and URI.
-
-    Args:
-      prefix (str): Namespace prefix such as "ovf"
-      uri (str): Namespace URI such as "http://schemas.dmtf.org/ovf/envelope/1"
-    """
-    try:
-        ET.register_namespace(prefix, uri)
-    except AttributeError:
-        # 2.6 doesn't have the above API so we must write directly
-        ET._namespace_map[uri] = prefix  # pylint: disable=protected-access
 
 
 class XML(object):
@@ -54,7 +39,7 @@ class XML(object):
         """
         match = re.match(r"\{(.*)\}", str(text))
         if not match:
-            logger.error("No namespace prefix on %s??", text)
+            logger.error("Name '%s' has no associated namespace!", text)
             return ""
         return match.group(1)
 
@@ -69,8 +54,8 @@ class XML(object):
           str: Bare name, such as "Element".
         """
         match = re.match(r"\{.*\}(.*)", str(text))
-        if match is None:
-            logger.error("No namespace prefix on %s??", text)
+        if not match:
+            logger.error("Name '%s' has no associated namespace!", text)
             return text
         else:
             return match.group(1)
@@ -85,9 +70,7 @@ class XML(object):
           xml_file (str): File path to read.
 
         Raises:
-          xml.etree.ElementTree.ParseError: if parsing fails under Python
-              2.7 or later
-          xml.parsers.expat.ExpatError: if parsing fails under Python 2.6
+          xml.etree.ElementTree.ParseError: if parsing fails
         """
         # Parse the XML into memory
         self.tree = ET.parse(xml_file)
@@ -101,7 +84,7 @@ class XML(object):
         Args:
           xml_file (str): Filename to write to
         """
-        logger.debug("Writing XML to %s", xml_file)
+        logger.verbose("Writing XML to %s", xml_file)
 
         # Pretty-print the XML for readability
         self.xml_reindent(self.root, 0)
@@ -116,13 +99,10 @@ class XML(object):
         # option
         #
         # This is a bug - see http://bugs.python.org/issue17088
-        if sys.hexversion >= 0x02070000:
-            self.tree.write(xml_file, xml_declaration=True, encoding='utf-8')
-        else:
-            # 2.6 doesn't have the xml_declaration parameter. Sigh.
-            self.tree.write(xml_file, encoding='utf-8')
+        self.tree.write(xml_file, xml_declaration=True, encoding='utf-8')
 
-    def xml_reindent(self, parent, depth):
+    @staticmethod
+    def xml_reindent(parent, depth=0):
         """Recursively add indentation to XML to make it look nice.
 
         Args:
@@ -134,7 +114,7 @@ class XML(object):
         last = None
         for elem in list(parent):
             elem.tail = "\n" + (" " * depth)
-            self.xml_reindent(elem, depth)
+            XML.xml_reindent(elem, depth)
             last = elem
 
         if last is not None:
@@ -201,28 +181,34 @@ class XML(object):
             label = tag
         else:
             elements = []
-            for t in tag:
-                elements.extend(parent.findall(t))
+            for tag_entry in tag:
+                elements.extend(parent.findall(tag_entry))
             label = [XML.strip_ns(t) for t in tag]
-        logger.debug("Examining %s %s elements under %s",
-                     len(elements), label, XML.strip_ns(parent.tag))
+
+        if not elements:
+            logger.spam("No children matching %s found under %s",
+                        label, XML.strip_ns(parent.tag))
+            return elements
+
+        logger.spam("Examining %s %s elements under %s",
+                    len(elements), label, XML.strip_ns(parent.tag))
         child_list = []
-        for e in elements:
+        for element in elements:
             found = True
 
             if attrib:
                 for key in attrib.keys():
-                    if e.get(key, None) != attrib[key]:
-                        logger.debug("Attribute '%s' (%s) does not match "
-                                     "expected value (%s)",
-                                     XML.strip_ns(key), e.get(key, ""),
-                                     attrib[key])
+                    if element.get(key, None) != attrib[key]:
+                        logger.spam("Attribute '%s' (%s) does not match "
+                                    "expected value (%s)",
+                                    XML.strip_ns(key), element.get(key, ""),
+                                    attrib[key])
                         found = False
                         break
 
             if found:
-                child_list.append(e)
-        logger.debug("Found %s matching %s elements", len(child_list), label)
+                child_list.append(element)
+        logger.spam("Found %s matching %s elements", len(child_list), label)
         return child_list
 
     @classmethod
@@ -244,13 +230,16 @@ class XML(object):
               known namespace.
         """
         if ordering and new_child.tag not in ordering:
-            if (known_namespaces and
-                    (XML.get_ns(new_child.tag) in known_namespaces)):
-                logger.warning("New child '%s' is not in the list of "
-                               "expected children under '%s': %s",
-                               new_child.tag,
+            child_ns = XML.get_ns(new_child.tag)
+            if known_namespaces and child_ns in known_namespaces:
+                logger.warning("New child '%s' is in a known namespace '%s',"
+                               " but is not in the list of expected children"
+                               " in this namespace under '%s':\n%s",
+                               XML.strip_ns(new_child.tag),
+                               child_ns,
                                XML.strip_ns(parent.tag),
-                               ordering)
+                               [XML.strip_ns(expected) for expected in ordering
+                                if XML.get_ns(expected) == child_ns])
             # Assume this is some sort of custom element, which
             # implicitly goes at the end of the list.
             ordering = None
@@ -259,7 +248,7 @@ class XML(object):
             parent.append(new_child)
         else:
             new_index = ordering.index(new_child.tag)
-            i = 0
+            index = 0
             found_position = False
             for child in list(parent):
                 try:
@@ -267,19 +256,24 @@ class XML(object):
                         found_position = True
                         break
                 except ValueError:
-                    if (known_namespaces and (XML.get_ns(child.tag) in
-                                              known_namespaces)):
+                    child_ns = XML.get_ns(child.tag)
+                    if known_namespaces and child_ns in known_namespaces:
                         logger.warning(
-                            "Existing child element '%s' is not in expected "
-                            "list of children under '%s': \n%s",
-                            child.tag, XML.strip_ns(parent.tag), ordering)
+                            "Found unexpected child element '%s' under '%s' in"
+                            " namespace '%s'. The list of expected children in"
+                            " this namespace is only:\n%s",
+                            XML.strip_ns(child.tag),
+                            XML.strip_ns(parent.tag),
+                            child_ns,
+                            [XML.strip_ns(expected) for expected in ordering
+                             if XML.get_ns(expected) == child_ns])
                     # Assume this is some sort of custom element - all known
                     # elements should implicitly come before it.
                     found_position = True
                     break
-                i += 1
+                index += 1
             if found_position:
-                parent.insert(i, new_child)
+                parent.insert(index, new_child)
             else:
                 parent.append(new_child)
 
@@ -305,12 +299,12 @@ class XML(object):
             attrib = {}
         element = cls.find_child(parent, tag, attrib=attrib)
         if element is None:
-            logger.debug("Creating new %s under %s",
-                         XML.strip_ns(tag), XML.strip_ns(parent.tag))
+            logger.spam("Creating new %s element under parent %s",
+                        XML.strip_ns(tag), XML.strip_ns(parent.tag))
             element = ET.Element(tag)
             XML.add_child(parent, element, ordering, known_namespaces)
         if text is not None:
             element.text = str(text)
-        for a in attrib:
-            element.set(a, attrib[a])
+        for attr in attrib:
+            element.set(attr, attrib[attr])
         return element

@@ -1,5 +1,5 @@
 # September 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,15 +14,13 @@
 
 import logging
 
-from COT.platforms.generic import GenericPlatform
-from COT.data_validation import (
-    ValueTooLowError, ValueTooHighError, validate_int,
-)
+from COT.platforms.platform import Platform, Hardware
+from COT.data_validation import ValidRange
 
 logger = logging.getLogger(__name__)
 
 
-class NXOSv(GenericPlatform):
+class NXOSv(Platform):
     """Platform-specific logic for Cisco NX-OSv (Titanium)."""
 
     PLATFORM_NAME = "Cisco NX-OSv"
@@ -31,8 +29,14 @@ class NXOSv(GenericPlatform):
     LITERAL_CLI_STRING = None
     SUPPORTED_NIC_TYPES = ["E1000", "virtio"]
 
-    @classmethod
-    def guess_nic_name(cls, nic_number):
+    HARDWARE_LIMITS = Platform.HARDWARE_LIMITS.copy()
+    HARDWARE_LIMITS.update({
+        Hardware.cpus: ValidRange(1, 8),
+        Hardware.memory: ValidRange(2048, 8192),
+        Hardware.serial_count: ValidRange(1, 2),
+    })
+
+    def guess_nic_name(self, nic_number):
         """NX-OSv names its NICs a bit interestingly...
 
         Args:
@@ -54,44 +58,5 @@ class NXOSv(GenericPlatform):
             return ("Ethernet{0}/{1}".format((nic_number - 2) // 48 + 2,
                                              (nic_number - 2) % 48 + 1))
 
-    @classmethod
-    def validate_cpu_count(cls, cpus):
-        """NX-OSv requires 1-8 CPUs.
 
-        Args:
-          cpus (int): Number of CPUs
-
-        Raises:
-          ValueTooLowError: if ``cpus`` is less than 1
-          ValueTooHighError: if ``cpus`` is more than 8
-        """
-        validate_int(cpus, 1, 8, "CPUs")
-
-    @classmethod
-    def validate_memory_amount(cls, mebibytes):
-        """NX-OSv requires 2-8 GiB of RAM.
-
-        Args:
-          mebibytes (int): RAM, in MiB.
-
-        Raises:
-          ValueTooLowError: if ``mebibytes`` is less than 2048
-            ValueTooHighError: if ``mebibytes`` is more than 8192
-        """
-        if mebibytes < 2048:
-            raise ValueTooLowError("RAM", str(mebibytes) + " MiB", "2 GiB")
-        elif mebibytes > 8192:
-            raise ValueTooHighError("RAM", str(mebibytes) + " MiB", "8 GiB")
-
-    @classmethod
-    def validate_serial_count(cls, count):
-        """NX-OSv requires 1-2 serial ports.
-
-        Args:
-          count (int): Number of serial ports.
-
-        Raises:
-          ValueTooLowError: if ``count`` is less than 1
-          ValueTooHighError: if ``count`` is more than 2
-        """
-        validate_int(count, 1, 2, "serial ports")
+Platform.PRODUCT_PLATFORM_MAP['com.cisco.nx-osv'] = NXOSv

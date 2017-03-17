@@ -29,11 +29,11 @@ sys.path.insert(0, os.path.abspath('..'))
 
 
 def regenerate_usage_contents(force=False):
-    """Get CLI usage strings for all submodules and write them to file."""
+    """Get CLI usage strings for all COT commands and write them to file."""
     COT_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     logger.info("COT path: "+COT_path)
     sys.path.insert(0, COT_path)
-    from COT.cli import CLI
+    from COT.ui.cli import CLI
     # Don't use our actual terminal width as it may vary.
     # Instead, use 79 chars minus the 8-character indent used in man pages.
     cli = CLI(terminal_width=71)

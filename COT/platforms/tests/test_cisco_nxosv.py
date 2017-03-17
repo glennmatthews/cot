@@ -1,7 +1,7 @@
 # test_cisco_nxosv.py - Unit test cases for Cisco NXOSv platform
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -14,71 +14,72 @@
 
 """Unit test cases for NXOSv platform."""
 
-import unittest
 from COT.platforms.cisco_nxosv import NXOSv
 from COT.data_validation import (
     ValueUnsupportedError, ValueTooLowError, ValueTooHighError
 )
+from COT.platforms.tests import PlatformTests
 
 
-class TestNXOSv(unittest.TestCase):
+class TestNXOSv(PlatformTests.PlatformTest):
     """Test cases for Cisco NX-OSv platform handling."""
 
     cls = NXOSv
+    product_string = "com.cisco.nx-osv"
 
     def test_nic_name(self):
         """Test NIC name construction."""
-        self.assertEqual(self.cls.guess_nic_name(1),
+        self.assertEqual(self.ins.guess_nic_name(1),
                          "mgmt0")
-        self.assertEqual(self.cls.guess_nic_name(2),
+        self.assertEqual(self.ins.guess_nic_name(2),
                          "Ethernet2/1")
-        self.assertEqual(self.cls.guess_nic_name(3),
+        self.assertEqual(self.ins.guess_nic_name(3),
                          "Ethernet2/2")
-        self.assertEqual(self.cls.guess_nic_name(4),
+        self.assertEqual(self.ins.guess_nic_name(4),
                          "Ethernet2/3")
         # ...
-        self.assertEqual(self.cls.guess_nic_name(49),
+        self.assertEqual(self.ins.guess_nic_name(49),
                          "Ethernet2/48")
-        self.assertEqual(self.cls.guess_nic_name(50),
+        self.assertEqual(self.ins.guess_nic_name(50),
                          "Ethernet3/1")
 
     def test_cpu_count(self):
         """Test CPU count limits."""
-        self.assertRaises(ValueTooLowError, self.cls.validate_cpu_count, 0)
-        self.cls.validate_cpu_count(1)
-        self.cls.validate_cpu_count(8)
-        self.assertRaises(ValueTooHighError, self.cls.validate_cpu_count, 9)
+        self.assertRaises(ValueTooLowError, self.ins.validate_cpu_count, 0)
+        self.ins.validate_cpu_count(1)
+        self.ins.validate_cpu_count(8)
+        self.assertRaises(ValueTooHighError, self.ins.validate_cpu_count, 9)
 
     def test_memory_amount(self):
         """Test RAM allocation limits."""
         self.assertRaises(ValueTooLowError,
-                          self.cls.validate_memory_amount, 2047)
-        self.cls.validate_memory_amount(2048)
-        self.cls.validate_memory_amount(8192)
+                          self.ins.validate_memory_amount, 2047)
+        self.ins.validate_memory_amount(2048)
+        self.ins.validate_memory_amount(8192)
         self.assertRaises(ValueTooHighError,
-                          self.cls.validate_memory_amount, 8193)
+                          self.ins.validate_memory_amount, 8193)
 
     def test_nic_count(self):
         """Test NIC range limits."""
-        self.assertRaises(ValueTooLowError, self.cls.validate_nic_count, -1)
-        self.cls.validate_nic_count(0)
-        self.cls.validate_nic_count(32)
+        self.assertRaises(ValueTooLowError, self.ins.validate_nic_count, -1)
+        self.ins.validate_nic_count(0)
+        self.ins.validate_nic_count(32)
         # No upper bound known at present
 
     def test_nic_type(self):
         """Test NIC valid and invalid types."""
         self.assertRaises(ValueUnsupportedError,
-                          self.cls.validate_nic_type, "E1000e")
-        self.cls.validate_nic_type("E1000")
+                          self.ins.validate_nic_type, "E1000e")
+        self.ins.validate_nic_type("E1000")
         self.assertRaises(ValueUnsupportedError,
-                          self.cls.validate_nic_type, "PCNet32")
-        self.cls.validate_nic_type("virtio")
+                          self.ins.validate_nic_type, "PCNet32")
+        self.ins.validate_nic_type("virtio")
         self.assertRaises(ValueUnsupportedError,
-                          self.cls.validate_nic_type, "VMXNET3")
+                          self.ins.validate_nic_type, "VMXNET3")
 
     def test_serial_count(self):
         """Test serial port range limits."""
-        self.assertRaises(ValueTooLowError, self.cls.validate_serial_count, 0)
-        self.cls.validate_serial_count(1)
-        self.cls.validate_serial_count(2)
-        self.assertRaises(ValueTooHighError, self.cls.validate_serial_count, 3)
+        self.assertRaises(ValueTooLowError, self.ins.validate_serial_count, 0)
+        self.ins.validate_serial_count(1)
+        self.ins.validate_serial_count(2)
+        self.assertRaises(ValueTooHighError, self.ins.validate_serial_count, 3)

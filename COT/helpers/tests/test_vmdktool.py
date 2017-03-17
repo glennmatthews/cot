@@ -21,7 +21,7 @@ from distutils.version import StrictVersion
 
 import mock
 
-from COT.helpers.tests.test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperTestCase
 from COT.helpers.vmdktool import VMDKTool
 from COT.helpers import helpers
 
@@ -29,8 +29,8 @@ from COT.helpers import helpers
 
 
 @mock.patch('COT.helpers.Helper.download_and_expand_tgz',
-            side_effect=HelperUT.stub_download_and_expand_tgz)
-class TestVMDKTool(HelperUT):
+            side_effect=HelperTestCase.stub_download_and_expand_tgz)
+class TestVMDKTool(HelperTestCase):
     """Test cases for VMDKTool helper class."""
 
     def setUp(self):

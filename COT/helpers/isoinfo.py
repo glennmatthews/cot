@@ -40,3 +40,19 @@ class ISOInfo(Helper):
             "isoinfo",
             info_uri="http://cdrecord.org",
             version_regexp=r"isoinfo ([0-9.]+)")
+
+    def call(self, args, **kwargs):
+        """Call isoinfo with the given arguments.
+
+        Caches the output of:
+
+        - ``isoinfo -i FILE -d`` (volume descriptior info)
+        - ``isoinfo -i FILE -f`` (``find . -print`` equivalent)
+        - ``isoinfo -i FILE -l`` (``ls -lR`` equivalent)
+
+        For the parameters, see :meth:`COT.helpers.helper.Helper.call` etc.
+        """
+        output = super(ISOInfo, self).call(args, **kwargs)
+        if output and ('-d' in args or '-f' in args or '-l' in args):
+            self.cached_output[tuple(args)] = output
+        return output

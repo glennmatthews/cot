@@ -11,3 +11,9 @@
 # distributed except according to the terms contained in the LICENSE.txt file.
 
 """Unit test cases for the COT package and its submodules."""
+
+from .cot_testcase import COTTestCase
+
+__all__ = (
+    "COTTestCase",
+)

@@ -73,8 +73,8 @@ class FatDisk(Helper):
 
         with self.download_and_expand_tgz(
                 'https://github.com/goblinhack/'
-                'fatdisk/archive/v1.0.0-beta.tar.gz') as d:
-            new_d = os.path.join(d, 'fatdisk-1.0.0-beta')
+                'fatdisk/archive/v1.0.0-beta.tar.gz') as directory:
+            new_d = os.path.join(directory, 'fatdisk-1.0.0-beta')
             logger.info("Compiling 'fatdisk'")
             check_call(['./RUNME'], cwd=new_d)
             destdir = os.getenv('DESTDIR', '')
@@ -86,4 +86,4 @@ class FatDisk(Helper):
             logger.info("Compilation complete, installing to " +
                         destination)
             self.mkdir(destination)
-            self.cp(os.path.join(new_d, 'fatdisk'), destination)
+            self.copy_file(os.path.join(new_d, 'fatdisk'), destination)

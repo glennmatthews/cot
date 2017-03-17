@@ -46,7 +46,6 @@
   no_whitespace
   non_negative_int
   positive_int
-  to_string
   validate_int
   truth_value
 
@@ -56,40 +55,12 @@
   NIC_TYPES
 """
 
-import xml.etree.ElementTree as ET
 import hashlib
 import re
-import sys
+from collections import namedtuple
 from distutils.util import strtobool
 
-
-def to_string(obj):
-    """Get string representation of an object, special-case for XML Element.
-
-    Args:
-      obj (object): Object to represent as a string.
-    Returns:
-      str: string representation
-    Examples:
-      ::
-
-        >>> to_string("Hello")
-        'Hello'
-        >>> to_string(27.5)
-        '27.5'
-        >>> e = ET.Element('hello', attrib={'key': 'value'})
-        >>> print(e)   # doctest: +ELLIPSIS
-        <Element ...hello... at ...>
-        >>> print(to_string(e))
-        <hello key="value" />
-    """
-    if ET.iselement(obj):
-        if sys.version_info[0] >= 3:
-            return ET.tostring(obj, encoding='unicode')
-        else:
-            return ET.tostring(obj)
-    else:
-        return str(obj)
+from COT.utilities import to_string
 
 
 def alphanum_split(key):
@@ -120,7 +91,7 @@ def alphanum_split(key):
     return [text_to_int(c) for c in re.split('([0-9]+)', key)]
 
 
-def natural_sort(l):
+def natural_sort(iterable):
     """Sort the given list "naturally" rather than in ASCII order.
 
     E.g, "10" comes after "9" rather than between "1" and "2".
@@ -128,7 +99,7 @@ def natural_sort(l):
     See also http://nedbatchelder.com/blog/200712/human_sorting.html
 
     Args:
-      l (list): List to sort
+      iterable (list): List to sort
     Returns:
       list: Sorted list
     Examples:
@@ -140,7 +111,7 @@ def natural_sort(l):
         ['1st', '3rd', '10th', '101st']
     """
     # Sort based on alphanum_split return value
-    return sorted(l, key=alphanum_split)
+    return sorted(iterable, key=alphanum_split)
 
 
 def match_or_die(first_label, first, second_label, second):
@@ -261,7 +232,7 @@ def canonicalize_nic_subtype(subtype):
         Unsupported value 'foobar' for NIC subtype ...
 
     .. seealso::
-       :meth:`COT.platforms.GenericPlatform.validate_nic_type`
+       :meth:`COT.platforms.Platform.validate_nic_type`
     """
     return canonicalize_helper("NIC subtype", subtype,
                                _NIC_MAPPINGS, re.IGNORECASE)
@@ -307,12 +278,12 @@ def canonicalize_scsi_subtype(subtype):
                                re.IGNORECASE)
 
 
-def check_for_conflict(label, li):
+def check_for_conflict(label, refs):
     """Make sure the list does not contain references to more than one object.
 
     Args:
       label (str): Descriptive label to be used if an error is raised
-      li (list): List of object references (which may include ``None``)
+      refs (list): List of object references (which may include ``None``)
     Raises:
       ValueMismatchError: if references differ
     Returns:
@@ -333,10 +304,10 @@ def check_for_conflict(label, li):
         Please correct or clarify your search parameters.
     """
     obj = None
-    for i, obj1 in enumerate(li):
+    for index, obj1 in enumerate(refs):
         if obj1 is None:
             continue
-        for obj2 in li[(i+1):]:
+        for obj2 in refs[(index+1):]:
             if obj2 is not None and obj1 != obj2:
                 raise ValueMismatchError(
                     "Found multiple candidates for the {0}:"
@@ -358,9 +329,9 @@ def file_checksum(path_or_obj, checksum_type):
     """
     # pylint: disable=redefined-variable-type
     if checksum_type == 'md5':
-        h = hashlib.md5()
+        hash_obj = hashlib.md5()
     elif checksum_type == 'sha1':
-        h = hashlib.sha1()
+        hash_obj = hashlib.sha1()
     else:
         raise NotImplementedError(
             "No support for generating checksum type {0}"
@@ -380,12 +351,12 @@ def file_checksum(path_or_obj, checksum_type):
             buf = file_obj.read(blocksize)
             if len(buf) == 0:
                 break
-            h.update(buf)
+            hash_obj.update(buf)
     finally:
         if file_obj != path_or_obj:
             file_obj.close()
 
-    return h.hexdigest()
+    return hash_obj.hexdigest()
 
 
 def mac_address(string):
@@ -473,7 +444,7 @@ def no_whitespace(string):
 
 def validate_int(string,
                  minimum=None, maximum=None,
-                 label="input"):
+                 label=None):
     """Parser helper function for validating integer arguments in a range.
 
     Args:
@@ -506,24 +477,27 @@ def validate_int(string,
         ...     print(e)
         Value '100' for x is too high - must be at most 10
     """
+    if label is None:
+        label = "input"
     try:
-        i = int(string)
+        value = int(string)
     except ValueError:
         raise ValueUnsupportedError(label, string, "integer")
-    if minimum is not None and i < minimum:
-        raise ValueTooLowError(label, i, minimum)
-    if maximum is not None and i > maximum:
-        raise ValueTooHighError(label, i, maximum)
-    return i
+    if minimum is not None and value < minimum:
+        raise ValueTooLowError(label, value, minimum)
+    if maximum is not None and value > maximum:
+        raise ValueTooHighError(label, value, maximum)
+    return value
 
 
-def non_negative_int(string):
+def non_negative_int(string, label=None):
     """Parser helper function for integer arguments that must be 0 or more.
 
     Alias for :func:`validate_int` setting :attr:`minimum` to 0.
 
     Args:
       string (str): String to validate.
+      label (str): Label to include in any errors raised
     Returns:
       int: Validated integer value
     Raises:
@@ -542,16 +516,17 @@ def non_negative_int(string):
         ...     print(e)
         Value '-1' for input is too low - must be at least 0
     """
-    return validate_int(string, minimum=0)
+    return validate_int(string, minimum=0, label=label)
 
 
-def positive_int(string):
+def positive_int(string, label=None):
     """Parser helper function for integer arguments that must be 1 or more.
 
     Alias for :func:`validate_int` setting :attr:`minimum` to 1.
 
     Args:
       string (str): String to validate.
+      label (str): Label to include in any errors raised
     Returns:
       int: Validated integer value
     Raises:
@@ -568,7 +543,7 @@ def positive_int(string):
         ...     print(e)
         Value '0' for input is too low - must be at least 1
     """
-    return validate_int(string, minimum=1)
+    return validate_int(string, minimum=1, label=label)
 
 
 def truth_value(value):
@@ -610,6 +585,10 @@ def truth_value(value):
             ['y', 'yes', 't', 'true', 'on', 1,
              'n', 'no', 'f', 'false', 'off', 0]
         )
+
+
+ValidRange = namedtuple('ValidRange', ['minimum', 'maximum'])
+"""Simple helper class representing a range of valid values."""
 
 
 # Some handy exception and error types we can throw
@@ -680,6 +659,6 @@ class ValueTooHighError(ValueUnsupportedError):
                         self.expected_value))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":   # pragma: no cover
     import doctest
     doctest.testmod()

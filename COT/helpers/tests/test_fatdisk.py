@@ -16,25 +16,22 @@
 
 """Unit test cases for the COT.helpers.fatdisk module."""
 
-import logging
 import os
 import re
 from distutils.version import StrictVersion
 
 import mock
 
-from COT.helpers.tests.test_helper import HelperUT
+from COT.helpers.tests.test_helper import HelperTestCase
 from COT.helpers.fatdisk import FatDisk
 from COT.helpers import helpers
-
-logger = logging.getLogger(__name__)
 
 # pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
 @mock.patch('COT.helpers.fatdisk.FatDisk.download_and_expand_tgz',
-            side_effect=HelperUT.stub_download_and_expand_tgz)
-class TestFatDisk(HelperUT):
+            side_effect=HelperTestCase.stub_download_and_expand_tgz)
+class TestFatDisk(HelperTestCase):
     """Test cases for FatDisk helper class."""
 
     def setUp(self):
@@ -177,7 +174,6 @@ class TestFatDisk(HelperUT):
     @staticmethod
     def _find_make_only(name):
         """Stub for distutils.spawn.find_executable - only finds 'make'."""
-        logger.info("stub_find_executable(%s)", name)
         if name == 'make':
             return "/bin/make"
         else:

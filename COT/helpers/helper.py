@@ -56,31 +56,11 @@ import re
 import shutil
 import subprocess
 
-try:
-    from subprocess import check_output as _check_output
-except ImportError:
-    # Python 2.6 doesn't have subprocess.check_output.
-    # Implement it ourselves:
-    def _check_output(args, **kwargs):
-        process = subprocess.Popen(args,
-                                   stdout=subprocess.PIPE,
-                                   **kwargs)
-        stdout, _ = process.communicate()
-        retcode = process.poll()
-        if retcode:
-            e = subprocess.CalledProcessError(retcode, " ".join(args))
-            e.output = stdout
-            raise e
-        return stdout
-
 import tarfile
 import distutils.spawn
 from distutils.version import StrictVersion
 import requests
 
-from verboselogs import VerboseLogger
-
-logging.setLoggerClass(VerboseLogger)
 logger = logging.getLogger(__name__)
 
 try:
@@ -90,6 +70,7 @@ except ImportError:
     # Python 2.x
     import tempfile
 
+    # pylint: disable=invalid-name
     @contextlib.contextmanager
     def TemporaryDirectory(suffix='',   # noqa: N802
                            prefix='tmp',
@@ -159,7 +140,7 @@ class Helper(object):
     .. autosummary::
       :nosignatures:
 
-      cp
+      copy_file
       download_and_expand_tgz
       mkdir
 
@@ -207,6 +188,11 @@ class Helper(object):
             version_args = ['--version']
         self._version_args = version_args
         self._version_regexp = version_regexp
+        self.cached_output = {}
+        """Cache of call args --> output from this call.
+
+        This is opt-in per-subclass - nothing is cached by default.
+        """
 
     def __bool__(self):
         """A helper is True if installed and False if not installed."""
@@ -235,13 +221,13 @@ class Helper(object):
     def path(self):
         """Discovered path to the helper."""
         if not self._path:
-            logger.verbose("Checking for helper executable %s", self.name)
+            logger.spam("Checking for helper executable %s", self.name)
             self._path = distutils.spawn.find_executable(self.name)
             if self._path:
-                logger.verbose("%s is at %s", self.name, self.path)
+                logger.debug("%s is at %s", self.name, self.path)
                 self._installed = True
             else:
-                logger.verbose("No path to %s found", self.name)
+                logger.debug("No path to %s found", self.name)
         return self._path
 
     @property
@@ -275,15 +261,33 @@ class Helper(object):
         return self._version
 
     def call(self, args,
-             capture_output=True, **kwargs):
+             capture_output=True,
+             use_cached=True,
+             **kwargs):
         """Call the helper program with the given arguments.
 
         Args:
-          args (list): List of arguments to the helper program.
+          args (tuple): List of arguments to the helper program.
           capture_output (boolean): If ``True``, stdout/stderr will be
-              redirected to a buffer and returned, instead of being displayed
-              to the user. (I.e., :func:`check_output` will be invoked
-              instead of :func:`check_call`)
+            redirected to a buffer and returned, instead of being displayed
+            to the user. (I.e., :func:`check_output` will be invoked
+            instead of :func:`check_call`)
+          use_cached (boolean): If ``True``, and ``capture_output`` is also
+             ``True``, then if there is an entry in :attr:`cached_output`
+             for the given ``args``, just return that entry instead of
+             calling the helper again.
+             Ignored if ``capture_output`` is ``False``.
+
+        .. note::
+          By default no captured output is cached (as it may not necessarily
+          be appropriate to cache the output of many commands.) Subclasses
+          that wish to cache output of certain calls should wrap this method
+          with the appropriate logic, typically along the lines of::
+
+              output = super(MyHelper, self).call(args, *kwargs)
+              if output and args[0] == 'info':
+                  self.cached_output[args] = output
+              return output
 
         Returns:
           str: Captured stdout/stderr if :attr:`capture_output` is True,
@@ -306,11 +310,23 @@ class Helper(object):
                     "Please install it and/or check your $PATH."
                     .format(self.name))
             self.install()
-        args = [self.name] + args
+        # Force args to be a tuple if it was a list,
+        # as tuple is hashable for the cache and list is not.
+        args = tuple(args)
+        call_args = [self.name] + list(args)
         if capture_output:
-            return check_output(args, **kwargs)
+            if use_cached and args in self.cached_output:
+                logger.debug("Returning cached output of '%s'",
+                             " ".join(call_args))
+                logger.spam("Cached output:\n%s",
+                            self.cached_output[args])
+                return self.cached_output[args]
+            # Default implementation does not cache any output.
+            # Subclasses should wrap this method if they want to
+            # cache output from specific commands.
+            return check_output(call_args, **kwargs)
         else:
-            check_call(args, **kwargs)
+            check_call(call_args, **kwargs)
             return None
 
     def install(self):
@@ -329,7 +345,7 @@ class Helper(object):
             return
         if not self.installable:
             raise self.unsure_how_to_install()
-        logger.info("Installing '%s'...", self.name)
+        logger.notice("Installing '%s'...", self.name)
         # Call the subclass implementation
         self._install()
         # Make sure it actually performed as promised
@@ -339,7 +355,7 @@ class Helper(object):
                 "Installation did not raise an exception, but afterward, "
                 "unable to locate {0}!".format(self.name))
 
-        logger.info("Successfully installed '%s'", self.name)
+        logger.notice("Successfully installed '%s'", self.name)
 
     def unsure_how_to_install(self):
         """Return a RuntimeError or NotImplementedError for install trouble."""
@@ -410,25 +426,21 @@ class Helper(object):
         Yields:
           str: Temporary directory path where the archive has been extracted.
         """
-        with TemporaryDirectory(prefix="cot_helper") as d:
-            logger.debug("Temporary directory is %s", d)
+        with TemporaryDirectory(prefix="cot_helper") as directory:
+            logger.debug("Temporary directory is %s", directory)
             logger.verbose("Downloading and extracting %s", url)
             response = requests.get(url, stream=True)
-            tgz = os.path.join(d, 'helper.tgz')
-            with open(tgz, 'wb') as f:
-                shutil.copyfileobj(response.raw, f)
+            tgz = os.path.join(directory, 'helper.tgz')
+            with open(tgz, 'wb') as fileobj:
+                shutil.copyfileobj(response.raw, fileobj)
             del response
             logger.debug("Extracting %s", tgz)
-            # the "with tarfile.open()..." construct isn't supported in 2.6
-            tarf = tarfile.open(tgz, "r:gz")
+            with tarfile.open(tgz, "r:gz") as tarf:
+                tarf.extractall(path=directory)
             try:
-                tarf.extractall(path=d)
+                yield directory
             finally:
-                tarf.close()
-            try:
-                yield d
-            finally:
-                logger.debug("Cleaning up temporary directory %s", d)
+                logger.debug("Cleaning up temporary directory %s", directory)
 
     @staticmethod
     def mkdir(directory, permissions=493):    # 493 == 0o755
@@ -446,23 +458,23 @@ class Helper(object):
             raise RuntimeError("Path {0} exists but is not a directory!"
                                .format(directory))
         try:
-            logger.verbose("Creating directory " + directory)
+            logger.debug("Creating directory " + directory)
             os.makedirs(directory, permissions)
             return True
-        except OSError as e:
-            logger.verbose("Directory %s creation failed, trying sudo",
-                           directory)
+        except OSError as exc:
+            logger.debug("Directory %s creation failed, trying sudo",
+                         directory)
             try:
                 check_call(['sudo', 'mkdir', '-p',
                             '--mode=%o' % permissions,
                             directory])
             except HelperError:
                 # That failed too - re-raise the original exception
-                raise e
+                raise exc
             return True
 
     @staticmethod
-    def cp(src, dest):
+    def copy_file(src, dest):
         """Copy the given src to the given dest, using sudo if needed.
 
         Args:
@@ -475,20 +487,20 @@ class Helper(object):
         Raises:
           HelperError: if file copying fails
         """
-        logger.verbose("Copying %s to %s", src, dest)
+        logger.debug("Copying %s to %s", src, dest)
         try:
             shutil.copy(src, dest)
-        except (OSError, IOError) as e:
-            logger.verbose('Installation error, trying sudo.')
+        except (OSError, IOError) as exc:
+            logger.debug('Installation error, trying sudo.')
             try:
                 check_call(['sudo', 'cp', src, dest])
             except HelperError:
                 # That failed too - re-raise the original exception
-                raise e
+                raise exc
         return True
 
 
-helpers = HelperDict(Helper)
+helpers = HelperDict(Helper)   # pylint: disable=invalid-name
 """Dictionary of concrete Helper subclasses to be populated at load time."""
 
 
@@ -557,23 +569,25 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
         Permission denied
     """
     cmd = args[0]
-    logger.info("Calling '%s'...", " ".join(args))
+    # As this call will output to stdout/stderr, make sure the user knows
+    # what's about to happen
+    logger.notice("Calling '%s'...", " ".join(args))
     try:
         subprocess.check_call(args, **kwargs)
-    except OSError as e:
-        if retry_with_sudo and (e.errno == errno.EPERM or
-                                e.errno == errno.EACCES):
+    except OSError as exc:
+        if retry_with_sudo and (exc.errno == errno.EPERM or
+                                exc.errno == errno.EACCES):
             check_call(['sudo'] + args,
                        require_success=require_success,
                        retry_with_sudo=False,
                        **kwargs)
             return
-        if e.errno != errno.ENOENT:
+        if exc.errno != errno.ENOENT:
             raise
-        raise HelperNotFoundError(e.errno,
+        raise HelperNotFoundError(exc.errno,
                                   "Unable to locate helper program '{0}'. "
                                   "Please check your $PATH.".format(cmd))
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError as exc:
         if require_success:
             if retry_with_sudo:
                 check_call(['sudo'] + args,
@@ -581,10 +595,10 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
                            retry_with_sudo=False,
                            **kwargs)
                 return
-            raise HelperError(e.returncode,
+            raise HelperError(exc.returncode,
                               "Helper program '{0}' exited with error {1}"
-                              .format(cmd, e.returncode))
-    logger.info("...done")
+                              .format(cmd, exc.returncode))
+    logger.notice("...done")
     logger.debug("%s exited successfully", cmd)
 
 
@@ -646,32 +660,34 @@ def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
         Permission denied
     """
     cmd = args[0]
-    logger.info("Calling '%s' and capturing its output...", " ".join(args))
+    # Unlike check_call above, here we capture stderr/stdout, so it's
+    # much less important to notify the user about this.
+    logger.debug("Calling '%s' and capturing its output...", " ".join(args))
     try:
-        stdout = _check_output(args,
-                               stderr=subprocess.STDOUT,
-                               **kwargs).decode('ascii', 'ignore')
-    except OSError as e:
-        if e.errno != errno.ENOENT:
+        stdout = subprocess.check_output(args,
+                                         stderr=subprocess.STDOUT,
+                                         **kwargs).decode('ascii', 'ignore')
+    except OSError as exc:
+        if exc.errno != errno.ENOENT:
             raise
-        raise HelperNotFoundError(e.errno,
+        raise HelperNotFoundError(exc.errno,
                                   "Unable to locate helper program '{0}'. "
                                   "Please check your $PATH.".format(cmd))
-    except subprocess.CalledProcessError as e:
-        stdout = e.output.decode()
+    except subprocess.CalledProcessError as exc:
+        stdout = exc.output.decode()
         if require_success:
             if retry_with_sudo:
                 return check_output(['sudo'] + args,
                                     require_success=require_success,
                                     retry_with_sudo=False,
                                     **kwargs)
-            raise HelperError(e.returncode,
+            raise HelperError(exc.returncode,
                               "Helper program '{0}' exited with error {1}:"
-                              "\n> {2}\n{3}".format(cmd, e.returncode,
+                              "\n> {2}\n{3}".format(cmd, exc.returncode,
                                                     " ".join(args),
                                                     stdout))
-    logger.info("...done")
-    logger.verbose("%s output:\n%s", cmd, stdout)
+    logger.debug("...done")
+    logger.spam("%s output:\n%s", cmd, stdout)
     return stdout
 
 
@@ -729,6 +745,6 @@ def helper_select(choices):
     raise HelperNotFoundError(msg)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":   # pragma: no cover
     import doctest
     doctest.testmod()

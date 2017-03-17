@@ -3,7 +3,7 @@
 # test_file_reference.py - Unit test cases for COT file reference handling
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2015 the COT project developers.
+# Copyright (c) 2015, 2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -22,11 +22,11 @@ import tarfile
 from contextlib import closing
 from pkg_resources import resource_filename
 
-from COT.tests.ut import COT_UT
+from COT.tests import COTTestCase
 from COT.file_reference import FileOnDisk, FileInTAR
 
 
-class TestFileOnDisk(COT_UT):
+class TestFileOnDisk(COTTestCase):
     """Test cases for FileOnDisk class."""
 
     def test_nonexistent_file(self):
@@ -73,15 +73,16 @@ class TestFileOnDisk(COT_UT):
 
     def test_equality(self):
         """Test the __eq__ and __ne__ operators."""
-        a = FileOnDisk(self.input_ovf)
-        b = FileOnDisk(os.path.dirname(self.input_ovf),
-                       os.path.basename(self.input_ovf))
-        self.assertEqual(a, b)
-        c = FileOnDisk(self.input_vmdk)
-        self.assertNotEqual(a, c)
+        entry_from_path = FileOnDisk(self.input_ovf)
+        entry_from_dir_plus_name = FileOnDisk(
+            os.path.dirname(self.input_ovf),
+            os.path.basename(self.input_ovf))
+        self.assertEqual(entry_from_path, entry_from_dir_plus_name)
+        other_entry = FileOnDisk(self.input_vmdk)
+        self.assertNotEqual(entry_from_path, other_entry)
 
 
-class TestFileInTAR(COT_UT):
+class TestFileInTAR(COTTestCase):
     """Test cases for FileInTAR class."""
 
     def setUp(self):

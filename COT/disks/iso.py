@@ -12,11 +12,14 @@
 
 """Handling of ISO files."""
 
+import logging
 import os
 import re
 
 from COT.disks.disk import DiskRepresentation
 from COT.helpers import helpers, HelperError, helper_select
+
+logger = logging.getLogger(__name__)
 
 
 class ISO(DiskRepresentation):
@@ -67,28 +70,30 @@ class ISO(DiskRepresentation):
                 self._files = result
         return self._files
 
-    def _create_file(self):
-        """Create an ISO file."""
-        if not self._files:
+    @staticmethod
+    def _create_file(path, disk_subformat="rockridge", files=None, **kwargs):
+        """Create an ISO file.
+
+        Args:
+          path (str): Location to create the ISO file.
+          disk_subformat (str): Defaults to "rockridge". Set to "" to not
+            include Rock Ridge extensions.
+          files (list): List of files to include in this ISO (required)
+          **kwargs: unused
+        """
+        if not files:
             raise RuntimeError("Unable to create an empty ISO file")
-        # Default subformat is to include Rock Ridge extensions.
-        # To not have these, use subformat=""
-        if self._disk_subformat is None:
-            self._disk_subformat = 'rockridge'
         # We can use mkisofs, genisoimage, or xorriso, and fortunately
         # all three take similar parameters
-        args = ['-output', self.path, '-full-iso9660-filenames',
+        args = ['-output', path, '-full-iso9660-filenames',
                 '-iso-level', '2', '-allow-lowercase']
-        if self._disk_subformat == 'rockridge':
+        if disk_subformat == 'rockridge':
             args.append('-r')
-        args += self.files
+        args += files
         helper = helper_select(['mkisofs', 'genisoimage', 'xorriso'])
         if helper.name == "xorriso":
             args = ['-as', 'mkisofs'] + args
         helper.call(args)
-
-        self._disk_subformat = None
-        self._files = None
 
     @classmethod
     def file_is_this_type(cls, path):
@@ -107,21 +112,22 @@ class ISO(DiskRepresentation):
             raise HelperError(2, "No such file or directory: '{0}'"
                               .format(path))
         if helpers['isoinfo']:
+            logger.debug("Using 'isoinfo' to check whether %s is an ISO", path)
             try:
                 helpers['isoinfo'].call(['-i', path, '-d'])
-                return True
+                return 100
             except HelperError:
                 # Not an ISO
-                return False
+                return 0
 
         # else, try to detect ISO files by file magic number
-        with open(path, 'rb') as f:
+        with open(path, 'rb') as fileobj:
             for offset in (0x8001, 0x8801, 0x9001):
-                f.seek(offset)
-                magic = f.read(5).decode('ascii', 'ignore')
+                fileobj.seek(offset)
+                magic = fileobj.read(5).decode('ascii', 'ignore')
                 if magic == "CD001":
-                    return True
-        return False
+                    return 100
+        return 0
 
     @classmethod
     def from_other_image(cls, input_image, output_dir, output_subformat=None):

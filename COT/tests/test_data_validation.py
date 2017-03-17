@@ -3,7 +3,7 @@
 # data_validation.py - Unit test cases for COT.data_validation module
 #
 # December 2014, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -17,12 +17,6 @@
 """Unit test cases for COT.data_validation module."""
 
 import re
-import logging
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 from COT.data_validation import (
     match_or_die, file_checksum,
@@ -32,12 +26,10 @@ from COT.data_validation import (
     InvalidInputError, ValueMismatchError, ValueUnsupportedError,
     ValueTooLowError, ValueTooHighError,
 )
-from COT.tests.ut import COT_UT
-
-logger = logging.getLogger(__name__)
+from COT.tests import COTTestCase
 
 
-class TestFileChecksum(COT_UT):
+class TestFileChecksum(COTTestCase):
     """Test cases for file_checksum() function."""
 
     def test_file_checksum_md5(self):
@@ -69,7 +61,7 @@ class TestFileChecksum(COT_UT):
                           'crc')
 
 
-class TestValidationFunctions(unittest.TestCase):
+class TestValidationFunctions(COTTestCase):
     """Test cases for input validation APIs."""
 
     def test_canonicalize_helper(self):
@@ -80,10 +72,10 @@ class TestValidationFunctions(unittest.TestCase):
             ("[fF]oo[0-9]+[bB]ar", 'FooBar'),
         ]
         # not case-insensitive by default
-        with self.assertRaises(ValueUnsupportedError) as cm:
+        with self.assertRaises(ValueUnsupportedError) as catcher:
             canonicalize_helper("foo", "LSI Logic SAS", mappings)
-        self.assertEqual(cm.exception.value_type, "foo")
-        self.assertEqual(cm.exception.expected_value,
+        self.assertEqual(catcher.exception.value_type, "foo")
+        self.assertEqual(catcher.exception.expected_value,
                          ["lsilogicsas", "lsilogic", "FooBar"])
 
         # but can be case-insensitive on request
@@ -108,14 +100,14 @@ class TestValidationFunctions(unittest.TestCase):
 
         Verify that the NIC_TYPES / _NIC_MAPPINGS are idempotent.
         """
-        for t in NIC_TYPES:
-            self.assertEqual(canonicalize_nic_subtype(t), t)
+        for nictype in NIC_TYPES:
+            self.assertEqual(canonicalize_nic_subtype(nictype), nictype)
 
     def test_match_or_die(self):
         """Test the match_or_die() function."""
-        with self.assertRaises(ValueMismatchError) as cm:
+        with self.assertRaises(ValueMismatchError) as catcher:
             match_or_die("input", "a", "output", "b")
-        self.assertEqual(str(cm.exception),
+        self.assertEqual(str(catcher.exception),
                          "input a does not match output b")
 
         match_or_die("input", "a", "output", "a")
@@ -184,28 +176,28 @@ class TestValidationFunctions(unittest.TestCase):
 
     def test_custom_error_attributes(self):
         """Test the properties of ValueUnsupportedError and its children."""
-        with self.assertRaises(ValueUnsupportedError) as cm:
+        with self.assertRaises(ValueUnsupportedError) as catcher:
             validate_int("a")
-        self.assertEqual(cm.exception.value_type, "input")
-        self.assertEqual(cm.exception.actual_value, "a")
-        self.assertEqual(cm.exception.expected_value, "integer")
-        self.assertEqual(str(cm.exception),
+        self.assertEqual(catcher.exception.value_type, "input")
+        self.assertEqual(catcher.exception.actual_value, "a")
+        self.assertEqual(catcher.exception.expected_value, "integer")
+        self.assertEqual(str(catcher.exception),
                          "Unsupported value 'a' for input - expected integer")
 
-        with self.assertRaises(ValueTooLowError) as cm:
+        with self.assertRaises(ValueTooLowError) as catcher:
             non_negative_int(-1)
-        self.assertEqual(cm.exception.value_type, "input")
-        self.assertEqual(cm.exception.actual_value, -1)
-        self.assertEqual(cm.exception.expected_value, 0)
+        self.assertEqual(catcher.exception.value_type, "input")
+        self.assertEqual(catcher.exception.actual_value, -1)
+        self.assertEqual(catcher.exception.expected_value, 0)
         self.assertEqual(
-            str(cm.exception),
+            str(catcher.exception),
             "Value '-1' for input is too low - must be at least 0")
 
-        with self.assertRaises(ValueTooHighError) as cm:
+        with self.assertRaises(ValueTooHighError) as catcher:
             validate_int("100", maximum=10, label="score")
-        self.assertEqual(cm.exception.value_type, "score")
-        self.assertEqual(cm.exception.actual_value, 100)
-        self.assertEqual(cm.exception.expected_value, 10)
+        self.assertEqual(catcher.exception.value_type, "score")
+        self.assertEqual(catcher.exception.actual_value, 100)
+        self.assertEqual(catcher.exception.expected_value, 10)
         self.assertEqual(
-            str(cm.exception),
+            str(catcher.exception),
             "Value '100' for score is too high - must be at most 10")

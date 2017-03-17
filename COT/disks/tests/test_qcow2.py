@@ -3,7 +3,7 @@
 # test_qcow2.py - Unit test cases for QCOW2 disk representation.
 #
 # October 2016, Glenn F. Matthews
-# Copyright (c) 2014-2016 the COT project developers.
+# Copyright (c) 2014-2017 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -22,7 +22,7 @@ import os
 from distutils.version import StrictVersion
 import mock
 
-from COT.tests.ut import COT_UT
+from COT.tests import COTTestCase
 from COT.disks import QCOW2, VMDK, RAW
 from COT.helpers import helpers
 
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-type-doc,missing-param-doc
 
 
-class TestQCOW2(COT_UT):
+class TestQCOW2(COTTestCase):
     """Test cases for QCOW2 class."""
 
     def setUp(self):
@@ -43,7 +43,7 @@ class TestQCOW2(COT_UT):
     def test_init_with_files_unsupported(self):
         """Creation of a QCOW2 with specific file contents is not supported."""
         self.assertRaises(NotImplementedError,
-                          QCOW2,
+                          QCOW2.create_file,
                           path=os.path.join(self.temp_dir, "out.qcow2"),
                           files=[self.input_ovf])
 
@@ -64,7 +64,7 @@ class TestQCOW2(COT_UT):
     @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
                 new_callable=mock.PropertyMock,
                 return_value=StrictVersion("1.0.0"))
-    @mock.patch('COT.disks.qcow2.QCOW2.create_file')
+    @mock.patch('os.path.exists', return_value=True)
     @mock.patch('COT.disks.raw.RAW.from_other_image')
     @mock.patch('COT.helpers.qemu_img.QEMUImg.call')
     def test_convert_from_vmdk_old_qemu(self,
@@ -84,7 +84,7 @@ class TestQCOW2(COT_UT):
     @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
                 new_callable=mock.PropertyMock,
                 return_value=StrictVersion("1.2.0"))
-    @mock.patch('COT.disks.qcow2.QCOW2.create_file')
+    @mock.patch('os.path.exists', return_value=True)
     @mock.patch('COT.helpers.qemu_img.QEMUImg.call')
     @mock.patch('COT.helpers.vmdktool.VMDKTool.call')
     def test_convert_from_vmdk_new_qemu(self, mock_vmdktool, mock_qemuimg, *_):

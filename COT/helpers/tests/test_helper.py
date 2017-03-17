@@ -25,8 +25,8 @@ from distutils.version import StrictVersion
 import requests
 import mock
 
-from COT.ui_shared import UI
-from COT.tests.ut import COT_UT
+from COT.ui import UI
+from COT.tests import COTTestCase
 from COT.helpers.helper import TemporaryDirectory, check_call, check_output
 from COT.helpers import (
     Helper, PackageManager,
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=missing-type-doc,missing-param-doc,protected-access
 
 
-class HelperUT(COT_UT):
+class HelperTestCase(COTTestCase):
     """Generic class for testing Helper and subclasses thereof."""
 
     def __init__(self, method_name='runTest'):
@@ -50,7 +50,7 @@ class HelperUT(COT_UT):
         For the parameters, see :class:`unittest.TestCase`.
         """
         self.helper = None
-        super(HelperUT, self).__init__(method_name)
+        super(HelperTestCase, self).__init__(method_name)
 
     def assertSubprocessCalls(self, mock_function, args_list):  # noqa: N802
         """Assert the mock_function was called with the given lists of args."""
@@ -107,35 +107,33 @@ class HelperUT(COT_UT):
               ``pkgname``.
         """
         helpers['dpkg']._installed = True
-        # Python 2.6 doesn't let us do multiple mocks in one 'with'
-        with mock.patch.object(self.helper, '_path') as mock_path:
-            with mock.patch('subprocess.check_call') as mock_check_call:
-                with mock.patch(
-                        'COT.helpers.helper.check_output',
-                        return_value="is not installed and no "
-                        "information is available") as mock_check_output:
-                    mock_path.return_value = (None, '/bin/' + helpername)
-                    self.enable_apt_install()
-                    self.helper.install()
-                    self.assertSubprocessCalls(mock_check_output,
-                                               [['dpkg', '-s', pkgname]])
-                    self.assertSubprocessCalls(
-                        mock_check_call,
-                        [
-                            ['apt-get', '-q', 'update'],
-                            ['apt-get', '-q', 'install', pkgname],
-                        ])
-                    self.assertEqual(helpername, self.helper.name)
-                    self.assertAptUpdated()
-                    # Make sure we don't 'apt-get update' again unnecessarily
-                    mock_check_call.reset_mock()
-                    mock_check_output.reset_mock()
-                    self.helper.install()
-                    self.assertSubprocessCalls(mock_check_output,
-                                               [['dpkg', '-s', pkgname]])
-                    self.assertSubprocessCalls(
-                        mock_check_call,
-                        [['apt-get', '-q', 'install', pkgname]])
+        with mock.patch.object(self.helper, '_path') as mock_path, \
+            mock.patch('subprocess.check_call') as mock_check_call, \
+            mock.patch('COT.helpers.helper.check_output',
+                       return_value="is not installed and no "
+                       "information is available") as mock_check_output:
+            mock_path.return_value = (None, '/bin/' + helpername)
+            self.enable_apt_install()
+            self.helper.install()
+            self.assertSubprocessCalls(mock_check_output,
+                                       [['dpkg', '-s', pkgname]])
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [
+                    ['apt-get', '-q', 'update'],
+                    ['apt-get', '-q', 'install', pkgname],
+                ])
+            self.assertEqual(helpername, self.helper.name)
+            self.assertAptUpdated()
+            # Make sure we don't 'apt-get update' again unnecessarily
+            mock_check_call.reset_mock()
+            mock_check_output.reset_mock()
+            self.helper.install()
+            self.assertSubprocessCalls(mock_check_output,
+                                       [['dpkg', '-s', pkgname]])
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['apt-get', '-q', 'install', pkgname]])
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def brew_install_test(self, brew_params, *_):
@@ -147,13 +145,12 @@ class HelperUT(COT_UT):
         self.select_package_manager('brew')
         if isinstance(brew_params, str):
             brew_params = [brew_params]
-        # Python 2.6 doesn't let us use multiple contexts in one 'with'
-        with mock.patch('subprocess.check_call') as mock_check_call:
-            with mock.patch.object(self.helper, '_path') as mock_path:
-                mock_path.return_value = (None, '/bin/' + brew_params[0])
-                self.helper.install()
-                mock_check_call.assert_called_with(
-                    ['brew', 'install'] + brew_params)
+        with mock.patch('subprocess.check_call') as mock_check_call, \
+                mock.patch.object(self.helper, '_path') as mock_path:
+            mock_path.return_value = (None, '/bin/' + brew_params[0])
+            self.helper.install()
+            mock_check_call.assert_called_with(
+                ['brew', 'install'] + brew_params)
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     def port_install_test(self, portname, *_):
@@ -164,22 +161,21 @@ class HelperUT(COT_UT):
         """
         self.select_package_manager('port')
         Port._updated = False
-        # Python 2.6 doesn't let us use multiple contexts in one 'with'
-        with mock.patch('subprocess.check_call') as mock_check_call:
-            with mock.patch.object(self.helper, '_path') as mock_path:
-                mock_path.return_value = (None, '/bin/' + portname)
-                self.helper.install()
-                self.assertSubprocessCalls(
-                    mock_check_call,
-                    [['port', 'selfupdate'],
-                     ['port', 'install', portname]])
-                self.assertTrue(Port._updated)
-                # Make sure we don't call port selfupdate again unnecessarily
-                mock_check_call.reset_mock()
-                self.helper.install()
-                self.assertSubprocessCalls(
-                    mock_check_call,
-                    [['port', 'install', portname]])
+        with mock.patch('subprocess.check_call') as mock_check_call, \
+                mock.patch.object(self.helper, '_path') as mock_path:
+            mock_path.return_value = (None, '/bin/' + portname)
+            self.helper.install()
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['port', 'selfupdate'],
+                 ['port', 'install', portname]])
+            self.assertTrue(Port._updated)
+            # Make sure we don't call port selfupdate again unnecessarily
+            mock_check_call.reset_mock()
+            self.helper.install()
+            self.assertSubprocessCalls(
+                mock_check_call,
+                [['port', 'install', portname]])
 
     def yum_install_test(self, pkgname, *_):
         """Test installation with yum."""
@@ -194,13 +190,13 @@ class HelperUT(COT_UT):
     @contextlib.contextmanager
     def stub_download_and_expand_tgz(_url):
         """Stub for Helper.download_and_expand_tgz - make a fake directory."""
-        with TemporaryDirectory(prefix="cot_ut_helper") as d:
-            yield d
+        with TemporaryDirectory(prefix="cot_ut_helper") as directory:
+            yield directory
 
     def setUp(self):
         """Test case setup function called automatically prior to each test."""
         # subclass needs to set self.helper
-        super(HelperUT, self).setUp()
+        super(HelperTestCase, self).setUp()
         if self.helper:
             self.helper._path = None
             self.helper._installed = False
@@ -211,7 +207,7 @@ class HelperUT(COT_UT):
             helper._installed = None
             helper._path = None
             helper._version = None
-        super(HelperUT, self).tearDown()
+        super(HelperTestCase, self).tearDown()
 
     @mock.patch('distutils.spawn.find_executable', return_value=None)
     @mock.patch('platform.system', return_value='Windows')
@@ -236,7 +232,7 @@ class HelperUT(COT_UT):
         self.assertRaises(RuntimeError, self.helper._install)
 
 
-class HelperGenericTest(HelperUT):
+class HelperGenericTest(HelperTestCase):
     """Test cases for generic Helper class."""
 
     def setUp(self):
@@ -260,9 +256,9 @@ class HelperGenericTest(HelperUT):
 
     def test_check_call_helpererror(self):
         """HelperError if executable fails and require_success is set."""
-        with self.assertRaises(HelperError) as cm:
+        with self.assertRaises(HelperError) as catcher:
             check_call(["false"])
-        self.assertEqual(cm.exception.errno, 1)
+        self.assertEqual(catcher.exception.errno, 1)
 
         check_call(["false"], require_success=False)
 
@@ -277,9 +273,9 @@ class HelperGenericTest(HelperUT):
         mock_check_call.side_effect = raise_oserror
 
         # Without retry_on_sudo, we reraise the permissions error
-        with self.assertRaises(OSError) as cm:
+        with self.assertRaises(OSError) as catcher:
             check_call(["false"])
-        self.assertEqual(cm.exception.errno, 13)
+        self.assertEqual(catcher.exception.errno, 13)
         mock_check_call.assert_called_once_with(["false"])
 
         # With retry_on_sudo, we retry.
@@ -301,9 +297,9 @@ class HelperGenericTest(HelperUT):
         mock_check_call.side_effect = raise_subprocess_error
 
         # Without retry_on_sudo, we reraise the permissions error
-        with self.assertRaises(HelperError) as cm:
+        with self.assertRaises(HelperError) as catcher:
             check_call(["false"])
-        self.assertEqual(cm.exception.errno, 1)
+        self.assertEqual(catcher.exception.errno, 1)
         mock_check_call.assert_called_once_with(["false"])
 
         # With retry_on_sudo, we retry.
@@ -329,10 +325,10 @@ class HelperGenericTest(HelperUT):
 
     def test_check_output_helpererror(self):
         """HelperError if executable fails and require_success is set."""
-        with self.assertRaises(HelperError) as cm:
+        with self.assertRaises(HelperError) as catcher:
             check_output(["false"])
 
-        self.assertEqual(cm.exception.errno, 1)
+        self.assertEqual(catcher.exception.errno, 1)
 
         check_output(["false"], require_success=False)
 
@@ -364,18 +360,18 @@ class HelperGenericTest(HelperUT):
         self.helper._provider_package['brew'] = 'install-me-with-brew'
         self.helper._provider_package['port'] = 'install-me-with-port'
         self.select_package_manager(None)
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(RuntimeError) as catcher:
             self.helper.install()
-        msg = str(cm.exception)
+        msg = str(catcher.exception)
         self.assertRegex(msg, "Unsure how to install generic.")
         # Since both helpers are supported, we should see both messages
         self.assertRegex(msg, "COT can use Homebrew")
         self.assertRegex(msg, "COT can use MacPorts")
 
         del self.helper._provider_package['brew']
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(RuntimeError) as catcher:
             self.helper.install()
-        msg = str(cm.exception)
+        msg = str(catcher.exception)
         self.assertRegex(msg, "Unsure how to install generic.")
         # Now we should only see the supported one
         self.assertNotRegex(msg, "COT can use Homebrew")
@@ -383,17 +379,17 @@ class HelperGenericTest(HelperUT):
 
         del self.helper._provider_package['port']
         # Now we should fall back to NotImplementedError
-        with self.assertRaises(NotImplementedError) as cm:
+        with self.assertRaises(NotImplementedError) as catcher:
             self.helper.install()
-        msg = str(cm.exception)
+        msg = str(catcher.exception)
         self.assertRegex(msg, "Unsure how to install generic.")
         self.assertNotRegex(msg, "COT can use Homebrew")
         self.assertNotRegex(msg, "COT can use MacPorts")
 
         self.helper._provider_package['brew'] = 'install-me-with-brew'
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(RuntimeError) as catcher:
             self.helper.install()
-        msg = str(cm.exception)
+        msg = str(catcher.exception)
         self.assertRegex(msg, "Unsure how to install generic.")
         # Now we should only see the supported one
         self.assertRegex(msg, "COT can use Homebrew")
@@ -445,7 +441,7 @@ class HelperGenericTest(HelperUT):
         self.assertFalse(os.path.exists(directory))
 
 
-class PackageManagerGenericTest(HelperUT):
+class PackageManagerGenericTest(HelperTestCase):
     """Unit test for abstract PackageManager class."""
 
     def setUp(self):
@@ -463,7 +459,7 @@ class PackageManagerGenericTest(HelperUT):
 @mock.patch('os.makedirs')
 @mock.patch('os.path.exists', return_value=False)
 @mock.patch('os.path.isdir', return_value=False)
-class TestHelperMkDir(COT_UT):
+class TestHelperMkDir(COTTestCase):
     """Test cases for Helper.mkdir()."""
 
     def test_already_exists(self, mock_isdir, mock_exists,
@@ -527,24 +523,24 @@ class TestHelperMkDir(COT_UT):
 
 @mock.patch('COT.helpers.helper.check_call')
 @mock.patch('shutil.copy')
-class TestHelperCp(COT_UT):
-    """Test cases for Helper.cp()."""
+class TestHelperCopyFile(COTTestCase):
+    """Test cases for Helper.copy_file()."""
 
     def test_permission_ok(self, mock_copy, mock_check_call):
         """File copy succeeds with user permissions."""
-        self.assertTrue(Helper.cp('/foo', '/bar'))
+        self.assertTrue(Helper.copy_file('/foo', '/bar'))
         mock_copy.assert_called_with('/foo', '/bar')
         mock_check_call.assert_not_called()
 
     def test_need_sudo(self, mock_copy, mock_check_call):
         """File copy needs sudo."""
         mock_copy.side_effect = OSError
-        self.assertTrue(Helper.cp('/foo', '/bar'))
+        self.assertTrue(Helper.copy_file('/foo', '/bar'))
         mock_copy.assert_called_with('/foo', '/bar')
         mock_check_call.assert_called_with(['sudo', 'cp', '/foo', '/bar'])
 
 
-class TestHelperSelect(COT_UT):
+class TestHelperSelect(COTTestCase):
     """Test cases for helper_select() API."""
 
     def setUp(self):
