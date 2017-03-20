@@ -242,8 +242,24 @@ ovf:size="{cfg_size}" />
         ovf.destroy()
 
         # Read OVA and overwrite itself
-        ova = OVF(os.path.join(self.temp_dir, "temp.ova"),
+        # Issue #66 resulted from the two strings not being identical
+        # So mix relative and absolute paths:
+        os.chdir(self.temp_dir)
+        ova = OVF("temp.ova",
                   os.path.join(self.temp_dir, "temp.ova"))
+        ova.write()
+        ova.destroy()
+
+        # Another permutation of issue #66 - output file is a
+        # symlink to input file
+        os.symlink("temp.ova", "symlink.ova")
+        ova = OVF("temp.ova", "symlink.ova")
+        ova.write()
+        ova.destroy()
+
+        # A third permutation - output file is hardlink to input
+        os.link("temp.ova", "hardlink.ova")
+        ova = OVF("temp.ova", "hardlink.ova")
         ova.write()
         ova.destroy()
 
