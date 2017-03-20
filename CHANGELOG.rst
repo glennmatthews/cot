@@ -3,6 +3,16 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Fixed**
+
+- Path normalization of output file resulted in COT failing to detect the
+  case of self-overwriting an OVA, resulting in file corruption (`#66`_).
+  Improved detection of self-overwriting cases including relative vs.
+  absolute paths, symlinks, and hardlinks.
+
 `2.0.1`_ - 2017-03-17
 ---------------------
 
@@ -752,6 +762,7 @@ Initial public release.
 .. _#63: https://github.com/glennmatthews/cot/issues/63
 .. _#64: https://github.com/glennmatthews/cot/issues/64
 .. _#65: https://github.com/glennmatthews/cot/issues/65
+.. _#66: https://github.com/glennmatthews/cot/issues/66
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

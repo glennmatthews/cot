@@ -2640,12 +2640,20 @@ class OVF(VMDescription, XML):
 
         (prefix, _) = os.path.splitext(ovf_descriptor)
 
-        if self.input_file == tar_file:
+        # Issue #66 - need to detect any of the possible scenarios:
+        # 1) output path and input path are the same real path
+        #    (not just string-equal!)
+        # 2) output file and input file are the same file (including links)
+        # but not error out if (common case) output_file doesn't exist yet.
+        if (os.path.realpath(self.input_file) == os.path.realpath(tar_file) or
+            (os.path.exists(tar_file) and
+             os.path.samefile(self.input_file, tar_file))):
             # We're about to overwrite the input OVA with a new OVA.
             # (Python tarfile module doesn't support in-place edits.)
             # Any files that we need to carry over need to be extracted NOW!
-            logger.verbose("Extracting files from %s before overwriting it.",
-                           self.input_file)
+            logger.info(
+                "Input OVA will be overwritten. Extracting files from %s to"
+                " working directory before overwriting it.", self.input_file)
             for filename in self._file_references:
                 file_ref = self._file_references[filename]
                 if file_ref.file_path is None:

@@ -13,6 +13,7 @@ We would like to thank:
   * Jeff Haag
   * Jeff Loughridge
   * Vincent Wenshi Lv
+  * Roger Melton
   * Jonathan Muslow
   * Scott O'Donnell
   * Rick Ogg
