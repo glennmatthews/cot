@@ -3,6 +3,15 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Fixed**
+
+- Fixed issue where UnboundLocalError would be raised during COT's
+  attempt to clean up after a qemu-img error occurring while trying to
+  convert a disk to VMDK (`#67`_).
+
 `2.0.2`_ - 2017-03-20
 ---------------------
 
@@ -763,6 +772,7 @@ Initial public release.
 .. _#64: https://github.com/glennmatthews/cot/issues/64
 .. _#65: https://github.com/glennmatthews/cot/issues/65
 .. _#66: https://github.com/glennmatthews/cot/issues/66
+.. _#67: https://github.com/glennmatthews/cot/issues/67
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
