@@ -6,9 +6,9 @@ source =
 omit =
     */tests/*
     COT/_version.py
+    COT/commands/demo_logging.py
     setup.py
     versioneer.py
-    demo_logging.py
     .eggs/*
     *easy_install*
     */pypy/*
