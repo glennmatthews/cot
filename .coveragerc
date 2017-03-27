@@ -1,14 +1,22 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
+source =
+    COT
 omit =
     */tests/*
     COT/_version.py
     setup.py
     versioneer.py
-    .tox/*
+    demo_logging.py
     .eggs/*
     *easy_install*
     */pypy/*
     */lib_pypy/*
     */distutils/*
+
+[paths]
+source =
+    COT
+    .tox/*/lib/python*/site-packages/COT
+    .tox/pypy/site-packages/COT
