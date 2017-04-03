@@ -84,8 +84,8 @@ class TestVMDKTool(HelperTestCase):
                 ['apt-get', '-q', 'install', 'make'],
                 ['apt-get', '-q', 'install', 'zlib1g-dev'],
                 ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
-                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+                ['sudo', 'mkdir', '-p', '-m', '755', '/usr/local/man/man8'],
+                ['sudo', 'mkdir', '-p', '-m', '755', '/usr/local/bin'],
                 ['make', 'install', 'PREFIX=/usr/local'],
             ])
         self.assertAptUpdated()
@@ -111,9 +111,9 @@ class TestVMDKTool(HelperTestCase):
             mock_check_call,
             [
                 ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
-                ['sudo', 'mkdir', '-p', '--mode=755',
+                ['sudo', 'mkdir', '-p', '-m', '755',
                  '/home/cot/opt/local/man/man8'],
-                ['sudo', 'mkdir', '-p', '--mode=755',
+                ['sudo', 'mkdir', '-p', '-m', '755',
                  '/home/cot/opt/local/bin'],
                 ['make', 'install', 'PREFIX=/opt/local', 'DESTDIR=/home/cot'],
             ])
@@ -146,8 +146,8 @@ class TestVMDKTool(HelperTestCase):
                 ['yum', '--quiet', 'install', 'make'],
                 ['yum', '--quiet', 'install', 'zlib-devel'],
                 ['make', 'CFLAGS="-D_GNU_SOURCE -g -O -pipe"'],
-                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/man/man8'],
-                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+                ['sudo', 'mkdir', '-p', '-m', '755', '/usr/local/man/man8'],
+                ['sudo', 'mkdir', '-p', '-m', '755', '/usr/local/bin'],
                 ['make', 'install', 'PREFIX=/usr/local'],
             ])
 

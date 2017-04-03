@@ -500,7 +500,7 @@ class TestHelperMkDir(COTTestCase):
         mock_exists.assert_called_with('/foo/bar')
         mock_makedirs.assert_called_with('/foo/bar', 493)  # 493 == 0o755
         mock_check_call.assert_called_with(
-            ['sudo', 'mkdir', '-p', '--mode=755', '/foo/bar'])
+            ['sudo', 'mkdir', '-p', '-m', '755', '/foo/bar'])
 
     def test_nondefault_permissions(self, mock_isdir, mock_exists,
                                     mock_makedirs, mock_check_call):
@@ -518,7 +518,7 @@ class TestHelperMkDir(COTTestCase):
         self.assertTrue(Helper.mkdir('/foo/bar', 511))  # 511 == 0o777
         mock_makedirs.assert_called_with('/foo/bar', 511)
         mock_check_call.assert_called_with(
-            ['sudo', 'mkdir', '-p', '--mode=777', '/foo/bar'])
+            ['sudo', 'mkdir', '-p', '-m', '777', '/foo/bar'])
 
 
 @mock.patch('COT.helpers.helper.check_call')

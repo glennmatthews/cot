@@ -11,6 +11,7 @@ This project adheres to `Semantic Versioning`_.
 - Fixed issue where UnboundLocalError would be raised during COT's
   attempt to clean up after a qemu-img error occurring while trying to
   convert a disk to VMDK (`#67`_).
+- Fixed incorrect invocation of 'sudo mkdir' on Mac OS X.
 
 `2.0.2`_ - 2017-03-20
 ---------------------
