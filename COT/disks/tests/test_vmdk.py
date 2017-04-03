@@ -100,8 +100,10 @@ class TestVMDKConversion(COTTestCase):
         super(TestVMDKConversion, self).setUp()
         self.input_image_paths = {}
         self.input_disks = {}
+        input_dir = os.path.join(self.temp_dir, "disks")
+        os.makedirs(input_dir)
         for disk_format in ["raw", "qcow2", "vmdk"]:
-            temp_disk = os.path.join(self.temp_dir,
+            temp_disk = os.path.join(input_dir,
                                      "foo.{0}".format(disk_format))
             helpers['qemu-img'].call(['create', '-f', disk_format,
                                       temp_disk, "16M"])
@@ -116,6 +118,12 @@ class TestVMDKConversion(COTTestCase):
 
         self.assertEqual(vmdk.disk_format, 'vmdk')
         self.assertEqual(vmdk.disk_subformat, output_subformat)
+
+        # With older versions of QEMU, COT may convert the input image to a RAW
+        # file as an intermediate step. Make sure it's cleaned up afterwards!
+        temp_image = os.path.join(self.temp_dir, 'foo.img')
+        self.assertFalse(os.path.exists(temp_image),
+                         "Temporary image {0} not deleted".format(temp_image))
 
     @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
                 new_callable=mock.PropertyMock,
@@ -134,12 +142,45 @@ class TestVMDKConversion(COTTestCase):
         for disk_format in ["raw", "qcow2", "vmdk"]:
             self.other_format_to_vmdk_test(disk_format)
 
-            for call_args in mock_qemu_call.call_args_list:
-                self.assertNotIn('convert', call_args)
+            if disk_format != "raw":
+                # use qemu-img to convert to raw
+                mock_qemu_call.assert_called_once_with(
+                    ['convert', '-O', 'raw',
+                     self.input_disks[disk_format].path, mock.ANY])
+            else:
+                mock_qemu_call.assert_not_called()
+
             mock_vmdktool_call.assert_called_once()
 
             mock_qemu_call.reset_mock()
             mock_vmdktool_call.reset_mock()
+
+    @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
+                new_callable=mock.PropertyMock,
+                return_value=StrictVersion("1.2.0"))
+    def test_disk_conversion_old_qemu_error(self, *_):
+        """Error recovery/cleanup during multi-step conversion with vmdktool.
+
+        https://github.com/glennmatthews/cot/issues/67
+        """
+        # Error in conversion from qcow2 to raw
+        with mock.patch('COT.helpers.qemu_img.QEMUImg.call',
+                        side_effect=HelperError):
+            self.assertRaises(HelperError,
+                              VMDK.from_other_image,
+                              self.input_disks['qcow2'], self.temp_dir)
+
+        # Error in conversion from raw to vmdk
+        with mock.patch('COT.helpers.vmdktool.VMDKTool.call',
+                        side_effect=HelperError):
+            self.assertRaises(HelperError,
+                              VMDK.from_other_image,
+                              self.input_disks['qcow2'], self.temp_dir)
+
+        # Make sure we didn't leave the temporary image behind
+        temp_image = os.path.join(self.temp_dir, 'foo.img')
+        self.assertFalse(os.path.exists(temp_image),
+                         "Temporary image {0} not deleted".format(temp_image))
 
     @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
                 new_callable=mock.PropertyMock,
@@ -157,12 +198,17 @@ class TestVMDKConversion(COTTestCase):
         we still prefer vmdktool, but fall back to qemu-img with a warning
         if vmdktool is not available.
         """
-        # First, with vmdktool, same as previous test case
+        # First, with vmdktool, same as test_disk_conversion_old_qemu
         for disk_format in ["raw", "qcow2", "vmdk"]:
             self.other_format_to_vmdk_test(disk_format)
 
-            for call_args in mock_qemu_call.call_args_list:
-                self.assertNotIn('convert', call_args)
+            if disk_format != "raw":
+                # use qemu-img to convert to raw
+                mock_qemu_call.assert_called_once_with(
+                    ['convert', '-O', 'raw',
+                     self.input_disks[disk_format].path, mock.ANY])
+            else:
+                mock_qemu_call.assert_not_called()
             mock_vmdktool_call.assert_called_once()
 
             mock_qemu_call.reset_mock()

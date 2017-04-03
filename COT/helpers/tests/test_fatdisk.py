@@ -92,7 +92,7 @@ class TestFatDisk(HelperTestCase):
                 ['apt-get', '-q', 'install', 'make'],
                 ['apt-get', '-q', 'install', 'gcc'],
                 ['./RUNME'],
-                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+                ['sudo', 'mkdir', '-p', '-m', '755', '/usr/local/bin'],
             ])
         self.assertTrue(re.search("/fatdisk$", mock_copy.call_args[0][0]))
         self.assertEqual('/usr/local/bin', mock_copy.call_args[0][1])
@@ -119,7 +119,7 @@ class TestFatDisk(HelperTestCase):
             mock_check_call,
             [
                 ['./RUNME'],
-                ['sudo', 'mkdir', '-p', '--mode=755',
+                ['sudo', 'mkdir', '-p', '-m', '755',
                  '/home/cot/opt/local/bin'],
             ])
         self.assertTrue(re.search("/fatdisk$", mock_copy.call_args[0][0]))
@@ -156,7 +156,7 @@ class TestFatDisk(HelperTestCase):
                 ['yum', '--quiet', 'install', 'make'],
                 ['yum', '--quiet', 'install', 'gcc'],
                 ['./RUNME'],
-                ['sudo', 'mkdir', '-p', '--mode=755', '/usr/local/bin'],
+                ['sudo', 'mkdir', '-p', '-m', '755', '/usr/local/bin'],
             ])
         self.assertTrue(re.search("/fatdisk$", mock_copy.call_args[0][0]))
         self.assertEqual('/usr/local/bin', mock_copy.call_args[0][1])

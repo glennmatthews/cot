@@ -102,6 +102,7 @@ class VMDK(DiskRepresentation):
                 if input_image.disk_format != 'raw':
                     # vmdktool needs a raw image as input
                     from COT.disks import RAW
+                    temp_image = None
                     try:
                         temp_image = RAW.from_other_image(input_image,
                                                           output_dir)
@@ -109,7 +110,9 @@ class VMDK(DiskRepresentation):
                                                     output_dir,
                                                     output_subformat)
                     finally:
-                        os.remove(temp_image.path)
+                        if temp_image is not None:
+                            os.remove(temp_image.path)
+                            temp_image = None
 
                 # Note that vmdktool takes its arguments in unusual order -
                 # output file comes before input file

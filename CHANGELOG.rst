@@ -3,6 +3,16 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`2.0.3`_ - 2017-04-03
+---------------------
+
+**Fixed**
+
+- Fixed issue where UnboundLocalError would be raised during COT's
+  attempt to clean up after a qemu-img error occurring while trying to
+  convert a disk to VMDK (`#67`_).
+- Fixed incorrect invocation of 'sudo mkdir' on Mac OS X.
+
 `2.0.2`_ - 2017-03-20
 ---------------------
 
@@ -763,6 +773,7 @@ Initial public release.
 .. _#64: https://github.com/glennmatthews/cot/issues/64
 .. _#65: https://github.com/glennmatthews/cot/issues/65
 .. _#66: https://github.com/glennmatthews/cot/issues/66
+.. _#67: https://github.com/glennmatthews/cot/issues/67
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -795,6 +806,7 @@ Initial public release.
 .. _verboselogs: https://verboselogs.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _2.0.3: https://github.com/glennmatthews/cot/compare/v2.0.2...v2.0.3
 .. _2.0.2: https://github.com/glennmatthews/cot/compare/v2.0.1...v2.0.2
 .. _2.0.1: https://github.com/glennmatthews/cot/compare/v2.0.0...v2.0.1
 .. _2.0.0: https://github.com/glennmatthews/cot/compare/v1.9.1...v2.0.0
