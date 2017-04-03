@@ -271,34 +271,7 @@ vmdktool:     NOT FOUND""".strip()),
                  "``--ignore-errors``.",
                  """
 > cot install-helpers
-    INFO: Installing 'fatdisk'...
-    INFO: Compiling 'fatdisk'
-    INFO: Calling './RUNME'...
 (...)
-    INFO: ...done
-    INFO: Compilation complete, installing to /usr/local/bin
-    INFO: Successfully installed 'fatdisk'
-    INFO: Calling 'fatdisk --version' and capturing its output...
-    INFO: ...done
-    INFO: Installing 'vmdktool'...
-    INFO: vmdktool requires 'zlib'... installing 'zlib'
-    INFO: Calling 'dpkg -s zlib1g-dev' and capturing its output...
-    INFO: ...done
-    INFO: Compiling 'vmdktool'
-    INFO: Calling 'make CFLAGS="-D_GNU_SOURCE -g -O -pipe"'...
-(...)
-    INFO: ...done
-    INFO: Compilation complete, installing to /usr/local
-    INFO: Calling 'make install'...
-install -s vmdktool /usr/local/bin/
-install vmdktool.8 /usr/local/man/man8/
-    INFO: ...done
-    INFO: Successfully installed 'vmdktool'
-    INFO: Calling 'vmdktool -V' and capturing its output...
-    INFO: ...done
-    INFO: Copying cot-add-disk.1 to /usr/share/man/man1/cot-add-disk.1
-(...)
-    INFO: Copying cot.1 to /usr/share/man/man1/cot.1
 Results:
 -------------
 COT manpages: successfully installed to /usr/share/man
@@ -311,7 +284,7 @@ ovftool:      INSTALLATION FAILED: No support for automated
 qemu-img:     present at /usr/bin/qemu-img
 vmdktool:     successfully installed to /usr/local/bin/vmdktool
 
-Unable to install some helpers""".strip())]),
+[Errno 1] Unable to install some helpers""".strip())]),
             formatter_class=argparse.RawDescriptionHelpFormatter)
 
         group = parser.add_mutually_exclusive_group()
