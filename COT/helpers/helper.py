@@ -589,8 +589,8 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
         # to:
         # ENOEXEC "Exec format error"
         # We shouldn't see ENOEXEC otherwise, so we special case this.
-        if (exc.errno == errno.ENOEXEC and    # pragma: no cover
-                args[0] == 'sudo'):
+        if (exc.errno == errno.ENOEXEC and
+                args[0] == 'sudo'):    # pragma: no cover
             raise HelperError(exc.errno, "The 'sudo' command is unavailable")
         if exc.errno != errno.ENOENT:
             raise
