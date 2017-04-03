@@ -582,6 +582,14 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
                        retry_with_sudo=False,
                        **kwargs)
             return
+        # In Travis CI container environment, 'sudo' is disallowed.
+        # For some reason, recently (4/2017) it's changed from failing with
+        # EPERM "sudo: must be setuid root"
+        # to:
+        # ENOEXEC "Exec format error"
+        # We shouldn't see ENOEXEC otherwise, so we special case this.
+        if exc.errno == errno.ENOEXEC and args[0] == 'sudo': # pragma: no cover
+            raise HelperError(exc.errno, "The 'sudo' command is unavailable")
         if exc.errno != errno.ENOENT:
             raise
         raise HelperNotFoundError(exc.errno,
