@@ -19,11 +19,28 @@
 import os
 import tarfile
 
-from contextlib import closing
 from pkg_resources import resource_filename
 
 from COT.tests import COTTestCase
-from COT.file_reference import FileOnDisk, FileInTAR
+from COT.file_reference import FileReference, FileOnDisk, FileInTAR
+
+
+class TestFileReference(COTTestCase):
+    """Test cases for abstract FileReference class."""
+
+    def test_create(self):
+        """Test create() factory method."""
+        fileref = FileReference.create(os.path.dirname(self.input_ovf),
+                                       os.path.basename(self.input_ovf))
+        self.assertIsInstance(fileref, FileOnDisk)
+
+        fileref = FileReference.create(resource_filename(__name__, "test.tar"),
+                                       "sample_cfg.txt")
+        self.assertIsInstance(fileref, FileInTAR)
+
+        self.assertRaises(IOError, FileReference.create, "/foo", "bar.txt")
+        self.assertRaises(NotImplementedError, FileReference.create,
+                          self.input_vmdk, "config.txt")
 
 
 class TestFileOnDisk(COTTestCase):
@@ -31,55 +48,48 @@ class TestFileOnDisk(COTTestCase):
 
     def test_nonexistent_file(self):
         """Test error handling when the file doesn't exist."""
-        self.assertRaises(IOError, FileOnDisk, "/foo/bar.txt")
         self.assertRaises(IOError, FileOnDisk, "/foo", "bar.txt")
 
     def test_exists(self):
         """Test the exists property."""
-        self.assertTrue(FileOnDisk(self.input_ovf).exists)
+        self.assertTrue(FileOnDisk(os.path.dirname(self.input_ovf),
+                                   os.path.basename(self.input_ovf)).exists)
         # false case is covered by test_nonexistent_file
 
     def test_size(self):
         """Test the size property."""
-        self.assertEqual(FileOnDisk(self.input_ovf).size,
+        self.assertEqual(FileOnDisk(os.path.dirname(self.input_ovf),
+                                    os.path.basename(self.input_ovf)).size,
                          os.path.getsize(self.input_ovf))
 
-    def test_open_close(self):
-        """Test the open() and close() APIs."""
-        ref = FileOnDisk(self.input_ovf)
-        ref_obj = ref.open('r')
-        try:
+    def test_open(self):
+        """Test the open() API."""
+        ref = FileOnDisk(os.path.dirname(self.input_ovf),
+                         os.path.basename(self.input_ovf))
+        with ref.open('r') as ref_obj:
             file_obj = open(self.input_ovf, 'r')
             try:
                 self.assertEqual(file_obj.readline(), ref_obj.readline())
             finally:
                 file_obj.close()
-        finally:
-            ref.close()
+        # ref_obj should be closed automatically
+        self.assertRaises(ValueError, ref_obj.read)
 
     def test_copy_to(self):
         """Test the copy_to() API."""
-        FileOnDisk(self.input_ovf).copy_to(self.temp_dir)
+        FileOnDisk(os.path.dirname(self.input_ovf),
+                   os.path.basename(self.input_ovf)).copy_to(self.temp_dir)
         self.check_diff("", file2=os.path.join(self.temp_dir, 'input.ovf'))
 
     def test_add_to_archive(self):
         """Test the add_to_archive() API."""
         output_tarfile = os.path.join(self.temp_dir, 'test_output.tar')
-        with closing(tarfile.open(output_tarfile, 'w')) as tarf:
-            FileOnDisk(self.input_ovf).add_to_archive(tarf)
-        with closing(tarfile.open(output_tarfile, 'r')) as tarf:
+        with tarfile.open(output_tarfile, 'w') as tarf:
+            FileOnDisk(os.path.dirname(self.input_ovf),
+                       os.path.basename(self.input_ovf)).add_to_archive(tarf)
+        with tarfile.open(output_tarfile, 'r') as tarf:
             tarf.extract('input.ovf', self.temp_dir)
         self.check_diff("", file2=os.path.join(self.temp_dir, 'input.ovf'))
-
-    def test_equality(self):
-        """Test the __eq__ and __ne__ operators."""
-        entry_from_path = FileOnDisk(self.input_ovf)
-        entry_from_dir_plus_name = FileOnDisk(
-            os.path.dirname(self.input_ovf),
-            os.path.basename(self.input_ovf))
-        self.assertEqual(entry_from_path, entry_from_dir_plus_name)
-        other_entry = FileOnDisk(self.input_vmdk)
-        self.assertNotEqual(entry_from_path, other_entry)
 
 
 class TestFileInTAR(COTTestCase):
@@ -114,25 +124,23 @@ class TestFileInTAR(COTTestCase):
                          os.path.getsize(resource_filename(__name__,
                                                            'sample_cfg.txt')))
 
-    def test_open_close(self):
-        """Test the open() and close() APIs."""
+    def test_open(self):
+        """Test the open() API."""
         # open() only supports r/rb mode
-        self.assertRaises(ValueError, self.valid_ref.open, 'w')
-        self.assertRaises(ValueError, self.valid_ref.open, 'a')
+        with self.assertRaises(ValueError):
+            with self.valid_ref.open('w') as obj:
+                assert "Should never get here"
+        with self.assertRaises(ValueError):
+            with self.valid_ref.open('a') as obj:
+                assert "Should never get here"
 
-        # No-op:
-        self.valid_ref.close()
-
-        obj = self.valid_ref.open('r')
-        # Check that file contents are as expected
-        self.assertEqual(obj.readline(), b'!\n')
-        self.assertEqual(obj.readline(), b'interface GigabitEthernet0/0/0/0\n')
-        # TODO: this should clean up nicely
-        obj.close()
-        self.valid_ref.close()
+        with self.valid_ref.open('r') as obj:
+            # Check that file contents are as expected
+            self.assertEqual(obj.readline(), b'!\n')
+            self.assertEqual(obj.readline(),
+                             b'interface GigabitEthernet0/0/0/0\n')
+        # obj should be closed now
         self.assertRaises(ValueError, obj.read)
-        # No-op:
-        self.valid_ref.close()
 
     def test_copy_to(self):
         """Test the copy_to() API."""
@@ -144,17 +152,10 @@ class TestFileInTAR(COTTestCase):
     def test_add_to_archive(self):
         """Test the add_to_archive() API."""
         output_tarfile = os.path.join(self.temp_dir, 'test_output.tar')
-        with closing(tarfile.open(output_tarfile, 'w')) as tarf:
+        with tarfile.open(output_tarfile, 'w') as tarf:
             self.valid_ref.add_to_archive(tarf)
-        with closing(tarfile.open(output_tarfile, 'r')) as tarf:
+        with tarfile.open(output_tarfile, 'r') as tarf:
             tarf.extract('sample_cfg.txt', self.temp_dir)
         self.check_diff("",
                         file1=resource_filename(__name__, 'sample_cfg.txt'),
                         file2=os.path.join(self.temp_dir, 'sample_cfg.txt'))
-
-    def test_equality(self):
-        """Test the __eq__ and __ne__ operators."""
-        same_ref = FileInTAR(self.tarfile, "sample_cfg.txt")
-        self.assertEqual(self.valid_ref, same_ref)
-        another_ref = FileInTAR(self.tarfile, "input.mf")
-        self.assertNotEqual(self.valid_ref, another_ref)

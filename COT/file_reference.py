@@ -14,73 +14,187 @@
 # of COT, including this file, may be copied, modified, propagated, or
 # distributed except according to the terms contained in the LICENSE.txt file.
 
-"""Wrapper classes to abstract away differences between file sources."""
+"""Wrapper classes to abstract away differences between file sources.
+
+**Classes**
+
+.. autosummary::
+  :nosignatures:
+
+  FileReference
+  FileOnDisk
+  FileInTAR
+"""
 
 import logging
 import os
 import shutil
 import tarfile
 
-from contextlib import closing
+from contextlib import contextmanager, closing
+
+from COT.data_validation import file_checksum
 
 logger = logging.getLogger(__name__)
 
 
-class FileOnDisk(object):
-    """Wrapper for a 'real' file on disk."""
+class FileReference(object):
+    """Semi-abstract base class for file references."""
 
-    def __init__(self, file_path, filename=None):
-        """Create a reference to a file on disk.
+    @classmethod
+    def create(cls, container_path, filename, **kwargs):
+        """Create a reference to a file in a container of some sort.
 
         Args:
-          file_path (str): File path or directory path
-          filename (str): If specified, file_path is considered to be a
-              directory containing this filename. If not specified, the
-              final element in file_path is considered the filename.
+          container_path (str): Path to a container such as a directory or
+            a TAR file.
+          filename (str): Name of file within the container in question.
+          **kwargs: See :meth:__init__()
+
+        Returns:
+          FileReference: instance of appropriate subclass
+        """
+        if not os.path.exists(container_path):
+            raise IOError("'{0}' does not exist".format(container_path))
+        if os.path.isdir(container_path):
+            return FileOnDisk(container_path, filename, **kwargs)
+        elif tarfile.is_tarfile(container_path):
+            return FileInTAR(container_path, filename, **kwargs)
+        else:
+            raise NotImplementedError("Don't know how to open container {0}!"
+                                      .format(container_path))
+
+    def __init__(self,
+                 container_path,
+                 filename,
+                 checksum_algorithm=None,
+                 expected_checksum=None,
+                 expected_size=None):
+        """Common initialization and validation logic.
+
+        Args:
+          container_path (str): Path to container (directory, TAR file, etc.)
+          filename (str): Relative path within the container to the file itself
+          checksum_algorithm (str): 'sha1', 'sha256', etc.
+          expected_checksum (str): Expected checksum of the file, if any.
+          expected_size (int): Expected size of the file, in bytes, if any.
 
         Raises:
-          IOError: if no such file exists
-
-        Examples:
-          ::
-
-            >>> a = FileOnDisk('/etc/resolv.conf')
-            >>> b = FileOnDisk('/etc', 'resolv.conf')
-            >>> a == b
-            True
-
+          IOError: if the file does not actually exist or is not readable.
         """
-        if filename is None:
-            self.file_path = file_path
-            self.filename = os.path.basename(file_path)
-        else:
-            self.file_path = os.path.join(file_path, filename)
-            self.filename = filename
+        self.container_path = container_path
+        self.filename = os.path.normpath(filename)
+        self.checksum_algorithm = checksum_algorithm
+        self._checksum = None
+        self._size = None
+        self.force_refresh = False
+
+        logger.spam("Initing for file %s, expected_size %s,"
+                    " expected_checksum %s",
+                    self.filename, expected_size, expected_checksum)
+
         if not self.exists:
-            raise IOError("File {0} does not exist!".format(self.file_path))
-        self.obj = None
+            raise IOError("File '{0}' does not exist in {1}"
+                          .format(self.filename, self.container_path))
 
-    def __eq__(self, other):
-        """FileOnDisk instances are equal if they point to the same path.
+        if expected_checksum is not None and (self.checksum !=
+                                              expected_checksum):
+            logger.error("The %s checksum for file '%s' is expected to be:"
+                         "\n%s\nbut is actually:\n%s\n"
+                         "This file may have been tampered with!",
+                         self.checksum_algorithm,
+                         self.filename,
+                         expected_checksum,
+                         self.checksum)
 
-        No attempt is made to check file equivalence, symlinks, etc.
+        if expected_size is not None and self.size != int(expected_size):
+            logger.warning("The size of file '%s' is expected to be %s bytes,"
+                           " but is actually %s bytes.",
+                           self.filename, expected_size, self.size)
+
+        # Should never fail this:
+        assert self.exists
+
+    @property
+    def checksum(self):
+        """Checksum of the referenced file."""
+        if self._checksum is None or self.force_refresh:
+            with self.open('rb') as file_obj:
+                self._checksum = file_checksum(file_obj,
+                                               self.checksum_algorithm)
+        return self._checksum
+
+    @property
+    def exists(self):
+        """Report whether this file actually exists."""
+        raise NotImplementedError
+
+    @property
+    def file_path(self):
+        """Actual path to a real file, if any."""
+        return None
+
+    @property
+    def size(self):
+        """Size of the referenced file, in bytes."""
+        raise NotImplementedError
+
+    @contextmanager
+    def open(self, mode):
+        """Open the file and yield a reference to the file object.
+
+        Automatically closes the file when done.
+        Some subclasses may not support all modes.
 
         Args:
-          other (object): Other object to compare against
-        Returns:
-          bool: True if the paths are the same, else False
+          mode (str): Mode such as 'r', 'w', 'a', 'w+', etc.
+        Yields:
+          file: File object
         """
-        return type(other) is type(self) and self.file_path == other.file_path
+        raise NotImplementedError
 
-    def __ne__(self, other):
-        """FileOnDisk instances are not equal if they have different paths.
+    def refresh(self):
+        """Make sure all information in this reference is still valid."""
+        # Cache the previously known values
+        exp_size = self.size
+        exp_checksum = self.checksum
+        logger.spam("Refreshing FileReference for '%s', "
+                    "expected size %s, cksum %s",
+                    self.filename, exp_size, exp_checksum)
+        result = True
 
-        Args:
-          other (object): Other object to compare against
-        Returns:
-          bool: False if the paths are the same, else True
-        """
-        return not self.__eq__(other)
+        self.force_refresh = True
+
+        if not self.exists:
+            logger.error("File '%s' no longer exists!", self.filename)
+            # keep force_refresh as True since we're in a bad state
+            return False
+
+        # Refresh the attributes and see if they've changed
+        if self.size != exp_size and exp_size is not None:
+            logger.warning("Size of file '%s' has changed"
+                           " from %s bytes to %s bytes.",
+                           self.filename, exp_size, self.size)
+            result = False
+
+        if self.checksum != exp_checksum and exp_checksum is not None:
+            logger.error("The %s checksum of file '%s' has changed"
+                         " from\n%s\nto\n%s\n"
+                         "This file may have been tampered with!",
+                         self.checksum_algorithm, self.filename,
+                         exp_checksum, self.checksum)
+            result = False
+
+        return result
+
+
+class FileOnDisk(FileReference):
+    """Wrapper for a 'real' file on disk."""
+
+    @property
+    def file_path(self):
+        """Directory + filename."""
+        return os.path.join(self.container_path, self.filename)
 
     @property
     def exists(self):
@@ -90,22 +204,21 @@ class FileOnDisk(object):
     @property
     def size(self):
         """The size of this file, in bytes."""
-        return os.path.getsize(self.file_path)
+        if self._size is None or self.force_refresh:
+            self._size = os.path.getsize(self.file_path)
+        return self._size
 
+    @contextmanager
     def open(self, mode):
         """Open the file and return a reference to the file object.
 
         Args:
           mode (str): Mode such as 'r', 'w', 'a', 'w+', etc.
-        Returns:
+        Yields:
           file: File object
         """
-        self.obj = open(self.file_path, mode)
-        return self.obj
-
-    def close(self):
-        """Close the file previously opened."""
-        self.obj.close()
+        with open(self.file_path, mode) as obj:
+            yield obj
 
     def copy_to(self, dest_dir):
         """Copy this file to the given destination directory.
@@ -129,15 +242,16 @@ class FileOnDisk(object):
         tarf.add(self.file_path, self.filename)
 
 
-class FileInTAR(object):
+class FileInTAR(FileReference):
     """Wrapper for a file inside a TAR archive or OVA."""
 
-    def __init__(self, tarfile_path, filename):
+    def __init__(self, tarfile_path, filename, **kwargs):
         """Create a reference to a file contained in a TAR archive.
 
         Args:
           tarfile_path (str): Path to TAR archive to read
           filename (str): File name in the TAR archive.
+          **kwargs: Passed through to :meth:`FileReference.__init__`.
 
         Raises:
           IOError: if ``tarfile_path`` doesn't reference a TAR file,
@@ -145,44 +259,13 @@ class FileInTAR(object):
         """
         if not tarfile.is_tarfile(tarfile_path):
             raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
-        self.tarfile_path = tarfile_path
-        self.filename = os.path.normpath(filename)
-        if not self.exists:
-            raise IOError("{0} does not exist in {1}"
-                          .format(filename, tarfile_path))
-        self.file_path = None
         self.tarf = None
-        self.obj = None
-
-    def __eq__(self, other):
-        """FileInTAR are equal if they have the same filename and tarfile.
-
-        No attempt is made to check file equivalence, symlinks, etc.
-
-        Args:
-          other (object): Other object to compare against
-        Returns:
-          bool: True if filename and tarfile_path are the same, else False
-        """
-        if type(other) is type(self):
-            return (self.tarfile_path == other.tarfile_path and
-                    self.filename == other.filename)
-        return False
-
-    def __ne__(self, other):
-        """FileInTar are not equal if they have different paths or names.
-
-        Args:
-          other (object): Other object to compare against
-        Returns:
-          bool: False if filename and tarfile_path are the same, else True
-        """
-        return not self.__eq__(other)
+        super(FileInTAR, self).__init__(tarfile_path, filename, **kwargs)
 
     @property
     def exists(self):
         """True if the file exists in the TAR archive, else False."""
-        with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
+        with tarfile.open(self.container_path, 'r') as tarf:
             try:
                 tarf.getmember(self.filename)
                 return True
@@ -199,15 +282,18 @@ class FileInTAR(object):
     @property
     def size(self):
         """The size of this file in bytes."""
-        with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
-            return tarf.getmember(self.filename).size
+        if self._size is None or self.force_refresh:
+            with tarfile.open(self.container_path, 'r') as tarf:
+                self._size = tarf.getmember(self.filename).size
+        return self._size
 
+    @contextmanager
     def open(self, mode):
         """Open the TAR and return a reference to the relevant file object.
 
         Args:
           mode (str): Only 'r' and 'rb' modes are supported.
-        Returns:
+        Yields:
           file: File object
         Raises:
           ValueError: if ``mode`` is not valid.
@@ -215,18 +301,12 @@ class FileInTAR(object):
         # We can only extract a file object from a TAR file in read mode.
         if mode != 'r' and mode != 'rb':
             raise ValueError("FileInTar.open() only supports 'r'/'rb' mode")
-        self.tarf = tarfile.open(self.tarfile_path, 'r')
-        self.obj = self.tarf.extractfile(self.filename)
-        return self.obj
-
-    def close(self):
-        """Close the file object previously opened."""
-        if self.tarf is not None:
-            self.tarf.close()
-            self.tarf = None
-        if self.obj is not None:
-            self.obj.close()
-            self.obj = None
+        # actually tarf.extractfile is always a binary object...
+        with tarfile.open(self.container_path, 'r') as tarf:
+            self.tarf = tarf
+            with closing(tarf.extractfile(self.filename)) as obj:
+                yield obj
+        self.tarf = None
 
     def copy_to(self, dest_dir):
         """Extract this file to the given destination directory.
@@ -234,9 +314,9 @@ class FileInTAR(object):
         Args:
           dest_dir (str): Destination directory or filename.
         """
-        with closing(tarfile.open(self.tarfile_path, 'r')) as tarf:
+        with tarfile.open(self.container_path, 'r') as tarf:
             logger.debug("Extracting %s from %s to %s",
-                         self.filename, self.tarfile_path, dest_dir)
+                         self.filename, self.container_path, dest_dir)
             tarf.extract(self.filename, dest_dir)
 
     def add_to_archive(self, tarf):
@@ -245,15 +325,7 @@ class FileInTAR(object):
         Args:
           tarf (tarfile.TarFile): Add this file to that archive.
         """
-        self.open('r')
-        try:
+        with self.open('r') as obj:
             logger.debug("Copying %s directly from %s to TAR file",
-                         self.filename, self.tarfile_path)
-            tarf.addfile(self.tarf.getmember(self.filename), self.obj)
-        finally:
-            self.close()
-
-
-if __name__ == "__main__":   # pragma: no cover
-    import doctest
-    doctest.testmod()
+                         self.filename, self.container_path)
+            tarf.addfile(self.tarf.getmember(self.filename), obj)

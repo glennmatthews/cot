@@ -15,6 +15,9 @@ This project adheres to `Semantic Versioning`_.
 
 - Official support for pypy3. (COT has already been usable under pypy3, but
   now it's actually part of our tests.)
+- COT checks the manifest when loading an OVF/OVA and warns if any
+  checksum mismatches are seen.
+- ``FileReference`` class as superclass of ``FileInTAR`` and ``FileOnDisk``.
 
 **Changed**
 

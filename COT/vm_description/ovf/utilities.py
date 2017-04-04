@@ -21,14 +21,58 @@
 .. autosummary::
   :nosignatures:
 
-  programmatic_bytes_to_int
   int_bytes_to_programmatic_units
+  parse_manifest
+  programmatic_bytes_to_int
 """
 
 import logging
 import re
 
 logger = logging.getLogger(__name__)
+
+
+def parse_manifest(manifest_text):
+    r"""Parse the given manifest file contents into a dictionary.
+
+    Args:
+      manifest_text (str): Contents of an OVF manifest file
+
+    Returns:
+      dict: Mapping of filename to (algorithm, checksum_string)
+
+    Examples:
+      ::
+
+        >>> result = parse_manifest(
+        ... "SHA1(package.ovf)= 237de026fb285b85528901da058475e56034da95\n"
+        ... "SHA1(vmdisk1.vmdk)= 393a66df214e192ffbfedb78528b5be75cc9e1c3\n"
+        ... )
+        >>> sorted(result.keys())
+        ['package.ovf', 'vmdisk1.vmdk']
+        >>> result["package.ovf"]
+        ('SHA1', '237de026fb285b85528901da058475e56034da95')
+        >>> result["vmdisk1.vmdk"]
+        ('SHA1', '393a66df214e192ffbfedb78528b5be75cc9e1c3')
+
+    """
+    result = {}
+    for line in manifest_text.split("\n"):
+        if not line:
+            continue
+        # Per the OVF spec, the correct format for a manifest line is:
+        # <algo>(<filename>)= <checksum>
+        # but we've seen examples in the wild that aren't quite right, like:
+        # <algo> (<filename>)=<checksum>
+        # Be forgiving of such errors:
+        match = re.match(r"^\s*([A-Z0-9]+)\s*\((.+)\)\s*=\s*([0-9a-f]+)\s*$",
+                         line)
+        if match:
+            result[match.group(2)] = (match.group(1), match.group(3))
+        else:
+            logger.error('Unexpected or invalid manifest line: "%s"', line)
+
+    return result
 
 
 def programmatic_bytes_to_int(base_value, programmatic_units):

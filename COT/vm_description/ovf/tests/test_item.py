@@ -43,7 +43,7 @@ class TestOVFItem(COTTestCase):
 
     def test_1_to_1(self):
         """Convert one Item to an OVFItem and back."""
-        root = ET.fromstring("""<?xml version='1.0' encoding='utf-8'?>
+        root = ET.fromstring("""<?xml version='1.0'?>
 <ovf:Envelope xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" \
 xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/\
 CIM_ResourceAllocationSettingData" \

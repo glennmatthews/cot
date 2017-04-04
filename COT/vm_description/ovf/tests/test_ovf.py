@@ -24,7 +24,6 @@ import tempfile
 import shutil
 import subprocess
 import tarfile
-from contextlib import closing
 import mock
 
 from COT.tests import COTTestCase
@@ -187,15 +186,12 @@ ovf:size="{cfg_size}" />
            cfg_size=self.FILE_SIZE['sample_cfg.txt']))
 
         # Read OVA, write OVF
-        try:
-            tarf = tarfile.open(os.path.join(self.staging_dir, 'input.ova'),
-                                'w')
+        with tarfile.open(os.path.join(self.staging_dir, 'input.ova'),
+                          'w') as tarf:
             tarf.add(os.path.join(self.staging_dir, 'input.ovf'), 'input.ovf')
             tarf.add(os.path.join(self.staging_dir, 'input.vmdk'),
                      'input.vmdk')
             tarf.add(self.sample_cfg, 'sample_cfg.txt')
-        finally:
-            tarf.close()
         with OVF(os.path.join(self.staging_dir, 'input.ova'),
                  os.path.join(self.temp_dir, 'output.ovf')):
             self.assertLogged(**self.NONEXISTENT_FILE)
@@ -226,23 +222,23 @@ ovf:size="{cfg_size}" />
                     os.path.join(self.staging_dir, 'input.vmdk'))
         with OVF(os.path.join(self.staging_dir, 'input.ovf'),
                  os.path.join(self.temp_dir, "temp.ova")):
+            # Write out to OVA (which will correct the file size information)
             pass
-        self.assertLogged(msg="Size of file.*seems to have changed.*"
-                          "The updated OVF will reflect this change.")
+        self.assertLogged(msg="The size of file '%s' is expected"
+                          " to be.*but is actually.*")
         self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
                           "The updated OVF will reflect this change.")
-
-        # Write out to OVA (which will correct the file size information)
 
         # Now read in the OVA
         with OVF(os.path.join(self.temp_dir, "temp.ova"),
                  os.path.join(self.temp_dir, "temp.ovf")):
             # Replace the tar file fake .vmdk with the real .vmdk
-            tarf = tarfile.open(os.path.join(self.temp_dir, "temp.ova"), 'a')
-            tarf.add(self.input_vmdk, 'input.vmdk')
-            tarf.close()
-        self.assertLogged(msg="Size of file.*seems to have changed.*"
-                          "The updated OVF will reflect this change.")
+            with tarfile.open(os.path.join(self.temp_dir, "temp.ova"),
+                              'a') as tarf:
+                tarf.add(self.input_vmdk, 'input.vmdk')
+
+        self.assertLogged(msg="Size of file '%s' has changed")
+        self.assertLogged(msg="checksum of file '%s' has changed")
         # TODO: When the disk is in the input OVA we can't validate capacity.
         # self.assertLogged(msg="Capacity of disk.*seems to have changed.*"
         #                  "The updated OVF will reflect this change.")
@@ -310,8 +306,8 @@ ovf:size="{cfg_size}" />
         ovf.write()
         ovf.destroy()
 
-        with closing(tarfile.open(os.path.join(self.temp_dir, 'input.ova'),
-                                  'r')) as tarf:
+        with tarfile.open(os.path.join(self.temp_dir, 'input.ova'),
+                          'r') as tarf:
             try:
                 vmdk = tarf.getmember('input.vmdk')
                 self.assertTrue(vmdk.isfile(),
@@ -393,8 +389,8 @@ ovf:size="{cfg_size}" />
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ova that is an empty TAR file
-        tarf = tarfile.open(fake_file, 'w')
-        tarf.close()
+        with tarfile.open(fake_file, 'w') as tarf:
+            pass
         with self.assertRaises(VMInitError) as catcher:
             OVF(fake_file, None)
         self.assertEqual(catcher.exception.errno, 1)
@@ -402,19 +398,13 @@ ovf:size="{cfg_size}" />
         self.assertEqual(catcher.exception.filename, fake_file)
 
         # .ova that is a TAR file but does not contain an OVF descriptor
-        tarf = tarfile.open(fake_file, 'w')
-        try:
+        with tarfile.open(fake_file, 'w') as tarf:
             tarf.add(self.blank_vmdk, os.path.basename(self.blank_vmdk))
-        finally:
-            tarf.close()
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
         # .ova that contains an OVF descriptor but in the wrong position
-        tarf = tarfile.open(fake_file, 'a')
-        try:
+        with tarfile.open(fake_file, 'a') as tarf:
             tarf.add(self.minimal_ovf, os.path.basename(self.minimal_ovf))
-        finally:
-            tarf.close()
         # this results in a logged error but not rejection - Postel's Law
         with OVF(fake_file, None):
             self.assertLogged(
@@ -422,8 +412,7 @@ ovf:size="{cfg_size}" />
                 msg="OVF file %s found, but .*not.*first")
 
         # .ova with unsafe absolute path references
-        tarf = tarfile.open(fake_file, 'w')
-        try:
+        with tarfile.open(fake_file, 'w') as tarf:
             # tarfile.add() is sometimes smart enough to protect us against
             # such unsafe references, but we can overrule it by using
             # gettarinfo() and addfile() instead of just add().
@@ -434,8 +423,6 @@ ovf:size="{cfg_size}" />
                              os.path.basename(self.minimal_ovf)))
             with open(self.minimal_ovf, 'rb') as fileobj:
                 tarf.addfile(tari, fileobj)
-        finally:
-            tarf.close()
         self.assertRaises(VMInitError, OVF, fake_file, None)
 
     def test_invalid_ovf_contents(self):
