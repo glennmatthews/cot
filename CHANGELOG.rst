@@ -6,6 +6,11 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Fixed**
+
+- COT now produces valid manifests for OVF 2.x files (which use SHA256
+  instead of SHA1 as in OVF 0.x and 1.x).
+
 **Added**
 
 - Official support for pypy3. (COT has already been usable under pypy3, but

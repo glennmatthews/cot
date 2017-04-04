@@ -323,7 +323,7 @@ def file_checksum(path_or_obj, checksum_type):
 
     Args:
       path_or_obj (str): File path to checksum OR an opened file object
-      checksum_type (str): Supported values are 'md5' and 'sha1'.
+      checksum_type (str): Supported values are 'md5', 'sha1', 'sha256'.
     Returns:
       str: Hexadecimal file checksum
     """
@@ -332,6 +332,8 @@ def file_checksum(path_or_obj, checksum_type):
         hash_obj = hashlib.md5()
     elif checksum_type == 'sha1':
         hash_obj = hashlib.sha1()
+    elif checksum_type == 'sha256':
+        hash_obj = hashlib.sha256()
     else:
         raise NotImplementedError(
             "No support for generating checksum type {0}"

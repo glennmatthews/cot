@@ -682,7 +682,14 @@ class OVF(VMDescription, XML):
         manifest_size = 0
         for href, file_ref in self._file_references.items():
             # Approximate size of a manifest entry for this file
-            manifest_size += 50 + len(href)
+            if self.ovf_version >= 2.0:
+                # SHA256(href)= <64 hex digits>
+                # so 64 + href length + ~12 other characters
+                manifest_size += 76 + len(href)
+            else:
+                # SHA1(href)= <40 hex digits>
+                # so 40 + href length + ~10 other characters
+                manifest_size += 50 + len(href)
 
             if file_ref is not None:
                 # TODO - can be None in invalid.ovf example, what should we do?
@@ -2595,6 +2602,24 @@ class OVF(VMDescription, XML):
         # Find the OVF file
         return os.path.join(self.working_dir, ovf_descriptor.name)
 
+    def _checksum_file(self, path_or_obj):
+        """Call file_checksum() with the appropriate checksum algorithm.
+
+        Args:
+          path_or_obj (str): File path to checksum OR an opened file object
+        Returns:
+          tuple: (algorithm_name, hex checksum)
+        """
+        if self.ovf_version >= 2.0:
+            # OVF 2.x uses SHA256 for manifest
+            sum_algo = 'sha256'
+        else:
+            # OVF 0.x and 1.x use SHA1
+            sum_algo = 'sha1'
+        checksum = file_checksum(path_or_obj, sum_algo)
+        algo = sum_algo.upper()
+        return (algo, checksum)
+
     def generate_manifest(self, ovf_file):
         """Construct the manifest file for this package, if possible.
 
@@ -2609,11 +2634,12 @@ class OVF(VMDescription, XML):
         (prefix, _) = os.path.splitext(ovf_file)
         logger.verbose("Generating manifest for %s", ovf_file)
         manifest = prefix + '.mf'
-        # TODO: OVF 2.0 uses SHA256 instead of SHA1.
-        sha1sum = file_checksum(ovf_file, 'sha1')
+        algo, checksum = self._checksum_file(ovf_file)
         with open(manifest, 'wb') as mfobj:
-            mfobj.write("SHA1({file})= {sum}\n"
-                        .format(file=os.path.basename(ovf_file), sum=sha1sum)
+            mfobj.write("{algo}({file})= {sum}\n"
+                        .format(algo=algo,
+                                file=os.path.basename(ovf_file),
+                                sum=checksum)
                         .encode('utf-8'))
             # Checksum all referenced files as well
             for file_obj in self.references.findall(self.FILE):
@@ -2621,12 +2647,12 @@ class OVF(VMDescription, XML):
                 file_ref = self._file_references[file_name]
                 try:
                     file_obj = file_ref.open('rb')
-                    sha1sum = file_checksum(file_obj, 'sha1')
+                    algo, checksum = self._checksum_file(file_obj)
                 finally:
                     file_ref.close()
 
-                mfobj.write("SHA1({file})= {sum}\n"
-                            .format(file=file_name, sum=sha1sum)
+                mfobj.write("{algo}({file})= {sum}\n"
+                            .format(algo=algo, file=file_name, sum=checksum)
                             .encode('utf-8'))
 
         logger.debug("Manifest generated successfully")

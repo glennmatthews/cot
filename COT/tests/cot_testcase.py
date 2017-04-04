@@ -236,6 +236,10 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
     # OVF claiming to be a "version 3" OVF format, which doesn't exist yet
     ersatz_v3_ovf = _localfile("ersatz_ovf_3.0.ovf")
 
+    # Manifests corresponding to OVFs above
+    input_manifest = _localfile("input.mf")
+    v20_vbox_manifest = _localfile("ubuntu.2.0.mf")
+
     # Some canned disk images and other files too
     input_iso = _localfile("input.iso")
     input_vmdk = _localfile("input.vmdk")

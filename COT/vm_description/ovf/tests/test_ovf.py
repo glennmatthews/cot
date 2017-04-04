@@ -77,6 +77,14 @@ class TestOVFInputOutput(COTTestCase):
         with OVF(self.input_ovf, self.temp_file) as vm:
             self.assertEqual(vm.ovf_version, 1.0)
         self.check_diff('')
+        self.check_diff(
+            file1=self.input_manifest,
+            file2=os.path.join(self.temp_dir, "out.mf"),
+            expected="""
+-SHA1(input.ovf)= c3bd2579c2edc76ea35b5bde7d4f4e41eab08963
++SHA1(out.ovf)= c3bd2579c2edc76ea35b5bde7d4f4e41eab08963
+ SHA1(input.vmdk)= 264caaa216ad928f82f727bb06d8e6e6fbd94df0
+ """)
 
         # Filename output too
         with OVF(self.input_ovf, self.temp_file + '.a.b.c'):
@@ -102,6 +110,12 @@ class TestOVFInputOutput(COTTestCase):
 
         # ovftool does not consider vbox ovfs to be valid
         self.validate_output_with_ovftool = False
+
+        # TODO - similarly OVF checksum will change, so a direct check
+        # of the manifest is out
+        # self.check_diff(file1=self.v20_vbox_manifest,
+        #                 file2=os.path.join(self.temp_dir, "out.mf"),
+        #                 expected="")
 
     def test_input_output_vmware(self):
         """Test reading/writing of an OVF with custom extensions."""
