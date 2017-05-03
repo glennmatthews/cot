@@ -313,7 +313,7 @@ class OVF(VMDescription, XML):
 
         if self.input_file == self.ovf_descriptor:
             # Check files in the directory referenced by the OVF descriptor
-            input_path = os.path.dirname(self.ovf_descriptor)
+            input_path = os.path.dirname(os.path.abspath(self.ovf_descriptor))
         else:
             # OVA - check contents of TAR file.
             input_path = self.input_file

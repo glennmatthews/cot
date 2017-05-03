@@ -43,11 +43,13 @@ class TestOVFInputOutput(COTTestCase):
         super(TestOVFInputOutput, self).setUp()
         # Additional temp directory used by some test cases
         self.staging_dir = None
+        self.base_dir = os.getcwd()
 
     def tearDown(self):
         """Test case cleanup function called automatically after each test."""
         if self.staging_dir:
             shutil.rmtree(self.staging_dir)
+        os.chdir(self.base_dir)
         super(TestOVFInputOutput, self).tearDown()
 
     def test_filename_validation(self):
@@ -92,6 +94,31 @@ class TestOVFInputOutput(COTTestCase):
                 msg="found '%s' in mid-filename; treating as such",
                 args=('out.ovf.a.b.c', '.ovf'))
         self.check_diff('', file2=(self.temp_file + ".a.b.c"))
+
+    def test_input_output_relative_paths(self):
+        """Make sure relative and implicit paths are handled."""
+        os.chdir(os.path.dirname(self.input_ovf))
+        with OVF(os.path.basename(self.input_ovf), self.temp_file) as vm:
+            self.assertEqual(vm.ovf_version, 1.0)
+        self.check_diff('')
+        os.remove(self.temp_file)
+
+        with OVF(os.path.join(".", os.path.basename(self.input_ovf)),
+                 self.temp_file) as vm:
+            self.assertEqual(vm.ovf_version, 1.0)
+        self.check_diff('')
+        os.remove(self.temp_file)
+
+        os.chdir(os.path.dirname(self.temp_file))
+        with OVF(self.input_ovf, os.path.basename(self.temp_file)) as vm:
+            self.assertEqual(vm.ovf_version, 1.0)
+        self.check_diff('')
+        os.remove(self.temp_file)
+
+        with OVF(self.input_ovf,
+                 os.path.join(".", os.path.basename(self.temp_file))) as vm:
+            self.assertEqual(vm.ovf_version, 1.0)
+        self.check_diff('')
 
     def test_input_output_v09(self):
         """Test reading/writing of a v0.9 OVF."""

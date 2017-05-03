@@ -55,7 +55,8 @@ class FileReference(object):
           FileReference: instance of appropriate subclass
         """
         if not os.path.exists(container_path):
-            raise IOError("'{0}' does not exist".format(container_path))
+            raise IOError("Container path '{0}' does not exist"
+                          .format(container_path))
         if os.path.isdir(container_path):
             return FileOnDisk(container_path, filename, **kwargs)
         elif tarfile.is_tarfile(container_path):
