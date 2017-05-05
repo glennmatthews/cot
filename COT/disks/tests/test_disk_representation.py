@@ -32,13 +32,26 @@ logger = logging.getLogger(__name__)
 class TestDiskRepresentation(COTTestCase):
     """Test DiskRepresentation class."""
 
-    def test_disk_representation_from_file_raw(self):
-        """Test if DiskRepresentation.from_file() works for raw images."""
+    def test_disk_representation_from_file_raw_extension(self):
+        """Test if DiskRepresentation.from_file() works for .img images."""
         temp_disk = os.path.join(self.temp_dir, 'foo.img')
         helpers['qemu-img'].call(['create', '-f', 'raw', temp_disk, "16M"])
         diskrep = DiskRepresentation.from_file(temp_disk)
         self.assertEqual(diskrep.disk_format, "raw")
         self.assertEqual(diskrep.disk_subformat, None)
+
+    def test_disk_representation_from_file_raw_noext(self):
+        """DiskRepresentation.from_file() falls back to RAW if unsure."""
+        temp_disk = os.path.join(self.temp_dir, 'foo.bar')
+        with open(temp_disk, 'a') as fakedisk:
+            fakedisk.write("Hello world")
+        diskrep = DiskRepresentation.from_file(temp_disk)
+        self.assertEqual(diskrep.disk_format, "raw")
+        self.assertEqual(diskrep.disk_subformat, None)
+        # Less confidence in this case
+        self.assertLogged(levelname='WARNING',
+                          msg='COT has low confidence',
+                          args=(temp_disk, 'raw', '10'))
 
     def test_disk_representation_from_file_qcow2(self):
         """Test if DiskRepresentation.from_file() works for qcow2 images."""
@@ -99,6 +112,12 @@ class TestDiskRepresentation(COTTestCase):
         """No default files getter logic."""
         with self.assertRaises(NotImplementedError):
             assert DiskRepresentation(path=self.blank_vmdk).files
+
+    def test_predicted_drive_type(self):
+        """Default prediction is 'harddisk'."""
+        self.assertEqual(
+            'harddisk',
+            DiskRepresentation(path=self.blank_vmdk).predicted_drive_type)
 
     def test_file_is_this_type_missing_file(self):
         """file_is_this_type raises an error if file doesn't exist."""

@@ -47,6 +47,7 @@ class TestRAW(COTTestCase):
 
         self.assertEqual(raw.disk_format, 'raw')
         self.assertEqual(raw.disk_subformat, None)
+        self.assertEqual(raw.predicted_drive_type, 'harddisk')
 
     @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
                 new_callable=mock.PropertyMock,

@@ -24,7 +24,6 @@
   add_disk_worker
   confirm_elements
   guess_controller_type
-  guess_drive_type_from_extension
   search_for_elements
   validate_elements
   validate_controller_address
@@ -279,51 +278,6 @@ otherwise, will create a new disk entry.""")
         parser.set_defaults(instance=self)
 
 
-def guess_drive_type_from_extension(disk_file_name):
-    """Guess the disk type (harddisk/cdrom) from the disk file name.
-
-    Args:
-      disk_file_name (str): File name or file path.
-    Returns:
-      str: "cdrom" or "harddisk"
-    Raises:
-      InvalidInputError: if the disk type cannot be guessed.
-    Examples:
-      ::
-
-        >>> guess_drive_type_from_extension('/foo/bar.vmdk')
-        'harddisk'
-        >>> guess_drive_type_from_extension('baz.vmdk.iso')
-        'cdrom'
-        >>> try:
-        ...     guess_drive_type_from_extension('/etc/os-release')
-        ...     raise AssertionError("no exception raised")
-        ... except InvalidInputError as e:
-        ...     print(e)
-        Unable to guess disk drive type for file '/etc/os-release' from its extension ''.
-        Known extensions are ['.img', '.iso', '.qcow2', '.raw', '.vmdk']
-        Please specify '--type harddisk' or '--type cdrom'.
-    """    # noqa: E501
-    disk_extension = os.path.splitext(disk_file_name)[1]
-    ext_type_map = {
-        '.iso':   'cdrom',
-        '.vmdk':  'harddisk',
-        '.raw':   'harddisk',
-        '.qcow2': 'harddisk',
-        '.img':   'harddisk',
-    }
-    try:
-        drive_type = ext_type_map[disk_extension]
-    except KeyError:
-        raise InvalidInputError(
-            "Unable to guess disk drive type for file '{0}' from its "
-            "extension '{1}'.\nKnown extensions are {2}\n"
-            "Please specify '--type harddisk' or '--type cdrom'."
-            .format(disk_file_name, disk_extension,
-                    sorted(ext_type_map.keys())))
-    return drive_type
-
-
 def search_for_elements(vm, disk_file, file_id, controller, address):
     """Search for a unique set of objects based on the given criteria.
 
@@ -573,9 +527,9 @@ def add_disk_worker(vm,
       description (str): Description of disk device
     """
     if drive_type is None:
-        drive_type = guess_drive_type_from_extension(disk_image.path)
+        drive_type = disk_image.predicted_drive_type
         logger.warning("New disk drive type not specified, guessing it should "
-                       "be '%s' based on file extension", drive_type)
+                       "be '%s' based on file type", drive_type)
 
     # Convert the disk to a new format if needed...
     disk_image = vm.convert_disk_if_needed(disk_image, drive_type)

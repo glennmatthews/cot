@@ -48,12 +48,12 @@ class CommandTestCase(COTTestCase):
     # TODO: change these to functions so we can populate 'args' for each
     DRIVE_TYPE_GUESSED_HARDDISK = {
         'levelname': 'WARNING',
-        'msg': "drive type not specified.*guessing.*based on file extension",
+        'msg': "drive type not specified.*guessing.*based on file type",
         'args': ('harddisk', ),
     }
     DRIVE_TYPE_GUESSED_CDROM = {
         'levelname': 'WARNING',
-        'msg': "drive type not specified.*guessing.*based on file extension",
+        'msg': "drive type not specified.*guessing.*based on file type",
         'args': ('cdrom', ),
     }
     CONTROLLER_TYPE_GUESSED_IDE = {

@@ -17,6 +17,8 @@ This project adheres to `Semantic Versioning`_.
   mandatory pre-requisite for building COT. This helps us to avoid breaking
   Travis-CI tests when a new version of Sphinx comes out that doesn't support
   older Python versions like 3.3.
+- Replaced ``add_disk.guess_drive_type_from_extension`` with
+  ``DiskRepresentation.predicted_drive_type``.
 
 `2.0.3`_ - 2017-04-03
 ---------------------

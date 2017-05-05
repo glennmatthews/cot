@@ -40,12 +40,6 @@ class DiskRepresentation(object):
         return DiskRepresentation.__subclasses__()
 
     @staticmethod
-    def supported_disk_formats():
-        """List of disk format strings with support."""
-        return [subclass.disk_format
-                for subclass in DiskRepresentation.subclasses()]
-
-    @staticmethod
     def class_for_format(disk_format):
         """Get the DiskRepresentation subclass associated with the given format.
 
@@ -80,18 +74,23 @@ class DiskRepresentation(object):
         for subclass in DiskRepresentation.subclasses():
             confidence = subclass.file_is_this_type(path)
             if confidence > best_confidence:
-                logger.debug("File %s may be a %s, with confidence %d",
+                logger.debug("File %s may be a %s, with confidence %d%%",
                              path, subclass.disk_format, confidence)
                 best_guess = subclass
                 best_confidence = confidence
             elif confidence > 0 and confidence == best_confidence:
-                logger.warning("For file %s, same confidence level (%d) for "
+                logger.warning("For file %s, same confidence level (%d%%) for "
                                "classes %s and %s. Using %s",
                                path, confidence, best_guess,
                                subclass, best_guess)
         if best_guess is not None:
-            logger.verbose("File %s appears to be a %s",
-                           path, best_guess.disk_format)
+            logger.verbose("File %s appears to be a %s, with confidence %s%%",
+                           path, best_guess.disk_format, best_confidence)
+            if best_confidence < 50:
+                logger.warning("File %s has been guessed to be a %s disk "
+                               "image, but COT has low confidence (%s%%) "
+                               "in this guess.",
+                               path, best_guess.disk_format, best_confidence)
             return best_guess(path)
         else:
             raise NotImplementedError("No support for files of this type")
@@ -170,6 +169,16 @@ class DiskRepresentation(object):
             return self._files
         raise NotImplementedError("Unable to determine file contents")
 
+    @property
+    def predicted_drive_type(self):
+        """Disk drive type typically used for a Disk of this type.
+
+        Returns:
+          str: 'cdrom' or 'harddisk'
+        """
+        # Default for most Disk types
+        return 'harddisk'
+
     def convert_to(self, new_format, new_directory, new_subformat=None):
         """Convert the disk file to a new format and return the new instance.
 
@@ -186,6 +195,7 @@ class DiskRepresentation(object):
 
         .. seealso:: :meth:`from_other_image`
         """
+        assert os.path.isdir(new_directory)
         subclass = self.class_for_format(new_format)
         if subclass is None:
             raise NotImplementedError("No support for converting to type '{0}'"

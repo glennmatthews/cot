@@ -58,6 +58,7 @@ class TestISO(COTTestCase):
             self.assertEqual(iso.disk_subformat, "")
             self.assertEqual(iso.files,
                              ['iosxr_config.txt', 'iosxr_config_admin.txt'])
+        self.assertEqual(iso.predicted_drive_type, 'cdrom')
 
     def test_create_with_files(self):
         """Creation of a ISO with specific file contents."""

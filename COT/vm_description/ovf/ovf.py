@@ -1888,6 +1888,9 @@ class OVF(VMDescription, XML):
             logger.debug("No disk conversion needed")
             return disk_image
 
+        logger.debug("Converting %s (%s, %s) to streamOptimized VMDK",
+                     disk_image.path, disk_image.disk_format,
+                     disk_image.disk_subformat)
         return disk_image.convert_to(new_format='vmdk',
                                      new_subformat='streamOptimized',
                                      new_directory=self.working_dir)

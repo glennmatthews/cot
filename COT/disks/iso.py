@@ -70,6 +70,15 @@ class ISO(DiskRepresentation):
                 self._files = result
         return self._files
 
+    @property
+    def predicted_drive_type(self):
+        """Disk drive type typically used for a Disk of this type.
+
+        Returns:
+          str: 'cdrom'
+        """
+        return 'cdrom'
+
     @staticmethod
     def _create_file(path, disk_subformat="rockridge", files=None, **kwargs):
         """Create an ISO file.

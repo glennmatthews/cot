@@ -548,21 +548,6 @@ class TestCLIAddDisk(TestCOTCLI):
         self.call_cot(['add-disk', '/foo/bar.vmdk', self.input_ovf],
                       result=2)
 
-    def test_unknown_filetype(self):
-        """Pass in a file that is not obviously a CDROM or hard disk."""
-        # Unknown extension
-        mystery_file = os.path.join(self.temp_dir, "foo.bar")
-        open(mystery_file, 'a').close()
-        self.call_cot(['add-disk', mystery_file, self.input_ovf,
-                       '-o', self.temp_file],
-                      result=2)
-        # No extension
-        mystery_file = os.path.join(self.temp_dir, "foo")
-        open(mystery_file, 'a').close()
-        self.call_cot(['add-disk', mystery_file, self.input_ovf,
-                       '-o', self.temp_file],
-                      result=2)
-
 
 class TestCLIAddFile(TestCOTCLI):
     """CLI test cases for "cot add-file" command."""
