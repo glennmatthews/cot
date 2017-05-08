@@ -115,6 +115,37 @@ directly:
 
 Fix any errors and warnings these tools report, and run again until no errors are reported.
 
+CLI consistency
+'''''''''''''''
+
+When adding or modifying CLI, keep the following guidelines in mind:
+
+* All subcommands *must* support ``-h``/``--help``. Never redefine ``-h`` to
+  mean something other than "get help".
+* All commands that modify files *must* define ``-o``/``--output`` to specify
+  a new file to create instead of overwriting any input file. If and only if
+  the command does not modify the input file, you may use ``-o`` to mean
+  something else (e.g., ``cot deploy ...`` has ``-o``/``--ovftool-args``).
+* Best effort: use consistent argument names and short argument names unless
+  there's an unavoidable conflict. Examples:
+
+  * ``cot add-file`` and ``cot add-disk`` abbreviate ``--file-id`` as ``-f``,
+    but ``cot remove-file`` abbreviates it as ``-i`` because it uses ``-f`` to
+    mean ``--file-path``. In retrospect, using ``-p`` for ``--file-path``
+    would have allowed COT to be more self-consistenct.
+  * ``cot edit-hardware`` uses ``-p``/``--profiles`` to specify one or more
+    configuration profiles to operate on. ``cot deploy esxi`` uses
+    ``-c``/``--configuration`` to specify the configuration profile to deploy.
+    In this case, this is somewhat unavoidable as ``cot edit-hardware`` uses
+    ``-c`` to mean ``--cpus`` (no reasonable alternative) and
+    ``cot deploy esxi`` uses ``-p`` to mean ``--password`` (likewise).
+
+* In cases where short argument names unavoidably differ between commands,
+  support the same set of long names if at all possible. For example,
+  ``cot edit-hardware`` and ``cot deploy esxi`` should both support both
+  ``--profile``\ (s) and ``--configuration``\ (s) as synonymous long names
+  that can be used interchangeably to specify a configuration profile.
+
 Add automated unit tests
 ------------------------
 
