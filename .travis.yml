@@ -7,7 +7,7 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  - pypy
+  - pypy-5.3.1
 
 addons:
   apt:
