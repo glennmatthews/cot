@@ -3,6 +3,21 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Added**
+
+- Official support for pypy3. (COT has already been usable under pypy3, but
+  now it's actually part of our tests.)
+
+**Changed**
+
+- Refactored how man page builds are triggered so that Sphinx is no longer a
+  mandatory pre-requisite for building COT. This helps us to avoid breaking
+  Travis-CI tests when a new version of Sphinx comes out that doesn't support
+  older Python versions like 3.3.
+
 `2.0.3`_ - 2017-04-03
 ---------------------
 
