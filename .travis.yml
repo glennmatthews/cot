@@ -7,8 +7,13 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  - pypy-5.3.1
-  - pypy3
+  # Travis-CI 'pypy' is ancient (Python 2.7.8, 2/2015), so request a newer one
+  - pypy-5.4.1             # Python 2.7.10
+  # Travis-CI 'pypy3' is even older (Python 3.2.5, 10/2014), so ditto
+  - pypy3.3-5.5-alpha      # Python 3.3.5
+  # not working on Travis-CI as of 6/2017:
+  # https://github.com/travis-ci/travis-ci/issues/7507
+  # - pypy3.5-5.7.1-alpha  # Python 3.5.3
 
 addons:
   apt:
