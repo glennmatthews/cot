@@ -118,6 +118,8 @@ class FileReference(object):
     @property
     def checksum(self):
         """Checksum of the referenced file."""
+        if self.checksum_algorithm is None:
+            return None
         if self._checksum is None or self.force_refresh:
             with self.open('rb') as file_obj:
                 self._checksum = file_checksum(file_obj,
