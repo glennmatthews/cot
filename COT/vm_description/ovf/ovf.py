@@ -44,7 +44,7 @@ from COT.disks import DiskRepresentation
 from COT.utilities import pretty_bytes, tar_entry_size
 
 from ..vm_description import VMDescription, VMInitError
-from .name_helper import name_helper
+from .name_helper import name_helper, CIM_URI
 from .hardware import OVFHardware, OVFHardwareDataError
 from .item import list_union
 from .utilities import (
@@ -203,6 +203,9 @@ class OVF(VMDescription, XML):
             ET.register_namespace('vmw', "http://www.vmware.com/schema/ovf")
             ET.register_namespace('vbox',
                                   "http://www.virtualbox.org/ovf/machine")
+            ET.register_namespace(
+                'pasd',
+                CIM_URI + "/cim-schema/2/CIM_ProcessorAllocationSettingData")
 
             # Go ahead and set pointers to some of the most useful XML sections
             self.envelope = self.root

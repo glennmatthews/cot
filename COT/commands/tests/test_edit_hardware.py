@@ -567,6 +567,46 @@ CIM_ResourceAllocationSettingData">
 +      </ovf:Item>
      </ovf:VirtualHardwareSection>""", file1=self.csr_ovf)
 
+    def test_set_nic_count_add_nonconsecutive_instances(self):
+        """Add additional NICs to an OVF with non-consecutive InstanceIDs."""
+        self.command.package = self.csr_ovf_2017
+        self.command.nics = 5
+        self.command.run()
+        self.command.finished()
+        self.check_diff("""
+       <ovf:Description>Data network 3</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="GigabitEthernet4">
++      <ovf:Description>Data network 4</ovf:Description>
++    </ovf:Network>
++    <ovf:Network ovf:name="GigabitEthernet5">
++      <ovf:Description>Data network 5</ovf:Description>
+     </ovf:Network>
+...
+       <ovf:Item>
++        <rasd:AddressOnParent>14</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>GigabitEthernet4</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet4</rasd:Description>
++        <rasd:ElementName>GigabitEthernet4</rasd:ElementName>
++        <rasd:InstanceID>14</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>15</rasd:AddressOnParent>
++        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
++        <rasd:Connection>GigabitEthernet5</rasd:Connection>
++        <rasd:Description>NIC representing GigabitEthernet5</rasd:Description>
++        <rasd:ElementName>GigabitEthernet5</rasd:ElementName>
++        <rasd:InstanceID>15</rasd:InstanceID>
++        <rasd:ResourceSubType>VMXNET3</rasd:ResourceSubType>
++        <rasd:ResourceType>10</rasd:ResourceType>
++      </ovf:Item>
++      <ovf:Item>
+         <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        """, file1=self.csr_ovf_2017)
+
     def test_set_nic_count_named_nics_and_networks(self):
         """Add more NICs and explicitly named networks across all profiles.
 

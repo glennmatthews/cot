@@ -8,6 +8,8 @@ This project adheres to `Semantic Versioning`_.
 
 **Fixed**
 
+- COT now ensures that cloned Items have a higher InstanceID than the Item
+  they were cloned from, avoiding unexpected out-of-order behavior (`#70`_).
 - COT now produces valid manifests for OVF 2.x files (which use SHA256
   instead of SHA1 as in OVF 0.x and 1.x).
 
@@ -799,6 +801,7 @@ Initial public release.
 .. _#65: https://github.com/glennmatthews/cot/issues/65
 .. _#66: https://github.com/glennmatthews/cot/issues/66
 .. _#67: https://github.com/glennmatthews/cot/issues/67
+.. _#70: https://github.com/glennmatthews/cot/issues/70
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
