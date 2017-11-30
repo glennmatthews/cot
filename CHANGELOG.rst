@@ -3,6 +3,19 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`2.0.5`_ - 2017-11-30
+---------------------
+
+**Fixed**
+
+- Error in previous release due to COT using a user-specified relative file
+  path in ``FileReference.create`` which implicitly assumed absolute paths.
+
+  - Now correctly fixes up the path before constructing this ``FileReference``.
+  - To prevent similar errors in the future, if a ``FileReference`` is
+    constructed with a non-absolute path, COT will log a warning and attempt
+    to fix the path at that point.
+
 `2.0.4`_ - 2017-11-30
 ---------------------
 
@@ -834,6 +847,7 @@ Initial public release.
 .. _verboselogs: https://verboselogs.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _2.0.5: https://github.com/glennmatthews/cot/compare/v2.0.4...v2.0.5
 .. _2.0.4: https://github.com/glennmatthews/cot/compare/v2.0.3...v2.0.4
 .. _2.0.3: https://github.com/glennmatthews/cot/compare/v2.0.2...v2.0.3
 .. _2.0.2: https://github.com/glennmatthews/cot/compare/v2.0.1...v2.0.2

@@ -42,6 +42,23 @@ class TestFileReference(COTTestCase):
         self.assertRaises(NotImplementedError, FileReference.create,
                           self.input_vmdk, "config.txt")
 
+    def test_create_relative(self):
+        """Test create() factory method incorrectly given relative paths."""
+        os.chdir(os.path.dirname(self.input_ovf))
+        fileref = FileReference.create('.',
+                                       os.path.basename(self.input_ovf))
+        self.assertIsInstance(fileref, FileOnDisk)
+        self.assertLogged(**self.FILE_REF_RELATIVE)
+
+        fileref = FileReference.create("test.tar",
+                                       "sample_cfg.txt")
+        self.assertIsInstance(fileref, FileInTAR)
+        self.assertLogged(**self.FILE_REF_RELATIVE)
+
+        self.assertRaises(IOError, FileReference.create, "/foo", "bar.txt")
+        self.assertRaises(NotImplementedError, FileReference.create,
+                          self.input_vmdk, "config.txt")
+
 
 class TestFileOnDisk(COTTestCase):
     """Test cases for FileOnDisk class."""
@@ -55,6 +72,13 @@ class TestFileOnDisk(COTTestCase):
         self.assertTrue(FileOnDisk(os.path.dirname(self.input_ovf),
                                    os.path.basename(self.input_ovf)).exists)
         # false case is covered by test_nonexistent_file
+
+    def test_exists_relative(self):
+        """Test like test_exists, but with a relative path."""
+        os.chdir(os.path.dirname(self.input_ovf))
+        self.assertTrue(FileOnDisk('',
+                                   os.path.basename(self.input_ovf)).exists)
+        self.assertLogged(**self.FILE_REF_RELATIVE)
 
     def test_size(self):
         """Test the size property."""
@@ -117,6 +141,14 @@ class TestFileInTAR(COTTestCase):
         """Test the exists property."""
         self.assertTrue(self.valid_ref.exists)
         # false case is covered in test_nonexistent_entry
+
+    def test_exists_relative(self):
+        """Test the exists property when initialized with relative path."""
+        os.chdir(os.path.dirname(self.tarfile))
+        relative_ref = FileInTAR(os.path.basename(self.tarfile),
+                                 "sample_cfg.txt")
+        self.assertTrue(relative_ref.exists)
+        self.assertLogged(**self.FILE_REF_RELATIVE)
 
     def test_size(self):
         """Test the size property."""
