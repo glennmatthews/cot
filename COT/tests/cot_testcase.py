@@ -200,6 +200,14 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
         'msg': "New disk address on parent not specified, guessing.*%s",
         'args': ('0', ),
     }
+    FILE_REF_RELATIVE = {
+        'levelname': 'WARNING',
+        'msg': ('Only absolute paths are accepted, '
+                'but got apparent relative path "%s".\n'
+                'Attempting to convert it to an absolute path.'),
+    }
+
+    # Standard NOTICE logger messages we may expect at various points:
     REMOVING_FILE = {
         'levelname': 'NOTICE',
         'msg': "Removing reference to missing file",

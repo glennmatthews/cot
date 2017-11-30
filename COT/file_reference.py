@@ -46,14 +46,20 @@ class FileReference(object):
         """Create a reference to a file in a container of some sort.
 
         Args:
-          container_path (str): Path to a container such as a directory or
-            a TAR file.
+          container_path (str): Absolute path to a container such as a
+            directory or a TAR file.
           filename (str): Name of file within the container in question.
           **kwargs: See :meth:__init__()
 
         Returns:
           FileReference: instance of appropriate subclass
         """
+        if not os.path.isabs(container_path):
+            logger.warning("Only absolute paths are accepted, but "
+                           'got apparent relative path "%s".'
+                           "\nAttempting to convert it to an absolute path.",
+                           container_path)
+            container_path = os.path.abspath(container_path)
         if not os.path.exists(container_path):
             raise IOError("Container path '{0}' does not exist"
                           .format(container_path))
@@ -83,6 +89,12 @@ class FileReference(object):
         Raises:
           IOError: if the file does not actually exist or is not readable.
         """
+        if not os.path.isabs(container_path):
+            logger.warning("Only absolute paths are accepted, but "
+                           'got apparent relative path "%s".'
+                           "\nAttempting to convert it to an absolute path.",
+                           container_path)
+            container_path = os.path.abspath(container_path)
         self.container_path = container_path
         self.filename = os.path.normpath(filename)
         self.checksum_algorithm = checksum_algorithm
@@ -260,6 +272,12 @@ class FileInTAR(FileReference):
           IOError: if ``tarfile_path`` doesn't reference a TAR file,
               or the TAR file does not contain ``filename``.
         """
+        if not os.path.isabs(tarfile_path):
+            logger.warning("Only absolute paths are accepted, but "
+                           'got apparent relative path "%s".'
+                           "\nAttempting to convert it to an absolute path.",
+                           tarfile_path)
+            tarfile_path = os.path.abspath(tarfile_path)
         if not tarfile.is_tarfile(tarfile_path):
             raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
         self.tarf = None

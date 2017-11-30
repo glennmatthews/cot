@@ -38,7 +38,7 @@ from COT.data_validation import (
     match_or_die, check_for_conflict, file_checksum,
     ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
 )
-from COT.file_reference import FileReference
+from COT.file_reference import FileReference, FileOnDisk
 from COT.platforms import Platform
 from COT.disks import DiskRepresentation
 from COT.utilities import pretty_bytes, tar_entry_size
@@ -319,7 +319,7 @@ class OVF(VMDescription, XML):
             input_path = os.path.dirname(os.path.abspath(self.ovf_descriptor))
         else:
             # OVA - check contents of TAR file.
-            input_path = self.input_file
+            input_path = os.path.abspath(self.input_file)
 
         file_references = {}
 
@@ -2383,8 +2383,9 @@ class OVF(VMDescription, XML):
         file_obj.set(self.FILE_SIZE, file_size_string)
 
         # Make a note of the file's location - we'll copy it at write time.
-        self.file_references[file_name] = FileReference.create(
-            os.path.dirname(file_path), file_name,
+        # The file_path is always a FileOnDisk
+        self.file_references[file_name] = FileOnDisk(
+            os.path.dirname(os.path.abspath(file_path)), file_name,
             checksum_algorithm=self.checksum_algorithm)
 
         return file_obj

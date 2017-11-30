@@ -60,6 +60,23 @@ ovf:size="{cfg_size}" />
 """.format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
            ovf_size=os.path.getsize(self.iosv_ovf)))
 
+    def test_add_file_relative_path(self):
+        """Basic file addition, with a relative rather than absolute path."""
+        os.chdir(os.path.dirname(self.iosv_ovf))
+        self.command.package = os.path.relpath(self.input_ovf)
+        self.command.file = os.path.basename(self.iosv_ovf)
+        self.command.run()
+        # COT should fixup the relative path to absolute path, avoiding this:
+        # self.assertLogged(**self.FILE_REF_RELATIVE)
+        self.command.finished()
+        self.check_diff("""
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
++    <ovf:File ovf:href="iosv.ovf" ovf:id="iosv.ovf" ovf:size="{ovf_size}" />
+   </ovf:References>
+""".format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
+           ovf_size=os.path.getsize(self.iosv_ovf)))
+
     def test_add_file_with_id(self):
         """Add a file with explicit 'file_id' argument."""
         self.command.package = self.input_ovf

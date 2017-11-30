@@ -17,6 +17,7 @@
 """Unit test cases for COT.edit_properties.COTEditProperties class."""
 
 import logging
+import os
 import re
 
 from COT.commands.tests.command_testcase import CommandTestCase
@@ -210,6 +211,25 @@ ovf:userConfigurable="false" ovf:value="yep!" />
         """Inject a sequence of properties from a config file."""
         self.command.package = self.input_ovf
         self.command.config_file = self.sample_cfg
+        self.command.run()
+        self.command.finished()
+        self.check_diff("""
+       </ovf:Property>
++      <ovf:Property ovf:key="config-0001" ovf:type="string" \
+ovf:value="interface GigabitEthernet0/0/0/0" />
++      <ovf:Property ovf:key="config-0002" ovf:type="string" \
+ovf:value="no shutdown" />
++      <ovf:Property ovf:key="config-0003" ovf:type="string" \
+ovf:value="interface Loopback0" />
++      <ovf:Property ovf:key="config-0004" ovf:type="string" ovf:value="end" />
+     </ovf:ProductSection>
+""")
+
+    def test_load_config_file_relative_path(self):
+        """Inject a sequence of properties from a relative-path config file."""
+        os.chdir(os.path.dirname(self.sample_cfg))
+        self.command.package = os.path.relpath(self.input_ovf)
+        self.command.config_file = os.path.basename(self.sample_cfg)
         self.command.run()
         self.command.finished()
         self.check_diff("""

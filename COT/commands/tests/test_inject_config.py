@@ -142,6 +142,30 @@ ovf:size="{config_size}" />
         else:
             logger.info("isoinfo not available, not checking disk contents")
 
+    def test_inject_config_iso_relative_path(self):
+        """Inject config file specified by relative path, on an ISO."""
+        os.chdir(os.path.dirname(self.config_file))
+        self.command.package = os.path.relpath(self.input_ovf)
+        self.command.config_file = os.path.basename(self.config_file)
+        self.command.run()
+        self.assertLogged(**self.OVERWRITING_DISK_ITEM)
+        self.command.finished()
+        config_iso = os.path.join(self.temp_dir, 'config.iso')
+        self.check_diff("""
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
++    <ovf:File ovf:href="config.iso" ovf:id="config.iso" \
+ovf:size="{config_size}" />
+   </ovf:References>
+...
+         <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
++        <rasd:Description>Configuration disk</rasd:Description>
+         <rasd:ElementName>CD-ROM 2</rasd:ElementName>
++        <rasd:HostResource>ovf:/file/config.iso</rasd:HostResource>
+         <rasd:InstanceID>8</rasd:InstanceID>"""
+                        .format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
+                                config_size=os.path.getsize(config_iso)))
+
     def test_inject_config_iso_secondary(self):
         """Inject secondary config file on an ISO."""
         self.command.package = self.input_ovf

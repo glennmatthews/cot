@@ -3,6 +3,19 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Fixed**
+
+- Error in previous release due to COT using a user-specified relative file
+  path in ``FileReference.create`` which implicitly assumed absolute paths.
+
+  - Now correctly fixes up the path before constructing this ``FileReference``.
+  - To prevent similar errors in the future, if a ``FileReference`` is
+    constructed with a non-absolute path, COT will log a warning and attempt
+    to fix the path at that point.
+
 `2.0.4`_ - 2017-11-30
 ---------------------
 

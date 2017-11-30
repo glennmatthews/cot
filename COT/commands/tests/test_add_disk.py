@@ -140,6 +140,49 @@ ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
                                     os.path.join(self.temp_dir, "blank.vmdk")),
                         "disk file should be exported unchanged")
 
+    def test_new_hard_disk_relative_path(self):
+        """Test adding a new hard disk with relative path to the OVF."""
+        os.chdir(os.path.dirname(self.blank_vmdk))
+        self.command.package = os.path.relpath(self.input_ovf)
+        self.command.disk_image = os.path.basename(self.blank_vmdk)
+        self.command.run()
+        # COT should fixup the relative path to absolute path, avoiding this:
+        # self.assertLogged(**self.FILE_REF_RELATIVE)
+        self.assertLogged(**self.DRIVE_TYPE_GUESSED_HARDDISK)
+        self.assertLogged(**self.CONTROLLER_TYPE_GUESSED_IDE)
+        self.command.finished()
+        self.check_diff("""
+     <ovf:File ovf:href="sample_cfg.txt" ovf:id="textfile" \
+ovf:size="{cfg_size}" />
++    <ovf:File ovf:href="blank.vmdk" ovf:id="blank.vmdk" \
+ovf:size="{blank_size}" />
+   </ovf:References>
+...
+     <ovf:Disk ovf:capacity="1" ovf:capacityAllocationUnits="byte * 2^30" \
+ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format=\
+"http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
++    <ovf:Disk ovf:capacity="512" ovf:capacityAllocationUnits="byte * 2^20" \
+ovf:diskId="blank.vmdk" ovf:fileRef="blank.vmdk" ovf:format=\
+"http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" />
+   </ovf:DiskSection>
+...
+       </ovf:Item>
++      <ovf:Item>
++        <rasd:AddressOnParent>0</rasd:AddressOnParent>
++        <rasd:ElementName>Hard Disk Drive</rasd:ElementName>
++        <rasd:HostResource>ovf:/disk/blank.vmdk</rasd:HostResource>
++        <rasd:InstanceID>14</rasd:InstanceID>
++        <rasd:Parent>5</rasd:Parent>
++        <rasd:ResourceType>17</rasd:ResourceType>
++      </ovf:Item>
+     </ovf:VirtualHardwareSection>
+""".format(cfg_size=self.FILE_SIZE['sample_cfg.txt'],
+           blank_size=self.FILE_SIZE['blank.vmdk']))
+        # Make sure the disk file is copied over
+        self.assertTrue(filecmp.cmp(self.blank_vmdk,
+                                    os.path.join(self.temp_dir, "blank.vmdk")),
+                        "disk file should be exported unchanged")
+
     def test_new_hard_disk_and_explicit_controller(self):
         """Test adding a hard disk to an explicitly new SCSI controller."""
         self.command.package = self.input_ovf
