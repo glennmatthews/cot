@@ -77,8 +77,9 @@ except ImportError:
 
         def initialize_options(self):
             """No-op."""
-            pass
+            self.config_dir = self.build_dir = None
 
+        user_options = []
         finalize_options = initialize_options
 
         def run(self):
