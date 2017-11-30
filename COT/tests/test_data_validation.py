@@ -49,12 +49,13 @@ class TestFileChecksum(COTTestCase):
         self.assertEqual(checksum,
                          "5d0635163f6a580442f01466245e122f8412e8d6")
 
+        checksum = file_checksum(self.blank_vmdk, 'sha256')
+        self.assertEqual(checksum,
+                         "0d25f7544be720ec07d9a7e09516d07b"
+                         "a89d2efdc53f8b4c76a8375854d3a578")
+
     def test_file_checksum_unsupported(self):
         """Test invalid options to file_checksum()."""
-        self.assertRaises(NotImplementedError,
-                          file_checksum,
-                          self.input_ovf,
-                          'sha256')
         self.assertRaises(NotImplementedError,
                           file_checksum,
                           self.input_ovf,

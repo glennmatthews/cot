@@ -32,6 +32,5 @@ def load_tests(*_):
     """
     suite = TestSuite()
     suite.addTests(DocTestSuite('COT.data_validation'))
-    suite.addTests(DocTestSuite('COT.file_reference'))
     suite.addTests(DocTestSuite('COT.utilities'))
     return suite

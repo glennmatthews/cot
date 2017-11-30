@@ -39,13 +39,15 @@ QEMU_VERSION_WARNING = {
 class TestVMDK(COTTestCase):
     """Generic test cases for VMDK class."""
 
-    def test_capacity(self):
-        """Check capacity of several VMDK files."""
+    def test_capacity_drive_type(self):
+        """Check capacity and predicted drive type of several VMDK files."""
         vmdk1 = VMDK(path=self.blank_vmdk)
         self.assertEqual(vmdk1.capacity, "536870912")
+        self.assertEqual(vmdk1.predicted_drive_type, 'harddisk')
 
         vmdk2 = VMDK(path=self.input_vmdk)
         self.assertEqual(vmdk2.capacity, "1073741824")
+        self.assertEqual(vmdk2.predicted_drive_type, 'harddisk')
 
     def test_create_default(self):
         """Default creation logic."""

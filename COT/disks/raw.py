@@ -67,7 +67,18 @@ class RAW(DiskRepresentation):
         # i.e., less than 100% confidence:
         confidence = super(RAW, cls).file_is_this_type(path)
         if confidence == 100:
-            confidence = 10
+            # If it explicitly has a .raw or .img extension, we're more
+            # confident than if it doesn't.
+            extension = os.path.splitext(path)[1]
+            if extension in ['.raw', '.img']:
+                logger.debug("Based on '%s' extension, this file probably"
+                             " is a raw image.", extension)
+                confidence = 60
+            else:
+                logger.debug("Any file could possibly be a raw file, but the"
+                             " '%s' extension doesn't give us confidence.",
+                             extension)
+                confidence = 10
         return confidence
 
     @classmethod

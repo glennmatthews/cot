@@ -1,0 +1,220 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "COT-EDIT-HARDWARE" "1" "Nov 30, 2017" "2.0.4" "Common OVF Tool (COT)"
+.SH NAME
+cot-edit-hardware \- Edit hardware properties and configuration profiles of an OVF or OVA
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+cot edit\-hardware \-\-help
+cot <opts> edit\-hardware PACKAGE [\-o OUTPUT] \-v TYPE [TYPE2 ...]
+cot <opts> edit\-hardware PACKAGE [\-o OUTPUT]
+                         [\-p PROFILE [PROFILE2 ...]
+                         [\-\-delete\-all\-other\-profiles]] [\-c CPUS]
+                         [\-m MEMORY] [\-n NICS]
+                         [\-\-nic\-types TYPE [TYPE2 ...]]
+                         [\-N NETWORK [NETWORK2 ...]]
+                         [\-M MAC1 [MAC2 ...]]
+                         [\-\-nic\-names NAME1 [NAME2 ...]]
+                         [\-s SERIAL_PORTS] [\-S URI1 [URI2 ...]]
+                         [\-\-scsi\-subtypes TYPE [TYPE2 ...]]
+                         [\-\-ide\-subtypes TYPE [TYPE2 ...]]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+Edit hardware properties of the specified OVF or OVA
+.SH OPTIONS
+.INDENT 0.0
+.TP
+.B PACKAGE
+OVF descriptor or OVA file to edit
+.UNINDENT
+.SS General options
+.INDENT 0.0
+.TP
+.B \-h\fP,\fB  \-\-help
+Show this help message and exit
+.TP
+.BI \-o \ OUTPUT\fP,\fB \ \-\-output \ OUTPUT
+Name/path of new OVF/OVA package to create
+instead of updating the existing OVF
+.TP
+.BI \-v \ <TYPE...>\fP,\fB \ \-\-virtual\-system\-type \ <TYPE...>
+Change virtual system type(s) supported by
+this OVF/OVA package.
+.TP
+.BI \-p \ <PROFILE...>\fP,\fB \ \-\-profiles \ <PROFILE...>
+Make hardware changes only under the given
+configuration profile(s). (default: changes
+apply to all profiles)
+.TP
+.B \-\-delete\-all\-other\-profiles
+Delete all configuration profiles other than
+those specified with the \-\-profiles option
+.UNINDENT
+.SS Computational hardware options
+.INDENT 0.0
+.TP
+.BI \-c \ CPUS\fP,\fB \ \-\-cpus \ CPUS
+Set the number of CPUs.
+.TP
+.BI \-m \ MEMORY\fP,\fB \ \-\-memory \ MEMORY
+Set the amount of RAM. (Examples: "4096M", "4
+GiB")
+.UNINDENT
+.SS Network interface options
+.INDENT 0.0
+.TP
+.BI \-n \ NICS\fP,\fB \ \-\-nics \ NICS
+Set the number of NICs.
+.TP
+.BI \-\-nic\-types \ <TYPE...>
+Set the hardware type(s) for all NICs.
+(default: do not change existing NICs, and
+new NICs added will match the existing
+type(s).)
+.TP
+.BI \-\-nic\-names \ <NAME1...>
+Specify a list of one or more NIC names or
+patterns to apply to NIC devices. See Notes.
+.TP
+.BI \-N \ <NETWORK...>\fP,\fB \ \-\-nic\-networks \ <NETWORK...>
+Specify a series of one or more network names
+or patterns to map NICs to. See Notes.
+.TP
+.BI \-\-network\-descriptions \ <NAME1...>
+Specify a list of one or more network
+descriptions or patterns to apply to the
+networks. See Notes.
+.TP
+.BI \-M \ <MAC1...>\fP,\fB \ \-\-mac\-addresses\-list \ <MAC1...>
+Specify a list of MAC addresses for the NICs.
+If N MACs are specified, the first (N\-1) NICs
+will receive the first (N\-1) MACs, and all
+remaining NICs will use the Nth MAC
+.UNINDENT
+.SS Serial port options
+.INDENT 0.0
+.TP
+.BI \-s \ SERIAL_PORTS\fP,\fB \ \-\-serial\-ports \ SERIAL_PORTS
+Set the number of serial ports.
+.TP
+.BI \-S \ <URI1...>\fP,\fB \ \-\-serial\-connectivity \ <URI1...>
+Specify a series of connectivity strings
+(URIs such as "\fI\%telnet://localhost:9101\fP") to
+map serial ports to. If fewer URIs than
+serial ports are specified, the remaining
+ports will be unmapped.
+.UNINDENT
+.SS Disk and disk controller options
+.INDENT 0.0
+.TP
+.BI \-\-scsi\-subtypes \ <TYPE...>
+Set resource subtype(s) (such as "lsilogic"
+or "virtio") for all SCSI controllers. If an
+empty string is provided, any existing
+subtype will be removed.
+.TP
+.BI \-\-ide\-subtypes \ <TYPE...>
+Set resource subtype(s) (such as "virtio")
+for all IDE controllers. If an empty string
+is provided, any existing subtype will be
+removed.
+.UNINDENT
+.SH NOTES
+.sp
+The \-\-nic\-names, \-\-nic\-networks, and \-\-network\-descriptions options
+support the use of a wildcard value to automatically generate a
+series of consecutively numbered strings. The syntax for the
+wildcard option is \(aq{\(aq followed by a number to start incrementing
+from, followed by \(aq}\(aq. See examples below.
+.SH EXAMPLES
+.sp
+Create a new profile named "1CPU\-8GB" with 1 CPU and 8 gigabytes of
+RAM
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+cot edit\-hardware csr1000v.ova \-\-output csr1000v_custom.ova \e
+    \-\-profile 1CPU\-4GB \-\-cpus 1 \-\-memory 8GB
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Wildcard example \- without caring about how many NICs are defined in
+the input OVA, rename all of the NICs in the output OVA as
+\(aqEthernet0/10\(aq, \(aqEthernet0/11\(aq, \(aqEthernet0/12\(aq, etc., and map them
+to networks \(aqEthernet0_10\(aq, \(aqEthernet0_11\(aq, \(aqEthernet0_12\(aq, etc.,
+which are described as \(aqData network 1\(aq, \(aqData network 2\(aq, etc.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+cot edit\-hardware input.ova \-o output.ova \e
+    \-\-nic\-names "Ethernet0/{10}" \e
+    \-\-nic\-networks "Ethernet0_{10}" \e
+    \-\-network\-descriptions "Data network {1}"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Combination of fixed and wildcarded names \- rename the NICs in the
+output OVA as \(aqmgmt\(aq, \(aqeth0\(aq, \(aqeth1\(aq, \(aqeth2\(aq...
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+cot edit\-hardware input.ova \-o output.ova \-\-nic\-names "mgmt" \e
+    "eth{0}"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH SEE ALSO
+.sp
+\fBcot\fP(1)
+.SH AUTHOR
+Glenn F. Matthews
+.SH COPYRIGHT
+2013-2017, the COT project developers
+.\" Generated by docutils manpage writer.
+.

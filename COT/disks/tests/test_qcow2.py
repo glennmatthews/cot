@@ -53,6 +53,7 @@ class TestQCOW2(COTTestCase):
 
         self.assertEqual(qcow2.disk_format, 'qcow2')
         self.assertEqual(qcow2.disk_subformat, None)
+        self.assertEqual(qcow2.predicted_drive_type, 'harddisk')
 
     def test_from_other_image_vmdk(self):
         """Test conversion of streamOptimized vmdk format to qcow2."""
@@ -60,6 +61,7 @@ class TestQCOW2(COTTestCase):
 
         self.assertEqual(qcow2.disk_format, 'qcow2')
         self.assertEqual(qcow2.disk_subformat, None)
+        self.assertEqual(qcow2.predicted_drive_type, 'harddisk')
 
     @mock.patch('COT.helpers.qemu_img.QEMUImg.version',
                 new_callable=mock.PropertyMock,

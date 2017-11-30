@@ -16,6 +16,8 @@
 
 """COT - the Common OVF Tool."""
 
+from __future__ import print_function
+
 # Install setuptools automatically if not already present
 try:
     from setuptools import setup
@@ -25,12 +27,74 @@ except ImportError:
     from setuptools import setup
 
 import os.path
-import sys
+import re
 from distutils.command.build import build
-from setuptools.command.bdist_egg import bdist_egg
-from setuptools.command.test import test
-
 import versioneer
+from setuptools.command.bdist_egg import bdist_egg
+
+# At present setuptools has no way to resolve build-time dependencies.
+# Sphinx is needed to regenerate the COT man pages at build time,
+# but is not actually a setup requirement or an install requirement.
+# See also:
+#     https://github.com/pypa/pip/issues/2381
+
+# Also, to reduce noise in the repository, we only auto-update the man pages
+# if we're working in a release candidate, hotfix, or master branch
+GIT_HEAD = os.path.join(os.path.dirname(__file__), ".git", "HEAD")
+rebuild_manpages = False
+if os.path.exists(GIT_HEAD):
+    head_data = open(GIT_HEAD).read()
+    match = re.match(r"ref: refs/heads/(.*)", head_data)
+    if match:
+        branch = match.group(1)
+        print("Current branch is {0}".format(branch))
+        if any(branch.startswith(pfx) for pfx in ['release',
+                                                  'hotfix',
+                                                  'master']):
+            rebuild_manpages = True
+        else:
+            print("COT manual pages will not be automatically rebuilt.")
+            print("You may run '{0} build_man' to rebuild them manually."
+                  .format(os.path.basename(__file__)))
+
+try:
+    from sphinx.setup_command import BuildDoc
+
+    class BuildMan(BuildDoc):
+        """Command to (re)build man pages using Sphinx."""
+
+        def initialize_options(self):
+            """Default to manpage builder."""
+            BuildDoc.initialize_options(self)
+            self.builder = 'man'
+
+except ImportError:
+    from distutils.cmd import Command
+    import time
+
+    class BuildMan(Command):
+        """No-op."""
+
+        def initialize_options(self):
+            """No-op."""
+            self.config_dir = self.build_dir = None
+
+        user_options = []
+        finalize_options = initialize_options
+
+        def run(self):
+            """Print a warning message and return."""
+            print("\033[1;31m")
+            print("WARNING: Sphinx is not installed.")
+            print("         As a result, COT cannot update its man pages.")
+            print("         If you are building for a release, please:")
+            print("             pip install -r requirements.txt")
+            print("             pip install 'sphinx>=1.5' sphinx_rtd_theme")
+            print("         and then rerun this command.")
+            print("\033[0;0m")
+            # Give the user time to take notice
+            time.sleep(10)
+            print("Continuing...")
 
 README_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            'README.rst')
@@ -42,27 +106,16 @@ install_requires = [
     'requests>=2.5.1',
     'verboselogs>=1.6',
 
+    # http://docs.python-requests.org/en/latest/community/
+    #      faq/#what-are-hostname-doesn-t-match-errors
+    # COT tends to run into this issue when downloading the VMDKtool source
+    'pyOpenSSL; python_version < "2.7.9"',
+    'ndg-httpsclient; python_version < "2.7.9"',
+    # shutil.get_terminal_size is standard in 3.3 and later only.
+    'backports.shutil_get_terminal_size; python_version < "3.3"',
     # enum module is standard in Python 3.4 and later, else use enum34
     'enum34; python_version < "3.4"',
 ]
-# shutil.get_terminal_size is standard in 3.3 and later only.
-if sys.version_info < (3, 3):
-    install_requires.append('backports.shutil_get_terminal_size')
-
-# http://docs.python-requests.org/en/latest/community/
-#      faq/#what-are-hostname-doesn-t-match-errors
-# COT tends to run into this issue when downloading the VMDKtool source
-if sys.version_info < (2, 7, 9):
-    install_requires.append('pyOpenSSL')
-    install_requires.append('ndg-httpsclient')
-
-if sys.version_info >= (3, 0) and sys.version_info < (3, 4):
-    # Sphinx 1.5 and later dropped support for python 3.3
-    setup_requires = install_requires + ['sphinx>=1.3.1,<1.5']
-else:
-    setup_requires = install_requires + ['sphinx>=1.3.1']
-
-setup_requires.append('sphinx_rtd_theme')
 
 tests_require = install_requires + ['unittest2', 'mock']
 
@@ -72,46 +125,28 @@ extras_require = {
 
 cmdclass = versioneer.get_cmdclass()
 
+cmdclass['build_man'] = BuildMan
 
-# Ensure that docs are generated whenever build/sdist are run
-build.sub_commands.insert(0, ('build_sphinx', None))
-cmdclass['sdist'].sub_commands.insert(0, ('build_sphinx', None))
+if rebuild_manpages:
+    class BDistEgg(bdist_egg):
+        """Custom subclass for the 'bdist_egg' command.
 
+        This command is called automatically by 'install', but it doesn't do
+        sub_commands, so we have to subclass it instead.
+        """
 
-class custom_bdist_egg(bdist_egg):  # noqa: N801
-    """Custom subclass for the 'bdist_egg' command.
+        def run(self):
+            """Call build_man then proceed as normal."""
+            self.run_command('build_man')
+            bdist_egg.run(self)
 
-    This command is called automatically by 'install', but it doesn't do
-    sub_commands, so we have to subclass it instead.
-    """
-
-    def run(self):
-        """Call build_sphinx then proceed as normal."""
-        self.run_command('build_sphinx')
-        bdist_egg.run(self)
-
-
-cmdclass['bdist_egg'] = custom_bdist_egg
-
-
-class custom_test(test):  # noqa: N801
-    """Custom subclass for the 'test' command."""
-
-    def with_project_on_sys_path(self, func):
-        """Make sure docs were built, then proceed as normal."""
-        if not os.path.exists(os.path.join(os.path.dirname(__file__),
-                                           "COT/docs/man")):
-            self.run_command('build_sphinx')
-        test.with_project_on_sys_path(self, func)
-
-
-cmdclass['test'] = custom_test
-
-# Summary of use cases and how they lead to getting the man pages generated:
-# setup.py test --> run_command(build_sphinx)
-# setup.py sdist --sub_commands--> build_sphinx
-# setup.py bdist_egg --> run_command(build_sphinx)
-# setup.py bdist_wheel --> run_command(build) --sub_commands--> build_sphinx
+    # Ensure that man pages are regenerated whenever build/sdist are run
+    # setup.py sdist --sub_commands--> build_man
+    cmdclass['sdist'].sub_commands.insert(0, ('build_man', None))
+    # setup.py bdist_egg --> run_command(build_man)
+    cmdclass['bdist_egg'] = BDistEgg
+    # setup.py bdist_wheel --> run_command(build) --sub_commands--> build_man
+    build.sub_commands.insert(0, ('build_man', None))
 
 setup(
     # Package description
@@ -125,7 +160,6 @@ setup(
     license='MIT',
 
     # Requirements
-    setup_requires=setup_requires,
     test_suite='unittest2.collector',
     tests_require=tests_require,
     install_requires=install_requires,
@@ -180,6 +214,8 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
     ],
     keywords='virtualization ovf ova esxi vmware vcenter',
 )

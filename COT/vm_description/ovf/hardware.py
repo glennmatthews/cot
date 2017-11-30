@@ -143,13 +143,16 @@ class OVFHardware(object):
                        len(self.ovf.virtual_hw_section.findall(self.ovf.ITEM)),
                        len(self.item_dict))
 
-    def find_unused_instance_id(self):
+    def find_unused_instance_id(self, start=1):
         """Find the first available ``InstanceID`` number.
 
+        Args:
+          start (int): First InstanceID value to consider (disregarding all
+            lower InstanceIDs, even if available).
         Returns:
           str: An instance ID that is not yet in use.
         """
-        instance = 1
+        instance = int(start)
         while str(instance) in self.item_dict.keys():
             instance += 1
         logger.debug("Found unused InstanceID %d", instance)
@@ -204,7 +207,7 @@ class OVFHardware(object):
         Returns:
           tuple: ``(instance_id, ovfitem)``
         """
-        instance = self.find_unused_instance_id()
+        instance = self.find_unused_instance_id(start=parent_item.instance_id)
         logger.spam("Cloning existing Item %s with new instance ID %s",
                     parent_item, instance)
         ovfitem = copy.deepcopy(parent_item)

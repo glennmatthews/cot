@@ -223,8 +223,10 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
     minimal_ovf = _localfile("minimal.ovf")
     # IOSv OVF
     iosv_ovf = _localfile("iosv.ovf")
-    # CSR1000V OVF
+    # CSR1000V OVF - legacy
     csr_ovf = _localfile("csr1000v.ovf")
+    # CSR1000V OVF as of 2017
+    csr_ovf_2017 = _localfile("csr1000v_2017.ovf")
     # v0.9 OVF
     v09_ovf = _localfile("v0.9.ovf")
     # v2.0 OVF from VirtualBox
@@ -235,6 +237,10 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
     invalid_ovf = _localfile("invalid.ovf")
     # OVF claiming to be a "version 3" OVF format, which doesn't exist yet
     ersatz_v3_ovf = _localfile("ersatz_ovf_3.0.ovf")
+
+    # Manifests corresponding to OVFs above
+    input_manifest = _localfile("input.mf")
+    v20_vbox_manifest = _localfile("ubuntu.2.0.mf")
 
     # Some canned disk images and other files too
     input_iso = _localfile("input.iso")

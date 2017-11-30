@@ -32,24 +32,23 @@ import tarfile
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError
 import textwrap
-from contextlib import closing
 
 from COT.xml_file import XML
 from COT.data_validation import (
     match_or_die, check_for_conflict, file_checksum,
     ValueTooHighError, ValueUnsupportedError, canonicalize_nic_subtype,
 )
-from COT.file_reference import FileOnDisk, FileInTAR
+from COT.file_reference import FileReference
 from COT.platforms import Platform
 from COT.disks import DiskRepresentation
 from COT.utilities import pretty_bytes, tar_entry_size
 
 from ..vm_description import VMDescription, VMInitError
-from .name_helper import name_helper
+from .name_helper import name_helper, CIM_URI
 from .hardware import OVFHardware, OVFHardwareDataError
 from .item import list_union
 from .utilities import (
-    int_bytes_to_programmatic_units, programmatic_bytes_to_int,
+    int_bytes_to_programmatic_units, parse_manifest, programmatic_bytes_to_int,
 )
 
 logger = logging.getLogger(__name__)
@@ -204,6 +203,9 @@ class OVF(VMDescription, XML):
             ET.register_namespace('vmw', "http://www.vmware.com/schema/ovf")
             ET.register_namespace('vbox',
                                   "http://www.virtualbox.org/ovf/machine")
+            ET.register_namespace(
+                'pasd',
+                CIM_URI + "/cim-schema/2/CIM_ProcessorAllocationSettingData")
 
             # Go ahead and set pointers to some of the most useful XML sections
             self.envelope = self.root
@@ -256,33 +258,120 @@ class OVF(VMDescription, XML):
 
             assert self.platform
 
-            self._init_check_file_entries()
+            self.file_references = self._init_check_file_entries()
+            """Dictionary of FileReferences for this package.
+
+            Does not include the manifest file."""
 
         except Exception:
             self.destroy()
             raise
 
+    def _compare_file_lists(self, descriptor_file_list, manifest_file_list):
+        """Helper for _init_check_file_entries method.
+
+        Args:
+          descriptor_file_list (list): List of file names derived from the
+            OVF descriptor.
+          manifest_file_list (list): List of file names derived from the
+            manifest file (minus the descriptor itself).
+        """
+        if not manifest_file_list:
+            return
+
+        descriptor_in_manifest = False
+        # DSP0243 2.1.0: "The manifest file shall contain SHA digests for all
+        #                 distinct files referenced in the References element
+        #                 of the OVF descriptor and for no other files."
+        for filename in manifest_file_list:
+            if filename == os.path.basename(self.ovf_descriptor):
+                # Manifest should reference the descriptor, but of course the
+                # descriptor does not reference itself
+                descriptor_in_manifest = True
+            elif filename not in descriptor_file_list:
+                logger.error("The manifest lists file '%s' but the OVF"
+                             " descriptor does not include it in its"
+                             " References section", filename)
+        for filename in descriptor_file_list:
+            if filename not in manifest_file_list:
+                logger.error("The OVF descriptor references file '%s' but"
+                             " this file is not included in the manifest",
+                             filename)
+
+        if not descriptor_in_manifest:
+            logger.error("The manifest does not list the OVF descriptor")
+
     def _init_check_file_entries(self):
-        """Check files described in the OVF and store file references."""
-        file_list = [file_entry.get(self.FILE_HREF) for file_entry in
-                     self.references.findall(self.FILE)]
+        """Check files described in the OVF and store file references.
+
+        Also compare the referenced files against the manifest, if any.
+
+        Returns:
+            dict: File HREF (file name) --> :class:`~COT.FileReference` object.
+              Note that this does *not* include the OVF manifest file.
+        """
+        descriptor_files = dict(
+            [(elem.get(self.FILE_HREF), elem.get(self.FILE_SIZE)) for
+             elem in self.references.findall(self.FILE)])
+
         if self.input_file == self.ovf_descriptor:
             # Check files in the directory referenced by the OVF descriptor
-            input_path = os.path.dirname(self.ovf_descriptor)
-            ref_cls = FileOnDisk
+            input_path = os.path.dirname(os.path.abspath(self.ovf_descriptor))
         else:
             # OVA - check contents of TAR file.
             input_path = self.input_file
-            ref_cls = FileInTAR
 
-        for file_href in file_list:
+        file_references = {}
+
+        mf_filename = os.path.splitext(
+            os.path.basename(self.ovf_descriptor))[0] + ".mf"
+        manifest_entries = {}
+        try:
+            # We don't store the manifest file itself in file_references,
+            # as it's basically a read-once file and storing it in the file
+            # references causes much confusion when writing back out to
+            # generate the OVF descriptor and manifest file.
+            manifest_file = FileReference.create(input_path, mf_filename)
+            with manifest_file.open('rb') as file_obj:
+                manifest_text = file_obj.read().decode()
+            manifest_entries = parse_manifest(manifest_text)
+        except IOError:
+            logger.debug("Manifest file is missing or unreadable.")
+
+        self._compare_file_lists(descriptor_files.keys(),
+                                 manifest_entries.keys())
+
+        # Check the checksum of the descriptor itself
+        # We don't store this in file_references as that would be
+        # prone to self-recursion.
+        m_algo, m_cksum = manifest_entries.get(
+            os.path.basename(self.ovf_descriptor), (None, None))
+        if m_algo and m_algo != self.checksum_algorithm:
+            # TODO: log a warning? Discard the checksum?
+            pass
+        FileReference.create(
+            input_path, os.path.basename(self.ovf_descriptor),
+            checksum_algorithm=self.checksum_algorithm,
+            expected_checksum=m_cksum)
+
+        # Now check the checksum of the other files
+        for file_href, file_size in descriptor_files.items():
+            m_algo, m_cksum = manifest_entries.get(file_href, (None, None))
+            if m_algo and m_algo != self.checksum_algorithm:
+                # TODO: log a warning? Discard the checksum?
+                pass
             try:
-                self._file_references[file_href] = ref_cls(input_path,
-                                                           file_href)
+                file_references[file_href] = FileReference.create(
+                    input_path, file_href,
+                    checksum_algorithm=self.checksum_algorithm,
+                    expected_checksum=m_cksum,
+                    expected_size=file_size)
             except IOError:
                 logger.error("File '%s' referenced in the OVF descriptor "
                              "does not exist.", file_href)
-                self._file_references[file_href] = None
+                continue
+
+        return file_references
 
     @property
     def output_file(self):
@@ -325,6 +414,16 @@ class OVF(VMDescription, XML):
                     .format(root_namespace),
                     self.ovf_descriptor)
         return self._ovf_version
+
+    @property
+    def checksum_algorithm(self):
+        """The preferred file checksum algorithm for this OVF."""
+        if self.ovf_version >= 2.0:
+            # OVF 2.x uses SHA256 for manifest
+            return 'sha256'
+        else:
+            # OVF 0.x and 1.x use SHA1
+            return 'sha1'
 
     @property
     def product_class(self):
@@ -680,14 +779,19 @@ class OVF(VMDescription, XML):
 
         # Account for the size of all the referenced files
         manifest_size = 0
-        for href, file_ref in self._file_references.items():
+        for href, file_ref in self.file_references.items():
             # Approximate size of a manifest entry for this file
-            manifest_size += 50 + len(href)
+            if self.ovf_version >= 2.0:
+                # SHA256(href)= <64 hex digits>
+                # so 64 + href length + ~12 other characters
+                manifest_size += 76 + len(href)
+            else:
+                # SHA1(href)= <40 hex digits>
+                # so 40 + href length + ~10 other characters
+                manifest_size += 50 + len(href)
 
-            if file_ref is not None:
-                # TODO - can be None in invalid.ovf example, what should we do?
-                # Size of the file proper
-                needed += tar_entry_size(file_ref.size)
+            # Size of the file proper
+            needed += tar_entry_size(file_ref.size)
 
         # Manifest file
         needed += tar_entry_size(manifest_size)
@@ -737,9 +841,7 @@ class OVF(VMDescription, XML):
             # Copy all files from working directory to destination
             dest_dir = os.path.dirname(os.path.abspath(self.output_file))
 
-            for file_obj in self.references.findall(self.FILE):
-                file_name = file_obj.get(self.FILE_HREF)
-                file_ref = self._file_references[file_name]
+            for file_ref in self.file_references.values():
                 file_ref.copy_to(dest_dir)
 
             # Generate manifest
@@ -754,24 +856,33 @@ class OVF(VMDescription, XML):
 
         Helper method for :func:`write`.
         """
+        # Refresh the file references
+        to_delete = []
+        for filename, file_ref in self.file_references.items():
+            if file_ref.exists:
+                file_ref.refresh()
+            else:
+                # file used to exist but no longer does??
+                logger.error("Referenced file '%s' does not exist!", filename)
+                to_delete.append(filename)
+
+        for filename in to_delete:
+            del self.file_references[filename]
+
         for file_elem in self.references.findall(self.FILE):
             href = file_elem.get(self.FILE_HREF)
-            file_ref = self._file_references[href]
-
-            if file_ref is not None and not file_ref.exists:
-                # file used to exist but no longer does??
-                logger.error("Referenced file '%s' does not exist!", href)
-                self._file_references[href] = None
-                file_ref = None
-
-            if file_ref is None:
+            if href not in self.file_references:
                 # TODO this should probably have a confirm() check...
                 logger.notice("Removing reference to missing file %s", href)
                 self.references.remove(file_elem)
                 # TODO remove references to this file from Disk, Item?
-                continue
 
-            real_size = str(file_ref.size)
+        for filename, file_ref in self.file_references.items():
+            file_elem = self.find_child(self.references, self.FILE,
+                                        {self.FILE_HREF: filename})
+            assert file_elem is not None
+            file_elem.set(self.FILE_SIZE, str(file_ref.size))
+
             real_capacity = None
 
             disk_item = self.find_disk_from_file_id(
@@ -785,17 +896,6 @@ class OVF(VMDescription, XML):
                     diskrep = DiskRepresentation.from_file(file_ref.file_path)
                     real_capacity = diskrep.capacity
 
-            reported_size = file_elem.get(self.FILE_SIZE)
-            if real_size != reported_size:
-                # FILE_SIZE is optional in the OVF standard
-                if reported_size is not None:
-                    logger.warning("Size of file '%s' seems to have changed "
-                                   "from %s (reported in the original OVF) "
-                                   "to %s (current file size). "
-                                   "The updated OVF will reflect this change.",
-                                   href, reported_size, real_size)
-                file_elem.set(self.FILE_SIZE, real_size)
-
             if disk_item is not None and real_capacity is not None:
                 reported_capacity = str(self.get_capacity_from_disk(disk_item))
                 if reported_capacity != real_capacity:
@@ -804,7 +904,7 @@ class OVF(VMDescription, XML):
                         "from %s (reported in the original OVF) "
                         "to %s (actual capacity). "
                         "The updated OVF will reflect this change.",
-                        href, reported_capacity, real_capacity)
+                        filename, reported_capacity, real_capacity)
                     self.set_capacity_of_disk(disk_item, real_capacity)
 
     def _refresh_networks(self):
@@ -987,7 +1087,7 @@ class OVF(VMDescription, XML):
             # TODO - check file size in working dir and/or tarfile
             file_size_str = ""
         else:
-            file_size_str = pretty_bytes(file_obj.get(self.FILE_SIZE))
+            file_size_str = pretty_bytes(reported_size)
 
         disk_obj = self.find_disk_from_file_id(file_obj.get(self.FILE_ID))
         if disk_obj is None:
@@ -1888,6 +1988,9 @@ class OVF(VMDescription, XML):
             logger.debug("No disk conversion needed")
             return disk_image
 
+        logger.debug("Converting %s (%s, %s) to streamOptimized VMDK",
+                     disk_image.path, disk_image.disk_format,
+                     disk_image.disk_subformat)
         return disk_image.convert_to(new_format='vmdk',
                                      new_subformat='streamOptimized',
                                      new_directory=self.working_dir)
@@ -2238,6 +2341,10 @@ class OVF(VMDescription, XML):
         logger.debug("Adding File to OVF")
 
         if file_obj is not None:
+            href = file_obj.get(self.FILE_HREF)
+            if href in self.file_references.keys():
+                del self.file_references[href]
+
             file_obj.clear()
         elif disk is None:
             file_obj = ET.SubElement(self.references, self.FILE)
@@ -2276,7 +2383,9 @@ class OVF(VMDescription, XML):
         file_obj.set(self.FILE_SIZE, file_size_string)
 
         # Make a note of the file's location - we'll copy it at write time.
-        self._file_references[file_name] = FileOnDisk(file_path)
+        self.file_references[file_name] = FileReference.create(
+            os.path.dirname(file_path), file_name,
+            checksum_algorithm=self.checksum_algorithm)
 
         return file_obj
 
@@ -2294,7 +2403,7 @@ class OVF(VMDescription, XML):
               than 'cdrom' or 'harddisk'
         """
         self.references.remove(file_obj)
-        del self._file_references[file_obj.get(self.FILE_HREF)]
+        del self.file_references[file_obj.get(self.FILE_HREF)]
 
         if disk is not None:
             self.disk_section.remove(disk)
@@ -2606,24 +2715,22 @@ class OVF(VMDescription, XML):
         (prefix, _) = os.path.splitext(ovf_file)
         logger.verbose("Generating manifest for %s", ovf_file)
         manifest = prefix + '.mf'
-        # TODO: OVF 2.0 uses SHA256 instead of SHA1.
-        sha1sum = file_checksum(ovf_file, 'sha1')
+        with open(ovf_file, 'rb') as ovfobj:
+            checksum = file_checksum(ovfobj, self.checksum_algorithm)
         with open(manifest, 'wb') as mfobj:
-            mfobj.write("SHA1({file})= {sum}\n"
-                        .format(file=os.path.basename(ovf_file), sum=sha1sum)
+            mfobj.write("{algo}({file})= {sum}\n"
+                        .format(algo=self.checksum_algorithm.upper(),
+                                file=os.path.basename(ovf_file),
+                                sum=checksum)
                         .encode('utf-8'))
             # Checksum all referenced files as well
             for file_obj in self.references.findall(self.FILE):
                 file_name = file_obj.get(self.FILE_HREF)
-                file_ref = self._file_references[file_name]
-                try:
-                    file_obj = file_ref.open('rb')
-                    sha1sum = file_checksum(file_obj, 'sha1')
-                finally:
-                    file_ref.close()
+                file_ref = self.file_references[file_name]
 
-                mfobj.write("SHA1({file})= {sum}\n"
-                            .format(file=file_name, sum=sha1sum)
+                mfobj.write("{algo}({file})= {sum}\n"
+                            .format(algo=self.checksum_algorithm.upper(),
+                                    file=file_name, sum=file_ref.checksum)
                             .encode('utf-8'))
 
         logger.debug("Manifest generated successfully")
@@ -2654,15 +2761,18 @@ class OVF(VMDescription, XML):
             logger.info(
                 "Input OVA will be overwritten. Extracting files from %s to"
                 " working directory before overwriting it.", self.input_file)
-            for filename in self._file_references:
-                file_ref = self._file_references[filename]
+            for filename in self.file_references:
+                file_ref = self.file_references[filename]
                 if file_ref.file_path is None:
                     file_ref.copy_to(self.working_dir)
-                    self._file_references[filename] = FileOnDisk(
-                        self.working_dir, filename)
+                    self.file_references[filename] = FileReference.create(
+                        self.working_dir, filename,
+                        checksum_algorithm=self.checksum_algorithm,
+                        expected_checksum=file_ref.checksum,
+                        expected_size=file_ref.size)
 
         # Be sure to dereference any links to the actual file content!
-        with closing(tarfile.open(tar_file, 'w', dereference=True)) as tarf:
+        with tarfile.open(tar_file, 'w', dereference=True) as tarf:
             # OVF is always first
             logger.debug("Adding OVF descriptor %s to %s",
                          ovf_descriptor, tar_file)
@@ -2679,7 +2789,7 @@ class OVF(VMDescription, XML):
             # Add all other files mentioned in the OVF
             for file_obj in self.references.findall(self.FILE):
                 file_name = file_obj.get(self.FILE_HREF)
-                file_ref = self._file_references[file_name]
+                file_ref = self.file_references[file_name]
                 logger.debug("Adding associated file %s to %s",
                              file_name, tar_file)
                 file_ref.add_to_archive(tarf)

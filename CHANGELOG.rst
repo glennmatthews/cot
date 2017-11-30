@@ -3,6 +3,33 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`2.0.4`_ - 2017-11-30
+---------------------
+
+**Fixed**
+
+- COT now ensures that cloned Items have a higher InstanceID than the Item
+  they were cloned from, avoiding unexpected out-of-order behavior (`#70`_).
+- COT now produces valid manifests for OVF 2.x files (which use SHA256
+  instead of SHA1 as in OVF 0.x and 1.x).
+
+**Added**
+
+- Official support for pypy3. (COT has already been usable under pypy3, but
+  now it's actually part of our tests.)
+- COT checks the manifest when loading an OVF/OVA and warns if any
+  checksum mismatches are seen.
+- ``FileReference`` class as superclass of ``FileInTAR`` and ``FileOnDisk``.
+
+**Changed**
+
+- Refactored how man page builds are triggered so that Sphinx is no longer a
+  mandatory pre-requisite for building COT. This helps us to avoid breaking
+  Travis-CI tests when a new version of Sphinx comes out that doesn't support
+  older Python versions like 3.3.
+- Replaced ``add_disk.guess_drive_type_from_extension`` with
+  ``DiskRepresentation.predicted_drive_type``.
+
 `2.0.3`_ - 2017-04-03
 ---------------------
 
@@ -774,6 +801,7 @@ Initial public release.
 .. _#65: https://github.com/glennmatthews/cot/issues/65
 .. _#66: https://github.com/glennmatthews/cot/issues/66
 .. _#67: https://github.com/glennmatthews/cot/issues/67
+.. _#70: https://github.com/glennmatthews/cot/issues/70
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -806,6 +834,7 @@ Initial public release.
 .. _verboselogs: https://verboselogs.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _2.0.4: https://github.com/glennmatthews/cot/compare/v2.0.3...v2.0.4
 .. _2.0.3: https://github.com/glennmatthews/cot/compare/v2.0.2...v2.0.3
 .. _2.0.2: https://github.com/glennmatthews/cot/compare/v2.0.1...v2.0.2
 .. _2.0.1: https://github.com/glennmatthews/cot/compare/v2.0.0...v2.0.1

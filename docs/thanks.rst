@@ -14,6 +14,7 @@ We would like to thank:
   * Jeff Loughridge
   * Vincent Wenshi Lv
   * Roger Melton
+  * Keith Mitchell
   * Jonathan Muslow
   * Scott O'Donnell
   * Rick Ogg
