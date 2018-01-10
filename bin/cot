@@ -55,7 +55,7 @@ import os
 path = os.path.abspath(sys.argv[0])
 while os.path.dirname(path) != path:
     if os.path.exists(os.path.join(path, 'COT', '__init__.py')):
-        sys.path.insert(0, path)
+        sys.path.append(path)
         break
     path = os.path.dirname(path)
 
