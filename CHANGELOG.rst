@@ -3,6 +3,16 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`2.1.0`_ - 2018-01-29
+---------------------
+
+**Fixed**
+
+- The ``bin/cot`` helper script in this repository (not the script installed
+  when installing COT normally) has had some ``$PATH`` issues fixed.
+- ``cot add-disk ... --controller`` now accepts ``sata`` as an additional
+  option (`#72`_).
+
 `2.0.5`_ - 2017-11-30
 ---------------------
 
@@ -815,6 +825,7 @@ Initial public release.
 .. _#66: https://github.com/glennmatthews/cot/issues/66
 .. _#67: https://github.com/glennmatthews/cot/issues/67
 .. _#70: https://github.com/glennmatthews/cot/issues/70
+.. _#72: https://github.com/glennmatthews/cot/issues/72
 
 .. _Semantic Versioning: http://semver.org/
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
@@ -847,6 +858,7 @@ Initial public release.
 .. _verboselogs: https://verboselogs.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _2.1.0: https://github.com/glennmatthews/cot/compare/v2.0.5...v2.1.0
 .. _2.0.5: https://github.com/glennmatthews/cot/compare/v2.0.4...v2.0.5
 .. _2.0.4: https://github.com/glennmatthews/cot/compare/v2.0.3...v2.0.4
 .. _2.0.3: https://github.com/glennmatthews/cot/compare/v2.0.2...v2.0.3
