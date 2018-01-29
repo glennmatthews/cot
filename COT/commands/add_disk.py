@@ -3,7 +3,7 @@
 # add_disk.py - Implements "cot add-disk" command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2018 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -55,7 +55,7 @@ def validate_controller_address(controller, address):
     Helper method for the :attr:`controller`/:attr:`address` setters.
 
     Args:
-      controller (str): ``'ide'`` or ``'scsi'``
+      controller (str): "ide", "sata", or "scsi"
       address (str): A string like '0:0' or '2:10'
 
     Raises:
@@ -76,6 +76,8 @@ def validate_controller_address(controller, address):
         ... except InvalidInputError as e:
         ...     print(e)
         SCSI disk address must be between 0:0 and 3:15
+        >>> validate_controller_address("sata", "0:0")
+        >>> validate_controller_address("sata", "1:3")
     """
     logger.debug("validate_controller_address: %s, %s", controller, address)
     if controller is not None and address is not None:
@@ -163,7 +165,7 @@ class COTAddDisk(ReadWriteCommand):
 
     @property
     def controller(self):
-        """Disk controller type (``ide``, ``scsi``).
+        """Disk controller type (``ide``, ``sata``, ``scsi``).
 
         Raises:
           InvalidInputError: see :meth:`validate_controller_address`
@@ -216,7 +218,7 @@ class COTAddDisk(ReadWriteCommand):
             add_help=False,
             usage=self.ui.fill_usage("add-disk", [
                 "DISK_IMAGE PACKAGE [-o OUTPUT] [-f FILE_ID] \
-[-t {harddisk,cdrom}] [-c {ide,scsi}] [-s SUBTYPE] [-a ADDRESS] \
+[-t {harddisk,cdrom}] [-c {ide,sata,scsi}] [-s SUBTYPE] [-a ADDRESS] \
 [-d DESCRIPTION] [-n DISKNAME]"
             ]),
             help="""Add a disk image to an OVF package and map it as a disk
@@ -251,7 +253,7 @@ otherwise, will create a new disk entry.""")
         group = parser.add_argument_group("controller-related options")
 
         group.add_argument('-c', '--controller',
-                           choices=['ide', 'scsi'],
+                           choices=['ide', 'sata', 'scsi'],
                            help="""Disk controller type (default: """
                            """determined by disk drive type and platform)""")
         group.add_argument('-a', '--address', type=device_address,
@@ -260,8 +262,8 @@ otherwise, will create a new disk entry.""")
                            """(default: use first unused address on the """
                            """controller)""")
         group.add_argument('-s', '--subtype',
-                           help="""Disk controller subtype such as "virtio" """
-                           """or "lsilogic".""")
+                           help="""Disk controller subtype such as """
+                           """"virtio", "lsilogic", or "AHCI".""")
 
         group = parser.add_argument_group("descriptive options")
 
@@ -307,7 +309,7 @@ def search_for_elements(vm, disk_file, file_id, controller, address):
       vm (VMDescription): Virtual machine object
       disk_file (str): Disk file name or path
       file_id (str): File identifier
-      controller (str): controller type, "ide" or "scsi"
+      controller (str): controller type -- "ide", "sata", or "scsi"
       address (str): device address, such as "1:0"
 
     Raises:
@@ -354,10 +356,10 @@ def guess_controller_type(platform, ctrl_item, drive_type):
       ctrl_item (object): Any known controller object, or None
       drive_type (str): "cdrom" or "harddisk"
     Returns:
-      str: 'ide' or 'scsi'
+      str: 'ide', 'sata', or 'scsi'
     Raises:
       ValueUnsupportedError: if ``ctrl_item`` is not None but is also not
-          an IDE or SCSI controller device.
+          an IDE, SATA, or SCSI controller device.
     Examples:
       ::
 
@@ -376,10 +378,10 @@ def guess_controller_type(platform, ctrl_item, drive_type):
                        ctrl_type, drive_type, platform)
     else:
         ctrl_type = ctrl_item.hardware_type
-        if ctrl_type != 'ide' and ctrl_type != 'scsi':
+        if ctrl_type not in ['ide', 'sata', 'scsi']:
             raise ValueUnsupportedError("controller ResourceType",
                                         ctrl_type,
-                                        "'ide' or 'scsi'")
+                                        "'ide', 'sata', or 'scsi'")
         logger.notice("Controller type not specified - using"
                       " '%s' based on existing Item", ctrl_type)
     return ctrl_type
@@ -399,7 +401,7 @@ def validate_elements(vm, file_obj, disk_obj, disk_item, ctrl_item,
       disk_item (object): Known disk device object
       ctrl_item (object): Known controller device object
       file_id (str): File identifier string
-      ctrl_type (str): Controller type ("ide" or "scsi")
+      ctrl_type (str): Controller type ("ide", "sata", or "scsi")
     """
     # Ok, we now have confirmed that we have at most one of each of these
     # four objects. Now it's time for some sanity checking...
@@ -447,7 +449,7 @@ def confirm_elements(vm, ui, file_obj, disk_image, disk_obj, disk_item,
       disk_obj (object): Known disk object
       disk_item (object): Known disk device object
       drive_type (str): "harddisk" or "cdrom"
-      controller (str): Controller type ("ide" or "scsi")
+      controller (str): Controller type ("ide", "sata", or "scsi")
       ctrl_item (object): Known controller device object
       subtype (str): Controller subtype (such as "virtio")
     """
@@ -514,7 +516,7 @@ def add_disk_worker(vm,
           disk_image file name extension.
       file_id (str): Identifier of the disk file in the VM. If not
           specified, the VM will automatically derive an appropriate value.
-      controller (str): Disk controller type: ``'ide'`` or ``'scsi'``.
+      controller (str): Disk controller type: "ide" or "sata" or "scsi".
           If not specified, will be derived from the `type` and the
           `platform` of the given `vm`.
       subtype (str): Controller subtype ('virtio', 'lsilogic', etc.)

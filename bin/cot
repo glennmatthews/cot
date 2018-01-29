@@ -3,7 +3,7 @@
 # cot - Main executable for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2014, 2016-2017 the COT project developers.
+# Copyright (c) 2013-2014, 2016-2018 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -24,7 +24,8 @@ if [ -f "$dir/cot_helper.sh" ]; then
 fi
 # Now proceed to find the right python version...
 if type python3 >/dev/null 2>/dev/null; then
-  exec python3 "$0" "$@"
+  # Exclude script directory from default sys.path
+  exec python3 -I "$0" "$@"
 elif type python2.7 >/dev/null 2>/dev/null; then
   exec python2.7 "$0" "$@"
 elif type python-2.7.1 >/dev/null 2>/dev/null; then
@@ -50,14 +51,17 @@ if not hasattr(sys, "hexversion") or sys.hexversion < 0x020701f0:
 # compiled bytecode to disk. :-(
 sys.dont_write_bytecode = True
 
-# Fix up sys.path to point to the COT module
-import os
-path = os.path.abspath(sys.argv[0])
-while os.path.dirname(path) != path:
-    if os.path.exists(os.path.join(path, 'COT', '__init__.py')):
-        sys.path.insert(0, path)
-        break
-    path = os.path.dirname(path)
+try:
+    import COT.ui.cli
+except ImportError:
+    # Fix up sys.path to include the COT module
+    import os
+    path = os.path.abspath(sys.argv[0])
+    while os.path.dirname(path) != path:
+        if os.path.exists(os.path.join(path, 'COT', '__init__.py')):
+            sys.path.append(path)
+            break
+        path = os.path.dirname(path)
 
 # Set up the CLI
 import COT.ui.cli
