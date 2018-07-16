@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`Unreleased`_
+-------------
+
+**Removed**
+
+- Discontinued support for Python 3.3 as it has been retired since 2017.
+
 `2.1.0`_ - 2018-01-29
 ---------------------
 

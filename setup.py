@@ -3,7 +3,7 @@
 # setup.py - installer script for COT package
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2014-2017 the COT project developers.
+# Copyright (c) 2014-2018 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -164,6 +164,7 @@ setup(
     tests_require=tests_require,
     install_requires=install_requires,
     extras_require=extras_require,
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
 
     # Package contents
     cmdclass=cmdclass,
@@ -210,7 +211,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
