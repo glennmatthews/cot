@@ -3,7 +3,7 @@
 # command_testcase.py - base class for Command test cases
 #
 # March 2017, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -26,7 +26,7 @@ try:
     import StringIO
 except ImportError:
     # Python 3.x
-    import io as StringIO
+    import io as StringIO    # noqa: N812
 
 from COT.tests import COTTestCase
 from COT.ui import UI

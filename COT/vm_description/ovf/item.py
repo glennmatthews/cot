@@ -3,7 +3,7 @@
 # item.py - OVFItem class
 #
 # June 2016, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -37,7 +37,7 @@ hardware configuration profiles.
 
 import re
 import logging
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET    # noqa: N814
 
 from COT.data_validation import natural_sort, ValueUnsupportedError
 from COT.xml_file import XML
