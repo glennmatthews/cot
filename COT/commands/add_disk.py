@@ -3,7 +3,7 @@
 # add_disk.py - Implements "cot add-disk" command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2018 the COT project developers.
+# Copyright (c) 2013-2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -150,7 +150,7 @@ class COTAddDisk(ReadWriteCommand):
 
     @property
     def address(self):
-        """Disk device address on controller (``1:0``, etc.).
+        """Disk device address on controller (:code:`1:0`, etc.).
 
         Raises:
           InvalidInputError: see :meth:`validate_controller_address`
