@@ -1,7 +1,8 @@
 Common OVF Tool (COT)
 
-Copyright (c) 2013-2018 by the following developers:
+Copyright (c) 2013-2019 by the following developers:
 Glenn F. Matthews
 Kevin A. Keim
 Quol Fontana
 Jusheng Feng
+Subba Srinivas

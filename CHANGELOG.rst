@@ -6,6 +6,10 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+**Added**
+
+- COT now recognizes and validates the Cisco C9800-CL platform.
+
 **Removed**
 
 - Discontinued support for Python 3.3 as it has been retired since 2017.
