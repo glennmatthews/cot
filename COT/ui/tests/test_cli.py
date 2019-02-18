@@ -3,7 +3,7 @@
 # test_cli.py - Unit test cases for generic COT CLI.
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -28,7 +28,7 @@ try:
     import StringIO
 except ImportError:
     # Python 3.x
-    import io as StringIO
+    import io as StringIO    # noqa: N812
 
 import mock
 

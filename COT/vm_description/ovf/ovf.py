@@ -3,7 +3,7 @@
 # ovf.py - Class for OVF/OVA handling
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -29,7 +29,7 @@ import os
 import os.path
 import re
 import tarfile
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET    # noqa: N814
 from xml.etree.ElementTree import ParseError
 import textwrap
 
