@@ -1,5 +1,5 @@
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -74,5 +74,5 @@ del get_versions
 
 __version_long__ = (
     """Common OVF Tool (COT), version """ + __version__ +
-    """\nCopyright (C) 2013-2017 the COT project developers."""
+    """\nCopyright (C) 2013-2019 the COT project developers."""
 )
