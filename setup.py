@@ -111,6 +111,8 @@ install_requires = [
     # COT tends to run into this issue when downloading the VMDKtool source
     'pyOpenSSL; python_version < "2.7.9"',
     'ndg-httpsclient; python_version < "2.7.9"',
+    # shutil.disk_usage is standard in 3.3 and later only.
+    'psutil>=5.6.7; python_version < "3.3"',
     # shutil.get_terminal_size is standard in 3.3 and later only.
     'backports.shutil_get_terminal_size; python_version < "3.3"',
     # enum module is standard in Python 3.4 and later, else use enum34
