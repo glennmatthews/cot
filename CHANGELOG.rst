@@ -3,6 +3,13 @@ Change Log
 All notable changes to the COT project will be documented in this file.
 This project adheres to `Semantic Versioning`_.
 
+`2.2.1`_ - 2019-12-04
+---------------------
+
+**Added**
+
+- COT now officially supports Python 3.7.
+
 `2.2.0`_ - 2019-02-18
 ---------------------
 
@@ -869,6 +876,7 @@ Initial public release.
 .. _verboselogs: https://verboselogs.readthedocs.io/en/latest/
 
 .. _Unreleased: https://github.com/glennmatthews/cot/compare/master...develop
+.. _2.2.1: https://github.com/glennmatthews/cot/compare/v2.2.0...v2.2.1
 .. _2.2.0: https://github.com/glennmatthews/cot/compare/v2.1.0...v2.2.0
 .. _2.1.0: https://github.com/glennmatthews/cot/compare/v2.0.5...v2.1.0
 .. _2.0.5: https://github.com/glennmatthews/cot/compare/v2.0.4...v2.0.5
