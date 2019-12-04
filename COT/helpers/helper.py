@@ -3,7 +3,7 @@
 # helper.py - Abstract provider of a non-Python helper program.
 #
 # February 2015, Glenn F. Matthews
-# Copyright (c) 2015-2017 the COT project developers.
+# Copyright (c) 2015-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -118,7 +118,7 @@ class HelperDict(dict):
         self.factory = factory
 
     def __missing__(self, key):
-        """Method called when accessing a non-existent key.
+        """Handle an error; method called when accessing a non-existent key.
 
         Automatically populate the given key with an instance of the factory.
 
@@ -195,7 +195,7 @@ class Helper(object):
         """
 
     def __bool__(self):
-        """A helper is True if installed and False if not installed."""
+        """Convert to bool; a helper is True if installed and False if not."""
         return self.installed
 
     # For Python 2.x compatibility:
@@ -209,17 +209,17 @@ class Helper(object):
 
     @property
     def name(self):
-        """Name of the helper program."""
+        """Get the name of the helper program."""
         return self._name
 
     @property
     def info_uri(self):
-        """URI for more information about this helper."""
+        """Get a URI for more information about this helper."""
         return self._info_uri
 
     @property
     def path(self):
-        """Discovered path to the helper."""
+        """Get the discovered path to the helper."""
         if not self._path:
             logger.spam("Checking for helper executable %s", self.name)
             self._path = distutils.spawn.find_executable(self.name)
@@ -232,14 +232,14 @@ class Helper(object):
 
     @property
     def installed(self):
-        """Whether this helper program is installed and available to run."""
+        """Get whether the helper program is installed and available to run."""
         if self._installed is None:
             self._installed = (self.path is not None)
         return self._installed
 
     @property
     def installable(self):
-        """Whether COT is capable of installing this program on this system."""
+        """Get whether COT can auto-install this program on this system."""
         for pm_name in self._provider_package:
             if helpers[pm_name]:
                 return True
@@ -247,7 +247,7 @@ class Helper(object):
 
     @property
     def version(self):
-        """Release version of the associated helper program."""
+        """Get release version of the associated helper program."""
         if self.installed and not self._version:
             output = self.call(self._version_args, require_success=False)
             match = re.search(self._version_regexp, output)
@@ -519,7 +519,9 @@ class PackageManager(Helper):
 
 
 def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
-    """Wrapper for :func:`subprocess.check_call`.
+    """Call a subprocess and check its return code.
+
+    Wrapper for :func:`subprocess.check_call`.
 
     Unlike :meth:`check_output` below, this does not redirect stdout
     or stderr; all output from the subprocess will be sent to the system
@@ -613,7 +615,9 @@ def check_call(args, require_success=True, retry_with_sudo=False, **kwargs):
 
 
 def check_output(args, require_success=True, retry_with_sudo=False, **kwargs):
-    r"""Wrapper for :func:`subprocess.check_output`.
+    r"""Call a subprocess and capture its output.
+
+    Wrapper for :func:`subprocess.check_output`.
 
     Automatically redirects stderr to stdout, captures both to a buffer,
     and generates a debug message with the stdout contents.

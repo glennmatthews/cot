@@ -3,7 +3,7 @@
 # edit_properties.py - Implements "edit-properties" sub-command
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -153,17 +153,17 @@ class COTEditProperties(ReadWriteCommand):
             new_value.append((key, value, prop_type))
         self._properties = new_value
 
-    @property
-    def transports(self):
-        """Transport mechanism(s) for environment properties."""
-        return self._transports
-
     _KNOWN_TRANSPORTS = {
         'iso':    "iso",
         'vmware': "com.vmware.guestInfo",
         'ibm':    "http://www.ibm.com/xmlns/ovf/transport/filesystem/"
                   "etc/ovf-transport",
     }
+
+    @property
+    def transports(self):
+        """Transport mechanism(s) for environment properties."""
+        return self._transports
 
     @transports.setter
     def transports(self, value):

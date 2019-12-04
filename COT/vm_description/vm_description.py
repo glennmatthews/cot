@@ -3,7 +3,7 @@
 # vm_description.py - Abstract class for reading, editing, and writing VMs
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -123,7 +123,7 @@ class VMDescription(object):
 
     @classmethod
     def factory(cls, input_file, *args, **kwargs):
-        """Factory method to select and create the appropriate subclass.
+        """Select and create the appropriate subclass (factory method).
 
         Args:
           input_file (str): Input file to test against each class's
@@ -197,7 +197,7 @@ class VMDescription(object):
         return self
 
     def __exit__(self, exc_type, exc_value, trace):
-        """Exiting context manager block. If no error, call :meth:`write`.
+        """Exit the context manager block. If no error, call :meth:`write`.
 
         In any case, also call :meth:`destroy`.
         For the parameters, see :mod:`contextlib`.
@@ -229,12 +229,12 @@ class VMDescription(object):
 
     @property
     def input_file(self):
-        """Data file to read in."""
+        """Get the data file to read in."""
         return self._input_file
 
     @property
     def output_file(self):
-        """Filename that :meth:`write` will output to."""
+        """Get/set the filename that :meth:`write` will output to."""
         return self._output_file
 
     @output_file.setter
@@ -243,7 +243,7 @@ class VMDescription(object):
 
     @property
     def working_dir(self):
-        """Temporary directory this instance can use for storage.
+        """Get a temporary directory this instance can use for storage.
 
         Will be automatically erased when :meth:`destroy` is called.
         """
@@ -256,7 +256,7 @@ class VMDescription(object):
 
     @property
     def product_class(self):
-        """The product class identifier, such as com.cisco.csr1000v."""
+        """Get/set the product class identifier, such as com.cisco.csr1000v."""
         return self._product_class
 
     @product_class.setter
@@ -265,7 +265,7 @@ class VMDescription(object):
 
     @property
     def platform(self):
-        """The Platform instance object associated with this VM.
+        """Get the Platform instance object associated with this VM.
 
         An instance of :class:`~COT.platforms.Platform` or a more specific
         subclass if recognized as such.
@@ -282,7 +282,7 @@ class VMDescription(object):
 
     @property
     def config_profiles(self):
-        """The list of supported configuration profiles.
+        """Get the list of supported configuration profiles.
 
         If there are no profiles defined, returns an empty list.
         If there is a default profile, it will be first in the list.
@@ -291,7 +291,7 @@ class VMDescription(object):
 
     @property
     def default_config_profile(self):
-        """The name of the default configuration profile.
+        """Get the name of the default configuration profile.
 
         Returns:
           str: Profile name or ``None`` if none are defined.
@@ -302,7 +302,7 @@ class VMDescription(object):
 
     @property
     def environment_properties(self):
-        """The array of environment properties.
+        """Get the array of environment properties.
 
         Returns:
           list: Array of dicts (one per property) with the keys
@@ -313,7 +313,7 @@ class VMDescription(object):
 
     @property
     def environment_transports(self):
-        """The list of environment transport methods."""
+        """Get/set the list of environment transport methods."""
         raise NotImplementedError("environment_transports not implemented")
 
     @environment_transports.setter
@@ -322,18 +322,18 @@ class VMDescription(object):
 
     @property
     def networks(self):
-        """The list of network names currently defined in this VM."""
+        """Get the list of network names currently defined in this VM."""
         raise NotImplementedError("networks property not implemented!")
 
     @property
     def network_descriptions(self):
-        """The list of network descriptions currently defined in this VM."""
+        """Get list of network descriptions currently defined in this VM."""
         raise NotImplementedError(
             "network_descriptions property not implemented!")
 
     @property
     def system_types(self):
-        """List of virtual system type(s) supported by this virtual machine."""
+        """Get/set list of virtual system type(s) supported by this VM."""
         raise NotImplementedError("system_types not implemented!")
 
     @system_types.setter
@@ -342,7 +342,7 @@ class VMDescription(object):
 
     @property
     def version_short(self):
-        """A short string describing the product version."""
+        """Get/set a short string describing the product version."""
         raise NotImplementedError("version_short not implemented!")
 
     @version_short.setter
@@ -351,7 +351,7 @@ class VMDescription(object):
 
     @property
     def version_long(self):
-        """A long string describing the product version."""
+        """Get/set a long string describing the product version."""
         raise NotImplementedError("version_long not implemented!")
 
     @version_long.setter

@@ -3,7 +3,7 @@
 # edit_hardware.py - Implements "edit-hardware" sub-command
 #
 # September 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -119,7 +119,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def cpus(self):
-        """Number of CPUs to set."""
+        """Get/set the number of CPUs to update to."""
         return self._cpus
 
     @cpus.setter
@@ -133,13 +133,13 @@ class COTEditHardware(ReadWriteCommand):
         self.ui.validate_value(self.vm.platform.validate_cpu_count, value)
         self._cpus = value
 
-    @property
-    def memory(self):
-        """Amount of RAM (in megabytes) to set."""
-        return self._memory
-
     # We like to see memory input in the form "4096M" or "4 GB" or "2 GiB"
     MEMORY_REGEXP = r"^\s*(\d+)\s*([mMgG])?i?[bB]?\s*$"
+
+    @property
+    def memory(self):
+        """Get/set the amount of RAM (in megabytes) to update to."""
+        return self._memory
 
     @memory.setter
     def memory(self, value):
@@ -175,7 +175,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def nics(self):
-        """Number of NICs to set."""
+        """Get/set the number of NICs to update to."""
         return self._nics
 
     @nics.setter
@@ -190,7 +190,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def nic_type(self):
-        """NIC type string to set.
+        """Get/set the NIC type string to set.
 
         .. deprecated:: 1.5
            Use :attr:`nic_types` instead.
@@ -211,7 +211,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def nic_types(self):
-        """List of NIC type strings to set."""
+        """Get/set the list of NIC type strings to set."""
         return self._nic_types
 
     @nic_types.setter
@@ -222,7 +222,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def serial_ports(self):
-        """Serial port count to set."""
+        """Get/set the serial port count to update to."""
         return self._serial_ports
 
     @serial_ports.setter
@@ -237,7 +237,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def scsi_subtype(self):
-        """SCSI controller subtype string to set.
+        """Get/set the SCSI controller subtype string to set.
 
         .. deprecated:: 1.5
            Use :attr:`scsi_subtypes` instead.
@@ -258,7 +258,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def scsi_subtypes(self):
-        """SCSI controller subtype string(s) to set."""
+        """Get/set the SCSI controller subtype string(s) to set."""
         return self._scsi_subtypes
 
     @scsi_subtypes.setter
@@ -270,7 +270,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def ide_subtype(self):
-        """IDE controller subtype string to set.
+        """Get/set the IDE controller subtype string to set.
 
         .. deprecated:: 1.5
            Use :attr:`ide_subtypes` instead.
@@ -291,7 +291,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def ide_subtypes(self):
-        """IDE controller subtype string(s) to set."""
+        """Get/set the IDE controller subtype string(s) to set."""
         return self._ide_subtypes
 
     @ide_subtypes.setter

@@ -3,7 +3,7 @@
 # hardware.py - OVFHardware class
 #
 # June 2016, Glenn F. Matthews
-# Copyright (c) 2013-2016 the COT project developers.
+# Copyright (c) 2013-2016, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -300,7 +300,9 @@ class OVFHardware(object):
             return matches[0]
 
     def get_item_count(self, resource_type, profile):
-        """Wrapper for :meth:`get_item_count_per_profile`.
+        """Get the number of Items of the given type for the given profile.
+
+        Wrapper for :meth:`get_item_count_per_profile`.
 
         Args:
           resource_type (str): Resource type string like 'scsi' or 'serial'

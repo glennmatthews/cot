@@ -3,7 +3,7 @@
 # file_reference.py - APIs abstracting away various ways to refer to a file.
 #
 # August 2015, Glenn F. Matthews
-# Copyright (c) 2015-2017 the COT project developers.
+# Copyright (c) 2015-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -77,7 +77,7 @@ class FileReference(object):
                  checksum_algorithm=None,
                  expected_checksum=None,
                  expected_size=None):
-        """Common initialization and validation logic.
+        """Initialize and validate the file reference (common logic).
 
         Args:
           container_path (str): Path to container (directory, TAR file, etc.)
@@ -208,17 +208,17 @@ class FileOnDisk(FileReference):
 
     @property
     def file_path(self):
-        """Directory + filename."""
+        """Get directory + filename."""
         return os.path.join(self.container_path, self.filename)
 
     @property
     def exists(self):
-        """True if the file exists on disk, else False."""
+        """Return True if the file exists on disk, else False."""
         return os.path.exists(self.file_path)
 
     @property
     def size(self):
-        """The size of this file, in bytes."""
+        """Get the size of this file, in bytes."""
         if self._size is None or self.force_refresh:
             self._size = os.path.getsize(self.file_path)
         return self._size
@@ -285,7 +285,7 @@ class FileInTAR(FileReference):
 
     @property
     def exists(self):
-        """True if the file exists in the TAR archive, else False."""
+        """Return True if the file exists in the TAR archive, else False."""
         with tarfile.open(self.container_path, 'r') as tarf:
             try:
                 tarf.getmember(self.filename)
@@ -302,7 +302,7 @@ class FileInTAR(FileReference):
 
     @property
     def size(self):
-        """The size of this file in bytes."""
+        """Get the size of this file in bytes."""
         if self._size is None or self.force_refresh:
             with tarfile.open(self.container_path, 'r') as tarf:
                 self._size = tarf.getmember(self.filename).size

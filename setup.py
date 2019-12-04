@@ -3,7 +3,7 @@
 # setup.py - installer script for COT package
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2014-2018 the COT project developers.
+# Copyright (c) 2014-2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -64,7 +64,7 @@ try:
         """Command to (re)build man pages using Sphinx."""
 
         def initialize_options(self):
-            """Default to manpage builder."""
+            """Set the manpage builder as default."""
             BuildDoc.initialize_options(self)
             self.builder = 'man'
 

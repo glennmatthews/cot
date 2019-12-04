@@ -161,7 +161,7 @@ def pretty_bytes(byte_value, base_shift=0):
 
 
 def tar_entry_size(filesize):
-    """The space a file of the given size will actually require in a TAR file.
+    """Get the space a file of the given size will actually require in a TAR.
 
     The entry has a 512-byte header followd by the actual file data,
     padded to a multiple of 512 bytes if necessary.
