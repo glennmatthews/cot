@@ -32,6 +32,13 @@ import logging
 import os
 import sys
 
+try:
+    # Python 3.x
+    from shutil import disk_usage
+except ImportError:
+    # Python 2.7
+    from psutil import disk_usage
+
 import xml.etree.ElementTree as ET    # noqa: N814
 
 logger = logging.getLogger(__name__)
@@ -49,9 +56,11 @@ def available_bytes_at_path(path):
     Raises:
       OSError: if the specified path does not exist or is not readable.
     """
-    statvfs = os.statvfs(path)
-    # available = free blocks times block size
-    available = statvfs.f_bavail * statvfs.f_frsize
+    if not os.path.exists(path):
+        raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+    if not os.path.isdir(path):
+        raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), path)
+    available = disk_usage(path).free
     logger.debug("There appears to be %s available at %s",
                  pretty_bytes(available), path)
     return available
@@ -152,7 +161,7 @@ def pretty_bytes(byte_value, base_shift=0):
 
 
 def tar_entry_size(filesize):
-    """The space a file of the given size will actually require in a TAR file.
+    """Get the space a file of the given size will actually require in a TAR.
 
     The entry has a 512-byte header followd by the actual file data,
     padded to a multiple of 512 bytes if necessary.

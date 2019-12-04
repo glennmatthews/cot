@@ -1,5 +1,5 @@
 # January 2017, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -38,7 +38,9 @@ class Nexus9000v(Platform):
     })
 
     def guess_nic_name(self, nic_number):
-        """The Nexus 9000v has a management NIC and some number of data NICs.
+        """Guess the name of the Nth NIC in this VM.
+
+        The Nexus 9000v has a management NIC and some number of data NICs.
 
         Args:
           nic_number (int): Nth NIC to name.

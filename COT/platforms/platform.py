@@ -1,5 +1,5 @@
 # September 2016, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -135,7 +135,7 @@ class Platform(object):
         """
 
     def __str__(self):
-        """String representation - same as :attr:`PLATFORM_NAME`."""
+        """Get the string representation - same as :attr:`PLATFORM_NAME`."""
         return self.__class__.PLATFORM_NAME
 
     # Some of these methods are semi-abstract, so:

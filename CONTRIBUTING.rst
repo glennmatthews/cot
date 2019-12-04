@@ -230,7 +230,7 @@ Add yourself as a contributor
 -----------------------------
 
 If you haven't contributed to COT previously, be sure to add yourself as a
-contributor in the ``COPYRIGHT.txt`` file.
+contributor in the ``AUTHORS.txt`` file.
 
 Open a pull request
 -------------------

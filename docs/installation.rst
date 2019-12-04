@@ -7,7 +7,7 @@ Installing COT
 System requirements
 -------------------
 
-* COT requires either Python 2.7 or Python 3.3 or later.
+* COT requires either Python 2.7 or Python 3.4 or later.
 * COT is tested to work under Mac OS X and Ubuntu Linux and similar distros.
 * COT now has limited support for CentOS and related distros as well.
 
@@ -146,7 +146,7 @@ of the COT installation process, or they can be installed as-needed by COT:
   file types.
 
 COT can attempt to install these tools using the appropriate package manager
-for your platform (i.e., MacPorts_ for Mac OS X, and either ``apt-get`` or
+for your platform (i.e., MacPorts_ or Homebrew_ for Mac OS X, and either ``apt-get`` or
 ``yum`` for Linux).
 
 .. warning::
@@ -175,4 +175,5 @@ to install the helper in question.
 .. _fatdisk: http://github.com/goblinhack/fatdisk
 .. _ovftool: https://www.vmware.com/support/developer/ovf/
 .. _MacPorts: http://www.macports.org/
+.. _Homebrew: https://brew.sh/
 .. _argcomplete: https://argcomplete.readthedocs.io/en/latest/

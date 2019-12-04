@@ -268,7 +268,9 @@ class OVF(VMDescription, XML):
             raise
 
     def _compare_file_lists(self, descriptor_file_list, manifest_file_list):
-        """Helper for _init_check_file_entries method.
+        """Compare two lists of files.
+
+        Helper for _init_check_file_entries method.
 
         Args:
           descriptor_file_list (list): List of file names derived from the
@@ -417,7 +419,7 @@ class OVF(VMDescription, XML):
 
     @property
     def checksum_algorithm(self):
-        """The preferred file checksum algorithm for this OVF."""
+        """Get the preferred file checksum algorithm for this OVF."""
         if self.ovf_version >= 2.0:
             # OVF 2.x uses SHA256 for manifest
             return 'sha256'
@@ -427,7 +429,7 @@ class OVF(VMDescription, XML):
 
     @property
     def product_class(self):
-        """The product class identifier, such as com.cisco.csr1000v."""
+        """Get/set the product class identifier, such as com.cisco.csr1000v."""
         if self._product_class is None and self.product_section is not None:
             self._product_class = self.product_section.get(self.PRODUCT_CLASS)
         return super(OVF, self).product_class
@@ -453,7 +455,7 @@ class OVF(VMDescription, XML):
 
     @property
     def platform(self):
-        """The platform type, as determined from the OVF descriptor.
+        """Get the platform type, as determined from the OVF descriptor.
 
         This will be the class :class:`~COT.platforms.Platform` or
         a more-specific subclass if recognized as such.
@@ -535,7 +537,7 @@ class OVF(VMDescription, XML):
 
     @property
     def config_profiles(self):
-        """The list of supported configuration profiles.
+        """Get the list of supported configuration profiles.
 
         If this OVF has no defined profiles, returns an empty list.
         If there is a default profile, it will be first in the list.
@@ -558,7 +560,7 @@ class OVF(VMDescription, XML):
 
     @property
     def environment_properties(self):
-        """The array of environment properties.
+        """Get the array of environment properties.
 
         Array of dicts (one per property) with the keys ``"key"``, ``"value"``,
         ``"qualifiers"``, ``"type"``, ``"user_configurable"``, ``"label"``,
@@ -585,7 +587,7 @@ class OVF(VMDescription, XML):
 
     @property
     def environment_transports(self):
-        """The list of environment transport method strings."""
+        """Get/set the list of environment transport method strings."""
         if self.ovf_version < 1.0:
             return None
         if self.virtual_hw_section is not None:
@@ -607,7 +609,7 @@ class OVF(VMDescription, XML):
 
     @property
     def networks(self):
-        """The list of network names currently defined in this VM."""
+        """Get the list of network names currently defined in this VM."""
         if self.network_section is None:
             return []
         return [network.get(self.NETWORK_NAME) for
@@ -615,7 +617,7 @@ class OVF(VMDescription, XML):
 
     @property
     def network_descriptions(self):
-        """The list of network descriptions currently defined in this VM.
+        """Get the list of network descriptions currently defined in this VM.
 
         Returns:
           list: List of network description strings
@@ -627,7 +629,7 @@ class OVF(VMDescription, XML):
 
     @property
     def system_types(self):
-        """List of virtual system type(s) supported by this virtual machine.
+        """Get/set the list of virtual system type(s) supported by this VM.
 
         For an OVF, this corresponds to the ``VirtualSystemType`` element.
         """
@@ -2522,7 +2524,9 @@ class OVF(VMDescription, XML):
         return ctrl_item
 
     def _create_new_disk_device(self, drive_type, address, name, ctrl_item):
-        """Helper for :meth:`add_disk_device`, in the case of no prior Item.
+        """Create a new disk device Item entry.
+
+        Helper for :meth:`add_disk_device`, in the case of no prior Item.
 
         Args:
           drive_type (str): ``'harddisk'`` or ``'cdrom'``

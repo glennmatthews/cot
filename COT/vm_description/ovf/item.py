@@ -353,7 +353,9 @@ class OVFItem(object):
         return value
 
     def _set_new_property(self, name, value, profiles):
-        """Helper for :meth:`set_property`. Create a new property entry.
+        """Create a new property entry.
+
+        Helper for :meth:`set_property`.
 
         Args:
           name (str): Property name
@@ -370,7 +372,9 @@ class OVFItem(object):
         self.modified = True
 
     def _set_existing_property(self, name, value, profiles, overwrite):
-        """Helper for :meth:`set_property`. Update an existing property.
+        """Update an existing property.
+
+        Helper for :meth:`set_property`.
 
         Args:
           name (str): Property name

@@ -3,7 +3,7 @@
 # deploy.py - Implements "cot deploy" command
 #
 # June 2014, Kevin A. Keim
-# Copyright (c) 2014-2017 the COT project developers.
+# Copyright (c) 2014-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 #
 # This file is part of the Common OVF Tool (COT) project.
@@ -295,7 +295,7 @@ class COTDeploy(ReadCommand):
 
     @property
     def network_map(self):
-        """Mapping of network names to networks."""
+        """Get/set mapping of network names to networks."""
         return self._network_map
 
     @network_map.setter
@@ -317,7 +317,7 @@ class COTDeploy(ReadCommand):
 
     @property
     def serial_connection(self):
-        """Mapping of serial ports to various connection types."""
+        """Get/set mapping of serial ports to various connection types."""
         return self._serial_connection
 
     @serial_connection.setter

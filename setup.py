@@ -3,7 +3,7 @@
 # setup.py - installer script for COT package
 #
 # April 2014, Glenn F. Matthews
-# Copyright (c) 2014-2018 the COT project developers.
+# Copyright (c) 2014-2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -64,7 +64,7 @@ try:
         """Command to (re)build man pages using Sphinx."""
 
         def initialize_options(self):
-            """Default to manpage builder."""
+            """Set the manpage builder as default."""
             BuildDoc.initialize_options(self)
             self.builder = 'man'
 
@@ -111,6 +111,8 @@ install_requires = [
     # COT tends to run into this issue when downloading the VMDKtool source
     'pyOpenSSL; python_version < "2.7.9"',
     'ndg-httpsclient; python_version < "2.7.9"',
+    # shutil.disk_usage is standard in 3.3 and later only.
+    'psutil>=5.6.7; python_version < "3.3"',
     # shutil.get_terminal_size is standard in 3.3 and later only.
     'backports.shutil_get_terminal_size; python_version < "3.3"',
     # enum module is standard in Python 3.4 and later, else use enum34
@@ -214,6 +216,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],

@@ -3,7 +3,7 @@
 # cli.py - CLI handling for the Common OVF Tool suite
 #
 # August 2013, Glenn F. Matthews
-# Copyright (c) 2013-2017 the COT project developers.
+# Copyright (c) 2013-2017, 2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution
 # and at https://github.com/glennmatthews/cot/blob/master/COPYRIGHT.txt.
 #
@@ -106,7 +106,7 @@ class CLI(UI):
 
     @property
     def terminal_width(self):
-        """The width of the terminal in columns."""
+        """Get the width of the terminal in columns."""
         if self._terminal_width is None:
             try:
                 self._terminal_width = get_terminal_size().columns
@@ -558,7 +558,7 @@ class CLI(UI):
                 setattr(arg_dict["instance"], arg, value)
 
     def main(self, args):
-        """Main worker function for COT when invoked from the CLI.
+        """Invoke the main worker logic for COT when invoked from the CLI.
 
         * Calls :meth:`adjust_verbosity` with the appropriate verbosity level
           derived from the args.
