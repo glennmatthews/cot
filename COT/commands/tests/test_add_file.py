@@ -20,6 +20,7 @@ import os.path
 
 from COT.commands.tests.command_testcase import CommandTestCase
 from COT.ui import UI
+from COT.commands.add_disk import COTAddDisk
 from COT.commands.add_file import COTAddFile
 from COT.data_validation import InvalidInputError
 
@@ -121,7 +122,6 @@ ovf:size="{cfg_size}" />
    <ovf:VirtualSystem ovf:id="x">
 """.format(self.FILE_SIZE['blank.vmdk']))
 
-        from COT.commands.add_disk import COTAddDisk
         add_disk = COTAddDisk(UI())
         add_disk.package = intermediate_ovf
         add_disk.output = self.temp_file

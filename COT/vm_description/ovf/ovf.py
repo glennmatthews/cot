@@ -103,7 +103,7 @@ class OVF(VMDescription, XML):
         filename = os.path.basename(filename)
         extension = os.path.splitext(filename)[1]
 
-        if extension == ".ovf" or extension == ".ova" or extension == ".box":
+        if extension in (".ovf", ".ova", ".box"):
             return extension
         # Some sources of files are not good about preserving the extension
         # and hence tend to append additional extensions - while this may open
@@ -135,7 +135,7 @@ class OVF(VMDescription, XML):
           str: OVF descriptor path
         """
         extension = self.detect_type_from_name(input_file)
-        if extension == '.ova' or extension == '.box':
+        if extension in ('.ova', '.box'):
             # Untar the ova to our working directory
             return self.untar(input_file)
         elif extension == '.ovf':
@@ -399,7 +399,7 @@ class OVF(VMDescription, XML):
         """
         if self._ovf_version is None:
             root_namespace = XML.get_ns(self.root.tag)
-            logger.debug("Root namespace is " + root_namespace)
+            logger.debug("Root namespace is %s", root_namespace)
             if root_namespace == 'http://www.vmware.com/schema/ovf/1/envelope':
                 logger.info("OVF version is 0.9")
                 self._ovf_version = 0.9
@@ -496,7 +496,7 @@ class OVF(VMDescription, XML):
                 validator(*args)
                 return True
             except ValueUnsupportedError as exc:
-                logger.warning(label + str(exc))
+                logger.warning("%s%s", label, str(exc))
                 return False
 
         for profile_id in profile_ids:
@@ -1146,7 +1146,7 @@ class OVF(VMDescription, XML):
             href_str = "  " + file_obj.get(self.FILE_HREF)
             # Truncate to fit in available space
             if len(href_str) > href_w:
-                href_str = href_str[:(href_w-3)] + "..."
+                href_str = href_str[:(href_w - 3)] + "..."
             if disk_cap or device_str:
                 str_list.append(template.format(href_str, file_size,
                                                 disk_cap, device_str))
@@ -1247,7 +1247,7 @@ class OVF(VMDescription, XML):
                 str_list.append("  " + name)
             elif truncate and len(desc) > max_d:
                 str_list.append('  {name:{w}}  "{tdesc}..."'.format(
-                    name=name, w=max_n, tdesc=desc[:max_d-3]))
+                    name=name, w=max_n, tdesc=desc[:(max_d - 3)]))
             else:
                 str_list.extend(wrapper.wrap(
                     '{name:{w}}  "{desc}"'.format(name=name, w=max_n,

@@ -337,6 +337,8 @@ class Helper(object):
           RuntimeError: if potentially :attr:`installable` on this platform
             but required helpers (e.g., package managers) are not available.
           HelperError: if installation is attempted but fails.
+          HelperNotFoundError: if installation succeeded but the installed
+            helper could not be located.
 
         Subclasses should not override this method but instead should provide
         an appropriate implementation of the :meth:`_install` method.
@@ -450,6 +452,12 @@ class Helper(object):
           directory (str): Directory to check/create.
           permissions (int): Permission mask to set when creating a directory.
               Default is ``0o755``.
+        Returns:
+          bool: True if the directory exists or was created successfully.
+        Raises:
+          RuntimeError: if a non-directory file already exists at the requested
+            location.
+          OSError: if directory creation failed
         """
         if os.path.isdir(directory):
             # TODO: permissions check, update permissions if needed
@@ -458,7 +466,7 @@ class Helper(object):
             raise RuntimeError("Path {0} exists but is not a directory!"
                                .format(directory))
         try:
-            logger.debug("Creating directory " + directory)
+            logger.debug("Creating directory %s", directory)
             os.makedirs(directory, permissions)
             return True
         except OSError as exc:

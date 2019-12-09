@@ -191,7 +191,7 @@ class UI(object):
             # Did user enter a list index?
             try:
                 index = int(result)
-                return option_list[index-1]
+                return option_list[index - 1]
             except (ValueError, IndexError):
                 pass
             logger.error("Invalid input. Please try again.")

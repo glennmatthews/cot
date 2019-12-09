@@ -143,7 +143,7 @@ class CLI(UI):
                                   [-f FILE_ID]
         """
         # Automatically add a line for --help to the usage
-        output_lines = ["\n  cot "+subcommand+" --help"]
+        output_lines = ["\n  cot " + subcommand + " --help"]
         # Prefix for all other usage lines:
         prefix = "  cot <opts> {0}".format(subcommand)
         # We don't want to use standard 'textwrap' because we'd like to keep
@@ -181,7 +181,7 @@ class CLI(UI):
             if len(prefix) + max_group_len >= width:
                 indent_line = "     "
             else:
-                indent_line = " "*len(prefix)
+                indent_line = " " * len(prefix)
 
             wrapped_line = prefix
             for group in usage_groups:
@@ -253,7 +253,7 @@ class CLI(UI):
             if len(example_lines) > 1:
                 # Don't wrap multiline examples, just indent
                 for line in example_lines:
-                    output_lines.append("    "+line)
+                    output_lines.append("    " + line)
             else:
                 wrapped_line = "   "
                 for param in re.findall(splitter, example):
@@ -349,9 +349,9 @@ class CLI(UI):
 
         while True:
             ans = self.input("{0} [y] ".format(prompt)).strip()
-            if not ans or ans == 'y' or ans == 'Y':
+            if not ans or ans in ('y', 'Y'):
                 return True
-            elif ans == 'n' or ans == 'N':
+            elif ans in ('n', 'N'):
                 return False
             else:
                 print("Please enter 'y' or 'n'")

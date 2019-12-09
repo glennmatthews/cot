@@ -53,6 +53,11 @@ class FileReference(object):
 
         Returns:
           FileReference: instance of appropriate subclass
+
+        Raises:
+          IOError: if nothing exists at ``container_path``
+          NotImplementedError: if ``container_path`` is a file that this
+            function does not know how to handle
         """
         if not os.path.isabs(container_path):
             logger.warning("Only absolute paths are accepted, but "
@@ -320,7 +325,7 @@ class FileInTAR(FileReference):
           ValueError: if ``mode`` is not valid.
         """
         # We can only extract a file object from a TAR file in read mode.
-        if mode != 'r' and mode != 'rb':
+        if mode not in ('r', 'rb'):
             raise ValueError("FileInTar.open() only supports 'r'/'rb' mode")
         # actually tarf.extractfile is always a binary object...
         with tarfile.open(self.container_path, 'r') as tarf:

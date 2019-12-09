@@ -197,7 +197,7 @@ class OVFItem(object):
           default (object): Default value to return if there are no matches
 
         Returns:
-          Set of profile strings, or the given `default` if no matches.
+          object: Set of profile strings, or the given `default` if no matches.
         """
         value_dict = self.properties.get(name, None)
         if not value_dict:
@@ -302,7 +302,7 @@ class OVFItem(object):
             if en_val is not None:
                 value = re.sub(en_val, "_EN_", value)
 
-        if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
+        if name in (self.ELEMENT_NAME, self.ITEM_DESCRIPTION):
             vq_val = self.get_value(self.VIRTUAL_QUANTITY, profiles)
             if vq_val is not None:
                 value = re.sub(vq_val, "_VQ_", value)
@@ -337,7 +337,7 @@ class OVFItem(object):
             en_val = self._get_value(self.ELEMENT_NAME, profiles)
             if en_val is not None:
                 value = re.sub("_EN_", str(en_val), str(value))
-        if name == self.ELEMENT_NAME or name == self.ITEM_DESCRIPTION:
+        if name in (self.ELEMENT_NAME, self.ITEM_DESCRIPTION):
             # To regenerate text that depends on these values:
             rst_val = self._get_value(self.RESOURCE_SUB_TYPE, profiles)
             if isinstance(rst_val, tuple):
@@ -640,7 +640,7 @@ class OVFItem(object):
         val = self._get_value(tag, profiles)
         val = self.value_replace_wildcards(tag, val, profiles)
         # Sanity check
-        if tag == self.ELEMENT_NAME or tag == self.ITEM_DESCRIPTION:
+        if tag in (self.ELEMENT_NAME, self.ITEM_DESCRIPTION):
             if val and re.search(r"_RST_|_VQ_|_CONN_|_EN_", val):
                 raise OVFItemDataError("Unreplaced wildcard in value "
                                        "for {0} profiles {1}:\n{2}\n{3}"
@@ -692,8 +692,8 @@ class OVFItem(object):
                 inter = set_so_far.intersection(profile_set)
                 if inter:
                     raise RuntimeError("OVFItem illegally contains duplicate "
-                                       "profiles %s under %s: %s",
-                                       inter, name, value_dict)
+                                       "profiles {0} under {1}: {2}"
+                                       .format(inter, name, value_dict))
                 set_so_far |= profile_set
 
     def has_profile(self, profile):

@@ -518,7 +518,7 @@ Enter new value for this property
             For the parameters, see get_input.
             """
             if self.counter > 0:
-                log = expected[self.counter-1][msgs_idx]
+                log = expected[self.counter - 1][msgs_idx]
                 if log is not None:
                     self.assertLogged(info='After step {0}, '
                                       .format(self.counter - 1),

@@ -124,12 +124,12 @@ class SerialConnection(object):
           InvalidInputError: if value string is not recognized as valid
           NotImplementedError: if ``kind`` is not valid
         """
-        if kind == 'device' or kind == 'file' or kind == 'pipe':
+        if kind in ('device', 'file', 'pipe'):
             # TODO: Validate that device path exists on target?
             # TODO: Validate that datastore and file path exists on target?
             # TODO: Validate that pipe path exists on target?
             return value
-        elif kind == 'tcp' or kind == 'telnet':
+        elif kind in ('tcp', 'telnet'):
             # //<host>:<port>
             # //:<port>
             # <host>:<port>

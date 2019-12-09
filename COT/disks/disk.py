@@ -124,6 +124,9 @@ class DiskRepresentation(object):
 
         Args:
           path (str): Path to existing file.
+        Raises:
+          ValueError: if ``path`` is empty or ``None``
+          HelperError: if no file exists at ``path``
         """
         if not path:
             raise ValueError("Path must be set to a valid value, but got {0}"
@@ -229,6 +232,7 @@ class DiskRepresentation(object):
 
         Raises:
           HelperError: if no file exists at ``path``.
+          RuntimeError: if the ``qemu-img`` output doesn't report a file format
         """
         if not os.path.exists(path):
             raise HelperError(2, "No such file or directory: '{0}'"

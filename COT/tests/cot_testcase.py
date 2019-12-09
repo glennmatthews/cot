@@ -267,13 +267,14 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
         Returns:
           dict: kwargs suitable for passing into :meth:`assertLogged`
         """
-        msg = ""
+        label = ""
         if profile:
-            msg += "In profile '{0}':".format(profile)
-        msg += "(Unsupported )?[vV]alue '{0}' for {1}".format(value, kind)
+            label = "In profile '{0}':".format(profile)
+        msg = "(Unsupported )?[vV]alue '{0}' for {1}".format(value, kind)
         return {
             'levelname': 'WARNING',
-            'msg': msg,
+            'msg': '%s%s',
+            'args': (label, msg),
         }
 
     def __init__(self, method_name='runTest'):

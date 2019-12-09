@@ -74,7 +74,7 @@ class SmarterConnection(SmartConnection):
         Raises:
           vim.fault.HostConnectFault: TODO
           requests.exceptions.ConnectionError: TODO
-        Yields:
+        Returns:
           pyVmomi.VmomiSupport.vim.ServiceInstance: Session service instance.
         """
         logger.verbose("Establishing connection to %s:%s...",
@@ -162,6 +162,8 @@ class PyVmomiVMReconfigSpec(object):
           service_instance (pyVmomi.VmomiSupport.vim.ServiceInstance):
             Connection to ESXi.
           vm_name (str): Virtual machine name.
+        Raises:
+          LookupError: if no VM was found.
         """
         self.service_instance = service_instance
         self.vm = self.lookup_object(vim.VirtualMachine, vm_name)
@@ -172,7 +174,7 @@ class PyVmomiVMReconfigSpec(object):
     def __enter__(self):
         """Use a ConfigSpec as the context manager object.
 
-        Yields:
+        Returns:
             pyVmomi.VmomiSupport.vim.vm.ConfigSpec: config specification
         """
         return self.spec
@@ -439,6 +441,9 @@ class COTDeployESXi(COTDeploy):
         Args:
           conn (SerialConnection): Serial connection to create
           spec (PyVmomiVMReconfigSpec): PyVmomi VM spec object
+        Raises:
+          NotImplementedError: if conn.kind is not one of "device", "telnet",
+            or "tcp"
         """
         logger.verbose(conn)
         serial_spec = vim.vm.device.VirtualDeviceSpec()

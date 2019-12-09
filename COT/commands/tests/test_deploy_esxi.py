@@ -24,9 +24,10 @@ import socket
 import ssl
 from distutils.version import StrictVersion
 
-import mock
 import requests
 from pyVmomi import vim
+
+import mock
 
 try:
     import unittest2 as unittest
@@ -401,8 +402,8 @@ class TestSmarterConnection(COTTestCase):
             self.reason = reason
             self.message = ("Max retries exceeded with url: %s (Caused by %r)"
                             % (url, reason))
-            super(self.__class__, self).__init__("%s: %s" %
-                                                 (pool, self.message))
+            super(TestSmarterConnection.MaxRetryError28, self).__init__(
+                "%s: %s" % (pool, self.message))
 
     class NewConnectionError28(Exception):
         """Mock of requests 2.8 NewConnectionError exception class."""
@@ -411,7 +412,8 @@ class TestSmarterConnection(COTTestCase):
             """Create fake exception."""
             self.pool = pool
             self.message = message
-            super(self.__class__, self).__init__("%s: %s" % (pool, message))
+            super(TestSmarterConnection.NewConnectionError28, self).__init__(
+                "%s: %s" % (pool, message))
 
     def test_unwrap_connection_error_28(self):
         """Unwrap an error like a ConnectionError raised by requests 2.8."""

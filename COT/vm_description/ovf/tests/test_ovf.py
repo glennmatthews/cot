@@ -308,8 +308,8 @@ ovf:size="{cfg_size}" />
 
         # Make sure everything propagated over successfully
         input_dir = os.path.dirname(self.input_ovf)
-        for ext in ['.ovf', '.mf', '.iso', '.vmdk']:
-            if ext == '.mf' or ext == '.ovf':
+        for ext in ('.ovf', '.mf', '.iso', '.vmdk'):
+            if ext in ('.mf', '.ovf'):
                 self.check_diff("", os.path.join(input_dir, "input" + ext),
                                 os.path.join(self.temp_dir, "input" + ext))
             else:

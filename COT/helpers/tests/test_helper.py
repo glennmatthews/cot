@@ -247,7 +247,7 @@ class HelperGenericTest(HelperTestCase):
         super(HelperGenericTest, self).tearDown()
 
     def test_check_call_helpernotfounderror(self):
-        """HelperNotFoundError if executable doesn't exist."""
+        """Expect a HelperNotFoundError if executable doesn't exist."""
         self.assertRaises(HelperNotFoundError,
                           check_call, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
@@ -255,7 +255,7 @@ class HelperGenericTest(HelperTestCase):
                           ["not_a_command"], require_success=True)
 
     def test_check_call_helpererror(self):
-        """HelperError if executable fails and require_success is set."""
+        """Expect a HelperError if executable fails and require_success."""
         with self.assertRaises(HelperError) as catcher:
             check_call(["false"])
         self.assertEqual(catcher.exception.errno, 1)
@@ -269,7 +269,7 @@ class HelperGenericTest(HelperTestCase):
             """Raise an OSError unless using 'sudo'."""
             if args[0] != 'sudo':
                 raise OSError(13, 'permission denied')
-            return
+
         mock_check_call.side_effect = raise_oserror
 
         # Without retry_on_sudo, we reraise the permissions error
@@ -292,7 +292,7 @@ class HelperGenericTest(HelperTestCase):
             """Raise a CalledProcessError unless using 'sudo'."""
             if args[0] != 'sudo':
                 raise subprocess.CalledProcessError(1, " ".join(args))
-            return
+
         mock_check_call.reset_mock()
         mock_check_call.side_effect = raise_subprocess_error
 
@@ -311,7 +311,7 @@ class HelperGenericTest(HelperTestCase):
         ])
 
     def test_check_output_helpernotfounderror(self):
-        """HelperNotFoundError if executable doesn't exist."""
+        """Expect HelperNotFoundError if executable doesn't exist."""
         self.assertRaises(HelperNotFoundError,
                           check_output, ["not_a_command"])
         self.assertRaises(HelperNotFoundError,
@@ -319,12 +319,12 @@ class HelperGenericTest(HelperTestCase):
                           require_success=True)
 
     def test_check_output_oserror(self):
-        """OSError if requested command isn't an executable."""
+        """Expect OSError if requested command isn't an executable."""
         self.assertRaises(OSError,
                           check_output, self.input_ovf)
 
     def test_check_output_helpererror(self):
-        """HelperError if executable fails and require_success is set."""
+        """Expect HelperError if executable fails and require_success."""
         with self.assertRaises(HelperError) as catcher:
             check_output(["false"])
 
@@ -355,7 +355,7 @@ class HelperGenericTest(HelperTestCase):
                 new_callable=mock.PropertyMock, return_value=True)
     @mock.patch('platform.system', return_value='Darwin')
     def test_install_missing_package_manager_mac(self, *_):
-        """RuntimeError if Mac install supported but brew/port are absent."""
+        """Expect RuntimeError if Mac install supported but no brew/port."""
         self.helper._installed = False
         self.helper._provider_package['brew'] = 'install-me-with-brew'
         self.helper._provider_package['port'] = 'install-me-with-port'
@@ -403,7 +403,7 @@ class HelperGenericTest(HelperTestCase):
         self.assertRaises(HelperNotFoundError, self.helper.install)
 
     def test_call_install(self):
-        """call will call install, which raises an error."""
+        """Calling call() will call install(), which raises an error."""
         self.assertRaises(NotImplementedError,
                           self.helper.call, ["Hello!"])
 

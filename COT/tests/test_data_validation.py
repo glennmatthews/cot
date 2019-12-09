@@ -141,7 +141,7 @@ class TestValidationFunctions(COTTestCase):
                              "abcdefghijklmnopqrstuvwxyz1234567890"]:
             self.assertEqual(no_whitespace(valid_string), valid_string.strip())
 
-        for invalid_string in ["a b", "a\tb" "a\nb" "a\rb"]:
+        for invalid_string in ["a b", "a\tb", "a\nb", "a\rb"]:
             self.assertRaises(InvalidInputError, no_whitespace, invalid_string)
 
     def test_validate_int(self):

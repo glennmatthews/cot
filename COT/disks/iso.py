@@ -89,6 +89,8 @@ class ISO(DiskRepresentation):
             include Rock Ridge extensions.
           files (list): List of files to include in this ISO (required)
           **kwargs: unused
+        Raises:
+          RuntimeError: if ``files`` is an empty list
         """
         if not files:
             raise RuntimeError("Unable to create an empty ISO file")

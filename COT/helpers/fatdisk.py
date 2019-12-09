@@ -83,7 +83,7 @@ class FatDisk(Helper):
             if destdir != '':
                 prefix = prefix.lstrip(os.sep)
             destination = os.path.join(destdir, prefix, 'bin')
-            logger.info("Compilation complete, installing to " +
+            logger.info("Compilation complete, installing to %s",
                         destination)
             self.mkdir(destination)
             self.copy_file(os.path.join(new_d, 'fatdisk'), destination)

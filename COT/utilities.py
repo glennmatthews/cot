@@ -107,6 +107,9 @@ def pretty_bytes(byte_value, base_shift=0):
     Returns:
       str: Pretty-printed byte string such as "1.00 GiB"
 
+    Raises:
+      ValueError: if base_shift is a negative number
+
     Examples:
       ::
 

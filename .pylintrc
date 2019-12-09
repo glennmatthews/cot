@@ -25,7 +25,16 @@ reports=no
 #   locally-disabled
 #   too-few-public-methods
 #
-# Disabled temporarily
+# Disabled for stylistic preference:
+#   no-else-break
+#   no-else-raise
+#   no-else-return
+#   unnecessary-pass
+#
+# Disabled as we need to maintain Python 2.7 compatibility:
+#   useless-object-inheritance
+#
+# Disabled temporarily due to bugs
 #   missing-returns-doc (https://github.com/PyCQA/pylint/pull/1008)
 #   missing-raises-doc (https://github.com/PyCQA/pylint/pull/1011)
 #   duplicate-code (https://github.com/PyCQA/pylint/pull/1055,
@@ -36,10 +45,15 @@ disable=bad-continuation,
   fixme,
   line-too-long,
   locally-disabled,
+  missing-raises-doc,
+  missing-returns-doc,
+  no-else-break,
+  no-else-raise,
+  no-else-return,
   too-few-public-methods,
   trailing-whitespace,
-  missing-returns-doc,
-  missing-raises-doc
+  unnecessary-pass,
+  useless-object-inheritance,
 
 [BASIC]
 

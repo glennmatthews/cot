@@ -847,7 +847,7 @@ class VMDescription(object):
         'brief': 0,
         None: 1,
         'verbose': 2
-        }
+    }
 
     def info_string(self, width=79, verbosity_option=None):
         """Get a descriptive string summarizing the contents of this VM.

@@ -52,7 +52,7 @@ class IOSv(Platform):
         return "GigabitEthernet0/" + str(nic_number - 1)
 
     def validate_memory_amount(self, mebibytes):
-        """IOSv has minimum 192 MiB (with minimal feature set), max 3 GiB.
+        """Check that IOSv has min 192 MiB (w/ minimal features), max 3 GiB.
 
         Args:
           mebibytes (int): RAM, in MiB.

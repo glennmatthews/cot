@@ -307,7 +307,7 @@ def check_for_conflict(label, refs):
     for index, obj1 in enumerate(refs):
         if obj1 is None:
             continue
-        for obj2 in refs[(index+1):]:
+        for obj2 in refs[(index + 1):]:
             if obj2 is not None and obj1 != obj2:
                 raise ValueMismatchError(
                     "Found multiple candidates for the {0}:"
@@ -326,6 +326,8 @@ def file_checksum(path_or_obj, checksum_type):
       checksum_type (str): Supported values are 'md5', 'sha1', 'sha256'.
     Returns:
       str: Hexadecimal file checksum
+    Raises:
+      NotImplementedError: given an unsupported ``checksum_type``.
     """
     # pylint: disable=redefined-variable-type
     if checksum_type == 'md5':

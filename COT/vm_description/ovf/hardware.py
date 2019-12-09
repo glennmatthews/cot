@@ -552,7 +552,7 @@ class OVFHardware(object):
         if profile_list is None:
             profile_list = self.ovf.config_profiles + [None]
         for ovfitem in self.find_all_items(resource_type):
-            if len(value_list):
+            if value_list:
                 new_value = value_list.pop(0)
             else:
                 new_value = default
@@ -561,7 +561,7 @@ class OVFHardware(object):
                     ovfitem.set_property(prop_name, new_value, [profile])
             logger.info("Updated %s property %s to %s under %s",
                         resource_type, prop_name, new_value, profile_list)
-        if len(value_list):
+        if value_list:
             logger.warning("After scanning all known %s Items, not all "
                            "%s values were used - leftover %s",
                            resource_type, prop_name, value_list)

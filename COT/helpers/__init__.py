@@ -83,6 +83,9 @@ for cls in Helper.__subclasses__():
     if cls is PackageManager:
         # Don't record the abstract class!
         continue
+    # While the base Helper class has "name" as a required __init__ parameter,
+    # all subclasses are required to provide their own value for "name". Hence:
+    # pylint: disable=no-value-for-parameter
     ins = cls()
     helpers[ins.name] = ins
 

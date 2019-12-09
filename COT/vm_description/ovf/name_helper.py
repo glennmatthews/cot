@@ -328,7 +328,7 @@ class OVFNameHelper1(object):
         if name not in self._cache:
             if name.lower() in self.NSM:
                 self._cache[name] = "{%s}" % self.NSM[name.lower()]
-            elif name == "EPASD" or name == "SASD":
+            elif name in ("EPASD", "SASD"):
                 self._cache[name] = self.RASD
             elif name not in self._raw:
                 raise AttributeError("Unknown attribute '{0}'".format(name))
@@ -408,8 +408,8 @@ class OVFNameHelper1(object):
         """
         if resource_type == self.RES_MAP['ethernet']:
             return self.EPASD
-        elif (resource_type == self.RES_MAP['harddisk'] or
-              resource_type == self.RES_MAP['cdrom']):
+        elif resource_type in (self.RES_MAP['harddisk'],
+                               self.RES_MAP['cdrom']):
             return self.SASD
         else:
             return self.RASD

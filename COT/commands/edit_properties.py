@@ -258,7 +258,7 @@ class COTEditProperties(ReadWriteCommand):
                         "'q' to write changes and quit"),
                 default_value='q')
 
-            if user_input == 'q' or user_input == 'Q':
+            if user_input in('q', 'Q'):
                 break
 
             prop = next(p for p in proparray if p['key'] == user_input)

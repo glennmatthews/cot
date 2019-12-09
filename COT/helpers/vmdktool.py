@@ -99,7 +99,7 @@ class VMDKTool(Helper):
                 args.append('DESTDIR=' + destdir)
                 # os.path.join doesn't like absolute paths in the middle
                 prefix = prefix.lstrip(os.sep)
-            logger.info("Compilation complete, installing to " +
+            logger.info("Compilation complete, installing to %s",
                         os.path.join(destdir, prefix))
             # Make sure the relevant man and bin directories exist
             self.mkdir(os.path.join(destdir, prefix, 'man', 'man8'))
