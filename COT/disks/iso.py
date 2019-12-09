@@ -79,6 +79,8 @@ class ISO(DiskRepresentation):
         """
         return 'cdrom'
 
+    # https://github.com/PyCQA/pylint/issues/1553
+    # pylint: disable=arguments-differ
     @staticmethod
     def _create_file(path, disk_subformat="rockridge", files=None, **kwargs):
         """Create an ISO file.

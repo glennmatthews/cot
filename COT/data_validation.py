@@ -353,7 +353,7 @@ def file_checksum(path_or_obj, checksum_type):
     try:
         while True:
             buf = file_obj.read(blocksize)
-            if len(buf) == 0:
+            if len(buf) == 0:  # pylint: disable=len-as-condition
                 break
             hash_obj.update(buf)
     finally:

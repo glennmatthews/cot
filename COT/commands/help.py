@@ -45,9 +45,12 @@ class COTHelp(Command):
 
     @property
     def subcommand(self):
-        """CLI subcommand to give help for.
+        """str: CLI subcommand to give help for.
 
         If ``None``, then help will be displayed for the COT global parser.
+
+        Raises:
+          InvalidInputError: if the requested subcommand does not exist.
         """
         return self._subcommand
 

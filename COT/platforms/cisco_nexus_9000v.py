@@ -46,6 +46,8 @@ class Nexus9000v(Platform):
           nic_number (int): Nth NIC to name.
 
         Returns:
+          str: such as
+
           * mgmt0
           * Ethernet1/1
           * Ethernet1/2

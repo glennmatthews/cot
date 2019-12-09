@@ -294,7 +294,7 @@ class OVFHardware(object):
             raise LookupError(
                 "Found multiple matching '{0}' Items (instances {1})"
                 .format(resource_type, [m.instance_id for m in matches]))
-        elif len(matches) == 0:
+        elif len(matches) == 0:  # pylint: disable=len-as-condition
             return None
         else:
             return matches[0]

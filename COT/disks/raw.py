@@ -81,6 +81,8 @@ class RAW(DiskRepresentation):
                 confidence = 10
         return confidence
 
+    # https://github.com/PyCQA/pylint/issues/1553
+    # pylint: disable=arguments-differ
     @classmethod
     def _create_file(cls, path, files=None, capacity=None, **kwargs):
         """Create a raw disk image file.

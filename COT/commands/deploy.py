@@ -248,7 +248,7 @@ class COTDeploy(ReadCommand):
 
     @property
     def hypervisor(self):
-        """Hypervisor to deploy to.
+        """str: Hypervisor to deploy to.
 
         Raises:
           InvalidInputError: if not a recognized value.
@@ -264,7 +264,7 @@ class COTDeploy(ReadCommand):
 
     @property
     def configuration(self):
-        """VM configuration profile to use for deployment.
+        """str: VM configuration profile to use for deployment.
 
         Raises:
           InvalidInputError: if not a profile defined in the VM.
@@ -284,7 +284,11 @@ class COTDeploy(ReadCommand):
 
     @property
     def power_on(self):
-        """Whether to automatically power on the VM after deployment."""
+        """bool: Whether to automatically power on the VM after deployment.
+
+        Raises:
+          InvalidInputError: if setting to a non-boolean value
+        """
         return self._power_on
 
     @power_on.setter
@@ -295,7 +299,11 @@ class COTDeploy(ReadCommand):
 
     @property
     def network_map(self):
-        """Get/set mapping of network names to networks."""
+        """list: Mapping of network names to networks.
+
+        Raises:
+          InvalidInputError: if any mapping in the list is misformatted.
+        """
         return self._network_map
 
     @network_map.setter
@@ -317,7 +325,7 @@ class COTDeploy(ReadCommand):
 
     @property
     def serial_connection(self):
-        """Get/set mapping of serial ports to various connection types."""
+        """list: Mapping of serial ports to various connection types."""
         return self._serial_connection
 
     @serial_connection.setter

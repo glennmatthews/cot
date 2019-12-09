@@ -41,6 +41,8 @@ class IOSXRv9000(IOSXRv):
           nic_number (int): Nth NIC to name.
 
         Returns:
+          str: such as
+
           * "MgmtEth0/0/CPU0/0"
           * "CtrlEth"
           * "DevEth"

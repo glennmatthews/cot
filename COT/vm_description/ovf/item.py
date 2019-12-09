@@ -129,7 +129,7 @@ class OVFItem(object):
           name (str): Attribute name.
 
         Returns:
-          Value looked up from OVFNameHelper.
+          object: Value looked up from OVFNameHelper.
 
         Raises:
           AttributeError: Magic methods (``__foo``) will not be passed
@@ -594,7 +594,7 @@ class OVFItem(object):
           profiles (set): set of profile names, or None
 
         Returns:
-          Value, default value, or ``None``, unsanitized.
+          str: Value, default value, or ``None``, unsanitized.
         """
         if profiles is not None:
             profiles = set(profiles)
@@ -631,7 +631,7 @@ class OVFItem(object):
           profiles (set): set of profile names, or None
 
         Returns:
-          Value string or list, or ``None``
+          object: Value string or list, or ``None``
 
         Raises:
           OVFItemDataError: if :meth:`value_replace_wildcards` failed to

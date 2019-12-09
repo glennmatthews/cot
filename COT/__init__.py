@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 # September 2013, Glenn F. Matthews
 # Copyright (c) 2013-2019 the COT project developers.
 # See the COPYRIGHT.txt file at the top-level directory of this distribution

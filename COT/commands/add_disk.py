@@ -137,7 +137,7 @@ class COTAddDisk(ReadWriteCommand):
 
     @property
     def disk_image(self):
-        """Disk image file to add to the VM.
+        """str: Disk image file to add to the VM.
 
         Raises:
           InvalidInputError: if the file does not exist.
@@ -150,7 +150,7 @@ class COTAddDisk(ReadWriteCommand):
 
     @property
     def address(self):
-        """Disk device address on controller (:code:`1:0`, etc.).
+        """str: Disk device address on controller (:code:`1:0`, etc.).
 
         Raises:
           InvalidInputError: see :meth:`validate_controller_address`
@@ -165,7 +165,7 @@ class COTAddDisk(ReadWriteCommand):
 
     @property
     def controller(self):
-        """Disk controller type (``ide``, ``sata``, ``scsi``).
+        """str: Disk controller type (``ide``, ``sata``, ``scsi``).
 
         Raises:
           InvalidInputError: see :meth:`validate_controller_address`

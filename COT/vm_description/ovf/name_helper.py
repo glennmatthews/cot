@@ -90,7 +90,7 @@ def name_helper(version):
       version (float): OVF specification version to use, such as 0.9, 1.0,
           or 2.0
     Returns:
-      Instance of OVFNameHelper[012] as appropriate.
+      object: Instance of OVFNameHelper[012] as appropriate.
     """
     if version < 1.0:
         return OVFNameHelper0()
@@ -319,7 +319,7 @@ class OVFNameHelper1(object):
         Args:
           name (str): Attribute name to look up.
         Returns:
-          Value looked up from :attr:`_raw` and/or :attr:`_cache`.
+          object: Value looked up from :attr:`_raw` and/or :attr:`_cache`.
         Raises:
           AttributeError: if the given ``name`` is not found.
         """
@@ -551,4 +551,5 @@ class OVFNameHelper2(OVFNameHelper1):
 
     def __init__(self):
         """Create a name helper for OVF version 2.x."""
+        # pylint: disable=useless-super-delegation
         super(OVFNameHelper2, self).__init__()

@@ -41,6 +41,8 @@ class ISOInfo(Helper):
             info_uri="http://cdrecord.org",
             version_regexp=r"isoinfo ([0-9.]+)")
 
+    # https://github.com/PyCQA/pylint/issues/1553
+    # pylint: disable=arguments-differ
     def call(self, args, **kwargs):
         """Call isoinfo with the given arguments.
 

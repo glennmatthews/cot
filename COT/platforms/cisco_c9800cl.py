@@ -60,6 +60,8 @@ class C9800CL(Platform):
         Args:
           nic_number (int): Nth NIC to name.
         Returns:
+          str: such as
+
           * "GigabitEthernet1"
           * "GigabitEthernet2"
           * etc.

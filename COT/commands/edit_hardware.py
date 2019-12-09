@@ -119,7 +119,11 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def cpus(self):
-        """Get/set the number of CPUs to update to."""
+        """int: Number of CPUs to update to.
+
+        Raises:
+          InvalidInputError: on non-integer or negative input values
+        """
         return self._cpus
 
     @cpus.setter
@@ -138,7 +142,11 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def memory(self):
-        """Get/set the amount of RAM (in megabytes) to update to."""
+        """int: Amount of RAM (in megabytes) to update to.
+
+        Raises:
+          InvalidInputError: on non-integer or otherwise invalid input.
+        """
         return self._memory
 
     @memory.setter
@@ -175,7 +183,11 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def nics(self):
-        """Get/set the number of NICs to update to."""
+        """int: Number of NICs to update to.
+
+        Raises:
+          InvalidInputError: on non-integer or otherwise invalid input
+        """
         return self._nics
 
     @nics.setter
@@ -190,7 +202,10 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def nic_type(self):
-        """Get/set the NIC type string to set.
+        """str: NIC type string to set.
+
+        Raises:
+          TypeError: if more than one NIC type is set under :attr:`nic_types`.
 
         .. deprecated:: 1.5
            Use :attr:`nic_types` instead.
@@ -211,7 +226,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def nic_types(self):
-        """Get/set the list of NIC type strings to set."""
+        """list: NIC type strings to set."""
         return self._nic_types
 
     @nic_types.setter
@@ -222,7 +237,11 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def serial_ports(self):
-        """Get/set the serial port count to update to."""
+        """int: Serial port count to update to.
+
+        Raises:
+          InvalidInputError: on non-integer or otherwise invalid input.
+        """
         return self._serial_ports
 
     @serial_ports.setter
@@ -237,7 +256,10 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def scsi_subtype(self):
-        """Get/set the SCSI controller subtype string to set.
+        """str: SCSI controller subtype string to set.
+
+        Raises:
+          TypeError: if :attr:`scsi_subtypes` has more than one subtype entry.
 
         .. deprecated:: 1.5
            Use :attr:`scsi_subtypes` instead.
@@ -258,7 +280,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def scsi_subtypes(self):
-        """Get/set the SCSI controller subtype string(s) to set."""
+        """list: SCSI controller subtype string(s) to set."""
         return self._scsi_subtypes
 
     @scsi_subtypes.setter
@@ -270,7 +292,10 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def ide_subtype(self):
-        """Get/set the IDE controller subtype string to set.
+        """str: IDE controller subtype string to set.
+
+        Raises:
+          TypeError: if :attr:`ide_subtypes` has more than one subtype entry.
 
         .. deprecated:: 1.5
            Use :attr:`ide_subtypes` instead.
@@ -291,7 +316,7 @@ class COTEditHardware(ReadWriteCommand):
 
     @property
     def ide_subtypes(self):
-        """Get/set the IDE controller subtype string(s) to set."""
+        """list: IDE controller subtype string(s) to set."""
         return self._ide_subtypes
 
     @ide_subtypes.setter
@@ -809,8 +834,7 @@ def guess_list_wildcard(known_values):
     for value_index in range(0, len(known_values) - 1):
         current_value = known_values[value_index]
         split_val = alphanum_split(current_value)
-        for token_index in range(0, len(split_val)):
-            token = split_val[token_index]
+        for token_index, token in enumerate(split_val):
             if not isinstance(token, int):
                 continue
             prefix = "".join([str(k) for k in split_val[:token_index]])

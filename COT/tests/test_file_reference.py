@@ -172,7 +172,7 @@ class TestFileInTAR(COTTestCase):
             self.assertEqual(obj.readline(),
                              b'interface GigabitEthernet0/0/0/0\n')
         # obj should be closed now
-        self.assertRaises(ValueError, obj.read)
+        self.assertRaises(ValueError, obj.read)  # pylint: disable=no-member
 
     def test_copy_to(self):
         """Test the copy_to() API."""

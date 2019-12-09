@@ -39,6 +39,8 @@ class QEMUImg(Helper):
             info_uri="http://www.qemu.org",
             version_regexp="qemu-img version ([0-9.]+)")
 
+    # https://github.com/PyCQA/pylint/issues/1553
+    # pylint: disable=arguments-differ
     def call(self, args, **kwargs):
         """Call qemu-img with the given arguments.
 

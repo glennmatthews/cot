@@ -72,7 +72,7 @@ class COTEditProperties(ReadWriteCommand):
 
     @property
     def config_file(self):
-        """Path to plaintext file to read configuration lines from.
+        """str: Path to plaintext file to read configuration lines from.
 
         Raises:
           InvalidInputError: if the file does not exist.
@@ -88,10 +88,13 @@ class COTEditProperties(ReadWriteCommand):
 
     @property
     def properties(self):
-        r"""List of property (key, value, type) tuples to update.
+        r"""list: Property (key, value, type) tuples to update.
 
         Properties may also be set from strings (such as by CLI)
         with the syntax ``<key>[=<value>][+<type>]``.
+
+        Raises:
+          InvalidInputError: if any input strings are misformatted.
 
         Examples:
           ::
@@ -162,7 +165,7 @@ class COTEditProperties(ReadWriteCommand):
 
     @property
     def transports(self):
-        """Transport mechanism(s) for environment properties."""
+        """list: Transport mechanism(s) for environment properties."""
         return self._transports
 
     @transports.setter

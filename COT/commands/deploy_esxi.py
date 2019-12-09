@@ -76,7 +76,7 @@ class SmarterConnection(SmartConnection):
           requests.exceptions.ConnectionError: TODO
         Returns:
           pyVmomi.VmomiSupport.vim.ServiceInstance: Session service instance.
-        """
+        """  # pylint: disable=missing-raises-doc
         logger.verbose("Establishing connection to %s:%s...",
                        self.server, self.port)
         try:
@@ -251,7 +251,7 @@ class COTDeployESXi(COTDeploy):
 
     @property
     def ovftool_args(self):
-        """List of CLI arguments to pass through to ``ovftool``."""
+        """list: CLI arguments to pass through to ``ovftool``."""
         return list(self._ovftool_args)
 
     @ovftool_args.setter
@@ -262,7 +262,7 @@ class COTDeployESXi(COTDeploy):
 
     @property
     def locator(self):
-        """Target vSphere locator."""
+        """str: Target vSphere locator."""
         return self._locator
 
     @locator.setter
@@ -406,7 +406,7 @@ class COTDeployESXi(COTDeploy):
         # VMWare has confirmed that they have no plan to implement serial port
         # orchestration in ovftool, so we have to do it ourselves now that
         # the VM has been created.
-        if len(self.serial_connection) > 0:
+        if self.serial_connection:
             self.fixup_serial_ports()
 
         # TODO: only now power on VM if power_on was requested

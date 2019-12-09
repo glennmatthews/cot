@@ -55,6 +55,8 @@ class IOSXRv(Platform):
           nic_number (int): Nth NIC to name.
 
         Returns:
+          str: such as
+
           * "MgmtEth0/0/CPU0/0"
           * "GigabitEthernet0/0/0/0"
           * "GigabitEthernet0/0/0/1"

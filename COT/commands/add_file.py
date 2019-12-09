@@ -55,7 +55,7 @@ class COTAddFile(ReadWriteCommand):
 
     @property
     def file(self):
-        """File to be added to the package.
+        """str: File path to be added to the package.
 
         Raises:
           InvalidInputError: if the file does not exist.

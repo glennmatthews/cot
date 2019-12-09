@@ -377,7 +377,7 @@ class OVF(VMDescription, XML):
 
     @property
     def output_file(self):
-        """OVF or OVA file that will be created or updated by :meth:`write`.
+        """str: OVF or OVA file that will be created/updated by :meth:`write`.
 
         Raises:
           ValueUnsupportedError: if :func:`detect_type_from_name` fails
@@ -393,9 +393,12 @@ class OVF(VMDescription, XML):
 
     @property
     def ovf_version(self):
-        """Float representing the OVF specification version in use.
+        """float: Representing the OVF specification version in use.
 
         Supported values at present are 0.9, 1.0, and 2.0.
+
+        Raises:
+          VMInitError: if the OVF contains an unsupported version.
         """
         if self._ovf_version is None:
             root_namespace = XML.get_ns(self.root.tag)
@@ -419,7 +422,7 @@ class OVF(VMDescription, XML):
 
     @property
     def checksum_algorithm(self):
-        """Get the preferred file checksum algorithm for this OVF."""
+        """str: Preferred file checksum algorithm for this OVF."""
         if self.ovf_version >= 2.0:
             # OVF 2.x uses SHA256 for manifest
             return 'sha256'
@@ -429,7 +432,7 @@ class OVF(VMDescription, XML):
 
     @property
     def product_class(self):
-        """Get/set the product class identifier, such as com.cisco.csr1000v."""
+        """str: Product class identifier, such as com.cisco.csr1000v."""
         if self._product_class is None and self.product_section is not None:
             self._product_class = self.product_section.get(self.PRODUCT_CLASS)
         return super(OVF, self).product_class
@@ -455,7 +458,7 @@ class OVF(VMDescription, XML):
 
     @property
     def platform(self):
-        """Get the platform type, as determined from the OVF descriptor.
+        """class: platform type, as determined from the OVF descriptor.
 
         This will be the class :class:`~COT.platforms.Platform` or
         a more-specific subclass if recognized as such.
@@ -537,7 +540,7 @@ class OVF(VMDescription, XML):
 
     @property
     def config_profiles(self):
-        """Get the list of supported configuration profiles.
+        """list: Supported configuration profiles.
 
         If this OVF has no defined profiles, returns an empty list.
         If there is a default profile, it will be first in the list.
@@ -560,7 +563,7 @@ class OVF(VMDescription, XML):
 
     @property
     def environment_properties(self):
-        """Get the array of environment properties.
+        """list: Array of environment properties.
 
         Array of dicts (one per property) with the keys ``"key"``, ``"value"``,
         ``"qualifiers"``, ``"type"``, ``"user_configurable"``, ``"label"``,
@@ -587,7 +590,12 @@ class OVF(VMDescription, XML):
 
     @property
     def environment_transports(self):
-        """Get/set the list of environment transport method strings."""
+        """list: Environment transport method strings.
+
+        Raises:
+          NotImplementedError: setting any value for this property with an OVF
+            of specification version 0.9.
+        """
         if self.ovf_version < 1.0:
             return None
         if self.virtual_hw_section is not None:
@@ -609,7 +617,7 @@ class OVF(VMDescription, XML):
 
     @property
     def networks(self):
-        """Get the list of network names currently defined in this VM."""
+        """list: Network names currently defined in this VM."""
         if self.network_section is None:
             return []
         return [network.get(self.NETWORK_NAME) for
@@ -617,11 +625,7 @@ class OVF(VMDescription, XML):
 
     @property
     def network_descriptions(self):
-        """Get the list of network descriptions currently defined in this VM.
-
-        Returns:
-          list: List of network description strings
-        """
+        """list: Network description strings currently defined in this VM."""
         if self.network_section is None:
             return []
         return [network.findtext(self.NWK_DESC, "") for
@@ -629,7 +633,7 @@ class OVF(VMDescription, XML):
 
     @property
     def system_types(self):
-        """Get/set the list of virtual system type(s) supported by this VM.
+        """list: virtual system type(s) supported by this VM.
 
         For an OVF, this corresponds to the ``VirtualSystemType`` element.
         """
@@ -659,7 +663,7 @@ class OVF(VMDescription, XML):
 
     @property
     def product(self):
-        """Short descriptive product string (XML ``Product`` element)."""
+        """str: Short descriptive product string (XML ``Product`` element)."""
         if self.product_section is not None:
             return self.product_section.findtext(self.PRODUCT, None)
         return None
@@ -671,7 +675,7 @@ class OVF(VMDescription, XML):
 
     @property
     def vendor(self):
-        """Short descriptive vendor string (XML ``Vendor`` element)."""
+        """str: Short descriptive vendor string (XML ``Vendor`` element)."""
         if self.product_section is not None:
             return self.product_section.findtext(self.VENDOR, None)
         return None
@@ -683,7 +687,7 @@ class OVF(VMDescription, XML):
 
     @property
     def version_short(self):
-        """Short descriptive version string (XML ``Version`` element)."""
+        """str: Short descriptive version string (XML ``Version`` element)."""
         if self.product_section is not None:
             return self.product_section.findtext(self.VERSION, None)
         return None
@@ -695,7 +699,7 @@ class OVF(VMDescription, XML):
 
     @property
     def version_long(self):
-        """Long descriptive version string (XML ``FullVersion`` element)."""
+        """str: Long version string (XML ``FullVersion`` element)."""
         if self.product_section is not None:
             return self.product_section.findtext(self.FULL_VERSION, None)
         return None
@@ -707,7 +711,7 @@ class OVF(VMDescription, XML):
 
     @property
     def product_url(self):
-        """Product URL string (XML ``ProductUrl`` element)."""
+        """str: Product URL string (XML ``ProductUrl`` element)."""
         if self.product_section is not None:
             return self.product_section.findtext(self.PRODUCT_URL, None)
         return None
@@ -719,7 +723,7 @@ class OVF(VMDescription, XML):
 
     @property
     def vendor_url(self):
-        """Vendor URL string (XML ``VendorUrl`` element)."""
+        """str: Vendor URL string (XML ``VendorUrl`` element)."""
         if self.product_section is not None:
             return self.product_section.findtext(self.VENDOR_URL, None)
         return None
@@ -731,7 +735,7 @@ class OVF(VMDescription, XML):
 
     @property
     def application_url(self):
-        """Application URL string (XML ``AppUrl`` element)."""
+        """str: Application URL string (XML ``AppUrl`` element)."""
         if self.product_section is not None:
             return self.product_section.findtext(self.APPLICATION_URL, None)
         return None
@@ -748,7 +752,7 @@ class OVF(VMDescription, XML):
           name (str): Attribute being looked up.
 
         Returns:
-          Attribute value
+          object: Attribute value
 
         Raises:
           AttributeError: Magic methods (``__foo``) will not be passed

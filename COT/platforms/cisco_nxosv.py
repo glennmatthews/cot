@@ -43,6 +43,8 @@ class NXOSv(Platform):
           nic_number (int): Nth NIC to name.
 
         Returns:
+          str: such as
+
           * mgmt0
           * Ethernet2/1
           * Ethernet2/2

@@ -45,6 +45,8 @@ class IOSv(Platform):
         Args:
           nic_number (int): Nth NIC to name.
         Returns:
+          str: such as
+
           * "GigabitEthernet0/0"
           * "GigabitEthernet0/1"
           * etc.

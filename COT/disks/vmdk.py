@@ -139,6 +139,8 @@ class VMDK(DiskRepresentation):
             output_path])
         return cls(output_path)
 
+    # https://github.com/PyCQA/pylint/issues/1553
+    # pylint: disable=arguments-differ
     @classmethod
     def _create_file(cls, path, disk_subformat="streamOptimized", **kwargs):
         """Worker function for create_file().

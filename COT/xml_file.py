@@ -154,7 +154,7 @@ class XML(object):
                         attrib,
                         XML.strip_ns(parent.tag),
                         "\n".join([ET.tostring(e).decode() for e in matches])))
-        elif len(matches) == 0:
+        elif len(matches) == 0:  # pylint: disable=len-as-condition
             if required:
                 raise KeyError("Mandatory element <{0}> not found under <{1}>"
                                .format(XML.strip_ns(tag),

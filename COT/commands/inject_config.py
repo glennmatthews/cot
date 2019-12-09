@@ -56,7 +56,7 @@ class COTInjectConfig(ReadWriteCommand):
 
     @property
     def config_file(self):
-        """Primary configuration file.
+        """str: Primary configuration file path.
 
         Raises:
           InvalidInputError: if the file does not exist
@@ -80,7 +80,7 @@ class COTInjectConfig(ReadWriteCommand):
 
     @property
     def secondary_config_file(self):
-        """Secondary configuration file.
+        """str: Secondary configuration file path.
 
         Raises:
           InvalidInputError: if the file does not exist
@@ -104,7 +104,7 @@ class COTInjectConfig(ReadWriteCommand):
 
     @property
     def extra_files(self):
-        """Additional files to be embedded as-is.
+        """list: Additional files to be embedded as-is.
 
         Raises:
           InvalidInputError: if any file in the list does not exist

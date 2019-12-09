@@ -51,7 +51,11 @@ class COTInfo(Command):
 
     @property
     def package_list(self):
-        """List of VM definitions to get information for."""
+        """list: VM definitions to get information for.
+
+        Raises:
+          InvalidInputError: if any package given as input does not exist.
+        """
         return self._package_list
 
     @package_list.setter
@@ -64,7 +68,13 @@ class COTInfo(Command):
 
     @property
     def verbosity(self):
-        """Verbosity of information displayed."""
+        """str: Verbosity of information displayed.
+
+        One of "brief", "verbose", or ``None``.
+
+        Raises:
+          InvalidInputError: if given an invalid value as input.
+        """
         return self._verbosity
 
     @verbosity.setter

@@ -219,7 +219,7 @@ class ReadCommand(Command):
 
     @property
     def package(self):
-        """VM description file to read from.
+        """str: VM description file path to read from.
 
         Calls :meth:`COT.vm_description.VMDescription.factory` to instantiate
         :attr:`self.vm` from the provided file.
@@ -303,11 +303,17 @@ class ReadWriteCommand(ReadCommand):
 
     @property
     def output(self):
-        """Output file for this command.
+        """str: Output file path for this command.
 
         If the specified file already exists,  will prompt the user
         (:meth:`~COT.ui.UI.confirm_or_die`) to
         confirm overwriting the existing file.
+
+        Raises:
+          InvalidInputError: if the given path already exists as something
+            other than an ordinary file; if the parent directory of the given
+            path does not exist; if the parent of the given path exists and
+            is not a directory but is instead some sort of file.
         """
         return self._output
 
