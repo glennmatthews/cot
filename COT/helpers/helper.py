@@ -94,6 +94,8 @@ class HelperNotFoundError(OSError):
     """A helper program cannot be located."""
 
 
+# TODO: In python 3.x, EnvironmentError is just an alias of OSError
+# Change this when we drop Python 2.7 support.
 class HelperError(EnvironmentError):
     """A helper program exited with non-zero return code."""
 
@@ -494,12 +496,13 @@ class Helper(object):
           bool: True
 
         Raises:
-          HelperError: if file copying fails
+          OSError: if file copying fails
         """
         logger.debug("Copying %s to %s", src, dest)
         try:
             shutil.copy(src, dest)
         except (OSError, IOError) as exc:
+            # IOError for Python 2.7, OSError for Python 3.x
             logger.debug('Installation error, trying sudo.')
             try:
                 check_call(['sudo', 'cp', src, dest])

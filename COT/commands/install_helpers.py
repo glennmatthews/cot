@@ -87,8 +87,7 @@ def _install_manpage(src_path, man_dir):
     Returns:
       tuple: (page_previously_installed, page_updated)
     Raises:
-      IOError: if installation fails under some circumstances
-      OSError: if installation fails under other circumstances
+      OSError: if installation fails due to system circumstances
     """
     # Which man section does this belong in?
     filename = os.path.basename(src_path)
@@ -129,6 +128,7 @@ def install_manpages(man_dir):
             some_preinstalled |= prev
             installed_any |= new
     except (IOError, OSError, HelperError) as exc:
+        # IOError for Python 2.7, OSError for Python 3.x
         return False, "INSTALLATION FAILED: " + str(exc)
 
     if some_preinstalled:
@@ -202,7 +202,12 @@ class COTInstallHelpers(Command):
             return install_manpages(man_dir)
 
     def run(self):
-        """Verify all helper tools and install any that are missing."""
+        """Verify all helper tools and install any that are missing.
+
+        Raises:
+          HelperError: if any installation fails and :attr:`ignore_errors`
+            is ``False``.
+        """
         result = True
         results = {}
         for name in ['fatdisk', 'ovftool', 'qemu-img', 'vmdktool']:
@@ -232,7 +237,7 @@ class COTInstallHelpers(Command):
             print(wrapper.fill("{0:13} {1}".format(name + ":", results[name])))
         print("")
         if not result and not self.ignore_errors:
-            raise EnvironmentError(1, "Unable to install some helpers")
+            raise HelperError(-1, "Unable to install some helpers")
 
     def create_subparser(self):
         """Create 'install-helpers' CLI subparser."""

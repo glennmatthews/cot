@@ -337,7 +337,7 @@ class OVF(VMDescription, XML):
             with manifest_file.open('rb') as file_obj:
                 manifest_text = file_obj.read().decode()
             manifest_entries = parse_manifest(manifest_text)
-        except IOError:
+        except OSError:
             logger.debug("Manifest file is missing or unreadable.")
 
         self._compare_file_lists(descriptor_files.keys(),
@@ -368,7 +368,7 @@ class OVF(VMDescription, XML):
                     checksum_algorithm=self.checksum_algorithm,
                     expected_checksum=m_cksum,
                     expected_size=file_size)
-            except IOError:
+            except OSError:
                 logger.error("File '%s' referenced in the OVF descriptor "
                              "does not exist.", file_href)
                 continue

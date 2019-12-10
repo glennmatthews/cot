@@ -38,7 +38,7 @@ class TestFileReference(COTTestCase):
                                        "sample_cfg.txt")
         self.assertIsInstance(fileref, FileInTAR)
 
-        self.assertRaises(IOError, FileReference.create, "/foo", "bar.txt")
+        self.assertRaises(OSError, FileReference.create, "/foo", "bar.txt")
         self.assertRaises(NotImplementedError, FileReference.create,
                           self.input_vmdk, "config.txt")
 
@@ -55,7 +55,7 @@ class TestFileReference(COTTestCase):
         self.assertIsInstance(fileref, FileInTAR)
         self.assertLogged(**self.FILE_REF_RELATIVE)
 
-        self.assertRaises(IOError, FileReference.create, "/foo", "bar.txt")
+        self.assertRaises(OSError, FileReference.create, "/foo", "bar.txt")
         self.assertRaises(NotImplementedError, FileReference.create,
                           self.input_vmdk, "config.txt")
 
@@ -65,7 +65,7 @@ class TestFileOnDisk(COTTestCase):
 
     def test_nonexistent_file(self):
         """Test error handling when the file doesn't exist."""
-        self.assertRaises(IOError, FileOnDisk, "/foo", "bar.txt")
+        self.assertRaises(OSError, FileOnDisk, "/foo", "bar.txt")
 
     def test_exists(self):
         """Test the exists property."""
@@ -127,15 +127,15 @@ class TestFileInTAR(COTTestCase):
 
     def test_nonexistent_tarfile(self):
         """Test error handling when TAR file doesn't exist."""
-        self.assertRaises(IOError, FileInTAR, "/foo/bar", "filename")
+        self.assertRaises(OSError, FileInTAR, "/foo/bar", "filename")
 
     def test_nonexistent_entry(self):
         """Test error handling when filename isn't in the TAR."""
-        self.assertRaises(IOError, FileInTAR, self.tarfile, "foo.bar")
+        self.assertRaises(OSError, FileInTAR, self.tarfile, "foo.bar")
 
     def test_not_tarfile(self):
         """Test error handling when file is not a TAR file."""
-        self.assertRaises(IOError, FileInTAR, self.input_ovf, self.input_ovf)
+        self.assertRaises(OSError, FileInTAR, self.input_ovf, self.input_ovf)
 
     def test_exists(self):
         """Test the exists property."""

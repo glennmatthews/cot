@@ -26,6 +26,7 @@
   FileInTAR
 """
 
+import errno
 import logging
 import os
 import shutil
@@ -55,7 +56,7 @@ class FileReference(object):
           FileReference: instance of appropriate subclass
 
         Raises:
-          IOError: if nothing exists at ``container_path``
+          OSError: if nothing exists at ``container_path``
           NotImplementedError: if ``container_path`` is a file that this
             function does not know how to handle
         """
@@ -66,7 +67,7 @@ class FileReference(object):
                            container_path)
             container_path = os.path.abspath(container_path)
         if not os.path.exists(container_path):
-            raise IOError("Container path '{0}' does not exist"
+            raise OSError(errno.ENOENT, "Container path '{0}' does not exist"
                           .format(container_path))
         if os.path.isdir(container_path):
             return FileOnDisk(container_path, filename, **kwargs)
@@ -92,7 +93,7 @@ class FileReference(object):
           expected_size (int): Expected size of the file, in bytes, if any.
 
         Raises:
-          IOError: if the file does not actually exist or is not readable.
+          OSError: if the file does not actually exist or is not readable.
         """
         if not os.path.isabs(container_path):
             logger.warning("Only absolute paths are accepted, but "
@@ -112,7 +113,7 @@ class FileReference(object):
                     self.filename, expected_size, expected_checksum)
 
         if not self.exists:
-            raise IOError("File '{0}' does not exist in {1}"
+            raise OSError(errno.ENOENT, "File '{0}' does not exist in {1}"
                           .format(self.filename, self.container_path))
 
         if expected_checksum is not None and (self.checksum !=
@@ -274,8 +275,9 @@ class FileInTAR(FileReference):
           **kwargs: Passed through to :meth:`FileReference.__init__`.
 
         Raises:
-          IOError: if ``tarfile_path`` doesn't reference a TAR file,
-              or the TAR file does not contain ``filename``.
+          OSError: if ``tarfile_path`` doesn't exist, or if ``tarfile_path``
+            exists but is not a TAR file, or if the identified TAR file
+            does not contain ``filename``.
         """
         if not os.path.isabs(tarfile_path):
             logger.warning("Only absolute paths are accepted, but "
@@ -283,8 +285,12 @@ class FileInTAR(FileReference):
                            "\nAttempting to convert it to an absolute path.",
                            tarfile_path)
             tarfile_path = os.path.abspath(tarfile_path)
+        if not os.path.exists(tarfile_path):
+            raise OSError(errno.ENOENT,
+                          "{0} does not exist".format(tarfile_path))
         if not tarfile.is_tarfile(tarfile_path):
-            raise IOError("{0} is not a valid TAR file.".format(tarfile_path))
+            raise OSError(errno.EINVAL,
+                          "{0} is not a valid TAR file.".format(tarfile_path))
         self.tarf = None
         super(FileInTAR, self).__init__(tarfile_path, filename, **kwargs)
 

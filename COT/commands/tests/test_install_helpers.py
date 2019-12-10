@@ -188,7 +188,7 @@ qemu-img:     INSTALLATION FAILED: [Errno 1] not really installing!
 vmdktool:     INSTALLATION FAILED: [Errno 1] not really installing!
 """
         # Normally we raise an error due to the failed installations
-        with self.assertRaises(EnvironmentError):
+        with self.assertRaises(HelperError):
             self.check_cot_output(expected_output)
         # ...but we can set ignore_errors to suppress this behavior
         self.command.ignore_errors = True

@@ -39,6 +39,8 @@ from COT.utilities import directory_size, pretty_bytes
 logger = logging.getLogger(__name__)
 
 
+# TODO: In Python 3.x, EnvironmentError is just an alias of OSError.
+# Change this when we drop support for Python 2.7
 class VMInitError(EnvironmentError):
     """Class representing errors encountered when trying to init/load a VM."""
 

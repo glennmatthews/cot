@@ -78,9 +78,9 @@ class TestDiskRepresentation(COTTestCase):
 
     def test_disk_representation_from_file_errors(self):
         """Check DiskRepresentation.from_file() error handling."""
-        self.assertRaises(IOError, DiskRepresentation.from_file,
+        self.assertRaises(OSError, DiskRepresentation.from_file,
                           "")
-        self.assertRaises(IOError, DiskRepresentation.from_file,
+        self.assertRaises(OSError, DiskRepresentation.from_file,
                           "/foo/bar/baz")
         self.assertRaises(TypeError, DiskRepresentation.from_file,
                           None)

@@ -606,8 +606,9 @@ class CLI(UI):
             sys.exit("Missing functionality:\n{0}\n"
                      "Please contact the COT development team."
                      .format(exc.args[0]))
-        except EnvironmentError as exc:
-            # EnvironmentError may have some of (errno, strerror, filename).
+        except (OSError, EnvironmentError) as exc:
+            # EnvironmentError for Python 2.7, OSError for Python 3.x
+            # This exception *may* have some of (errno, strerror, filename).
             if exc.errno is not None:
                 if exc.filename is not None:
                     # implicitly we also have e.strerror

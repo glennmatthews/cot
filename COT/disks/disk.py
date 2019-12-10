@@ -12,6 +12,7 @@
 
 """Abstract base class for representations of disk image files."""
 
+import errno
 import logging
 import os
 import re
@@ -64,11 +65,12 @@ class DiskRepresentation(object):
           DiskRepresentation: Representation of this file.
 
         Raises:
-          IOError: if no file exists at the given path
+          OSError: if no file exists at the given path
           NotImplementedError: if the file is not a supported type.
         """
         if not os.path.exists(path):
-            raise IOError(2, "No such file or directory: {0}".format(path))
+            raise OSError(errno.ENOENT,
+                          "No such file or directory: {0}".format(path))
         best_guess = None
         best_confidence = 0
         for subclass in DiskRepresentation.subclasses():
