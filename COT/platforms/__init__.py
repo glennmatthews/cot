@@ -36,6 +36,7 @@ Platform modules
 
   COT.platforms.platform
   COT.platforms.cisco_csr1000v
+  COT.platforms.cisco_c8000v
   COT.platforms.cisco_iosv
   COT.platforms.cisco_iosxrv
   COT.platforms.cisco_iosxrv_9000
@@ -50,6 +51,7 @@ import logging
 
 from .platform import Platform
 from .cisco_csr1000v import CSR1000V
+from .cisco_c8000v import C8000V
 from .cisco_iosv import IOSv
 from .cisco_iosxrv import IOSXRv, IOSXRvRP, IOSXRvLC
 from .cisco_iosxrv_9000 import IOSXRv9000
