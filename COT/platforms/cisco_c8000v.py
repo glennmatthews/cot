@@ -33,8 +33,8 @@ class C8000V(Platform):
     HARDWARE_LIMITS = Platform.HARDWARE_LIMITS.copy()
     HARDWARE_LIMITS.update({
         Hardware.cpus: ValidRange(1, 8),    # but see below
-        Hardware.memory: ValidRange(2560, 8192),
-        Hardware.nic_count: ValidRange(3, 26),
+        Hardware.memory: ValidRange(4096, 8192),
+        Hardware.nic_count: ValidRange(3, 8),
         Hardware.serial_count: ValidRange(0, 2),
     })
 
