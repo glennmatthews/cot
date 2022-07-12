@@ -235,6 +235,8 @@ class COTTestCase(unittest.TestCase):  # noqa: N801
     csr_ovf = _localfile("csr1000v.ovf")
     # CSR1000V OVF as of 2017
     csr_ovf_2017 = _localfile("csr1000v_2017.ovf")
+    # C8000V OVF
+    c8000_ovf = _localfile("c8000v.ovf")
     # v0.9 OVF
     v09_ovf = _localfile("v0.9.ovf")
     # v2.0 OVF from VirtualBox
