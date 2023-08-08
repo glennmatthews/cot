@@ -2777,7 +2777,7 @@ class OVF(VMDescription, XML):
                         expected_size=file_ref.size)
 
         # Be sure to dereference any links to the actual file content!
-        with tarfile.open(tar_file, 'w', dereference=True) as tarf:
+        with tarfile.open(tar_file, 'w', dereference=True, format=tarfile.GNU_FORMAT) as tarf:
             # OVF is always first
             logger.debug("Adding OVF descriptor %s to %s",
                          ovf_descriptor, tar_file)
